@@ -46,6 +46,8 @@ interface SaveToPatientProps {
    * distinguíveis em `assessment.instrumentVersion` (ver paciente-detalhe.tsx).
    */
   instrumentVersion?: string;
+  /** Chamado depois que as respostas foram salvas no paciente (ex.: liberar "Nova partida" sem aviso). */
+  onSaved?: (patientId: string) => void;
 }
 
 function validApplicationDate(value: string | Date | undefined, fallback: Date): Date {
@@ -275,6 +277,7 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
     },
     onSuccess: (data, patientId) => {
       setSavedPatientId(patientId);
+      rawProps.onSaved?.(patientId);
       queryClient.invalidateQueries({
         queryKey: [
           isRemoteClinical

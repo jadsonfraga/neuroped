@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Check, ClipboardList, Copy, Download, Eye, Flag, Music, Music2, Pause, Play, Repeat, RotateCcw, ShieldCheck, Smartphone, Sparkles, Undo2, Volume2, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSondaExitGuard } from "@/hooks/useSondaExitGuard";
@@ -29,12 +29,15 @@ import {
   bandForYears,
   buildGameBrief,
   buildGameReport,
+  buildPatientRecordItems,
   formatDuration,
   interpret,
   itemsFor,
+  judgeShortcut,
   phaseById,
   recordJudged,
   recordTouch,
+  sessionWallSeconds,
   shuffle,
   summarize,
   undoLastAnswer,
@@ -51,6 +54,11 @@ import {
   type TouchItem,
 } from "@/features/super-neuropad/model";
 import "@/styles/super-neuropad-arcade.css";
+
+// "Salvar em paciente" é o mesmo fluxo das demais escalas; carrega só na tela de resultado.
+const LazySaveToPatient = lazy(() =>
+  import("@/components/SaveToPatient").then(({ SaveToPatient: Component }) => ({ default: Component })),
+);
 
 const XP_PER_ITEM = 10;
 const TOTAL_ITEMS = PHASES.length * ITEMS_PER_PHASE;
@@ -182,8 +190,8 @@ function PhaseTrail({ current, done, character }: { current: number; done: boole
   );
 }
 
-function Hud({ character, answered, phaseIndex, done, musicOn, paused, canUndo, canFinish, onToggleMusic, onUndo, onPause, onFinish, onRestart }: {
-  character: Character; answered: number; phaseIndex: number; done: boolean[]; musicOn: boolean; paused: boolean; canUndo: boolean; canFinish: boolean;
+function Hud({ character, answered, phaseIndex, done, musicOn, paused, canPause, canUndo, canFinish, onToggleMusic, onUndo, onPause, onFinish, onRestart }: {
+  character: Character; answered: number; phaseIndex: number; done: boolean[]; musicOn: boolean; paused: boolean; canPause: boolean; canUndo: boolean; canFinish: boolean;
   onToggleMusic: () => void; onUndo: () => void; onPause: () => void; onFinish: () => void; onRestart: () => void;
 }) {
   return (
@@ -201,7 +209,7 @@ function Hud({ character, answered, phaseIndex, done, musicOn, paused, canUndo, 
           <ArcadeButton tone={musicOn ? "sky" : "paper"} className="px-3 py-1.5 text-xs" aria-pressed={musicOn} onClick={onToggleMusic} aria-label={musicOn ? "Música ligada" : "Música desligada"}>
             {musicOn ? <Music2 className="h-4 w-4" /> : <Music className="h-4 w-4" />} Música
           </ArcadeButton>
-          <ArcadeButton tone="paper" className="px-3 py-1.5 text-xs" onClick={onPause} aria-pressed={paused}>
+          <ArcadeButton tone="paper" className="px-3 py-1.5 text-xs" onClick={onPause} aria-pressed={paused} disabled={!canPause} aria-keyshortcuts="P" title="Pausa o desafio e o cronômetro (tecla P)">
             {paused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />} {paused ? "Continuar" : "Pausa"}
           </ArcadeButton>
           <ArcadeButton tone="slate" className="px-3 py-1.5 text-xs" onClick={onUndo} disabled={!canUndo} title="Volta um desafio e apaga o último registro">
@@ -212,7 +220,7 @@ function Hud({ character, answered, phaseIndex, done, musicOn, paused, canUndo, 
               <Flag className="h-4 w-4" /> Encerrar
             </ArcadeButton>
           )}
-          <ArcadeButton tone="paper" className="px-3 py-1.5 text-xs" onClick={onRestart}>
+          <ArcadeButton tone="paper" className="px-3 py-1.5 text-xs" onClick={onRestart} title="Recomeça do mundo 1 com a mesma idade e o mesmo herói">
             <RotateCcw className="h-4 w-4" /> Reiniciar
           </ArcadeButton>
         </div>
@@ -348,16 +356,17 @@ function JudgeStage({ item, onJudge }: { item: Exclude<Item, TouchItem>; onJudge
         <p className="mt-1 text-lg font-black leading-snug">{item.prompt}</p>
         <p className="mt-2 text-sm"><span className="font-black">Conta como acerto:</span> {item.expected}</p>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          <ArcadeButton tone="grass" className="min-h-14 text-base" onClick={(event) => onJudge("acerto", event)}>
+          <ArcadeButton tone="grass" className="min-h-14 text-base" aria-keyshortcuts="1" onClick={(event) => onJudge("acerto", event)}>
             <Check className="h-5 w-5" /> Acertou
           </ArcadeButton>
-          <ArcadeButton tone="berry" className="min-h-14 text-base" onClick={(event) => onJudge("erro", event)}>
+          <ArcadeButton tone="berry" className="min-h-14 text-base" aria-keyshortcuts="2" onClick={(event) => onJudge("erro", event)}>
             <X className="h-5 w-5" /> Errou
           </ArcadeButton>
-          <ArcadeButton tone="slate" className="min-h-14 text-base" onClick={(event) => onJudge("sem_resposta", event)}>
+          <ArcadeButton tone="slate" className="min-h-14 text-base" aria-keyshortcuts="3" onClick={(event) => onJudge("sem_resposta", event)}>
             Não respondeu
           </ArcadeButton>
         </div>
+        <p className="mt-2 hidden text-[11px] font-bold opacity-70 sm:block">Teclado: 1 Acertou · 2 Errou · 3 Não respondeu · P Pausa</p>
       </div>
     </div>
   );
@@ -386,9 +395,13 @@ export default function SuperNeuroPadGamePage() {
   const [answers, setAnswers] = useState<AnswerRecord[]>([]);
   const [cheer, setCheer] = useState<string | null>(null);
   const [paused, setPaused] = useState(false);
+  /** Pausa disparada porque a aba/tela saiu de foco (bloqueio do tablet, troca de app). */
+  const [autoPaused, setAutoPaused] = useState(false);
   const [repeated, setRepeated] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [seed] = useState(() => Math.floor(Math.random() * 1_000_000));
+  const [seed, setSeed] = useState(() => Math.floor(Math.random() * 1_000_000));
+  /** Resultado já copiado, baixado ou salvo: "Nova partida" só pede confirmação antes disso. */
+  const [resultKept, setResultKept] = useState(false);
   const startedAt = useRef<string>("");
   const finishedAt = useRef<string | null>(null);
   const itemStart = useRef<number>(0);
@@ -444,15 +457,46 @@ export default function SuperNeuroPadGamePage() {
     if (next) getMusic().start(); else music.current?.stop();
   }, [getMusic, musicOn]);
 
+  // Tela bloqueada ou troca de aplicativo no meio do desafio: pausa sozinho para
+  // o tempo do item não inflar (o relatório soma só os intervalos ativos).
+  useEffect(() => {
+    if (screen !== "play" || paused) return;
+    const onVisibility = () => { if (document.hidden) pauseNow(true); };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  });
+
+  // Atalhos da aplicadora: 1/2/3 nos itens julgados (fala e ação) e P para pausa.
+  // Itens de toque seguem exclusivos da criança na tela.
+  useEffect(() => {
+    if (screen !== "play") return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.repeat || event.altKey || event.ctrlKey || event.metaKey) return;
+      const target = event.target as HTMLElement | null;
+      if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
+      if (event.key === "p" || event.key === "P") { event.preventDefault(); togglePause(); return; }
+      const status = judgeShortcut(event.key);
+      if (!status || paused || !item || item.kind === "toque") return;
+      event.preventDefault();
+      submitAnswer(recordJudged(item, phaseId, status, elapsedSeconds(), repeated), event);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+
   function startGame() {
     if (!ready) return;
     softTap();
     startedAt.current = new Date().toISOString();
     finishedAt.current = null;
+    // Ordem das opções nova a cada partida: recomeçar não repete as posições já vistas.
+    setSeed(Math.floor(Math.random() * 1_000_000));
+    setResultKept(false);
     setAnswers([]);
     setPhaseIndex(0);
     setItemIndex(0);
     setPaused(false);
+    setAutoPaused(false);
     pauseCount.current = 0;
     undoCount.current = 0;
     lastAnswerAt.current = Number.NEGATIVE_INFINITY;
@@ -460,18 +504,30 @@ export default function SuperNeuroPadGamePage() {
     if (musicOn) getMusic().start();
   }
 
+  /** Nova partida para OUTRA criança: limpa idade e herói para a faixa nunca ficar herdada da criança anterior. */
   function restart() {
     if (answers.length > 0 && screen !== "results" && !window.confirm("Reiniciar apaga o registro desta partida. Deseja reiniciar?")) return;
+    if (screen === "results" && !resultKept && !window.confirm("O resultado ainda não foi copiado, baixado nem salvo em paciente. Começar uma nova partida apaga este resultado. Continuar?")) return;
     softTap();
     music.current?.stop();
     setAnswers([]);
     setPhaseIndex(0);
     setItemIndex(0);
+    setAgeYears(null);
+    setCharacter(null);
+    setResultKept(false);
     setKitChecked({});
     setPaused(false);
     finishedAt.current = null;
     lastAnswerAt.current = Number.NEGATIVE_INFINITY;
     setScreen("setup");
+  }
+
+  /** Recomeço rápido com a mesma criança (idade, herói e inventário mantidos): volta direto ao mundo 1. */
+  function replaySameChild() {
+    if (answers.length > 0 && !window.confirm("Recomeçar do mundo 1 apaga o registro desta partida. Deseja recomeçar?")) return;
+    music.current?.stop();
+    startGame();
   }
 
   function showCheer(text: string) {
@@ -519,6 +575,7 @@ export default function SuperNeuroPadGamePage() {
     if (!previous) return;
     softTap();
     undoCount.current += 1;
+    if (paused && musicOn) getMusic().start();
     setAnswers(previous.answers);
     setPhaseIndex(PHASE_ORDER.indexOf(previous.phaseId));
     setItemIndex(previous.itemIndex);
@@ -527,14 +584,23 @@ export default function SuperNeuroPadGamePage() {
     showCheer("Desfeito. Refaça o desafio.");
   }
 
+  function pauseNow(auto: boolean) {
+    if (paused) return;
+    activeItemMs.current += performance.now() - itemStart.current;
+    pauseCount.current += 1;
+    // Pausa é lanche, banheiro ou conversa: a trilha para junto com o cronômetro.
+    music.current?.stop();
+    setAutoPaused(auto);
+    setPaused(true);
+  }
+
   function togglePause() {
     softTap();
-    if (paused) itemStart.current = performance.now();
-    else {
-      activeItemMs.current += performance.now() - itemStart.current;
-      pauseCount.current += 1;
-    }
-    setPaused(!paused);
+    if (!paused) { pauseNow(false); return; }
+    itemStart.current = performance.now();
+    if (musicOn) getMusic().start();
+    setAutoPaused(false);
+    setPaused(false);
   }
 
   function finishEarly() {
@@ -573,6 +639,7 @@ export default function SuperNeuroPadGamePage() {
       anchor.click();
       anchor.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setResultKept(true);
       toast({ title: "PDF detalhado gerado", description: summarize(session).complete
         ? "Resultado objetivo, leitura para a consulta e cada item com resposta esperada, registrada e tempo."
         : "Observações registradas e situação da partida incompleta, sem classificação ou interpretação." });
@@ -586,14 +653,18 @@ export default function SuperNeuroPadGamePage() {
   async function copyText(text: string, filename: string, title: string) {
     try {
       await navigator.clipboard.writeText(text);
+      setResultKept(true);
       toast({ title, description: "Texto na área de transferência." });
     } catch {
       downloadTextDocument(text, `${safeTextFilename(filename)}.txt`);
+      setResultKept(true);
       toast({ title: "Baixado em TXT", description: "A área de transferência não estava disponível." });
     }
   }
 
   const summary = session ? summarize(session) : null;
+  const wallSeconds = session ? sessionWallSeconds(session) : null;
+  const patientRecord = session && screen === "results" ? buildPatientRecordItems(session) : [];
   const reading = session && screen === "results" ? interpret(session) : null;
   // Fora da preparação o cabeçalho encolhe: o desafio precisa caber na tela virada para a criança.
   const compact = screen !== "setup";
@@ -716,13 +787,14 @@ export default function SuperNeuroPadGamePage() {
           done={done}
           musicOn={musicOn}
           paused={paused}
+          canPause={screen === "play"}
           canUndo={answers.length > 0 && screen !== "intro"}
           canFinish={answers.length > 0}
           onToggleMusic={toggleMusic}
           onUndo={undo}
           onPause={togglePause}
           onFinish={finishEarly}
-          onRestart={restart}
+          onRestart={replaySameChild}
         />
       )}
 
@@ -757,6 +829,7 @@ export default function SuperNeuroPadGamePage() {
           {paused && (
             <div className="flex flex-col items-center gap-4 py-10 text-center">
               <div className="snp-pixel snp-blink text-4xl">Pausa</div>
+              {autoPaused && <p className="snp-chip bg-[var(--snp-sun-tint)]" role="status">Pausado sozinho: a tela saiu de foco.</p>}
               <p className="max-w-md text-sm font-bold opacity-80">O tempo do desafio parou. Lanche, banheiro ou respiro. Toque em continuar quando a criança estiver pronta.</p>
               <ArcadeButton tone="grass" className="px-6 py-3 text-base" onClick={togglePause}><Play className="h-5 w-5" /> Continuar</ArcadeButton>
             </div>
@@ -808,6 +881,10 @@ export default function SuperNeuroPadGamePage() {
             <p className="text-base font-bold">{summary.character.emoji} {summary.character.name} {summary.character.role} · {answers.length * XP_PER_ITEM} XP · {done.filter(Boolean).length} conquistas</p>
             <div className="mt-3 flex justify-center"><BadgeShelf done={done} /></div>
             <p className="mt-3 text-xs font-black opacity-80">Aplicadora: vire a tela para você. O que vem abaixo é o registro objetivo.</p>
+            <p className="mt-1 text-xs font-bold opacity-80" data-testid="super-neuropad-when">
+              {formatClinicalDateTime(new Date(session.finishedAt ?? session.startedAt))} · {session.ageYears} anos (faixa {summary.band.label})
+              {wallSeconds !== null ? ` · sessão de ${formatDuration(wallSeconds)}` : ""} · tarefas {formatDuration(summary.durationSeconds)}
+            </p>
           </div>
 
           {summary.level === null ? (
@@ -902,9 +979,29 @@ export default function SuperNeuroPadGamePage() {
             <ArcadeButton tone="paper" onClick={() => { softTap(); void copyText(buildGameReport(session), `super-neuropad-game-${session.bandId}`, "Registro completo copiado"); }}>
               <Copy className="h-5 w-5" /> Copiar registro completo
             </ArcadeButton>
-            <ArcadeButton tone="slate" onClick={restart}>
+            <ArcadeButton tone="slate" onClick={restart} title="Limpa idade e herói para a próxima criança">
               <RotateCcw className="h-5 w-5" /> Nova partida
             </ArcadeButton>
+          </div>
+          <p className="text-xs font-bold opacity-70" role="status">
+            {resultKept ? "Resultado guardado (copiado, baixado ou salvo)." : "Nada é guardado sozinho: copie, baixe o PDF ou salve em paciente antes de sair ou começar outra partida."}
+          </p>
+
+          <div className="snp-panel snp-panel--soft p-4 text-[var(--snp-ink-fixed)]" data-testid="super-neuropad-save">
+            <div className="snp-pixel text-[11px]">Salvar no prontuário do paciente</div>
+            <p className="mt-1 text-xs font-semibold opacity-80">Envia o resumo e cada item registrado ao paciente escolhido, pelo mesmo fluxo das demais escalas. Só acontece ao tocar em salvar.</p>
+            <div className="mt-3">
+              <Suspense fallback={<p className="text-xs font-bold opacity-70">Carregando pacientes…</p>}>
+                <LazySaveToPatient
+                  scaleName={SUPER_NEUROPAD_TITLE}
+                  instrumentVersion={`super-neuropad-${SUPER_NEUROPAD_VERSION}`}
+                  patientAge={`${session.ageYears} anos`}
+                  applicationDate={session.finishedAt ?? session.startedAt}
+                  responses={patientRecord}
+                  onSaved={() => setResultKept(true)}
+                />
+              </Suspense>
+            </div>
           </div>
 
           {reading && reading.missed.length > 0 && (
