@@ -1,24 +1,37 @@
 /**
  * PDF detalhado do Super NeuroPad Game — especificação pura (sem DOM) para o
- * construtor clínico compartilhado (`buildDocumentPdf`). O documento traz
- * identificação, resultado objetivo por fase, cada pergunta com resposta
- * esperada, resposta registrada, certo/errado e tempo, além dos critérios de
- * leitura e da proveniência. Emoji e símbolos são convertidos em texto: o
- * registro usa sempre o rótulo textual de cada opção.
+ * construtor clínico compartilhado (`buildDocumentPdf`). O documento traz:
+ * metadados da sessão (data/hora local, idade, duração, pausas, mundos não
+ * aplicados), o que foi testado por instrumento de origem (Sonda 10, OBS-10,
+ * Reconhecimento Visual, Avaliação Cognitiva Infantil), desempenho por domínio
+ * contra a referência autoral da idade, cada item com origem, resposta
+ * esperada, resposta da criança, resultado, tempo, repetição e via, as
+ * observações da aplicadora e um bloco estruturado (rótulos fixos + JSON por
+ * linha) para leitura por máquina. Emoji e símbolos viram texto.
  */
 import type { DocSpec } from "@/lib/documentPdf";
 import type { DocumentIssuer } from "@/lib/issuer";
 import {
+  cleanObservations,
+  cutText,
   describeArt,
+  estimateBandSeconds,
   formatDuration,
   interpret,
   KIND_LABELS,
   LEVEL_LABELS,
+  ORIGIN_LABELS,
+  phaseById,
+  phaseStatusText,
+  sessionWallSeconds,
   STATUS_LABELS,
+  STRUCTURED_HEADER,
+  SUPER_NEUROPAD_MILESTONE_SOURCES,
   SUPER_NEUROPAD_NATURE,
   SUPER_NEUROPAD_SOURCES,
   SUPER_NEUROPAD_TITLE,
   SUPER_NEUROPAD_VERSION,
+  buildStructuredLines,
   summarize,
   type GameSession,
 } from "./model";
@@ -44,23 +57,42 @@ export function issuerLines(issuer: DocumentIssuer, credentials: string): Issuer
 export function buildGameDocSpec(session: GameSession, issuer: IssuerLines, appliedAt: string): DocSpec {
   const summary = summarize(session);
   const reading = interpret(session);
-  const incomplete = `Partida incompleta: ${session.answers.length} de ${summary.total} itens registrados. Sem classificação ou interpretação.`;
+  const wall = sessionWallSeconds(session);
+  const estimate = estimateBandSeconds(summary.band.min);
+  const observations = cleanObservations(session.observations ?? "");
+  const skipped = summary.phases.filter((phase) => phase.skipReason);
+  const incomplete = `Partida incompleta: ${session.answers.length} de ${summary.total} itens registrados. Sem classificação ou interpretação (regra da partida incompleta); cada mundo mostra o que foi registrado ou "não aplicado".`;
   const identification = [
-    `Idade informada: ${session.ageYears} anos (faixa ${summary.band.label})`,
+    `Idade informada: ${session.ageYears} anos (faixa anual de ${summary.band.label}; itens calibrados para esta idade)`,
+    `Data e hora da aplicação (horário local, America/Sao_Paulo): ${appliedAt}`,
     `Personagem escolhido: ${summary.character.name} ${summary.character.role} (${summary.character.power})`,
-    `Data e hora da aplicação: ${appliedAt}`,
-    `Aplicação: recepção/secretária na pré-consulta, sem câmera, resposta direta da criança`,
-    `Tempo somado nas tarefas: ${formatDuration(summary.durationSeconds)}`,
-    `Situação: ${summary.complete ? "jogo completo (5 fases)" : `jogo incompleto (${session.answers.length} de ${summary.total} itens registrados)`}`,
-    `Proveniência do registro: ${session.pauseCount ?? 0} pausa(s), ${session.undoCount ?? 0} registro(s) desfeito(s) e refeito(s), ${session.answers.filter((answer) => answer.repeated).length} comando(s) repetido(s)`,
+    `Aplicação: aplicadora junto com a criança, no próprio aplicativo; sem câmera e sem instrumento externo`,
+    `Duração da sessão (relógio): ${wall !== null ? formatDuration(wall) : "não disponível"} - tempo somado nas tarefas: ${formatDuration(summary.durationSeconds)} - tempo estimado para a idade: ${formatDuration(estimate.totalSeconds)} (máximo 20 min)`,
+    `Pausas: ${session.pauseCount ?? 0} (${formatDuration(session.pausedSeconds ?? 0)} em pausa) - registros desfeitos e refeitos: ${session.undoCount ?? 0} - comandos repetidos: ${session.answers.filter((answer) => answer.repeated).length} - acertos por gesto/apontar: ${session.answers.filter((answer) => answer.via === "gesto").length}`,
+    `Situação: ${summary.complete ? `jogo completo (${summary.phases.length} mundos, ${summary.total} itens)` : `jogo incompleto (${session.answers.length} de ${summary.total} itens registrados)`}`,
+    `Mundos não aplicados: ${skipped.length === 0 ? "nenhum" : skipped.map((phase) => `${phase.phase.name} (${phase.skipReason})`).join("; ")}`,
+  ].join("\n");
+
+  const origins = [
+    "Cada item do jogo vem de uma das quatro abas de origem, que continuam disponíveis para aprofundar:",
+    "",
+    ...summary.origins.map((origin) => [
+      `${origin.label} (${origin.route}): ${origin.planned} item(ns) previstos para ${summary.band.label}; registrados ${origin.applied}; acertos ${origin.hits}.`,
+      `  Mundos: ${origin.phases.map((id) => phaseById(id).name).join(", ") || "nenhum nesta idade"}`,
+      `  Referências: ${origin.refs.join(" | ") || "-"}`,
+    ].join("\n")),
   ].join("\n");
 
   const objective = [
-    summary.level === null ? incomplete : `TOTAL: ${summary.hits} acertos em ${summary.total} itens - ${LEVEL_LABELS[summary.level]}`,
+    summary.level === null ? incomplete : `TOTAL: ${summary.hits} acertos em ${summary.total} itens (esperado para a idade: ${summary.expectedMin} ou mais) - ${LEVEL_LABELS[summary.level]}`,
     "",
     ...summary.phases.map((phase) =>
-      `Fase ${phase.phase.order} - ${phase.phase.name} (${phase.phase.domain}): ${phase.level === null ? `${phase.answers.length} de ${phase.total} itens registrados` : `${phase.hits}/${phase.total} acertos, ${phase.errors} erros, ${phase.noResponse} sem resposta - ${LEVEL_LABELS[phase.level]} - ${formatDuration(phase.seconds)}`}`,
+      `Mundo ${phase.phase.order} - ${phase.phase.name} (${phase.phase.domain}): ${phase.level === null
+        ? phaseStatusText(phase, false)
+        : `${phase.hits}/${phase.total} acertos (esperado: ${phase.expectedMin} ou mais), ${phase.errors} erros, ${phase.noResponse} sem resposta, ${phase.refused} recusa(s) - ${LEVEL_LABELS[phase.level]} - ${formatDuration(phase.seconds)}`}`,
     ),
+    "",
+    "Esperado para a idade = referência operacional autoral do jogo (proporção de acertos), não norma populacional nem ponto de corte validado.",
   ].join("\n");
 
   const consultation = reading ? [
@@ -76,40 +108,49 @@ export function buildGameDocSpec(session: GameSession, issuer: IssuerLines, appl
   ].join("\n") : incomplete;
 
   const phaseSections = summary.phases.map((phase) => ({
-    heading: `Fase ${phase.phase.order} - ${phase.phase.name} (${phase.phase.domain}) - ${summary.complete ? `${phase.hits}/${phase.total}` : `${phase.answers.length} itens registrados`}`,
+    heading: `Mundo ${phase.phase.order} - ${phase.phase.name} (${phase.phase.domain}) - ${phaseStatusText(phase, summary.complete)}`,
     body: phase.answers.length === 0
-      ? "Fase não aplicada."
+      ? (phase.skipReason ? `Não aplicado - motivo: ${phase.skipReason}.` : "Não aplicado.")
       : phase.answers
           .map((answer, index) => [
             `${index + 1}. ${describeArt(answer.prompt)}`,
+            `   Origem: ${ORIGIN_LABELS[answer.origin]} - ${describeArt(answer.ref)}`,
             `   Tipo: ${KIND_LABELS[answer.kind]}`,
             `   Resposta esperada: ${describeArt(answer.expected)}`,
-            `   Resposta registrada: ${describeArt(answer.given)}`,
-            `   Resultado: ${STATUS_LABELS[answer.status]} - tempo: ${answer.seconds} s${answer.repeated ? " - comando repetido 1x" : ""}`,
+            `   Resposta da criança: ${describeArt(answer.given)}`,
+            `   Resultado: ${STATUS_LABELS[answer.status]} - tempo: ${answer.seconds} s - repetições do comando: ${answer.repeated ? 1 : 0}${answer.via === "gesto" ? " - via: gesto/apontar" : ""}`,
           ].join("\n"))
           .join("\n\n"),
   }));
 
+  const perPhase = summary.phases[0]?.total ?? 0;
   const criteria = [
-    "Cada item tem uma única resposta certa. Itens de toque são conferidos pelo próprio jogo; itens de fala e de ação são conferidos pela aplicadora contra o critério explícito exibido na tela.",
-    "Faixas operacionais autorais para leitura rápida da equipe (não normativas):",
-    "  Por fase (4 itens): 3-4 acertos = dentro do esperado; 2 = observar; 0-1 = sinal de alerta.",
-    "  Total (20 itens): 16 ou mais = dentro do esperado; 12-15 = observar; 11 ou menos = sinal de alerta.",
-    "Itens sem resposta contam como não acertados. Dificuldade propositalmente abaixo do esperado para a faixa: o jogo rastreia déficit grosseiro, não mede talento nem potencial.",
-    "Ritmo: item lento é o que leva 2 vezes a mediana da própria partida (mínimo 12 s); é comparação interna, não tempo normativo. Comando repetido é anotado quando a aplicadora precisou repetir a instrução uma vez.",
+    "Cada item tem uma única resposta certa. Itens de toque e de montar palavra são conferidos pelo próprio jogo; itens de fala e de ação são conferidos pela aplicadora contra o critério explícito exibido na tela.",
+    "Faixas operacionais autorais para leitura rápida da equipe (não normativas), as mesmas proporções desde a primeira versão do jogo:",
+    `  Por mundo (${perPhase} itens): ${cutText(perPhase)}.`,
+    `  Total (${summary.total} itens): ${cutText(summary.total, "total")}.`,
+    "\"Não respondeu\" e \"Recusou\" contam como não acertados e ficam registrados à parte de \"Errou\". Nas faixas de 2 e 3 anos, alguns itens de fala aceitam apontar/gesto como alternativa prevista (registrado como via gesto).",
+    `Calibração: itens escolhidos por ano de idade a partir dos bancos de origem, para que uma criança com desenvolvimento típico acerte a maior parte, mas não necessariamente todos. Referência descritiva de marcos: ${SUPER_NEUROPAD_MILESTONE_SOURCES.join("; ")}. Não há validação normativa deste conjunto.`,
+    "Ritmo: item lento é o que leva 2 vezes a mediana da própria partida (mínimo 12 s); é comparação interna, não tempo normativo.",
+  ].join("\n");
+
+  const structured = [
+    "Rótulos fixos: SESSAO, DOMINIO, ORIGEM, ITEM, OBSERVACOES. Valor em JSON de uma linha após o rótulo. Figuras aparecem como [nome]. Níveis ficam null em partida incompleta.",
+    "",
+    ...buildStructuredLines(session),
   ].join("\n");
 
   const provenance = [
     `${SUPER_NEUROPAD_TITLE} - versão ${SUPER_NEUROPAD_VERSION}`,
     "Natureza: " + SUPER_NEUROPAD_NATURE,
-    "Reúne e reconcilia, em cinco fases, o conteúdo de quatro abas do NeuroPed que continuam disponíveis:",
+    `Integra, em ${summary.phases.length} mundos, os elementos de quatro abas do NeuroPed que continuam disponíveis:`,
     ...SUPER_NEUROPAD_SOURCES.map((source) => `  - ${source}`),
-    "Registro gerado localmente no dispositivo; nada foi persistido no navegador nem enviado por rede.",
+    "Durante o jogo nada foi persistido no navegador nem enviado por rede. O registro só vai ao prontuário pelo botão explícito \"Salvar no prontuário\".",
   ].join("\n");
 
   return {
     title: `${SUPER_NEUROPAD_TITLE} - resultado detalhado`,
-    subtitle: `Triagem de pré-consulta por faixa etária - ${summary.band.label}`,
+    subtitle: `Avaliação de pré-consulta - ${summary.band.label}`,
     credentials: [
       [issuer.doctorName, issuer.specialty].filter(Boolean).join(" - "),
       issuer.credentials,
@@ -117,13 +158,16 @@ export function buildGameDocSpec(session: GameSession, issuer: IssuerLines, appl
     clinicName: issuer.clinicName || undefined,
     motto: issuer.motto || undefined,
     sections: [
-      { heading: "Identificação da aplicação", body: identification },
-      { heading: "Resultado objetivo", body: objective },
+      { heading: "Identificação da sessão", body: identification },
+      { heading: "O que foi testado por instrumento de origem", body: origins },
+      { heading: "Desempenho por domínio x esperado para a idade", body: objective },
       ...(reading ? [{ heading: "Leitura para a consulta", body: consultation }] : []),
       ...phaseSections,
+      { heading: "Observações da aplicadora", body: observations ? describeArt(observations) : "Sem observações registradas." },
       ...(reading ? [{ heading: "Critérios de leitura", body: criteria }] : []),
+      { heading: STRUCTURED_HEADER, body: structured },
       { heading: "Proveniência e natureza", body: provenance },
     ],
-    footer: "Triagem autoral de pré-consulta. Não substitui avaliação médica, psicométrica ou diagnóstica. Leitura e conclusão pertencem ao médico.",
+    footer: "Avaliação autoral de pré-consulta. Não substitui avaliação médica, psicométrica ou diagnóstica. Leitura e conclusão pertencem ao médico.",
   };
 }

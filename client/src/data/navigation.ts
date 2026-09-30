@@ -60,7 +60,7 @@ const superNeuroPadNavigation: NavItem = {
   label: "Super NeuroPad Game",
   icon: Gamepad2,
   tone: "priority",
-  description: "Aventura em 5 fases · secretária na pré-consulta · resultado em PDF",
+  description: "Pré-consulta integrada · 6 mundos · 2 a 17 anos · até 20 min · PDF",
 };
 
 const obs10Navigation: NavItem = {

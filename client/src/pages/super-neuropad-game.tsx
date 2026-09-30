@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, Check, ClipboardList, Copy, Download, Eye, Flag, Music, Music2, Pause, Play, Repeat, RotateCcw, ShieldCheck, Smartphone, Sparkles, Undo2, Volume2, X } from "lucide-react";
+import { ArrowRight, Ban, Check, ClipboardList, Copy, Delete, Download, Eraser, Eye, Flag, Hand, Music, Music2, Pause, Play, Repeat, RotateCcw, ShieldCheck, SkipForward, Smartphone, Sparkles, Undo2, Volume2, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSondaExitGuard } from "@/hooks/useSondaExitGuard";
 import { acceptManualTap } from "@/components/jogo-facil/easyReport";
@@ -11,30 +11,43 @@ import { play1Up, playCoin, playFlagPole, playJump, playPowerUp } from "@/lib/so
 import { downloadTextDocument, safeTextFilename } from "@/lib/shareText";
 import { createChiptune, type Chiptune } from "@/features/super-neuropad/music";
 import { buildGameDocSpec, issuerLines } from "@/features/super-neuropad/pdf";
+import { Stimulus as VrStimulus } from "@/features/visual-recognition/Stimulus";
 import {
   CHARACTERS,
-  ITEMS_PER_PHASE,
+  GESTURE_SHORTCUT,
   KIND_LABELS,
   LEVEL_LABELS,
   MAX_AGE_YEARS,
   MIN_AGE_YEARS,
+  OBSERVATION_CHIPS,
+  OBSERVATIONS_MAX,
+  ORIGIN_LABELS,
   PHASE_ORDER,
   PHASES,
   RESPONSE_PATTERN_LABELS,
+  SKIP_REASONS,
   STATUS_LABELS,
   SUPER_NEUROPAD_NATURE,
   SUPER_NEUROPAD_SOURCES,
   SUPER_NEUROPAD_TITLE,
   SUPER_NEUROPAD_VERSION,
+  UNDER_TWO_MESSAGE,
+  YEARS,
+  ageGate,
+  bandItemCount,
   bandForYears,
   buildGameBrief,
   buildGameReport,
   buildPatientRecordItems,
+  cutText,
+  estimateBandSeconds,
   formatDuration,
   interpret,
   itemsFor,
   judgeShortcut,
   phaseById,
+  phaseStatusText,
+  recordBuild,
   recordJudged,
   recordTouch,
   sessionWallSeconds,
@@ -43,14 +56,16 @@ import {
   undoLastAnswer,
   type AnswerRecord,
   type AnswerStatus,
+  type BuildItem,
   type Character,
   type GameSession,
-  type Item,
+  type JudgedItem,
   type Level,
   type Option,
   type PhaseId,
   type PhaseSummary,
   type ShapeId,
+  type SkippedPhase,
   type TouchItem,
 } from "@/features/super-neuropad/model";
 import "@/styles/super-neuropad-arcade.css";
@@ -61,7 +76,6 @@ const LazySaveToPatient = lazy(() =>
 );
 
 const XP_PER_ITEM = 10;
-const TOTAL_ITEMS = PHASES.length * ITEMS_PER_PHASE;
 const CHEERS = ["+10 XP!", "Anotado, próxima!", "Boa, vamos em frente!", "Mais um passo!", "Moeda coletada!"] as const;
 const PREVIEW_SECONDS = 5;
 /** Falas do herói: só ânimo, nunca certo/errado. */
@@ -73,11 +87,11 @@ const HERO_LINES: Record<string, { intro: string; done: string }> = {
   fada: { intro: "Asas abertas, lá vamos nós!", done: "Voo perfeito!" },
   panda: { intro: "Com calma a gente chega.", done: "Mais um passo tranquilo!" },
 };
-const YEARS = Array.from({ length: MAX_AGE_YEARS - MIN_AGE_YEARS + 1 }, (_, index) => MIN_AGE_YEARS + index);
 
 type Screen = "setup" | "intro" | "play" | "phase-done" | "results";
 
 const PHASE_TONE: Record<PhaseId, string> = {
+  vila: "snp-panel--sky",
   olhos: "snp-panel--grass",
   palavras: "snp-panel--sky",
   numeros: "snp-panel--lilac",
@@ -95,6 +109,7 @@ const STATUS_TONE: Record<AnswerStatus, string> = {
   acerto: "bg-emerald-600 text-white",
   erro: "bg-rose-600 text-white",
   sem_resposta: "bg-slate-600 text-white",
+  recusa: "bg-amber-800 text-white",
 };
 
 type Tone = "sun" | "sky" | "grass" | "berry" | "lilac" | "paper" | "slate";
@@ -121,9 +136,15 @@ function ShapeArt({ shape }: { shape: ShapeId }) {
   );
 }
 
-function StimulusView({ item }: { item: Item }) {
+function VrFigure({ id, size = "md" }: { id: string; size?: "md" | "lg" }) {
+  // Figura do banco do Reconhecimento Visual, desenhada pelo componente de lá; `child` evita que o texto alternativo entregue a resposta.
+  return <span className={`snp-vr block ${size === "lg" ? "h-40 w-40 sm:h-52 sm:w-52" : "h-24 w-24 sm:h-32 sm:w-32"}`}><VrStimulus id={id} child /></span>;
+}
+
+function StimulusView({ item }: { item: JudgedItem }) {
   if (item.kind === "fazer" && item.shape) return <ShapeArt shape={item.shape} />;
-  const text = item.kind === "toque" ? null : item.stimulus;
+  if (item.kind === "fala" && item.stimulusVr) return <VrFigure id={item.stimulusVr} size="lg" />;
+  const text = item.stimulus;
   if (!text) return null;
   const long = text.length > 12;
   return (
@@ -133,10 +154,10 @@ function StimulusView({ item }: { item: Item }) {
   );
 }
 
-function XpBar({ answered }: { answered: number }) {
+function XpBar({ answered, total }: { answered: number; total: number }) {
   return (
-    <div className="snp-xp w-full" role="progressbar" aria-label="Barra de XP" aria-valuemin={0} aria-valuemax={TOTAL_ITEMS} aria-valuenow={answered}>
-      {Array.from({ length: TOTAL_ITEMS }, (_, index) => <i key={index} className={index < answered ? "on" : ""} />)}
+    <div className="snp-xp w-full" role="progressbar" aria-label="Barra de XP" aria-valuemin={0} aria-valuemax={total} aria-valuenow={answered}>
+      {Array.from({ length: total }, (_, index) => <i key={index} className={index < answered ? "on" : ""} />)}
     </div>
   );
 }
@@ -145,7 +166,7 @@ function PhaseMeter({ phase }: { phase: PhaseSummary }) {
   const cells: string[] = phase.answers.map((answer) => (answer.status === "acerto" ? "hit" : answer.status === "erro" ? "err" : "none"));
   while (cells.length < phase.total) cells.push("");
   return (
-    <div className="snp-meter" role="img" aria-label={`${phase.phase.name}: ${phase.hits} acertos, ${phase.errors} erros, ${phase.noResponse} sem resposta em ${phase.total}`}>
+    <div className="snp-meter" role="img" aria-label={`${phase.phase.name}: ${phase.hits} acertos, ${phase.errors} erros, ${phase.noResponse} sem resposta, ${phase.refused} recusa(s) em ${phase.total}`}>
       {cells.map((cell, index) => <i key={index} className={cell} />)}
     </div>
   );
@@ -190,8 +211,8 @@ function PhaseTrail({ current, done, character }: { current: number; done: boole
   );
 }
 
-function Hud({ character, answered, phaseIndex, done, musicOn, paused, canPause, canUndo, canFinish, onToggleMusic, onUndo, onPause, onFinish, onRestart }: {
-  character: Character; answered: number; phaseIndex: number; done: boolean[]; musicOn: boolean; paused: boolean; canPause: boolean; canUndo: boolean; canFinish: boolean;
+function Hud({ character, answered, total, phaseIndex, done, musicOn, paused, canPause, canUndo, canFinish, onToggleMusic, onUndo, onPause, onFinish, onRestart }: {
+  character: Character; answered: number; total: number; phaseIndex: number; done: boolean[]; musicOn: boolean; paused: boolean; canPause: boolean; canUndo: boolean; canFinish: boolean;
   onToggleMusic: () => void; onUndo: () => void; onPause: () => void; onFinish: () => void; onRestart: () => void;
 }) {
   return (
@@ -225,7 +246,7 @@ function Hud({ character, answered, phaseIndex, done, musicOn, paused, canPause,
           </ArcadeButton>
         </div>
       </div>
-      <XpBar answered={answered} />
+      <XpBar answered={answered} total={total} />
       <BadgeShelf done={done} />
     </div>
   );
@@ -280,7 +301,7 @@ function SetupSteps({ hasAge, hasHero, kitDone, kitTotal }: { hasAge: boolean; h
   const steps = [
     { label: "Idade", ok: hasAge },
     { label: "Herói", ok: hasHero },
-    { label: kitTotal > 0 ? `Inventário ${kitDone}/${kitTotal}` : "Inventário", ok: kitTotal > 0 && kitDone === kitTotal, optional: true },
+    { label: kitTotal > 0 ? `Ambiente ${kitDone}/${kitTotal}` : "Ambiente", ok: kitTotal > 0 && kitDone === kitTotal, optional: true },
   ];
   return (
     <ol className="flex flex-wrap items-center gap-2" aria-label="Passos da preparação">
@@ -324,17 +345,20 @@ function TouchStage({ item, seed, paused, onAnswer }: { item: TouchItem; seed: n
         <span className="snp-chip"><Volume2 className="h-3.5 w-3.5" /> Leia em voz alta</span>
         <TurnCue who="crianca" />
       </div>
-      <p className="text-center text-2xl font-black leading-snug sm:text-3xl">{item.prompt}</p>
-      <div className={`grid gap-4 ${options.length <= 2 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-4"}`} role="group" aria-label="Opções">
+      {item.context && <p className="snp-panel snp-panel--soft mx-auto max-w-2xl p-3 text-center text-sm font-bold text-[var(--snp-ink-fixed)]">Aplicadora, leia antes: “{item.context}”</p>}
+      <p className="text-center text-2xl font-black leading-snug sm:text-3xl">{item.context ? item.prompt.replace(`Leia: “${item.context}” Depois: `, "") : item.prompt}</p>
+      {item.stimulusVr && <div className="flex justify-center" aria-label="Modelo"><span className="rounded-2xl border-[3px] border-[var(--snp-ink-fixed)] bg-white p-2"><VrFigure id={item.stimulusVr} /></span></div>}
+      {item.stimulus && <p className={`mx-auto max-w-3xl whitespace-pre-line break-words text-center font-black leading-snug ${item.stimulus.length > 40 ? "text-lg sm:text-xl" : "text-4xl sm:text-5xl"}`} aria-label={`Estímulo: ${item.stimulus}`}>{item.stimulus}</p>}
+      <div className={`grid gap-4 ${options.length <= 2 ? "grid-cols-2" : options.length === 3 ? "grid-cols-3" : "grid-cols-2 sm:grid-cols-4"}`} role="group" aria-label="Opções">
         {options.map((option, index) => (
           <button
             key={`${option.label}-${index}`}
             type="button"
             onClick={(event) => onAnswer(option, event)}
-            className={`snp-option flex min-h-32 items-center justify-center p-3 text-center font-black ${OPTION_TINTS[index % OPTION_TINTS.length]} ${item.big ? (option.size === "lg" ? "text-8xl" : option.size === "sm" ? "text-4xl" : "text-6xl") : "text-xl sm:text-2xl"}`}
-            aria-label={option.label}
+            className={`snp-option flex min-h-32 items-center justify-center p-3 text-center font-black ${option.vr ? "bg-white" : OPTION_TINTS[index % OPTION_TINTS.length]} ${item.big ? (option.size === "lg" ? "text-8xl" : option.size === "sm" ? "text-4xl" : "text-6xl") : "text-xl sm:text-2xl"}`}
+            aria-label={option.vr ? `Opção ${index + 1}` : option.label}
           >
-            <span aria-hidden="true">{option.art}</span>
+            {option.vr ? <VrFigure id={option.vr} /> : <span aria-hidden="true">{option.art}</span>}
           </button>
         ))}
       </div>
@@ -342,31 +366,146 @@ function TouchStage({ item, seed, paused, onAnswer }: { item: TouchItem; seed: n
   );
 }
 
-function JudgeStage({ item, onJudge }: { item: Exclude<Item, TouchItem>; onJudge: (status: AnswerStatus, event: React.MouseEvent) => void }) {
+/** Folha de desenho com o dedo: só na tela, nada é guardado nem exportado. */
+function DrawPad() {
+  const canvas = useRef<HTMLCanvasElement | null>(null);
+  const drawing = useRef(false);
+  const point = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    return { x: ((event.clientX - rect.left) / rect.width) * event.currentTarget.width, y: ((event.clientY - rect.top) / rect.height) * event.currentTarget.height };
+  };
+  const down = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    const context = event.currentTarget.getContext("2d");
+    if (!context) return;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    drawing.current = true;
+    const { x, y } = point(event);
+    context.lineWidth = 10; context.lineCap = "round"; context.lineJoin = "round"; context.strokeStyle = getComputedStyle(event.currentTarget).color; // cor do token (--snp-ink-fixed) via CSS
+    context.beginPath(); context.moveTo(x, y); context.lineTo(x + 0.1, y + 0.1); context.stroke();
+  };
+  const move = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!drawing.current) return;
+    const context = event.currentTarget.getContext("2d");
+    if (!context) return;
+    const { x, y } = point(event);
+    context.lineTo(x, y); context.stroke();
+  };
+  const up = () => { drawing.current = false; };
+  const clear = () => { const element = canvas.current; element?.getContext("2d")?.clearRect(0, 0, element.width, element.height); };
+  return (
+    <div className="w-full space-y-2" data-testid="snp-drawpad">
+      <canvas
+        ref={canvas} width={720} height={420} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerLeave={up} onPointerCancel={up}
+        className="snp-drawpad block h-56 w-full touch-none rounded-2xl border-[3px] border-dashed border-[var(--snp-ink-fixed)] bg-white sm:h-72"
+        aria-label="Área para desenhar ou escrever com o dedo. Nada é guardado."
+      />
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] font-bold opacity-70">Desenhe com o dedo. Nada é salvo: a aplicadora confere na hora.</span>
+        <button type="button" className="snp-chip" onClick={() => { softTap(); clear(); }}><Eraser className="h-3.5 w-3.5" /> Limpar</button>
+      </div>
+    </div>
+  );
+}
+
+function MissBar({ onMiss }: { onMiss: (status: "sem_resposta" | "recusa", event: React.MouseEvent) => void }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <button type="button" className="snp-chip opacity-80 hover:opacity-100" onClick={(event) => onMiss("sem_resposta", event)}>
+        Aplicadora: não respondeu · pular
+      </button>
+      <button type="button" className="snp-chip opacity-80 hover:opacity-100" onClick={(event) => onMiss("recusa", event)}>
+        <Ban className="h-3.5 w-3.5" /> Recusou · pular
+      </button>
+    </div>
+  );
+}
+
+function JudgeStage({ item, onJudge }: { item: JudgedItem; onJudge: (status: AnswerStatus, event: React.MouseEvent, gesture?: boolean) => void }) {
+  const drawn = item.kind === "fazer" && item.draw;
   return (
     <div className="space-y-5">
-      <div className="snp-panel flex min-h-40 items-center justify-center p-6">
-        <StimulusView item={item} />
-      </div>
+      {(drawn || item.stimulus || (item.kind === "fazer" && item.shape) || (item.kind === "fala" && item.stimulusVr)) && (
+        <div className={`snp-panel flex min-h-40 items-center justify-center gap-4 p-6 ${drawn ? "flex-col sm:flex-row" : ""}`}>
+          <StimulusView item={item} />
+          {drawn && <DrawPad />}
+        </div>
+      )}
       <div className="snp-panel snp-panel--soft p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="snp-pixel text-[11px] opacity-80">Aplicadora · {KIND_LABELS[item.kind]}</div>
+          <div className="snp-pixel text-[11px] opacity-80">Aplicadora · {KIND_LABELS[item.kind]} · {ORIGIN_LABELS[item.origin]}</div>
           <TurnCue who="aplicadora" />
         </div>
         <p className="mt-1 text-lg font-black leading-snug">{item.prompt}</p>
         <p className="mt-2 text-sm"><span className="font-black">Conta como acerto:</span> {item.expected}</p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        {item.gesture && <p className="mt-1 text-sm"><span className="font-black">Alternativa aceita:</span> {item.gesture}</p>}
+        <div className={`mt-4 grid gap-3 ${item.gesture ? "sm:grid-cols-5" : "sm:grid-cols-4"}`}>
           <ArcadeButton tone="grass" className="min-h-14 text-base" aria-keyshortcuts="1" onClick={(event) => onJudge("acerto", event)}>
             <Check className="h-5 w-5" /> Acertou
           </ArcadeButton>
+          {item.gesture && (
+            <ArcadeButton tone="grass" className="min-h-14 text-base" aria-keyshortcuts={GESTURE_SHORTCUT} onClick={(event) => onJudge("acerto", event, true)}>
+              <Hand className="h-5 w-5" /> Acertou por gesto
+            </ArcadeButton>
+          )}
           <ArcadeButton tone="berry" className="min-h-14 text-base" aria-keyshortcuts="2" onClick={(event) => onJudge("erro", event)}>
             <X className="h-5 w-5" /> Errou
           </ArcadeButton>
           <ArcadeButton tone="slate" className="min-h-14 text-base" aria-keyshortcuts="3" onClick={(event) => onJudge("sem_resposta", event)}>
             Não respondeu
           </ArcadeButton>
+          <ArcadeButton tone="paper" className="min-h-14 text-base" aria-keyshortcuts="4" onClick={(event) => onJudge("recusa", event)}>
+            <Ban className="h-5 w-5" /> Recusou
+          </ArcadeButton>
         </div>
-        <p className="mt-2 hidden text-[11px] font-bold opacity-70 sm:block">Teclado: 1 Acertou · 2 Errou · 3 Não respondeu · P Pausa</p>
+        <p className="mt-2 hidden text-[11px] font-bold opacity-70 sm:block">Teclado: 1 Acertou{item.gesture ? ` · ${GESTURE_SHORTCUT} Acertou por gesto` : ""} · 2 Errou · 3 Não respondeu · 4 Recusou · P Pausa</p>
+      </div>
+    </div>
+  );
+}
+
+/** Montar a palavra tocando nas letras na ordem (banco cognitivo). A tela confere sozinha. */
+function BuildStage({ item, seed, onDone }: { item: BuildItem; seed: number; onDone: (placed: string[], event: React.MouseEvent) => void }) {
+  const tiles = useMemo(() => shuffle(item.tiles.map((letter, index) => ({ letter, index })), seed), [item, seed]);
+  const [used, setUsed] = useState<number[]>([]);
+  const [showWord, setShowWord] = useState(false);
+  const placed = used.map((index) => item.tiles[index]);
+  return (
+    <div className="space-y-5" data-testid="snp-build">
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <span className="snp-chip"><Volume2 className="h-3.5 w-3.5" /> {item.show ? "Mostre a palavra" : "Dite a palavra"}</span>
+        <TurnCue who="crianca" />
+      </div>
+      <p className="text-center text-2xl font-black leading-snug sm:text-3xl">{item.prompt}</p>
+      {item.show ? (
+        <p className="text-center text-5xl font-black tracking-widest" aria-label={`Modelo: ${item.word}`}>{item.word}</p>
+      ) : (
+        <div className="flex justify-center">
+          <button type="button" className="snp-chip" aria-pressed={showWord} onClick={() => { softTap(); setShowWord((current) => !current); }}>
+            <Eye className="h-3.5 w-3.5" /> {showWord ? `Ditar: ${item.word}` : "Aplicadora: ver a palavra para ditar"}
+          </button>
+        </div>
+      )}
+      <div className="flex min-h-20 flex-wrap items-center justify-center gap-2 rounded-2xl border-[3px] border-dashed border-[var(--snp-ink-fixed)] bg-white p-3 text-[var(--snp-ink-fixed)]" aria-live="polite" aria-label="Palavra montada">
+        {placed.length === 0 ? <span className="text-sm font-bold opacity-60">Toque nas letras abaixo</span> : placed.map((letter, index) => <span key={index} className="snp-pixel text-3xl">{letter}</span>)}
+      </div>
+      <div className="flex flex-wrap justify-center gap-3" role="group" aria-label="Letras">
+        {tiles.map((tile) => {
+          const taken = used.includes(tile.index);
+          return (
+            <button key={tile.index} type="button" disabled={taken} onClick={() => { softTap(); setUsed((current) => [...current, tile.index]); }}
+              className={`snp-option flex h-16 w-16 items-center justify-center text-3xl font-black sm:h-20 sm:w-20 ${taken ? "opacity-30" : "bg-[var(--snp-sky-tint)]"}`}>
+              {tile.letter}
+            </button>
+          );
+        })}
+      </div>
+      <div className="flex flex-wrap justify-center gap-3">
+        <ArcadeButton tone="paper" disabled={used.length === 0} onClick={() => { softTap(); setUsed((current) => current.slice(0, -1)); }}>
+          <Delete className="h-5 w-5" /> Apagar letra
+        </ArcadeButton>
+        <ArcadeButton tone="grass" disabled={used.length === 0} onClick={(event) => onDone(placed, event)}>
+          <Check className="h-5 w-5" /> Pronto
+        </ArcadeButton>
       </div>
     </div>
   );
@@ -402,6 +541,11 @@ export default function SuperNeuroPadGamePage() {
   const [seed, setSeed] = useState(() => Math.floor(Math.random() * 1_000_000));
   /** Resultado já copiado, baixado ou salvo: "Nova partida" só pede confirmação antes disso. */
   const [resultKept, setResultKept] = useState(false);
+  /** Aplicadora tocou em "Menos de 2 anos": o jogo não é aplicado (bloqueio com orientação). */
+  const [underTwo, setUnderTwo] = useState(false);
+  const [skipped, setSkipped] = useState<SkippedPhase[]>([]);
+  const [skipOpen, setSkipOpen] = useState(false);
+  const [observations, setObservations] = useState("");
   const startedAt = useRef<string>("");
   const finishedAt = useRef<string | null>(null);
   const itemStart = useRef<number>(0);
@@ -411,6 +555,8 @@ export default function SuperNeuroPadGamePage() {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const pauseCount = useRef(0);
   const undoCount = useRef(0);
+  const pausedMs = useRef(0);
+  const pausedAt = useRef<number | null>(null);
   /** Carimbo do último registro aceito: trava toque duplo (mesma guarda do motor compartilhado EasyGame). */
   const lastAnswerAt = useRef(Number.NEGATIVE_INFINITY);
 
@@ -420,6 +566,8 @@ export default function SuperNeuroPadGamePage() {
   const items = band ? itemsFor(band.id, phaseId) : [];
   const item = items[itemIndex];
   const done = PHASE_ORDER.map((id) => band ? answers.filter((answer) => answer.phaseId === id).length >= itemsFor(band.id, id).length : false);
+  const totalItems = band ? bandItemCount(band.id) : 0;
+  const estimate = band ? estimateBandSeconds(band.min) : null;
   const dirty = answers.length > 0;
   useSondaExitGuard(dirty, "Sair apaga os registros desta partida. Copie ou baixe o resultado antes de sair. Deseja sair mesmo assim?");
   const ready = Boolean(band && character);
@@ -433,7 +581,10 @@ export default function SuperNeuroPadGamePage() {
     finishedAt: finishedAt.current,
     answers,
     pauseCount: pauseCount.current,
+    pausedSeconds: Math.round(pausedMs.current / 1000),
     undoCount: undoCount.current,
+    skipped,
+    observations,
   } : null;
 
   const getMusic = useCallback(() => {
@@ -475,8 +626,14 @@ export default function SuperNeuroPadGamePage() {
       const target = event.target as HTMLElement | null;
       if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
       if (event.key === "p" || event.key === "P") { event.preventDefault(); togglePause(); return; }
+      if (paused || !item || (item.kind !== "fala" && item.kind !== "fazer")) return;
+      if (event.key === GESTURE_SHORTCUT && item.gesture) {
+        event.preventDefault();
+        submitAnswer(recordJudged(item, phaseId, "acerto", elapsedSeconds(), repeated, "gesto"), event);
+        return;
+      }
       const status = judgeShortcut(event.key);
-      if (!status || paused || !item || item.kind === "toque") return;
+      if (!status) return;
       event.preventDefault();
       submitAnswer(recordJudged(item, phaseId, status, elapsedSeconds(), repeated), event);
     };
@@ -499,6 +656,11 @@ export default function SuperNeuroPadGamePage() {
     setAutoPaused(false);
     pauseCount.current = 0;
     undoCount.current = 0;
+    pausedMs.current = 0;
+    pausedAt.current = null;
+    setSkipped([]);
+    setSkipOpen(false);
+    setObservations("");
     lastAnswerAt.current = Number.NEGATIVE_INFINITY;
     setScreen("intro");
     if (musicOn) getMusic().start();
@@ -517,6 +679,10 @@ export default function SuperNeuroPadGamePage() {
     setCharacter(null);
     setResultKept(false);
     setKitChecked({});
+    setUnderTwo(false);
+    setSkipped([]);
+    setSkipOpen(false);
+    setObservations("");
     setPaused(false);
     finishedAt.current = null;
     lastAnswerAt.current = Number.NEGATIVE_INFINITY;
@@ -537,6 +703,7 @@ export default function SuperNeuroPadGamePage() {
   }
 
   function finishGame() {
+    if (pausedAt.current !== null) { pausedMs.current += performance.now() - pausedAt.current; pausedAt.current = null; }
     finishedAt.current = new Date().toISOString();
     playFlagPole();
     celebrate();
@@ -576,6 +743,7 @@ export default function SuperNeuroPadGamePage() {
     softTap();
     undoCount.current += 1;
     if (paused && musicOn) getMusic().start();
+    if (pausedAt.current !== null) { pausedMs.current += performance.now() - pausedAt.current; pausedAt.current = null; }
     setAnswers(previous.answers);
     setPhaseIndex(PHASE_ORDER.indexOf(previous.phaseId));
     setItemIndex(previous.itemIndex);
@@ -588,6 +756,7 @@ export default function SuperNeuroPadGamePage() {
     if (paused) return;
     activeItemMs.current += performance.now() - itemStart.current;
     pauseCount.current += 1;
+    pausedAt.current = performance.now();
     // Pausa é lanche, banheiro ou conversa: a trilha para junto com o cronômetro.
     music.current?.stop();
     setAutoPaused(auto);
@@ -598,13 +767,14 @@ export default function SuperNeuroPadGamePage() {
     softTap();
     if (!paused) { pauseNow(false); return; }
     itemStart.current = performance.now();
+    if (pausedAt.current !== null) { pausedMs.current += performance.now() - pausedAt.current; pausedAt.current = null; }
     if (musicOn) getMusic().start();
     setAutoPaused(false);
     setPaused(false);
   }
 
   function finishEarly() {
-    if (!window.confirm(`Encerrar agora? ${answers.length} de ${TOTAL_ITEMS} desafios registrados. O resultado sai como partida incompleta.`)) return;
+    if (!window.confirm(`Encerrar agora? ${answers.length} de ${totalItems} desafios registrados. O resultado sai como partida incompleta.`)) return;
     finishGame();
   }
 
@@ -621,7 +791,24 @@ export default function SuperNeuroPadGamePage() {
 
   function enterPhase() {
     play1Up();
+    setSkipOpen(false);
+    // Entrar num mundo que tinha sido pulado (depois de desfazer) anula o "não aplicado".
+    setSkipped((current) => current.filter((entry) => entry.phaseId !== phaseId));
     setScreen("play");
+  }
+
+  /** Pula o mundo inteiro com motivo: aparece como "não aplicado — motivo"; a partida fica incompleta (sem classificação). */
+  function skipPhase(reason: string) {
+    softTap();
+    setSkipOpen(false);
+    setSkipped((current) => [...current.filter((entry) => entry.phaseId !== phaseId), { phaseId, reason }]);
+    if (phaseIndex + 1 < PHASE_ORDER.length) {
+      setPhaseIndex(phaseIndex + 1);
+      setItemIndex(0);
+      setScreen("intro");
+      return;
+    }
+    finishGame();
   }
 
   async function exportPdf() {
@@ -678,16 +865,17 @@ export default function SuperNeuroPadGamePage() {
           <div className="min-w-0 flex-1 text-[var(--snp-stage-text)]">
             {!compact && (
               <div className="mb-2 flex flex-wrap items-center gap-2">
-                <span className="snp-chip">pré-consulta · secretária · {MIN_AGE_YEARS}–{MAX_AGE_YEARS} anos</span>
+                <span className="snp-chip">pré-consulta · aplicadora com a criança · {MIN_AGE_YEARS}–{MAX_AGE_YEARS} anos</span>
                 <span className="snp-chip">v{SUPER_NEUROPAD_VERSION}</span>
-                <span className="snp-chip">5 mundos · {ITEMS_PER_PHASE} desafios cada</span>
-                <span className="snp-chip">sem câmera</span>
+                <span className="snp-chip">{PHASES.length} mundos · 4–5 desafios cada</span>
+                <span className="snp-chip">até 20 min</span>
+                <span className="snp-chip">sem câmera · sem material externo</span>
               </div>
             )}
             <h1 className={`snp-pixel snp-title text-[var(--snp-paper-fixed)] ${compact ? "text-lg sm:text-xl" : "text-2xl sm:text-3xl"}`}>{SUPER_NEUROPAD_TITLE}</h1>
             {!compact && (
               <p className="mt-2 max-w-3xl text-sm font-semibold leading-relaxed">
-                Cinco mundos que reúnem Sonda 10, OBS-10, Reconhecimento Visual e Testes Cognitivos por Faixa Etária. Cada desafio tem certo e errado; a criança só vê XP, moedas e conquistas. Ao final, resultado objetivo, leitura para a consulta e PDF detalhado. Triagem autoral de déficits grosseiros; a conclusão é do médico.
+                Avaliação única de pré-consulta: seis mundos que integram Sonda 10, Observa 10 (OBS-10), Reconhecimento Visual e Avaliação Cognitiva Infantil, com desafios calibrados para cada ano de idade. Cada desafio tem certo e errado; a criança só vê XP, moedas e conquistas. Ao final, resultado por domínio, leitura para a consulta e PDF detalhado. Triagem autoral de déficits grosseiros; a conclusão é do médico.
               </p>
             )}
           </div>
@@ -697,25 +885,44 @@ export default function SuperNeuroPadGamePage() {
       {screen === "setup" && (
         <section className="space-y-5">
           <div className="snp-panel snp-panel--soft flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-            <SetupSteps hasAge={Boolean(band)} hasHero={Boolean(character)} kitDone={band ? band.kit.filter((entry) => kitChecked[entry]).length : 0} kitTotal={band?.kit.length ?? 0} />
-            <span className="text-xs font-bold opacity-70">Três toques e começa: idade, herói e, se der, o inventário.</span>
+            <SetupSteps hasAge={Boolean(band)} hasHero={Boolean(character)} kitDone={band ? band.ambient.filter((entry) => kitChecked[entry]).length : 0} kitTotal={band?.ambient.length ?? 0} />
+            <span className="text-xs font-bold opacity-70">Três toques e começa: idade, herói e, se der, a conferência da sala.</span>
           </div>
           <div className="snp-panel p-5">
             <h2 className="snp-pixel text-base">1 · Idade da criança (anos)</h2>
-            <p className="text-xs font-bold opacity-70">Somente anos completos. A faixa define os desafios.</p>
-            <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-8" role="group" aria-label="Idade em anos">
+            <p className="text-xs font-bold opacity-70">Somente anos completos. Cada ano tem os seus desafios.</p>
+            <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-9" role="group" aria-label="Idade em anos">
+              <button type="button" aria-pressed={underTwo} onClick={() => { softTap(); setUnderTwo(true); setAgeYears(null); setKitChecked({}); }}
+                className={`snp-option min-h-12 px-1 text-xs font-black leading-tight ${underTwo ? "bg-[var(--snp-berry-tint)]" : "bg-[var(--snp-paper-fixed)] hover:bg-[var(--snp-paper-2-fixed)]"}`}>
+                Menos de 2 anos
+              </button>
               {YEARS.map((year) => (
-                <button key={year} type="button" aria-pressed={ageYears === year} onClick={() => { softTap(); setAgeYears(year); setKitChecked({}); }}
+                <button key={year} type="button" aria-pressed={ageYears === year} onClick={() => { softTap(); setUnderTwo(false); setAgeYears(year); setKitChecked({}); }}
                   className={`snp-option min-h-12 text-lg font-black ${ageYears === year ? "bg-[var(--snp-sun)]" : "bg-[var(--snp-paper-fixed)] hover:bg-[var(--snp-paper-2-fixed)]"}`}>
                   {year}
                 </button>
               ))}
             </div>
-            {band && (
-              <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+            {underTwo && (() => {
+              const gate = ageGate(1);
+              return (
+                <div className="snp-panel snp-panel--berry mt-3 p-4" role="alert" data-testid="super-neuropad-under-two">
+                  <p className="font-black">Jogo não aplicado para menores de 2 anos.</p>
+                  <p className="mt-1 text-sm font-semibold">{UNDER_TWO_MESSAGE}</p>
+                  {!gate.ok && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {gate.routes.map((route) => <a key={route.href} href={`#${route.href}`} className="snp-chip bg-[var(--snp-sky-tint)]">{route.label} <ArrowRight className="h-3.5 w-3.5" /></a>)}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+            {band && estimate && (
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-sm" data-testid="super-neuropad-estimate">
                 <span className="text-xl" aria-hidden="true">{band.icon}</span>
-                <span className="snp-pixel text-xs">Faixa {band.label}</span>
-                <span className="font-bold opacity-70">· {TOTAL_ITEMS} desafios · cerca de 10 minutos</span>
+                <span className="snp-pixel text-xs">{band.label}</span>
+                <span className="font-bold opacity-70">· {totalItems} desafios em {PHASES.length} mundos · cerca de {Math.ceil(estimate.minutes)} minutos (máximo 20)</span>
+                {band.min <= 3 && <span className="snp-chip bg-[var(--snp-sun-tint)]">2–3 anos: menos desafios, respostas por gesto aceitas, pausa rápida à vontade</span>}
               </div>
             )}
           </div>
@@ -730,10 +937,10 @@ export default function SuperNeuroPadGamePage() {
 
           {band && (
             <div className="snp-panel p-5">
-              <h2 className="snp-pixel text-base">3 · Inventário da Torre do Corpo</h2>
-              <p className="text-xs font-bold opacity-70">Separe antes de começar. Checklist só em memória.</p>
+              <h2 className="snp-pixel text-base">3 · Ambiente da sala (opcional)</h2>
+              <p className="text-xs font-bold opacity-70">Não precisa de material: desenho e escrita são com o dedo na tela. Confira só o espaço. Checklist só em memória.</p>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                {band.kit.map((entry) => {
+                {band.ambient.map((entry) => {
                   const checked = Boolean(kitChecked[entry]);
                   return (
                     <button key={entry} type="button" aria-pressed={checked} onClick={() => { softTap(); setKitChecked((current) => ({ ...current, [entry]: !checked })); }}
@@ -763,7 +970,9 @@ export default function SuperNeuroPadGamePage() {
               <ul className="mt-2 list-disc space-y-1 pl-4 font-semibold opacity-90">
                 <li>Leia cada comando uma vez; pode repetir uma única vez e marque “Repeti o comando”.</li>
                 <li>Itens de fala e de ação: marque acerto só quando o critério da tela for cumprido inteiro.</li>
-                <li>Criança cansada ou recusando: marque “Não respondeu” e siga. Nunca force. Use “Pausa” para lanche ou banheiro.</li>
+                <li>Criança calada: “Não respondeu”. Criança que diz não ou empurra: “Recusou”. Os dois ficam separados de “Errou”. Nunca force.</li>
+                <li>Use “Pausa” para lanche, água ou banheiro; o tempo do desafio para junto. Se um mundo inteiro não der, use “Pular este mundo” e informe o motivo.</li>
+                <li>2 e 3 anos: quando o item mostrar “Alternativa aceita”, apontar ou fazer o gesto vale como acerto (“Acertou por gesto”).</li>
                 <li>Tocou errado? “Desfazer último” volta um desafio. Precisa parar? “Encerrar” gera o resultado parcial.</li>
                 <li>Nada é salvo no navegador. Gere o PDF ao final antes de sair da página.</li>
               </ul>
@@ -783,6 +992,7 @@ export default function SuperNeuroPadGamePage() {
         <Hud
           character={character}
           answered={answers.length}
+          total={totalItems}
           phaseIndex={phaseIndex}
           done={done}
           musicOn={musicOn}
@@ -801,7 +1011,7 @@ export default function SuperNeuroPadGamePage() {
       {screen === "intro" && character && (
         <section className={`snp-panel snp-scanlines ${PHASE_TONE[phaseId]} p-6 text-center`}>
           <div className="snp-float text-7xl" aria-hidden="true">{phase.emoji}</div>
-          <div className="snp-pixel mt-2 text-xs opacity-80">Fase {phase.order} de {PHASES.length}</div>
+          <div className="snp-pixel mt-2 text-xs opacity-80">Mundo {phase.order} de {PHASES.length}</div>
           <h2 className="snp-pixel text-2xl sm:text-3xl">{phase.name}</h2>
           <p className="mt-1 text-base font-bold opacity-90">{phase.tagline}</p>
           <div className="mt-4"><SpeechBubble character={character} text={HERO_LINES[character.id]?.intro ?? "Vamos lá!"} /></div>
@@ -811,11 +1021,30 @@ export default function SuperNeuroPadGamePage() {
               <TurnCue who="aplicadora" />
             </div>
             <p className="mt-1 font-semibold leading-relaxed">{phase.operator}</p>
+            <p className="mt-2 flex flex-wrap gap-1.5 text-xs font-bold">
+              <span className="opacity-70">Traz elementos de:</span>
+              {[...new Set(items.map((entry) => entry.origin))].map((origin) => <span key={origin} className="snp-chip">{ORIGIN_LABELS[origin]}</span>)}
+              <span className="opacity-70">· {items.length} desafios</span>
+            </p>
             <p className="mt-2 text-xs font-bold opacity-70"><Eye className="mr-1 inline h-3.5 w-3.5" /> Leia, depois toque em entrar e vire o tablet para a criança.</p>
           </div>
-          <ArcadeButton tone="sun" className="mt-5 px-6 py-3 text-base" onClick={enterPhase}>
-            <span aria-hidden="true">{character.emoji}</span> Entrar na fase
-          </ArcadeButton>
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+            <ArcadeButton tone="sun" className="px-6 py-3 text-base" onClick={enterPhase}>
+              <span aria-hidden="true">{character.emoji}</span> Entrar na fase
+            </ArcadeButton>
+            <ArcadeButton tone="paper" aria-expanded={skipOpen} onClick={() => { softTap(); setSkipOpen((current) => !current); }}>
+              <SkipForward className="h-4 w-4" /> Pular este mundo
+            </ArcadeButton>
+          </div>
+          {skipOpen && (
+            <div className="snp-panel mx-auto mt-4 max-w-2xl p-4 text-left text-sm" data-testid="super-neuropad-skip">
+              <p className="font-black">Por que este mundo não será aplicado?</p>
+              <p className="text-xs font-semibold opacity-80">Fica no resultado como “não aplicado — motivo”. A partida passa a ser incompleta: sem classificação geral.</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {SKIP_REASONS.map((reason) => <button key={reason} type="button" className="snp-chip bg-[var(--snp-paper-fixed)]" onClick={() => skipPhase(reason)}>{reason}</button>)}
+              </div>
+            </div>
+          )}
         </section>
       )}
 
@@ -830,7 +1059,7 @@ export default function SuperNeuroPadGamePage() {
             <div className="flex flex-col items-center gap-4 py-10 text-center">
               <div className="snp-pixel snp-blink text-4xl">Pausa</div>
               {autoPaused && <p className="snp-chip bg-[var(--snp-sun-tint)]" role="status">Pausado sozinho: a tela saiu de foco.</p>}
-              <p className="max-w-md text-sm font-bold opacity-80">O tempo do desafio parou. Lanche, banheiro ou respiro. Toque em continuar quando a criança estiver pronta.</p>
+              <p className="max-w-md text-sm font-bold opacity-80">Pausa rápida: o tempo do desafio parou. Lanche, água, banheiro ou respiro. Toque em continuar quando a criança estiver pronta.</p>
               <ArcadeButton tone="grass" className="px-6 py-3 text-base" onClick={togglePause}><Play className="h-5 w-5" /> Continuar</ArcadeButton>
             </div>
           )}
@@ -840,14 +1069,20 @@ export default function SuperNeuroPadGamePage() {
                   <TouchStage key={item.id} item={item} paused={paused} seed={seed + itemIndex * 17 + phaseIndex * 101} onAnswer={(chosen, event) => submitAnswer(recordTouch(item, phaseId, chosen, elapsedSeconds(), repeated), event)} />
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <RepeatToggle repeated={repeated} onToggle={() => setRepeated((current) => !current)} />
-                    <button type="button" className="snp-chip opacity-80 hover:opacity-100" onClick={(event) => submitAnswer(recordTouch(item, phaseId, null, elapsedSeconds(), repeated), event)}>
-                      Aplicadora: não respondeu · pular
-                    </button>
+                    <MissBar onMiss={(status, event) => submitAnswer(recordTouch(item, phaseId, null, elapsedSeconds(), repeated, status === "recusa"), event)} />
+                  </div>
+                </div>
+              ) : item.kind === "montar" ? (
+                <div className="space-y-4">
+                  <BuildStage key={item.id} item={item} seed={seed + itemIndex * 17 + phaseIndex * 101} onDone={(placed, event) => submitAnswer(recordBuild(item, phaseId, placed, elapsedSeconds(), repeated), event)} />
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <RepeatToggle repeated={repeated} onToggle={() => setRepeated((current) => !current)} />
+                    <MissBar onMiss={(status, event) => submitAnswer(recordBuild(item, phaseId, null, elapsedSeconds(), repeated, status === "recusa"), event)} />
                   </div>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <JudgeStage key={item.id} item={item} onJudge={(status, event) => submitAnswer(recordJudged(item, phaseId, status, elapsedSeconds(), repeated), event)} />
+                  <JudgeStage key={item.id} item={item} onJudge={(status, event, gesture) => submitAnswer(recordJudged(item, phaseId, status, elapsedSeconds(), repeated, gesture ? "gesto" : undefined), event)} />
                   <RepeatToggle repeated={repeated} onToggle={() => setRepeated((current) => !current)} />
                 </div>
               )}
@@ -868,7 +1103,7 @@ export default function SuperNeuroPadGamePage() {
           <p className="mt-1 text-base font-bold opacity-90">{character.name} {character.role} subiu para o nível {phaseIndex + 2}.</p>
           <div className="mt-4"><SpeechBubble character={character} text={HERO_LINES[character.id]?.done ?? "Conquista no bolso!"} /></div>
           <ArcadeButton tone="sun" className="mt-5 px-6 py-3 text-base" onClick={nextPhase}>
-            Próxima fase: {phaseById(PHASE_ORDER[phaseIndex + 1]).emoji} {phaseById(PHASE_ORDER[phaseIndex + 1]).name}
+            Próximo mundo: {phaseById(PHASE_ORDER[phaseIndex + 1]).emoji} {phaseById(PHASE_ORDER[phaseIndex + 1]).name}
           </ArcadeButton>
         </section>
       )}
@@ -882,19 +1117,21 @@ export default function SuperNeuroPadGamePage() {
             <div className="mt-3 flex justify-center"><BadgeShelf done={done} /></div>
             <p className="mt-3 text-xs font-black opacity-80">Aplicadora: vire a tela para você. O que vem abaixo é o registro objetivo.</p>
             <p className="mt-1 text-xs font-bold opacity-80" data-testid="super-neuropad-when">
-              {formatClinicalDateTime(new Date(session.finishedAt ?? session.startedAt))} · {session.ageYears} anos (faixa {summary.band.label})
-              {wallSeconds !== null ? ` · sessão de ${formatDuration(wallSeconds)}` : ""} · tarefas {formatDuration(summary.durationSeconds)}
+              {formatClinicalDateTime(new Date(session.finishedAt ?? session.startedAt))} · {summary.band.label} (faixa anual)
+              {wallSeconds !== null ? ` · sessão de ${formatDuration(wallSeconds)}` : ""} · tarefas {formatDuration(summary.durationSeconds)} · {session.pauseCount ?? 0} pausa(s)
+              {(session.pausedSeconds ?? 0) > 0 ? ` (${formatDuration(session.pausedSeconds ?? 0)} em pausa)` : ""}
             </p>
           </div>
 
           {summary.level === null ? (
             <div className="snp-panel p-5" data-testid="super-neuropad-incomplete">
               <p className="font-black">Partida incompleta: {session.answers.length} de {summary.total} itens registrados.</p>
-              <p>Sem classificação ou interpretação. As respostas registradas continuam disponíveis para copiar ou baixar.</p>
+              <p>Sem classificação ou interpretação (regra da partida incompleta). Cada mundo mostra o que foi registrado ou “não aplicado — motivo”; as respostas continuam disponíveis para copiar, baixar ou salvar.</p>
             </div>
           ) : (<div className={`snp-panel ${LEVEL_PANEL[summary.level]} p-5`}>
             <div className="snp-pixel text-[11px] opacity-80">Resultado objetivo · {summary.band.label} · {summary.complete ? "partida completa" : `partida incompleta (${session.answers.length} de ${summary.total} itens)`}</div>
             <div className="mt-1 text-3xl font-black">{LEVEL_ICON[summary.level]} {summary.hits} de {summary.total} acertos</div>
+            <div className="text-xs font-bold opacity-80">Esperado para {summary.band.label}: {summary.expectedMin} ou mais (referência autoral do jogo)</div>
             <div className="text-base font-black">{LEVEL_LABELS[summary.level]}</div>
             <div className="mt-1 text-xs font-semibold opacity-80">Tempo somado nas tarefas: {formatDuration(summary.durationSeconds)} · contagem autoral, não normativa; leitura é do médico.</div>
           </div>)}
@@ -905,17 +1142,17 @@ export default function SuperNeuroPadGamePage() {
             <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
               <div className="snp-panel snp-panel--soft p-3">
                 <div className="snp-pixel text-[10px] opacity-70">Prioridade</div>
-                <div className="mt-1 text-sm font-black">{reading.priorities.length === 0 ? "Nenhuma fase fora do esperado" : reading.priorities.map((entry) => `${entry.phase.emoji} ${entry.phase.name} ${entry.hits}/${entry.total}`).join(" · ")}</div>
+                <div className="mt-1 text-sm font-black">{reading.priorities.length === 0 ? "Nenhum mundo fora do esperado" : reading.priorities.map((entry) => `${entry.phase.emoji} ${entry.phase.name} ${entry.hits}/${entry.total}`).join(" · ")}</div>
               </div>
               <div className="snp-panel snp-panel--soft p-3">
                 <div className="snp-pixel text-[10px] opacity-70">Padrão de resposta</div>
                 <div className="mt-1 text-sm font-black">{RESPONSE_PATTERN_LABELS[reading.pattern]}</div>
-                <div className="text-[11px] font-semibold opacity-70">{reading.errors} erros · {reading.noResponse} sem resposta</div>
+                <div className="text-[11px] font-semibold opacity-70">{reading.errors} erros · {reading.noResponse - reading.refused} sem resposta · {reading.refused} recusa(s)</div>
               </div>
               <div className="snp-panel snp-panel--soft p-3">
                 <div className="snp-pixel text-[10px] opacity-70">Toque × aplicadora</div>
                 <div className="mt-1 text-sm font-black">Toque {reading.touch.hits}/{reading.touch.total} · Fala e ação {reading.judged.hits}/{reading.judged.total}</div>
-                <div className="text-[11px] font-semibold opacity-70">{reading.repeated} comando(s) repetido(s)</div>
+                <div className="text-[11px] font-semibold opacity-70">{reading.repeated} comando(s) repetido(s) · {reading.gestures} por gesto</div>
               </div>
               <div className="snp-panel snp-panel--soft p-3">
                 <div className="snp-pixel text-[10px] opacity-70">Ritmo</div>
@@ -955,18 +1192,47 @@ export default function SuperNeuroPadGamePage() {
             )}
           </div>)}
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-testid="super-neuropad-domains">
             {summary.phases.map((entry) => (
               <div key={entry.phase.id} className={`snp-panel ${entry.level !== null ? LEVEL_PANEL[entry.level] : "snp-panel--soft"} p-4`}>
                 <div className="text-2xl" aria-hidden="true">{entry.phase.emoji}</div>
                 <div className="snp-pixel text-[11px]">{entry.phase.name}</div>
                 <div className="text-[11px] font-semibold opacity-80">{entry.phase.domain}</div>
-                <div className="mt-2 text-2xl font-black">{entry.level !== null ? `${entry.hits}/${entry.total}` : `${entry.answers.length} registros`}</div>
+                <div className="mt-2 text-2xl font-black">{entry.level !== null ? `${entry.hits}/${entry.total}` : entry.applied ? `${entry.answers.length} registros` : "—"}</div>
+                <div className="text-[11px] font-bold opacity-80">Esperado para a idade: {entry.expectedMin} ou mais de {entry.total}</div>
                 <div className="mt-1"><PhaseMeter phase={entry} /></div>
-                <div className="mt-1 text-xs font-black">{entry.level !== null ? `${LEVEL_ICON[entry.level]} ${LEVEL_SHORT[entry.level]}` : entry.applied ? "Registro parcial" : "Não aplicada"}</div>
-                <div className="mt-1 text-[11px] font-semibold opacity-80">{entry.applied ? `${entry.errors} erros · ${entry.noResponse} sem resposta · ${formatDuration(entry.seconds)}` : "nenhum item registrado"}</div>
+                <div className="mt-1 text-xs font-black">{entry.level !== null ? `${LEVEL_ICON[entry.level]} ${LEVEL_SHORT[entry.level]}` : entry.skipReason ? `Não aplicado — ${entry.skipReason}` : entry.applied ? "Registro parcial" : "Não aplicado"}</div>
+                <div className="mt-1 text-[11px] font-semibold opacity-80">{entry.applied ? `${entry.errors} erros · ${entry.noResponse} sem resposta · ${entry.refused} recusa(s) · ${formatDuration(entry.seconds)}` : "nenhum item registrado"}</div>
               </div>
             ))}
+          </div>
+
+          <div className="snp-panel snp-panel--soft p-4 text-[var(--snp-ink-fixed)]" data-testid="super-neuropad-origins">
+            <div className="snp-pixel text-[11px]">O que foi testado por instrumento de origem</div>
+            <ul className="mt-2 grid gap-2 text-sm sm:grid-cols-2">
+              {summary.origins.map((origin) => (
+                <li key={origin.origin} className="rounded-xl border-2 border-[var(--snp-ink-40)] bg-[var(--snp-paper-fixed)] p-3">
+                  <div className="font-black">{origin.label}</div>
+                  <div className="text-xs font-semibold opacity-80">{origin.planned} desafio(s) em {origin.phases.map((id) => phaseById(id).name).join(", ")} · registrados {origin.applied} · acertos {origin.hits}</div>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="snp-panel p-4" data-testid="super-neuropad-observations">
+            <label htmlFor="snp-observations" className="snp-pixel text-[11px]">Observações da aplicadora (vão para o PDF, o registro e o prontuário)</label>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {OBSERVATION_CHIPS.map((chip) => (
+                <button key={chip} type="button" className="snp-chip" onClick={() => { softTap(); setObservations((current) => (current.includes(chip) ? current : [current.trim(), chip].filter(Boolean).join(". ")).slice(0, OBSERVATIONS_MAX)); }}>+ {chip}</button>
+              ))}
+            </div>
+            <textarea
+              id="snp-observations" value={observations} maxLength={OBSERVATIONS_MAX} rows={3}
+              onChange={(event) => setObservations(event.target.value.slice(0, OBSERVATIONS_MAX))}
+              className="mt-2 w-full rounded-xl border-[3px] border-[var(--snp-ink-fixed)] bg-white p-3 text-sm text-[var(--snp-ink-fixed)]"
+              placeholder="Comportamento, colaboração, intercorrências. Fica só nesta tela até você baixar, copiar ou salvar."
+            />
+            <div className="text-right text-[11px] font-bold opacity-60">{observations.length}/{OBSERVATIONS_MAX}</div>
           </div>
 
           <div className="flex flex-wrap gap-3">
@@ -1014,7 +1280,7 @@ export default function SuperNeuroPadGamePage() {
                       <div className="font-bold">{phaseById(answer.phaseId).emoji} {answer.prompt}</div>
                       <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-black ${STATUS_TONE[answer.status]}`}>{STATUS_LABELS[answer.status]}</span>
                     </div>
-                    <div className="mt-1 text-xs"><span className="font-black">Esperado:</span> {answer.expected} · <span className="font-black">Registrado:</span> {answer.given} · {answer.seconds} s{answer.repeated ? " · comando repetido 1x" : ""}</div>
+                    <div className="mt-1 text-xs"><span className="font-black">Esperado:</span> {answer.expected} · <span className="font-black">Registrado:</span> {answer.given} · {answer.seconds} s{answer.repeated ? " · comando repetido 1x" : ""} · {ORIGIN_LABELS[answer.origin]}</div>
                   </li>
                 ))}
               </ul>
@@ -1024,7 +1290,7 @@ export default function SuperNeuroPadGamePage() {
           <div className="space-y-3">
             {summary.phases.map((entry) => (
               <details key={entry.phase.id} className="snp-panel p-4" open={entry.level !== "esperado" || !entry.applied}>
-                <summary className="snp-pixel cursor-pointer text-xs">{entry.phase.emoji} Fase {entry.phase.order} · {entry.phase.name} · {entry.level !== null ? `${entry.hits}/${entry.total}` : `${entry.answers.length} itens registrados`}</summary>
+                <summary className="snp-pixel cursor-pointer text-xs">{entry.phase.emoji} Mundo {entry.phase.order} · {entry.phase.name} · {phaseStatusText(entry, summary.complete)}</summary>
                 <ol className="mt-3 space-y-2">
                   {entry.answers.map((answer, index) => (
                     <li key={answer.itemId} className="rounded-xl border-2 border-[var(--snp-ink-40)] bg-[var(--snp-paper-fixed)] p-3 text-sm text-[var(--snp-ink-fixed)]">
@@ -1032,7 +1298,7 @@ export default function SuperNeuroPadGamePage() {
                         <div className="font-bold">{index + 1}. {answer.prompt}</div>
                         <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-black ${STATUS_TONE[answer.status]}`}>{STATUS_LABELS[answer.status]}</span>
                       </div>
-                      <div className="mt-1 text-xs opacity-80">{KIND_LABELS[answer.kind]} · {answer.seconds} s{answer.repeated ? " · comando repetido 1x" : ""}</div>
+                      <div className="mt-1 text-xs opacity-80">{ORIGIN_LABELS[answer.origin]} · {KIND_LABELS[answer.kind]} · {answer.seconds} s{answer.repeated ? " · comando repetido 1x" : ""}{answer.via === "gesto" ? " · por gesto/apontar" : ""}</div>
                       <div className="mt-1 text-xs"><span className="font-black">Esperado:</span> {answer.expected} · <span className="font-black">Registrado:</span> {answer.given}</div>
                     </li>
                   ))}
@@ -1042,7 +1308,7 @@ export default function SuperNeuroPadGamePage() {
           </div>
 
           {summary.complete && (<p className="text-xs font-semibold leading-relaxed opacity-80">
-            Faixas operacionais autorais: por fase, 3–4 acertos = esperado, 2 = observar, 0–1 = alerta; no total, 16+ = esperado, 12–15 = observar, 11 ou menos = alerta. Item lento = 2 vezes a mediana da própria partida (mínimo 12 s). {SUPER_NEUROPAD_NATURE}
+            Faixas operacionais autorais: por mundo ({summary.phases[0].total} desafios), {cutText(summary.phases[0].total)}; no total ({summary.total}), {cutText(summary.total, "total")}. Recusa e não resposta contam como não acertadas e ficam registradas à parte. Item lento = 2 vezes a mediana da própria partida (mínimo 12 s). {SUPER_NEUROPAD_NATURE}
           </p>)}
         </section>
       )}
