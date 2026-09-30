@@ -1,30 +1,131 @@
 # Super NeuroPad Game
 
-Aba em destaque (`/super-neuropad-game`) usada pela secretária na pré-consulta para
-aplicar, sem câmera, um jogo de triagem de déficits grosseiros diretamente com a criança.
+Aba em destaque (`/super-neuropad-game`): **avaliação única de pré-consulta**, aplicada pela
+aplicadora junto com a criança, sem câmera e sem instrumento externo, em no máximo 20 minutos.
+Integra os elementos da Sonda 10, da Observa 10 (OBS-10), do Reconhecimento Visual e da
+Avaliação Cognitiva Infantil. As quatro abas continuam existindo, com os seus bancos
+intactos; o jogo **lê** os bancos delas e não os modifica.
 
 ## O que é
 
-- União reconciliada de quatro abas que continuam existindo: Sonda 10 (`/testes-diretos`),
-  OBS-10 (`/avaliacao-pre-consulta-faixa-etaria`), Reconhecimento Visual
-  (`/testes-reconhecimento`) e Testes Cognitivos por Faixa Etária (`/testes-cognitivos`).
-- Estrutura de RPG: personagem à escolha, cinco fases (Floresta dos Olhos, Ilha das Palavras,
-  Montanha dos Números, Caverna da Memória, Torre do Corpo), XP por participação, conquista
-  por fase, trilha chiptune sintetizada no dispositivo (Web Audio, sem arquivos de áudio).
-- Faixa etária somente em anos: 2–3, 4–5, 6–7, 8–9, 10–12, 13–17. Quatro desafios por fase,
-  vinte por partida, cerca de dez minutos.
+- Seis mundos (RPG com personagem, XP, conquistas e trilha chiptune sintetizada no dispositivo):
+  Vila da Conversa, Floresta dos Olhos, Ilha das Palavras, Montanha dos Números, Caverna da
+  Memória e Torre do Corpo.
+- Faixas **anuais** de 2 a 17 anos (o banco objetivo e o cognitivo já são anuais). Menos de 2
+  anos: o jogo não é aplicado; a tela bloqueia e encaminha para OBS-10 (0–23 meses) e Sonda 10.
+- 4 desafios por mundo até 5 anos (24 na partida); 5 por mundo a partir de 6 anos (30).
 - Efeitos sonoros 8-bit compartilhados do app (moeda ao registrar, power-up ao fechar fase,
   pulo ao trocar de mundo, bandeira ao concluir).
-- Todo item tem certo e errado explícitos. Itens de toque são conferidos pelo jogo; itens de
-  fala e de ação são conferidos pela aplicadora contra o critério exibido na tela
-  (Acertou / Errou / Não respondeu).
-- Resultado objetivo em tela e em PDF detalhado (pergunta, resposta esperada, resposta
-  registrada, certo/errado, tempo por item), via `buildDocumentPdf`, com figuras transcritas
-  em texto pelo glossário `describeArt`.
-- Acabamento arcade anos 90 (`client/src/styles/super-neuropad-arcade.css`): bordas grossas,
-  sombra dura, barra de XP em blocos, moedas, corações por desafio, "press start" piscando,
-  scanlines suaves. Animações só sob `prefers-reduced-motion: no-preference`; modo escuro
-  pelos tokens do app.
+- Todo item tem certo e errado explícitos. Toque e montagem de palavra são conferidos pelo jogo;
+  fala e ação são conferidas pela aplicadora contra o critério exibido na tela (Acertou /
+  Acertou por gesto (2–3 anos) / Errou / Não respondeu / Recusou).
+- Resultado objetivo em tela e em PDF detalhado via `buildDocumentPdf`, com figuras transcritas
+  em texto pelo glossário `describeArt` e as figuras do Reconhecimento Visual pelo nome.
+- Acabamento arcade anos 90 (`client/src/styles/super-neuropad-arcade.css`). Animações só sob
+  `prefers-reduced-motion: no-preference`; modo escuro pelos tokens do app.
+
+## Pré-consulta integrada (v2026-09-30.1)
+
+### De onde vem cada item
+
+| Aba de origem | Onde mora | O que entrou no jogo |
+|---|---|---|
+| Sonda 10 (`/testes-diretos`) | `client/src/data/sondaDez*.ts`, `components/sonda-dez/*`, itens de índice par de `components/jogo-facil/objectiveBank.ts` | chamar pelo nome, atenção conjunta, brincadeira simbólica, conversação/reciprocidade, narrativa e inferência, emoção, problema social, controle inibitório (DIA/NOITE), flexibilidade, memória operacional (ordem inversa), planejamento; itens objetivos de toque da idade |
+| Observa 10 (`/avaliacao-pre-consulta-faixa-etaria`) | `client/src/features/obs10/protocol.ts` (v1.6.1), `docs/audits/obs10-stations-gameflow.md`, itens de índice ímpar do banco objetivo | interagir e conversar, linguagem e raciocínio, registro e evocação de CASA–GATO–PÃO (6+), repetição de dígitos, SOL/LUA, núcleo motor (andar, correr, equilíbrio, linha), mãos/desenho/escrita (cópia de figuras na tela), retomar e encerrar |
+| Reconhecimento visual (`/testes-reconhecimento`) | `client/src/features/visual-recognition/model.ts` + `Stimulus.tsx` (figuras Mulberry, cores, opostos) | reconhecer (mesma pergunta e mesma graduação de alternativas do Modo Fácil: 2 opções abaixo de 4 anos, 3 até 6, 4 a partir de 7), parear, nomear (com sinônimos do banco), cores, opostos e conceitos contextualizados (quente/frio, pesado/leve, a partir de 5 anos, com o contexto do próprio banco) |
+| Avaliação cognitiva infantil (`/testes-cognitivos`) | `client/src/features/cognitive-age/bank.ts` (1–19 anos; visual, leitura, escrita, aritmética) | itens da idade com as mesmas alternativas e a mesma resposta: toque, fala e montagem de palavra (ditado/cópia com letras grandes) |
+
+Cada item leva `origin` e `ref` (ex.: `Sonda 10 · 5–7 anos · controle inibitório`,
+`Cognitivos 7 anos · números 2`), que saem na tela, no PDF, no prontuário e no bloco
+estruturado. O teste `tests/unit/super-neuropad-integrated-bank.test.ts` confere que os itens
+cognitivos e objetivos são os mesmos das abas de origem.
+
+### Mundos × domínios × origens
+
+| Mundo | Domínio | Origens |
+|---|---|---|
+| 1 · Vila da Conversa | Interação e comunicação | Sonda 10, OBS-10 |
+| 2 · Floresta dos Olhos | Reconhecimento visual e raciocínio visual | Reconhecimento visual, Cognitiva |
+| 3 · Ilha das Palavras | Linguagem, leitura e escrita | Sonda 10, OBS-10, Cognitiva |
+| 4 · Montanha dos Números | Quantidade e aritmética | Cognitiva, Sonda 10, OBS-10 |
+| 5 · Caverna da Memória | Memória, atenção e funções executivas | Sonda 10, OBS-10 |
+| 6 · Torre do Corpo | Coordenação motora, desenho e escrita | OBS-10, Sonda 10, Cognitiva |
+
+### Tabela de calibração por idade
+
+Contagens geradas do banco (`INTEGRATED_BANK`); tempo por `estimateBandSeconds`.
+
+| Idade | Itens (por mundo) | Sonda 10 | OBS-10 | Rec. visual | Cognitiva | Tipos (toque/fala/ação/montar) | Com gesto | Tempo estimado |
+|---|---|---|---|---|---|---|---|---|
+| 2 anos | 24 (4) | 10 | 6 | 4 | 4 | 9/5/10/0 | 4 | 16.0 min |
+| 3 anos | 24 (4) | 11 | 5 | 3 | 5 | 9/6/9/0 | 3 | 16.2 min |
+| 4 anos | 24 (4) | 8 | 7 | 3 | 6 | 9/11/4/0 | 0 | 14.8 min |
+| 5 anos | 24 (4) | 8 | 7 | 3 | 6 | 12/7/5/0 | 0 | 15.2 min |
+| 6 anos | 30 (5) | 11 | 10 | 2 | 7 | 14/11/5/0 | 0 | 13.9 min |
+| 7 anos | 30 (5) | 8 | 12 | 2 | 8 | 14/11/4/1 | 0 | 13.7 min |
+| 8 anos | 30 (5) | 10 | 10 | 1 | 9 | 14/11/4/1 | 0 | 14.3 min |
+| 9 anos | 30 (5) | 7 | 13 | 1 | 9 | 14/11/4/1 | 0 | 14.4 min |
+| 10 anos | 30 (5) | 11 | 9 | 1 | 9 | 14/11/4/1 | 0 | 14.4 min |
+| 11 anos | 30 (5) | 9 | 11 | 1 | 9 | 14/11/4/1 | 0 | 14.3 min |
+| 12 anos | 30 (5) | 11 | 9 | 1 | 9 | 14/11/4/1 | 0 | 15.2 min |
+| 13 anos | 30 (5) | 7 | 13 | 1 | 9 | 14/11/4/1 | 0 | 15.1 min |
+| 14 anos | 30 (5) | 11 | 9 | 1 | 9 | 14/11/4/1 | 0 | 15.4 min |
+| 15 anos | 30 (5) | 7 | 13 | 1 | 9 | 14/11/4/1 | 0 | 15.4 min |
+| 16 anos | 30 (5) | 11 | 9 | 1 | 9 | 14/11/4/1 | 0 | 15.5 min |
+| 17 anos | 30 (5) | 7 | 13 | 1 | 9 | 14/11/4/1 | 0 | 15.4 min |
+
+**Tempo estimado**: toque 12 s (+1 s a cada 25 caracteres de leitura, máx. +25 s), fala 20 s,
+ação 25 s, montar 30 s + 2 s por letra (ou o tempo próprio do item); fator de criança pequena
+×1,5 até 3 anos e ×1,25 até 5; 10 % de folga para repetições; preparação 60 s, 15 s de
+apresentação por mundo, 5 s por exposição de memória e pausa planejada de 90 s até 5 anos.
+O teste exige ≤ 20 min em todas as idades; a tela de preparação mostra a estimativa.
+
+**Critérios de calibração** (sem norma, sem inflar escore, sem mudar corte):
+
+- Cada ano usa os itens do perfil da **própria idade** nas abas de origem; quando um item da
+  idade era mais difícil que o esperado, entrou o item mais fácil do ano anterior (item-piso,
+  permitido pelo teste só um ano abaixo). Corrigir item mal nivelado não mexe nas razões de corte.
+- 2–3 anos: menos desafios, sem letras, leitura, numerais ou nomeação de cor (cor receptiva só
+  a partir de 30 meses, nomeação a partir de 4 anos, como no roteiro visual); quantidades
+  comparadas por figura; falas com **alternativa aceita por gesto/apontar**; alvos grandes.
+- Repetição de dígitos cresce com a idade (direta 3 aos 4 anos, 4 aos 6, 5 aos 9, 6 aos 12;
+  inversa só a partir de 6), CASA–GATO–PÃO a partir de 6 anos, conceitos contextualizados a
+  partir de 5 anos.
+- Vocabulário e situações do cotidiano brasileiro (parquinho, escola, R$, ônibus, guarda-chuva,
+  comida do dia a dia), nada que exija objeto, papel ou lápis: desenho e cópia são
+  feitos com o dedo na tela (nada é exportado); o ambiente usa só o chão, a porta e a mesa da sala.
+- Marcos citados para 2–5 anos vêm das fontes que o OBS-10 já usa
+  (`SUPER_NEUROPAD_MILESTONE_SOURCES`: CDC *Learn the Signs. Act Early*, AAP Bright Futures).
+  As faixas são **descritivas / esperadas**, não normas validadas em crianças brasileiras.
+
+### Dificuldades de criança pequena
+
+- Roteiro da aplicadora em cada item (o que perguntar e o que conta como acerto).
+- "Não respondeu" (criança calada) e "Recusou" (diz não, empurra) separados de "Errou"; ambos
+  contam como não acertados e aparecem à parte no resultado, na leitura e no PDF.
+- "Repeti o comando" (repetição permitida, registrada), Pausa (o tempo do item para; conta o
+  tempo em pausa), pausa automática quando a tela sai de foco, pausa planejada no tempo estimado
+  até 5 anos.
+- "Pular este mundo" com motivo (criança cansada ou sem colaboração, recusou o mundo inteiro,
+  sem espaço ou condição na sala, pedido da família, outro motivo): o mundo vira **não aplicado — motivo**; os registros dos outros mundos continuam.
+  Pela regra de 26/09/2026, a partida fica incompleta e não recebe classificação (global ou por
+  mundo).
+
+### Resultado, PDF e prontuário
+
+- Tela: resumo, desempenho por domínio × esperado para a idade (mínimo esperado conforme o
+  número de itens do mundo), painel "O que foi testado por instrumento de origem",
+  observações da aplicadora (chips + texto livre, até 1200 caracteres) e registros item a item.
+- PDF (`pdf.ts`): Identificação da sessão (data e hora locais, idade, duração, pausas e tempo em
+  pausa, repetições, acertos por gesto, mundos não aplicados); O que foi testado por
+  instrumento de origem; Desempenho por domínio x esperado para a idade; Leitura para a
+  consulta (só partida completa); um bloco por mundo com cada item (origem, tipo, resposta
+  esperada, resposta da criança, resultado, tempo e repetições); Observações da aplicadora;
+  Critérios de leitura; **Dados estruturados** (uma linha por registro `SESSAO`, `DOMINIO`,
+  `ORIGEM`, `ITEM`, `OBSERVACOES`, cada uma com JSON numa linha, para leitura por IA);
+  Proveniência e natureza.
+- Salvar no prontuário continua explícito; as linhas trazem o que foi testado por instrumento,
+  mundos não aplicados, observações e cada item com a origem.
 
 ## Controles da aplicadora (v2026-09-26.1)
 
@@ -64,7 +165,8 @@ aplicar, sem câmera, um jogo de triagem de déficits grosseiros diretamente com
   (conta como pausa na proveniência), para o tempo do item não inflar. A trilha para na pausa
   e volta ao continuar. O botão Pausa só fica ativo no desafio.
 - **Atalhos da aplicadora** (teclado físico ou tablet com teclado): `1` Acertou, `2` Errou,
-  `3` Não respondeu nos itens julgados (fala e ação) e `P` pausa/continua. Itens de toque
+  `3` Não respondeu, `4` Recusou e `5` Acertou por gesto (só quando o item aceita) nos itens
+  julgados (fala e ação) e `P` pausa/continua. Itens de toque
   continuam exclusivos da criança; tecla segurada, combinações e digitação em campos não
   disparam atalhos; os atalhos passam pela mesma guarda de toque duplo.
 - **Cabeçalho do resultado**: data e hora locais da partida, idade e faixa, duração da sessão
@@ -92,7 +194,8 @@ equivalente ou diagnóstico, exibida na tela de resultado, no relatório em text
 - fadiga: 75 % ou mais de acertos na primeira metade e 50 % ou menos na segunda (partida
   completa); ritmo desacelerado quando a mediana dos cinco últimos itens é o dobro da dos
   cinco primeiros (mínimo 4 s);
-- posição da idade na faixa (limite inferior ou superior), só quando há fase priorizada;
+- recusas e acertos por gesto contados à parte (as faixas agora são anuais; a antiga nota de
+  posição da idade na faixa saiu);
 - roteiro autoral por fase priorizada (`Phase.consult`): o que conferir na consulta, sem
   diagnóstico;
 - sinais de confiabilidade do registro em chips (toques rápidos, queda, ritmo, pausas e
@@ -106,8 +209,10 @@ equivalente ou diagnóstico, exibida na tela de resultado, no relatório em text
 
 ## Contrato clínico
 
-- Triagem autoral, não normativa: as faixas operacionais (por fase 3–4 esperado / 2 observar /
-  0–1 alerta; total 16+ / 12–15 / ≤11) são leitura rápida da equipe, nunca escore, percentil,
+- Triagem autoral, não normativa: as faixas operacionais mantêm as mesmas razões de antes
+  (por mundo ≥ 75 % esperado, ≥ 50 % observar; total ≥ 80 % / ≥ 60 %). Com 4 itens por mundo:
+  3–4 esperado / 2 observar / 0–1 alerta; com 5: 4–5 / 3 / 0–2; total 24 itens: 20–24 / 15–19 /
+  0–14; total 30: 24–30 / 18–23 / 0–17. São leitura rápida da equipe, nunca escore, percentil,
   idade equivalente ou diagnóstico. A conclusão é do médico.
 - A criança nunca vê certo/errado durante o jogo.
 - Nada é persistido no navegador nem enviado por rede automaticamente; o PDF é gerado
@@ -118,8 +223,12 @@ equivalente ou diagnóstico, exibida na tela de resultado, no relatório em text
 
 ## Código
 
-- `client/src/features/super-neuropad/model.ts` — faixas, personagens, fases, banco de 120
-  itens, motor de registro/resultado, relatório em texto e glossário para PDF.
+- `client/src/features/super-neuropad/items.ts` — tipos de item, origens e rótulos.
+- `client/src/features/super-neuropad/bank.ts` — banco integrado por ano (2–17), montado a partir
+  dos bancos das quatro abas de origem.
+- `client/src/features/super-neuropad/model.ts` — faixas anuais, bloqueio de menores de 2 anos,
+  estimativa de tempo, mundos, motor de registro/resultado, relatórios, bloco estruturado e
+  glossário para PDF.
 - `client/src/features/super-neuropad/music.ts` — trilha chiptune.
 - `client/src/features/super-neuropad/pdf.ts` — especificação do PDF detalhado.
 - `client/src/pages/super-neuropad-game.tsx` — página.
@@ -127,12 +236,18 @@ equivalente ou diagnóstico, exibida na tela de resultado, no relatório em text
 
 ## Verificação
 
-- `npm run test:super-neuropad` (também encadeado em `test:direct-track`).
+- `npm run test:super-neuropad` (também encadeado em `test:direct-track`): motor, relatório,
+  PDF e `super-neuropad-integrated-bank.test.ts` (contagens por ano, ids e conteúdos sem
+  duplicata, origens, reuso fiel, alternativas, figuras visuais por idade, adaptações de 2–3
+  anos, nada externo, tudo legível no PDF, ≤ 20 min em todas as idades).
 - `npm run build:client && npm run test:e2e:super-neuropad` — jornada completa no navegador
   com capturas, axe e download do PDF, incluindo pausa, desfazer, comando repetido e o painel
   de leitura para a consulta; também pausa automática por tela oculta, atalho `1`, painel de
   salvar em paciente, nova partida sem herdar idade, reiniciar direto no mundo 1 e confirmação
-  antes de descartar resultado não guardado.
+  antes de descartar resultado não guardado. Desde 30/09/2026 (integrada): bloqueio de menor
+  de 2 anos, estimativa de tempo, seis mundos com 30 desafios aos 7 anos, recusa, montagem de
+  palavra, desenho com o dedo, painéis de domínio/origem, observações, conteúdo do PDF (quando
+  há `pdftotext`), mundo pulado como "não aplicado" e 3 anos com acerto por gesto.
 
 ## Rollback
 

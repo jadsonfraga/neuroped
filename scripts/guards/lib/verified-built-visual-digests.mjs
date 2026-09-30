@@ -42,9 +42,26 @@ export function createBuiltVisualDigestInspector(root) {
     throw new Error("Caminho inesperado para o módulo visual compilado.");
   }
   regularFile(join(root, bundle));
+  // Chunks estaticamente importados pelo módulo canônico (ex.: o módulo do banco
+  // visual, compartilhado com o Super NeuroPad Game) também podem carregar os
+  // registros verificados. Só entra o fecho de imports estáticos do próprio
+  // módulo canônico no manifesto do Vite; a troca continua restrita aos campos
+  // sha256 que batem id + sourcePath + bytes empacotados. Todo o resto segue
+  // inspecionado pelo scanner de credenciais.
+  const bundles = new Set([bundle]);
+  const pending = [...(entries[0][1].imports ?? [])];
+  while (pending.length) {
+    const key = pending.shift();
+    const chunk = vite[key];
+    if (!chunk || typeof chunk.file !== "string" || bundles.has(chunk.file)) continue;
+    if (!/^assets\/[A-Za-z0-9_.-]+\.js$/.test(chunk.file)) throw new Error("Caminho inesperado para chunk importado pelo módulo visual.");
+    regularFile(join(root, chunk.file));
+    bundles.add(chunk.file);
+    pending.push(...(chunk.imports ?? []));
+  }
 
   return (relativePath, source) => {
-    if (relativePath !== MANIFEST && relativePath !== bundle) return source;
+    if (relativePath !== MANIFEST && !bundles.has(relativePath)) return source;
     const parsed = ts.createSourceFile(relativePath, source, ts.ScriptTarget.Latest, true,
       relativePath === MANIFEST ? ts.ScriptKind.JSON : ts.ScriptKind.JS);
     if (parsed.parseDiagnostics.length) throw new Error("Não foi possível analisar estruturalmente o inventário visual compilado.");
@@ -92,7 +109,7 @@ export function createBuiltVisualDigestInspector(root) {
     // decoded data structurally too, never execute the compiled application.
     // Retain decoded unverified fields for the credential scanner, rather than
     // letting string escaping conceal a credential beside a legitimate digest.
-    if (relativePath === bundle) {
+    if (bundles.has(relativePath)) {
       function visitSerialized(node) {
         if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression) &&
             ts.isIdentifier(node.expression.expression) && node.expression.expression.text === "JSON" &&

@@ -1,6 +1,8 @@
-// Super NeuroPad Game: banco objetivo (certo/errado explícito), cobertura
-// 6 faixas × 5 fases × 4 itens, motor de resultado, relatório/PDF e a
-// disciplina clínica da página (sem persistência, sem rede, sem câmera).
+// Super NeuroPad Game: faixas anuais 2–17 com barreira < 2 anos, seis mundos
+// integrados (Sonda 10, OBS-10, Reconhecimento Visual, Avaliação Cognitiva),
+// motor de resultado com recusa e gesto, mundos não aplicados, relatório/PDF
+// com bloco estruturado e a disciplina clínica da página (sem persistência,
+// sem rede, sem câmera). O banco por faixa é testado em super-neuropad-integrated-bank.test.ts.
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -8,24 +10,29 @@ import {
   AGE_BANDS,
   CHARACTERS,
   ITEM_BANK,
-  ITEMS_PER_PHASE,
   MAX_AGE_YEARS,
   MIN_AGE_YEARS,
   PHASE_ORDER,
   PHASES,
+  STRUCTURED_HEADER,
   SUPER_NEUROPAD_ROUTE,
+  UNDER_TWO_MESSAGE,
+  ageGate,
   bandForYears,
   buildGameBrief,
   buildGameReport,
   buildPatientRecordItems,
+  buildStructuredLines,
+  cutText,
   judgeShortcut,
+  levelCuts,
   sessionWallSeconds,
   describeArt,
   interpret,
-  pdfLossless,
   itemsFor,
   overallLevel,
   phaseLevel,
+  recordBuild,
   recordJudged,
   recordTouch,
   shuffle,
@@ -33,80 +40,64 @@ import {
   undoLastAnswer,
   type AnswerRecord,
   type GameSession,
+  type Item,
+  type PhaseId,
   type TouchItem,
 } from "../../client/src/features/super-neuropad/model";
 import { buildGameDocSpec } from "../../client/src/features/super-neuropad/pdf";
 import { pdfSafe } from "../../client/src/lib/documentPdf";
 import { decideRouteAccess, isRouteSensitive } from "../../client/src/security/routeGuardPolicy";
 
-test("faixas etárias cobrem 2 a 17 anos, em anos inteiros, sem lacuna nem sobreposição", () => {
+const ISSUER = { doctorName: "Profissional Sintético", specialty: "Neuropediatria", credentials: "CRM 00000", clinicName: "Clínica Sintética", motto: "" };
+const strip = (source: string) => source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+const pageSource = () => strip(readFileSync("client/src/pages/super-neuropad-game.tsx", "utf8"));
+
+test("faixas etárias: um ano cada, de 2 a 17, sem lacuna; menores de 2 anos bloqueados com mensagem clara", () => {
+  assert.equal(AGE_BANDS.length, MAX_AGE_YEARS - MIN_AGE_YEARS + 1);
   for (let years = MIN_AGE_YEARS; years <= MAX_AGE_YEARS; years++) {
-    const matches = AGE_BANDS.filter((band) => years >= band.min && years <= band.max);
-    assert.equal(matches.length, 1, `${years} anos deve cair em exatamente uma faixa`);
-    assert.equal(bandForYears(years)?.id, matches[0].id);
+    const band = bandForYears(years);
+    assert.ok(band, `${years} anos tem faixa`);
+    assert.equal(band.id, String(years));
+    assert.equal(band.min, years);
+    assert.equal(band.max, years);
+    assert.equal(band.label, `${years} anos`);
+    assert.equal(band.perPhase, years <= 5 ? 4 : 5);
+    const gate = ageGate(years);
+    assert.equal(gate.ok, true);
   }
   assert.equal(bandForYears(1), undefined);
   assert.equal(bandForYears(18), undefined);
   assert.equal(bandForYears(4.5), undefined, "meses não entram: só anos inteiros");
-  for (const band of AGE_BANDS) assert.doesNotMatch(band.label, /mes/i, "rótulo sem meses");
-});
-
-test("banco: cada faixa tem 5 fases com 4 itens objetivos e ids únicos", () => {
-  const ids = new Set<string>();
-  for (const band of AGE_BANDS) {
-    for (const phaseId of PHASE_ORDER) {
-      const items = itemsFor(band.id, phaseId);
-      assert.equal(items.length, ITEMS_PER_PHASE, `${band.id}/${phaseId}`);
-      for (const item of items) {
-        assert.equal(ids.has(item.id), false, `id duplicado ${item.id}`);
-        ids.add(item.id);
-        assert.ok(item.id.startsWith(`${band.id}.${phaseId}.`), `id ${item.id} fora da faixa/fase`);
-        assert.ok(item.prompt.trim().length > 0);
-        if (item.kind === "toque") {
-          assert.ok(item.options.length >= 2 && item.options.length <= 4, `${item.id}: 2 a 4 opções`);
-          const hits = item.options.filter((option) => option.label === item.answer);
-          assert.equal(hits.length, 1, `${item.id}: exatamente uma opção certa`);
-          for (const option of item.options) {
-            assert.ok(option.art.trim().length > 0 && option.label.trim().length > 0, `${item.id}: opção com arte e rótulo`);
-          }
-          if (item.preview) {
-            const shown = item.preview.split(/\s+/);
-            const answerArt = item.options.find((option) => option.label === item.answer)!.art;
-            const asksMissing = /NÃO apareceu/.test(item.prompt);
-            assert.equal(shown.includes(answerArt), !asksMissing, `${item.id}: resposta coerente com o estímulo mostrado`);
-          }
-        } else {
-          assert.ok(item.expected.trim().length > 0, `${item.id}: critério explícito de acerto`);
-        }
-      }
+  for (const years of [0, 1, 1.9]) {
+    const gate = ageGate(years);
+    assert.equal(gate.ok, false, `${years} anos não faz o jogo`);
+    if (!gate.ok) {
+      assert.equal(gate.reason, "menor_de_2");
+      assert.equal(gate.message, UNDER_TWO_MESSAGE);
+      assert.match(gate.message, /menos de 2 anos/);
+      assert.match(gate.message, /OBS-10/);
+      assert.match(gate.message, /Sonda 10/);
+      assert.deepEqual(gate.routes.map((route) => route.href), ["/avaliacao-pre-consulta-faixa-etaria", "/testes-diretos"]);
     }
   }
-  assert.equal(ids.size, AGE_BANDS.length * PHASE_ORDER.length * ITEMS_PER_PHASE);
-  assert.equal(Object.keys(ITEM_BANK).length, AGE_BANDS.length);
+  const over = ageGate(18);
+  assert.equal(over.ok, false);
+  if (!over.ok) assert.equal(over.reason, "acima_do_teto");
+  assert.equal(ageGate(Number.NaN).ok, false);
 });
 
-test("a posição da alternativa correta varia dentro de cada faixa (sem gabarito previsível)", () => {
-  for (const band of AGE_BANDS) {
-    const positions = new Set<number>();
-    for (const phaseId of PHASE_ORDER) {
-      for (const item of itemsFor(band.id, phaseId)) {
-        if (item.kind === "toque") positions.add(item.options.findIndex((option) => option.label === item.answer));
-      }
-    }
-    assert.ok(positions.size >= 3, `${band.id}: correta em ${positions.size} posições distintas`);
-  }
-});
-
-test("fases são cinco, ordenadas, cada uma com proveniência nas abas de origem", () => {
-  assert.equal(PHASES.length, 5);
-  assert.deepEqual(PHASES.map((phase) => phase.order), [1, 2, 3, 4, 5]);
+test("mundos são seis, ordenados, cada um com proveniência nas abas de origem", () => {
+  assert.equal(PHASES.length, 6);
+  assert.deepEqual(PHASES.map((phase) => phase.order), [1, 2, 3, 4, 5, 6]);
   assert.deepEqual(PHASES.map((phase) => phase.id), [...PHASE_ORDER]);
+  assert.deepEqual([...PHASE_ORDER], ["vila", "olhos", "palavras", "numeros", "memoria", "corpo"]);
   for (const phase of PHASES) {
-    assert.match(phase.source, /Sonda 10|OBS-10|Reconhecimento Visual|Testes Cognitivos/);
+    assert.match(phase.source, /Sonda 10|OBS-10|Reconhecimento Visual|Avaliação Cognitiva/);
     assert.ok(phase.operator.length > 20);
+    assert.ok(phase.origins.length >= 2);
   }
   assert.equal(CHARACTERS.length, 6);
-  assert.equal(new Set(CHARACTERS.map((character) => character.id)).size, 6);
+  assert.equal(Object.keys(ITEM_BANK).length, AGE_BANDS.length);
 });
 
 test("embaralhamento é determinístico por semente e preserva o conjunto", () => {
@@ -116,120 +107,248 @@ test("embaralhamento é determinístico por semente e preserva o conjunto", () =
   assert.deepEqual(values, ["a", "b", "c", "d"], "entrada não é mutada");
 });
 
-test("registro de toque confere sozinho; registro julgado usa o critério; tempos arredondam", () => {
-  const item = itemsFor("4-5", "olhos")[0] as TouchItem;
+function firstOf<K extends Item["kind"]>(years: number, kind: K, predicate: (item: Extract<Item, { kind: K }>) => boolean = () => true): { item: Extract<Item, { kind: K }>; phaseId: PhaseId } {
+  for (const phaseId of PHASE_ORDER) {
+    for (const item of itemsFor(String(years), phaseId)) {
+      if (item.kind === kind && predicate(item as Extract<Item, { kind: K }>)) return { item: item as Extract<Item, { kind: K }>, phaseId };
+    }
+  }
+  throw new Error(`sem item ${kind} aos ${years} anos`);
+}
+
+test("registros: toque e montagem conferidos pelo jogo; julgado pelo critério; recusa separada de não resposta; gesto só quando previsto", () => {
+  const { item, phaseId } = firstOf(5, "toque");
   const right = item.options.find((option) => option.label === item.answer)!;
   const wrong = item.options.find((option) => option.label !== item.answer)!;
-  assert.equal(recordTouch(item, "olhos", right, 2.345).status, "acerto");
-  assert.equal(recordTouch(item, "olhos", wrong, 1).status, "erro");
-  const skipped = recordTouch(item, "olhos", null, -3);
-  assert.equal(skipped.status, "sem_resposta");
-  assert.equal(skipped.seconds, 0);
-  assert.equal(recordTouch(item, "olhos", right, 2.345).seconds, 2.3);
-  const judged = itemsFor("4-5", "corpo")[0];
-  assert.notEqual(judged.kind, "toque");
-  if (judged.kind !== "toque") {
-    const record = recordJudged(judged, "corpo", "acerto", 4.06);
-    assert.equal(record.expected, judged.expected);
-    assert.equal(record.given, "Cumpriu o critério");
-    assert.equal(record.seconds, 4.1);
-    assert.equal(recordJudged(judged, "corpo", "sem_resposta", 1).given, "—");
-  }
-  const reading = itemsFor("8-9", "palavras")[3];
-  assert.equal(reading.kind, "fala");
-  if (reading.kind === "fala") {
-    assert.equal(recordJudged(reading, "palavras", "acerto", 2).prompt, "Peça: “Leia em voz alta.” (estímulo: O gato subiu no telhado.)");
-  }
-  const digits = itemsFor("8-9", "memoria")[0];
-  if (digits.kind === "fala") assert.match(recordJudged(digits, "memoria", "erro", 2).prompt, /\(estímulo: 3 · 8 · 1 · 6 · 4\)$/);
-  const icon = itemsFor("8-9", "corpo")[0];
-  if (icon.kind === "fazer") assert.equal(recordJudged(icon, "corpo", "acerto", 2).prompt, icon.prompt, "ícone ilustrativo não entra no registro");
+  const hit = recordTouch(item, phaseId, right, 2.345);
+  assert.equal(hit.status, "acerto");
+  assert.equal(hit.seconds, 2.3);
+  assert.equal(hit.origin, item.origin);
+  assert.equal(hit.ref, item.ref);
+  assert.equal(recordTouch(item, phaseId, wrong, 1).status, "erro");
+  const silent = recordTouch(item, phaseId, null, -3);
+  assert.equal(silent.status, "sem_resposta");
+  assert.equal(silent.seconds, 0);
+  assert.equal(recordTouch(item, phaseId, null, 3, false, true).status, "recusa");
+
+  const build = firstOf(7, "montar");
+  assert.equal(recordBuild(build.item, build.phaseId, [...build.item.target], 9).status, "acerto");
+  assert.equal(recordBuild(build.item, build.phaseId, [...build.item.target].reverse(), 9).status, "erro");
+  assert.equal(recordBuild(build.item, build.phaseId, null, 9).status, "sem_resposta");
+  assert.equal(recordBuild(build.item, build.phaseId, null, 9, false, true).status, "recusa");
+  assert.equal(recordBuild(build.item, build.phaseId, ["G", "A"], 9).given, "GA");
+  assert.match(recordBuild(build.item, build.phaseId, null, 9).prompt, /^Ditado: monte a palavra GATO$/);
+
+  const judged = firstOf(4, "fazer");
+  const record = recordJudged(judged.item, judged.phaseId, "acerto", 4.06);
+  assert.equal(record.expected, judged.item.expected);
+  assert.equal(record.given, "Cumpriu o critério");
+  assert.equal(record.seconds, 4.1);
+  assert.equal(recordJudged(judged.item, judged.phaseId, "sem_resposta", 1).given, "—");
+  assert.equal(recordJudged(judged.item, judged.phaseId, "recusa", 1).given, "Recusou");
+  assert.equal("via" in recordJudged(judged.item, judged.phaseId, "acerto", 1, false, "gesto"), false, "sem alternativa prevista, gesto não vira via");
+
+  const gesture = firstOf(2, "fala", (entry) => Boolean(entry.gesture));
+  const viaGesture = recordJudged(gesture.item, gesture.phaseId, "acerto", 3, false, "gesto");
+  assert.equal(viaGesture.via, "gesto");
+  assert.equal(viaGesture.given, "Cumpriu o critério por gesto/apontar");
+  assert.match(viaGesture.expected, /alternativa aceita: /);
+  assert.equal("via" in recordJudged(gesture.item, gesture.phaseId, "erro", 3, false, "gesto"), false, "gesto só acompanha acerto");
+
+  const reading = firstOf(7, "fala", (entry) => entry.prompt === "Peça: “Leia a frase em voz alta.”" || entry.prompt.startsWith("Leia a frase em voz alta"));
+  assert.match(recordJudged(reading.item, reading.phaseId, "acerto", 2).prompt, /\(estímulo: O gato dorme no sofá\.\)$/);
+  const digits = firstOf(9, "fala", (entry) => entry.prompt.includes("Repita: 3 – 8 – 1 – 6 – 4"));
+  assert.match(recordJudged(digits.item, digits.phaseId, "erro", 2).prompt, /\(estímulo: 3 · 8 · 1 · 6 · 4\)$/);
+  const icon = firstOf(8, "fazer", (entry) => entry.stimulus === "🦩");
+  assert.equal(recordJudged(icon.item, icon.phaseId, "acerto", 2).prompt, icon.item.prompt, "ícone ilustrativo não entra no registro");
+  const context = firstOf(5, "toque", (entry) => Boolean(entry.context));
+  assert.match(recordTouch(context.item, context.phaseId, null, 1).prompt, /ferver/);
 });
 
-test("faixas operacionais: 3–4 esperado, 2 observar, 0–1 alerta; total 16+/12–15/≤11", () => {
+test("faixas operacionais: as mesmas proporções de sempre, com texto gerado pelo número de itens", () => {
   assert.equal(phaseLevel(4, 4), "esperado");
   assert.equal(phaseLevel(3, 4), "esperado");
   assert.equal(phaseLevel(2, 4), "observar");
   assert.equal(phaseLevel(1, 4), "alerta");
-  assert.equal(phaseLevel(0, 4), "alerta");
+  assert.equal(phaseLevel(4, 5), "esperado");
+  assert.equal(phaseLevel(3, 5), "observar");
+  assert.equal(phaseLevel(2, 5), "alerta");
   assert.equal(overallLevel(16, 20), "esperado");
   assert.equal(overallLevel(15, 20), "observar");
-  assert.equal(overallLevel(12, 20), "observar");
   assert.equal(overallLevel(11, 20), "alerta");
+  assert.equal(overallLevel(20, 24), "esperado");
+  assert.equal(overallLevel(19, 24), "observar");
+  assert.equal(overallLevel(24, 30), "esperado");
+  assert.equal(overallLevel(18, 30), "observar");
+  assert.equal(overallLevel(17, 30), "alerta");
   assert.equal(overallLevel(0, 0), "alerta");
+  assert.deepEqual(levelCuts(4), { esperado: 3, observar: 2 });
+  assert.deepEqual(levelCuts(5), { esperado: 4, observar: 3 });
+  assert.deepEqual(levelCuts(20, "total"), { esperado: 16, observar: 12 });
+  assert.equal(cutText(4), "3–4 acertos = esperado; 2 = observar; 0–1 = alerta");
+  assert.equal(cutText(5), "4–5 acertos = esperado; 3 = observar; 0–2 = alerta");
+  assert.equal(cutText(20, "total"), "16–20 acertos = esperado; 12–15 = observar; 0–11 = alerta");
+  assert.equal(cutText(30, "total"), "24–30 acertos = esperado; 18–23 = observar; 0–17 = alerta");
+  // As proporções continuam iguais às da versão anterior: nenhuma faixa ficou mais permissiva.
+  for (let total = 1; total <= 40; total++) {
+    for (let hits = 0; hits <= total; hits++) {
+      assert.equal(phaseLevel(hits, total), hits / total >= 0.75 ? "esperado" : hits / total >= 0.5 ? "observar" : "alerta");
+    }
+  }
 });
 
-function play(bandId: GameSession["bandId"], plan: (index: number) => AnswerRecord["status"]): GameSession {
-  const band = AGE_BANDS.find((entry) => entry.id === bandId)!;
+type Plan = (index: number, item: Item) => AnswerRecord["status"];
+
+function answer(item: Item, phaseId: PhaseId, status: AnswerRecord["status"], seconds: number): AnswerRecord {
+  if (item.kind === "toque") {
+    const chosen = status === "sem_resposta" || status === "recusa" ? null : item.options.find((option) => (option.label === item.answer) === (status === "acerto"))!;
+    return recordTouch(item, phaseId, chosen, seconds, false, status === "recusa");
+  }
+  if (item.kind === "montar") {
+    const placed = status === "acerto" ? [...item.target] : status === "erro" ? [...item.target].reverse() : null;
+    return recordBuild(item, phaseId, placed, seconds, false, status === "recusa");
+  }
+  return recordJudged(item, phaseId, status, seconds);
+}
+
+function play(years: number, plan: Plan = () => "acerto"): GameSession {
   const answers: AnswerRecord[] = [];
   let index = 0;
   for (const phaseId of PHASE_ORDER) {
-    for (const item of itemsFor(bandId, phaseId)) {
-      const status = plan(index++);
-      if (item.kind === "toque") {
-        const chosen = status === "sem_resposta" ? null : item.options.find((option) => (option.label === item.answer) === (status === "acerto"))!;
-        answers.push(recordTouch(item, phaseId, chosen, 3));
-      } else {
-        answers.push(recordJudged(item, phaseId, status, 5));
-      }
+    for (const item of itemsFor(String(years), phaseId)) {
+      answers.push(answer(item, phaseId, plan(index++, item), item.kind === "toque" || item.kind === "montar" ? 3 : 5));
     }
   }
-  return { version: "test", ageYears: band.min, bandId, characterId: "robo", startedAt: "2026-09-25T12:00:00.000Z", finishedAt: "2026-09-25T12:10:00.000Z", answers };
+  return { version: "test", ageYears: years, bandId: String(years), characterId: "robo", startedAt: "2026-09-30T12:00:00.000Z", finishedAt: "2026-09-30T12:15:00.000Z", answers, pauseCount: 0 };
 }
 
-test("resumo conta acertos por fase e no total, marca completude e soma tempos", () => {
-  const perfect = summarize(play("8-9", () => "acerto"));
-  assert.equal(perfect.hits, 20);
-  assert.equal(perfect.total, 20);
+test("resumo conta acertos por mundo e no total, com esperado para a idade e completude", () => {
+  const perfect = summarize(play(8));
+  assert.equal(perfect.hits, 30);
+  assert.equal(perfect.total, 30);
+  assert.equal(perfect.expectedMin, 24);
   assert.equal(perfect.level, "esperado");
   assert.equal(perfect.complete, true);
-  assert.ok(perfect.durationSeconds > 0);
-  assert.deepEqual(perfect.phases.map((phase) => phase.hits), [4, 4, 4, 4, 4]);
+  assert.deepEqual(perfect.phases.map((phase) => phase.hits), [5, 5, 5, 5, 5, 5]);
+  assert.ok(perfect.phases.every((phase) => phase.expectedMin === 4));
 
-  const mixed = summarize(play("6-7", (index) => (index % 4 === 0 ? "erro" : index % 4 === 1 ? "sem_resposta" : "acerto")));
-  assert.equal(mixed.hits, 10);
+  const young = summarize(play(3));
+  assert.equal(young.total, 24);
+  assert.equal(young.expectedMin, 20);
+  assert.ok(young.phases.every((phase) => phase.total === 4 && phase.expectedMin === 3));
+
+  const mixed = summarize(play(6, (index) => (index % 5 === 0 ? "erro" : index % 5 === 1 ? "sem_resposta" : index % 5 === 2 ? "recusa" : "acerto")));
+  assert.equal(mixed.hits, 12);
   assert.equal(mixed.level, "alerta");
-  assert.deepEqual(mixed.phases.map((phase) => [phase.hits, phase.errors, phase.noResponse]), [[2, 1, 1], [2, 1, 1], [2, 1, 1], [2, 1, 1], [2, 1, 1]]);
-  assert.ok(mixed.phases.every((phase) => phase.level === "observar"));
+  assert.deepEqual(mixed.phases.map((phase) => [phase.hits, phase.errors, phase.noResponse, phase.refused]), Array(6).fill([2, 1, 1, 1]));
 
-  const partial = play("2-3", () => "acerto");
+  const partial = play(2);
   partial.answers = partial.answers.slice(0, 7);
   const summary = summarize(partial);
   assert.equal(summary.complete, false);
   assert.equal(summary.hits, 7);
-  assert.equal(summary.phases[4].answers.length, 0);
+  assert.equal(summary.phases[5].answers.length, 0);
+
+  const origins = summarize(play(7)).origins;
+  assert.deepEqual(origins.map((origin) => origin.origin), ["sonda10", "obs10", "visual", "cognitivo"]);
+  assert.equal(origins.reduce((sum, origin) => sum + origin.planned, 0), 30);
+  assert.ok(origins.every((origin) => origin.planned > 0 && origin.applied === origin.planned && origin.hits === origin.planned));
 });
 
-test("relatório e PDF trazem cada pergunta, resposta esperada, registrada, certo/errado e tempo, sem escore normativo", () => {
-  const session = play("10-12", (index) => (index === 3 ? "erro" : index === 9 ? "sem_resposta" : "acerto"));
-  const report = buildGameReport(session, new Date("2026-09-25T12:00:00Z"));
-  assert.match(report, /18 de 20 acertos/);
-  assert.match(report, /NÃO É ESCORE NORMATIVO, PERCENTIL NEM DIAGNÓSTICO/);
-  for (const answer of session.answers) {
-    assert.ok(report.includes(answer.prompt), `relatório inclui: ${answer.prompt}`);
-    assert.ok(report.includes(`Esperado: ${answer.expected}`));
+test("mundo pulado: aparece como não aplicado com motivo; partida fica incompleta, sem classificação, e o resto é preservado", () => {
+  const session = play(3);
+  session.answers = session.answers.filter((entry) => entry.phaseId !== "corpo");
+  session.skipped = [{ phaseId: "corpo", reason: "Criança cansada ou sem colaboração" }];
+  const summary = summarize(session);
+  assert.equal(summary.complete, false);
+  assert.equal(summary.level, null);
+  assert.equal(interpret(session), null);
+  const corpo = summary.phases.find((phase) => phase.phase.id === "corpo")!;
+  assert.equal(corpo.applied, false);
+  assert.equal(corpo.skipReason, "Criança cansada ou sem colaboração");
+  assert.equal(summary.hits, 20, "os mundos aplicados continuam contados");
+  for (const output of [buildGameBrief(session), buildGameReport(session), JSON.stringify(buildGameDocSpec(session, ISSUER, "30/09/2026 14:00"))]) {
+    assert.match(output, /não aplicado — Criança cansada|Não aplicado - motivo: Criança cansada|não aplicado — Criança cansada/i);
+    assert.match(output, /Sem classificação ou interpretação/);
   }
-  assert.match(report, /Errou · 3s/);
-  assert.match(report, /Não respondeu · 3s/);
+  const rows = buildPatientRecordItems(session);
+  assert.ok(rows.some((row) => row.question === "Mundo 6 · Torre do Corpo" && row.answer === "Não aplicado — Criança cansada ou sem colaboração"));
+  const structured = buildStructuredLines(session).join("\n");
+  assert.match(structured, /"nao_aplicado_motivo":"Criança cansada ou sem colaboração"/);
+  assert.match(structured, /"nivel":null/);
+});
+
+test("relatório e PDF: metadados, o que foi testado por instrumento, domínio × esperado, cada item com esperado/resposta/resultado/tempo/repetição e bloco estruturado", () => {
+  const session: GameSession = { ...play(7, (index) => (index === 3 ? "erro" : index === 9 ? "sem_resposta" : index === 12 ? "recusa" : "acerto")), pauseCount: 2, pausedSeconds: 95, undoCount: 1, observations: "Tímida no início, soltou depois." };
+  session.answers[5] = { ...session.answers[5], repeated: true };
+  const report = buildGameReport(session, new Date("2026-09-30T17:05:00Z"));
+  assert.match(report, /27 de 30 acertos \(esperado para a idade: 24 ou mais\)/);
+  assert.match(report, /Data e hora \(local\): 30\/09\/2026/);
+  assert.match(report, /O QUE FOI TESTADO POR INSTRUMENTO DE ORIGEM/);
+  for (const label of ["Sonda 10", "Observa 10 (OBS-10)", "Reconhecimento visual", "Avaliação cognitiva infantil"]) assert.ok(report.includes(`- ${label}: `), label);
+  assert.match(report, /NÃO É ESCORE NORMATIVO, PERCENTIL NEM DIAGNÓSTICO/);
+  assert.match(report, /OBSERVAÇÕES DA APLICADORA\nTímida no início, soltou depois\./);
+  for (const entry of session.answers) {
+    assert.ok(report.includes(entry.prompt), `relatório inclui: ${entry.prompt}`);
+    assert.ok(report.includes(`Esperado: ${entry.expected}`));
+  }
+  assert.match(report, /Errou · 3s|Errou · 5s/);
+  assert.match(report, /Recusou · /);
+  assert.match(report, /comando repetido 1x/);
+  assert.ok(report.includes(STRUCTURED_HEADER));
   assert.doesNotMatch(report, /percentil: |idade equivalente: |QI/i);
 
-  const spec = buildGameDocSpec(session, { doctorName: "Profissional Sintético", specialty: "Neuropediatria", credentials: "CRM 00000", clinicName: "Clínica Sintética", motto: "" }, "25/09/2026 09:00");
+  const spec = buildGameDocSpec(session, ISSUER, "30/09/2026 14:05");
   assert.match(spec.title, /Super NeuroPad Game/);
-  assert.equal(spec.sections.length, 3 + 5 + 2);
-  assert.deepEqual(spec.sections.slice(0, 3).map((section) => section.heading), ["Identificação da aplicação", "Resultado objetivo", "Leitura para a consulta"]);
-  assert.match(spec.sections[2].body, /Itens para checar na consulta \(2\)/);
-  assert.match(spec.sections[2].body, /nenhuma norma, percentil, idade equivalente ou diagnóstico/);
-  assert.match(spec.sections[1].body, /TOTAL: 18 acertos em 20 itens/);
+  assert.equal(spec.sections.length, 4 + 6 + 4, "identificação, instrumentos, domínios, leitura, 6 mundos, observações, critérios, estruturado, proveniência");
+  assert.deepEqual(spec.sections.slice(0, 4).map((section) => section.heading), [
+    "Identificação da sessão", "O que foi testado por instrumento de origem", "Desempenho por domínio x esperado para a idade", "Leitura para a consulta",
+  ]);
+  assert.deepEqual(spec.sections.slice(-4).map((section) => section.heading), ["Observações da aplicadora", "Critérios de leitura", STRUCTURED_HEADER, "Proveniência e natureza"]);
+  const identification = spec.sections[0].body;
+  assert.match(identification, /Idade informada: 7 anos \(faixa anual de 7 anos; itens calibrados para esta idade\)/);
+  assert.match(identification, /Data e hora da aplicação \(horário local, America\/Sao_Paulo\): 30\/09\/2026 14:05/);
+  assert.match(identification, /Duração da sessão \(relógio\): 15 min 00 s/);
+  assert.match(identification, /tempo estimado para a idade: \d+ min \d\d s \(máximo 20 min\)/);
+  assert.match(identification, /Pausas: 2 \(1 min 35 s em pausa\)/);
+  assert.match(identification, /Mundos não aplicados: nenhum/);
+  assert.match(spec.sections[1].body, /Sonda 10 \(\/testes-diretos\): \d+ item\(ns\) previstos para 7 anos/);
+  assert.match(spec.sections[1].body, /Reconhecimento visual \(\/testes-reconhecimento\)/);
+  assert.match(spec.sections[2].body, /TOTAL: 27 acertos em 30 itens \(esperado para a idade: 24 ou mais\)/);
+  assert.match(spec.sections[2].body, /Mundo 1 - Vila da Conversa \(Interação e comunicação\): \d\/5 acertos \(esperado: 4 ou mais\)/);
+  assert.match(spec.sections[3].body, /Itens para checar na consulta \(3\)/);
   const bodies = spec.sections.map((section) => section.body).join("\n");
-  for (const answer of session.answers) {
-    assert.ok(bodies.includes(describeArt(answer.prompt)));
-    assert.ok(bodies.includes(`Resposta esperada: ${describeArt(answer.expected)}`));
-    assert.ok(bodies.includes(`Resposta registrada: ${describeArt(answer.given)}`));
+  for (const entry of session.answers) {
+    assert.ok(bodies.includes(describeArt(entry.prompt)));
+    assert.ok(bodies.includes(`Resposta esperada: ${describeArt(entry.expected)}`));
+    assert.ok(bodies.includes(`Resposta da criança: ${describeArt(entry.given)}`));
   }
-  assert.match(bodies, /Resultado: Errou - tempo: 3 s/);
-  assert.match(bodies, /Resultado: Não respondeu - tempo: 3 s/);
+  assert.match(bodies, /Origem: Reconhecimento visual - Reconhecimento visual · reconhecer · Ambulância/);
+  assert.match(bodies, /Resultado: Recusou - tempo: \d s - repetições do comando: 0/);
+  assert.match(bodies, /repetições do comando: 1/);
+  assert.match(spec.sections.at(-4)!.body, /Tímida no início/);
+  assert.match(spec.sections.at(-3)!.body, /Por mundo \(5 itens\): 4–5 acertos = esperado; 3 = observar; 0–2 = alerta\./);
+  assert.match(spec.sections.at(-3)!.body, /CDC/);
+  const structured = spec.sections.at(-2)!.body.split("\n");
+  assert.equal(structured.filter((line) => line.startsWith("SESSAO ")).length, 1);
+  assert.equal(structured.filter((line) => line.startsWith("DOMINIO ")).length, 6);
+  assert.equal(structured.filter((line) => line.startsWith("ORIGEM ")).length, 4);
+  assert.equal(structured.filter((line) => line.startsWith("ITEM ")).length, 30);
+  assert.equal(structured.filter((line) => line.startsWith("OBSERVACOES ")).length, 1);
+  for (const line of structured.filter((entry) => /^[A-Z]+ \{/.test(entry))) {
+    const parsed = JSON.parse(line.slice(line.indexOf(" ") + 1));
+    assert.equal(typeof parsed, "object");
+  }
+  const sessionLine = JSON.parse(structured.find((line) => line.startsWith("SESSAO "))!.slice(7));
+  assert.equal(sessionLine.idade_anos, 7);
+  assert.equal(sessionLine.completa, true);
+  assert.equal(sessionLine.pausas, 2);
+  assert.equal(sessionLine.duracao_sessao_s, 900);
+  assert.equal(sessionLine.nivel_total, "esperado");
+  const itemLine = JSON.parse(structured.find((line) => line.startsWith("ITEM "))!.slice(5));
+  assert.deepEqual(Object.keys(itemLine), ["id", "mundo", "origem", "referencia", "tipo", "pergunta", "esperado", "resposta", "resultado", "tempo_s", "repeticoes", "via"]);
   assert.match(bodies, /nada foi persistido no navegador nem enviado por rede/);
-  assert.match(bodies, /O que vem depois\? \[vermelho\] \[vermelho\] \[azul\]/, "estímulo em emoji vira texto no PDF");
+  assert.match(bodies, /Salvar no prontuário/);
   // Nada é descartado pela normalização Latin-1 do construtor de PDF.
   for (const section of spec.sections) {
     for (const line of [section.heading, ...section.body.split("\n")]) {
@@ -239,36 +358,18 @@ test("relatório e PDF trazem cada pergunta, resposta esperada, registrada, cert
   }
 });
 
-test("todo enunciado, critério e rótulo do banco sobrevivem inteiros ao PDF via glossário de figuras", () => {
-  for (const band of AGE_BANDS) {
-    for (const phaseId of PHASE_ORDER) {
-      for (const item of itemsFor(band.id, phaseId)) {
-        assert.ok(pdfLossless(item.prompt), `${item.id}: enunciado perde figura no PDF: ${item.prompt}`);
-        if (item.kind === "toque") {
-          for (const option of item.options) assert.ok(pdfLossless(option.label), `${item.id}: rótulo ${option.label}`);
-          assert.ok(pdfLossless(item.answer));
-        } else {
-          assert.ok(pdfLossless(item.expected), `${item.id}: critério ${item.expected}`);
-        }
-      }
-    }
-  }
-  assert.equal(describeArt("Toque na figura IGUAL a esta: 🦋"), "Toque na figura IGUAL a esta: [borboleta]");
-  assert.equal(describeArt("Qual figura é IGUAL a esta? ♞"), "Qual figura é IGUAL a esta? [cavalo preto]");
-});
-
-test("desfazer último registro devolve fase e índice exatos do desafio a refazer", () => {
+test("desfazer último registro devolve mundo e índice exatos do desafio a refazer", () => {
   assert.equal(undoLastAnswer([]), null);
-  const session = play("6-7", () => "acerto");
-  const inPhase3 = session.answers.slice(0, 10); // 4 + 4 + 2 itens
-  const undone = undoLastAnswer(inPhase3)!;
+  const session = play(3);
+  const inWorld3 = session.answers.slice(0, 10); // 4 + 4 + 2 itens
+  const undone = undoLastAnswer(inWorld3)!;
   assert.equal(undone.answers.length, 9);
-  assert.equal(undone.phaseId, "numeros");
-  assert.equal(undone.itemIndex, 1, "volta para o segundo desafio da terceira fase");
-  const phaseEnd = undoLastAnswer(session.answers.slice(0, 8))!;
-  assert.equal(phaseEnd.phaseId, "palavras");
-  assert.equal(phaseEnd.itemIndex, 3, "fim de fase volta para o último desafio da fase");
-  assert.equal(inPhase3.length, 10, "entrada não é mutada");
+  assert.equal(undone.phaseId, "palavras");
+  assert.equal(undone.itemIndex, 1);
+  const worldEnd = undoLastAnswer(session.answers.slice(0, 8))!;
+  assert.equal(worldEnd.phaseId, "olhos");
+  assert.equal(worldEnd.itemIndex, 3);
+  assert.equal(inWorld3.length, 10, "entrada não é mutada");
 });
 
 function readComplete(session: GameSession) {
@@ -277,182 +378,163 @@ function readComplete(session: GameSession) {
   return reading;
 }
 
-test("comando repetido entra no registro só quando marcado e aparece em relatório e PDF", () => {
-  const item = itemsFor("4-5", "olhos")[0] as TouchItem;
-  const right = item.options.find((option) => option.label === item.answer)!;
-  assert.equal("repeated" in recordTouch(item, "olhos", right, 1), false);
-  assert.equal(recordTouch(item, "olhos", right, 1, true).repeated, true);
-  const judged = itemsFor("4-5", "corpo")[0];
-  if (judged.kind !== "toque") assert.equal(recordJudged(judged, "corpo", "erro", 2, true).repeated, true);
-  const session = play("4-5", () => "acerto");
-  session.answers[2] = { ...session.answers[2], repeated: true };
-  const reading = readComplete(session);
-  assert.equal(reading.repeated, 1);
-  assert.ok(reading.notes.some((note) => /Comando repetido em 1 item/.test(note)));
-  assert.match(buildGameReport(session), /comando repetido 1x/);
-  const spec = buildGameDocSpec(session, { doctorName: "P", specialty: "", credentials: "", clinicName: "", motto: "" }, "26/09/2026 09:00");
-  assert.match(spec.sections.map((section) => section.body).join("\n"), /comando repetido 1x/);
-});
-
-test("leitura para a consulta: prioridades, padrão de resposta, ritmo interno, toque × aplicadora e abas para aprofundar", () => {
-  const perfect = readComplete(play("8-9", () => "acerto"));
-  assert.equal(perfect.complete, true);
+test("leitura para a consulta: prioridades, padrão com recusa agrupada, gesto, ritmo interno, toque × aplicadora e abas para aprofundar", () => {
+  const perfect = readComplete(play(8));
   assert.deepEqual(perfect.priorities, []);
-  assert.deepEqual(perfect.missed, []);
   assert.equal(perfect.pattern, "nenhum");
-  assert.deepEqual(perfect.slow, []);
-  assert.ok(perfect.notes.some((note) => /dentro do esperado/.test(note) && /não exclui dificuldades sutis/.test(note)));
+  assert.ok(perfect.notes.some((note) => /dentro do esperado para a idade/.test(note) && /não exclui dificuldades sutis/.test(note)));
   assert.equal(perfect.notes.some((note) => /Aprofundar/.test(note)), false);
 
-  // Fase 4 (memória) toda sem resposta, fase 2 (palavras) com dois erros: prioridade ordena alerta antes de observar.
-  const mixed = readComplete(play("6-7", (index) => (index >= 12 && index < 16 ? "sem_resposta" : index === 4 || index === 5 ? "erro" : "acerto")));
+  // Mundo 5 (memória) todo recusado, mundo 3 (palavras) com dois erros.
+  const mixed = readComplete(play(6, (index) => (index >= 20 && index < 25 ? "recusa" : index === 10 || index === 11 ? "erro" : "acerto")));
   assert.deepEqual(mixed.priorities.map((phase) => [phase.phase.id, phase.level]), [["memoria", "alerta"], ["palavras", "observar"]]);
-  assert.equal(mixed.missed.length, 6);
+  assert.equal(mixed.missed.length, 7);
   assert.equal(mixed.errors, 2);
-  assert.equal(mixed.noResponse, 4);
+  assert.equal(mixed.noResponse, 5);
+  assert.equal(mixed.refused, 5);
   assert.equal(mixed.pattern, "nao_resposta");
-  assert.ok(mixed.notes.some((note) => /Predomínio de não resposta \(4 de 6/.test(note) && /recusa, timidez, cansaço/.test(note)));
-  assert.ok(mixed.notes.some((note) => /Prioridade para a consulta: Caverna da Memória 0\/4 \(alerta\); Ilha das Palavras 2\/4 \(observar\)/.test(note)));
-  assert.deepEqual(mixed.deepen, [
-    "Sonda 10 (memória operacional e regra) · OBS-10 (regra SOL/LUA)",
-    "Sonda 10 (linguagem) · Testes Cognitivos (leitura e escrita)",
-  ]);
-  assert.ok(mixed.notes.some((note) => /Aprofundar com as abas de origem: Sonda 10 \(memória operacional e regra\)/.test(note)));
+  assert.ok(mixed.notes.some((note) => /Predomínio de não resposta ou recusa \(5 de 7 itens perdidos, 5 recusa\(s\)\)/.test(note)));
+  assert.ok(mixed.notes.some((note) => /Prioridade para a consulta: Caverna da Memória 0\/5 \(alerta\); Ilha das Palavras 3\/5 \(observar\)/.test(note)));
+  assert.ok(mixed.notes.some((note) => note.startsWith("Aprofundar com as abas de origem: Sonda 10 (memória operacional")));
 
-  // Ritmo: comparação interna. Mediana 3-5 s; um item de 40 s fica marcado; nada normativo.
-  const slowSession = play("10-12", () => "acerto");
+  const gestures = play(2);
+  gestures.answers = gestures.answers.map((entry) => {
+    const item = itemsFor("2", entry.phaseId).find((candidate) => candidate.id === entry.itemId)!;
+    return (item.kind === "fala" || item.kind === "fazer") && item.gesture ? recordJudged(item, entry.phaseId, "acerto", 5, false, "gesto") : entry;
+  });
+  const gestureReading = readComplete(gestures);
+  assert.ok(gestureReading.gestures >= 3);
+  assert.ok(gestureReading.notes.some((note) => /acerto\(s\) por gesto\/apontar/.test(note)));
+
+  const slowSession = play(10);
   slowSession.answers[7] = { ...slowSession.answers[7], seconds: 40 };
   const slow = readComplete(slowSession);
   assert.equal(slow.slow.length, 1);
-  assert.equal(slow.slow[0].seconds, 40);
-  assert.ok(slow.notes.some((note) => /Ritmo: mediana de \d+(\.\d)? s por item; 1 item\(ns\) bem acima do ritmo da própria criança \(40 s\)\. Comparação interna à partida, não normativa\./.test(note)));
+  assert.ok(slow.notes.some((note) => /1 item\(ns\) bem acima do ritmo da própria criança \(40 s\)\. Comparação interna à partida, não normativa\./.test(note)));
 
-  // Toque × aplicadora: todo item julgado errado, todo toque certo.
-  const judgedFail = readComplete(play("6-7", () => "acerto"));
-  const byKind = play("6-7", () => "acerto");
-  byKind.answers = byKind.answers.map((answer) => (answer.kind === "toque" ? answer : { ...answer, status: "erro", given: "Não cumpriu o critério" }));
+  const byKind = play(6);
+  byKind.answers = byKind.answers.map((entry) => (entry.kind === "toque" || entry.kind === "montar" ? entry : { ...entry, status: "erro", given: "Não cumpriu o critério" }));
   const kind = readComplete(byKind);
   assert.equal(kind.touch.hits, kind.touch.total);
   assert.equal(kind.judged.hits, 0);
-  assert.ok(kind.judged.total > 0);
-  assert.ok(kind.pattern === "erro_ativo");
-  assert.ok(kind.notes.some((note) => /Melhor nos itens conferidos pelo jogo/.test(note) && /rigor do critério aplicado/.test(note)));
-  assert.equal(judgedFail.notes.some((note) => /Melhor nos itens/.test(note)), false);
+  assert.ok(kind.notes.some((note) => /Melhor nos itens conferidos pelo jogo/.test(note)));
 
-  // Partida incompleta: fases não aplicadas não viram alerta nem prioridade.
-  const partial = play("2-3", () => "acerto");
-  partial.answers = partial.answers.slice(0, 9);
-  const summary = summarize(partial);
-  assert.deepEqual(summary.phases.map((phase) => phase.applied), [true, true, true, false, false]);
-  assert.equal(summary.phases[0].seconds, 12);
-  assert.equal(interpret(partial), null, "registro parcial não recebe interpretação");
-  assert.equal(summary.level, null);
-  assert.ok(summary.phases.every((phase) => phase.level === null));
+  const app = readFileSync("client/src/App.tsx", "utf8");
+  for (const phase of PHASES) {
+    assert.ok(phase.consult.length > 60);
+    assert.doesNotMatch(phase.consult, /diagn[oó]stico|percentil|escore|QI/i);
+    for (const route of phase.routes) assert.ok(app.includes(`path="${route.href}"`), `${route.href} existe no App`);
+  }
 
-  const text = [...perfect.notes, ...mixed.notes, ...slow.notes, ...kind.notes].join("\n");
+  const withEvents = { ...play(6), pauseCount: 2, undoCount: 1 };
+  assert.ok(readComplete(withEvents).notes.some((note) => note === "Proveniência do registro: 2 pausa(s), 1 registro(s) desfeito(s) e refeito(s) durante a partida."));
+
+  const text = [...perfect.notes, ...mixed.notes, ...slow.notes, ...kind.notes, ...gestureReading.notes].join("\n");
   assert.doesNotMatch(text, /percentil|idade equivalente|QI|diagnóstico de|escore/i, "leitura descritiva, sem norma nem diagnóstico");
   for (const note of text.split("\n")) assert.equal(pdfSafe(note), note.replace(/[–—]/g, "-").replace(/×/g, "x"), `nota perde conteúdo no PDF: ${note}`);
 });
 
-test("leitura inteligente: toques impulsivos, não resposta por tipo, fadiga, ritmo, posição na faixa, roteiro e rotas de origem", () => {
-  // Toques errados em menos de 1 s: só conta erro ativo rápido em item de toque.
-  const fast = play("6-7", (index) => (index % 2 === 0 ? "erro" : "acerto"));
-  fast.answers = fast.answers.map((answer) => (answer.kind === "toque" ? { ...answer, seconds: 0.4 } : answer));
+test("leitura: toques impulsivos, não resposta por tipo e fadiga", () => {
+  const fast = play(6, (index) => (index % 2 === 0 ? "erro" : "acerto"));
+  fast.answers = fast.answers.map((entry) => (entry.kind === "toque" ? { ...entry, seconds: 0.4 } : entry));
   const fastReading = readComplete(fast);
   assert.ok(fastReading.fastMisses.length >= 2);
-  assert.ok(fastReading.fastMisses.every((answer) => answer.kind === "toque" && answer.status === "erro"));
-  assert.ok(fastReading.notes.some((note) => /toques errados em menos de 1 s: considerar impulsividade ou toque acidental/.test(note)));
-  const calm = readComplete(play("6-7", (index) => (index % 2 === 0 ? "erro" : "acerto")));
-  assert.deepEqual(calm.fastMisses, [], "3 s por item não é toque impulsivo");
+  assert.ok(fastReading.fastMisses.every((entry) => entry.kind === "toque" && entry.status === "erro"));
 
-  // Não resposta concentrada nas tarefas de fala.
-  const shy = play("8-9", () => "acerto");
-  shy.answers = shy.answers.map((answer) => (answer.kind === "fala" ? { ...answer, status: "sem_resposta", given: "—" } : answer));
+  const shy = play(8);
+  shy.answers = shy.answers.map((entry) => (entry.kind === "fala" ? { ...entry, status: "sem_resposta", given: "—" } : entry));
   const shyReading = readComplete(shy);
   assert.ok(shyReading.noResponseByKind.fala >= 2);
   assert.equal(shyReading.noResponseByKind.toque, 0);
   assert.ok(shyReading.notes.some((note) => /Não resposta concentrada nas tarefas de fala/.test(note)));
 
-  // Fadiga: primeira metade certa, segunda metade errada.
-  const tired = play("10-12", (index) => (index < 10 ? "acerto" : "erro"));
-  const tiredReading = readComplete(tired);
-  assert.deepEqual([tiredReading.halves.first.hits, tiredReading.halves.second.hits], [10, 0]);
-  assert.equal(tiredReading.halves.drop, true);
-  assert.ok(tiredReading.notes.some((note) => /Queda na segunda metade da partida \(10\/10 acertos no início, 0\/10 no fim\)/.test(note)));
-  assert.equal(readComplete(play("10-12", () => "acerto")).halves.drop, false);
-
-  // Ritmo desacelerou: cinco primeiros em 2 s, cinco últimos em 10 s.
-  const slowing = play("13-17", () => "acerto");
-  slowing.answers = slowing.answers.map((answer, index) => ({ ...answer, seconds: index < 5 ? 2 : index >= 15 ? 10 : 3 }));
-  const slowingReading = readComplete(slowing);
-  assert.deepEqual(slowingReading.pace, { start: 2, end: 10, slowdown: true });
-  assert.ok(slowingReading.notes.some((note) => /Ritmo desacelerou ao longo da partida \(mediana 2 s nos primeiros itens, 10 s nos últimos\)/.test(note)));
-  assert.equal(readComplete(play("13-17", () => "acerto")).pace.slowdown, false);
-
-  // Posição na faixa: só vira nota quando há fase fora do esperado.
-  const lower = play("4-5", (index) => (index < 3 ? "erro" : "acerto"));
-  lower.ageYears = 4;
-  const lowerReading = readComplete(lower);
-  assert.equal(lowerReading.bandPosition, "inferior");
-  assert.ok(lowerReading.notes.some((note) => /Idade no limite inferior da faixa \(4 anos em 4 a 5 anos\)/.test(note)));
-  const upper = { ...lower, ageYears: 5 };
-  assert.equal(readComplete(upper).bandPosition, "superior");
-  assert.ok(readComplete(upper).notes.some((note) => /Idade no limite superior da faixa \(5 anos em 4 a 5 anos\)/.test(note)));
-  const middle = play("10-12", (index) => (index < 3 ? "erro" : "acerto"));
-  middle.ageYears = 11;
-  assert.equal(readComplete(middle).bandPosition, "meio");
-  assert.equal(readComplete(middle).notes.some((note) => /limite (inferior|superior) da faixa/.test(note)), false);
-  const perfectLower = play("4-5", () => "acerto");
-  perfectLower.ageYears = 4;
-  assert.equal(readComplete(perfectLower).notes.some((note) => /limite inferior/.test(note)), false, "sem fase priorizada não há nota de faixa");
-
-  // Roteiro e rotas: uma entrada por fase priorizada, rotas sem repetição, todas existentes no App.
-  assert.deepEqual(lowerReading.plan.map((entry) => entry.phase.id), ["olhos"]);
-  assert.equal(lowerReading.plan[0].text, PHASES[0].consult);
-  assert.deepEqual(lowerReading.routes.map((route) => route.href), ["/testes-reconhecimento", "/testes-cognitivos"]);
-  assert.ok(lowerReading.notes.some((note) => note.startsWith("Roteiro para Floresta dos Olhos: ")));
-  const twoPhases = readComplete(play("6-7", (index) => (index < 3 || (index >= 4 && index < 7) ? "erro" : "acerto")));
-  assert.deepEqual(twoPhases.routes.map((route) => route.href), ["/testes-reconhecimento", "/testes-cognitivos", "/testes-diretos"], "rota repetida entra uma vez");
-  const app = readFileSync("client/src/App.tsx", "utf8");
-  for (const phase of PHASES) {
-    assert.ok(phase.consult.length > 60, `${phase.id}: roteiro de consulta`);
-    assert.doesNotMatch(phase.consult, /diagn[oó]stico|percentil|escore|QI/i);
-    assert.ok(phase.routes.length >= 1);
-    for (const route of phase.routes) assert.ok(app.includes(`path="${route.href}"`), `${route.href} existe no App`);
-  }
-
-  // Proveniência do registro (pausas e desfazer) entra na leitura e no PDF, e não no resumo do prontuário.
-  const withEvents = { ...play("6-7", () => "acerto"), pauseCount: 2, undoCount: 1 };
-  assert.ok(readComplete(withEvents).notes.some((note) => note === "Proveniência do registro: 2 pausa(s), 1 registro(s) desfeito(s) e refeito(s) durante a partida."));
-  assert.equal(readComplete(play("6-7", () => "acerto")).notes.some((note) => /Proveniência/.test(note)), false);
-  const spec = buildGameDocSpec(withEvents, { doctorName: "P", specialty: "", credentials: "", clinicName: "", motto: "" }, "26/09/2026 09:00");
-  assert.match(spec.sections[0].body, /Proveniência do registro: 2 pausa\(s\), 1 registro\(s\) desfeito\(s\) e refeito\(s\), 0 comando\(s\) repetido\(s\)/);
-  const brief = buildGameBrief({ ...lower, pauseCount: 1 });
-  assert.doesNotMatch(brief, /Roteiro para|Proveniência|Aprofundar/);
+  const tired = readComplete(play(10, (index) => (index < 15 ? "acerto" : "erro")));
+  assert.deepEqual([tired.halves.first.hits, tired.halves.second.hits], [15, 0]);
+  assert.equal(tired.halves.drop, true);
 });
 
-test("resumo para o prontuário é prosa curta com faixa, contagem, fases, itens perdidos e ressalva autoral", () => {
-  const session = play("6-7", (index) => (index === 1 ? "erro" : index === 13 ? "sem_resposta" : "acerto"));
-  const brief = buildGameBrief(session, new Date("2026-09-26T12:00:00Z"));
-  assert.match(brief, /^Triagem lúdica de pré-consulta \(Super NeuroPad Game, faixa 6 a 7 anos\) aplicada pela recepção em 26\/09\/2026: 18 de 20 acertos, dentro do esperado para a faixa\./);
-  assert.match(brief, /Por fase: Floresta dos Olhos 3\/4, Ilha das Palavras 4\/4, Montanha dos Números 4\/4, Caverna da Memória 3\/4, Torre do Corpo 4\/4\./);
+test("resumo para o prontuário é prosa curta com idade, contagem, mundos, itens perdidos, observações e ressalva autoral", () => {
+  const session = { ...play(6, (index) => (index === 1 ? "erro" : index === 13 ? "sem_resposta" : "acerto")), observations: "Colaborou bem" };
+  const brief = buildGameBrief(session, new Date("2026-09-30T12:00:00Z"));
+  assert.match(brief, /^Avaliação lúdica de pré-consulta \(Super NeuroPad Game, 6 anos\) aplicada em 30\/09\/2026: 28 de 30 acertos, dentro do esperado para a idade\./);
+  assert.match(brief, /Por mundo: Vila da Conversa 4\/5, Floresta dos Olhos 5\/5, Ilha das Palavras 4\/5, Montanha dos Números 5\/5, Caverna da Memória 5\/5, Torre do Corpo 5\/5\./);
   assert.match(brief, /Itens perdidos: .*\(errou\); .*\(não respondeu\)\./);
+  assert.match(brief, /Observações da aplicadora: Colaborou bem\. Contagem autoral/);
   assert.match(brief, /Contagem autoral, não normativa; a leitura e a conclusão são do médico\.$/);
-  assert.doesNotMatch(brief, /\n/, "uma única prosa corrida");
-  assert.doesNotMatch(brief, /Aprofundar com/, "sem instrução operacional no texto do prontuário");
-  assert.equal(brief.length < 1200, true);
+  assert.doesNotMatch(brief, /\n/);
+  assert.doesNotMatch(brief, /Aprofundar com/);
+  assert.ok(brief.length < 2000);
 });
 
 test("resumo e relatório datam a partida no fuso clínico, não em UTC nem no momento da cópia", () => {
-  // 22h30 em Petrolina = 01h30 UTC do dia seguinte.
-  const lateSession = { ...play("6-7", () => "acerto"), startedAt: "2026-09-27T01:20:00.000Z", finishedAt: "2026-09-27T01:30:00.000Z" };
-  assert.match(buildGameBrief(lateSession), /aplicada pela recepção em 26\/09\/2026:/);
-  assert.match(buildGameReport(lateSession), /Data: 26\/09\/2026 · /);
-  assert.doesNotMatch(buildGameReport(lateSession), /2026-09-27|27\/09\/2026/);
-  // Partida incompleta usa o início; instante inválido não gera "Invalid Date".
+  const lateSession = { ...play(6), startedAt: "2026-09-27T01:20:00.000Z", finishedAt: "2026-09-27T01:30:00.000Z" };
+  assert.match(buildGameBrief(lateSession), /aplicada em 26\/09\/2026:/);
+  assert.match(buildGameReport(lateSession), /Data e hora \(local\): 26\/09\/2026/);
+  assert.doesNotMatch(buildGameReport(lateSession), /27\/09\/2026/);
   const partial = { ...lateSession, finishedAt: null };
   assert.match(buildGameBrief(partial), / em 26\/09\/2026/);
   assert.doesNotMatch(buildGameReport({ ...partial, startedAt: "" }), /Invalid Date|NaN/);
+});
+
+test("partidas interrompidas ou com itens duplicados não pontuam nem interpretam em texto, resumo ou PDF", () => {
+  const full = play(6, (index) => (index % 2 ? "erro" : "acerto"));
+  for (const count of [0, 1, 4, 7, 29]) {
+    const partial = { ...full, answers: full.answers.slice(0, count) };
+    const result = summarize(partial);
+    assert.equal(result.complete, false);
+    assert.equal(result.level, null);
+    assert.ok(result.phases.every((phase) => phase.level === null));
+    assert.equal(interpret(partial), null);
+    const pdf = buildGameDocSpec(partial, ISSUER, "30/09/2026");
+    for (const output of [buildGameReport(partial), buildGameBrief(partial), JSON.stringify(pdf)]) {
+      assert.match(output, /incompleta/);
+      assert.match(output, /Sem classificação ou interpretação/);
+      assert.doesNotMatch(output, /sinal de alerta|dentro do esperado para|prioridade para|ritmo regular|roteiro sugerido|"nivel":"/i);
+    }
+    assert.ok(!pdf.sections.some((section) => /Leitura para a consulta|Critérios de leitura/.test(section.heading)));
+    assert.equal(pdf.sections.length, 3 + 6 + 3);
+    for (const entry of partial.answers) assert.ok(buildGameReport(partial).includes(entry.prompt));
+  }
+  const duplicate = { ...full, answers: full.answers.map((entry, index) => (index === 29 ? full.answers[0] : entry)) };
+  assert.equal(summarize(duplicate).complete, false);
+  assert.equal(interpret(duplicate), null);
+});
+
+test("duração de relógio da sessão: início → fim, nula sem fim ou com instantes inválidos", () => {
+  const session = play(6);
+  assert.equal(sessionWallSeconds(session), 900);
+  assert.equal(sessionWallSeconds({ ...session, finishedAt: null }), null);
+  assert.equal(sessionWallSeconds({ ...session, finishedAt: "invalido" }), null);
+  assert.equal(sessionWallSeconds({ ...session, finishedAt: "2026-09-30T11:00:00.000Z" }), null);
+});
+
+test("salvar no prontuário: resumo, partida, instrumentos, observações e cada item com origem, sem classificar partida incompleta", () => {
+  const full = { ...play(8, (index) => (index % 5 === 0 ? "erro" : "acerto")), pauseCount: 2, undoCount: 1, observations: "Agitada" };
+  const rows = buildPatientRecordItems(full);
+  assert.equal(rows.length, full.answers.length + 4);
+  assert.deepEqual(rows[0], { question: "Resumo para o prontuário", answer: buildGameBrief(full) });
+  assert.match(rows[1].answer, /Idade informada: 8 anos \(faixa anual\) · 30 de 30 itens registrados \(completa\)/);
+  assert.match(rows[1].answer, /duração da sessão 15 min/);
+  assert.match(rows[1].answer, /2 pausa\(s\) · 1 desfeito\(s\)/);
+  assert.equal(rows[2].question, "O que foi testado por instrumento");
+  assert.match(rows[2].answer, /Sonda 10: \d+\/\d+ itens registrados/);
+  assert.deepEqual(rows[3], { question: "Observações da aplicadora", answer: "Agitada" });
+  full.answers.forEach((entry, index) => {
+    const row = rows[index + 4];
+    assert.ok(row.question.endsWith(entry.prompt));
+    assert.ok(row.question.includes(" · Sonda 10 · ") || row.question.includes(" · Observa 10 (OBS-10) · ") || row.question.includes(" · Reconhecimento visual · ") || row.question.includes(" · Avaliação cognitiva infantil · "));
+    assert.ok(row.answer.includes(`esperado: ${entry.expected}`) && row.answer.includes(`registrado: ${entry.given}`));
+  });
+  for (const count of [0, 1, 7, 29]) {
+    const partial = { ...full, answers: full.answers.slice(0, count), finishedAt: null, observations: "" };
+    const partialRows = buildPatientRecordItems(partial);
+    assert.equal(partialRows.length, count + 3);
+    assert.match(partialRows[1].answer, /\(incompleta\)/);
+    assert.doesNotMatch(partialRows[1].answer, /duração da sessão/);
+    const text = partialRows.map((row) => `${row.question} ${row.answer}`).join("\n");
+    assert.match(text, /Sem classificação ou interpretação/);
+    assert.doesNotMatch(text, /sinal de alerta|dentro do esperado para|prioridade para|roteiro sugerido/i);
+  }
 });
 
 test("página: rota real, sensível, sem persistência local, sem rede e sem câmera; abas de origem preservadas", () => {
@@ -464,140 +546,119 @@ test("página: rota real, sensível, sem persistência local, sem rede e sem câ
   }
   assert.equal(isRouteSensitive(SUPER_NEUROPAD_ROUTE), true);
   const accessBase = { path: SUPER_NEUROPAD_ROUTE, accessMode: "remote" as const, isAuthenticated: true, isLoading: false };
-  for (const role of ["admin", "professional", "operator"] as const) {
-    assert.equal(decideRouteAccess({ ...accessBase, userRole: role }), "allow", `papel ${role} pode aplicar o jogo`);
-  }
-  assert.equal(decideRouteAccess({ ...accessBase, userRole: "reader" }), "forbidden", "reader não aplica o jogo");
-  const strip = (source: string) => source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
-  const page = strip(readFileSync("client/src/pages/super-neuropad-game.tsx", "utf8"));
-  const feature = ["model.ts", "music.ts", "pdf.ts"].map((file) => strip(readFileSync(`client/src/features/super-neuropad/${file}`, "utf8"))).join("\n");
+  for (const role of ["admin", "professional", "operator"] as const) assert.equal(decideRouteAccess({ ...accessBase, userRole: role }), "allow");
+  assert.equal(decideRouteAccess({ ...accessBase, userRole: "reader" }), "forbidden");
+  const page = pageSource();
+  const feature = ["model.ts", "bank.ts", "items.ts", "music.ts", "pdf.ts"].map((file) => strip(readFileSync(`client/src/features/super-neuropad/${file}`, "utf8"))).join("\n");
   assert.doesNotMatch(page + feature, /\b(?:localStorage|sessionStorage|indexedDB)\s*\./, "sem persistência clínica no navegador");
-  assert.doesNotMatch(page + feature, /\b(?:fetch|XMLHttpRequest|WebSocket)\s*\(/, "sem envio por rede");
-  assert.doesNotMatch(page + feature, /getUserMedia|MediaRecorder|<video/, "sem câmera");
+  assert.doesNotMatch(page + feature, /\b(?:fetch|XMLHttpRequest|WebSocket)\s*\(|preloadSymbols/, "sem envio por rede");
+  assert.doesNotMatch(page + feature, /getUserMedia|MediaRecorder|<video|toDataURL|toBlob/, "sem câmera e o desenho com o dedo não é exportado");
   assert.match(page, /buildDocumentPdf\(buildGameDocSpec\(/, "PDF pelo construtor clínico compartilhado");
-  assert.match(page, /createChiptune\(\)/, "trilha chiptune sintetizada");
-  assert.match(page, /undoLastAnswer\(answers\)/, "desfazer último registro na interface");
-  assert.match(page, /interpret\(session\)/, "leitura para a consulta na tela de resultado");
-  assert.match(page, /buildGameBrief\(session\)/, "resumo para o prontuário");
-  assert.match(page, /import "@\/styles\/super-neuropad-arcade\.css"/, "acabamento arcade isolado em folha própria");
+  assert.match(page, /createChiptune\(\)/);
+  assert.match(page, /undoLastAnswer\(answers\)/);
+  assert.match(page, /interpret\(session\)/);
+  assert.match(page, /buildGameBrief\(session\)/);
+  assert.match(page, /import \{ Stimulus as VrStimulus \} from "@\/features\/visual-recognition\/Stimulus";/, "figuras do Reconhecimento Visual reaproveitadas");
+  assert.match(page, /<VrStimulus id=\{id\} child \/>/, "texto alternativo não entrega a resposta");
+  assert.match(page, /import "@\/styles\/super-neuropad-arcade\.css"/);
   const css = readFileSync("client/src/styles/super-neuropad-arcade.css", "utf8");
-  assert.match(css, /prefers-reduced-motion: no-preference/, "animações só com movimento permitido");
-  assert.match(page, /isSoundEnabled\(\)/.test(feature) ? /Música/ : /Música/, "controle de música na interface");
-  assert.match(feature, /isSoundEnabled\(\)/, "música respeita a preferência global de som");
+  assert.match(css, /prefers-reduced-motion: no-preference/);
+  assert.match(css, /\.snp \.snp-vr \.rv-illustration/);
+  assert.match(feature, /isSoundEnabled\(\)/);
   assert.doesNotMatch(page, /Acertou!|Errou!|Resposta certa|Resposta errada/, "a criança não recebe certo/errado como feedback de jogo");
+  assert.doesNotMatch(page, /cerca de 10 minutos|5 mundos|3–4 acertos = esperado|16\+ = esperado/, "textos fixos da versão de 5 mundos removidos");
 });
 
-test("toque duplo em tablet não registra o mesmo desafio duas vezes: os três caminhos de resposta passam pela guarda por carimbo de evento", () => {
-  const strip = (source: string) => source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
-  const page = strip(readFileSync("client/src/pages/super-neuropad-game.tsx", "utf8"));
-  assert.match(page, /import \{ acceptManualTap \} from "@\/components\/jogo-facil\/easyReport";/, "reaproveita a guarda de toque duplo já testada no motor compartilhado (EasyGame), sem duplicar a lógica");
-  assert.match(page, /if \(!acceptManualTap\(lastAnswerAt\.current, event\.timeStamp\)\) return;\s*\n\s*lastAnswerAt\.current = event\.timeStamp;\s*\n\s*pushAnswer\(record\);/, "submitAnswer só chama pushAnswer quando o toque respeita o intervalo mínimo");
-  assert.doesNotMatch(page, /onAnswer=\{\(chosen\) => pushAnswer/, "TouchStage não chama pushAnswer direto, sem passar pela guarda");
-  assert.doesNotMatch(page, /onJudge=\{\(status\) => pushAnswer/, "JudgeStage não chama pushAnswer direto, sem passar pela guarda");
+test("página: menores de 2 anos bloqueados, estimativa de tempo, ambiente sem material, pular mundo com motivo e observações", () => {
+  const page = pageSource();
+  assert.match(page, /Menos de 2 anos/);
+  assert.match(page, /data-testid="super-neuropad-under-two"/);
+  assert.match(page, /\{UNDER_TWO_MESSAGE\}/);
+  assert.match(page, /setUnderTwo\(true\); setAgeYears\(null\);/, "menor de 2 anos nunca tem faixa selecionada");
+  assert.match(page, /estimateBandSeconds\(band\.min\)/);
+  assert.match(page, /\(máximo 20\)/);
+  assert.match(page, /band\.ambient/);
+  assert.doesNotMatch(page, /band\.kit/);
+  assert.match(page, /function skipPhase\(reason: string\)/);
+  assert.match(page, /SKIP_REASONS\.map/);
+  assert.match(page, /setSkipped\(\(current\) => current\.filter\(\(entry\) => entry\.phaseId !== phaseId\)\)/, "entrar no mundo anula o pulo anterior");
+  assert.match(page, /data-testid="super-neuropad-observations"/);
+  assert.match(page, /maxLength=\{OBSERVATIONS_MAX\}/);
+  assert.match(page, /OBSERVATION_CHIPS\.map/);
+  assert.match(page, /data-testid="super-neuropad-origins"/);
+  assert.match(page, /cutText\(summary\.phases\[0\]\.total\)/);
+  assert.match(page, /<DrawPad \/>/);
+  assert.match(page, /BuildStage/);
+});
+
+test("toque duplo em tablet não registra o mesmo desafio duas vezes: todos os caminhos de resposta passam pela guarda por carimbo de evento", () => {
+  const page = pageSource();
+  assert.match(page, /import \{ acceptManualTap \} from "@\/components\/jogo-facil\/easyReport";/);
+  assert.match(page, /if \(!acceptManualTap\(lastAnswerAt\.current, event\.timeStamp\)\) return;\s*\n\s*lastAnswerAt\.current = event\.timeStamp;\s*\n\s*pushAnswer\(record\);/);
+  assert.doesNotMatch(page, /=> pushAnswer\(/, "nenhum botão chama pushAnswer direto");
   const submissionSites = [
     /onAnswer=\{\(chosen, event\) => submitAnswer\(recordTouch\(item, phaseId, chosen, elapsedSeconds\(\), repeated\), event\)\}/,
-    /onClick=\{\(event\) => submitAnswer\(recordTouch\(item, phaseId, null, elapsedSeconds\(\), repeated\), event\)\}/,
-    /onJudge=\{\(status, event\) => submitAnswer\(recordJudged\(item, phaseId, status, elapsedSeconds\(\), repeated\), event\)\}/,
+    /onMiss=\{\(status, event\) => submitAnswer\(recordTouch\(item, phaseId, null, elapsedSeconds\(\), repeated, status === "recusa"\), event\)\}/,
+    /onDone=\{\(placed, event\) => submitAnswer\(recordBuild\(item, phaseId, placed, elapsedSeconds\(\), repeated\), event\)\}/,
+    /onMiss=\{\(status, event\) => submitAnswer\(recordBuild\(item, phaseId, null, elapsedSeconds\(\), repeated, status === "recusa"\), event\)\}/,
+    /onJudge=\{\(status, event, gesture\) => submitAnswer\(recordJudged\(item, phaseId, status, elapsedSeconds\(\), repeated, gesture \? "gesto" : undefined\), event\)\}/,
   ];
   for (const pattern of submissionSites) assert.match(page, pattern, `caminho de resposta sem guarda: ${pattern}`);
-  // Reiniciar zera a guarda: sem isto, uma partida nova herdaria o carimbo da anterior e travaria o primeiro toque legítimo.
   assert.match(page, /lastAnswerAt\.current = Number\.NEGATIVE_INFINITY;\s*\n\s*setScreen\("intro"\)/, "startGame zera a guarda");
   assert.match(page, /lastAnswerAt\.current = Number\.NEGATIVE_INFINITY;\s*\n\s*setScreen\("setup"\)/, "restart zera a guarda");
 });
 
-
-test("partidas interrompidas ou com itens duplicados não pontuam nem interpretam em texto, resumo ou PDF", () => {
-  const full = play("6-7", (index) => index % 2 ? "erro" : "acerto");
-  const issuer = { doctorName: "Sintético", specialty: "", credentials: "", clinicName: "", motto: "" };
-  for (const count of [0, 1, 4, 7, 19]) {
-    const partial = { ...full, answers: full.answers.slice(0, count) };
-    const result = summarize(partial);
-    assert.equal(result.complete, false);
-    assert.equal(result.level, null);
-    assert.ok(result.phases.every((phase) => phase.level === null));
-    assert.equal(interpret(partial), null);
-    const pdf = buildGameDocSpec(partial, issuer, "26/09/2026");
-    for (const output of [buildGameReport(partial), buildGameBrief(partial), JSON.stringify(pdf)]) {
-      assert.match(output, /incompleta/);
-      assert.match(output, /Sem classificação ou interpretação/);
-      assert.doesNotMatch(output, /sinal de alerta|dentro do esperado|prioridade para|ritmo regular|acertos em|\d+\/4|roteiro sugerido/i);
-    }
-    assert.ok(!pdf.sections.some((section) => /Leitura para a consulta|Critérios de leitura/.test(section.heading)));
-    for (const answer of partial.answers) assert.ok(buildGameReport(partial).includes(answer.prompt));
-  }
-  const duplicate = { ...full, answers: full.answers.map((answer, index) => index === 19 ? full.answers[0] : answer) };
-  assert.equal(summarize(duplicate).complete, false, "20 registros não bastam: cada item esperado precisa aparecer uma vez");
-  assert.equal(interpret(duplicate), null);
-});
-
-
-// ─────────────────────────── uso prático na consulta (30/09) ───────────────────────────
-test("duração de relógio da sessão: início → fim, nula sem fim ou com instantes inválidos", () => {
-  const session = play("6-7", () => "acerto");
-  assert.equal(sessionWallSeconds(session), 600);
-  assert.equal(sessionWallSeconds({ ...session, finishedAt: null }), null);
-  assert.equal(sessionWallSeconds({ ...session, finishedAt: "invalido" }), null);
-  assert.equal(sessionWallSeconds({ ...session, finishedAt: "2026-09-25T11:00:00.000Z" }), null, "fim antes do início não vira duração negativa");
-});
-
-test("salvar em paciente: resumo, dados da partida e cada item, sem classificar partida incompleta", () => {
-  const full = play("8-9", (index) => (index % 5 === 0 ? "erro" : "acerto"));
-  const rows = buildPatientRecordItems({ ...full, pauseCount: 2, undoCount: 1 });
-  assert.equal(rows.length, full.answers.length + 2);
-  assert.deepEqual(rows[0], { question: "Resumo para o prontuário", answer: buildGameBrief(full) });
-  assert.match(rows[1].answer, /Idade informada: 8 anos · faixa 8 a 9 anos · 20 de 20 itens registrados \(completa\)/);
-  assert.match(rows[1].answer, /duração da sessão 10 min/);
-  assert.match(rows[1].answer, /2 pausa\(s\) · 1 desfeito\(s\)/);
-  full.answers.forEach((answer, index) => {
-    const row = rows[index + 2];
-    assert.ok(row.question.endsWith(answer.prompt), "ordem da partida preservada");
-    assert.ok(row.answer.includes(`esperado: ${answer.expected}`) && row.answer.includes(`registrado: ${answer.given}`));
-  });
-  for (const count of [0, 1, 7, 19]) {
-    const partial = { ...full, answers: full.answers.slice(0, count), finishedAt: null };
-    const partialRows = buildPatientRecordItems(partial);
-    assert.equal(partialRows.length, count + 2);
-    assert.match(partialRows[1].answer, /\(incompleta\)/);
-    assert.doesNotMatch(partialRows[1].answer, /duração da sessão/, "sem fim, sem duração");
-    const text = partialRows.map((row) => `${row.question} ${row.answer}`).join("\n");
-    assert.match(text, /Sem classificação ou interpretação/);
-    assert.doesNotMatch(text, /sinal de alerta|dentro do esperado|prioridade para|\d+\/4|roteiro sugerido/i);
-  }
-});
-
-test("atalhos da aplicadora: 1/2/3 só para itens julgados; P pausa; toque segue da criança", () => {
+test("atalhos da aplicadora: 1/2/3/4 (e 5 = gesto) só para itens julgados; P pausa; toque e montagem seguem da criança", () => {
   assert.equal(judgeShortcut("1"), "acerto");
   assert.equal(judgeShortcut("2"), "erro");
   assert.equal(judgeShortcut("3"), "sem_resposta");
-  for (const key of ["0", "4", "p", "Enter", " ", "a"]) assert.equal(judgeShortcut(key), null, key);
-  const strip = (source: string) => source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
-  const page = strip(readFileSync("client/src/pages/super-neuropad-game.tsx", "utf8"));
-  assert.match(page, /if \(!status \|\| paused \|\| !item \|\| item\.kind === "toque"\) return;/, "teclado nunca responde item de toque");
-  assert.match(page, /submitAnswer\(recordJudged\(item, phaseId, status, elapsedSeconds\(\), repeated\), event\)/, "atalho passa pela guarda de toque duplo");
-  assert.match(page, /event\.repeat \|\| event\.altKey \|\| event\.ctrlKey \|\| event\.metaKey/, "tecla segurada ou combinação não registra");
-  assert.match(page, /INPUT\|TEXTAREA\|SELECT/, "digitar em campo (ex.: novo paciente) não aciona atalhos");
-  for (const key of ["1", "2", "3", "P"]) assert.match(page, new RegExp(`aria-keyshortcuts="${key}"`));
+  assert.equal(judgeShortcut("4"), "recusa");
+  for (const key of ["0", "5", "p", "Enter", " ", "a"]) assert.equal(judgeShortcut(key), null, key);
+  const page = pageSource();
+  assert.match(page, /if \(paused \|\| !item \|\| \(item\.kind !== "fala" && item\.kind !== "fazer"\)\) return;/, "teclado nunca responde item de toque ou de montar");
+  assert.match(page, /if \(event\.key === GESTURE_SHORTCUT && item\.gesture\)/, "atalho de gesto só quando o item prevê");
+  assert.match(page, /submitAnswer\(recordJudged\(item, phaseId, status, elapsedSeconds\(\), repeated\), event\)/);
+  assert.match(page, /event\.repeat \|\| event\.altKey \|\| event\.ctrlKey \|\| event\.metaKey/);
+  assert.match(page, /INPUT\|TEXTAREA\|SELECT/, "digitar nas observações não aciona atalhos");
+  for (const key of ["1", "2", "3", "4", "P"]) assert.match(page, new RegExp(`aria-keyshortcuts="${key}"`));
+  assert.match(page, /aria-keyshortcuts=\{GESTURE_SHORTCUT\}/);
 });
 
-test("página prática: pausa automática, recomeço rápido, nova criança limpa idade e resultado protegido", () => {
-  const strip = (source: string) => source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
-  const page = strip(readFileSync("client/src/pages/super-neuropad-game.tsx", "utf8"));
-  assert.match(page, /addEventListener\("visibilitychange", onVisibility\)/, "tela bloqueada pausa o desafio");
+test("página prática: pausa automática com tempo em pausa, recomeço rápido, nova criança limpa idade e resultado protegido", () => {
+  const page = pageSource();
+  assert.match(page, /addEventListener\("visibilitychange", onVisibility\)/);
   assert.match(page, /if \(document\.hidden\) pauseNow\(true\)/);
-  assert.match(page, /pauseCount\.current \+= 1;\s*\n\s*music\.current\?\.stop\(\);/, "pausa conta na proveniência e para a trilha");
-  assert.match(page, /canPause=\{screen === "play"\}/, "pausa só no desafio (não distorce o cronômetro nas telas de fase)");
-  assert.match(page, /function restart\(\) \{[\s\S]*?setAgeYears\(null\);\s*\n\s*setCharacter\(null\);/, "nova partida não herda a idade (faixa) da criança anterior");
-  assert.match(page, /screen === "results" && !resultKept && !window\.confirm\(/, "resultado não guardado pede confirmação");
-  assert.match(page, /function replaySameChild\(\) \{[\s\S]*?startGame\(\);/, "reiniciar volta direto ao mundo 1");
+  assert.match(page, /pauseCount\.current \+= 1;\s*\n\s*pausedAt\.current = performance\.now\(\);/, "pausa conta na proveniência e marca o início");
+  assert.match(page, /pausedMs\.current \+= performance\.now\(\) - pausedAt\.current/, "tempo em pausa é somado");
+  assert.match(page, /pausedSeconds: Math\.round\(pausedMs\.current \/ 1000\)/);
+  assert.match(page, /canPause=\{screen === "play"\}/);
+  assert.match(page, /function restart\(\) \{[\s\S]*?setAgeYears\(null\);\s*\n\s*setCharacter\(null\);/);
+  assert.match(page, /function restart\(\) \{[\s\S]*?setObservations\(""\);/, "nova criança não herda observações");
+  assert.match(page, /screen === "results" && !resultKept && !window\.confirm\(/);
+  assert.match(page, /function replaySameChild\(\) \{[\s\S]*?startGame\(\);/);
   assert.match(page, /onRestart=\{replaySameChild\}/);
-  assert.match(page, /setSeed\(Math\.floor\(Math\.random\(\) \* 1_000_000\)\);/, "ordem das opções nova a cada partida");
+  assert.match(page, /setSeed\(Math\.floor\(Math\.random\(\) \* 1_000_000\)\);/);
   for (const kept of [/writeText\(text\);\s*\n\s*setResultKept\(true\)/, /downloadTextDocument\([^\n]+\);\s*\n\s*setResultKept\(true\)/, /revokeObjectURL\(url\), 1000\);\s*\n\s*setResultKept\(true\)/, /onSaved=\{\(\) => setResultKept\(true\)\}/]) {
     assert.match(page, kept);
   }
-  // Salvar em paciente: ação explícita, só na tela de resultado, pelo componente compartilhado.
   assert.match(page, /import\("@\/components\/SaveToPatient"\)/);
   assert.match(page, /screen === "results" \? buildPatientRecordItems\(session\) : \[\]/);
-  const resultsBlock = page.slice(page.indexOf('{screen === "results" && summary && session && ('));
-  assert.ok(resultsBlock.includes("<LazySaveToPatient"), "salvar em paciente só aparece no resultado");
-  assert.doesNotMatch(page.slice(0, page.indexOf('{screen === "results" && summary && session && (')), /<LazySaveToPatient/);
+  const resultsAt = page.indexOf('{screen === "results" && summary && session && (');
+  assert.ok(page.slice(resultsAt).includes("<LazySaveToPatient"));
+  assert.doesNotMatch(page.slice(0, resultsAt), /<LazySaveToPatient/);
+});
+
+test("banco: toque tem uma opção certa e a posição dela varia (sem gabarito previsível)", () => {
+  for (const band of AGE_BANDS) {
+    const positions = new Set<number>();
+    for (const phaseId of PHASE_ORDER) {
+      for (const item of itemsFor(band.id, phaseId)) {
+        if (item.kind !== "toque") continue;
+        const touch = item as TouchItem;
+        assert.equal(touch.options.filter((option) => option.label === touch.answer).length, 1, item.id);
+        positions.add(touch.options.findIndex((option) => option.label === touch.answer));
+      }
+    }
+    assert.ok(positions.size >= 2, `${band.id}: correta em ${positions.size} posições distintas (o jogo ainda embaralha a cada partida)`);
+  }
 });

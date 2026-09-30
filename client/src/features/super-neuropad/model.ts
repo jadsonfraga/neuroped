@@ -1,41 +1,74 @@
 /**
- * Super NeuroPad Game — modelo, banco de itens e motor de resultado.
+ * Super NeuroPad Game — avaliação única de pré-consulta, uma faixa por ano (2 a 17 anos).
  *
- * Reúne, em uma única jornada de cinco fases, o que hoje está espalhado em
- * quatro abas que continuam existindo: Sonda 10, OBS-10 (Pré-Consulta por
- * faixa etária), Teste de Reconhecimento Visual e Testes Cognitivos por Faixa
- * Etária. O jogo é aplicado pela secretária, sem câmera, com resposta direta
- * da criança (toque na tela) ou registro imediato da aplicadora (fala/fazer).
+ * Integra, em uma só sessão de até 20 minutos, os elementos das quatro abas
+ * que continuam existindo: Sonda 10 (Avaliação Direta), Observa 10 (OBS-10,
+ * Pré-Consulta por faixa etária), Teste de Reconhecimento Visual e Avaliação
+ * Cognitiva Infantil (Testes Cognitivos por Faixa Etária). O banco integrado
+ * (`bank.ts`) reutiliza os bancos de lá; cada item diz de onde veio.
+ * Aplicado pela aplicadora junto com a criança, sem câmera e sem instrumento
+ * externo: resposta direta da criança (toque/montagem na tela) ou registro
+ * imediato da aplicadora (fala/ação) contra um critério explícito.
  *
  * Contrato clínico (não negociável):
- *   • triagem autoral de déficits GROSSEIROS por faixa etária em anos;
- *   • todo item tem certo e errado explícitos — sem julgamento subjetivo;
+ *   • triagem autoral de déficits GROSSEIROS por idade em anos (menores de 2 anos
+ *     não fazem o jogo: vão para OBS-10 ou Sonda 10);
+ *   • todo item tem certo e errado explícitos; "Não respondeu" e "Recusou" são
+ *     registrados à parte de "Errou";
  *   • contagens e faixas operacionais são autorais: não são norma, percentil,
  *     idade equivalente, escore psicométrico nem diagnóstico;
  *   • a criança nunca vê certo/errado; a leitura final é do médico;
- *   • nada é persistido no navegador nem enviado por rede; o resultado sai em
- *     PDF detalhado gerado localmente.
+ *   • nada é persistido no navegador nem enviado por rede durante o jogo; o
+ *     resultado sai em PDF gerado localmente e só vai ao prontuário pelo botão
+ *     explícito "Salvar no prontuário".
  */
 
-import { formatClinicalDate } from "../../lib/clinicalDate";
+import { formatClinicalDate, formatClinicalDateTime } from "../../lib/clinicalDate";
+import { EMOJI_NAMES, INTEGRATED_BANK, itemsPerPhase, MAX_AGE_YEARS, MIN_AGE_YEARS, PHASE_ORDER, YEARS, type PhaseId } from "./bank";
+import {
+  buildMatches,
+  isJudged,
+  itemExpected,
+  KIND_LABELS,
+  ORIGIN_LABELS,
+  ORIGIN_ORDER,
+  ORIGIN_ROUTES,
+  type BuildItem,
+  type DoItem,
+  type Item,
+  type JudgedItem,
+  type Option,
+  type OriginId,
+  type ShapeId,
+  type SpeakItem,
+  type TouchItem,
+} from "./items";
 
-export const SUPER_NEUROPAD_VERSION = "2026-09-26.1";
+export { buildMatches, isJudged, itemExpected, KIND_LABELS, ORIGIN_LABELS, ORIGIN_ORDER, ORIGIN_ROUTES, MAX_AGE_YEARS, MIN_AGE_YEARS, PHASE_ORDER, YEARS, itemsPerPhase };
+export type { BuildItem, DoItem, Item, JudgedItem, Option, OriginId, PhaseId, ShapeId, SpeakItem, TouchItem };
+
+export const SUPER_NEUROPAD_VERSION = "2026-09-30.1";
 export const SUPER_NEUROPAD_TITLE = "Super NeuroPad Game";
 export const SUPER_NEUROPAD_ROUTE = "/super-neuropad-game";
 export const SUPER_NEUROPAD_NATURE =
-  "Jogo de triagem autoral para déficits grosseiros, aplicado pela recepção na pré-consulta. Não é instrumento psicométrico, não gera escore normativo, percentil, idade equivalente nem diagnóstico. A leitura e a conclusão pertencem ao médico.";
+  "Avaliação lúdica autoral de pré-consulta para déficits grosseiros, aplicada pela aplicadora junto com a criança. Não é instrumento psicométrico, não gera escore normativo, percentil, idade equivalente nem diagnóstico. A leitura e a conclusão pertencem ao médico.";
 export const SUPER_NEUROPAD_SOURCES = [
-  "Sonda 10 · Avaliação Direta (memória, atenção, linguagem e regra)",
-  "OBS-10 · Pré-Consulta por Faixa Etária (núcleo motor e comandos com critério)",
-  "Teste de Reconhecimento Visual (reconhecer e nomear figuras por idade)",
-  "Testes Cognitivos por Faixa Etária (leitura, escrita e aritmética graduadas)",
+  "Sonda 10 · Avaliação Direta (interação, linguagem, atenção, memória operacional, inibição, flexibilidade e planejamento)",
+  "Observa 10 (OBS-10) · Pré-Consulta por Faixa Etária (acolher, núcleo motor, mãos/desenho/escrita, linguagem, regra SOL/LUA e evocação)",
+  "Teste de Reconhecimento Visual (reconhecer, parear e nomear figuras, cores e conceitos por idade)",
+  "Avaliação Cognitiva Infantil · Testes Cognitivos por Faixa Etária (visual, fala/leitura, letras/escrita e números)",
+] as const;
+/** Marcos de desenvolvimento citados pelo roteiro OBS-10, usados como referência descritiva da calibração. */
+export const SUPER_NEUROPAD_MILESTONE_SOURCES = [
+  "CDC — Learn the Signs. Act Early (marcos de 2 a 5 anos)",
+  "AAP — Bright Futures / vigilância do desenvolvimento",
 ] as const;
 
-export const MIN_AGE_YEARS = 2;
-export const MAX_AGE_YEARS = 17;
+/** Teto da sessão inteira, em segundos (20 minutos). */
+export const SESSION_LIMIT_SECONDS = 20 * 60;
 
-// ─────────────────────────────── faixas etárias (anos) ───────────────────────────────
-export type BandId = "2-3" | "4-5" | "6-7" | "8-9" | "10-12" | "13-17";
+// ─────────────────────────────── faixas etárias (um ano cada) ───────────────────────────────
+export type BandId = string;
 
 export interface AgeBand {
   id: BandId;
@@ -43,21 +76,52 @@ export interface AgeBand {
   min: number;
   max: number;
   icon: string;
-  kit: string[];
+  /** Desafios por mundo nesta faixa. */
+  perPhase: number;
+  /** O que o ambiente da sala precisa ter (nada é levado: tudo mais está no aplicativo). */
+  ambient: string[];
 }
 
-export const AGE_BANDS: readonly AgeBand[] = [
-  { id: "2-3", label: "2 a 3 anos", min: 2, max: 3, icon: "🌱", kit: ["Bola macia", "Lápis grosso e papel", "3 blocos grandes", "Pano e um brinquedo pequeno", "Caixa aberta"] },
-  { id: "4-5", label: "4 a 5 anos", min: 4, max: 5, icon: "🌿", kit: ["Lápis e papel", "Caixa com tampa", "Espaço livre para pular"] },
-  { id: "6-7", label: "6 a 7 anos", min: 6, max: 7, icon: "🚀", kit: ["Lápis e papel", "Mesa para bater a mão (regra SOL/LUA)"] },
-  { id: "8-9", label: "8 a 9 anos", min: 8, max: 9, icon: "🧭", kit: ["Lápis e papel", "Linha reta no chão (fita ou rejunte)", "Mesa para a regra SOL/LUA"] },
-  { id: "10-12", label: "10 a 12 anos", min: 10, max: 12, icon: "🧠", kit: ["Lápis e papel", "Espaço livre para equilíbrio"] },
-  { id: "13-17", label: "13 a 17 anos", min: 13, max: 17, icon: "✨", kit: ["Lápis e papel", "Linha reta no chão (fita ou rejunte)"] },
-] as const;
+function iconFor(years: number): string {
+  if (years <= 3) return "🌱";
+  if (years <= 5) return "🌿";
+  if (years <= 7) return "🚀";
+  if (years <= 9) return "🧭";
+  if (years <= 12) return "🧠";
+  return "✨";
+}
+
+function ambientFor(years: number): string[] {
+  const base = ["Chão livre de uns 3 metros até uma porta ou parede", "Criança sentada ao lado da aplicadora, com o tablet na mesa"];
+  if (years >= 4) base.push("Mesa para bater a mão (regra SOL/LUA)");
+  if (years >= 8) base.push("Uma junta reta do piso para andar sobre a linha");
+  return base;
+}
+
+export const AGE_BANDS: readonly AgeBand[] = YEARS.map((years) => ({
+  id: String(years), label: `${years} anos`, min: years, max: years, icon: iconFor(years), perPhase: itemsPerPhase(years), ambient: ambientFor(years),
+}));
 
 export function bandForYears(years: number): AgeBand | undefined {
   if (!Number.isInteger(years)) return undefined;
   return AGE_BANDS.find((band) => years >= band.min && years <= band.max);
+}
+
+export const UNDER_TWO_MESSAGE =
+  "Crianças com menos de 2 anos não fazem o Super NeuroPad Game. Use a Observa 10 (OBS-10, de 0 a 23 meses) ou a Sonda 10 (a partir de 12 meses), que têm roteiros próprios para bebês.";
+export const OVER_MAX_MESSAGE = `O jogo vai até ${MAX_AGE_YEARS} anos. Acima disso, use as abas de origem com o roteiro de adolescentes e adultos jovens.`;
+
+export type AgeGate = { ok: true; band: AgeBand } | { ok: false; reason: "menor_de_2" | "acima_do_teto" | "invalida"; message: string; routes: { label: string; href: string }[] };
+
+/** Barreira de idade: menores de 2 anos não são testados, com mensagem clara e as abas certas. */
+export function ageGate(years: number): AgeGate {
+  if (!Number.isFinite(years)) return { ok: false, reason: "invalida", message: "Informe a idade da criança em anos completos.", routes: [] };
+  if (years < MIN_AGE_YEARS) {
+    return { ok: false, reason: "menor_de_2", message: UNDER_TWO_MESSAGE, routes: [{ label: "Observa 10 (OBS-10)", href: ORIGIN_ROUTES.obs10 }, { label: "Sonda 10", href: ORIGIN_ROUTES.sonda10 }] };
+  }
+  if (years > MAX_AGE_YEARS) return { ok: false, reason: "acima_do_teto", message: OVER_MAX_MESSAGE, routes: [] };
+  const band = bandForYears(years);
+  return band ? { ok: true, band } : { ok: false, reason: "invalida", message: "Informe a idade da criança em anos completos.", routes: [] };
 }
 
 // ─────────────────────────────── personagens (RPG) ───────────────────────────────
@@ -78,9 +142,7 @@ export const CHARACTERS: readonly Character[] = [
   { id: "panda", emoji: "🐼", name: "Panda", role: "Curandeiro", power: "Calma de mestre" },
 ] as const;
 
-// ─────────────────────────────── fases (mundos) ───────────────────────────────
-export type PhaseId = "olhos" | "palavras" | "numeros" | "memoria" | "corpo";
-
+// ─────────────────────────────── mundos (domínios) ───────────────────────────────
 export interface Phase {
   id: PhaseId;
   order: number;
@@ -91,335 +153,162 @@ export interface Phase {
   badge: string;
   operator: string;
   source: string;
-  /** O que conferir na consulta quando a fase fica fora do esperado (roteiro autoral, não diagnóstico). */
+  /** Abas de origem cujos elementos entram neste mundo. */
+  origins: readonly OriginId[];
+  /** O que conferir na consulta quando o mundo fica fora do esperado (roteiro autoral, não diagnóstico). */
   consult: string;
-  /** Abas de origem que aprofundam a fase, com rota interna. */
+  /** Abas de origem que aprofundam o mundo, com rota interna. */
   routes: readonly { label: string; href: string }[];
 }
 
 export const PHASES: readonly Phase[] = [
   {
-    id: "olhos", order: 1, name: "Floresta dos Olhos", emoji: "🌳", domain: "Reconhecimento visual",
+    id: "vila", order: 1, name: "Vila da Conversa", emoji: "🏡", domain: "Interação e comunicação",
+    tagline: "Conversar, brincar de faz de conta e entender o que os outros sentem.", badge: "Amigo da Vila",
+    operator: "Comece por aqui: é o acolhimento. Converse com calma, na altura da criança. Pode repetir o comando uma vez; nas faixas de 2 e 3 anos vale responder apontando ou com gesto quando o item disser.",
+    source: "Sonda 10 (entrada social, atenção conjunta, simbolismo, pragmática, cognição social) · OBS-10 (acolher e interagir)",
+    origins: ["sonda10", "obs10"],
+    consult: "Conferir interação espontânea com a família, resposta ao nome, atenção compartilhada, brincadeira simbólica, reciprocidade na conversa e compreensão de emoções; separar timidez com estranhos de dificuldade persistente.",
+    routes: [{ label: "Sonda 10", href: ORIGIN_ROUTES.sonda10 }, { label: "OBS-10", href: ORIGIN_ROUTES.obs10 }],
+  },
+  {
+    id: "olhos", order: 2, name: "Floresta dos Olhos", emoji: "🌳", domain: "Reconhecimento visual e raciocínio visual",
     tagline: "Encontre a figura certa entre as folhas.", badge: "Explorador da Floresta",
     operator: "Leia a pergunta em voz alta e deixe a criança tocar na tela. Se ela apontar sem tocar, toque na figura que ela apontou. Não dê pistas.",
-    source: "Teste de Reconhecimento Visual · Testes Cognitivos (visual)",
+    source: "Teste de Reconhecimento Visual (figuras, cores, conceitos) · Avaliação Cognitiva Infantil (visual)",
+    origins: ["visual", "cognitivo"],
     consult: "Conferir visão (óculos, consulta oftalmológica recente), nomeação e pareamento de figuras com mais itens, atenção visual durante a tarefa e se a criança entendeu o formato de tocar na tela.",
-    routes: [{ label: "Reconhecimento Visual", href: "/testes-reconhecimento" }, { label: "Testes Cognitivos", href: "/testes-cognitivos" }],
+    routes: [{ label: "Reconhecimento Visual", href: ORIGIN_ROUTES.visual }, { label: "Testes Cognitivos", href: ORIGIN_ROUTES.cognitivo }],
   },
   {
-    id: "palavras", order: 2, name: "Ilha das Palavras", emoji: "🏝️", domain: "Linguagem e leitura",
+    id: "palavras", order: 3, name: "Ilha das Palavras", emoji: "🏝️", domain: "Linguagem, leitura e escrita",
     tagline: "Sons, nomes e frases escondidos na areia.", badge: "Navegante das Palavras",
     operator: "Fale devagar, uma vez; pode repetir uma única vez. Nas tarefas de fala, marque acerto só quando a resposta bater com o critério.",
-    source: "Sonda 10 (linguagem) · Testes Cognitivos (leitura e escrita)",
+    source: "Sonda 10 (linguagem) · OBS-10 (linguagem e raciocínio) · Avaliação Cognitiva Infantil (fala/leitura e letras/escrita)",
+    origins: ["sonda10", "obs10", "cognitivo"],
     consult: "Conferir história de linguagem e audição, compreensão de ordens em conversa livre, vocabulário e, na idade escolar, leitura e escrita conforme a série; separar timidez de dificuldade real.",
-    routes: [{ label: "Sonda 10", href: "/testes-diretos" }, { label: "Testes Cognitivos", href: "/testes-cognitivos" }],
+    routes: [{ label: "Sonda 10", href: ORIGIN_ROUTES.sonda10 }, { label: "Testes Cognitivos", href: ORIGIN_ROUTES.cognitivo }],
   },
   {
-    id: "numeros", order: 3, name: "Montanha dos Números", emoji: "⛰️", domain: "Quantidade e aritmética",
+    id: "numeros", order: 4, name: "Montanha dos Números", emoji: "⛰️", domain: "Quantidade e aritmética",
     tagline: "Cada conta é um degrau até o topo.", badge: "Alpinista dos Números",
     operator: "Leia a pergunta; a criança responde tocando. Sem contar junto, sem dica com os dedos.",
-    source: "Testes Cognitivos (aritmética) · Sonda 10 (conceitos)",
+    source: "Avaliação Cognitiva Infantil (números) · Sonda 10 e OBS-10 (banco objetivo)",
+    origins: ["cognitivo", "sonda10", "obs10"],
     consult: "Conferir contagem, comparação de quantidades e cálculo conforme a série, escolaridade e apoio pedagógico; checar se a dificuldade é só numérica ou acompanha leitura e atenção.",
-    routes: [{ label: "Testes Cognitivos", href: "/testes-cognitivos" }, { label: "Sonda 10", href: "/testes-diretos" }],
+    routes: [{ label: "Testes Cognitivos", href: ORIGIN_ROUTES.cognitivo }, { label: "Sonda 10", href: ORIGIN_ROUTES.sonda10 }],
   },
   {
-    id: "memoria", order: 4, name: "Caverna da Memória", emoji: "🔦", domain: "Memória e atenção",
+    id: "memoria", order: 5, name: "Caverna da Memória", emoji: "🔦", domain: "Memória, atenção e funções executivas",
     tagline: "Guarde o que viu e ouviu para atravessar a caverna.", badge: "Guardião da Caverna",
-    operator: "Diga a sequência uma vez, em ritmo de um item por segundo. Acerto só quando a repetição for exata conforme o critério.",
-    source: "Sonda 10 (memória operacional e regra) · OBS-10 (regra SOL/LUA)",
+    operator: "Diga a sequência uma vez, em ritmo de um item por segundo. Nas regras (SOL/LUA, DIA/NOITE), faça uma prática antes. Acerto só quando o critério for cumprido inteiro.",
+    source: "Sonda 10 (memória operacional, inibição, flexibilidade, planejamento) · OBS-10 (repetição, regra SOL/LUA e evocação das 3 palavras)",
+    origins: ["sonda10", "obs10"],
     consult: "Conferir atenção sustentada e memória operacional com mais itens, sono, rotina e distratibilidade na consulta; repetir a regra com demonstração para separar não entender de não sustentar.",
-    routes: [{ label: "Sonda 10", href: "/testes-diretos" }, { label: "OBS-10", href: "/avaliacao-pre-consulta-faixa-etaria" }],
+    routes: [{ label: "Sonda 10", href: ORIGIN_ROUTES.sonda10 }, { label: "OBS-10", href: ORIGIN_ROUTES.obs10 }],
   },
   {
-    id: "corpo", order: 5, name: "Torre do Corpo", emoji: "🏰", domain: "Coordenação motora e grafismo",
+    id: "corpo", order: 6, name: "Torre do Corpo", emoji: "🏰", domain: "Coordenação motora, desenho e escrita",
     tagline: "Equilíbrio, mãos e traços para subir a torre.", badge: "Mestre da Torre",
-    operator: "Demonstre uma vez quando o comando disser. Fique ao lado nas tarefas de equilíbrio. Marque acerto só quando o critério for cumprido inteiro.",
-    source: "OBS-10 (núcleo motor) · Sonda 10 (visuoconstrução) · Testes Cognitivos (escrita)",
-    consult: "Exame motor dirigido na consulta: tônus, equilíbrio, marcha, coordenação fina, preensão do lápis, grafismo e lateralidade; conferir se o kit estava disponível e se a demonstração foi feita.",
-    routes: [{ label: "OBS-10", href: "/avaliacao-pre-consulta-faixa-etaria" }, { label: "Sonda 10", href: "/testes-diretos" }],
+    operator: "Demonstre uma vez quando o comando disser. Fique ao lado nas tarefas de equilíbrio. Desenho e escrita são feitos com o dedo na tela. Marque acerto só quando o critério for cumprido inteiro.",
+    source: "OBS-10 (núcleo motor; mãos, desenho e escrita) · Sonda 10 (imitação) · Avaliação Cognitiva Infantil (escrita)",
+    origins: ["obs10", "sonda10", "cognitivo"],
+    consult: "Exame motor dirigido na consulta: tônus, equilíbrio, marcha, coordenação fina, preensão, grafismo e lateralidade; conferir se havia espaço livre e se a demonstração foi feita.",
+    routes: [{ label: "OBS-10", href: ORIGIN_ROUTES.obs10 }, { label: "Sonda 10", href: ORIGIN_ROUTES.sonda10 }],
   },
 ] as const;
 
-export const PHASE_ORDER: readonly PhaseId[] = ["olhos", "palavras", "numeros", "memoria", "corpo"];
-export const ITEMS_PER_PHASE = 4;
-
 export function phaseById(id: PhaseId): Phase {
   const phase = PHASES.find((entry) => entry.id === id);
-  if (!phase) throw new Error(`Fase desconhecida: ${id}`);
+  if (!phase) throw new Error(`Mundo desconhecido: ${id}`);
   return phase;
 }
 
-// ─────────────────────────────── itens ───────────────────────────────
-export type ShapeId = "circulo" | "cruz" | "quadrado" | "triangulo" | "losango" | "pentagono";
-
-export interface Option {
-  /** O que a criança vê no botão (emoji, número ou palavra). */
-  art: string;
-  /** Nome textual da opção, usado no registro e no PDF. */
-  label: string;
-  size?: "sm" | "lg";
-}
-
-/** A criança responde tocando na tela; o jogo confere sozinho. */
-export interface TouchItem {
-  kind: "toque";
-  id: string;
-  prompt: string;
-  options: Option[];
-  answer: string;
-  /** Estímulo mostrado antes das opções e escondido pela aplicadora (memória visual). */
-  preview?: string;
-  big?: boolean;
-}
-
-/** A aplicadora faz a pergunta e confere a resposta falada contra o critério. */
-export interface SpeakItem {
-  kind: "fala";
-  id: string;
-  prompt: string;
-  expected: string;
-  stimulus?: string;
-}
-
-/** A criança executa uma ação; a aplicadora confere contra o critério. */
-export interface DoItem {
-  kind: "fazer";
-  id: string;
-  prompt: string;
-  expected: string;
-  stimulus?: string;
-  shape?: ShapeId;
-}
-
-export type Item = TouchItem | SpeakItem | DoItem;
-
-export const KIND_LABELS: Record<Item["kind"], string> = {
-  toque: "Toque na tela (conferido pelo jogo)",
-  fala: "Resposta falada (conferida pela aplicadora)",
-  fazer: "Ação executada (conferida pela aplicadora)",
-};
-
-const o = (art: string, label: string, size?: Option["size"]): Option => (size ? { art, label, size } : { art, label });
-const toque = (id: string, prompt: string, options: Option[], answer: string, extra: Partial<Pick<TouchItem, "preview" | "big">> = {}): TouchItem => ({ kind: "toque", id, prompt, options, answer, ...extra });
-const fala = (id: string, prompt: string, expected: string, stimulus?: string): SpeakItem => (stimulus ? { kind: "fala", id, prompt, expected, stimulus } : { kind: "fala", id, prompt, expected });
-const fazer = (id: string, prompt: string, expected: string, extra: Partial<Pick<DoItem, "stimulus" | "shape">> = {}): DoItem => ({ kind: "fazer", id, prompt, expected, ...extra });
-
-const COLORS4 = [o("🟡", "Amarelo"), o("🔴", "Vermelho"), o("🔵", "Azul"), o("🟢", "Verde")];
-
-/**
- * Banco: 6 faixas × 5 fases × 4 itens. Cada item é resolvível sozinho, com o
- * estímulo inteiro visível. Dificuldade propositalmente abaixo do esperado
- * para a faixa: o objetivo é flagrar déficit grosseiro, não medir talento.
- * A posição da alternativa correta varia; a UI ainda embaralha em tempo real.
- */
-export const ITEM_BANK: Record<BandId, Record<PhaseId, Item[]>> = {
-  "2-3": {
-    olhos: [
-      toque("2-3.olhos.1", "Toque no CACHORRO", [o("🐱", "Gato"), o("🐶", "Cachorro"), o("🐟", "Peixe")], "Cachorro", { big: true }),
-      toque("2-3.olhos.2", "Toque na BOLA", [o("🍎", "Maçã"), o("⚽", "Bola"), o("🚗", "Carro")], "Bola", { big: true }),
-      toque("2-3.olhos.3", "Toque na BANANA", [o("🍌", "Banana"), o("🍎", "Maçã"), o("🥕", "Cenoura")], "Banana", { big: true }),
-      toque("2-3.olhos.4", "Toque no CARRO", [o("🐱", "Gato"), o("👟", "Sapato"), o("🚗", "Carro")], "Carro", { big: true }),
-    ],
-    palavras: [
-      fala("2-3.palavras.1", "Mostre a figura e pergunte: “O que é isto?”", "Diz “gato” (aceita “gatinho” ou “miau”)", "🐱"),
-      fala("2-3.palavras.2", "Mostre a figura e pergunte: “O que é isto?”", "Diz “banana”", "🍌"),
-      fala("2-3.palavras.3", "Diga: “Mostre o seu nariz.”", "Aponta ou toca o próprio nariz", "👃"),
-      fala("2-3.palavras.4", "Pergunte: “Que barulho o cachorro faz?”", "Diz “au-au” ou “late”", "🐶"),
-    ],
-    numeros: [
-      toque("2-3.numeros.1", "Toque onde tem MUITAS bolinhas", [o("⚫", "Uma bolinha"), o("⚫⚫⚫⚫⚫", "Muitas bolinhas")], "Muitas bolinhas", { big: true }),
-      toque("2-3.numeros.2", "Toque no elefante GRANDE", [o("🐘", "Elefante pequeno", "sm"), o("🐘", "Elefante grande", "lg")], "Elefante grande", { big: true }),
-      fala("2-3.numeros.3", "Coloque 3 blocos na mesa e peça: “Me dá só UM.”", "Entrega exatamente um bloco", "🧱🧱🧱"),
-      toque("2-3.numeros.4", "Toque onde tem DOIS gatinhos", [o("🐱", "Um gato"), o("🐱🐱🐱", "Três gatos"), o("🐱🐱", "Dois gatos")], "Dois gatos", { big: true }),
-    ],
-    memoria: [
-      fala("2-3.memoria.1", "Diga: “Repita: BOLA.”", "Repete a palavra “bola”", "🗣️"),
-      fala("2-3.memoria.2", "Diga: “Repita: 2 – 5.”", "Repete os dois números na ordem", "2 · 5"),
-      fazer("2-3.memoria.3", "Esconda o brinquedo embaixo do pano na frente da criança e pergunte: “Cadê?”", "Levanta o pano e encontra o brinquedo", { stimulus: "🧸" }),
-      fala("2-3.memoria.4", "Diga: “Pegue o lápis e coloque na caixa.” (comando de 2 partes)", "Faz as duas ações na ordem", "✏️ ➜ 📦"),
-    ],
-    corpo: [
-      fazer("2-3.corpo.1", "Peça: “Corra até a porta e volte.”", "Corre ou anda rápido sem cair", { stimulus: "🏃" }),
-      fazer("2-3.corpo.2", "Coloque a bola no chão e peça: “Chute a bola.”", "Chuta a bola sem se apoiar", { stimulus: "⚽" }),
-      fazer("2-3.corpo.3", "Dê o lápis e peça: “Faça um risco no papel.”", "Faz um traço ou rabisco no papel", { stimulus: "✏️" }),
-      fazer("2-3.corpo.4", "Peça: “Empilhe os blocos.” (3 blocos)", "Empilha 3 blocos sem derrubar", { stimulus: "🧱" }),
-    ],
-  },
-  "4-5": {
-    olhos: [
-      toque("4-5.olhos.1", "Toque no TRIÂNGULO", [o("🟦", "Quadrado"), o("🔺", "Triângulo"), o("⚫", "Círculo"), o("⭐", "Estrela")], "Triângulo", { big: true }),
-      toque("4-5.olhos.2", "Toque na cor AZUL", COLORS4, "Azul", { big: true }),
-      toque("4-5.olhos.3", "Toque na figura IGUAL a esta: 🦋", [o("🐝", "Abelha"), o("🐞", "Joaninha"), o("🦋", "Borboleta"), o("🐛", "Lagarta")], "Borboleta", { big: true }),
-      toque("4-5.olhos.4", "Toque no que a gente usa para BEBER", [o("🥤", "Copo"), o("🍴", "Garfo"), o("👟", "Sapato"), o("📚", "Livro")], "Copo", { big: true }),
-    ],
-    palavras: [
-      fala("4-5.palavras.1", "Pergunte: “Qual é o seu nome?”", "Diz o próprio primeiro nome", "🙋"),
-      fala("4-5.palavras.2", "Pergunte: “O que a gente faz com uma colher?”", "Responde “comer” (ou “tomar sopa”)", "🥄"),
-      toque("4-5.palavras.3", "Toque no animal que MIA", [o("🐶", "Cachorro"), o("🐮", "Vaca"), o("🐱", "Gato"), o("🐸", "Sapo")], "Gato", { big: true }),
-      fala("4-5.palavras.4", "Mostre a cor e pergunte: “Que cor é esta?”", "Diz “vermelho”", "🔴"),
-    ],
-    numeros: [
-      toque("4-5.numeros.1", "Toque onde tem TRÊS maçãs", [o("🍎🍎", "Duas maçãs"), o("🍎🍎🍎", "Três maçãs"), o("🍎", "Uma maçã"), o("🍎🍎🍎🍎", "Quatro maçãs")], "Três maçãs", { big: true }),
-      fala("4-5.numeros.2", "Diga: “Conte em voz alta até 5.”", "Conta 1, 2, 3, 4, 5 na ordem", "1 2 3 4 5"),
-      toque("4-5.numeros.3", "Toque no número 2", [o("3", "Três"), o("5", "Cinco"), o("2", "Dois"), o("1", "Um")], "Dois", { big: true }),
-      toque("4-5.numeros.4", "Toque no grupo que tem MAIS peixes", [o("🐟🐟🐟🐟🐟", "Cinco peixes"), o("🐟🐟", "Dois peixes")], "Cinco peixes", { big: true }),
-    ],
-    memoria: [
-      fala("4-5.memoria.1", "Diga: “Repita: 4 – 9 – 2.”", "Repete os três números na ordem", "4 · 9 · 2"),
-      fala("4-5.memoria.2", "Diga: “Repita: gato, bola, casa.”", "Repete as três palavras (qualquer ordem)", "🐱 ⚽ 🏠"),
-      fala("4-5.memoria.3", "Diga: “Pegue o lápis, coloque na caixa e feche a caixa.” (3 partes)", "Faz as três ações", "✏️ ➜ 📦 ➜ 🔒"),
-      toque("4-5.memoria.4", "Toque na figura que você VIU", [o("🐶", "Cachorro"), o("🐱", "Gato"), o("🍎", "Maçã"), o("🚗", "Carro")], "Cachorro", { preview: "🐶 🍌", big: true }),
-    ],
-    corpo: [
-      fazer("4-5.corpo.1", "Peça: “Fique em um pé só.” Conte até 3 em voz alta.", "Fica 3 segundos em um pé sem apoiar", { stimulus: "🦩" }),
-      fazer("4-5.corpo.2", "Peça: “Pule com os dois pés juntos.”", "Salta com os dois pés saindo do chão ao mesmo tempo", { stimulus: "🐸" }),
-      fazer("4-5.corpo.3", "Mostre o círculo e peça: “Copie no papel.”", "Desenha uma forma fechada e arredondada", { shape: "circulo" }),
-      fazer("4-5.corpo.4", "Mostre a cruz e peça: “Copie no papel.”", "Desenha duas linhas que se cruzam", { shape: "cruz" }),
-    ],
-  },
-  "6-7": {
-    olhos: [
-      toque("6-7.olhos.1", "Qual figura é IGUAL a esta? 🔷", [o("🔶", "Losango laranja"), o("🔷", "Losango azul"), o("🔺", "Triângulo"), o("🟦", "Quadrado")], "Losango azul", { big: true }),
-      toque("6-7.olhos.2", "O que vem depois? 🔴 🔵 🔴 🔵 🔴 __", [o("🔵", "Azul"), o("🔴", "Vermelho"), o("🟢", "Verde"), o("🟡", "Amarelo")], "Azul", { big: true }),
-      toque("6-7.olhos.3", "Toque na figura DIFERENTE", [o("🍎", "Maçã"), o("🍎", "Maçã"), o("🍐", "Pera"), o("🍎", "Maçã")], "Pera", { big: true }),
-      toque("6-7.olhos.4", "Toque na LETRA", [o("7", "Número sete"), o("★", "Estrela"), o("B", "Letra B"), o("♥", "Coração")], "Letra B", { big: true }),
-    ],
-    palavras: [
-      toque("6-7.palavras.1", "Qual palavra começa com a letra M?", [o("mesa", "mesa"), o("sapo", "sapo"), o("foca", "foca"), o("rato", "rato")], "mesa"),
-      toque("6-7.palavras.2", "Leia: “A bola é azul.” De que cor é a bola?", [o("Verde", "Verde"), o("Amarela", "Amarela"), o("Azul", "Azul"), o("Vermelha", "Vermelha")], "Azul"),
-      toque("6-7.palavras.3", "Qual palavra rima com GATO?", [o("mesa", "mesa"), o("pato", "pato"), o("bola", "bola"), o("casa", "casa")], "pato"),
-      fala("6-7.palavras.4", "Peça: “Leia em voz alta.”", "Lê “bola” corretamente", "BOLA"),
-    ],
-    numeros: [
-      toque("6-7.numeros.1", "3 + 2 = ?", [o("4", "4"), o("5", "5"), o("6", "6"), o("3", "3")], "5", { big: true }),
-      toque("6-7.numeros.2", "Qual número vem depois? 7, 8, 9, __", [o("11", "11"), o("6", "6"), o("10", "10"), o("12", "12")], "10", { big: true }),
-      toque("6-7.numeros.3", "Qual número é MAIOR?", [o("3", "3"), o("8", "8"), o("5", "5"), o("2", "2")], "8", { big: true }),
-      toque("6-7.numeros.4", "5 − 2 = ?", [o("2", "2"), o("4", "4"), o("1", "1"), o("3", "3")], "3", { big: true }),
-    ],
-    memoria: [
-      fala("6-7.memoria.1", "Diga: “Repita: 6 – 1 – 8 – 3.”", "Repete os quatro números na ordem", "6 · 1 · 8 · 3"),
-      fala("6-7.memoria.2", "Diga: “Repita ao contrário: 2 – 7.”", "Diz “7 – 2”", "2 · 7 ↩"),
-      toque("6-7.memoria.3", "Qual figura NÃO apareceu?", [o("🍎", "Maçã"), o("🚗", "Carro"), o("🐸", "Sapo"), o("🐱", "Gato")], "Sapo", { preview: "🍎 🚗 🐱", big: true }),
-      fala("6-7.memoria.4", "Regra: “Quando eu disser SOL, bata na mesa; quando disser LUA, mãos paradas.” Uma prática de cada. Sequência: SOL – LUA – SOL – SOL – LUA", "Acerta as 5 (bate só no SOL)", "☀️ 🌙"),
-    ],
-    corpo: [
-      fazer("6-7.corpo.1", "Peça: “Fique em um pé só.” Conte até 5 em voz alta.", "Mantém 5 segundos sem apoiar", { stimulus: "🦩" }),
-      fazer("6-7.corpo.2", "Peça: “Toque o seu nariz com o dedo e depois o meu dedo.” 3 vezes.", "Acerta o alvo nas 3 vezes", { stimulus: "👉👃" }),
-      fazer("6-7.corpo.3", "Mostre o quadrado e peça: “Copie no papel.”", "Desenha quatro lados com cantos", { shape: "quadrado" }),
-      fazer("6-7.corpo.4", "Peça: “Escreva o seu nome.”", "Escreve o primeiro nome legível", { stimulus: "✏️" }),
-    ],
-  },
-  "8-9": {
-    olhos: [
-      toque("8-9.olhos.1", "O que vem depois? 🔺 🔵 🔺 🔵 🔺 __", [o("🔺", "Triângulo"), o("🔵", "Azul"), o("🟢", "Verde"), o("⭐", "Estrela")], "Azul", { big: true }),
-      toque("8-9.olhos.2", "Qual figura é IGUAL a esta? ♠", [o("♣", "Paus"), o("♠", "Espadas"), o("♥", "Copas"), o("♦", "Ouros")], "Espadas", { big: true }),
-      toque("8-9.olhos.3", "Quantos triângulos há? 🔺🔺🔺🔺", [o("3", "3"), o("5", "5"), o("4", "4"), o("2", "2")], "4", { big: true }),
-      toque("8-9.olhos.4", "Qual NÃO é uma fruta?", [o("🍎", "Maçã"), o("🍇", "Uva"), o("🍌", "Banana"), o("🥕", "Cenoura")], "Cenoura", { big: true }),
-    ],
-    palavras: [
-      toque("8-9.palavras.1", "Leia: “Ana foi ao mercado comprar pão.” O que Ana foi comprar?", [o("Leite", "Leite"), o("Pão", "Pão"), o("Bolo", "Bolo"), o("Suco", "Suco")], "Pão"),
-      toque("8-9.palavras.2", "Qual palavra está escrita CERTA?", [o("caza", "caza"), o("kasa", "kasa"), o("casa", "casa"), o("cassa", "cassa")], "casa"),
-      toque("8-9.palavras.3", "Qual é o CONTRÁRIO de ALTO?", [o("Grande", "Grande"), o("Largo", "Largo"), o("Longe", "Longe"), o("Baixo", "Baixo")], "Baixo"),
-      fala("8-9.palavras.4", "Peça: “Leia em voz alta.”", "Lê a frase inteira sem trocar palavras", "O gato subiu no telhado."),
-    ],
-    numeros: [
-      toque("8-9.numeros.1", "12 + 15 = ?", [o("26", "26"), o("27", "27"), o("25", "25"), o("28", "28")], "27", { big: true }),
-      toque("8-9.numeros.2", "20 − 8 = ?", [o("11", "11"), o("13", "13"), o("12", "12"), o("14", "14")], "12", { big: true }),
-      toque("8-9.numeros.3", "3 × 4 = ?", [o("7", "7"), o("9", "9"), o("14", "14"), o("12", "12")], "12", { big: true }),
-      toque("8-9.numeros.4", "Qual número vem depois? 5, 10, 15, __", [o("20", "20"), o("18", "18"), o("25", "25"), o("16", "16")], "20", { big: true }),
-    ],
-    memoria: [
-      fala("8-9.memoria.1", "Diga: “Repita: 3 – 8 – 1 – 6 – 4.”", "Repete os cinco números na ordem", "3 · 8 · 1 · 6 · 4"),
-      fala("8-9.memoria.2", "Diga: “Repita ao contrário: 5 – 1 – 9.”", "Diz “9 – 1 – 5”", "5 · 1 · 9 ↩"),
-      toque("8-9.memoria.3", "Qual figura NÃO apareceu?", [o("🍌", "Banana"), o("🏠", "Casa"), o("🚲", "Bicicleta"), o("🐶", "Cachorro")], "Casa", { preview: "🍌 🚲 🐶 ⭐", big: true }),
-      fala("8-9.memoria.4", "Regra SOL/LUA (bate no SOL, para na LUA). Uma prática de cada. Sequência: SOL – SOL – LUA – SOL – LUA – LUA – SOL – LUA", "Acerta as 8 (bate só no SOL)", "☀️ 🌙"),
-    ],
-    corpo: [
-      fazer("8-9.corpo.1", "Peça: “Fique em um pé só.” Conte até 8 em voz alta.", "Mantém 8 segundos sem apoiar", { stimulus: "🦩" }),
-      fazer("8-9.corpo.2", "Peça: “Ande na linha com um pé na frente do outro, calcanhar encostando na ponta.” 6 passos.", "Dá 6 passos sem sair da linha", { stimulus: "👣" }),
-      fazer("8-9.corpo.3", "Mostre o triângulo e peça: “Copie no papel.”", "Desenha três lados com cantos fechados", { shape: "triangulo" }),
-      fazer("8-9.corpo.4", "Dite: “O sol é quente.” e peça para escrever.", "Escreve as quatro palavras legíveis", { stimulus: "✏️" }),
-    ],
-  },
-  "10-12": {
-    olhos: [
-      toque("10-12.olhos.1", "O que vem depois? 🔴 🔴 🔵 🔴 🔴 🔵 🔴 __", [o("🔵", "Azul"), o("🔴", "Vermelho"), o("🟢", "Verde"), o("🟡", "Amarelo")], "Vermelho", { big: true }),
-      toque("10-12.olhos.2", "Qual figura é IGUAL a esta? ♞", [o("♘", "Cavalo branco"), o("♝", "Bispo"), o("♞", "Cavalo preto"), o("♜", "Torre")], "Cavalo preto", { big: true }),
-      toque("10-12.olhos.3", "Qual NÃO é um meio de transporte?", [o("🚗", "Carro"), o("✈️", "Avião"), o("🛏️", "Cama"), o("🚲", "Bicicleta")], "Cama", { big: true }),
-      toque("10-12.olhos.4", "Quantas estrelas há? ⭐⭐⭐⭐⭐⭐", [o("5", "5"), o("7", "7"), o("6", "6"), o("8", "8")], "6", { big: true }),
-    ],
-    palavras: [
-      toque("10-12.palavras.1", "Leia: “Pedro esqueceu o guarda-chuva e chegou molhado.” Por que Pedro chegou molhado?", [o("Caiu na piscina", "Caiu na piscina"), o("Estava chovendo", "Estava chovendo"), o("Tomou banho", "Tomou banho"), o("Lavou o carro", "Lavou o carro")], "Estava chovendo"),
-      toque("10-12.palavras.2", "Qual palavra está escrita CERTA?", [o("jirafa", "jirafa"), o("gyrafa", "gyrafa"), o("girrafa", "girrafa"), o("girafa", "girafa")], "girafa"),
-      toque("10-12.palavras.3", "Qual é o SINÔNIMO de FELIZ?", [o("Triste", "Triste"), o("Cansado", "Cansado"), o("Alegre", "Alegre"), o("Bravo", "Bravo")], "Alegre"),
-      fala("10-12.palavras.4", "Peça: “Leia em voz alta.”", "Lê sem trocar nem omitir palavras", "A menina guardou os livros na estante depois da aula."),
-    ],
-    numeros: [
-      toque("10-12.numeros.1", "48 + 27 = ?", [o("65", "65"), o("75", "75"), o("74", "74"), o("85", "85")], "75", { big: true }),
-      toque("10-12.numeros.2", "7 × 8 = ?", [o("54", "54"), o("48", "48"), o("63", "63"), o("56", "56")], "56", { big: true }),
-      toque("10-12.numeros.3", "36 ÷ 4 = ?", [o("9", "9"), o("8", "8"), o("6", "6"), o("7", "7")], "9", { big: true }),
-      toque("10-12.numeros.4", "A METADE de 50 é?", [o("20", "20"), o("30", "30"), o("25", "25"), o("15", "15")], "25", { big: true }),
-    ],
-    memoria: [
-      fala("10-12.memoria.1", "Diga: “Repita: 7 – 2 – 9 – 4 – 1 – 6.”", "Repete os seis números na ordem", "7 · 2 · 9 · 4 · 1 · 6"),
-      fala("10-12.memoria.2", "Diga: “Repita ao contrário: 8 – 3 – 5 – 1.”", "Diz “1 – 5 – 3 – 8”", "8 · 3 · 5 · 1 ↩"),
-      toque("10-12.memoria.3", "Qual figura NÃO apareceu?", [o("🍎", "Maçã"), o("🔑", "Chave"), o("🐱", "Gato"), o("🎈", "Balão")], "Chave", { preview: "🍎 🚗 🐱 ⭐ 🎈", big: true }),
-      fala("10-12.memoria.4", "Diga: “Repita: mesa, lua, pão, rio, sapo.”", "Repete as cinco palavras (qualquer ordem)", "🗣️ ×5"),
-    ],
-    corpo: [
-      fazer("10-12.corpo.1", "Peça: “Fique em um pé só, olhos abertos.” Conte até 10 em voz alta.", "Mantém 10 segundos sem apoiar", { stimulus: "🦩" }),
-      fazer("10-12.corpo.2", "Demonstre e peça: “Toque cada dedo no polegar, do indicador ao mindinho, e volte.” 2 vezes.", "Faz a sequência completa 2 vezes sem pular dedo", { stimulus: "🖐️" }),
-      fazer("10-12.corpo.3", "Mostre o losango e peça: “Copie no papel.”", "Desenha quatro lados com as pontas em cima e embaixo", { shape: "losango" }),
-      fazer("10-12.corpo.4", "Dite: “O cachorro correu no parque.” e peça para escrever.", "Escreve as cinco palavras legíveis, sem omissão", { stimulus: "✏️" }),
-    ],
-  },
-  "13-17": {
-    olhos: [
-      toque("13-17.olhos.1", "O que vem depois? ▲ ▶ ▼ ◀ ▲ ▶ __", [o("◀", "Seta para a esquerda"), o("▲", "Seta para cima"), o("▼", "Seta para baixo"), o("▶", "Seta para a direita")], "Seta para baixo", { big: true }),
-      toque("13-17.olhos.2", "Qual figura é IGUAL a esta? ♛", [o("♕", "Rainha branca"), o("♚", "Rei preto"), o("♝", "Bispo"), o("♛", "Rainha preta")], "Rainha preta", { big: true }),
-      toque("13-17.olhos.3", "Quantos quadrados há? 🟦🟦🟦🟦🟦🟦🟦", [o("6", "6"), o("7", "7"), o("8", "8"), o("9", "9")], "7", { big: true }),
-      toque("13-17.olhos.4", "Qual ícone representa TEMPO?", [o("🍎", "Maçã"), o("🎒", "Mochila"), o("⏰", "Relógio"), o("🎧", "Fone")], "Relógio", { big: true }),
-    ],
-    palavras: [
-      toque("13-17.palavras.1", "Leia: “Apesar da chuva, o jogo não foi cancelado.” O jogo aconteceu?", [o("Não", "Não"), o("Sim", "Sim"), o("Foi adiado", "Foi adiado"), o("Não dá para saber", "Não dá para saber")], "Sim"),
-      toque("13-17.palavras.2", "Qual palavra está escrita CERTA?", [o("excessão", "excessão"), o("esceção", "esceção"), o("exceção", "exceção"), o("exceçao", "exceçao")], "exceção"),
-      toque("13-17.palavras.3", "Qual é o ANTÔNIMO de GENEROSO?", [o("Bondoso", "Bondoso"), o("Egoísta", "Egoísta"), o("Alegre", "Alegre"), o("Rápido", "Rápido")], "Egoísta"),
-      fala("13-17.palavras.4", "Peça: “Leia em voz alta.”", "Lê sem trocar, omitir ou inventar palavras", "O laboratório publicou os resultados da pesquisa na sexta-feira."),
-    ],
-    numeros: [
-      toque("13-17.numeros.1", "125 + 87 = ?", [o("202", "202"), o("222", "222"), o("212", "212"), o("211", "211")], "212", { big: true }),
-      toque("13-17.numeros.2", "9 × 7 = ?", [o("63", "63"), o("56", "56"), o("72", "72"), o("64", "64")], "63", { big: true }),
-      toque("13-17.numeros.3", "144 ÷ 12 = ?", [o("11", "11"), o("13", "13"), o("12", "12"), o("14", "14")], "12", { big: true }),
-      toque("13-17.numeros.4", "25% de 80 é?", [o("15", "15"), o("25", "25"), o("40", "40"), o("20", "20")], "20", { big: true }),
-    ],
-    memoria: [
-      fala("13-17.memoria.1", "Diga: “Repita: 5 – 2 – 8 – 1 – 9 – 4.”", "Repete os seis números na ordem", "5 · 2 · 8 · 1 · 9 · 4"),
-      fala("13-17.memoria.2", "Diga: “Repita ao contrário: 6 – 2 – 9 – 4.”", "Diz “4 – 9 – 2 – 6”", "6 · 2 · 9 · 4 ↩"),
-      toque("13-17.memoria.3", "Qual figura NÃO apareceu?", [o("🔑", "Chave"), o("📚", "Livros"), o("🧢", "Boné"), o("⭐", "Estrela")], "Boné", { preview: "🔑 🎈 🚲 📚 🍇 ⭐", big: true }),
-      fala("13-17.memoria.4", "Diga: “Repita: janela, cavalo, ponte, verde, relógio, pedra.”", "Repete pelo menos 5 das 6 palavras", "🗣️ ×6"),
-    ],
-    corpo: [
-      fazer("13-17.corpo.1", "Peça: “Fique em um pé só, de olhos FECHADOS.” Conte até 5. Fique ao lado.", "Mantém 5 segundos sem abrir os olhos nem apoiar", { stimulus: "🦩" }),
-      fazer("13-17.corpo.2", "Peça: “Ande na linha calcanhar-ponta, 8 passos, e volte.”", "Ida e volta sem sair da linha", { stimulus: "👣" }),
-      fazer("13-17.corpo.3", "Mostre o pentágono e peça: “Copie no papel.”", "Desenha cinco lados fechados", { shape: "pentagono" }),
-      fazer("13-17.corpo.4", "Dite: “Amanhã teremos prova de matemática na escola.” e peça para escrever.", "Escreve todas as palavras legíveis, sem omissão", { stimulus: "✏️" }),
-    ],
-  },
-};
+// ─────────────────────────────── banco ───────────────────────────────
+export const ITEM_BANK: Record<BandId, Record<PhaseId, Item[]>> = Object.fromEntries(
+  Object.entries(INTEGRATED_BANK).map(([years, phases]) => [String(years), phases]),
+);
 
 export function itemsFor(bandId: BandId, phaseId: PhaseId): Item[] {
-  return ITEM_BANK[bandId][phaseId];
+  return ITEM_BANK[bandId]?.[phaseId] ?? [];
+}
+
+export function bandItemCount(bandId: BandId): number {
+  return PHASE_ORDER.reduce((sum, phaseId) => sum + itemsFor(bandId, phaseId).length, 0);
+}
+
+// ─────────────────────────────── tempo estimado por faixa ───────────────────────────────
+/** Segundos por tipo de item numa aplicação típica (ler/ouvir o comando, responder, registrar). */
+export const KIND_SECONDS: Record<Item["kind"], number> = { toque: 12, fala: 20, fazer: 25, montar: 30 };
+export const SETUP_SECONDS = 60;
+export const INTRO_SECONDS = 15;
+export const PREVIEW_SECONDS = 5;
+export const REPEAT_ALLOWANCE = 0.1;
+
+/** Crianças pequenas precisam de mais tempo por item (atenção curta, fala emergente, transições). */
+export function youngFactor(years: number): number {
+  if (years <= 3) return 1.5;
+  if (years <= 5) return 1.25;
+  return 1;
+}
+
+/** Pausa rápida planejada (lanche, água, banheiro) para as faixas de até 5 anos. */
+export function plannedBreakSeconds(years: number): number {
+  return years <= 5 ? 90 : 0;
+}
+
+/** Leitura: +1 s a cada 25 caracteres de enunciado/estímulo/opções nos itens de toque (máximo +25 s). */
+export const READING_CHARS_PER_SECOND = 25;
+
+export function itemSeconds(item: Item): number {
+  const base = item.seconds ?? KIND_SECONDS[item.kind];
+  if (item.kind !== "toque") return base;
+  const chars = item.prompt.length + (item.stimulus?.length ?? 0) + (item.context?.length ?? 0) + item.options.reduce((sum, option) => sum + (option.vr ? 0 : option.label.length), 0);
+  const reading = Math.min(25, Math.floor(chars / READING_CHARS_PER_SECOND));
+  return base + reading + (item.preview ? PREVIEW_SECONDS : 0);
+}
+
+export interface BandEstimate {
+  years: number;
+  items: number;
+  perPhase: number;
+  itemSeconds: number;
+  overheadSeconds: number;
+  totalSeconds: number;
+  minutes: number;
+  byPhase: Record<PhaseId, number>;
+}
+
+/**
+ * Tempo estimado da sessão inteira: preparação + apresentação de cada mundo +
+ * itens (com fator para crianças pequenas) + folga de 10% para repetições +
+ * pausa planejada até 5 anos. Travado em ≤ 20 minutos por teste unitário.
+ */
+export function estimateBandSeconds(years: number): BandEstimate {
+  const bandId = String(years);
+  const factor = youngFactor(years);
+  const byPhase = {} as Record<PhaseId, number>;
+  let itemTotal = 0;
+  for (const phaseId of PHASE_ORDER) {
+    const seconds = itemsFor(bandId, phaseId).reduce((sum, item) => sum + itemSeconds(item) * factor, 0);
+    byPhase[phaseId] = Math.round(seconds);
+    itemTotal += seconds;
+  }
+  const withRepeats = itemTotal * (1 + REPEAT_ALLOWANCE);
+  const overhead = SETUP_SECONDS + INTRO_SECONDS * PHASE_ORDER.length + plannedBreakSeconds(years);
+  const total = Math.round(withRepeats + overhead);
+  return {
+    years, items: bandItemCount(bandId), perPhase: itemsPerPhase(years), itemSeconds: Math.round(withRepeats), overheadSeconds: overhead,
+    totalSeconds: total, minutes: Math.round((total / 60) * 10) / 10, byPhase,
+  };
 }
 
 // ─────────────────────────────── glossário de figuras (PDF) ───────────────────────────────
 // O construtor de PDF desenha em Latin-1 e descarta emoji. Para o registro
 // não perder o estímulo ("O que vem depois? 🔴 🔵 …"), cada figura vira o seu
-// nome textual entre colchetes. O glossário nasce dos rótulos das opções e é
-// complementado pelos estímulos que só aparecem em enunciados.
+// nome textual entre colchetes.
 const ART_EXTRA: Record<string, string> = {
-  "👃": "nariz", "🧱": "bloco", "🗣️": "fala", "🧸": "brinquedo", "✏️": "lápis", "📦": "caixa", "🔒": "fechar",
-  "🏃": "correr", "🦩": "um pé só", "👉": "dedo", "👣": "passos", "🖐️": "mão", "☀️": "SOL", "🌙": "LUA",
-  "🙋": "criança", "🥄": "colher", "➜": "depois", "↩": "ao contrário",
+  "🏃": "correr", "☀️": "SOL", "🌙": "LUA", "√": "raiz de", "·": "·",
 };
 
 function stripVariation(text: string): string {
@@ -438,12 +327,14 @@ export const ART_GLOSSARY: ReadonlyArray<readonly [string, string]> = (() => {
         if (item.kind !== "toque") continue;
         for (const option of item.options) {
           const art = stripVariation(option.art);
-          if (hasNonLatin(art) && !map.has(art)) map.set(art, option.label.toLowerCase());
+          if (art && hasNonLatin(art) && !map.has(art)) map.set(art, option.label.toLowerCase());
         }
       }
     }
   }
+  for (const [art, label] of Object.entries(EMOJI_NAMES)) if (!map.has(stripVariation(art))) map.set(stripVariation(art), label);
   for (const [art, label] of Object.entries(ART_EXTRA)) map.set(stripVariation(art), label);
+  map.delete("·");
   return [...map.entries()].sort((a, b) => b[0].length - a[0].length);
 })();
 
@@ -480,18 +371,24 @@ export function shuffle<T>(values: readonly T[], seed: number): T[] {
 }
 
 // ─────────────────────────────── registro e resultado ───────────────────────────────
-export type AnswerStatus = "acerto" | "erro" | "sem_resposta";
+export type AnswerStatus = "acerto" | "erro" | "sem_resposta" | "recusa";
 
 export const STATUS_LABELS: Record<AnswerStatus, string> = {
   acerto: "Acertou",
   erro: "Errou",
   sem_resposta: "Não respondeu",
+  recusa: "Recusou",
 };
+
+/** Via de resposta aceita num acerto: padrão (fala/ação/toque) ou alternativa não verbal prevista no item. */
+export type AnswerVia = "gesto";
 
 export interface AnswerRecord {
   phaseId: PhaseId;
   itemId: string;
   kind: Item["kind"];
+  origin: OriginId;
+  ref: string;
   prompt: string;
   expected: string;
   given: string;
@@ -499,6 +396,13 @@ export interface AnswerRecord {
   seconds: number;
   /** A aplicadora precisou repetir o comando uma vez (permitido uma única repetição). */
   repeated?: boolean;
+  /** Acerto pela alternativa não verbal prevista no item (apontar/gesto). */
+  via?: AnswerVia;
+}
+
+export interface SkippedPhase {
+  phaseId: PhaseId;
+  reason: string;
 }
 
 export interface GameSession {
@@ -511,35 +415,74 @@ export interface GameSession {
   answers: AnswerRecord[];
   /** Pausas feitas pela aplicadora durante a partida (proveniência do registro). */
   pauseCount?: number;
+  /** Tempo total em pausa, em segundos. */
+  pausedSeconds?: number;
   /** Registros desfeitos e refeitos durante a partida (proveniência do registro). */
   undoCount?: number;
+  /** Mundos não aplicados de propósito, com o motivo informado pela aplicadora. */
+  skipped?: SkippedPhase[];
+  /** Observações livres da aplicadora (comportamento, contexto, intercorrências). */
+  observations?: string;
 }
 
-export function itemExpected(item: Item): string {
-  return item.kind === "toque" ? item.answer : item.expected;
+export const OBSERVATIONS_MAX = 1200;
+export const SKIP_REASONS = [
+  "Criança cansada ou sem colaboração",
+  "Recusou o mundo inteiro",
+  "Sem espaço ou condição na sala",
+  "Pedido da família",
+  "Outro motivo",
+] as const;
+export const OBSERVATION_CHIPS = [
+  "Colaborou bem", "Tímida no início, soltou depois", "Agitada, levantou várias vezes", "Cansou no fim",
+  "Precisou de pausa", "Fala difícil de entender", "Respondeu mais com gestos", "Acompanhante ajudou a acalmar",
+] as const;
+
+export function cleanObservations(text: string): string {
+  return (text ?? "").replace(/\s+/g, " ").trim().slice(0, OBSERVATIONS_MAX);
 }
 
-/** Registro a partir de um toque da criança: o jogo confere sozinho. */
-export function recordTouch(item: TouchItem, phaseId: PhaseId, chosen: Option | null, seconds: number, repeated = false): AnswerRecord {
-  const status: AnswerStatus = chosen === null ? "sem_resposta" : chosen.label === item.answer ? "acerto" : "erro";
-  const record: AnswerRecord = { phaseId, itemId: item.id, kind: "toque", prompt: item.prompt, expected: item.answer, given: chosen ? chosen.label : "—", status, seconds: round1(seconds) };
-  return repeated ? { ...record, repeated: true } : record;
+function sentence(text: string): string {
+  return /[.!?…]$/.test(text) ? text : `${text}.`;
+}
+
+function round1(value: number): number {
+  return Number.isFinite(value) && value >= 0 ? Math.round(value * 10) / 10 : 0;
+}
+
+function base(item: Item, phaseId: PhaseId, seconds: number, repeated: boolean) {
+  return { phaseId, itemId: item.id, kind: item.kind, origin: item.origin, ref: item.ref, seconds: round1(seconds), ...(repeated ? { repeated: true } : {}) };
+}
+
+/** Registro a partir de um toque da criança: o jogo confere sozinho. `refusal` marca recusa explícita. */
+export function recordTouch(item: TouchItem, phaseId: PhaseId, chosen: Option | null, seconds: number, repeated = false, refusal = false): AnswerRecord {
+  const status: AnswerStatus = chosen === null ? (refusal ? "recusa" : "sem_resposta") : chosen.label === item.answer ? "acerto" : "erro";
+  const prompt = item.context && !item.prompt.includes(item.context) ? `${item.prompt} (contexto lido: ${item.context})` : item.prompt;
+  return { ...base(item, phaseId, seconds, repeated), prompt, expected: item.answer, given: chosen ? chosen.label : "—", status };
+}
+
+/** Registro a partir da montagem da palavra: o jogo confere sozinho. */
+export function recordBuild(item: BuildItem, phaseId: PhaseId, placed: readonly string[] | null, seconds: number, repeated = false, refusal = false): AnswerRecord {
+  const status: AnswerStatus = placed === null ? (refusal ? "recusa" : "sem_resposta") : buildMatches(item, placed) ? "acerto" : "erro";
+  const prompt = `${item.show ? "Cópia" : "Ditado"}: monte a palavra ${item.word}`;
+  return { ...base(item, phaseId, seconds, repeated), prompt, expected: item.word, given: placed === null ? "—" : placed.join("") || "(nada montado)", status };
 }
 
 /** Registro a partir da conferência da aplicadora contra o critério explícito. */
-export function recordJudged(item: SpeakItem | DoItem, phaseId: PhaseId, status: AnswerStatus, seconds: number, repeated = false): AnswerRecord {
-  const given = status === "acerto" ? "Cumpriu o critério" : status === "erro" ? "Não cumpriu o critério" : "—";
+export function recordJudged(item: JudgedItem, phaseId: PhaseId, status: AnswerStatus, seconds: number, repeated = false, via?: AnswerVia): AnswerRecord {
+  const viaGesture = status === "acerto" && via === "gesto" && Boolean(item.gesture);
+  const given = status === "acerto" ? (viaGesture ? "Cumpriu o critério por gesto/apontar" : "Cumpriu o critério") : status === "erro" ? "Não cumpriu o critério" : status === "recusa" ? "Recusou" : "—";
   // Estímulo textual (frase lida, sequência ditada) entra no registro; ícones ilustrativos não.
   const textual = item.stimulus && !/\p{Extended_Pictographic}/u.test(item.stimulus);
   const prompt = textual ? `${item.prompt} (estímulo: ${item.stimulus})` : item.prompt;
-  const record: AnswerRecord = { phaseId, itemId: item.id, kind: item.kind, prompt, expected: item.expected, given, status, seconds: round1(seconds) };
-  return repeated ? { ...record, repeated: true } : record;
+  const expected = item.gesture ? `${item.expected} · alternativa aceita: ${item.gesture}` : item.expected;
+  return { ...base(item, phaseId, seconds, repeated), prompt, expected, given, status, ...(viaGesture ? { via: "gesto" as const } : {}) };
 }
 
 /**
  * Desfaz o último registro (toque errado da aplicadora, criança que mudou de
  * ideia antes do próximo item). Devolve a lista sem o último item e a posição
- * exata (fase e índice) para o jogo reapresentar o mesmo desafio.
+ * exata (mundo e índice) para o jogo reapresentar o mesmo desafio.
  */
 export function undoLastAnswer(answers: readonly AnswerRecord[]): { answers: AnswerRecord[]; phaseId: PhaseId; itemIndex: number } | null {
   if (answers.length === 0) return null;
@@ -548,36 +491,48 @@ export function undoLastAnswer(answers: readonly AnswerRecord[]): { answers: Ans
   return { answers: rest, phaseId: last.phaseId, itemIndex: rest.filter((answer) => answer.phaseId === last.phaseId).length };
 }
 
-function round1(value: number): number {
-  return Number.isFinite(value) && value >= 0 ? Math.round(value * 10) / 10 : 0;
-}
-
 export type Level = "esperado" | "observar" | "alerta";
 
 export const LEVEL_LABELS: Record<Level, string> = {
-  esperado: "Dentro do esperado para a faixa",
+  esperado: "Dentro do esperado para a idade",
   observar: "Observar na consulta",
   alerta: "Sinal de alerta — priorizar na consulta",
 };
 
-/**
- * Faixas operacionais AUTORAIS (não normativas) para leitura rápida pela
- * equipe: por fase, 3–4 acertos = esperado, 2 = observar, 0–1 = alerta.
- * No total de 20, 16+ = esperado, 12–15 = observar, 0–11 = alerta.
- */
+/** Proporções AUTORAIS (não normativas) — as mesmas desde a primeira versão do jogo. */
+export const PHASE_RATIOS = { esperado: 0.75, observar: 0.5 } as const;
+export const OVERALL_RATIOS = { esperado: 0.8, observar: 0.6 } as const;
+
+function cut(total: number, ratio: number): number {
+  return Math.ceil(total * ratio - 1e-9);
+}
+
+/** Menor número de acertos para cada faixa, dado o número de itens. */
+export function levelCuts(total: number, scope: "fase" | "total" = "fase"): { esperado: number; observar: number } {
+  const ratios = scope === "fase" ? PHASE_RATIOS : OVERALL_RATIOS;
+  return { esperado: cut(total, ratios.esperado), observar: cut(total, ratios.observar) };
+}
+
+/** Texto das faixas para o número de itens (ex.: "4–5 acertos = esperado; 3 = observar; 0–2 = alerta"). */
+export function cutText(total: number, scope: "fase" | "total" = "fase"): string {
+  const cuts = levelCuts(total, scope);
+  const span = (from: number, to: number) => (from === to ? `${from}` : `${from}–${to}`);
+  return `${span(cuts.esperado, total)} acertos = esperado; ${span(cuts.observar, cuts.esperado - 1)} = observar; ${span(0, cuts.observar - 1)} = alerta`;
+}
+
 export function phaseLevel(hits: number, total: number): Level {
   if (total <= 0) return "alerta";
   const ratio = hits / total;
-  if (ratio >= 0.75) return "esperado";
-  if (ratio >= 0.5) return "observar";
+  if (ratio >= PHASE_RATIOS.esperado) return "esperado";
+  if (ratio >= PHASE_RATIOS.observar) return "observar";
   return "alerta";
 }
 
 export function overallLevel(hits: number, total: number): Level {
   if (total <= 0) return "alerta";
   const ratio = hits / total;
-  if (ratio >= 0.8) return "esperado";
-  if (ratio >= 0.6) return "observar";
+  if (ratio >= OVERALL_RATIOS.esperado) return "esperado";
+  if (ratio >= OVERALL_RATIOS.observar) return "observar";
   return "alerta";
 }
 
@@ -586,47 +541,85 @@ export interface PhaseSummary {
   hits: number;
   errors: number;
   noResponse: number;
+  refused: number;
   total: number;
   level: Level | null;
-  /** Falso quando nenhum item da fase foi registrado (partida interrompida). */
+  /** Falso quando nenhum item do mundo foi registrado (partida interrompida ou mundo pulado). */
   applied: boolean;
-  /** Tempo somado dos itens registrados na fase, em segundos. */
+  /** Motivo quando a aplicadora pulou o mundo de propósito ("não aplicado"). */
+  skipReason: string | null;
+  /** Tempo somado dos itens registrados no mundo, em segundos. */
   seconds: number;
   answers: AnswerRecord[];
+  /** Referência descritiva: acertos mínimos para "dentro do esperado" neste mundo. */
+  expectedMin: number;
+}
+
+export interface OriginSummary {
+  origin: OriginId;
+  label: string;
+  route: string;
+  planned: number;
+  applied: number;
+  hits: number;
+  phases: PhaseId[];
+  refs: string[];
 }
 
 export interface GameSummary {
   band: AgeBand;
   character: Character;
   phases: PhaseSummary[];
+  origins: OriginSummary[];
   hits: number;
   total: number;
   level: Level | null;
   durationSeconds: number;
   complete: boolean;
+  expectedMin: number;
 }
 
 export function summarize(session: GameSession): GameSummary {
   const band = bandForYears(session.ageYears) ?? AGE_BANDS[0];
   const character = CHARACTERS.find((entry) => entry.id === session.characterId) ?? CHARACTERS[0];
+  const skipped = new Map((session.skipped ?? []).map((entry) => [entry.phaseId, entry.reason]));
   const expected = PHASE_ORDER.flatMap((phaseId) => itemsFor(band.id, phaseId).map((item) => ({ item, phaseId })));
+  // Regra documentada (26/09): só a partida completa (todos os itens registrados uma única vez)
+  // recebe classificação. Mundo pulado = partida incompleta, mas o mundo aparece como "não aplicado".
   const complete = bandForYears(session.ageYears)?.id === session.bandId
+    && skipped.size === 0
     && session.answers.length === expected.length
     && expected.every(({ item, phaseId }) => session.answers.filter((answer) => answer.itemId === item.id && answer.phaseId === phaseId).length === 1);
   const phases: PhaseSummary[] = PHASE_ORDER.map((phaseId) => {
     const phase = phaseById(phaseId);
     const answers = session.answers.filter((answer) => answer.phaseId === phaseId);
     const total = itemsFor(band.id, phaseId).length;
-    const hits = answers.filter((answer) => answer.status === "acerto").length;
-    const errors = answers.filter((answer) => answer.status === "erro").length;
-    const noResponse = answers.filter((answer) => answer.status === "sem_resposta").length;
+    const count = (status: AnswerStatus) => answers.filter((answer) => answer.status === status).length;
     const seconds = Math.round(answers.reduce((sum, answer) => sum + answer.seconds, 0));
-    return { phase, hits, errors, noResponse, total, level: complete ? phaseLevel(hits, total) : null, applied: answers.length > 0, seconds, answers };
+    const hits = count("acerto");
+    return {
+      phase, hits, errors: count("erro"), noResponse: count("sem_resposta"), refused: count("recusa"), total,
+      level: complete ? phaseLevel(hits, total) : null, applied: answers.length > 0, skipReason: skipped.get(phaseId) ?? null, seconds, answers,
+      expectedMin: levelCuts(total).esperado,
+    };
+  });
+  const origins: OriginSummary[] = ORIGIN_ORDER.map((origin) => {
+    const planned = expected.filter(({ item }) => item.origin === origin);
+    const answered = session.answers.filter((answer) => answer.origin === origin);
+    return {
+      origin, label: ORIGIN_LABELS[origin], route: ORIGIN_ROUTES[origin], planned: planned.length, applied: answered.length,
+      hits: answered.filter((answer) => answer.status === "acerto").length,
+      phases: PHASE_ORDER.filter((phaseId) => planned.some((entry) => entry.phaseId === phaseId)),
+      refs: [...new Set(planned.map(({ item }) => item.ref.split(" · ").slice(0, 3).join(" · ")))],
+    };
   });
   const hits = phases.reduce((sum, phase) => sum + phase.hits, 0);
   const total = phases.reduce((sum, phase) => sum + phase.total, 0);
   const durationSeconds = session.answers.reduce((sum, answer) => sum + answer.seconds, 0);
-  return { band, character, phases, hits, total, level: complete ? overallLevel(hits, total) : null, durationSeconds: Math.round(durationSeconds), complete };
+  return {
+    band, character, phases, origins, hits, total, level: complete ? overallLevel(hits, total) : null, durationSeconds: Math.round(durationSeconds), complete,
+    expectedMin: levelCuts(total, "total").esperado,
+  };
 }
 
 export function formatDuration(seconds: number): string {
@@ -636,22 +629,29 @@ export function formatDuration(seconds: number): string {
   return minutes > 0 ? `${minutes} min ${rest.toString().padStart(2, "0")} s` : `${rest} s`;
 }
 
+/** Texto de um mundo no resumo: acertos, "não aplicado — motivo" ou itens registrados. */
+export function phaseStatusText(phase: PhaseSummary, complete: boolean): string {
+  if (phase.skipReason) return `não aplicado — ${phase.skipReason}`;
+  if (!phase.applied) return "não aplicado";
+  if (!complete) return `${phase.answers.length} de ${phase.total} itens registrados, ${phase.hits} acertos`;
+  return `${phase.hits}/${phase.total}`;
+}
 
 // ─────────────────────────────── leitura para a consulta ───────────────────────────────
 /**
  * Leitura AUTORAL e descritiva do registro, pensada para o médico bater o
  * olho antes da consulta: o que priorizar, que padrão de resposta apareceu
- * (erro ativo × não resposta), lentidão relativa ao ritmo da própria criança,
- * dependência do julgamento da aplicadora e qual aba de origem aprofunda cada
- * fase. Toda comparação é interna à partida. Nada aqui é norma, percentil,
- * idade equivalente ou diagnóstico.
+ * (erro ativo × não resposta/recusa), lentidão relativa ao ritmo da própria
+ * criança, dependência do julgamento da aplicadora e qual aba de origem
+ * aprofunda cada mundo. Toda comparação é interna à partida. Nada aqui é
+ * norma, percentil, idade equivalente ou diagnóstico.
  */
 export type ResponsePattern = "nenhum" | "erro_ativo" | "nao_resposta" | "misto";
 
 export const RESPONSE_PATTERN_LABELS: Record<ResponsePattern, string> = {
   nenhum: "Sem itens perdidos",
   erro_ativo: "Predomínio de erro ativo",
-  nao_resposta: "Predomínio de não resposta",
+  nao_resposta: "Predomínio de não resposta ou recusa",
   misto: "Erros e não respostas em proporção parecida",
 };
 
@@ -663,14 +663,16 @@ export interface KindProfile {
 export interface GameReading {
   headline: string;
   complete: boolean;
-  /** Fases aplicadas fora do esperado, da mais crítica para a menos. */
+  /** Mundos aplicados fora do esperado, do mais crítico para o menos. */
   priorities: PhaseSummary[];
-  /** Fases sem nenhum item registrado. */
+  /** Mundos sem nenhum item registrado. */
   notApplied: PhaseSummary[];
-  /** Itens perdidos (erro ou não resposta), na ordem da partida. */
+  /** Itens perdidos (erro, não resposta ou recusa), na ordem da partida. */
   missed: AnswerRecord[];
   errors: number;
+  /** Não respostas + recusas (o padrão de resposta agrupa os dois). */
   noResponse: number;
+  refused: number;
   pattern: ResponsePattern;
   medianSeconds: number;
   /** Itens com tempo >= 2x a mediana da própria partida (mínimo 12 s). */
@@ -678,21 +680,20 @@ export interface GameReading {
   touch: KindProfile;
   judged: KindProfile;
   repeated: number;
+  gestures: number;
   /** Toques em menos de 1 s que não acertaram: impulsividade ou toque acidental a considerar. */
   fastMisses: AnswerRecord[];
-  /** Não respostas por tipo de tarefa. */
+  /** Não respostas e recusas por tipo de tarefa. */
   noResponseByKind: Record<Item["kind"], number>;
   /** Acertos na primeira e na segunda metade da partida (ordem de aplicação). */
   halves: { first: KindProfile; second: KindProfile; drop: boolean };
   /** Mediana de tempo nos cinco primeiros e nos cinco últimos itens; slowdown quando o fim leva 2x mais. */
   pace: { start: number; end: number; slowdown: boolean };
-  /** Posição da idade dentro da faixa etária. */
-  bandPosition: "inferior" | "meio" | "superior";
-  /** Roteiro autoral para a consulta, uma entrada por fase priorizada. */
+  /** Roteiro autoral para a consulta, uma entrada por mundo priorizado. */
   plan: { phase: Phase; text: string }[];
-  /** Abas de origem que aprofundam as fases priorizadas. */
+  /** Abas de origem que aprofundam os mundos priorizados. */
   deepen: string[];
-  /** Rotas internas das abas de origem das fases priorizadas, sem repetição. */
+  /** Rotas internas das abas de origem dos mundos priorizados, sem repetição. */
   routes: { label: string; href: string }[];
   /** Frases descritivas prontas para leitura rápida. */
   notes: string[];
@@ -728,7 +729,8 @@ export function interpret(session: GameSession): GameReading | null {
     .sort((a, b) => LEVEL_RANK[a.level] - LEVEL_RANK[b.level] || a.hits - b.hits || a.phase.order - b.phase.order);
   const missed = session.answers.filter((answer) => answer.status !== "acerto");
   const errors = missed.filter((answer) => answer.status === "erro").length;
-  const noResponse = missed.filter((answer) => answer.status === "sem_resposta").length;
+  const refused = missed.filter((answer) => answer.status === "recusa").length;
+  const noResponse = missed.filter((answer) => answer.status === "sem_resposta" || answer.status === "recusa").length;
   const pattern: ResponsePattern = missed.length === 0
     ? "nenhum"
     : errors >= noResponse * 2 ? "erro_ativo" : noResponse >= errors * 2 ? "nao_resposta" : "misto";
@@ -740,48 +742,51 @@ export function interpret(session: GameSession): GameReading | null {
     const subset = session.answers.filter((answer) => kinds.includes(answer.kind));
     return { hits: subset.filter((answer) => answer.status === "acerto").length, total: subset.length };
   };
-  const touch = profile(["toque"]);
+  const touch = profile(["toque", "montar"]);
   const judged = profile(["fala", "fazer"]);
   const repeated = session.answers.filter((answer) => answer.repeated).length;
+  const gestures = session.answers.filter((answer) => answer.via === "gesto").length;
   const deepen = [...new Set(priorities.map((phase) => phase.phase.source))];
   const routes: { label: string; href: string }[] = [];
   for (const phase of priorities) for (const route of phase.phase.routes) if (!routes.some((entry) => entry.href === route.href)) routes.push(route);
   const plan = priorities.map((phase) => ({ phase: phase.phase, text: phase.phase.consult }));
-  const fastMisses = session.answers.filter((answer) => answer.kind === "toque" && answer.status !== "acerto" && answer.status !== "sem_resposta" && answer.seconds > 0 && answer.seconds < FAST_TAP_SECONDS);
-  const noResponseByKind: Record<Item["kind"], number> = { toque: 0, fala: 0, fazer: 0 };
-  for (const answer of session.answers) if (answer.status === "sem_resposta") noResponseByKind[answer.kind] += 1;
+  const fastMisses = session.answers.filter((answer) => answer.kind === "toque" && answer.status === "erro" && answer.seconds > 0 && answer.seconds < FAST_TAP_SECONDS);
+  const noResponseByKind: Record<Item["kind"], number> = { toque: 0, fala: 0, fazer: 0, montar: 0 };
+  for (const answer of session.answers) if (answer.status === "sem_resposta" || answer.status === "recusa") noResponseByKind[answer.kind] += 1;
   const halfAt = Math.ceil(session.answers.length / 2);
   const halfProfile = (subset: AnswerRecord[]): KindProfile => ({ hits: subset.filter((answer) => answer.status === "acerto").length, total: subset.length });
   const first = halfProfile(session.answers.slice(0, halfAt));
   const second = halfProfile(session.answers.slice(halfAt));
-  const drop = summary.complete && first.total > 0 && second.total > 0 && first.hits / first.total >= 0.75 && second.hits / second.total <= 0.5;
+  const drop = first.total > 0 && second.total > 0 && first.hits / first.total >= 0.75 && second.hits / second.total <= 0.5;
   const paceStart = timed.length >= PACE_WINDOW * 2 ? Math.round(median(timed.slice(0, PACE_WINDOW).map((answer) => answer.seconds)) * 10) / 10 : 0;
   const paceEnd = timed.length >= PACE_WINDOW * 2 ? Math.round(median(timed.slice(-PACE_WINDOW).map((answer) => answer.seconds)) * 10) / 10 : 0;
   const slowdown = paceStart > 0 && paceEnd >= 4 && paceEnd >= paceStart * 2;
-  const bandPosition: GameReading["bandPosition"] = summary.band.min === summary.band.max ? "meio" : session.ageYears <= summary.band.min ? "inferior" : session.ageYears >= summary.band.max ? "superior" : "meio";
 
   const notes: string[] = [];
-  if (!summary.complete) {
-    notes.push(`Partida incompleta: ${session.answers.length} de ${summary.total} itens registrados. ${notApplied.length > 0 ? `Fase(s) não aplicada(s): ${notApplied.map((phase) => phase.phase.name).join(", ")}. ` : ""}A contagem total só vale para comparação quando a partida é completa.`);
-  }
   if (applied.length > 0 && priorities.length === 0) {
-    notes.push("Todas as fases aplicadas ficaram dentro do esperado para a faixa nesta triagem de déficits grosseiros. Isso não exclui dificuldades sutis; a consulta segue o roteiro habitual.");
+    notes.push("Todos os mundos ficaram dentro do esperado para a idade nesta triagem de déficits grosseiros. Isso não exclui dificuldades sutis; a consulta segue o roteiro habitual.");
   }
   if (priorities.length > 0) {
     notes.push(`Prioridade para a consulta: ${priorities.map((phase) => `${shortPhase(phase)} (${phase.level})`).join("; ")}.`);
   }
   if (pattern === "nao_resposta") {
-    notes.push(`Predomínio de não resposta (${noResponse} de ${missed.length} itens perdidos). Antes de ler como déficit, considerar recusa, timidez, cansaço ou não compreensão do comando; vale reapresentar esses itens na consulta.`);
+    notes.push(`Predomínio de não resposta ou recusa (${noResponse} de ${missed.length} itens perdidos${refused > 0 ? `, ${refused} recusa(s)` : ""}). Antes de ler como déficit, considerar recusa, timidez, cansaço ou não compreensão do comando; vale reapresentar esses itens na consulta.`);
   } else if (pattern === "erro_ativo") {
     notes.push(`Predomínio de erro ativo (${errors} de ${missed.length} itens perdidos): a criança respondeu, mas fora do critério. Aponta mais para lacuna no domínio do que para recusa.`);
   } else if (pattern === "misto") {
-    notes.push(`Erros (${errors}) e não respostas (${noResponse}) em proporção parecida: separar na consulta o que foi lacuna do que foi recusa ou desatenção.`);
+    notes.push(`Erros (${errors}) e não respostas/recusas (${noResponse}) em proporção parecida: separar na consulta o que foi lacuna do que foi recusa ou desatenção.`);
+  }
+  if (refused > 0 && pattern !== "nao_resposta") {
+    notes.push(`${refused} item(ns) recusado(s): registrados à parte do erro; contam como não acertados na contagem.`);
+  }
+  if (gestures > 0) {
+    notes.push(`${gestures} acerto(s) por gesto/apontar (alternativa não verbal prevista no item): compreensão presente; conferir linguagem expressiva na consulta.`);
   }
   if (touch.total > 0 && judged.total > 0) {
     const touchRatio = touch.hits / touch.total;
     const judgedRatio = judged.hits / judged.total;
     if (touchRatio - judgedRatio >= 0.4) {
-      notes.push(`Melhor nos itens conferidos pelo jogo (toque ${touch.hits}/${touch.total}) do que nos conferidos pela aplicadora (fala e ação ${judged.hits}/${judged.total}). Conferir na consulta os itens de fala e de ação e o rigor do critério aplicado.`);
+      notes.push(`Melhor nos itens conferidos pelo jogo (toque/montagem ${touch.hits}/${touch.total}) do que nos conferidos pela aplicadora (fala e ação ${judged.hits}/${judged.total}). Conferir na consulta os itens de fala e de ação e o rigor do critério aplicado.`);
     } else if (judgedRatio - touchRatio >= 0.4) {
       notes.push(`Melhor nos itens de fala e ação (${judged.hits}/${judged.total}) do que nos de toque na tela (${touch.hits}/${touch.total}). Observar atenção visual, impulsividade no toque e compreensão da pergunta lida.`);
     }
@@ -800,19 +805,14 @@ export function interpret(session: GameSession): GameReading | null {
   if (noResponse >= 2) {
     const dominant = (Object.keys(noResponseByKind) as Item["kind"][]).find((kind) => noResponseByKind[kind] === noResponse);
     if (dominant === "fala") notes.push("Não resposta concentrada nas tarefas de fala: considerar timidez, ansiedade com estranhos ou linguagem expressiva; checar em conversa livre com a família presente.");
-    else if (dominant === "fazer") notes.push("Não resposta concentrada nas tarefas de ação: considerar recusa a comandos motores, timidez corporal ou kit indisponível; refazer com demonstração.");
-    else if (dominant === "toque") notes.push("Não resposta concentrada nas tarefas de toque: considerar desinteresse pela tela ou não compreensão do formato; testar com objetos concretos.");
+    else if (dominant === "fazer") notes.push("Não resposta concentrada nas tarefas de ação: considerar recusa a comandos motores, timidez corporal ou falta de espaço; refazer com demonstração.");
+    else if (dominant === "toque" || dominant === "montar") notes.push("Não resposta concentrada nas tarefas de tela: considerar desinteresse pela tela ou não compreensão do formato; testar com objetos concretos na consulta.");
   }
   if (drop) {
-    notes.push(`Queda na segunda metade da partida (${first.hits}/${first.total} acertos no início, ${second.hits}/${second.total} no fim): considerar fadiga ou desatenção crescente; a ordem das fases é fixa, então as últimas fases podem estar subestimadas.`);
+    notes.push(`Queda na segunda metade da partida (${first.hits}/${first.total} acertos no início, ${second.hits}/${second.total} no fim): considerar fadiga ou desatenção crescente; a ordem dos mundos é fixa, então os últimos mundos podem estar subestimados.`);
   }
   if (slowdown) {
-    notes.push(`Ritmo desacelerou ao longo da partida (mediana ${paceStart} s nos primeiros itens, ${paceEnd} s nos últimos): sinal de cansaço ou de dificuldade crescente nas fases finais.`);
-  }
-  if (bandPosition === "inferior" && priorities.length > 0) {
-    notes.push(`Idade no limite inferior da faixa (${session.ageYears} anos em ${summary.band.label}): os itens são calibrados para a faixa inteira, então erro isolado pesa menos; alerta em fase inteira continua valendo.`);
-  } else if (bandPosition === "superior" && priorities.length > 0) {
-    notes.push(`Idade no limite superior da faixa (${session.ageYears} anos em ${summary.band.label}): os itens ficam bem abaixo do esperado, então cada fase fora do esperado pesa mais.`);
+    notes.push(`Ritmo desacelerou ao longo da partida (mediana ${paceStart} s nos primeiros itens, ${paceEnd} s nos últimos): sinal de cansaço ou de dificuldade crescente nos mundos finais.`);
   }
   const events = [session.pauseCount ? `${session.pauseCount} pausa(s)` : "", session.undoCount ? `${session.undoCount} registro(s) desfeito(s) e refeito(s)` : ""].filter(Boolean);
   if (events.length > 0) notes.push(`Proveniência do registro: ${events.join(", ")} durante a partida.`);
@@ -823,13 +823,11 @@ export function interpret(session: GameSession): GameReading | null {
     notes.push(`Aprofundar com as abas de origem: ${deepen.join(" · ")}.`);
   }
 
-  const headline = summary.complete
-    ? `${LEVEL_LABELS[summary.level]} · ${summary.hits} de ${summary.total} acertos`
-    : `Partida incompleta · ${summary.hits} acertos em ${session.answers.length} itens registrados`;
+  const headline = `${LEVEL_LABELS[summary.level]} · ${summary.hits} de ${summary.total} acertos`;
 
   return {
-    headline, complete: summary.complete, priorities, notApplied, missed, errors, noResponse, pattern, medianSeconds, slow, touch, judged, repeated,
-    fastMisses, noResponseByKind, halves: { first, second, drop }, pace: { start: paceStart, end: paceEnd, slowdown }, bandPosition, plan, deepen, routes, notes,
+    headline, complete: summary.complete, priorities, notApplied, missed, errors, noResponse, refused, pattern, medianSeconds, slow, touch, judged, repeated, gestures,
+    fastMisses, noResponseByKind, halves: { first, second, drop }, pace: { start: paceStart, end: paceEnd, slowdown }, plan, deepen, routes, notes,
   };
 }
 
@@ -842,6 +840,11 @@ function sessionDate(session: GameSession): Date {
   return Number.isNaN(stamp.getTime()) ? new Date() : stamp;
 }
 
+function skippedText(summary: GameSummary): string {
+  const skipped = summary.phases.filter((phase) => phase.skipReason);
+  return skipped.length ? ` Não aplicado: ${skipped.map((phase) => `${phase.phase.name} (${phase.skipReason})`).join("; ")}.` : "";
+}
+
 /** Resumo curto, em prosa, para colar na evolução ou no prontuário. */
 export function buildGameBrief(session: GameSession, date = sessionDate(session)): string {
   const summary = summarize(session);
@@ -849,47 +852,103 @@ export function buildGameBrief(session: GameSession, date = sessionDate(session)
   // Dia no fuso clínico. `toISOString()` é UTC: no Brasil, a partir das 21h,
   // o registro de pré-consulta saía datado do dia seguinte.
   const day = formatClinicalDate(date);
+  const observations = cleanObservations(session.observations ?? "");
+  const obsText = observations ? ` Observações da aplicadora: ${sentence(observations)}` : "";
   if (!reading || summary.level === null) {
-    return `Registro lúdico de pré-consulta (${SUPER_NEUROPAD_TITLE}, faixa ${summary.band.label}) em ${day}: partida incompleta, ${session.answers.length} de ${summary.total} itens registrados. Sem classificação ou interpretação. `
-      + session.answers.map((answer) => `${answer.prompt}: ${answer.given} (${STATUS_LABELS[answer.status].toLowerCase()}; ${answer.seconds} s).`).join(" ");
+    return `Registro lúdico de pré-consulta (${SUPER_NEUROPAD_TITLE}, ${summary.band.label}) em ${day}: partida incompleta, ${session.answers.length} de ${summary.total} itens registrados. Sem classificação ou interpretação.`
+      + ` Por mundo: ${summary.phases.map((phase) => `${phase.phase.name} ${phaseStatusText(phase, false)}`).join(", ")}.${skippedText(summary)} `
+      + session.answers.map((answer) => `${answer.prompt}: ${answer.given} (${STATUS_LABELS[answer.status].toLowerCase()}; ${answer.seconds} s).`).join(" ")
+      + obsText;
   }
   const parts: string[] = [
-    `Triagem lúdica de pré-consulta (${SUPER_NEUROPAD_TITLE}, faixa ${summary.band.label}) aplicada pela recepção em ${day}: ${summary.complete ? `${summary.hits} de ${summary.total} acertos, ${LEVEL_LABELS[summary.level].toLowerCase()}` : `partida incompleta, ${summary.hits} acertos em ${session.answers.length} itens registrados`}.`,
-    `Por fase: ${summary.phases.map((phase) => `${phase.phase.name} ${phase.applied ? `${phase.hits}/${phase.total}` : "não aplicada"}`).join(", ")}.`,
+    `Avaliação lúdica de pré-consulta (${SUPER_NEUROPAD_TITLE}, ${summary.band.label}) aplicada em ${day}: ${summary.hits} de ${summary.total} acertos, ${LEVEL_LABELS[summary.level].toLowerCase()}.`,
+    `Por mundo: ${summary.phases.map((phase) => `${phase.phase.name} ${phase.hits}/${phase.total}`).join(", ")}.`,
   ];
   if (reading.missed.length > 0) {
     parts.push(`Itens perdidos: ${reading.missed.map((answer) => `${answer.prompt} (${STATUS_LABELS[answer.status].toLowerCase()})`).join("; ")}.`);
   }
   parts.push(...reading.notes.filter((note) => !note.startsWith("Aprofundar") && !note.startsWith("Roteiro para") && !note.startsWith("Proveniência")));
+  if (observations) parts.push(`Observações da aplicadora: ${sentence(observations)}`);
   parts.push("Contagem autoral, não normativa; a leitura e a conclusão são do médico.");
   return parts.join(" ");
+}
+
+// ─────────────────────────────── bloco estruturado (leitura por IA) ───────────────────────────────
+export const STRUCTURED_HEADER = "DADOS ESTRUTURADOS (formato estável: uma linha por registro, JSON após o rótulo)";
+
+/**
+ * Bloco legível por máquina, com rótulos fixos: `SESSAO`, `DOMINIO`, `ORIGEM`, `ITEM`
+ * e `OBSERVACOES`. Os valores são JSON de uma linha; figuras viram nomes entre colchetes.
+ * Campos de nível ficam `null` quando a partida está incompleta (sem classificação).
+ */
+export function buildStructuredLines(session: GameSession, date = sessionDate(session)): string[] {
+  const summary = summarize(session);
+  const wall = sessionWallSeconds(session);
+  const json = (value: unknown) => describeArt(JSON.stringify(value));
+  const lines: string[] = [];
+  lines.push(`SESSAO ${json({
+    instrumento: SUPER_NEUROPAD_TITLE, versao: SUPER_NEUROPAD_VERSION, idade_anos: session.ageYears, faixa: summary.band.label,
+    data_hora_local: formatClinicalDateTime(date), fuso: "America/Sao_Paulo (UTC-3)", completa: summary.complete,
+    itens_previstos: summary.total, itens_registrados: session.answers.length, acertos: summary.hits,
+    esperado_minimo_total: summary.expectedMin, nivel_total: summary.level, duracao_tarefas_s: summary.durationSeconds,
+    duracao_sessao_s: wall, tempo_estimado_s: estimateBandSeconds(summary.band.min).totalSeconds,
+    pausas: session.pauseCount ?? 0, tempo_em_pausa_s: Math.round(session.pausedSeconds ?? 0), desfeitos: session.undoCount ?? 0,
+    mundos_nao_aplicados: (session.skipped ?? []).map((entry) => ({ mundo: phaseById(entry.phaseId).name, motivo: entry.reason })),
+  })}`);
+  for (const phase of summary.phases) {
+    lines.push(`DOMINIO ${json({
+      mundo: phase.phase.name, dominio: phase.phase.domain, ordem: phase.phase.order, itens: phase.total, registrados: phase.answers.length,
+      acertos: phase.hits, erros: phase.errors, sem_resposta: phase.noResponse, recusas: phase.refused,
+      esperado_minimo: phase.expectedMin, nivel: phase.level, aplicado: phase.applied, nao_aplicado_motivo: phase.skipReason, tempo_s: phase.seconds,
+    })}`);
+  }
+  for (const origin of summary.origins) {
+    lines.push(`ORIGEM ${json({ instrumento: origin.label, itens_previstos: origin.planned, registrados: origin.applied, acertos: origin.hits, mundos: origin.phases.map((id) => phaseById(id).name) })}`);
+  }
+  for (const answer of session.answers) {
+    lines.push(`ITEM ${json({
+      id: answer.itemId, mundo: phaseById(answer.phaseId).name, origem: ORIGIN_LABELS[answer.origin], referencia: answer.ref, tipo: answer.kind,
+      pergunta: answer.prompt, esperado: answer.expected, resposta: answer.given, resultado: answer.status, tempo_s: answer.seconds,
+      repeticoes: answer.repeated ? 1 : 0, via: answer.via ?? "padrao",
+    })}`);
+  }
+  lines.push(`OBSERVACOES ${json({ texto: cleanObservations(session.observations ?? "") || null })}`);
+  return lines;
 }
 
 // ─────────────────────────────── relatório em texto ───────────────────────────────
 export function buildGameReport(session: GameSession, date = sessionDate(session)): string {
   const summary = summarize(session);
   const reading = interpret(session);
+  const wall = sessionWallSeconds(session);
+  const observations = cleanObservations(session.observations ?? "");
   const lines: string[] = [
     `${SUPER_NEUROPAD_TITLE} · versão ${SUPER_NEUROPAD_VERSION}`,
     `Idade informada: ${session.ageYears} anos · Faixa: ${summary.band.label} · Personagem: ${summary.character.emoji} ${summary.character.name} ${summary.character.role}`,
-    `Data: ${formatClinicalDate(date)} · Tempo somado nas tarefas: ${formatDuration(summary.durationSeconds)} · ${summary.complete ? "Jogo completo" : "Jogo incompleto"}`,
+    `Data e hora (local): ${formatClinicalDateTime(date)} · Tempo somado nas tarefas: ${formatDuration(summary.durationSeconds)}${wall !== null ? ` · Duração da sessão: ${formatDuration(wall)}` : ""} · ${session.pauseCount ?? 0} pausa(s) · ${summary.complete ? "Jogo completo" : "Jogo incompleto"}`,
+    "",
+    "O QUE FOI TESTADO POR INSTRUMENTO DE ORIGEM",
+    ...summary.origins.map((origin) => `- ${origin.label}: ${origin.planned} item(ns) nos mundos ${origin.phases.map((id) => phaseById(id).name).join(", ")} · registrados ${origin.applied}, acertos ${origin.hits}`),
     "",
     "RESULTADO OBJETIVO — CONTAGEM DE ACERTOS (NÃO É ESCORE NORMATIVO, PERCENTIL NEM DIAGNÓSTICO)",
-    summary.level === null ? `Partida incompleta: ${session.answers.length} de ${summary.total} itens registrados. Sem classificação ou interpretação.` : `Total: ${summary.hits} de ${summary.total} acertos · ${LEVEL_LABELS[summary.level]}`,
-    ...summary.phases.map((phase) => `Fase ${phase.phase.order} · ${phase.phase.name} (${phase.phase.domain}): ${phase.level === null ? `${phase.answers.length} de ${phase.total} itens registrados` : `${phase.hits}/${phase.total} acertos, ${phase.errors} erros, ${phase.noResponse} sem resposta · ${LEVEL_LABELS[phase.level]} · ${formatDuration(phase.seconds)}`}`),
+    summary.level === null ? `Partida incompleta: ${session.answers.length} de ${summary.total} itens registrados. Sem classificação ou interpretação.` : `Total: ${summary.hits} de ${summary.total} acertos (esperado para a idade: ${summary.expectedMin} ou mais) · ${LEVEL_LABELS[summary.level]}`,
+    ...summary.phases.map((phase) => `Mundo ${phase.phase.order} · ${phase.phase.name} (${phase.phase.domain}): ${phase.level === null ? phaseStatusText(phase, false) : `${phase.hits}/${phase.total} acertos (esperado: ${phase.expectedMin} ou mais), ${phase.errors} erros, ${phase.noResponse} sem resposta, ${phase.refused} recusa(s) · ${LEVEL_LABELS[phase.level]} · ${formatDuration(phase.seconds)}`}`),
     "",
-    ...(reading ? ["LEITURA PARA A CONSULTA (DESCRITIVA, AUTORAL, NÃO NORMATIVA)", ...reading.notes.map((note) => `- ${note}`)] : []),
+    ...(reading ? ["LEITURA PARA A CONSULTA (DESCRITIVA, AUTORAL, NÃO NORMATIVA)", ...reading.notes.map((note) => `- ${note}`), ""] : []),
+    "OBSERVAÇÕES DA APLICADORA",
+    observations || "Sem observações registradas.",
     "",
     "DETALHAMENTO ITEM A ITEM",
   ];
   for (const phase of summary.phases) {
-    lines.push(`Fase ${phase.phase.order} · ${phase.phase.name}`);
-    if (phase.answers.length === 0) lines.push("  (fase não aplicada)");
+    lines.push(`Mundo ${phase.phase.order} · ${phase.phase.name}`);
+    if (phase.answers.length === 0) lines.push(`  (${phase.skipReason ? `não aplicado — ${phase.skipReason}` : "mundo não aplicado"})`);
     phase.answers.forEach((answer, index) => {
-      lines.push(`  ${index + 1}. [${KIND_LABELS[answer.kind]}] ${answer.prompt}`);
-      lines.push(`     Esperado: ${answer.expected} · Registrado: ${answer.given} · ${STATUS_LABELS[answer.status]} · ${answer.seconds}s${answer.repeated ? " · comando repetido 1x" : ""}`);
+      lines.push(`  ${index + 1}. [${ORIGIN_LABELS[answer.origin]} · ${KIND_LABELS[answer.kind]}] ${answer.prompt}`);
+      lines.push(`     Esperado: ${answer.expected} · Registrado: ${answer.given} · ${STATUS_LABELS[answer.status]} · ${answer.seconds}s${answer.repeated ? " · comando repetido 1x" : ""}${answer.via === "gesto" ? " · por gesto/apontar" : ""}`);
     });
   }
+  lines.push("", STRUCTURED_HEADER, ...buildStructuredLines(session, date));
   lines.push("", SUPER_NEUROPAD_NATURE);
   return lines.join("\n");
 }
@@ -897,7 +956,7 @@ export function buildGameReport(session: GameSession, date = sessionDate(session
 // ─────────────────────────────── uso prático na consulta ───────────────────────────────
 /**
  * Duração de relógio da partida (início → fim), em segundos inteiros. Difere do
- * "tempo somado nas tarefas", que exclui pausas, introduções e telas de fase.
+ * "tempo somado nas tarefas", que exclui pausas, introduções e telas de mundo.
  * Sem instantes válidos ou com fim antes do início, devolve null.
  */
 export function sessionWallSeconds(session: GameSession): number | null {
@@ -909,33 +968,37 @@ export function sessionWallSeconds(session: GameSession): number | null {
 }
 
 /**
- * Linhas pergunta/resposta para "Salvar em paciente" (mesmo formato das demais
+ * Linhas pergunta/resposta para "Salvar no prontuário" (mesmo formato das demais
  * escalas). A primeira linha é o resumo em prosa de `buildGameBrief`, que já
  * respeita a regra de partida incompleta (sem classificação); depois vem cada
- * item registrado, na ordem da partida, com esperado, registrado, tempo e
- * repetição. Nenhum escore novo é criado aqui.
+ * item registrado, na ordem da partida, com origem, esperado, registrado,
+ * tempo e repetição. Nenhum escore novo é criado aqui.
  */
 export function buildPatientRecordItems(session: GameSession): Array<{ question: string; answer: string }> {
   const summary = summarize(session);
   const wall = sessionWallSeconds(session);
+  const observations = cleanObservations(session.observations ?? "");
   const rows = [
     { question: "Resumo para o prontuário", answer: buildGameBrief(session) },
     {
       question: "Partida",
       answer: [
-        `Idade informada: ${session.ageYears} anos · faixa ${summary.band.label}`,
+        `Idade informada: ${session.ageYears} anos (faixa anual)`,
         `${session.answers.length} de ${summary.total} itens registrados (${summary.complete ? "completa" : "incompleta"})`,
         `tempo somado nas tarefas ${formatDuration(summary.durationSeconds)}`,
         ...(wall !== null ? [`duração da sessão ${formatDuration(wall)}`] : []),
         `${session.pauseCount ?? 0} pausa(s) · ${session.undoCount ?? 0} desfeito(s)`,
       ].join(" · "),
     },
+    { question: "O que foi testado por instrumento", answer: summary.origins.map((origin) => `${origin.label}: ${origin.applied}/${origin.planned} itens registrados, ${origin.hits} acertos`).join(" · ") },
+    ...summary.phases.filter((phase) => phase.skipReason).map((phase) => ({ question: `Mundo ${phase.phase.order} · ${phase.phase.name}`, answer: `Não aplicado — ${phase.skipReason}` })),
+    ...(observations ? [{ question: "Observações da aplicadora", answer: observations }] : []),
   ];
   for (const answer of session.answers) {
     const phase = phaseById(answer.phaseId);
     rows.push({
-      question: `Fase ${phase.order} · ${phase.name} · ${answer.prompt}`,
-      answer: `${STATUS_LABELS[answer.status]} · registrado: ${answer.given} · esperado: ${answer.expected} · ${answer.seconds} s${answer.repeated ? " · comando repetido 1x" : ""}`,
+      question: `Mundo ${phase.order} · ${phase.name} · ${ORIGIN_LABELS[answer.origin]} · ${answer.prompt}`,
+      answer: `${STATUS_LABELS[answer.status]} · registrado: ${answer.given} · esperado: ${answer.expected} · ${answer.seconds} s${answer.repeated ? " · comando repetido 1x" : ""}${answer.via === "gesto" ? " · por gesto/apontar" : ""}`,
     });
   }
   return rows;
@@ -944,8 +1007,10 @@ export function buildPatientRecordItems(session: GameSession): Array<{ question:
 /**
  * Atalhos de teclado da aplicadora nos itens julgados (fala e ação). Itens de
  * toque continuam exclusivos da criança na tela: o teclado não responde por ela.
+ * 5 = acertou por gesto/apontar (só nos itens que preveem essa alternativa).
  */
-export const JUDGE_SHORTCUTS: Readonly<Record<string, AnswerStatus>> = Object.freeze({ "1": "acerto", "2": "erro", "3": "sem_resposta" });
+export const JUDGE_SHORTCUTS: Readonly<Record<string, AnswerStatus>> = Object.freeze({ "1": "acerto", "2": "erro", "3": "sem_resposta", "4": "recusa" });
+export const GESTURE_SHORTCUT = "5";
 export function judgeShortcut(key: string): AnswerStatus | null {
   return JUDGE_SHORTCUTS[key] ?? null;
 }

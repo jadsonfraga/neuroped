@@ -56,3 +56,8 @@
 @media (max-width: 640px) {
   .snp-panel { box-shadow: 4px 4px 0 var(--snp-shadow); }
 }
+
+/* Figuras do Reconhecimento Visual dentro do jogo (componente reutilizado da aba de origem). */
+.snp .snp-vr .rv-illustration { width: 100%; height: 100%; display: block; object-fit: contain; user-select: none; -webkit-user-drag: none; }
+/* Folha de desenho com o dedo: sem rolagem nem zoom durante o traço. */
+.snp .snp-drawpad { touch-action: none; cursor: crosshair; color: var(--snp-ink-fixed); }
