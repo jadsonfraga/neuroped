@@ -16,6 +16,7 @@ import { DatabaseSync } from "node:sqlite";
 import { onRequest as opsMiddleware } from "../../functions/api/operations/_middleware";
 import { onRequestGet as opsGet, onRequestPost as opsPost } from "../../functions/api/operations/index";
 import { onRequestGet as publicGet } from "../../functions/api/public-booking";
+import { formatPatientDateTime as fmt } from "../../functions/api/operations/_notificationDelivery";
 
 const OPERATIONAL_KEY = "chave-operacional-de-teste-com-32-caracteres!!";
 
@@ -181,7 +182,7 @@ let firstId = "";
   const dashboard = await sec();
   const note = dashboard.body.notifications.find((item: any) => item.appointmentId === firstId);
   assert.equal(note.recipient, "+5587999990000", "destinatário decifrado para a equipe");
-  assert.match(note.message, new RegExp(`${D1}T10:00`));
+  assert.ok(note.message.includes(fmt(`${D1}T10:00`)), note.message);
 }
 
 // ── 2. Recepção remarca: horário, duração, locks, auditoria e notificação ──
@@ -212,7 +213,7 @@ let firstId = "";
   const dashboard = await sec();
   const note = dashboard.body.notifications.find((item: any) => item.template === "appointment_rescheduled");
   assert.equal(note.recipient, "+5587999990000");
-  assert.match(note.message, new RegExp(`${D1}T10:00.*${D1}T14:00`));
+  assert.ok(note.message.includes(`de ${fmt(`${D1}T10:00`)} para ${fmt(`${D1}T14:00`)}`), note.message);
   assert.equal(dashboard.body.audit.some((item: any) => item.action === "appointment_reschedule"), true);
 }
 
@@ -299,7 +300,7 @@ let firstId = "";
   assert.equal(queued[0].status, "pending_provider");
   const dashboard = await sec();
   const note = dashboard.body.notifications.find((item: any) => item.template === "appointment_cancelled");
-  assert.equal(note.message, `Consulta de ${D1}T09:00 cancelada pela clínica.`);
+  assert.equal(note.message, `Clínica clinica-alfa cancelou a consulta com Dra. Alfa de ${fmt(`${D1}T09:00`)}.`);
   assert.equal(note.recipient, "+5587999990000");
   assert.deepEqual(locks(firstId), [], "cancelamento libera os locks");
   const again = await sec({ action: "appointment_reschedule", id: firstId, startsAtLocal: `${D1}T11:00` });

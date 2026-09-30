@@ -30,6 +30,14 @@ import {
   type ServiceRow,
 } from "./_core";
 import {
+  EMAIL_NOTIFICATION_TEMPLATES,
+  MAX_EMAIL_ATTEMPTS,
+  buildPatientMessage,
+  dispatchNotificationEmail,
+  emailDeliveryActive,
+  loadNotificationContext,
+} from "./_notificationDelivery";
+import {
   ensureOperationsHardeningSchema,
   linkOperationsOperator,
   listOperationsAudit,
@@ -157,7 +165,14 @@ async function getDashboard(
     .bind(provider.id, clinicId)
     .all<any>();
   const notificationsResult = await db
-    .prepare(`SELECT * FROM notification_outbox WHERE provider_user_id = ? AND clinic_id = ? ORDER BY created_at DESC LIMIT 120`)
+    .prepare(
+      `SELECT n.*, (a.guardian_email_encrypted IS NOT NULL) AS has_guardian_email
+         FROM notification_outbox n
+         LEFT JOIN appointments a ON a.id = n.appointment_id
+        WHERE n.provider_user_id = ? AND n.clinic_id = ?
+        ORDER BY n.created_at DESC
+        LIMIT 120`,
+    )
     .bind(provider.id, clinicId)
     .all<any>();
 
@@ -213,6 +228,11 @@ async function getDashboard(
       recipient: await decryptText(env, row.recipient_encrypted, "recipient"),
       message: (await decryptText(env, row.payload_encrypted, "payload")) ?? "",
       status: row.status,
+      // Colunas da 0031; ausentes (migração pendente) viram 0/null.
+      attempts: Number(row.attempts ?? 0),
+      lastError: row.last_error ?? null,
+      lastAttemptAt: row.last_attempt_at ?? null,
+      emailEligible: EMAIL_NOTIFICATION_TEMPLATES.has(String(row.template)) && Boolean(row.has_guardian_email),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     })),
@@ -281,6 +301,7 @@ async function getDashboard(
     waitlist,
     reviews: principal.canConfigure ? fullReviews : [],
     notifications,
+    emailDelivery: { active: emailDeliveryActive(env), maxAttempts: MAX_EMAIL_ATTEMPTS },
     metrics,
     access: { ...principal, clinicId },
     staff: principal.canConfigure ? await listOperationsStaff(db, provider.id) : [],
@@ -568,13 +589,20 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       await env.DB.batch([insertAppointment, ...slotLockStatements(env.DB, user.id, appointmentId, starts, endsAtLocal)]);
       // Mesma fila dos fluxos públicos: sem provedor externo a mensagem fica
       // `pending_provider` na caixa de saída para envio manual.
+      const createdContext = await loadNotificationContext(env.DB, user.id, clinicId);
       await enqueueNotification(env.DB, env, {
         appointmentId,
         providerUserId: user.id,
         clinicId,
         template: "appointment_created",
         recipient: cleanOptionalText(body.guardianPhone, 40) || cleanOptionalText(body.guardianEmail, 180),
-        message: `Consulta agendada pela clínica para ${starts}.`,
+        email: cleanOptionalText(body.guardianEmail, 180),
+        context: createdContext,
+        message: buildPatientMessage("appointment_created", {
+          startsAtLocal: starts,
+          timezone: profile.timezone,
+          context: createdContext,
+        }),
       });
       auditTargetType = "appointment";
       auditTargetId = appointmentId;
@@ -629,13 +657,22 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       if ((rescheduleResults[0]?.meta?.changes ?? 0) !== 1) {
         return errorResponse("A consulta mudou durante a remarcação. Recarregue a agenda.", "STALE_APPOINTMENT", 409);
       }
+      const movedEmail = await decryptText(env, current.guardian_email_encrypted, "guardian_email");
+      const movedContext = await loadNotificationContext(env.DB, user.id, clinicId);
       await enqueueNotification(env.DB, env, {
         appointmentId: id,
         providerUserId: user.id,
         clinicId,
         template: "appointment_rescheduled",
-        recipient: await decryptText(env, current.guardian_phone_encrypted, "guardian_phone") || await decryptText(env, current.guardian_email_encrypted, "guardian_email"),
-        message: `Consulta remarcada pela clínica de ${current.starts_at_local} para ${starts}.`,
+        recipient: await decryptText(env, current.guardian_phone_encrypted, "guardian_phone") || movedEmail,
+        email: movedEmail,
+        context: movedContext,
+        message: buildPatientMessage("appointment_rescheduled", {
+          startsAtLocal: starts,
+          previousStartsAtLocal: current.starts_at_local,
+          timezone: current.timezone,
+          context: movedContext,
+        }),
       });
       auditTargetType = "appointment";
       auditTargetId = id;
@@ -705,15 +742,24 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       if ((transitionResults[0]?.meta?.changes ?? 0) !== 1) {
         return errorResponse("A consulta mudou durante a atualização. Recarregue a agenda.", "STALE_APPOINTMENT", 409);
       }
+      const statusEmail = await decryptText(env, current.guardian_email_encrypted, "guardian_email");
+      const statusContext = await loadNotificationContext(env.DB, user.id, clinicId);
+      const statusTemplate = `appointment_${status}`;
       await enqueueNotification(env.DB, env, {
         appointmentId: id,
         providerUserId: user.id,
         clinicId,
-        template: `appointment_${status}`,
-        recipient: await decryptText(env, current.guardian_phone_encrypted, "guardian_phone") || await decryptText(env, current.guardian_email_encrypted, "guardian_email"),
-        message: status === "cancelled"
-          ? `Consulta de ${current.starts_at_local} cancelada pela clínica.`
-          : `Atualização da consulta: status ${status}. Horário ${current.starts_at_local}.`,
+        template: statusTemplate,
+        recipient: await decryptText(env, current.guardian_phone_encrypted, "guardian_phone") || statusEmail,
+        // Só confirmação e cancelamento vão por e-mail; os demais seguem manuais.
+        email: EMAIL_NOTIFICATION_TEMPLATES.has(statusTemplate) ? statusEmail : null,
+        context: statusContext,
+        message: buildPatientMessage(statusTemplate, {
+          startsAtLocal: current.starts_at_local,
+          timezone: current.timezone,
+          status,
+          context: statusContext,
+        }),
       });
       auditTargetType = "appointment";
       auditTargetId = id;
@@ -749,6 +795,42 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       auditTargetType = "review";
       auditTargetId = id;
       auditMetadata = { status: approved ? "approved" : "hidden" };
+    } else if (action === "notification_retry_email") {
+      // Reenvio explícito pela equipe. Limitado a MAX_EMAIL_ATTEMPTS e a uma
+      // tentativa por minuto por mensagem; sem laço automático.
+      const id = cleanText(body.id, 80);
+      if (!id) return errorResponse("Notificação inválida.", "VALIDATION_ERROR", 400);
+      if (!emailDeliveryActive(env)) {
+        return errorResponse("Envio por e-mail não configurado. Use o envio manual.", "EMAIL_NOT_CONFIGURED", 409);
+      }
+      const row = await env.DB.prepare(
+        `SELECT n.id, n.template, n.payload_encrypted, a.guardian_email_encrypted
+           FROM notification_outbox n
+           LEFT JOIN appointments a ON a.id = n.appointment_id
+          WHERE n.id = ? AND n.provider_user_id = ? AND n.clinic_id = ?
+          LIMIT 1`,
+      ).bind(id, user.id, clinicId).first<{
+        id: string; template: string; payload_encrypted: string; guardian_email_encrypted: string | null;
+      }>();
+      if (!row) return errorResponse("Notificação não encontrada.", "NOT_FOUND", 404);
+      const delivery = await dispatchNotificationEmail(env.DB, env, {
+        id,
+        email: await decryptText(env, row.guardian_email_encrypted, "guardian_email"),
+        message: (await decryptText(env, row.payload_encrypted, "payload")) ?? "",
+        context: await loadNotificationContext(env.DB, user.id, clinicId),
+      });
+      if (delivery === "no_email") {
+        return errorResponse("O responsável não tem e-mail cadastrado. Use o envio manual.", "NO_EMAIL", 409);
+      }
+      if (delivery === "not_eligible") {
+        return errorResponse("Esta mensagem não pode ser reenviada agora (já enviada, fora do escopo de e-mail, limite de tentativas ou tentativa há menos de 1 minuto).", "NOT_ELIGIBLE", 409);
+      }
+      if (delivery === "error") {
+        return errorResponse("Não foi possível tentar o envio agora.", "EMAIL_DISPATCH_ERROR", 503);
+      }
+      auditTargetType = "notification";
+      auditTargetId = id;
+      auditMetadata = { status: delivery };
     } else if (action === "notification_status") {
       const id = cleanText(body.id, 80);
       const status = cleanText(body.status, 30);

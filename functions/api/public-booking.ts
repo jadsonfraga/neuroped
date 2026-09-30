@@ -26,6 +26,7 @@ import {
   type ServiceRow,
 } from "./operations/_core";
 import { ensureOperationsHardeningSchema } from "./operations/_access";
+import { buildPatientMessage, loadNotificationContext, publicManageUrl } from "./operations/_notificationDelivery";
 import { isValidLocalDate, selectFutureSlots } from "../../shared/operations";
 import { readJsonBody as readBody, nowInProviderTimezone as nowInTimezone } from "./operations/_core";
 
@@ -314,13 +315,21 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
       }
 
       const recipient = guardianPhone || guardianEmail || null;
+      const notificationContext = await loadNotificationContext(env.DB, provider.user_id, clinicId);
       await enqueueNotification(env.DB, env, {
         appointmentId,
         providerUserId: provider.user_id,
         clinicId,
         template: "booking_requested",
         recipient,
-        message: `Solicitação de consulta recebida para ${chosen.startsAtLocal}. A clínica ainda precisa confirmar o horário.`,
+        email: guardianEmail || null,
+        context: notificationContext,
+        message: buildPatientMessage("booking_requested", {
+          startsAtLocal: chosen.startsAtLocal,
+          timezone: provider.timezone,
+          context: notificationContext,
+          manageUrl: publicManageUrl(env, notificationContext),
+        }),
       });
 
       return jsonResponse(
@@ -364,13 +373,22 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
       if ((cancelResults[0]?.meta?.changes ?? 0) !== 1) {
         return errorResponse("A reserva mudou enquanto era cancelada. Atualize e tente novamente.", "STALE_APPOINTMENT", 409);
       }
+      const cancelEmail = await decryptText(env, appointment.guardian_email_encrypted, "guardian_email");
+      const cancelContext = await loadNotificationContext(env.DB, appointment.provider_user_id, appointment.clinic_id);
       await enqueueNotification(env.DB, env, {
         appointmentId: appointment.id,
         providerUserId: appointment.provider_user_id,
         clinicId: appointment.clinic_id,
         template: "booking_cancelled",
-        recipient: await decryptText(env, appointment.guardian_phone_encrypted, "guardian_phone") || await decryptText(env, appointment.guardian_email_encrypted, "guardian_email"),
-        message: `Reserva cancelada para ${appointment.starts_at_local}.`,
+        recipient: await decryptText(env, appointment.guardian_phone_encrypted, "guardian_phone") || cancelEmail,
+        email: cancelEmail,
+        context: cancelContext,
+        message: buildPatientMessage("booking_cancelled", {
+          startsAtLocal: appointment.starts_at_local,
+          timezone: appointment.timezone,
+          context: cancelContext,
+          manageUrl: publicManageUrl(env, cancelContext),
+        }),
       });
       return jsonResponse({ ok: true, status: "cancelled" });
     }
@@ -432,13 +450,22 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
         }
         throw error;
       }
+      const rescheduleEmail = await decryptText(env, appointment.guardian_email_encrypted, "guardian_email");
+      const rescheduleContext = await loadNotificationContext(env.DB, appointment.provider_user_id, appointment.clinic_id);
       await enqueueNotification(env.DB, env, {
         appointmentId: appointment.id,
         providerUserId: appointment.provider_user_id,
         clinicId: appointment.clinic_id,
         template: "booking_rescheduled",
-        recipient: await decryptText(env, appointment.guardian_phone_encrypted, "guardian_phone") || await decryptText(env, appointment.guardian_email_encrypted, "guardian_email"),
-        message: `Remarcação solicitada para ${chosen.startsAtLocal}. A clínica precisa reconfirmar.`,
+        recipient: await decryptText(env, appointment.guardian_phone_encrypted, "guardian_phone") || rescheduleEmail,
+        email: rescheduleEmail,
+        context: rescheduleContext,
+        message: buildPatientMessage("booking_rescheduled", {
+          startsAtLocal: chosen.startsAtLocal,
+          timezone: provider.timezone,
+          context: rescheduleContext,
+          manageUrl: publicManageUrl(env, rescheduleContext),
+        }),
       });
       return jsonResponse({ ok: true, status: "requested", startsAtLocal: chosen.startsAtLocal, endsAtLocal: chosen.endsAtLocal });
     }
