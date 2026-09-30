@@ -82,6 +82,10 @@ assert.match(
   "a página de planos precisa oferecer o caminho para criar conta",
 );
 
+// 4b) Agenda vendida é a agenda que existe: sem promessa de WhatsApp/SMS/lembrete.
+assert.match(page, /Agenda própria e agendamento online/, "a vitrine precisa listar a agenda que já existe");
+assert.match(page, /Não envia WhatsApp, SMS nem lembretes/, "a vitrine precisa negar WhatsApp, SMS e lembretes D-1");
+
 // 5) Verdade clínica na vitrine: a página não pode prometer diagnóstico.
 assert.match(
   page,

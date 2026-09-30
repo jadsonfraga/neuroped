@@ -26,9 +26,27 @@ import {
   type ServiceRow,
 } from "./operations/_core";
 import { ensureOperationsHardeningSchema } from "./operations/_access";
+import { requireBillingEntitlement } from "./billing/_guard";
 import { buildPatientMessage, loadNotificationContext, publicManageUrl } from "./operations/_notificationDelivery";
 import { isValidLocalDate, selectFutureSlots } from "../../shared/operations";
 import { readJsonBody as readBody, nowInProviderTimezone as nowInTimezone } from "./operations/_core";
+
+/**
+ * Mesma decisão de acesso da agenda interna (`requireBillingEntitlement`,
+ * escopo clínico, pelo profissional e clínica resolvidos): clínica sem
+ * assinatura válida, suspensa ou encerrada não recebe pedido público.
+ * Avaliação e assinatura ativa (inclusive em atraso ainda não suspenso)
+ * seguem iguais.
+ */
+async function clinicBookingUnavailable(db: D1Database, providerUserId: string, clinicId: string): Promise<Response | null> {
+  const denial = await requireBillingEntitlement(db, providerUserId, clinicId, "clinical");
+  if (!denial) return null;
+  return errorResponse(
+    "O agendamento online desta clínica está temporariamente indisponível. Entre em contato diretamente com a clínica para marcar sua consulta.",
+    "CLINIC_BOOKING_UNAVAILABLE",
+    409,
+  );
+}
 
 function emailValid(value: string): boolean {
   return !value || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -249,6 +267,8 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
       }
       const clinicId = await resolveClinicId(env.DB, provider.user_id, clinicSlug);
       if (!clinicId) return errorResponse("Agendamento online não está ativo.", "BOOKING_DISABLED", 409);
+      const bookingDenied = await clinicBookingUnavailable(env.DB, provider.user_id, clinicId);
+      if (bookingDenied) return bookingDenied;
       const serviceId = cleanText(body.serviceId, 80);
       const service = await getService(env.DB, provider.user_id, serviceId, true, clinicId);
       const startsAtLocal = cleanText(body.startsAtLocal, 16);
@@ -480,6 +500,8 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
       }
       const clinicId = await resolveClinicId(env.DB, provider.user_id, cleanOptionalText(body.clinic, 80));
       if (!clinicId) return errorResponse("Lista de espera indisponível.", "BOOKING_DISABLED", 409);
+      const waitlistDenied = await clinicBookingUnavailable(env.DB, provider.user_id, clinicId);
+      if (waitlistDenied) return waitlistDenied;
       const service = await getService(env.DB, provider.user_id, cleanText(body.serviceId, 80), true, clinicId);
       if (!service) return errorResponse("Serviço inválido.", "VALIDATION_ERROR", 400);
       const guardianName = cleanText(body.guardianName, 120);
