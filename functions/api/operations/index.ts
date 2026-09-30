@@ -835,8 +835,21 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const id = cleanText(body.id, 80);
       const status = cleanText(body.status, 30);
       if (!id || !["manual_sent", "failed"].includes(status)) return errorResponse("Status de notificação inválido.", "VALIDATION_ERROR", 400);
-      const result = await env.DB.prepare(`UPDATE notification_outbox SET status = ?, updated_at = ? WHERE id = ? AND provider_user_id = ? AND clinic_id = ?`).bind(status, now, id, user.id, clinicId).run();
-      if ((result.meta?.changes ?? 0) !== 1) return errorResponse("Notificação não encontrada.", "NOT_FOUND", 404);
+      // `delivered` (já enviada por e-mail) e `manual_sent` são terminais. Sem a
+      // guarda de estado, aba desatualizada ou clique duplo regredia `delivered`
+      // para `manual_sent` e o histórico deixava de refletir o que aconteceu.
+      const result = await env.DB.prepare(
+        `UPDATE notification_outbox SET status = ?, updated_at = ?
+          WHERE id = ? AND provider_user_id = ? AND clinic_id = ?
+            AND status IN ('pending_provider', 'failed')`,
+      ).bind(status, now, id, user.id, clinicId).run();
+      if ((result.meta?.changes ?? 0) !== 1) {
+        const existing = await env.DB.prepare(
+          `SELECT 1 AS found FROM notification_outbox WHERE id = ? AND provider_user_id = ? AND clinic_id = ? LIMIT 1`,
+        ).bind(id, user.id, clinicId).first();
+        if (existing) return errorResponse("Esta mensagem já foi concluída e não pode mudar de status.", "INVALID_TRANSITION", 409);
+        return errorResponse("Notificação não encontrada.", "NOT_FOUND", 404);
+      }
       auditTargetType = "notification";
       auditTargetId = id;
       auditMetadata = { status };
