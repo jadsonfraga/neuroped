@@ -22,6 +22,7 @@ import {
   serviceToApi,
   sha256,
   slotLockStatements,
+  slotLockStatementsForAppointmentState,
   slugify,
   validSlug,
   type AppointmentRow,
@@ -38,7 +39,12 @@ import {
   setOperationsStaffActive,
   type OperationsPrincipal,
 } from "./_access";
-import { isValidTimeZone, type AppointmentStatus } from "../../../shared/operations";
+import {
+  addMinutesLocal,
+  isValidLocalDate,
+  isValidTimeZone,
+  type AppointmentStatus,
+} from "../../../shared/operations";
 import { readJsonBody as readBody, nowInProviderTimezone as localNow } from "./_core";
 
 function canConfigure(role: string): boolean {
@@ -364,6 +370,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       "delete_rule",
       "create_block",
       "delete_block",
+      "create_day_block",
       "review_moderate",
       "staff_link",
       "staff_active",
@@ -505,6 +512,25 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       ).bind(id, user.id, clinicId, starts, ends, cleanOptionalText(body.reason, 160), now).run();
       auditTargetType = "availability_block";
       auditTargetId = id;
+    } else if (action === "create_day_block") {
+      // Bloqueio de dia inteiro (ex.: feriado) reaproveita booking_blocks: a
+      // mesma tabela, os mesmos triggers de conflito com consultas ativas e o
+      // mesmo cálculo de vagas públicas. Só muda a forma de entrada: uma data
+      // e um rótulo obrigatório, cobrindo 00:00 até 00:00 do dia seguinte.
+      const date = cleanText(body.date, 10);
+      const reason = cleanText(body.reason, 160);
+      if (!isValidLocalDate(date)) return errorResponse("Data do bloqueio inválida.", "VALIDATION_ERROR", 400);
+      if (!reason) return errorResponse("Informe um rótulo para o bloqueio (ex.: Feriado).", "VALIDATION_ERROR", 400);
+      const starts = `${date}T00:00`;
+      const ends = addMinutesLocal(starts, 24 * 60);
+      const id = `blk-${crypto.randomUUID()}`;
+      await env.DB.prepare(
+        `INSERT INTO booking_blocks (id, provider_user_id, clinic_id, starts_at_local, ends_at_local, reason, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      ).bind(id, user.id, clinicId, starts, ends, reason, now).run();
+      auditTargetType = "availability_block";
+      auditTargetId = id;
+      auditMetadata = { status: "full_day" };
     } else if (action === "delete_block") {
       const id = cleanText(body.id, 80);
       if (!id) return errorResponse("Bloqueio inválido.", "VALIDATION_ERROR", 400);
@@ -540,9 +566,81 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
         await encryptText(env, cleanOptionalText(body.patientName, 120), "patient_name"), service.price_cents, now, now,
       );
       await env.DB.batch([insertAppointment, ...slotLockStatements(env.DB, user.id, appointmentId, starts, endsAtLocal)]);
+      // Mesma fila dos fluxos públicos: sem provedor externo a mensagem fica
+      // `pending_provider` na caixa de saída para envio manual.
+      await enqueueNotification(env.DB, env, {
+        appointmentId,
+        providerUserId: user.id,
+        clinicId,
+        template: "appointment_created",
+        recipient: cleanOptionalText(body.guardianPhone, 40) || cleanOptionalText(body.guardianEmail, 180),
+        message: `Consulta agendada pela clínica para ${starts}.`,
+      });
       auditTargetType = "appointment";
       auditTargetId = appointmentId;
       auditMetadata = { source: principal.delegated ? "operator" : "professional", serviceId };
+    } else if (action === "appointment_reschedule") {
+      // Remarcação pela equipe (profissional ou recepção vinculada). Mesma
+      // disciplina do `reschedule` público: UPDATE condicional ao estado lido
+      // (controle otimista), liberação dos locks só se o UPDATE venceu e novos
+      // locks só para o estado resultante — tudo no mesmo batch atômico, com
+      // os triggers de bloqueio/conflito como última barreira. Como em
+      // `create_appointment`, a equipe não fica restrita às regras públicas de
+      // disponibilidade; só a conflitos reais (consulta ou bloqueio).
+      const id = cleanText(body.id, 80);
+      const starts = assertLocalDateTime(body.startsAtLocal);
+      if (!id || !starts) return errorResponse("Remarcação inválida.", "VALIDATION_ERROR", 400);
+      const current = await env.DB.prepare(
+        `SELECT * FROM appointments WHERE id = ? AND provider_user_id = ? AND clinic_id = ? LIMIT 1`,
+      ).bind(id, user.id, clinicId).first<AppointmentRow>();
+      if (!current) return errorResponse("Consulta não encontrada.", "NOT_FOUND", 404);
+      if (!["requested", "confirmed"].includes(current.status)) {
+        return errorResponse("Somente consultas solicitadas ou confirmadas podem ser remarcadas.", "INVALID_TRANSITION", 409);
+      }
+      if (starts <= localNow(profile.timezone)) {
+        return errorResponse("O novo horário precisa estar no futuro.", "VALIDATION_ERROR", 400);
+      }
+      if (starts === current.starts_at_local) {
+        return errorResponse("O novo horário é igual ao atual.", "VALIDATION_ERROR", 400);
+      }
+      const service = await getService(env.DB, user.id, current.service_id, false, clinicId);
+      if (!service) return errorResponse("Serviço da consulta não encontrado.", "NOT_FOUND", 404);
+      const endsAtLocal = addMinutesLocal(starts, service.duration_minutes);
+      const rescheduleResults = await env.DB.batch([
+        env.DB.prepare(
+          `UPDATE appointments
+              SET starts_at_local = ?, ends_at_local = ?, updated_at = ?
+            WHERE id = ? AND provider_user_id = ? AND clinic_id = ? AND status = ?
+              AND starts_at_local = ? AND ends_at_local = ?`,
+        ).bind(
+          starts,
+          endsAtLocal,
+          now,
+          id,
+          user.id,
+          clinicId,
+          current.status,
+          current.starts_at_local,
+          current.ends_at_local,
+        ),
+        releaseSlotLocksAfterSuccessfulMutationStatement(env.DB, id),
+        ...slotLockStatementsForAppointmentState(env.DB, user.id, id, starts, endsAtLocal, current.status),
+      ]);
+      if ((rescheduleResults[0]?.meta?.changes ?? 0) !== 1) {
+        return errorResponse("A consulta mudou durante a remarcação. Recarregue a agenda.", "STALE_APPOINTMENT", 409);
+      }
+      await enqueueNotification(env.DB, env, {
+        appointmentId: id,
+        providerUserId: user.id,
+        clinicId,
+        template: "appointment_rescheduled",
+        recipient: await decryptText(env, current.guardian_phone_encrypted, "guardian_phone") || await decryptText(env, current.guardian_email_encrypted, "guardian_email"),
+        message: `Consulta remarcada pela clínica de ${current.starts_at_local} para ${starts}.`,
+      });
+      auditTargetType = "appointment";
+      auditTargetId = id;
+      // safeAuditMetadata (_access.ts) só aceita chaves da allowlist.
+      auditMetadata = { status: "rescheduled", source: principal.delegated ? "operator" : "professional" };
     } else if (action === "appointment_link_patient") {
       const id = cleanText(body.id, 80);
       const patientId = cleanText(body.patientId, 120);
@@ -613,7 +711,9 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
         clinicId,
         template: `appointment_${status}`,
         recipient: await decryptText(env, current.guardian_phone_encrypted, "guardian_phone") || await decryptText(env, current.guardian_email_encrypted, "guardian_email"),
-        message: `Atualização da consulta: status ${status}. Horário ${current.starts_at_local}.`,
+        message: status === "cancelled"
+          ? `Consulta de ${current.starts_at_local} cancelada pela clínica.`
+          : `Atualização da consulta: status ${status}. Horário ${current.starts_at_local}.`,
       });
       auditTargetType = "appointment";
       auditTargetId = id;
