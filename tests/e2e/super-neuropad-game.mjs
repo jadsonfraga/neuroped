@@ -105,6 +105,16 @@ try {
         assert.equal(await preview.count(), 0, "retomar não reapresenta figuras já ocultadas");
         await page.getByRole("group", { name: "Opções" }).waitFor();
       }
+      if (phase === 3 && item === 1) {
+        // Tela bloqueada/troca de app no meio do desafio: pausa sozinho, sem inflar o tempo do item.
+        await page.evaluate(() => {
+          Object.defineProperty(document, "hidden", { configurable: true, get: () => true });
+          document.dispatchEvent(new Event("visibilitychange"));
+        });
+        await page.getByText("Pausado sozinho: a tela saiu de foco.").waitFor();
+        await page.evaluate(() => { delete document.hidden; });
+        await page.getByRole("button", { name: "Continuar", exact: true }).first().click();
+      }
       if (phase === 1 && item === 2) await button("Repeti o comando").click(); // fica no registro como "comando repetido 1x"
       const options = page.getByRole("group", { name: "Opções" }).getByRole("button");
       await pace();
@@ -113,7 +123,14 @@ try {
         await options.nth(registered % 2).click();
       } else {
         if (phase === 5 && item === 3) await screen("04-play-fazer");
-        await button(registered % 3 === 2 ? "Errou" : "Acertou").click();
+        if (phase === 5 && item === 4) {
+          // Atalho da aplicadora em item julgado: tecla 1 = Acertou (mesma guarda de toque duplo).
+          const before = await page.getByText("Desafio 4 de 4").count();
+          assert.equal(before, 1);
+          await page.keyboard.press("1");
+        } else {
+          await button(registered % 3 === 2 ? "Errou" : "Acertou").click();
+        }
       }
       registered += 1;
       if (phase === 1 && item === 3 && !undone) {
@@ -203,6 +220,8 @@ try {
   console.log(`[super-neuropad-game] ✓ ${localMode ? "local" : "remote"}: fase recolhida aberta pela UI; 20 registros idênticos após aprofundar e cancelar filtro/login`);
   acceptDialogs = true;
   await root.getByText(/pausa\(s\) · ↩ 1 desfeito\(s\)/).waitFor(); // proveniência: 1 pausa e 1 desfazer nesta jornada
+  await page.getByTestId("super-neuropad-when").getByText(/6 anos \(faixa 6 a 7 anos\) · sessão de/).waitFor();
+  await page.getByTestId("super-neuropad-save").getByText("Salvar no prontuário do paciente").waitFor();
   await screen("06-results");
 
   const [download] = await Promise.all([
@@ -218,14 +237,34 @@ try {
   assert.ok(bytes.length > 5000, "PDF com conteúdo");
 
   // Encerramento antecipado precisa entregar observações, nunca classificar uma bateria parcial.
+  // PDF já baixado: "Nova partida" não pergunta e limpa idade/herói para a próxima criança.
+  const dialogsBeforeNew = dialogs.length;
   await button("Nova partida").click();
   await waitScreen("setup");
+  assert.equal(dialogs.length, dialogsBeforeNew, "resultado já guardado: nova partida sem confirmação");
+  assert.equal(await button("Começar a aventura").isDisabled(), true, "idade e herói da criança anterior não são herdados");
+  await page.getByRole("group", { name: "Idade em anos" }).getByRole("button", { name: "6", exact: true }).click();
+  await page.getByRole("group", { name: "Personagens" }).getByRole("button", { name: /Robô Guerreiro/ }).click();
   await button("Começar a aventura").click();
+  await page.getByRole("button", { name: /Entrar na fase/ }).click();
+  await pace();
+  await page.getByRole("group", { name: "Opções" }).getByRole("button").first().click();
+  // Recomeço rápido com a mesma criança: confirma e volta direto ao mundo 1, sem passar pela preparação.
+  await button("Reiniciar").click();
+  await waitScreen("intro");
+  await page.getByText("Fase 1 de 5").waitFor();
+  assert.match(dialogs.at(-1), /Recomeçar do mundo 1/);
   await page.getByRole("button", { name: /Entrar na fase/ }).click();
   await pace();
   await page.getByRole("group", { name: "Opções" }).getByRole("button").first().click();
   await button("Encerrar").click();
   await waitScreen("results");
+  // Resultado ainda não guardado: "Nova partida" pede confirmação; recusar mantém o resultado.
+  acceptDialogs = false;
+  await button("Nova partida").click();
+  await waitScreen("results");
+  assert.match(dialogs.at(-1), /ainda não foi copiado, baixado nem salvo/);
+  acceptDialogs = true;
   await page.getByTestId("super-neuropad-incomplete").getByText(/1 de 20 itens registrados/).waitFor();
   assert.equal(await page.getByTestId("super-neuropad-reading").count(), 0);
   assert.equal(await root.locator("details li").count(), 1);

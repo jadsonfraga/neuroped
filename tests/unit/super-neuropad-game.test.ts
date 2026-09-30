@@ -17,6 +17,9 @@ import {
   bandForYears,
   buildGameBrief,
   buildGameReport,
+  buildPatientRecordItems,
+  judgeShortcut,
+  sessionWallSeconds,
   describeArt,
   interpret,
   pdfLossless,
@@ -525,4 +528,76 @@ test("partidas interrompidas ou com itens duplicados não pontuam nem interpreta
   const duplicate = { ...full, answers: full.answers.map((answer, index) => index === 19 ? full.answers[0] : answer) };
   assert.equal(summarize(duplicate).complete, false, "20 registros não bastam: cada item esperado precisa aparecer uma vez");
   assert.equal(interpret(duplicate), null);
+});
+
+
+// ─────────────────────────── uso prático na consulta (30/09) ───────────────────────────
+test("duração de relógio da sessão: início → fim, nula sem fim ou com instantes inválidos", () => {
+  const session = play("6-7", () => "acerto");
+  assert.equal(sessionWallSeconds(session), 600);
+  assert.equal(sessionWallSeconds({ ...session, finishedAt: null }), null);
+  assert.equal(sessionWallSeconds({ ...session, finishedAt: "invalido" }), null);
+  assert.equal(sessionWallSeconds({ ...session, finishedAt: "2026-09-25T11:00:00.000Z" }), null, "fim antes do início não vira duração negativa");
+});
+
+test("salvar em paciente: resumo, dados da partida e cada item, sem classificar partida incompleta", () => {
+  const full = play("8-9", (index) => (index % 5 === 0 ? "erro" : "acerto"));
+  const rows = buildPatientRecordItems({ ...full, pauseCount: 2, undoCount: 1 });
+  assert.equal(rows.length, full.answers.length + 2);
+  assert.deepEqual(rows[0], { question: "Resumo para o prontuário", answer: buildGameBrief(full) });
+  assert.match(rows[1].answer, /Idade informada: 8 anos · faixa 8 a 9 anos · 20 de 20 itens registrados \(completa\)/);
+  assert.match(rows[1].answer, /duração da sessão 10 min/);
+  assert.match(rows[1].answer, /2 pausa\(s\) · 1 desfeito\(s\)/);
+  full.answers.forEach((answer, index) => {
+    const row = rows[index + 2];
+    assert.ok(row.question.endsWith(answer.prompt), "ordem da partida preservada");
+    assert.ok(row.answer.includes(`esperado: ${answer.expected}`) && row.answer.includes(`registrado: ${answer.given}`));
+  });
+  for (const count of [0, 1, 7, 19]) {
+    const partial = { ...full, answers: full.answers.slice(0, count), finishedAt: null };
+    const partialRows = buildPatientRecordItems(partial);
+    assert.equal(partialRows.length, count + 2);
+    assert.match(partialRows[1].answer, /\(incompleta\)/);
+    assert.doesNotMatch(partialRows[1].answer, /duração da sessão/, "sem fim, sem duração");
+    const text = partialRows.map((row) => `${row.question} ${row.answer}`).join("\n");
+    assert.match(text, /Sem classificação ou interpretação/);
+    assert.doesNotMatch(text, /sinal de alerta|dentro do esperado|prioridade para|\d+\/4|roteiro sugerido/i);
+  }
+});
+
+test("atalhos da aplicadora: 1/2/3 só para itens julgados; P pausa; toque segue da criança", () => {
+  assert.equal(judgeShortcut("1"), "acerto");
+  assert.equal(judgeShortcut("2"), "erro");
+  assert.equal(judgeShortcut("3"), "sem_resposta");
+  for (const key of ["0", "4", "p", "Enter", " ", "a"]) assert.equal(judgeShortcut(key), null, key);
+  const strip = (source: string) => source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+  const page = strip(readFileSync("client/src/pages/super-neuropad-game.tsx", "utf8"));
+  assert.match(page, /if \(!status \|\| paused \|\| !item \|\| item\.kind === "toque"\) return;/, "teclado nunca responde item de toque");
+  assert.match(page, /submitAnswer\(recordJudged\(item, phaseId, status, elapsedSeconds\(\), repeated\), event\)/, "atalho passa pela guarda de toque duplo");
+  assert.match(page, /event\.repeat \|\| event\.altKey \|\| event\.ctrlKey \|\| event\.metaKey/, "tecla segurada ou combinação não registra");
+  assert.match(page, /INPUT\|TEXTAREA\|SELECT/, "digitar em campo (ex.: novo paciente) não aciona atalhos");
+  for (const key of ["1", "2", "3", "P"]) assert.match(page, new RegExp(`aria-keyshortcuts="${key}"`));
+});
+
+test("página prática: pausa automática, recomeço rápido, nova criança limpa idade e resultado protegido", () => {
+  const strip = (source: string) => source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+  const page = strip(readFileSync("client/src/pages/super-neuropad-game.tsx", "utf8"));
+  assert.match(page, /addEventListener\("visibilitychange", onVisibility\)/, "tela bloqueada pausa o desafio");
+  assert.match(page, /if \(document\.hidden\) pauseNow\(true\)/);
+  assert.match(page, /pauseCount\.current \+= 1;\s*\n\s*music\.current\?\.stop\(\);/, "pausa conta na proveniência e para a trilha");
+  assert.match(page, /canPause=\{screen === "play"\}/, "pausa só no desafio (não distorce o cronômetro nas telas de fase)");
+  assert.match(page, /function restart\(\) \{[\s\S]*?setAgeYears\(null\);\s*\n\s*setCharacter\(null\);/, "nova partida não herda a idade (faixa) da criança anterior");
+  assert.match(page, /screen === "results" && !resultKept && !window\.confirm\(/, "resultado não guardado pede confirmação");
+  assert.match(page, /function replaySameChild\(\) \{[\s\S]*?startGame\(\);/, "reiniciar volta direto ao mundo 1");
+  assert.match(page, /onRestart=\{replaySameChild\}/);
+  assert.match(page, /setSeed\(Math\.floor\(Math\.random\(\) \* 1_000_000\)\);/, "ordem das opções nova a cada partida");
+  for (const kept of [/writeText\(text\);\s*\n\s*setResultKept\(true\)/, /downloadTextDocument\([^\n]+\);\s*\n\s*setResultKept\(true\)/, /revokeObjectURL\(url\), 1000\);\s*\n\s*setResultKept\(true\)/, /onSaved=\{\(\) => setResultKept\(true\)\}/]) {
+    assert.match(page, kept);
+  }
+  // Salvar em paciente: ação explícita, só na tela de resultado, pelo componente compartilhado.
+  assert.match(page, /import\("@\/components\/SaveToPatient"\)/);
+  assert.match(page, /screen === "results" \? buildPatientRecordItems\(session\) : \[\]/);
+  const resultsBlock = page.slice(page.indexOf('{screen === "results" && summary && session && ('));
+  assert.ok(resultsBlock.includes("<LazySaveToPatient"), "salvar em paciente só aparece no resultado");
+  assert.doesNotMatch(page.slice(0, page.indexOf('{screen === "results" && summary && session && (')), /<LazySaveToPatient/);
 });

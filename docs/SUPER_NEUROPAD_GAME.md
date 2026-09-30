@@ -47,6 +47,29 @@ aplicar, sem câmera, um jogo de triagem de déficits grosseiros diretamente com
 - Diversão sem revelar acerto: balões de fala do herói na introdução e na conquista,
   prateleira de conquistas no HUD e na tela final.
 
+## Uso prático na consulta (30/09/2026)
+
+- **Salvar no prontuário do paciente** (tela de resultado): envia ao paciente escolhido o
+  resumo em prosa (`buildGameBrief`), uma linha com os dados da partida (idade, faixa, itens,
+  tempo nas tarefas, duração da sessão, pausas e desfeitos) e cada item registrado com
+  esperado, registrado, tempo e repetição (`buildPatientRecordItems`). Partida incompleta
+  continua sem classificação. Carregado sob demanda só no resultado.
+- **Resultado protegido**: "Nova partida" pede confirmação enquanto o resultado não foi
+  copiado, baixado (PDF/TXT) ou salvo em paciente; um aviso mostra se já foi guardado.
+- **Nova partida = outra criança**: limpa idade e herói, para a faixa (e os itens) nunca
+  ficarem herdados da criança anterior.
+- **Reiniciar (mesma criança)**: no HUD, confirma e volta direto ao mundo 1 mantendo idade,
+  herói e inventário; a ordem das opções é sorteada de novo a cada partida.
+- **Pausa automática**: tela bloqueada ou troca de aplicativo durante um desafio pausa sozinho
+  (conta como pausa na proveniência), para o tempo do item não inflar. A trilha para na pausa
+  e volta ao continuar. O botão Pausa só fica ativo no desafio.
+- **Atalhos da aplicadora** (teclado físico ou tablet com teclado): `1` Acertou, `2` Errou,
+  `3` Não respondeu nos itens julgados (fala e ação) e `P` pausa/continua. Itens de toque
+  continuam exclusivos da criança; tecla segurada, combinações e digitação em campos não
+  disparam atalhos; os atalhos passam pela mesma guarda de toque duplo.
+- **Cabeçalho do resultado**: data e hora locais da partida, idade e faixa, duração da sessão
+  (relógio, `sessionWallSeconds`) e tempo somado nas tarefas.
+
 ## Leitura para a consulta
 
 `interpret(session)` produz uma leitura descritiva e autoral, sem norma, percentil, idade
@@ -87,7 +110,10 @@ equivalente ou diagnóstico, exibida na tela de resultado, no relatório em text
   0–1 alerta; total 16+ / 12–15 / ≤11) são leitura rápida da equipe, nunca escore, percentil,
   idade equivalente ou diagnóstico. A conclusão é do médico.
 - A criança nunca vê certo/errado durante o jogo.
-- Nada é persistido no navegador nem enviado por rede; o PDF é gerado localmente.
+- Nada é persistido no navegador nem enviado por rede automaticamente; o PDF é gerado
+  localmente. A única saída por rede é **Salvar no prontuário do paciente**, uma ação explícita
+  da profissional na tela de resultado, pelo mesmo componente das demais escalas
+  (`SaveToPatient`).
 - Rota sensível (`SENSITIVE_ROUTES`): exige sessão; papéis admin, professional e operator.
 
 ## Código
@@ -104,7 +130,9 @@ equivalente ou diagnóstico, exibida na tela de resultado, no relatório em text
 - `npm run test:super-neuropad` (também encadeado em `test:direct-track`).
 - `npm run build:client && npm run test:e2e:super-neuropad` — jornada completa no navegador
   com capturas, axe e download do PDF, incluindo pausa, desfazer, comando repetido e o painel
-  de leitura para a consulta.
+  de leitura para a consulta; também pausa automática por tela oculta, atalho `1`, painel de
+  salvar em paciente, nova partida sem herdar idade, reiniciar direto no mundo 1 e confirmação
+  antes de descartar resultado não guardado.
 
 ## Rollback
 
