@@ -43,6 +43,8 @@ ALTER TABLE notification_outbox ADD COLUMN clinic_id TEXT;
 ALTER TABLE operations_audit_log ADD COLUMN clinic_id TEXT;
 
 -- Backfill: clinic_id = a única membership ativa do provider_user_id.
+-- (O workflow de produção aplica deste marcador em diante depois de garantir as
+-- colunas via pragma_table_info. Mantenha a linha acima e só comandos reexecutáveis abaixo.)
 -- `HAVING COUNT(*) = 1` garante que só o caso não ambíguo recebe valor;
 -- reexecutar esta UPDATE depois de uma correção manual de membership é
 -- seguro, porque só toca `WHERE clinic_id IS NULL`.
