@@ -7,6 +7,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
+  ANSWER_TONE,
+  STATUS_LABELS,
   AGE_BANDS,
   CHARACTERS,
   ITEM_BANK,
@@ -276,6 +278,67 @@ test("mundo pulado: aparece como não aplicado com motivo; partida fica incomple
   const structured = buildStructuredLines(session).join("\n");
   assert.match(structured, /"nao_aplicado_motivo":"Criança cansada ou sem colaboração"/);
   assert.match(structured, /"nivel":null/);
+});
+
+test("cores da resposta: azul acertou, vermelho errou, cinza neutro para não respondeu/recusou/não aplicado; negrito; rótulo mantido; bloco estruturado sem estilo", () => {
+  assert.deepEqual(ANSWER_TONE, { acerto: "correct", erro: "wrong", sem_resposta: "neutral", recusa: "neutral" });
+  const session: GameSession = play(7, (index) => (index === 1 ? "erro" : index === 2 ? "sem_resposta" : index === 3 ? "recusa" : "acerto"));
+  session.answers = session.answers.filter((entry) => entry.phaseId !== "corpo");
+  session.skipped = [{ phaseId: "corpo", reason: "Criança cansada ou sem colaboração" }];
+  const spec = buildGameDocSpec(session, ISSUER, "30/09/2026 15:30");
+  const worlds = spec.sections.filter((section) => section.heading.startsWith("Mundo "));
+  assert.equal(worlds.length, 6);
+  for (const world of worlds) {
+    assert.ok(world.rich?.length, `${world.heading}: linhas com destaque`);
+    assert.equal(world.rich!.map((line) => line.text).join("\n"), world.body, "mesmo texto em body e rich (conteúdo inalterado)");
+  }
+  const vila = worlds[0].rich!;
+  const prompts = vila.filter((line) => /^\d+\. /.test(line.text));
+  assert.ok(prompts.length === 5 && prompts.every((line) => line.bold && !line.tone), "enunciado em negrito, sem cor");
+  const answers = vila.filter((line) => line.text.startsWith("   Resposta da criança: "));
+  assert.deepEqual(answers.map((line) => [line.bold, line.tone]), [[true, "correct"], [true, "wrong"], [true, "neutral"], [true, "neutral"], [true, "correct"]]);
+  const results = vila.filter((line) => line.text.startsWith("   Resultado: "));
+  assert.deepEqual(results.slice(0, 4).map((line) => line.text.split(" - ")[0].trim()), ["Resultado: Acertou", "Resultado: Errou", "Resultado: Não respondeu", "Resultado: Recusou"], "a cor nunca é o único sinal");
+  assert.ok(results.every((line) => !line.tone && !line.bold));
+  assert.ok(vila.filter((line) => /^ {3}(Origem|Tipo|Resposta esperada): /.test(line.text)).every((line) => !line.bold && !line.tone));
+  assert.deepEqual(worlds[5].rich, [{ text: "Não aplicado - motivo: Criança cansada ou sem colaboração.", tone: "neutral" }], "não aplicado em cinza, nunca vermelho");
+  for (const section of spec.sections.filter((entry) => !entry.heading.startsWith("Mundo "))) assert.equal(section.rich, undefined, `${section.heading}: sem estilo (inclui o bloco estruturado para IA)`);
+  assert.doesNotMatch(spec.sections.find((section) => section.heading === STRUCTURED_HEADER)!.body, /correct|wrong|neutral|tone/);
+
+  const page = pageSource();
+  assert.match(page, /snp-answer snp-answer--\$\{ANSWER_TONE\[answer\.status\]\}/, "resposta da criança com classe de tom");
+  assert.equal(page.match(/data-answer-tone=\{ANSWER_TONE\[answer\.status\]\}/g)?.length, 2, "lista de itens e itens para checar");
+  assert.equal(page.match(/\{STATUS_LABELS\[answer\.status\]\}<\/span>/g)?.length, 2, "rótulo de situação continua ao lado da cor");
+  const css = readFileSync("client/src/styles/super-neuropad-arcade.css", "utf8");
+  for (const tone of ["correct", "wrong", "neutral"]) assert.match(css, new RegExp(`\\.snp-answer--${tone} \\{ color: var\\(--snp-answer-${tone}\\); \\}`));
+  assert.match(css, /\.snp \.snp-answer \{ font-weight: 900; \}/);
+  // Contraste WCAG AA (texto pequeno, 4,5:1) sobre o papel fixo dos cartões, igual no claro e no escuro.
+  const tokens = readFileSync("client/src/styles/tokens.css", "utf8");
+  const hex = (name: string) => tokens.match(new RegExp(`--${name}: (#[0-9a-f]{6});`))![1];
+  const lum = (value: string) => {
+    const [r, g, b] = [1, 3, 5].map((at) => parseInt(value.slice(at, at + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const ratio = (a: string, b: string) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
+  const paper = hex("snp-paper-fixed");
+  for (const tone of ["correct", "wrong", "neutral"]) assert.ok(ratio(hex(`snp-answer-${tone}`), paper) >= 4.5, `${tone}: contraste AA`);
+  assert.equal(tokens.match(/--snp-answer-(correct|wrong|neutral):/g)?.length, 3, "tons fixos (não mudam no escuro: cartão é papel fixo)");
+  assert.equal(STATUS_LABELS.erro, "Errou");
+});
+
+test("PDF gerado de verdade: resposta certa em azul, errada em vermelho, neutra em cinza (operadores de cor no conteúdo)", async () => {
+  const { inflateSync } = await import("node:zlib");
+  const { buildDocumentPdf } = await import("../../client/src/lib/documentPdf");
+  const session: GameSession = play(7, (index) => (index === 1 ? "erro" : index === 2 ? "recusa" : "acerto"));
+  const bytes = await buildDocumentPdf(buildGameDocSpec(session, ISSUER, "30/09/2026 15:30"));
+  const raw = Buffer.from(bytes).toString("latin1");
+  let content = "";
+  for (const match of raw.matchAll(/stream\r?\n([\s\S]*?)\r?\nendstream/g)) {
+    try { content += inflateSync(Buffer.from(match[1], "latin1")).toString("latin1"); } catch { /* fluxo não comprimido/binário */ }
+  }
+  assert.match(content, /0\.114 0\.306 0\.847 rg/, "azul do acerto desenhado");
+  assert.match(content, /0\.725 0\.11 0\.11 rg/, "vermelho do erro desenhado");
+  assert.match(content, /0\.39 0\.43 0\.49 rg/, "cinza neutro disponível (recusa)");
 });
 
 test("relatório e PDF: metadados, o que foi testado por instrumento, domínio × esperado, cada item com esperado/resposta/resultado/tempo/repetição e bloco estruturado", () => {

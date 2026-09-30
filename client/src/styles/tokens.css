@@ -548,6 +548,11 @@
   --snp-sprite-shadow: rgba(27, 19, 64, 0.35);
   --snp-stage: rgba(255, 250, 240, 0.8);
   --snp-stage-text: #1b1340;
+  /* Resposta da criança no resultado (cartões em papel fixo, iguais no claro e no
+     escuro). Contraste sobre --snp-paper-fixed: azul 6,4:1, vermelho 6,2:1, cinza 7,3:1. */
+  --snp-answer-correct: #1d4ed8;
+  --snp-answer-wrong: #b91c1c;
+  --snp-answer-neutral: #4b5563;
 }
 .dark {
   --snp-ink: #efe9ff;
