@@ -47,7 +47,7 @@ aplicar, sem câmera, um jogo de triagem de déficits grosseiros diretamente com
 - Diversão sem revelar acerto: balões de fala do herói na introdução e na conquista,
   prateleira de conquistas no HUD e na tela final.
 
-## Uso prático na consulta (v2026-09-30)
+## Uso prático na consulta (30/09/2026)
 
 - **Salvar no prontuário do paciente** (tela de resultado): envia ao paciente escolhido o
   resumo em prosa (`buildGameBrief`), uma linha com os dados da partida (idade, faixa, itens,
