@@ -153,13 +153,34 @@ jobs:
           # precisam de atribuição manual auditada (owner com 0 ou 2+
           # memberships ativas no momento do backfill) — nunca heurística
           # automática. Ver docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md (OPS-01).
-          echo "### Linhas ainda sem clinic_id (atribuição manual auditada pendente)" >> "$GITHUB_STEP_SUMMARY"
+          # A contagem sai no log e como anotação (legíveis pela API/CLI), não
+          # só no resumo do job. Só números agregados; nenhuma linha de paciente.
+          {
+            echo "### Linhas ainda sem clinic_id (atribuição manual auditada pendente)"
+            echo ""
+            echo "| Tabela | Sem clinic_id |"
+            echo "| --- | ---: |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          total=0
           for table in \
             booking_services booking_availability_rules booking_blocks appointments \
             waitlist_entries appointment_reviews notification_outbox operations_audit_log; do
-            npx wrangler@4 d1 execute neuroped-db --remote \
-              --command "SELECT '$table' AS tabela, COUNT(*) AS sem_clinica FROM $table WHERE clinic_id IS NULL;" \
-              >> "$GITHUB_STEP_SUMMARY" 2>&1 || true
+            if npx wrangler@4 d1 execute neuroped-db --remote --json \
+                 --command "SELECT COUNT(*) AS sem_clinica FROM $table WHERE clinic_id IS NULL;" \
+                 > /tmp/null-$table.json 2>/tmp/null-$table.err \
+               && count=$(jq -er '.[0].results[0].sem_clinica' /tmp/null-$table.json); then
+              total=$((total + count))
+            else
+              count="erro na consulta"
+              cat /tmp/null-$table.err || true
+            fi
+            echo "sem clinic_id: $table = $count"
+            echo "| $table | $count |" >> "$GITHUB_STEP_SUMMARY"
           done
+          echo "sem clinic_id: total = $total"
+          echo "| **total** | **$total** |" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$total" -gt 0 ]; then
+            echo "::warning::$total linha(s) da agenda sem clinic_id aguardam atribuição manual auditada (OPS-01)."
+          fi
 
-          echo "✅ Operations Clinic Scope D1: clinic_id presente nas 8 tabelas da agenda; backfill reportado no resumo do job."
+          echo "✅ Operations Clinic Scope D1: clinic_id presente nas 8 tabelas da agenda; backfill pendente reportado no log e no resumo do job."

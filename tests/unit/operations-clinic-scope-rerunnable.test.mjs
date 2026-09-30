@@ -93,4 +93,10 @@ applyLikeWorkflow(pre);
 const got = Object.fromEntries(pre.prepare("SELECT id, clinic_id FROM booking_services ORDER BY id").all().map((r) => [r.id, r.clinic_id]));
 assert.deepEqual(got, { "s-manual": "c2", "s-one": "c1", "s-two": null });
 
+// Regressão (30/09): a contagem de clinic_id NULL ia só para o resumo do job,
+// ilegível pela API/CLI. Precisa sair também no log e como anotação.
+assert.match(workflow, /echo "sem clinic_id: \$table = \$count"/, "contagem por tabela no log");
+assert.match(workflow, /::warning::\$total linha\(s\) da agenda sem clinic_id/, "total pendente como anotação");
+assert.doesNotMatch(workflow, /WHERE clinic_id IS NULL;" \\\n\s*>> "\$GITHUB_STEP_SUMMARY"/, "contagem não pode ir só para o resumo");
+
 console.log("✓ 0029 reexecutável: colunas por pragma_table_info, backfill guardado, índices IF NOT EXISTS, schema igual ao banco novo");
