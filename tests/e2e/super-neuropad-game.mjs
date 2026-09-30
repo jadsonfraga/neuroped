@@ -229,6 +229,13 @@ try {
   const badges = await root.locator("details li").count();
   assert.equal(badges, TOTAL, "cada desafio listado com resultado");
   assert.equal(await root.locator("details li").filter({ hasText: /Recusou/ }).count(), 1, "recusa registrada como tal");
+  // Resposta da criança: negrito + azul (acertou) / vermelho (errou) / cinza (não respondeu, recusou); rótulo continua ao lado.
+  const toneColor = async (tone) => root.locator(`details li [data-answer-tone="${tone}"]`).first().evaluate((el) => [getComputedStyle(el).color, getComputedStyle(el).fontWeight]);
+  const refusedCard = root.locator("details li").filter({ hasText: /Recusou/ });
+  assert.equal(await refusedCard.locator('[data-answer-tone="neutral"]').count(), 1, "recusa em cinza neutro, não vermelho");
+  assert.deepEqual(await toneColor("correct"), ["rgb(29, 78, 216)", "900"], "acerto em azul e negrito");
+  if (await root.locator('details li [data-answer-tone="wrong"]').count()) assert.deepEqual(await toneColor("wrong"), ["rgb(185, 28, 28)", "900"], "erro em vermelho e negrito");
+  assert.deepEqual(await toneColor("neutral"), ["rgb(75, 85, 99)", "900"]);
   // Desempenho por domínio x esperado e o que veio de cada instrumento de origem.
   const domains = page.getByTestId("super-neuropad-domains");
   assert.equal(await domains.getByText(/Esperado para a idade: \d+ ou mais de 5/).count(), WORLDS, "cada domínio mostra o esperado para a idade");

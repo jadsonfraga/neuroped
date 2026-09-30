@@ -9,7 +9,7 @@
  * observações da aplicadora e um bloco estruturado (rótulos fixos + JSON por
  * linha) para leitura por máquina. Emoji e símbolos viram texto.
  */
-import type { DocSpec } from "@/lib/documentPdf";
+import type { DocLine, DocSpec } from "@/lib/documentPdf";
 import type { DocumentIssuer } from "@/lib/issuer";
 import {
   cleanObservations,
@@ -25,6 +25,7 @@ import {
   phaseStatusText,
   sessionWallSeconds,
   STATUS_LABELS,
+  ANSWER_TONE,
   STRUCTURED_HEADER,
   SUPER_NEUROPAD_MILESTONE_SOURCES,
   SUPER_NEUROPAD_NATURE,
@@ -107,21 +108,28 @@ export function buildGameDocSpec(session: GameSession, issuer: IssuerLines, appl
           .join("\n"),
   ].join("\n") : incomplete;
 
-  const phaseSections = summary.phases.map((phase) => ({
-    heading: `Mundo ${phase.phase.order} - ${phase.phase.name} (${phase.phase.domain}) - ${phaseStatusText(phase, summary.complete)}`,
-    body: phase.answers.length === 0
-      ? (phase.skipReason ? `Não aplicado - motivo: ${phase.skipReason}.` : "Não aplicado.")
-      : phase.answers
-          .map((answer, index) => [
-            `${index + 1}. ${describeArt(answer.prompt)}`,
-            `   Origem: ${ORIGIN_LABELS[answer.origin]} - ${describeArt(answer.ref)}`,
-            `   Tipo: ${KIND_LABELS[answer.kind]}`,
-            `   Resposta esperada: ${describeArt(answer.expected)}`,
-            `   Resposta da criança: ${describeArt(answer.given)}`,
-            `   Resultado: ${STATUS_LABELS[answer.status]} - tempo: ${answer.seconds} s - repetições do comando: ${answer.repeated ? 1 : 0}${answer.via === "gesto" ? " - via: gesto/apontar" : ""}`,
-          ].join("\n"))
-          .join("\n\n"),
-  }));
+  const phaseSections = summary.phases.map((phase) => {
+    const notApplied = phase.skipReason ? `Não aplicado - motivo: ${phase.skipReason}.` : "Não aplicado.";
+    // Mesmo texto em `body` (texto corrido) e em `rich` (desenho com destaque):
+    // enunciado em negrito; resposta da criança em negrito e na cor da situação
+    // (azul acertou, vermelho errou, cinza não respondeu/recusou/não aplicado).
+    const items = phase.answers.map((answer, index) => [
+      { text: `${index + 1}. ${describeArt(answer.prompt)}`, bold: true },
+      { text: `   Origem: ${ORIGIN_LABELS[answer.origin]} - ${describeArt(answer.ref)}` },
+      { text: `   Tipo: ${KIND_LABELS[answer.kind]}` },
+      { text: `   Resposta esperada: ${describeArt(answer.expected)}` },
+      { text: `   Resposta da criança: ${describeArt(answer.given)}`, bold: true, tone: ANSWER_TONE[answer.status] },
+      { text: `   Resultado: ${STATUS_LABELS[answer.status]} - tempo: ${answer.seconds} s - repetições do comando: ${answer.repeated ? 1 : 0}${answer.via === "gesto" ? " - via: gesto/apontar" : ""}` },
+    ] satisfies DocLine[]);
+    const rich: DocLine[] = phase.answers.length === 0
+      ? [{ text: notApplied, tone: "neutral" }]
+      : items.flatMap((lines, index) => (index === 0 ? lines : [{ text: "" }, ...lines]));
+    return {
+      heading: `Mundo ${phase.phase.order} - ${phase.phase.name} (${phase.phase.domain}) - ${phaseStatusText(phase, summary.complete)}`,
+      body: phase.answers.length === 0 ? notApplied : items.map((lines) => lines.map((line) => line.text).join("\n")).join("\n\n"),
+      rich,
+    };
+  });
 
   const perPhase = summary.phases[0]?.total ?? 0;
   const criteria = [

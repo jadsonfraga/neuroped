@@ -124,6 +124,11 @@ O teste exige ≤ 20 min em todas as idades; a tela de preparação mostra a est
   Critérios de leitura; **Dados estruturados** (uma linha por registro `SESSAO`, `DOMINIO`,
   `ORIGEM`, `ITEM`, `OBSERVACOES`, cada uma com JSON numa linha, para leitura por IA);
   Proveniência e natureza.
+- Cores da resposta (tela e PDF): enunciado em negrito; resposta da criança em negrito, **azul**
+  quando acertou e **vermelho** quando errou; "Não respondeu", "Recusou" e mundo "não aplicado"
+  em **cinza neutro** (ausência de resposta não é erro ativo). O rótulo (Acertou/Errou/…) continua
+  ao lado, então a cor nunca é o único sinal; contraste AA sobre o papel fixo dos cartões (claro e
+  escuro) e no PDF impresso. O bloco de dados estruturados continua texto puro.
 - Salvar no prontuário continua explícito; as linhas trazem o que foi testado por instrumento,
   mundos não aplicados, observações e cada item com a origem.
 
