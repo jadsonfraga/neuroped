@@ -28,7 +28,7 @@ permissions:
 jobs:
   migrate-saas-foundation:
     runs-on: ubuntu-latest
-    timeout-minutes: 60 # inclui até 30 min de espera na fila D1
+    timeout-minutes: 75 # inclui até 45 min de espera na fila D1
     steps:
       - name: Confirmar branch de produção
         run: |

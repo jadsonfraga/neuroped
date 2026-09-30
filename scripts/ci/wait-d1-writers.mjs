@@ -14,10 +14,16 @@
  *
  *   MODE=migration  espera toda migração D1 MAIS ANTIGA (id menor) terminar.
  *                   Fila FIFO entre migrações; nunca espera deploy, então não
- *                   há ciclo de espera (deadlock).
+ *                   há ciclo de espera (deadlock). Prazo padrão 45 min (18
+ *                   migrações serializadas levaram ~15 min em 29/09).
  *   MODE=deploy     espera TODA migração D1 em andamento/enfileirada terminar
  *                   antes das escritas D1 e da publicação do deploy — o deploy
- *                   roda depois das migrações do mesmo push.
+ *                   roda depois das migrações do mesmo push. Também espera as
+ *                   publicações do Pages MAIS ANTIGAS (PAGES_PUBLISHER_WORKFLOWS):
+ *                   deploy canônico, BoaConsulta e provisionamento têm grupos de
+ *                   concorrência distintos, então a exclusão mútua da publicação
+ *                   é FIFO por id aqui (publicador nunca espera um mais novo, sem
+ *                   deadlock; o commit mais novo publica por último).
  *
  * Só contam execuções de push/workflow_dispatch em main (execuções de
  * pull_request não escrevem no D1). Estouro do prazo falha fechado.
@@ -45,6 +51,17 @@ export const D1_MIGRATION_WORKFLOWS = Object.freeze([
   ".github/workflows/saas-remote-intake-d1.yml",
 ]);
 
+// Workflows que publicam o Cloudflare Pages de produção (--branch main).
+export const PAGES_PUBLISHER_WORKFLOWS = Object.freeze([
+  ".github/workflows/deploy-cloudflare.yml",
+  ".github/workflows/boaconsulta-import-release.yml",
+  ".github/workflows/provision-d1.yml",
+  // Só observados (não chamam esta fila): continuam no grupo cloudflare-pages /
+  // de recuperação; os demais publicadores esperam por eles se forem mais antigos.
+  ".github/workflows/daily-authorial-static-sync.yml",
+  ".github/workflows/deploy-cloudflare-recovery.yml",
+]);
+
 const ACTIVE_STATUSES = ["queued", "in_progress", "waiting", "requested", "pending"];
 
 /** Execuções que bloqueiam a execução atual. Função pura (testada). */
@@ -55,11 +72,16 @@ export function blockingRuns(runs, { mode, ownRunId }) {
     if (!run || seen.has(run.id)) return false;
     seen.add(run.id);
     if (Number(run.id) === own) return false;
-    if (!D1_MIGRATION_WORKFLOWS.includes(String(run.path ?? "").split("@")[0])) return false;
+    const path = String(run.path ?? "").split("@")[0];
+    const migration = D1_MIGRATION_WORKFLOWS.includes(path);
+    const publisher = PAGES_PUBLISHER_WORKFLOWS.includes(path);
+    if (!migration && !publisher) return false;
     if (!["push", "workflow_dispatch"].includes(run.event)) return false;
     if (run.head_branch !== "main") return false;
     if (!ACTIVE_STATUSES.includes(run.status)) return false;
-    return mode === "deploy" ? true : Number(run.id) < own;
+    const older = Number(run.id) < own;
+    if (mode === "deploy") return migration || (publisher && older);
+    return migration && older;
   });
 }
 
@@ -81,7 +103,7 @@ async function main() {
   const mode = process.env.MODE;
   const { GITHUB_TOKEN: token, GITHUB_REPOSITORY: repository, GITHUB_RUN_ID: ownRunId } = process.env;
   const apiUrl = process.env.GITHUB_API_URL || "https://api.github.com";
-  const timeoutMinutes = Number(process.env.TIMEOUT_MINUTES || 30);
+  const timeoutMinutes = Number(process.env.TIMEOUT_MINUTES || 45);
   const pollSeconds = Number(process.env.POLL_SECONDS || 20);
   if (mode !== "migration" && mode !== "deploy") throw new Error("MODE deve ser 'migration' ou 'deploy'.");
   if (!token || !repository || !ownRunId) throw new Error("GITHUB_TOKEN, GITHUB_REPOSITORY e GITHUB_RUN_ID são obrigatórios.");

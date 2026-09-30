@@ -30,7 +30,7 @@ permissions:
 jobs:
   migrate-billing:
     runs-on: ubuntu-latest
-    timeout-minutes: 65 # inclui até 30 min de espera na fila D1
+    timeout-minutes: 80 # inclui até 45 min de espera na fila D1
     steps:
       - name: Confirmar branch de produção
         run: |

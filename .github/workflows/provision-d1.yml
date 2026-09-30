@@ -15,8 +15,11 @@ name: Provision D1 backend
 on:
   workflow_dispatch:
 
+# Grupo próprio por ref (fora da vaga pendente única de `cloudflare-pages`).
+# Escritas D1 e a publicação do Pages são serializadas por
+# scripts/ci/wait-d1-writers.mjs (MODE=deploy).
 concurrency:
-  group: cloudflare-pages
+  group: pages-publisher-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
@@ -108,7 +111,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           MODE: deploy
-          TIMEOUT_MINUTES: "60"
+          # Migrações (até 45 min cada na fila) + publicações do Pages mais antigas.
+          TIMEOUT_MINUTES: "90"
         run: node scripts/ci/wait-d1-writers.mjs
 
       - name: Aplicar schema idempotente no D1
@@ -268,6 +272,12 @@ jobs:
           fi
 
       # ── 4. Build + deploy já com o backend ativo ──────────────────────────
+      # Mesma sentinela do deploy canônico: sem ela o Pages voltava a servir
+      # "pending-deploy-workflow" em deploy-check.json.
+      - name: Criar sentinela de deploy
+        # checkout usa ref: main; a sentinela registra o commit realmente compilado.
+        run: GITHUB_SHA="$(git rev-parse HEAD)" node scripts/ci/write-deploy-check.mjs
+
       - name: Build do frontend
         env:
           NODE_ENV: production

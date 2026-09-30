@@ -209,7 +209,11 @@ assert.match(
   /vercel:[\s\S]{0,500}concurrency:\s*\n\s*group: vercel-production/,
   "a sincronização Vercel deve compartilhar o lock do deploy canônico",
 );
-assert.match(provisionD1, /group: cloudflare-pages/);
+// provision-d1 saiu da vaga pendente única de `cloudflare-pages`; a publicação
+// é serializada pela fila FIFO de scripts/ci/wait-d1-writers.mjs (MODE=deploy).
+assert.doesNotMatch(provisionD1, /group: cloudflare-pages\s*$/m);
+assert.match(provisionD1, /group: pages-publisher-\$\{\{ github\.workflow \}\}-\$\{\{ github\.ref \}\}/);
+assert.match(provisionD1, /MODE: deploy/);
 assert.match(provisionD1, /ref: main/);
 assert.match(
   provisionD1,
