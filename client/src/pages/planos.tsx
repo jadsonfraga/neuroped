@@ -1,10 +1,12 @@
 import { Link } from "wouter";
 import {
   ArrowRight,
+  CalendarDays,
   CheckCircle2,
   FileLock2,
   Layers,
   LifeBuoy,
+  ListChecks,
   Mail,
   ShieldCheck,
   Users,
@@ -48,6 +50,24 @@ const MONTHLY_PRICE = priceFormatter.format(CANONICAL_PRICE_CENTS / 100);
 /** Capacidades que o produto realmente executa hoje. */
 const INCLUDED = [
   {
+    icon: CalendarDays,
+    title: "Agenda própria e agendamento online",
+    body:
+      "Agenda da clínica com serviços e horários de atendimento. A família solicita o horário pela página pública /agendar e pode remarcar ou cancelar com o código da reserva; a equipe também remarca e cancela pela agenda. Feriados e férias são bloqueados por dia inteiro, com rótulo.",
+  },
+  {
+    icon: Mail,
+    title: "E-mails da agenda para a família",
+    body:
+      "Confirmação, remarcação e cancelamento saem por e-mail para o responsável quando o envio de e-mail está configurado. Sem ele, as mensagens ficam prontas na caixa de saída para envio manual.",
+  },
+  {
+    icon: ListChecks,
+    title: "Lista de espera",
+    body:
+      "Famílias entram na lista de espera pela página pública quando não há horário, e a equipe acompanha cada pedido na agenda.",
+  },
+  {
     icon: Layers,
     title: "Clínica isolada por padrão",
     body:
@@ -57,7 +77,7 @@ const INCLUDED = [
     icon: Users,
     title: "Equipe com papéis e assentos",
     body:
-      "Convide profissionais por e-mail, defina o papel de cada um, revogue o convite ou remova o acesso. O teto de assentos da assinatura é aplicado no servidor, não na tela.",
+      "Convide profissionais por e-mail, defina o papel de cada um, revogue o convite ou remova o acesso. A recepção pode operar a agenda do profissional ao qual está vinculada. O teto de assentos da assinatura é aplicado no servidor, não na tela.",
   },
   {
     icon: Mail,
@@ -90,6 +110,7 @@ const NOT_INCLUDED = [
   "Não emite diagnóstico. Nenhuma escala do NeuroPed conclui um quadro clínico.",
   "Não substitui o julgamento profissional: instrumentos incompletos ou de aplicação assistida são rotulados como tal, e não se apresentam como versão oficial.",
   "Não vende consultoria, implantação ou treinamento — a assinatura é só o software.",
+  "Não envia WhatsApp, SMS nem lembretes automáticos na véspera da consulta. As mensagens da agenda saem por e-mail ou ficam para envio manual.",
 ];
 
 export default function PlanosPage() {

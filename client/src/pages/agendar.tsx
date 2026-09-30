@@ -22,6 +22,17 @@ function queryParam(name: string): string {
   return new URLSearchParams(query).get(name)?.trim() ?? "";
 }
 
+/** Mensagem do servidor ("409: {"error": "..."}") sem o JSON cru. */
+function serverMessage(err: unknown): string {
+  const text = err instanceof Error ? err.message : String(err);
+  const json = text.slice(text.indexOf("{"));
+  try {
+    const parsed = JSON.parse(json) as { error?: unknown };
+    if (typeof parsed.error === "string" && parsed.error) return parsed.error;
+  } catch { /* segue o texto original */ }
+  return text;
+}
+
 function todayLocal(): string {
   const date = new Date();
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
@@ -164,7 +175,7 @@ export default function AgendarPage() {
       toast({ title: "Solicitação registrada ✓", description: data.message });
       await manageBooking(data.bookingToken);
     } catch (err) {
-      toast({ title: "Não foi possível solicitar o horário.", description: String(err), variant: "destructive" });
+      toast({ title: "Não foi possível solicitar o horário.", description: serverMessage(err), variant: "destructive" });
     } finally {
       setBusy(false);
     }
@@ -236,7 +247,7 @@ export default function AgendarPage() {
       });
       toast({ title: "Entrada na lista de espera registrada ✓" });
     } catch (err) {
-      toast({ title: "Não foi possível entrar na lista de espera.", description: String(err), variant: "destructive" });
+      toast({ title: "Não foi possível entrar na lista de espera.", description: serverMessage(err), variant: "destructive" });
     } finally { setBusy(false); }
   }
 
