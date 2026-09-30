@@ -4,6 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
   CalendarClock,
+  CalendarOff,
+  CalendarRange,
   CheckCircle2,
   CircleDollarSign,
   Clock3,
@@ -81,6 +83,20 @@ function dateTimeLabel(value: string): string {
   return `${day}/${month}/${year} · ${time}`;
 }
 
+/** Bloqueio gravado por `create_day_block`: 00:00 do dia até 00:00 do dia seguinte. */
+function fullDayBlockDate(startsAtLocal: string, endsAtLocal: string): string | null {
+  if (!startsAtLocal.endsWith("T00:00") || !endsAtLocal.endsWith("T00:00")) return null;
+  const start = startsAtLocal.slice(0, 10);
+  const next = new Date(`${start}T12:00:00Z`);
+  next.setUTCDate(next.getUTCDate() + 1);
+  return next.toISOString().slice(0, 10) === endsAtLocal.slice(0, 10) ? start : null;
+}
+
+function dateLabel(value: string): string {
+  const [year, month, day] = value.split("-");
+  return `${day}/${month}/${year}`;
+}
+
 function auditDate(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
@@ -94,6 +110,8 @@ function auditDate(value: string): string {
 function auditActionLabel(value: string): string {
   const labels: Record<string, string> = {
     create_appointment: "agendamento criado",
+    appointment_reschedule: "consulta remarcada pela equipe",
+    create_day_block: "dia inteiro bloqueado",
     appointment_status: "status da consulta alterado",
     appointment_payment: "financeiro atualizado",
     waitlist_status: "lista de espera alterada",
@@ -159,6 +177,8 @@ export default function AgendaPage() {
   const [service, setService] = useState({ name: "", duration: "60", price: "", modality: "in_person" });
   const [rule, setRule] = useState({ weekday: "1", start: "08:00", end: "12:00", slot: "60" });
   const [block, setBlock] = useState({ start: "", end: "", reason: "" });
+  const [dayBlock, setDayBlock] = useState({ date: "", reason: "Feriado" });
+  const [rescheduling, setRescheduling] = useState<{ id: string; startsAtLocal: string } | null>(null);
   const [manual, setManual] = useState({ serviceId: "", startsAtLocal: "", patientId: "", guardianName: "", patientName: "", phone: "", email: "" });
 
   async function mutate(payload: Record<string, unknown>, success: string): Promise<boolean> {
@@ -413,9 +433,31 @@ export default function AgendaPage() {
                         </select>
                       )}
 
+                      {(apt.status === "requested" || apt.status === "confirmed") && rescheduling?.id !== apt.id && (
+                        <Button size="sm" variant="outline" disabled={busy} className="gap-1.5" onClick={() => setRescheduling({ id: apt.id, startsAtLocal: apt.startsAtLocal })}>
+                          <CalendarRange className="h-3.5 w-3.5" />Remarcar
+                        </Button>
+                      )}
                       {(nextStatuses[apt.status] ?? []).map((status) => <Button key={status} size="sm" variant={status === "cancelled" || status === "no_show" ? "outline" : "default"} disabled={busy} onClick={() => mutate({ action: "appointment_status", id: apt.id, status }, `Consulta: ${statusLabel[status]}.`)}>{statusLabel[status]}</Button>)}
                     </div>
                   </div>
+                  {rescheduling?.id === apt.id && (
+                    <div className="mt-3 flex flex-col gap-2 rounded-xl border border-primary/20 bg-primary/[0.04] p-3 sm:flex-row sm:items-end" data-testid="reschedule-form">
+                      <div className="flex-1">
+                        <Field label="Nova data e horário">
+                          <Input type="datetime-local" value={rescheduling.startsAtLocal} onChange={(e) => setRescheduling({ id: apt.id, startsAtLocal: e.target.value })} />
+                        </Field>
+                        <p className="mt-1 text-[11px] text-muted-foreground">A duração do serviço é mantida. Conflitos com outra consulta ou bloqueio são recusados, e uma mensagem de remarcação entra na caixa de saída.</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" disabled={busy || !rescheduling.startsAtLocal || rescheduling.startsAtLocal === apt.startsAtLocal} onClick={async () => {
+                          const saved = await mutate({ action: "appointment_reschedule", id: apt.id, startsAtLocal: rescheduling.startsAtLocal }, "Consulta remarcada.");
+                          if (saved) setRescheduling(null);
+                        }}>Confirmar remarcação</Button>
+                        <Button size="sm" variant="ghost" disabled={busy} onClick={() => setRescheduling(null)}>Cancelar</Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </CardContent>
@@ -479,7 +521,16 @@ export default function AgendaPage() {
               <CardHeader><CardTitle className="text-base">Bloqueios e férias</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><Field label="Início"><Input type="datetime-local" value={block.start} onChange={(e) => setBlock((p) => ({ ...p, start: e.target.value }))} /></Field><Field label="Fim"><Input type="datetime-local" value={block.end} onChange={(e) => setBlock((p) => ({ ...p, end: e.target.value }))} /></Field><Field label="Motivo"><Input value={block.reason} onChange={(e) => setBlock((p) => ({ ...p, reason: e.target.value }))} placeholder="Férias, reunião…" /></Field><div className="self-end"><Button className="w-full" disabled={busy || !block.start || !block.end} onClick={() => mutate({ action: "create_block", startsAtLocal: block.start, endsAtLocal: block.end, reason: block.reason }, "Bloqueio adicionado.")}>Bloquear</Button></div></div>
-                <div className="space-y-2">{data.blocks.map((item) => <div key={item.id} className="flex items-center justify-between gap-3 rounded-xl border p-3 text-sm"><span>{dateTimeLabel(item.startsAtLocal)} → {dateTimeLabel(item.endsAtLocal)}{item.reason ? ` · ${item.reason}` : ""}</span><Button size="icon" variant="ghost" onClick={() => mutate({ action: "delete_block", id: item.id }, "Bloqueio removido.")}><Trash2 className="h-4 w-4" /></Button></div>)}</div>
+                <div className="grid gap-3 rounded-2xl border border-dashed p-3 sm:grid-cols-2 lg:grid-cols-4" data-testid="day-block-form">
+                  <Field label="Dia inteiro"><Input type="date" value={dayBlock.date} onChange={(e) => setDayBlock((p) => ({ ...p, date: e.target.value }))} /></Field>
+                  <Field label="Rótulo"><Input value={dayBlock.reason} maxLength={160} onChange={(e) => setDayBlock((p) => ({ ...p, reason: e.target.value }))} placeholder="Feriado, congresso…" /></Field>
+                  <p className="self-end text-[11px] leading-relaxed text-muted-foreground">Fecha o dia todo (00:00–24:00) para autoagendamento e novas marcações. Dias com consulta ativa são recusados: remarque ou cancele antes.</p>
+                  <div className="self-end"><Button className="w-full gap-2" variant="secondary" disabled={busy || !dayBlock.date || !dayBlock.reason.trim()} onClick={async () => {
+                    const saved = await mutate({ action: "create_day_block", date: dayBlock.date, reason: dayBlock.reason.trim() }, "Dia inteiro bloqueado.");
+                    if (saved) setDayBlock((p) => ({ ...p, date: "" }));
+                  }}><CalendarOff className="h-4 w-4" />Bloquear dia</Button></div>
+                </div>
+                <div className="space-y-2">{data.blocks.map((item) => { const fullDay = fullDayBlockDate(item.startsAtLocal, item.endsAtLocal); return <div key={item.id} className="flex items-center justify-between gap-3 rounded-xl border p-3 text-sm"><span className="flex flex-wrap items-center gap-2">{fullDay ? <><Badge variant="secondary">dia inteiro</Badge>{dateLabel(fullDay)}</> : <>{dateTimeLabel(item.startsAtLocal)} → {dateTimeLabel(item.endsAtLocal)}</>}{item.reason ? ` · ${item.reason}` : ""}</span><Button size="icon" variant="ghost" aria-label="Remover bloqueio" onClick={() => mutate({ action: "delete_block", id: item.id }, "Bloqueio removido.")}><Trash2 className="h-4 w-4" /></Button></div>; })}</div>
               </CardContent>
             </Card>
           </TabsContent>
