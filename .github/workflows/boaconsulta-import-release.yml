@@ -153,24 +153,30 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: npx wrangler@4 pages deploy dist/public --project-name neuroped --branch main
 
+      # O Cloudflare leva alguns segundos para trocar a versão servida; o
+      # console já existia no deploy anterior, então só o commit no
+      # deploy-check.json prova que esta publicação está no ar.
       - name: Verificar console publicado
         run: |
           set -euo pipefail
-          ok=0
-          for i in $(seq 1 12); do
-            if curl -fsSL "https://neuroped.pages.dev/integracoes/boaconsulta/?run=${GITHUB_RUN_ID}&try=$i" \
-                 -o /tmp/boaconsulta-console.html 2>/dev/null \
+          base=https://neuroped.pages.dev
+          for attempt in $(seq 1 18); do
+            cache_buster="run=${GITHUB_RUN_ID}&attempt=$attempt"
+            if curl -fsSL "$base/deploy-check.json?$cache_buster" -o /tmp/boaconsulta-deploy-check.json \
+               && jq -e --arg sha "$GITHUB_SHA" '.commit == $sha' /tmp/boaconsulta-deploy-check.json >/dev/null \
+               && curl -fsSL "$base/integracoes/boaconsulta/?$cache_buster" -o /tmp/boaconsulta-console.html \
                && grep -Fq "Bridge BoaConsulta" /tmp/boaconsulta-console.html; then
-              ok=1
-              break
+              cat /tmp/boaconsulta-deploy-check.json
+              echo "✅ BoaConsulta Bridge publicado em ${GITHUB_SHA} com cofre D1 cifrado, staging e chave dedicada."
+              exit 0
             fi
+            echo "Aguardando Pages servir ${GITHUB_SHA} ($attempt/18)."
             sleep 10
           done
-          [ "$ok" -eq 1 ] || { echo "::error::Console BoaConsulta não apareceu no deploy."; exit 1; }
-          curl -fsSL "https://neuroped.pages.dev/deploy-check.json?run=${GITHUB_RUN_ID}" -o /tmp/boaconsulta-deploy-check.json
-          cat /tmp/boaconsulta-deploy-check.json
-          if grep -q "pending-deploy-workflow" /tmp/boaconsulta-deploy-check.json; then
+          cat /tmp/boaconsulta-deploy-check.json 2>/dev/null || true
+          if grep -q "pending-deploy-workflow" /tmp/boaconsulta-deploy-check.json 2>/dev/null; then
             echo "::error::deploy-check.json público voltou ao sentinela sem commit."
-            exit 1
+          else
+            echo "::error::Pages não confirmou ${GITHUB_SHA} nem o console BoaConsulta em 3 minutos."
           fi
-          echo "✅ BoaConsulta Bridge publicado com cofre D1 cifrado, staging e chave dedicada."
+          exit 1

@@ -89,6 +89,15 @@ for (const path of publishers.slice(1)) {
   assert.doesNotMatch(yml, /group: cloudflare-pages\s*$/m, `${path}: não pode disputar a vaga pendente do deploy canônico`);
   assert.match(yml, /group: pages-publisher-\$\{\{ github\.workflow \}\}-\$\{\{ github\.ref \}\}\n\s*cancel-in-progress: false/);
 }
+// Regressão: o BoaConsulta lia deploy-check.json uma única vez, antes de o
+// Cloudflare trocar a versão, e falhava com o deploy correto no ar.
+{
+  const yml = read(publishers[1]);
+  const verify = yml.slice(yml.indexOf("- name: Verificar console publicado"));
+  assert.match(verify, /for attempt in \$\(seq 1 \d+\)/, "verificação pública precisa repetir");
+  assert.match(verify, /jq -e --arg sha "\$GITHUB_SHA" '\.commit == \$sha'/, "e confirmar o commit exato");
+  assert.ok(verify.indexOf("deploy-check.json") < verify.indexOf("sleep"), "o marcador é conferido dentro do laço");
+}
 // Nenhum outro workflow disparado por push/PR aplica arquivo de migração fora da fila.
 for (const path of workflows) {
   const yml = read(path);
