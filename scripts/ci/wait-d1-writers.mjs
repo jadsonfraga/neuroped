@@ -44,6 +44,7 @@ export const D1_MIGRATION_WORKFLOWS = Object.freeze([
   ".github/workflows/clinic-feature-flags-d1.yml",
   ".github/workflows/email-verification-d1.yml",
   ".github/workflows/membership-seat-fix-d1.yml",
+  ".github/workflows/notification-email-d1.yml",
   ".github/workflows/password-recovery-d1.yml",
   ".github/workflows/public-submission-audit-d1.yml",
   ".github/workflows/remote-scale-response-d1.yml",

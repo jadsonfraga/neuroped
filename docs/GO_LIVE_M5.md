@@ -28,6 +28,12 @@ nasce travada — a confirmação de posse não é emitida e `POST /api/tenants`
 recusa para sempre com `EMAIL_VERIFICATION_REQUIRED`. Não há autoatendimento
 que resolva. O verificador chama esse estado de `ordemInvertida: true`.
 
+As mesmas três variáveis ligam o envio por e-mail das mensagens da Agenda
+(confirmação, remarcação e cancelamento) para o e-mail do responsável. Sem
+elas, a aba Comunicação continua em **envio manual**. A migração 0031
+(`notification-email-d1.yml`) precisa estar aplicada para o contador de
+tentativas.
+
 **Confirmação:** `pendencias` não contém `ENTREGA_EMAIL_NAO_CONFIGURADA`.
 Depois, peça uma redefinição de senha para um endereço seu e verifique que o
 e-mail chega.

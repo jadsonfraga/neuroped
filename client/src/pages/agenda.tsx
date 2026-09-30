@@ -13,6 +13,8 @@ import {
   ExternalLink,
   History,
   ListPlus,
+  Mail,
+  MailWarning,
   MessageSquareText,
   Plus,
   ShieldCheck,
@@ -107,6 +109,17 @@ function auditDate(value: string): string {
   }).format(date);
 }
 
+const NOTIFICATION_STATUS_LABELS: Record<string, string> = {
+  pending_provider: "pendente",
+  manual_sent: "enviada manualmente",
+  delivered: "enviada por e-mail",
+  failed: "falhou",
+};
+
+function notificationStatusLabel(value: string): string {
+  return NOTIFICATION_STATUS_LABELS[value] ?? value;
+}
+
 function auditActionLabel(value: string): string {
   const labels: Record<string, string> = {
     create_appointment: "agendamento criado",
@@ -116,6 +129,7 @@ function auditActionLabel(value: string): string {
     appointment_payment: "financeiro atualizado",
     waitlist_status: "lista de espera alterada",
     notification_status: "comunicação atualizada",
+    notification_retry_email: "reenvio de e-mail solicitado",
     create_service: "serviço criado",
     update_service: "serviço alterado",
     create_rule: "disponibilidade criada",
@@ -250,6 +264,9 @@ export default function AgendaPage() {
       </div>
     );
   }
+  // Resposta antiga (sem `emailDelivery`) = envio manual.
+  const emailActive = data.emailDelivery?.active === true;
+  const maxEmailAttempts = data.emailDelivery?.maxAttempts ?? 3;
 
   const canConfigure = data.access.canConfigure;
   // S13: o link compartilhado pela clínica já sai com `clinic=<slug da
@@ -469,7 +486,54 @@ export default function AgendaPage() {
         </TabsContent>
 
         <TabsContent value="comunicacao">
-          <Card><CardHeader><CardTitle className="text-base">Caixa de saída operacional</CardTitle></CardHeader><CardContent className="space-y-3"><p className="rounded-xl border bg-muted/30 p-3 text-xs text-muted-foreground">WhatsApp, SMS e e-mail externos não são simulados. Enquanto não houver provedor conectado, mensagens ficam como <strong>pendentes</strong> e podem ser copiadas/enviadas manualmente.</p>{data.notifications.length === 0 ? <Empty text="Nenhuma mensagem pendente." /> : data.notifications.map((item) => <div key={item.id} className="rounded-2xl border p-4"><div className="flex flex-wrap items-center gap-2"><Badge variant="outline">{item.status}</Badge><span className="text-xs text-muted-foreground">{item.template}</span></div><p className="mt-2 text-sm">{item.message}</p><p className="mt-1 text-xs text-muted-foreground">Destino: {item.recipient || "não informado"}</p><div className="mt-3 flex gap-2"><Button size="sm" variant="outline" onClick={() => navigator.clipboard?.writeText(item.message)}><Copy className="mr-2 h-3.5 w-3.5" />Copiar</Button>{item.status === "pending_provider" && <Button size="sm" onClick={() => mutate({ action: "notification_status", id: item.id, status: "manual_sent" }, "Marcada como enviada manualmente.")}>Marcar enviada</Button>}</div></div>)}</CardContent></Card>
+          <Card>
+            <CardHeader><CardTitle className="text-base">Caixa de saída operacional</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              {emailActive ? (
+                <div data-testid="email-delivery-indicator" data-state="active" className="flex gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3">
+                  <Mail className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-hidden="true" />
+                  <div className="text-xs">
+                    <p className="flex flex-wrap items-center gap-2 font-semibold text-foreground">Envio por e-mail ativo <Badge variant="outline" className="border-emerald-500/40 text-emerald-700 dark:text-emerald-300">automático</Badge></p>
+                    <p className="mt-1 text-muted-foreground">Confirmações, remarcações e cancelamentos saem automaticamente para o e-mail do responsável. Sem e-mail cadastrado, a mensagem fica pendente para envio manual. Falhas podem ser reenviadas até {maxEmailAttempts} tentativas. WhatsApp e SMS não são enviados.</p>
+                  </div>
+                </div>
+              ) : (
+                <div data-testid="email-delivery-indicator" data-state="manual" className="flex gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3">
+                  <MailWarning className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden="true" />
+                  <div className="text-xs">
+                    <p className="flex flex-wrap items-center gap-2 font-semibold text-foreground">Envio manual <Badge variant="outline" className="border-amber-500/40 text-amber-700 dark:text-amber-300">e-mail não configurado</Badge></p>
+                    <p className="mt-1 text-muted-foreground">Nenhum provedor de e-mail está conectado. As mensagens ficam como <strong>pendentes</strong>: copie e envie pelo seu canal e depois marque como enviada. WhatsApp, SMS e e-mail externos não são simulados.</p>
+                  </div>
+                </div>
+              )}
+              {data.notifications.length === 0 ? <Empty text="Nenhuma mensagem pendente." /> : data.notifications.map((item) => {
+                const attempts = item.attempts ?? 0;
+                const canEmail = emailActive && item.status === "pending_provider" && item.emailEligible === true && attempts < maxEmailAttempts;
+                return (
+                  <div key={item.id} data-testid="notification-item" className="rounded-2xl border p-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">{notificationStatusLabel(item.status)}</Badge>
+                      {item.channel === "email" && <Badge variant="secondary"><Mail className="mr-1 h-3 w-3" aria-hidden="true" />e-mail</Badge>}
+                      <span className="text-xs text-muted-foreground">{item.template}</span>
+                    </div>
+                    <p className="mt-2 whitespace-pre-line text-sm">{item.message}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Destino: {item.channel === "email" ? "e-mail do responsável" : item.recipient || "não informado"}</p>
+                    {attempts > 0 && item.status !== "delivered" && (
+                      <p className="mt-1 text-xs text-muted-foreground" data-testid="notification-attempts">
+                        Tentativas de e-mail: {attempts}/{maxEmailAttempts}
+                        {item.lastError ? " · o provedor recusou ou não respondeu" : ""}
+                      </p>
+                    )}
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button size="sm" variant="outline" onClick={() => navigator.clipboard?.writeText(item.message)}><Copy className="mr-2 h-3.5 w-3.5" />Copiar</Button>
+                      {canEmail && <Button size="sm" variant="outline" disabled={busy} onClick={() => mutate({ action: "notification_retry_email", id: item.id }, "Envio por e-mail solicitado.")}><Mail className="mr-2 h-3.5 w-3.5" />{attempts > 0 ? "Tentar e-mail novamente" : "Enviar por e-mail"}</Button>}
+                      {(item.status === "pending_provider" || item.status === "failed") && <Button size="sm" onClick={() => mutate({ action: "notification_status", id: item.id, status: "manual_sent" }, "Marcada como enviada manualmente.")}>Marcar enviada</Button>}
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="atividade">

@@ -13,7 +13,10 @@ import {
   type PublicSlot,
 } from "../../../shared/operations";
 
-export interface OperationsEnv {
+import type { MailTransportEnv } from "../auth/_mailTransport";
+import { dispatchNotificationEmail, loadNotificationContext, type NotificationContext } from "./_notificationDelivery";
+
+export interface OperationsEnv extends MailTransportEnv {
   DB?: D1Database;
   NEUROPED_JWT_SECRET?: string;
   OPERATIONAL_DATA_KEY?: string;
@@ -881,9 +884,16 @@ export async function enqueueNotification(
     template: string;
     recipient?: string | null;
     message: string;
+    /**
+     * E-mail do responsável, em claro, só para a tentativa de entrega. Não é
+     * persistido além do que `recipient` já persiste (cifrado).
+     */
+    email?: string | null;
+    context?: NotificationContext;
   },
 ): Promise<boolean> {
   const now = new Date().toISOString();
+  const id = `ntf-${crypto.randomUUID()}`;
   try {
     await db
       .prepare(
@@ -893,7 +903,7 @@ export async function enqueueNotification(
          VALUES (?, ?, ?, ?, 'manual', ?, ?, ?, 'pending_provider', ?, ?)`,
       )
       .bind(
-        `ntf-${crypto.randomUUID()}`,
+        id,
         options.appointmentId ?? null,
         options.providerUserId,
         options.clinicId,
@@ -904,11 +914,21 @@ export async function enqueueNotification(
         now,
       )
       .run();
-    return true;
   } catch (error) {
     console.error("[operations.notification-outbox]", error);
     return false;
   }
+  // Sem transporte configurado, `dispatchNotificationEmail` devolve
+  // `not_configured` sem tocar na linha: comportamento manual intacto.
+  if (options.email) {
+    await dispatchNotificationEmail(db, env, {
+      id,
+      email: options.email,
+      message: options.message,
+      context: options.context ?? (await loadNotificationContext(db, options.providerUserId, options.clinicId)),
+    });
+  }
+  return true;
 }
 
 export function assertLocalDateTime(value: unknown): string | null {

@@ -131,8 +131,21 @@ export interface NotificationOutboxItem {
   recipient: string | null;
   message: string;
   status: NotificationStatus;
+  /** Tentativas de envio por e-mail (0 = nunca tentado). */
+  attempts?: number;
+  /** Código do último erro de envio; nunca contém destinatário. */
+  lastError?: string | null;
+  lastAttemptAt?: string | null;
+  /** Pode sair por e-mail: template de confirmação/cancelamento/remarcação e responsável com e-mail. */
+  emailEligible?: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface EmailDeliveryStatus {
+  /** Transporte de e-mail transacional configurado no servidor. */
+  active: boolean;
+  maxAttempts: number;
 }
 
 export interface OperationsMetrics {
@@ -185,6 +198,8 @@ export interface OperationsDashboard {
   waitlist: WaitlistEntry[];
   reviews: AppointmentReview[];
   notifications: NotificationOutboxItem[];
+  /** Ausente em respostas antigas: tratar como envio manual. */
+  emailDelivery?: EmailDeliveryStatus;
   metrics: OperationsMetrics;
   access: OperationsAccessContext;
   staff: OperationsStaffLink[];
