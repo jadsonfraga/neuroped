@@ -893,3 +893,59 @@ export function buildGameReport(session: GameSession, date = sessionDate(session
   lines.push("", SUPER_NEUROPAD_NATURE);
   return lines.join("\n");
 }
+
+// ─────────────────────────────── uso prático na consulta ───────────────────────────────
+/**
+ * Duração de relógio da partida (início → fim), em segundos inteiros. Difere do
+ * "tempo somado nas tarefas", que exclui pausas, introduções e telas de fase.
+ * Sem instantes válidos ou com fim antes do início, devolve null.
+ */
+export function sessionWallSeconds(session: GameSession): number | null {
+  if (!session.finishedAt) return null;
+  const start = Date.parse(session.startedAt);
+  const end = Date.parse(session.finishedAt);
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return null;
+  return Math.round((end - start) / 1000);
+}
+
+/**
+ * Linhas pergunta/resposta para "Salvar em paciente" (mesmo formato das demais
+ * escalas). A primeira linha é o resumo em prosa de `buildGameBrief`, que já
+ * respeita a regra de partida incompleta (sem classificação); depois vem cada
+ * item registrado, na ordem da partida, com esperado, registrado, tempo e
+ * repetição. Nenhum escore novo é criado aqui.
+ */
+export function buildPatientRecordItems(session: GameSession): Array<{ question: string; answer: string }> {
+  const summary = summarize(session);
+  const wall = sessionWallSeconds(session);
+  const rows = [
+    { question: "Resumo para o prontuário", answer: buildGameBrief(session) },
+    {
+      question: "Partida",
+      answer: [
+        `Idade informada: ${session.ageYears} anos · faixa ${summary.band.label}`,
+        `${session.answers.length} de ${summary.total} itens registrados (${summary.complete ? "completa" : "incompleta"})`,
+        `tempo somado nas tarefas ${formatDuration(summary.durationSeconds)}`,
+        ...(wall !== null ? [`duração da sessão ${formatDuration(wall)}`] : []),
+        `${session.pauseCount ?? 0} pausa(s) · ${session.undoCount ?? 0} desfeito(s)`,
+      ].join(" · "),
+    },
+  ];
+  for (const answer of session.answers) {
+    const phase = phaseById(answer.phaseId);
+    rows.push({
+      question: `Fase ${phase.order} · ${phase.name} · ${answer.prompt}`,
+      answer: `${STATUS_LABELS[answer.status]} · registrado: ${answer.given} · esperado: ${answer.expected} · ${answer.seconds} s${answer.repeated ? " · comando repetido 1x" : ""}`,
+    });
+  }
+  return rows;
+}
+
+/**
+ * Atalhos de teclado da aplicadora nos itens julgados (fala e ação). Itens de
+ * toque continuam exclusivos da criança na tela: o teclado não responde por ela.
+ */
+export const JUDGE_SHORTCUTS: Readonly<Record<string, AnswerStatus>> = Object.freeze({ "1": "acerto", "2": "erro", "3": "sem_resposta" });
+export function judgeShortcut(key: string): AnswerStatus | null {
+  return JUDGE_SHORTCUTS[key] ?? null;
+}
