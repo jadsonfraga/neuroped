@@ -629,10 +629,12 @@ export default function AgendaPage() {
                     </div>
                     <p className="mt-2 whitespace-pre-line text-sm">{item.message}</p>
                     <p className="mt-1 text-xs text-muted-foreground">Destino: {item.channel === "email" ? "e-mail do responsável" : item.recipient || "não informado"}</p>
-                    {attempts > 0 && item.status !== "delivered" && (
+                    {(attempts > 0 || item.lastError === "rate_limited") && item.status !== "delivered" && (
                       <p className="mt-1 text-xs text-muted-foreground" data-testid="notification-attempts">
                         Tentativas de e-mail: {attempts}/{maxEmailAttempts}
-                        {item.lastError ? " · o provedor recusou ou não respondeu" : ""}
+                        {item.lastError === "rate_limited"
+                          ? " · limite de e-mails para este endereço; use o envio manual"
+                          : item.lastError ? " · o provedor recusou ou não respondeu" : ""}
                       </p>
                     )}
                     <div className="mt-3 flex flex-wrap gap-2">
