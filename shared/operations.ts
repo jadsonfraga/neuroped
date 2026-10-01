@@ -9,6 +9,21 @@ export const appointmentStatuses = [
 ] as const;
 export type AppointmentStatus = (typeof appointmentStatuses)[number];
 
+/**
+ * Rótulos em português dos estados, fonte única para a agenda interna, a visão do
+ * dia e a página pública. Estado nunca vai à tela como identificador interno
+ * (`requested`, `checked_in`): a família e a equipe leem português.
+ */
+export const appointmentStatusLabel: Record<AppointmentStatus, string> = {
+  requested: "solicitada",
+  confirmed: "confirmada",
+  checked_in: "check-in",
+  in_care: "em atendimento",
+  completed: "concluída",
+  cancelled: "cancelada",
+  no_show: "faltou",
+};
+
 export const paymentStatuses = ["pending", "paid", "waived", "refunded"] as const;
 export type PaymentStatus = (typeof paymentStatuses)[number];
 
@@ -18,6 +33,13 @@ export type BookingModality = (typeof bookingModalities)[number];
 export const waitlistStatuses = ["waiting", "offered", "booked", "closed"] as const;
 export type WaitlistStatus = (typeof waitlistStatuses)[number];
 
+export const waitlistStatusLabel: Record<WaitlistStatus, string> = {
+  waiting: "aguardando",
+  offered: "horário oferecido",
+  booked: "agendada",
+  closed: "encerrada",
+};
+
 export const notificationStatuses = [
   "pending_provider",
   "manual_sent",
@@ -25,6 +47,25 @@ export const notificationStatuses = [
   "failed",
 ] as const;
 export type NotificationStatus = (typeof notificationStatuses)[number];
+
+const NOTIFICATION_TEMPLATE_LABELS: Record<string, string> = {
+  booking_requested: "Solicitação de consulta recebida",
+  booking_cancelled: "Reserva cancelada pela família",
+  booking_rescheduled: "Remarcação pedida pela família",
+  appointment_created: "Consulta agendada pela clínica",
+  appointment_rescheduled: "Consulta remarcada pela clínica",
+};
+
+/** `appointment_<estado>` vira "Consulta: <estado>"; modelo desconhecido volta como veio. */
+export function notificationTemplateLabel(template: string): string {
+  const known = NOTIFICATION_TEMPLATE_LABELS[template];
+  if (known) return known;
+  const status = template.startsWith("appointment_") ? template.slice("appointment_".length) : "";
+  if ((appointmentStatuses as readonly string[]).includes(status)) {
+    return `Consulta: ${appointmentStatusLabel[status as AppointmentStatus]}`;
+  }
+  return template;
+}
 
 export interface ProviderProfile {
   userId: string;
