@@ -7,8 +7,8 @@ está na tabela abaixo.
 | Etapa | Escopo | Estado |
 | --- | --- | --- |
 | A | Migração 0032, bootstrap em runtime, workflow de migração, resolução do principal fail-closed com mais de um vínculo | PR A |
-| B | Seleção validada do profissional, middleware, vínculo com vários profissionais, revogação por vínculo, e-mail com contexto do profissional | pendente |
-| C | Seletor na UI, rótulo "Agenda de X", `queryKey` com o profissional, texto de `/planos` | pendente |
+| B | Seleção validada do profissional, middleware, vínculo com vários profissionais, revogação por vínculo, e-mail com contexto do profissional | PR B (empilhada sobre a A) |
+| C | Seletor na UI, rótulo "Agenda de X", `queryKey` com o profissional, texto de `/planos` | PR C (empilhada sobre a B) |
 | D | Visão unificada do dia (opcional, PR separada) | pendente |
 
 ## Problema
@@ -73,6 +73,11 @@ verificação da forma nova é do workflow da 0032 (mais estrita: exige que a
   máximo um vínculo por operador (o código ainda não cria o segundo), código novo
   e antigo se comportam igual.
 - A etapa B só deve ser publicada depois da A.
+- **B e C devem ir ao ar juntas.** Depois da B, um profissional pode vincular uma
+  recepção que já atende outro médico (antes era recusado). Uma recepção com dois
+  profissionais recebe `409 PROVIDER_SELECTION_REQUIRED` até escolher, e a UI atual
+  (anterior à C) não sabe escolher: ela ficaria sem agenda até a C. Publicar a B
+  sozinha só é seguro se ninguém vincular uma segunda vez no intervalo.
 - **Rollback da B** volta ao código da A, que é fail-closed com mais de um vínculo.
 - **Não reverta para antes da A** depois que existir operador com dois vínculos:
   o `LIMIT 1` antigo escolheria uma agenda arbitrária. Para voltar com segurança,
@@ -99,3 +104,95 @@ SELECT COUNT(*) FROM booking_staff_links l
 Resultado `0`: a etapa B pode exigir a membership a cada requisição. Maior que `0`:
 tratar esses vínculos (convite + aceite) antes, ou manter a exigência apenas para
 o caminho com seleção de profissional.
+
+## Etapa B — contrato da seleção de profissional
+
+Fonte única: `functions/api/operations/_context.ts` (`resolveOperationsContext`),
+usada pelo middleware (tenant e billing) e pelo handler. O Express chama o handler
+sem o middleware, então a validação não pode viver só no middleware.
+
+- **Transporte.** `?provider=<id do profissional>` na query, em GET e POST. O
+  corpo da requisição **nunca** define o profissional (o contexto não lê o corpo; há
+  asserção estática e teste). Só o papel `operator` seleciona; profissional e admin
+  operam sempre a própria agenda e o pedido é ignorado.
+- **Resolução** (`resolveOperationsAccess`): entre os vínculos **ativos** com
+  profissional **ativo** e papel `admin`/`professional`:
+  - pedido presente e válido → essa agenda;
+  - pedido ausente e exatamente um profissional possível → essa agenda (histórico,
+    inalterado);
+  - pedido ausente e mais de um → `409 PROVIDER_SELECTION_REQUIRED` com
+    `providers: [{ id, name }]` (nada além de id e nome);
+  - pedido que não está entre os vínculos ativos → `403 PROVIDER_NOT_AVAILABLE`.
+    Inexistente, sem vínculo, vínculo suspenso, profissional inativo e o próprio
+    operador como alvo respondem **exatamente igual** (anti-enumeração);
+  - nenhum vínculo → `403 STAFF_LINK_REQUIRED` (inalterado).
+- **Clínica.** É a do profissional escolhido (`resolveBillingClinicId`); `X-Tenant-Id`
+  continua sendo só um alvo, validado contra a membership **do profissional**.
+  Cada requisição opera exatamente um par (profissional, clínica), com billing e
+  encerramento (402/423) por esse par.
+- **Membership a cada requisição.** Com escolha explícita ou vários vínculos, a
+  membership `assistant` ativa da recepção na clínica da requisição é exigida e a
+  falta responde como "indisponível". Um vínculo **único** sem escolha mantém o
+  comportamento histórico (não exige a membership), para não barrar vínculos legados
+  anteriores ao AUTHZ-P1-06; ver o risco aberto abaixo. A UI (etapa C) só deve enviar
+  `provider` quando houver mais de um profissional.
+- **Dashboard.** `access.availableProviders` (só para a recepção) lista as escolhas.
+- **Vínculo.** `staff_link` passa a aceitar uma recepção já vinculada a outro
+  profissional: o vínculo é do par (profissional, recepção). A membership `assistant`
+  ativa continua repetida no predicado do `UPDATE` e do `INSERT`; o segundo vínculo
+  não revela nada sobre o primeiro. `STAFF_ALREADY_LINKED` deixou de existir. Os três
+  erros restantes (e-mail inexistente, papel inválido, sem membership aqui) seguem
+  indistinguíveis.
+- **Revogação.** `staff_active` só altera o vínculo do **próprio** profissional;
+  suspender um vínculo mantém os outros.
+- **Assentos.** Sem mudança: o teto conta memberships, não vínculos.
+
+## Etapa C — UI da escolha de profissional
+
+Só `client/src/pages/agenda.tsx` consome `/api/operations`. A `recepcao.tsx` é a
+página das pré-consultas guardadas no dispositivo e não usa essa API, então não
+recebe seletor.
+
+- **Escolha.** Recepção com mais de um profissional que recebe o `409` vê "Qual
+  agenda você vai operar?" com um botão "Agenda de X" por profissional. Com a
+  agenda aberta, a barra "Agenda de X" fica acima das abas (vale para todas) e, com
+  mais de um profissional, traz o seletor "Trocar profissional". Com um só
+  profissional a barra mostra o rótulo e não há seletor.
+- **Sem mistura.** A chave da consulta inclui o profissional
+  (`/api/operations?resource=dashboard&provider=<id>`); depois de uma ação todas as
+  agendas em cache são invalidadas. Trocar de profissional descarta o formulário de
+  agendamento manual, a busca de paciente e a remarcação em andamento.
+- **Ações.** Vão para o profissional escolhido pela **query** (`?provider=`); o corpo
+  nunca o carrega. Cancelar, check-in, falta e remarcar dizem "— agenda de X" na
+  mensagem de sucesso e no `title` do botão, e o formulário de remarcação diz
+  "Remarcando na agenda de X."
+- **Só quando preciso.** O `provider` só é enviado por recepção com mais de um
+  profissional. Se o painel mostrar que não é recepção, ou que há um só profissional,
+  a escolha lembrada é esquecida (profissional e recepção legada de vínculo único
+  seguem o caminho histórico, sem exigir membership).
+- **Escolha lembrada.** `localStorage`, uma chave por conta
+  (`neuroped:agenda:provider:v1:<id da conta>`), só o id do profissional, sempre em
+  `try/catch` e só pelo helper `client/src/lib/agendaProvider.ts`. Nunca é
+  autoridade: o servidor valida a cada pedido. Se o servidor recusar a escolha
+  lembrada (`403 PROVIDER_NOT_AVAILABLE`), ela é esquecida e a tela volta a pedir.
+- **`/planos`.** O texto passa a descrever a recepção com vários profissionais.
+  Publicar a C sem a B tornaria o texto falso; por isso B e C vão juntas.
+
+### Como foi provado
+
+- `tests/unit/agenda-provider.test.ts`: chave e URL sem injeção por id hostil,
+  leitura validada do `409`, escolha por conta, armazenamento que lança.
+- `tests/unit/agenda-multi-provider-static.test.mjs`: contrato do código.
+- `tests/e2e/agenda-multi-provider.mjs`: navegador (Chromium) sobre a UI de produção
+  e uma API sintética que reproduz o contrato do backend da etapa B; inclui axe no
+  escolhedor e na barra. Roda em `live-browser-persistence-guard.yml`. O backend
+  real é provado em `operations-multi-provider.test.ts`; **a UI e o backend reais
+  nunca rodaram juntos** neste ciclo.
+
+### CI de PRs empilhados
+
+Os workflows principais filtram `branches: [main]`. Um PR cujo base é a branch da
+etapa anterior roda só uma parte dos checks até o base virar `main`. Cada etapa foi
+validada localmente (tipos, lint, `test:operations`, `test:quick-wins`) e o CI
+completo roda quando o base é retargetado para `main`, depois que a etapa anterior
+entra.

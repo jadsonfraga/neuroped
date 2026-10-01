@@ -1,4 +1,5 @@
 import type { PublicUser } from "../auth/_shared";
+import type { OperationsProviderChoice } from "../../../shared/operations";
 
 export interface OperationsPrincipal {
   actorUserId: string;
@@ -156,60 +157,152 @@ export async function ensureOperationsHardeningSchema(db: D1Database): Promise<v
   await db.batch(HARDENING_SCHEMA.map((sql) => db.prepare(sql)));
 }
 
+export type { OperationsProviderChoice };
+
+/**
+ * Resultado da resolução de acesso à agenda.
+ *
+ * - `ok`: principal resolvido. `strict` indica que o profissional veio de uma
+ *   escolha explícita ou de uma recepção com mais de um vínculo; nesse caminho a
+ *   membership `assistant` ativa na clínica é exigida a CADA requisição.
+ * - `none`: nenhum vínculo ativo para um profissional válido.
+ * - `not_available`: o profissional pedido não é permitido a esta recepção.
+ *   Inexistente, sem vínculo, vínculo suspenso e profissional inativo caem aqui e
+ *   são indistinguíveis (anti-enumeração).
+ * - `selection_required`: mais de um profissional possível e nenhum pedido.
+ *   Nunca se escolhe uma agenda por acaso.
+ */
+export type OperationsAccessResolution =
+  | { kind: "ok"; principal: OperationsPrincipal; strict: boolean; availableProviders: OperationsProviderChoice[] }
+  | { kind: "none" }
+  | { kind: "not_available" }
+  | { kind: "selection_required"; providers: OperationsProviderChoice[] };
+
+const MAX_PROVIDER_CHOICES = 100;
+
+const ACTIVE_VALID_PROVIDER_LINK = `l.staff_user_id = ? AND l.active = 1
+         AND p.is_active = 1 AND p.role IN ('admin','professional')`;
+
+async function listProviderChoices(db: D1Database, staffUserId: string): Promise<OperationsProviderChoice[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT l.provider_user_id AS id, p.name AS name
+         FROM booking_staff_links l
+         JOIN users p ON p.id = l.provider_user_id
+        WHERE ${ACTIVE_VALID_PROVIDER_LINK}
+        ORDER BY p.name, l.provider_user_id
+        LIMIT ${MAX_PROVIDER_CHOICES}`,
+    )
+    .bind(staffUserId)
+    .all<{ id: string; name: string }>();
+  return (results ?? []).map((row) => ({ id: row.id, name: row.name }));
+}
+
+async function getProviderChoice(
+  db: D1Database,
+  staffUserId: string,
+  providerUserId: string,
+): Promise<OperationsProviderChoice | null> {
+  const row = await db
+    .prepare(
+      `SELECT l.provider_user_id AS id, p.name AS name
+         FROM booking_staff_links l
+         JOIN users p ON p.id = l.provider_user_id
+        WHERE ${ACTIVE_VALID_PROVIDER_LINK} AND l.provider_user_id = ?
+        LIMIT 1`,
+    )
+    .bind(staffUserId, providerUserId)
+    .first<{ id: string; name: string }>();
+  return row ? { id: row.id, name: row.name } : null;
+}
+
+/**
+ * Resolve de qual agenda o usuário opera nesta requisição.
+ *
+ * `requestedProviderId` é só um ALVO SOLICITADO pelo cliente, nunca autoridade:
+ * é validado aqui contra o vínculo ativo persistido da recepção. Profissional e
+ * admin operam sempre a própria agenda (o pedido é ignorado); a seleção só existe
+ * para o papel `operator`.
+ */
+export async function resolveOperationsAccess(
+  db: D1Database,
+  user: PublicUser,
+  requestedProviderId: string | null = null,
+): Promise<OperationsAccessResolution> {
+  if (user.role === "admin" || user.role === "professional") {
+    return {
+      kind: "ok",
+      strict: false,
+      availableProviders: [],
+      principal: {
+        actorUserId: user.id,
+        actorRole: user.role,
+        providerUserId: user.id,
+        providerName: user.name,
+        delegated: false,
+        canConfigure: true,
+      },
+    };
+  }
+
+  if (user.role !== "operator") return { kind: "none" };
+
+  const choices = await listProviderChoices(db, user.id);
+  const asPrincipal = (choice: OperationsProviderChoice): OperationsPrincipal => ({
+    actorUserId: user.id,
+    actorRole: user.role,
+    providerUserId: choice.id,
+    providerName: choice.name,
+    delegated: true,
+    canConfigure: false,
+  });
+
+  if (requestedProviderId) {
+    // A lista é limitada; só consulta direto se o pedido não está nela e ela
+    // pode estar truncada.
+    const hit =
+      choices.find((choice) => choice.id === requestedProviderId) ??
+      (choices.length >= MAX_PROVIDER_CHOICES
+        ? await getProviderChoice(db, user.id, requestedProviderId)
+        : null);
+    if (!hit) return { kind: "not_available" };
+    return { kind: "ok", principal: asPrincipal(hit), strict: true, availableProviders: choices };
+  }
+
+  if (choices.length === 0) return { kind: "none" };
+  // Mais de um profissional e nenhuma escolha: nunca por ordem de armazenamento.
+  if (choices.length > 1) return { kind: "selection_required", providers: choices };
+  // Um único vínculo e nenhum pedido: comportamento histórico, inalterado.
+  return { kind: "ok", principal: asPrincipal(choices[0]), strict: false, availableProviders: choices };
+}
+
+/**
+ * Compatibilidade: principal quando a resolução é inequívoca, `null` caso
+ * contrário (sem vínculo, indisponível ou seleção necessária).
+ */
 export async function resolveOperationsPrincipal(
   db: D1Database,
   user: PublicUser,
 ): Promise<OperationsPrincipal | null> {
-  if (user.role === "admin" || user.role === "professional") {
-    return {
-      actorUserId: user.id,
-      actorRole: user.role,
-      providerUserId: user.id,
-      providerName: user.name,
-      delegated: false,
-      canConfigure: true,
-    };
-  }
+  const access = await resolveOperationsAccess(db, user, null);
+  return access.kind === "ok" ? access.principal : null;
+}
 
-  if (user.role !== "operator") return null;
-
-  // `LIMIT 2` só para detectar ambiguidade. Operador com mais de um vínculo
-  // ativo não tem agenda "padrão": escolher uma por ordem de armazenamento
-  // abriria a agenda de um profissional por acaso. Fail-closed até existir
-  // seleção explícita do profissional (issue #1064).
-  const { results } = await db
-    .prepare(
-      `SELECT l.provider_user_id, p.name AS provider_name, p.role AS provider_role, p.is_active
-         FROM booking_staff_links l
-         JOIN users p ON p.id = l.provider_user_id
-        WHERE l.staff_user_id = ? AND l.active = 1
-        ORDER BY l.provider_user_id
-        LIMIT 2`,
-    )
-    .bind(user.id)
-    .all<{
-      provider_user_id: string;
-      provider_name: string;
-      provider_role: string;
-      is_active: number;
-    }>();
-
-  const rows = results ?? [];
-  if (rows.length !== 1) return null;
-  const row = rows[0];
-
-  if (!row.is_active || !["admin", "professional"].includes(row.provider_role)) {
-    return null;
-  }
-
-  return {
-    actorUserId: user.id,
-    actorRole: user.role,
-    providerUserId: row.provider_user_id,
-    providerName: row.provider_name,
-    delegated: true,
-    canConfigure: false,
-  };
+/**
+ * Membership `assistant` ATIVA da recepção na clínica da requisição. Vale para o
+ * caminho com seleção/vários vínculos; o vínculo único histórico não a exige
+ * (ver docs/saas/MULTI_PROVIDER_AGENDA.md, risco aberto).
+ */
+export async function operatorHasActiveAssistantMembership(
+  db: D1Database,
+  staffUserId: string,
+  clinicId: string,
+): Promise<boolean> {
+  const row = await db
+    .prepare(`SELECT 1 AS ok WHERE ${STAFF_MEMBERSHIP_PREDICATE}`)
+    .bind(clinicId, staffUserId)
+    .first<{ ok: number }>();
+  return Boolean(row);
 }
 
 export async function listOperationsStaff(
@@ -241,25 +334,6 @@ export async function listOperationsStaff(
     active: Boolean(row.active),
     createdAt: row.created_at,
   }));
-}
-
-interface ExistingStaffOwner {
-  provider_user_id: string;
-}
-
-async function getExistingStaffOwner(
-  db: D1Database,
-  staffUserId: string,
-): Promise<ExistingStaffOwner | null> {
-  return db
-    .prepare(
-      `SELECT provider_user_id
-         FROM booking_staff_links
-        WHERE staff_user_id = ?
-        LIMIT 1`,
-    )
-    .bind(staffUserId)
-    .first<ExistingStaffOwner>();
 }
 
 // O vínculo de recepção só vale para quem já é membro `assistant` ATIVO da
@@ -296,27 +370,23 @@ export async function linkOperationsOperator(
     .first<{ ok: number }>();
   if (!member) return { ok: false, code: "STAFF_NOT_CLINIC_MEMBER" };
 
-  const existing = await getExistingStaffOwner(db, staff.id);
-  if (existing && existing.provider_user_id !== principal.providerUserId) {
-    return { ok: false, code: "STAFF_ALREADY_LINKED" };
-  }
-
+  // Uma recepção pode atender vários profissionais (migração 0032, issue
+  // #1064): o vínculo é do PAR (profissional, recepção). Reativa o deste
+  // profissional se já existir; senão cria. Vínculos com outros profissionais
+  // não são consultados nem alterados. A membership é repetida no predicado
+  // das duas escritas.
   const now = new Date().toISOString();
-  if (existing) {
-    const update = await db
-      .prepare(
-        `UPDATE booking_staff_links
-            SET active = 1, created_by_user_id = ?, updated_at = ?
-          WHERE provider_user_id = ? AND staff_user_id = ?
-            AND ${STAFF_MEMBERSHIP_PREDICATE}`,
-      )
-      .bind(principal.actorUserId, now, principal.providerUserId, staff.id, clinicId, staff.id)
-      .run();
-    if ((update.meta?.changes ?? 0) === 1) {
-      return { ok: true, staffUserId: staff.id };
-    }
-    // A linha pode ter sido removida depois do SELECT; nesse caso seguimos para
-    // o INSERT protegido pela constraint/checagem de vencedor abaixo.
+  const update = await db
+    .prepare(
+      `UPDATE booking_staff_links
+          SET active = 1, created_by_user_id = ?, updated_at = ?
+        WHERE provider_user_id = ? AND staff_user_id = ?
+          AND ${STAFF_MEMBERSHIP_PREDICATE}`,
+    )
+    .bind(principal.actorUserId, now, principal.providerUserId, staff.id, clinicId, staff.id)
+    .run();
+  if ((update.meta?.changes ?? 0) === 1) {
+    return { ok: true, staffUserId: staff.id };
   }
 
   try {
@@ -333,11 +403,16 @@ export async function linkOperationsOperator(
       return { ok: false, code: "STAFF_NOT_CLINIC_MEMBER" };
     }
   } catch (cause) {
-    const winner = await getExistingStaffOwner(db, staff.id);
-    if (winner && winner.provider_user_id !== principal.providerUserId) {
-      return { ok: false, code: "STAFF_ALREADY_LINKED" };
-    }
-    throw cause;
+    // Corrida: outro pedido criou o MESMO par entre o UPDATE e o INSERT. O
+    // resultado desejado (vínculo ativo) já existe; qualquer outro erro sobe.
+    const winner = await db
+      .prepare(
+        `SELECT 1 AS found FROM booking_staff_links
+          WHERE provider_user_id = ? AND staff_user_id = ? AND active = 1 LIMIT 1`,
+      )
+      .bind(principal.providerUserId, staff.id)
+      .first<{ found: number }>();
+    if (!winner) throw cause;
   }
 
   return { ok: true, staffUserId: staff.id };

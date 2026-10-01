@@ -86,6 +86,11 @@ assert.match(
 assert.match(page, /Agenda própria e agendamento online/, "a vitrine precisa listar a agenda que já existe");
 assert.match(page, /Não envia WhatsApp, SMS nem lembretes/, "a vitrine precisa negar WhatsApp, SMS e lembretes D-1");
 
+// 4c) A recepção atende mais de um profissional (issue #1064): a vitrine descreve a
+// escolha da agenda e não pode voltar à limitação antiga ("um só profissional").
+assert.match(page, /atender mais de um profissional da clínica, escolhendo de qual agenda opera/, "a vitrine precisa descrever a recepção com vários profissionais");
+assert.doesNotMatch(page, /ao qual está vinculada/, "a limitação de um só profissional saiu da vitrine");
+
 // 5) Verdade clínica na vitrine: a página não pode prometer diagnóstico.
 assert.match(
   page,

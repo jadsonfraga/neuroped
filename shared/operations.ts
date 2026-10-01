@@ -160,6 +160,12 @@ export interface OperationsMetrics {
   noShow30d: number;
 }
 
+/** Profissional que uma recepção pode escolher (id e nome, nada além). */
+export interface OperationsProviderChoice {
+  id: string;
+  name: string;
+}
+
 export interface OperationsAccessContext {
   clinicId: string;
   actorUserId: string;
@@ -168,6 +174,11 @@ export interface OperationsAccessContext {
   providerName: string;
   delegated: boolean;
   canConfigure: boolean;
+  /**
+   * Só para a recepção: os profissionais entre os quais ela escolhe de qual
+   * agenda opera (`?provider=<id>`). Ausente para o profissional.
+   */
+  availableProviders?: OperationsProviderChoice[];
 }
 
 export interface OperationsStaffLink {

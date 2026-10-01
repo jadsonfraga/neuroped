@@ -10,7 +10,12 @@ const auditLog = read("functions/api/audit-log.ts");
 
 assert.match(cfConecta, /deletion\.meta\?\.changes[\s\S]*NOT_FOUND/, "Conecta D1 deve confirmar remoção real");
 assert.match(exConecta, /deletion\.changes !== 1[\s\S]*NOT_FOUND/, "Conecta Express deve confirmar remoção real");
-assert.match(access, /update\.meta\?\.changes[\s\S]*seguimos para[\s\S]*INSERT/, "vínculo staff deve sobreviver à corrida SELECT→UPDATE");
+// A garantia é a mesma de antes, na estrutura nova (sem SELECT prévio; issue
+// #1064): UPDATE que não afeta linha NUNCA é tomado como sucesso — segue para o
+// INSERT — e, se outro pedido criou o MESMO par no meio, só se aceita quando o
+// vínculo já está ativo; qualquer outro erro sobe.
+assert.match(access, /update\.meta\?\.changes[\s\S]*INSERT INTO booking_staff_links/, "vínculo staff: UPDATE sem linha afetada segue para o INSERT, nunca assume sucesso");
+assert.match(access, /Corrida: outro pedido criou o MESMO par[\s\S]*if \(!winner\) throw cause/, "vínculo staff deve sobreviver à corrida UPDATE→INSERT sem mascarar outros erros");
 assert.match(operations, /UPDATE booking_provider_profiles[\s\S]{0,700}update\.meta\?\.changes/, "perfil deve confirmar linha atualizada");
 assert.match(operations, /UPDATE booking_services[\s\S]{0,700}update\.meta\?\.changes/, "serviço deve confirmar linha atualizada");
 assert.doesNotMatch(auditLog, /DEMO_LOGS|Log de auditoria simulado/, "audit-log admin não pode degradar para fixture pública");

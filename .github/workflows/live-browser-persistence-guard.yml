@@ -17,6 +17,9 @@ on:
       - "client/src/lib/clinicRoutePolicy.ts"
       - "tests/unit/clinic-context-readiness.test.mjs"
       - "tests/e2e/clinic-context-readiness.mjs"
+      - "tests/e2e/agenda-multi-provider.mjs"
+      - "client/src/pages/agenda.tsx"
+      - "client/src/lib/agendaProvider.ts"
       - "client/src/contexts/AuthContext.tsx"
       - "client/src/contexts/ClinicContext.tsx"
       - "client/src/components/ClinicSwitcher.tsx"
@@ -109,3 +112,6 @@ jobs:
 
       - name: Prove delayed context and recovery across clinical routes
         run: node tests/e2e/clinic-context-readiness.mjs
+
+      - name: Prove reception chooses which provider's agenda it operates
+        run: node tests/e2e/agenda-multi-provider.mjs

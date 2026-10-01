@@ -39,7 +39,7 @@ assert.doesNotMatch(
 );
 assert.match(professional, /role === "operator"/);
 assert.match(professional, /STAFF_LINK_REQUIRED/);
-assert.match(professional, /resolveOperationsPrincipal/);
+assert.match(professional, /resolveOperationsContext/, "o handler resolve a agenda pela fonte única compartilhada com o middleware");
 assert.match(professional, /principal\.canConfigure/);
 assert.match(professional, /appointment_status/);
 assert.match(professional, /INVALID_TRANSITION/);
@@ -78,10 +78,26 @@ assert.doesNotMatch(
   "vínculo já pertencente a outro profissional não pode virar mensagem/código distinto exposto ao cliente",
 );
 assert.match(professional, /SCHEDULE_CONFLICT/, "API privada deve converter conflito físico de agenda em 409");
+// Desde a etapa B a derivação vive em _context.ts (fonte única do middleware e do
+// handler); a regra é a mesma: o tenant do operator é o do PROFISSIONAL.
+const context = read("functions/api/operations/_context.ts");
+const operationsMiddleware = read("functions/api/operations/_middleware.ts");
 assert.match(
-  professional,
-  /resolveBillingClinicId\([\s\S]{0,120}principal\.providerUserId/,
+  context,
+  /resolveBillingClinicId\(db, access\.principal\.providerUserId, request\)/,
   "operator deve herdar o tenant operacional do profissional sem ganhar membership clínico",
+);
+assert.match(operationsMiddleware, /resolveOperationsContext/, "middleware e handler resolvem a agenda pela mesma função");
+assert.match(
+  context,
+  /new URL\(request\.url\)\.searchParams\.get\(PROVIDER_PARAM\)/,
+  "o profissional pedido vem só da query; o corpo nunca define o profissional",
+);
+assert.doesNotMatch(context, /body/i, "o contexto da agenda não lê o corpo da requisição");
+assert.match(
+  context,
+  /access\.strict && !\(await operatorHasActiveAssistantMembership\(db, user\.id, clinicId\)\)/,
+  "com escolha explícita ou vários vínculos a membership assistant ativa é exigida a cada requisição",
 );
 assert.match(professional, /reviews: principal\.canConfigure \? fullReviews : \[\]/, "recepção não deve receber reviews privados");
 
@@ -93,20 +109,48 @@ assert.match(access, /booking_staff_links/);
 assert.doesNotMatch(access, /staff_user_id TEXT NOT NULL UNIQUE/, "bootstrap em runtime deve espelhar a tabela da 0032 (sem UNIQUE em staff_user_id)");
 assert.match(access, /PRIMARY KEY \(provider_user_id, staff_user_id\)/, "o par (profissional, recepção) segue único");
 assert.match(access, /idx_booking_staff_staff_active/, "consulta por operador precisa de índice próprio sem a UNIQUE");
-assert.match(access, /LIMIT 2/, "resolução do operador detecta ambiguidade");
-assert.match(access, /rows\.length !== 1\) return null/, "operador com mais de um vínculo ativo não recebe agenda escolhida por acaso");
+// Etapa B: a ambiguidade (mais de um profissional possível e nenhum escolhido)
+// nunca resolve por ordem de armazenamento — vira `selection_required`.
+assert.match(
+  access,
+  /if \(choices\.length > 1\) return \{ kind: "selection_required"/,
+  "operador com mais de um vínculo ativo não recebe agenda escolhida por acaso",
+);
+assert.match(
+  access,
+  /if \(!hit\) return \{ kind: "not_available" \}/,
+  "profissional pedido que não está entre os vínculos ativos é indisponível",
+);
 assert.match(access, /user\.role !== "operator"/);
 assert.match(
   access,
   /l\.staff_user_id = \? AND l\.active = 1/,
   "contexto do operador deve ser resolvido pelo vínculo ativo do próprio staff_user_id",
 );
-assert.match(access, /getExistingStaffOwner/);
-assert.match(access, /STAFF_ALREADY_LINKED/);
 assert.match(
   access,
-  /existing && existing\.provider_user_id !== principal\.providerUserId/,
-  "profissional não pode reassumir operador já pertencente a outro contexto",
+  /p\.is_active = 1 AND p\.role IN \('admin','professional'\)/,
+  "só profissional ativo entra entre as escolhas da recepção",
+);
+// OPS-03: o vínculo é do PAR (profissional, recepção). O contrato antigo ("um
+// operador pertence a um só profissional": getExistingStaffOwner /
+// STAFF_ALREADY_LINKED) deixou de existir de propósito; a membership assistant
+// ativa continua exigida e repetida no predicado das DUAS escritas.
+assert.doesNotMatch(access, /getExistingStaffOwner|STAFF_ALREADY_LINKED/, "o vínculo único por operador saiu (0032)");
+assert.match(
+  access,
+  /SET active = 1, created_by_user_id = \?, updated_at = \?\s+WHERE provider_user_id = \? AND staff_user_id = \?\s+AND \$\{STAFF_MEMBERSHIP_PREDICATE\}/,
+  "reativação do vínculo repete a membership assistant no predicado",
+);
+assert.match(
+  access,
+  /SELECT \?, \?, 1, \?, \?, \?\s+WHERE \$\{STAFF_MEMBERSHIP_PREDICATE\}/,
+  "criação do vínculo repete a membership assistant no predicado",
+);
+assert.doesNotMatch(
+  access,
+  /UPDATE booking_staff_links\s+SET(?:(?!WHERE)[^`])*provider_user_id\s*=/,
+  "vínculo de recepção nunca reatribui o profissional por UPDATE (só a cláusula SET; o WHERE usa o profissional como filtro)",
 );
 assert.doesNotMatch(
   access,
