@@ -20,6 +20,8 @@ on:
       - "tests/e2e/agenda-multi-provider.mjs"
       - "client/src/pages/agenda.tsx"
       - "client/src/lib/agendaProvider.ts"
+      - "client/src/lib/agendaUnifiedDay.ts"
+      - "client/src/components/AgendaUnifiedDay.tsx"
       - "client/src/contexts/AuthContext.tsx"
       - "client/src/contexts/ClinicContext.tsx"
       - "client/src/components/ClinicSwitcher.tsx"

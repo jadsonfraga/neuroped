@@ -43,9 +43,35 @@ assert.match(agenda, /data-testid="agenda-provider-select"/);
 
 // O rótulo fica FORA das abas (visível em todas) e antes delas.
 assert.ok(
-  agenda.indexOf('data-testid="agenda-provider-bar"') < agenda.indexOf('<Tabs defaultValue="agenda"'),
+  agenda.indexOf('data-testid="agenda-provider-bar"') < agenda.indexOf("<Tabs value={activeTab}"),
   "a barra da agenda em operação vem antes das abas, então vale para todas",
 );
+
+// Etapa D: visão unificada do dia. Só leitura, sem endpoint novo, e só para a
+// recepção com mais de um profissional.
+const unified = read("client/src/components/AgendaUnifiedDay.tsx");
+const unifiedLib = read("client/src/lib/agendaUnifiedDay.ts");
+// As asserções "nunca faz X" valem para o CÓDIGO; comentários podem citar o que não fazem.
+const stripComments = (source) => source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+const unifiedCode = stripComments(unified + unifiedLib);
+assert.match(agenda, /const unifiedAvailable = data\.access\.delegated && providerChoices\.length > 1/, "só a recepção com mais de um profissional vê a aba");
+assert.match(agenda, /\{unifiedAvailable && <TabsTrigger value="dia">Dia de todos<\/TabsTrigger>\}/);
+assert.match(agenda, /const activeTab = tab === "dia" && !unifiedAvailable \? "agenda" : tab/, "sem direito à aba, volta para a agenda");
+assert.match(
+  agenda,
+  /onOpenAgenda=\{\(providerUserId\) => \{\s+chooseProvider\(providerUserId\);\s+setTab\("agenda"\);\s+\}\}/,
+  "abrir a agenda de um profissional usa a escolha normal e volta para a aba da agenda",
+);
+// Cada profissional é buscado pela chave da etapa C (um par validado no servidor).
+assert.match(unified, /queryKey: \[dashboardKeyFor\(choice\.id\)\]/, "mesma chave por profissional da etapa C");
+assert.doesNotMatch(unifiedCode, /apiRequest|\bfetch\(|useMutation|method:\s*"(POST|PUT|PATCH|DELETE)"/, "a visão do dia é só leitura");
+assert.doesNotMatch(unifiedCode, /["'`]\/api\/operations/, "sem endpoint novo nem URL montada à mão: só dashboardKeyFor");
+assert.doesNotMatch(unifiedCode, /localStorage|sessionStorage/, "nada é guardado no navegador");
+assert.match(unified, /staleTime: 0/, "o dia é rebuscado ao abrir a aba (o padrão do app nunca rebusca)");
+assert.match(unified, /selectUnifiedProviders\(providers\)/, "o número de profissionais combinados tem teto");
+assert.match(unifiedLib, /appointment\.providerUserId !== choice\.id\) continue/, "consulta de outro dono nunca é rotulada com este profissional");
+assert.match(unifiedLib, /data\.access\?\.providerUserId === choice\.id/, "agenda cujo dono não é o pedido vira erro");
+assert.match(unified, /role="group"[\s\S]{0,80}aria-label=|tabIndex=\{0\}[\s\S]{0,40}role="group"/, "região com rolagem alcançável pelo teclado");
 
 // Cancelar, remarcar e demais ações dizem em qual agenda agiram.
 assert.match(agenda, /const agendaOf = agendaOfSuffix\(data\.access\.delegated, data\.access\.providerName\)/);
