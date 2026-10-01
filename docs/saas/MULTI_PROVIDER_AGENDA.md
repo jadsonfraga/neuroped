@@ -83,27 +83,47 @@ verificação da forma nova é do workflow da 0032 (mais estrita: exige que a
   o `LIMIT 1` antigo escolheria uma agenda arbitrária. Para voltar com segurança,
   deixe no máximo um vínculo ativo por operador antes (SQL no cabeçalho da 0032).
 
-## Risco aberto para a etapa B: membership a cada requisição
+## Membership a cada requisição (decidido: vale para toda recepção)
 
-Hoje a membership `assistant` ativa só é validada **ao vincular**
-(`STAFF_MEMBERSHIP_PREDICATE`), não a cada requisição. Remover a membership de uma
-recepção não revoga o vínculo. Exigi-la a cada requisição fecha essa brecha, mas
-pode barrar vínculos legados anteriores ao AUTHZ-P1-06 (a auditoria registra, em
-OPS-10, "se a secretária do cliente zero tem membership: unknown").
+Antes, a membership `assistant` ativa só era validada **ao vincular**
+(`STAFF_MEMBERSHIP_PREDICATE`). Remover a membership de uma recepção não revogava o
+vínculo, e o vínculo único legado (anterior ao AUTHZ-P1-06) nem a exigia nas
+requisições. A etapa B manteve isso para o vínculo único só porque não havia censo.
+O censo da migração 0032 mostrou **zero** vínculos em produção (`VINCULOS_ANTES: 0`,
+2026-10-01), então não há vínculo legado a proteger, e a exigência passou a valer
+para **toda** recepção:
 
-Censo a rodar **no D1 de produção** antes de endurecer (somente contagem; não é
-possível a partir do ambiente de desenvolvimento, por isso não foi executado):
+- **No vínculo.** Um vínculo só é válido se a recepção for membro `assistant` ATIVO
+  de uma clínica em que o profissional também é membro ativo
+  (`OPERATOR_SHARES_CLINIC_WITH_PROVIDER`, dentro de `ACTIVE_VALID_PROVIDER_LINK`).
+  Sem isso o vínculo conta como inexistente: a recepção que perdeu a membership
+  recebe `403 STAFF_LINK_REQUIRED` e **nem a lista de nomes do `409`**. Pedir um
+  profissional explicitamente nessa condição cai em `PROVIDER_NOT_AVAILABLE`,
+  indistinguível dos outros motivos.
+- **Na requisição.** Depois de resolver a clínica do profissional
+  (`resolveBillingClinicId`), `resolveOperationsContext` exige a membership na
+  clínica **exata** (fecha o `X-Tenant-Id` de uma clínica onde o profissional é
+  membro mas a recepção não é): `403 PROVIDER_NOT_AVAILABLE`.
+- **Revogação.** Retirar a membership revoga o acesso na requisição seguinte, sem
+  mexer no vínculo; devolver a membership devolve o acesso.
+
+Antes de publicar, rode o censo **no D1 de produção** (somente contagem; não é
+possível a partir do ambiente de desenvolvimento). Ele conta os vínculos ativos que
+**perderiam o acesso** com esta mudança:
 
 ```sql
 SELECT COUNT(*) FROM booking_staff_links l
  WHERE l.active = 1 AND NOT EXISTS (
-   SELECT 1 FROM clinic_memberships m
-    WHERE m.user_id = l.staff_user_id AND m.role = 'assistant' AND m.active = 1);
+   SELECT 1 FROM clinic_memberships ms
+     JOIN clinic_memberships mp ON mp.clinic_id = ms.clinic_id
+    WHERE ms.user_id = l.staff_user_id AND ms.role = 'assistant' AND ms.active = 1
+      AND mp.user_id = l.provider_user_id AND mp.active = 1);
 ```
 
-Resultado `0`: a etapa B pode exigir a membership a cada requisição. Maior que `0`:
-tratar esses vínculos (convite + aceite) antes, ou manter a exigência apenas para
-o caminho com seleção de profissional.
+Resultado `0`: nada muda para ninguém. Maior que `0`: essas recepções passam a receber
+`STAFF_LINK_REQUIRED` até serem convidadas para a clínica (convite + aceite) ou a
+membership ser reativada. **Rollback:** reverter o PR devolve o comportamento da etapa
+B (vínculo único sem exigir membership); não há migração.
 
 ## Etapa B — contrato da seleção de profissional
 
@@ -118,8 +138,7 @@ sem o middleware, então a validação não pode viver só no middleware.
 - **Resolução** (`resolveOperationsAccess`): entre os vínculos **ativos** com
   profissional **ativo** e papel `admin`/`professional`:
   - pedido presente e válido → essa agenda;
-  - pedido ausente e exatamente um profissional possível → essa agenda (histórico,
-    inalterado);
+  - pedido ausente e exatamente um profissional possível → essa agenda;
   - pedido ausente e mais de um → `409 PROVIDER_SELECTION_REQUIRED` com
     `providers: [{ id, name }]` (nada além de id e nome);
   - pedido que não está entre os vínculos ativos → `403 PROVIDER_NOT_AVAILABLE`.
@@ -130,12 +149,9 @@ sem o middleware, então a validação não pode viver só no middleware.
   continua sendo só um alvo, validado contra a membership **do profissional**.
   Cada requisição opera exatamente um par (profissional, clínica), com billing e
   encerramento (402/423) por esse par.
-- **Membership a cada requisição.** Com escolha explícita ou vários vínculos, a
-  membership `assistant` ativa da recepção na clínica da requisição é exigida e a
-  falta responde como "indisponível". Um vínculo **único** sem escolha mantém o
-  comportamento histórico (não exige a membership), para não barrar vínculos legados
-  anteriores ao AUTHZ-P1-06; ver o risco aberto abaixo. A UI (etapa C) só deve enviar
-  `provider` quando houver mais de um profissional.
+- **Membership a cada requisição.** Exigida de toda recepção (com ou sem escolha,
+  um ou vários vínculos); ver a seção "Membership a cada requisição" acima. A UI
+  (etapa C) só deve enviar `provider` quando houver mais de um profissional.
 - **Dashboard.** `access.availableProviders` (só para a recepção) lista as escolhas.
 - **Vínculo.** `staff_link` passa a aceitar uma recepção já vinculada a outro
   profissional: o vínculo é do par (profissional, recepção). A membership `assistant`
@@ -168,8 +184,8 @@ recebe seletor.
   "Remarcando na agenda de X."
 - **Só quando preciso.** O `provider` só é enviado por recepção com mais de um
   profissional. Se o painel mostrar que não é recepção, ou que há um só profissional,
-  a escolha lembrada é esquecida (profissional e recepção legada de vínculo único
-  seguem o caminho histórico, sem exigir membership).
+  a escolha lembrada é esquecida (profissional e recepção de vínculo único seguem o
+  caminho sem `provider`; a membership é exigida do mesmo jeito).
 - **Escolha lembrada.** `localStorage`, uma chave por conta
   (`neuroped:agenda:provider:v1:<id da conta>`), só o id do profissional, sempre em
   `try/catch` e só pelo helper `client/src/lib/agendaProvider.ts`. Nunca é

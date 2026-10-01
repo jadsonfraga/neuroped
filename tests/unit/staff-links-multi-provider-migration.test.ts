@@ -269,6 +269,29 @@ before.close();
   const db = makeDb(database);
   const operator = (id: string) => ({ id, name: id, email: `${id}@example.test`, role: "operator" }) as never;
 
+  // Um vínculo só vale com membership `assistant` ativa numa clínica em comum com
+  // o profissional (a recepção precisa ter aceitado o convite da clínica).
+  database
+    .prepare(`INSERT INTO clinics (id, slug, name, status, created_by_user_id, created_at, updated_at) VALUES ('clinic-m','clinic-m','Clínica M','active','prof-a',?,?)`)
+    .run(NOW, NOW);
+  // O trial automático traz poucos assentos; este caso usa três membros.
+  database
+    .prepare(`UPDATE billing_subscriptions SET seats = 10 WHERE customer_id IN (SELECT id FROM billing_customers WHERE clinic_id = 'clinic-m')`)
+    .run();
+  const membership = database.prepare(
+    `INSERT INTO clinic_memberships (clinic_id,user_id,role,active,created_at,updated_at) VALUES ('clinic-m',?,?,?,?,?)`,
+  );
+  membership.run("prof-a", "owner", 1, NOW, NOW);
+  membership.run("prof-b", "professional", 1, NOW, NOW);
+  assert.equal(
+    await resolveOperationsPrincipal(db, operator("sec-a")),
+    null,
+    "vínculo sem membership assistant da recepção não resolve (nem o vínculo legado da produção)",
+  );
+  membership.run("sec-a", "assistant", 0, NOW, NOW);
+  assert.equal(await resolveOperationsPrincipal(db, operator("sec-a")), null, "membership inativa não resolve");
+  database.prepare(`UPDATE clinic_memberships SET active = 1 WHERE user_id = 'sec-a'`).run();
+
   const single = await resolveOperationsPrincipal(db, operator("sec-a"));
   assert.ok(single, "um vínculo ativo para profissional ativo resolve");
   assert.equal(single.providerUserId, "prof-a");

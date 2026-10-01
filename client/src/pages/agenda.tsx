@@ -321,7 +321,7 @@ export default function AgendaPage() {
         <h1 className="text-xl font-bold">Agenda temporariamente indisponível</h1>
         <p className="text-sm text-muted-foreground">
           {detail.includes("STAFF_LINK_REQUIRED")
-            ? "Esta conta da recepção ainda precisa ser vinculada pelo profissional responsável na aba Equipe da Agenda & Gestão."
+            ? "Esta conta da recepção ainda precisa ser vinculada pelo profissional responsável (aba Equipe da Agenda & Gestão) e ter o convite da clínica aceito."
             : detail.includes("401") || detail.includes("AUTH")
               ? "Sua sessão profissional não está disponível. Entre novamente para acessar a agenda persistente."
               : "Nenhum dado foi simulado. Verifique autenticação, vínculo de equipe e banco persistente."}

@@ -162,10 +162,8 @@ export type { OperationsProviderChoice };
 /**
  * Resultado da resolução de acesso à agenda.
  *
- * - `ok`: principal resolvido. `strict` indica que o profissional veio de uma
- *   escolha explícita ou de uma recepção com mais de um vínculo; nesse caminho a
- *   membership `assistant` ativa na clínica é exigida a CADA requisição.
- * - `none`: nenhum vínculo ativo para um profissional válido.
+ * - `ok`: principal resolvido.
+ * - `none`: nenhum vínculo válido (ver `ACTIVE_VALID_PROVIDER_LINK`).
  * - `not_available`: o profissional pedido não é permitido a esta recepção.
  *   Inexistente, sem vínculo, vínculo suspenso e profissional inativo caem aqui e
  *   são indistinguíveis (anti-enumeração).
@@ -173,15 +171,27 @@ export type { OperationsProviderChoice };
  *   Nunca se escolhe uma agenda por acaso.
  */
 export type OperationsAccessResolution =
-  | { kind: "ok"; principal: OperationsPrincipal; strict: boolean; availableProviders: OperationsProviderChoice[] }
+  | { kind: "ok"; principal: OperationsPrincipal; availableProviders: OperationsProviderChoice[] }
   | { kind: "none" }
   | { kind: "not_available" }
   | { kind: "selection_required"; providers: OperationsProviderChoice[] };
 
 const MAX_PROVIDER_CHOICES = 100;
 
+// Um vínculo só vale enquanto a recepção seguir sendo membro `assistant` ATIVO de
+// uma clínica em que o profissional também é membro ativo (AUTHZ-P1-06 vale ao
+// vincular E a cada requisição). Sem isso o vínculo conta como inexistente: a
+// recepção que perdeu a membership não recebe nem a lista de nomes do `409`.
+const OPERATOR_SHARES_CLINIC_WITH_PROVIDER = `EXISTS (
+           SELECT 1 FROM clinic_memberships ms
+             JOIN clinic_memberships mp ON mp.clinic_id = ms.clinic_id
+            WHERE ms.user_id = l.staff_user_id AND ms.role = 'assistant' AND ms.active = 1
+              AND mp.user_id = l.provider_user_id AND mp.active = 1
+         )`;
+
 const ACTIVE_VALID_PROVIDER_LINK = `l.staff_user_id = ? AND l.active = 1
-         AND p.is_active = 1 AND p.role IN ('admin','professional')`;
+         AND p.is_active = 1 AND p.role IN ('admin','professional')
+         AND ${OPERATOR_SHARES_CLINIC_WITH_PROVIDER}`;
 
 async function listProviderChoices(db: D1Database, staffUserId: string): Promise<OperationsProviderChoice[]> {
   const { results } = await db
@@ -232,7 +242,6 @@ export async function resolveOperationsAccess(
   if (user.role === "admin" || user.role === "professional") {
     return {
       kind: "ok",
-      strict: false,
       availableProviders: [],
       principal: {
         actorUserId: user.id,
@@ -266,14 +275,14 @@ export async function resolveOperationsAccess(
         ? await getProviderChoice(db, user.id, requestedProviderId)
         : null);
     if (!hit) return { kind: "not_available" };
-    return { kind: "ok", principal: asPrincipal(hit), strict: true, availableProviders: choices };
+    return { kind: "ok", principal: asPrincipal(hit), availableProviders: choices };
   }
 
   if (choices.length === 0) return { kind: "none" };
   // Mais de um profissional e nenhuma escolha: nunca por ordem de armazenamento.
   if (choices.length > 1) return { kind: "selection_required", providers: choices };
-  // Um único vínculo e nenhum pedido: comportamento histórico, inalterado.
-  return { kind: "ok", principal: asPrincipal(choices[0]), strict: false, availableProviders: choices };
+  // Um único vínculo válido e nenhum pedido: é essa a agenda.
+  return { kind: "ok", principal: asPrincipal(choices[0]), availableProviders: choices };
 }
 
 /**
@@ -289,9 +298,8 @@ export async function resolveOperationsPrincipal(
 }
 
 /**
- * Membership `assistant` ATIVA da recepção na clínica da requisição. Vale para o
- * caminho com seleção/vários vínculos; o vínculo único histórico não a exige
- * (ver docs/saas/MULTI_PROVIDER_AGENDA.md, risco aberto).
+ * Membership `assistant` ATIVA da recepção na clínica EXATA da requisição. É
+ * exigida de toda recepção, a cada requisição (docs/saas/MULTI_PROVIDER_AGENDA.md).
  */
 export async function operatorHasActiveAssistantMembership(
   db: D1Database,
