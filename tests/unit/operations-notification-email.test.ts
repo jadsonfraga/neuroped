@@ -21,6 +21,7 @@ import { onRequest as opsMiddleware } from "../../functions/api/operations/_midd
 import { onRequestGet as opsGet, onRequestPost as opsPost } from "../../functions/api/operations/index";
 import { onRequestPost as publicPost } from "../../functions/api/public-booking";
 import {
+  EMAIL_RECIPIENT_MAX_PER_HOUR,
   MAX_EMAIL_ATTEMPTS,
   formatPatientDateTime as fmt,
 } from "../../functions/api/operations/_notificationDelivery";
@@ -391,6 +392,69 @@ let sentApptId: string;
   assert.equal(unknown.status, 404, "id inexistente continua 404");
 }
 
+// ── 5b. Teto por destinatário: o e-mail não sai, a reserva e a mensagem ficam ─
+{
+  resendMode = "ok";
+  mailEnv = { ...MAIL_ENV };
+  const D2 = day(16);
+  const quotaRows = () => raw.prepare(`SELECT recipient_hash FROM notification_email_quota ORDER BY rowid`).all() as Row[];
+  // Enche a janela da hora para o MESMO hash do primeiro envio (10 por hora).
+  const fillHour = () => {
+    const hash = quotaRows().at(-1)!.recipient_hash as string;
+    const recent = new Date(Date.now() - 60_000).toISOString();
+    const have = (raw.prepare(`SELECT COUNT(*) AS n FROM notification_email_quota WHERE recipient_hash = ?`).get(hash) as Row).n as number;
+    for (let i = have; i < EMAIL_RECIPIENT_MAX_PER_HOUR; i += 1) {
+      raw.prepare(`INSERT INTO notification_email_quota (recipient_hash, sent_at) VALUES (?, ?)`).run(hash, recent);
+    }
+  };
+
+  // Fluxo público: reserva, cancelamento e remarcação seguem funcionando, só o e-mail é contido.
+  const first = await pub({
+    action: "book", provider: "dra-alfa", clinic: "clinica-alfa", serviceId, startsAtLocal: `${D2}T09:00`,
+    guardianName: "Resp Teto", guardianEmail: "Bomba+1@Example.test", guardianPhone: "11999997777",
+    patientName: "Criança Teto", privacyAccepted: true,
+  });
+  assert.equal(first.status, 201);
+  fillHour();
+  const beforeSends = sent.length;
+  const blockedBook = await pub({
+    action: "book", provider: "dra-alfa", clinic: "clinica-alfa", serviceId, startsAtLocal: `${D2}T10:00`,
+    guardianName: "Resp Teto", guardianEmail: "bomba@example.test", guardianPhone: "11999997777",
+    patientName: "Criança Teto", privacyAccepted: true,
+  });
+  assert.equal(blockedBook.status, 201, "o teto de e-mail nunca derruba o agendamento");
+  assert.equal(sent.length, beforeSends, "variação do mesmo endereço (+etiqueta, caixa) divide o teto e não envia");
+  const blockedRow = outboxFor(appointmentAt(`${D2}T10:00`))[0];
+  assert.deepEqual(
+    { status: blockedRow.status, channel: blockedRow.channel, attempts: blockedRow.attempts, last_error: blockedRow.last_error },
+    { status: "pending_provider", channel: "manual", attempts: 0, last_error: "rate_limited" },
+    "a mensagem fica na caixa de saída para envio manual, sem gastar tentativa",
+  );
+  const cancelled = await pub({ action: "cancel", token: first.body.bookingToken });
+  assert.equal(cancelled.status, 200, "cancelar segue funcionando com o teto estourado");
+  assert.equal(sent.length, beforeSends, "e o e-mail de cancelamento também é contido");
+
+  // Equipe: o reenvio manual NÃO pode parecer sucesso quando o e-mail não saiu.
+  const retry = await sec({ action: "notification_retry_email", id: blockedRow.id });
+  assert.equal(retry.status, 429, JSON.stringify(retry.body));
+  assert.equal(retry.body.code, "EMAIL_RECIPIENT_LIMIT");
+  assert.equal(sent.length, beforeSends);
+  assert.equal(
+    raw.prepare(`SELECT COUNT(*) AS n FROM operations_audit_log WHERE action = 'notification_retry_email' AND target_id = ?`).get(blockedRow.id)?.n,
+    0,
+    "reenvio recusado não é auditado como enviado",
+  );
+  const listed = await sec();
+  assert.equal(listed.body.notifications.find((n: Row) => n.id === blockedRow.id).lastError, "rate_limited", "a equipe vê o motivo");
+
+  // Janela livre: o mesmo reenvio manual passa e entrega.
+  raw.exec(`DELETE FROM notification_email_quota`);
+  const resent = await sec({ action: "notification_retry_email", id: blockedRow.id });
+  assert.equal(resent.status, 200, JSON.stringify(resent.body));
+  assert.equal(sent.length, beforeSends + 1);
+  assert.equal((raw.prepare(`SELECT status FROM notification_outbox WHERE id = ?`).get(blockedRow.id) as Row).status, "delivered");
+}
+
 // ── 6. Isolamento: outra clínica não reenvia mensagem alheia ──────────────
 {
   raw.prepare(`INSERT INTO users (id,name,email,role,is_active,created_at,updated_at) VALUES ('prof-b','Profissional Beta','prof-b@example.test','professional',1,?,?)`).run(now(), now());
@@ -404,7 +468,7 @@ let sentApptId: string;
 // ── 7. Nenhum destinatário em log ─────────────────────────────────────────
 {
   const joined = logged.join("\n");
-  for (const secret of ["manual.familia@", "familia.email@", "publico@example", "falha.familia@", "recupera.familia@", "5511999990", "11999998888"]) {
+  for (const secret of ["manual.familia@", "familia.email@", "publico@example", "falha.familia@", "recupera.familia@", "bomba@", "Bomba+1@", "5511999990", "11999998888", "11999997777"]) {
     assert.ok(!joined.includes(secret), `log não pode conter destinatário (${secret})`);
   }
   assert.ok(joined.includes("[mail] delivery failed"), "a falha é logada só com status");

@@ -46,6 +46,16 @@ export interface TransactionalEmail {
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
 
 /**
+ * Teto de espera pelo provedor. Agendamento, remarcação e cancelamento públicos
+ * esperam o envio dentro da própria requisição (a reserva já foi gravada); sem
+ * limite, um provedor lento prendia a família numa tela de carregamento e
+ * ocupava a requisição até a plataforma encerrá-la. Estourar o tempo conta como
+ * falha de entrega (`false`), igual a qualquer outra, e a mensagem segue na
+ * caixa de saída para envio manual ou nova tentativa da equipe.
+ */
+export const MAIL_REQUEST_TIMEOUT_MS = 8_000;
+
+/**
  * Base pública HTTPS do app, normalizada. HTTPS é obrigatório: todo e-mail
  * transacional carrega um link com token de uso único, e um link em http seria
  * interceptável no caminho.
@@ -82,10 +92,19 @@ export function mailTransportConfigured(env: MailTransportEnv): boolean {
 export async function sendTransactionalEmail(
   env: MailTransportEnv,
   message: TransactionalEmail,
+  options: { timeoutMs?: number } = {},
 ): Promise<boolean> {
   if (!mailTransportConfigured(env)) return false;
   const apiKey = env.AUTH_RESEND_API_KEY!.trim();
   const from = env.AUTH_EMAIL_FROM!.trim();
+  const timeoutMs =
+    Number.isFinite(options.timeoutMs) && (options.timeoutMs as number) > 0
+      ? (options.timeoutMs as number)
+      : MAIL_REQUEST_TIMEOUT_MS;
+  // AbortController + timer (e não AbortSignal.timeout) para o mesmo
+  // comportamento em qualquer runtime e para limpar o timer ao terminar.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     const response = await fetch(RESEND_ENDPOINT, {
@@ -100,6 +119,7 @@ export async function sendTransactionalEmail(
         subject: message.subject,
         text: message.text,
       }),
+      signal: controller.signal,
     });
     if (!response.ok) {
       // Status é o único dado seguro de registrar: o corpo da resposta do
@@ -110,5 +130,7 @@ export async function sendTransactionalEmail(
   } catch (error) {
     console.error("[mail] delivery error", error instanceof Error ? error.name : "unknown");
     return false;
+  } finally {
+    clearTimeout(timer);
   }
 }
