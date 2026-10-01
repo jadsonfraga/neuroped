@@ -794,8 +794,22 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const id = cleanText(body.id, 80);
       const status = cleanText(body.status, 20);
       if (!id || !["waiting", "offered", "booked", "closed"].includes(status)) return errorResponse("Status da lista de espera inválido.", "VALIDATION_ERROR", 400);
-      const result = await env.DB.prepare(`UPDATE waitlist_entries SET status = ?, updated_at = ? WHERE id = ? AND provider_user_id = ? AND clinic_id = ?`).bind(status, now, id, user.id, clinicId).run();
-      if ((result.meta?.changes ?? 0) !== 1) return errorResponse("Entrada da lista de espera não encontrada.", "NOT_FOUND", 404);
+      // `booked` e `closed` são terminais. Sem a guarda de estado, aba
+      // desatualizada ou clique duplo reabria uma entrada já encerrada ou
+      // agendada (`closed` → `waiting`). De `waiting`/`offered` se vai a
+      // qualquer estado; repetir o estado atual de um deles é idempotente.
+      const result = await env.DB.prepare(
+        `UPDATE waitlist_entries SET status = ?, updated_at = ?
+          WHERE id = ? AND provider_user_id = ? AND clinic_id = ?
+            AND status IN ('waiting', 'offered')`,
+      ).bind(status, now, id, user.id, clinicId).run();
+      if ((result.meta?.changes ?? 0) !== 1) {
+        const existing = await env.DB.prepare(
+          `SELECT 1 AS found FROM waitlist_entries WHERE id = ? AND provider_user_id = ? AND clinic_id = ? LIMIT 1`,
+        ).bind(id, user.id, clinicId).first();
+        if (existing) return errorResponse("Esta entrada já foi concluída e não pode mudar de status.", "INVALID_TRANSITION", 409);
+        return errorResponse("Entrada da lista de espera não encontrada.", "NOT_FOUND", 404);
+      }
       auditTargetType = "waitlist";
       auditTargetId = id;
       auditMetadata = { status };
