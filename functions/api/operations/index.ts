@@ -852,6 +852,15 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       if (delivery === "not_eligible") {
         return errorResponse("Esta mensagem não pode ser reenviada agora (já enviada, fora do escopo de e-mail, limite de tentativas ou tentativa há menos de 1 minuto).", "NOT_ELIGIBLE", 409);
       }
+      if (delivery === "rate_limited") {
+        // Teto por destinatário (anti-abuso): o e-mail NÃO saiu. Sem isto, o
+        // resultado cairia no caminho de sucesso e a equipe acreditaria que enviou.
+        return errorResponse(
+          "Este endereço já recebeu muitos e-mails da NeuroPed na última hora ou no último dia. Use o envio manual ou tente mais tarde.",
+          "EMAIL_RECIPIENT_LIMIT",
+          429,
+        );
+      }
       if (delivery === "error") {
         return errorResponse("Não foi possível tentar o envio agora.", "EMAIL_DISPATCH_ERROR", 503);
       }
