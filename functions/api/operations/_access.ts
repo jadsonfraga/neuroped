@@ -18,9 +18,12 @@ export interface OperationsStaffLink {
 }
 
 const HARDENING_SCHEMA = [
+  // Espelho da forma final da migração 0032: SEM `UNIQUE` em staff_user_id (uma
+  // recepção pode ter mais de um profissional). Este CREATE só vale em banco
+  // novo; em produção a tabela já existe e a 0032 a reconstruiu.
   `CREATE TABLE IF NOT EXISTS booking_staff_links (
     provider_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    staff_user_id TEXT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    staff_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     active INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0,1)),
     created_by_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -29,6 +32,8 @@ const HARDENING_SCHEMA = [
   )`,
   `CREATE INDEX IF NOT EXISTS idx_booking_staff_provider_active
      ON booking_staff_links(provider_user_id, active, staff_user_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_booking_staff_staff_active
+     ON booking_staff_links(staff_user_id, active, provider_user_id)`,
   `CREATE TABLE IF NOT EXISTS operations_audit_log (
     id TEXT PRIMARY KEY,
     provider_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -168,23 +173,32 @@ export async function resolveOperationsPrincipal(
 
   if (user.role !== "operator") return null;
 
-  const row = await db
+  // `LIMIT 2` só para detectar ambiguidade. Operador com mais de um vínculo
+  // ativo não tem agenda "padrão": escolher uma por ordem de armazenamento
+  // abriria a agenda de um profissional por acaso. Fail-closed até existir
+  // seleção explícita do profissional (issue #1064).
+  const { results } = await db
     .prepare(
       `SELECT l.provider_user_id, p.name AS provider_name, p.role AS provider_role, p.is_active
          FROM booking_staff_links l
          JOIN users p ON p.id = l.provider_user_id
         WHERE l.staff_user_id = ? AND l.active = 1
-        LIMIT 1`,
+        ORDER BY l.provider_user_id
+        LIMIT 2`,
     )
     .bind(user.id)
-    .first<{
+    .all<{
       provider_user_id: string;
       provider_name: string;
       provider_role: string;
       is_active: number;
     }>();
 
-  if (!row || !row.is_active || !["admin", "professional"].includes(row.provider_role)) {
+  const rows = results ?? [];
+  if (rows.length !== 1) return null;
+  const row = rows[0];
+
+  if (!row.is_active || !["admin", "professional"].includes(row.provider_role)) {
     return null;
   }
 
