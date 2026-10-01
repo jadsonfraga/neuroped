@@ -47,8 +47,11 @@ import {
   storeProvider,
 } from "@/lib/agendaProvider";
 import {
+  appointmentStatusLabel as statusLabel,
   formatMoneyBRL,
   minutesToClock,
+  notificationTemplateLabel,
+  waitlistStatusLabel,
   type Appointment,
   type AppointmentStatus,
   type OperationsDashboard,
@@ -65,16 +68,6 @@ function localDateInput(): string {
   const offset = now.getTimezoneOffset() * 60000;
   return new Date(now.getTime() - offset).toISOString().slice(0, 10);
 }
-
-const statusLabel: Record<AppointmentStatus, string> = {
-  requested: "solicitada",
-  confirmed: "confirmada",
-  checked_in: "check-in",
-  in_care: "em atendimento",
-  completed: "concluída",
-  cancelled: "cancelada",
-  no_show: "faltou",
-};
 
 const nextStatuses: Partial<Record<AppointmentStatus, AppointmentStatus[]>> = {
   requested: ["confirmed", "cancelled", "no_show"],
@@ -600,7 +593,7 @@ export default function AgendaPage() {
         )}
 
         <TabsContent value="espera">
-          <Card><CardHeader><CardTitle className="text-base">Lista de espera</CardTitle></CardHeader><CardContent className="space-y-2">{data.waitlist.length === 0 ? <Empty text="Ninguém na lista de espera." /> : data.waitlist.map((item) => <div key={item.id} className="flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center"><div className="min-w-0 flex-1"><p className="font-semibold">{item.patientName || "Paciente"}</p><p className="text-xs text-muted-foreground">{item.serviceName} · {item.guardianName}{item.guardianPhone ? ` · ${item.guardianPhone}` : ""}</p></div><div className="flex gap-2"><Badge variant="outline">{item.status}</Badge>{item.status === "waiting" && <Button size="sm" onClick={() => mutate({ action: "waitlist_status", id: item.id, status: "offered" }, "Horário marcado como oferecido.")}>Oferecer</Button>}{item.status !== "closed" && <Button size="sm" variant="outline" onClick={() => mutate({ action: "waitlist_status", id: item.id, status: "closed" }, "Item encerrado.")}>Encerrar</Button>}</div></div>)}</CardContent></Card>
+          <Card><CardHeader><CardTitle className="text-base">Lista de espera</CardTitle></CardHeader><CardContent className="space-y-2">{data.waitlist.length === 0 ? <Empty text="Ninguém na lista de espera." /> : data.waitlist.map((item) => <div key={item.id} className="flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center"><div className="min-w-0 flex-1"><p className="font-semibold">{item.patientName || "Paciente"}</p><p className="text-xs text-muted-foreground">{item.serviceName} · {item.guardianName}{item.guardianPhone ? ` · ${item.guardianPhone}` : ""}</p></div><div className="flex gap-2"><Badge variant="outline">{waitlistStatusLabel[item.status] ?? item.status}</Badge>{item.status === "waiting" && <Button size="sm" onClick={() => mutate({ action: "waitlist_status", id: item.id, status: "offered" }, "Horário marcado como oferecido.")}>Oferecer</Button>}{item.status !== "closed" && <Button size="sm" variant="outline" onClick={() => mutate({ action: "waitlist_status", id: item.id, status: "closed" }, "Item encerrado.")}>Encerrar</Button>}</div></div>)}</CardContent></Card>
         </TabsContent>
 
         <TabsContent value="comunicacao">
@@ -632,7 +625,7 @@ export default function AgendaPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="outline">{notificationStatusLabel(item.status)}</Badge>
                       {item.channel === "email" && <Badge variant="secondary"><Mail className="mr-1 h-3 w-3" aria-hidden="true" />e-mail</Badge>}
-                      <span className="text-xs text-muted-foreground">{item.template}</span>
+                      <span className="text-xs text-muted-foreground">{notificationTemplateLabel(item.template)}</span>
                     </div>
                     <p className="mt-2 whitespace-pre-line text-sm">{item.message}</p>
                     <p className="mt-1 text-xs text-muted-foreground">Destino: {item.channel === "email" ? "e-mail do responsável" : item.recipient || "não informado"}</p>

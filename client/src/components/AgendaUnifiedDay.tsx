@@ -17,17 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { dashboardKeyFor, type ProviderChoice } from "@/lib/agendaProvider";
 import { buildUnifiedDay, selectUnifiedProviders } from "@/lib/agendaUnifiedDay";
-import type { AppointmentStatus, OperationsDashboard } from "@shared/operations";
-
-const statusLabel: Record<AppointmentStatus, string> = {
-  requested: "solicitada",
-  confirmed: "confirmada",
-  checked_in: "check-in",
-  in_care: "em atendimento",
-  completed: "concluída",
-  cancelled: "cancelada",
-  no_show: "faltou",
-};
+import { appointmentStatusLabel as statusLabel, type OperationsDashboard } from "@shared/operations";
 
 function dateLabel(value: string): string {
   const [year, month, day] = value.split("-");
