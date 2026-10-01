@@ -7,7 +7,7 @@ está na tabela abaixo.
 | Etapa | Escopo | Estado |
 | --- | --- | --- |
 | A | Migração 0032, bootstrap em runtime, workflow de migração, resolução do principal fail-closed com mais de um vínculo | PR A |
-| B | Seleção validada do profissional, middleware, vínculo com vários profissionais, revogação por vínculo, e-mail com contexto do profissional | pendente |
+| B | Seleção validada do profissional, middleware, vínculo com vários profissionais, revogação por vínculo, e-mail com contexto do profissional | PR B (empilhada sobre a A) |
 | C | Seletor na UI, rótulo "Agenda de X", `queryKey` com o profissional, texto de `/planos` | pendente |
 | D | Visão unificada do dia (opcional, PR separada) | pendente |
 
@@ -73,6 +73,11 @@ verificação da forma nova é do workflow da 0032 (mais estrita: exige que a
   máximo um vínculo por operador (o código ainda não cria o segundo), código novo
   e antigo se comportam igual.
 - A etapa B só deve ser publicada depois da A.
+- **B e C devem ir ao ar juntas.** Depois da B, um profissional pode vincular uma
+  recepção que já atende outro médico (antes era recusado). Uma recepção com dois
+  profissionais recebe `409 PROVIDER_SELECTION_REQUIRED` até escolher, e a UI atual
+  (anterior à C) não sabe escolher: ela ficaria sem agenda até a C. Publicar a B
+  sozinha só é seguro se ninguém vincular uma segunda vez no intervalo.
 - **Rollback da B** volta ao código da A, que é fail-closed com mais de um vínculo.
 - **Não reverta para antes da A** depois que existir operador com dois vínculos:
   o `LIMIT 1` antigo escolheria uma agenda arbitrária. Para voltar com segurança,
@@ -99,3 +104,45 @@ SELECT COUNT(*) FROM booking_staff_links l
 Resultado `0`: a etapa B pode exigir a membership a cada requisição. Maior que `0`:
 tratar esses vínculos (convite + aceite) antes, ou manter a exigência apenas para
 o caminho com seleção de profissional.
+
+## Etapa B — contrato da seleção de profissional
+
+Fonte única: `functions/api/operations/_context.ts` (`resolveOperationsContext`),
+usada pelo middleware (tenant e billing) e pelo handler. O Express chama o handler
+sem o middleware, então a validação não pode viver só no middleware.
+
+- **Transporte.** `?provider=<id do profissional>` na query, em GET e POST. O
+  corpo da requisição **nunca** define o profissional (o contexto não lê o corpo; há
+  asserção estática e teste). Só o papel `operator` seleciona; profissional e admin
+  operam sempre a própria agenda e o pedido é ignorado.
+- **Resolução** (`resolveOperationsAccess`): entre os vínculos **ativos** com
+  profissional **ativo** e papel `admin`/`professional`:
+  - pedido presente e válido → essa agenda;
+  - pedido ausente e exatamente um profissional possível → essa agenda (histórico,
+    inalterado);
+  - pedido ausente e mais de um → `409 PROVIDER_SELECTION_REQUIRED` com
+    `providers: [{ id, name }]` (nada além de id e nome);
+  - pedido que não está entre os vínculos ativos → `403 PROVIDER_NOT_AVAILABLE`.
+    Inexistente, sem vínculo, vínculo suspenso, profissional inativo e o próprio
+    operador como alvo respondem **exatamente igual** (anti-enumeração);
+  - nenhum vínculo → `403 STAFF_LINK_REQUIRED` (inalterado).
+- **Clínica.** É a do profissional escolhido (`resolveBillingClinicId`); `X-Tenant-Id`
+  continua sendo só um alvo, validado contra a membership **do profissional**.
+  Cada requisição opera exatamente um par (profissional, clínica), com billing e
+  encerramento (402/423) por esse par.
+- **Membership a cada requisição.** Com escolha explícita ou vários vínculos, a
+  membership `assistant` ativa da recepção na clínica da requisição é exigida e a
+  falta responde como "indisponível". Um vínculo **único** sem escolha mantém o
+  comportamento histórico (não exige a membership), para não barrar vínculos legados
+  anteriores ao AUTHZ-P1-06; ver o risco aberto abaixo. A UI (etapa C) só deve enviar
+  `provider` quando houver mais de um profissional.
+- **Dashboard.** `access.availableProviders` (só para a recepção) lista as escolhas.
+- **Vínculo.** `staff_link` passa a aceitar uma recepção já vinculada a outro
+  profissional: o vínculo é do par (profissional, recepção). A membership `assistant`
+  ativa continua repetida no predicado do `UPDATE` e do `INSERT`; o segundo vínculo
+  não revela nada sobre o primeiro. `STAFF_ALREADY_LINKED` deixou de existir. Os três
+  erros restantes (e-mail inexistente, papel inválido, sem membership aqui) seguem
+  indistinguíveis.
+- **Revogação.** `staff_active` só altera o vínculo do **próprio** profissional;
+  suspender um vínculo mantém os outros.
+- **Assentos.** Sem mudança: o teto conta memberships, não vínculos.

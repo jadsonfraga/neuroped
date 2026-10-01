@@ -144,7 +144,11 @@ const papelNaClinicaErrado = await staffLink("op-financeiro@example.test");
 for (const [nome, resp] of [
   ["e-mail inexistente", inexistente],
   ["conta sem papel operator", papelInvalido],
-  ["operator já vinculado a outro profissional", jaVinculado],
+  // Atenção: este operator é de OUTRA clínica e não tem membership na A; por isso
+  // cai em STAFF_NOT_CLINIC_MEMBER (a checagem de membership vem antes). "Já
+  // vinculado a outro profissional da mesma clínica" não é mais erro desde a 0032
+  // e tem o bloco próprio mais abaixo.
+  ["operator vinculado a outro profissional, sem membership nesta clínica", jaVinculado],
   ["operator sem membership nesta clínica", foraDaClinica],
   ["operator membro com papel diferente de assistant", papelNaClinicaErrado],
 ] as const) {
@@ -176,3 +180,44 @@ console.log("✓ POST /api/operations staff_link: e-mail inexistente, papel inv�
   assert.equal(link?.active, 1);
 }
 console.log("✓ caminho normal (operador disponível) não regrediu");
+
+// ── multi-profissional (0032, issue #1064) ────────────────────────────────
+// Recepção COM membership assistant ativa na clínica A e já vinculada a OUTRO
+// profissional da MESMA clínica: agora o vínculo com o pro-a é criado, sem
+// tocar no outro e sem revelar nada sobre ele.
+{
+  criarUsuario("pro-a2", "professional");
+  raw.prepare(`INSERT INTO clinic_memberships (clinic_id, user_id, role, active, created_at, updated_at) VALUES ('clinica-a', 'pro-a2', 'professional', 1, ?, ?)`).run(now, now);
+  criarUsuario("op-multi", "operator");
+  raw.prepare(`INSERT INTO clinic_memberships (clinic_id, user_id, role, active, created_at, updated_at) VALUES ('clinica-a', 'op-multi', 'assistant', 1, ?, ?)`).run(now, now);
+  raw.prepare(
+    `INSERT INTO booking_staff_links (provider_user_id, staff_user_id, active, created_by_user_id, created_at, updated_at)
+     VALUES ('pro-a2', 'op-multi', 1, 'pro-a2', ?, ?)`,
+  ).run(now, now);
+
+  const vinculos = () =>
+    (raw.prepare(`SELECT provider_user_id, active FROM booking_staff_links WHERE staff_user_id = 'op-multi' ORDER BY provider_user_id`).all() as Array<{ provider_user_id: string; active: number }>)
+      .map((row) => ({ ...row }));
+
+  const response = await staffLink("op-multi@example.test");
+  assert.equal(response.status, 200, "recepção de outro profissional da mesma clínica pode ser vinculada também");
+  assert.deepEqual(vinculos(), [
+    { provider_user_id: "pro-a", active: 1 },
+    { provider_user_id: "pro-a2", active: 1 },
+  ], "os dois vínculos existem; o do outro profissional ficou intacto");
+  const payload = JSON.stringify(await response.json());
+  assert.ok(!payload.includes("pro-a2"), "a resposta do pro-a não revela o vínculo com outro profissional");
+
+  const again = await staffLink("op-multi@example.test");
+  assert.equal(again.status, 200, "vincular de novo é idempotente");
+  assert.equal(vinculos().length, 2, "sem vínculo duplicado");
+
+  raw.prepare(`UPDATE booking_staff_links SET active = 0 WHERE provider_user_id = 'pro-a' AND staff_user_id = 'op-multi'`).run();
+  const reactivated = await staffLink("op-multi@example.test");
+  assert.equal(reactivated.status, 200);
+  assert.deepEqual(vinculos(), [
+    { provider_user_id: "pro-a", active: 1 },
+    { provider_user_id: "pro-a2", active: 1 },
+  ], "reativar o vínculo do pro-a não mexe no do pro-a2");
+}
+console.log("✓ recepção com membership vincula-se a mais de um profissional da clínica, de forma idempotente e sem vazar o outro vínculo");

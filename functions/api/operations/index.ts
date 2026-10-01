@@ -1,5 +1,4 @@
 import { getContextUser } from "../auth/_authorization";
-import { resolveBillingClinicId } from "../billing/_guard";
 import {
   appointmentToApi,
   assertLocalDateTime,
@@ -43,10 +42,11 @@ import {
   listOperationsAudit,
   listOperationsStaff,
   logOperationsAudit,
-  resolveOperationsPrincipal,
   setOperationsStaffActive,
   type OperationsPrincipal,
+  type OperationsProviderChoice,
 } from "./_access";
+import { resolveOperationsContext, type OperationsContextFailure } from "./_context";
 import {
   addMinutesLocal,
   isValidLocalDate,
@@ -108,6 +108,7 @@ async function getDashboard(
   provider: { id: string; name: string },
   principal: OperationsPrincipal,
   clinicId: string,
+  availableProviders: OperationsProviderChoice[] = [],
 ) {
   const profile = await ensureProviderProfile(db, provider);
   const nowMinute = localNow(profile.timezone);
@@ -303,7 +304,9 @@ async function getDashboard(
     notifications,
     emailDelivery: { active: emailDeliveryActive(env), maxAttempts: MAX_EMAIL_ATTEMPTS },
     metrics,
-    access: { ...principal, clinicId },
+    // `availableProviders`: só a recepção escolhe de qual profissional opera; o
+    // profissional não recebe a chave (payload inalterado).
+    access: { ...principal, clinicId, ...(principal.delegated ? { availableProviders } : {}) },
     staff: principal.canConfigure ? await listOperationsStaff(db, provider.id) : [],
     audit: await listOperationsAudit(db, provider.id, clinicId, 40),
   };
@@ -314,23 +317,41 @@ async function preparePrincipal(context: Parameters<PagesFunction<OperationsEnv>
   if (!user || !canOperate(user.role) || !context.env.DB) return null;
   await ensureOperationsSchema(context.env.DB);
   await ensureOperationsHardeningSchema(context.env.DB);
-  const principal = await resolveOperationsPrincipal(context.env.DB, user);
-  if (!principal) return null;
   // A recepção/operator é delegada ao profissional e não recebe membership
   // clínico só para operar a agenda. A fronteira tenant da agenda, portanto,
   // é a clínica do provider responsável — nunca uma elevação clínica da secretária.
-  const clinicId = await resolveBillingClinicId(
-    context.env.DB,
-    principal.providerUserId,
-    context.request,
-  );
-  if (!clinicId) return null;
+  // Com mais de um profissional, o escolhido (`?provider=`) é só um alvo
+  // solicitado, validado em `resolveOperationsContext` (mesma fonte do middleware).
+  const resolved = await resolveOperationsContext(context.env.DB, user, context.request);
+  if (!resolved.ok) return { ok: false as const, failure: resolved as OperationsContextFailure };
   return {
+    ok: true as const,
     authUser: user,
-    principal,
-    clinicId,
-    provider: { id: principal.providerUserId, name: principal.providerName },
+    principal: resolved.principal,
+    clinicId: resolved.clinicId,
+    availableProviders: resolved.availableProviders,
+    provider: { id: resolved.principal.providerUserId, name: resolved.principal.providerName },
   };
+}
+
+/** 409 com a lista, 403 indisponível; o resto mantém as respostas históricas. */
+function deniedResponse(
+  user: { role: string } | null | undefined,
+  failure?: OperationsContextFailure,
+): Response {
+  if (failure?.code === "PROVIDER_SELECTION_REQUIRED") {
+    return jsonResponse({ error: failure.error, code: failure.code, providers: failure.providers }, 409);
+  }
+  if (failure?.code === "PROVIDER_NOT_AVAILABLE") {
+    return errorResponse(failure.error, failure.code, 403);
+  }
+  return errorResponse(
+    user?.role === "operator"
+      ? "Recepção ainda não vinculada a um profissional."
+      : "Acesso não autorizado.",
+    user?.role === "operator" ? "STAFF_LINK_REQUIRED" : "FORBIDDEN",
+    403,
+  );
 }
 
 export const onRequestGet: PagesFunction<OperationsEnv> = async (context) => {
@@ -339,17 +360,12 @@ export const onRequestGet: PagesFunction<OperationsEnv> = async (context) => {
 
   try {
     const prepared = await preparePrincipal(context);
-    if (!prepared) {
-      const user = getContextUser(context);
-      return errorResponse(
-        user?.role === "operator"
-          ? "Recepção ainda não vinculada a um profissional."
-          : "Acesso não autorizado.",
-        user?.role === "operator" ? "STAFF_LINK_REQUIRED" : "FORBIDDEN",
-        403,
-      );
+    if (!prepared || !prepared.ok) {
+      return deniedResponse(getContextUser(context), prepared?.failure);
     }
-    return jsonResponse(await getDashboard(env.DB, env, prepared.provider, prepared.principal, prepared.clinicId));
+    return jsonResponse(
+      await getDashboard(env.DB, env, prepared.provider, prepared.principal, prepared.clinicId, prepared.availableProviders),
+    );
   } catch (error) {
     console.error("[operations.GET]", error);
     return errorResponse("Não foi possível carregar a gestão operacional.", "OPERATIONS_LOAD_FAILED", 500);
@@ -365,17 +381,10 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
 
   try {
     const prepared = await preparePrincipal(context);
-    if (!prepared) {
-      const user = getContextUser(context);
-      return errorResponse(
-        user?.role === "operator"
-          ? "Recepção ainda não vinculada a um profissional."
-          : "Acesso não autorizado.",
-        user?.role === "operator" ? "STAFF_LINK_REQUIRED" : "FORBIDDEN",
-        403,
-      );
+    if (!prepared || !prepared.ok) {
+      return deniedResponse(getContextUser(context), prepared?.failure);
     }
-    const { authUser, principal, provider, clinicId } = prepared;
+    const { authUser, principal, provider, clinicId, availableProviders } = prepared;
     const user = { ...authUser, id: provider.id, name: provider.name };
     const profile = await ensureProviderProfile(env.DB, provider);
     const now = new Date().toISOString();
@@ -420,9 +429,12 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
         // docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md): e-mail inexistente,
         // conta sem papel operator ativo e conta já vinculada a outro
         // profissional respondiam com código/status distintos — um oráculo
-        // de enumeração de contas alheias na plataforma. As três respondem
-        // agora exatamente igual — e conta sem membership `assistant` ativa
-        // nesta clínica (STAFF_NOT_CLINIC_MEMBER) também.
+        // de enumeração de contas alheias na plataforma. Responderam todas
+        // exatamente igual — e conta sem membership `assistant` ativa
+        // nesta clínica (STAFF_NOT_CLINIC_MEMBER) também. Desde a 0032 (issue
+        // #1064) uma recepção pode atender vários profissionais, então "já
+        // vinculada a outro" deixou de ser erro: o vínculo é criado sem revelar
+        // nada sobre os demais. Os três erros restantes seguem indistinguíveis.
         return errorResponse(
           "Este e-mail não corresponde a um usuário de recepção disponível para vínculo.",
           "STAFF_NOT_AVAILABLE",
@@ -863,7 +875,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       targetId: auditTargetId,
       metadata: auditMetadata,
     });
-    return jsonResponse(await getDashboard(env.DB, env, provider, principal, clinicId));
+    return jsonResponse(await getDashboard(env.DB, env, provider, principal, clinicId, availableProviders));
   } catch (error) {
     console.error(`[operations.POST:${action}]`, error);
     if (String(error).includes("SCHEDULE_CONFLICT")) {

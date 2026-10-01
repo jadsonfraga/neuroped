@@ -1,13 +1,13 @@
 import { getContextUser } from "../auth/_authorization";
 import { requireBillingEntitlement, resolveBillingClinicId } from "../billing/_guard";
-import { resolveOperationsPrincipal } from "./_access";
+import { resolveOperationsContext } from "./_context";
 
 interface Env {
   DB?: D1Database;
 }
 
-function jsonError(error: string, code: string, status: number): Response {
-  return new Response(JSON.stringify({ error, code }), {
+function jsonError(error: string, code: string, status: number, extra: Record<string, unknown> = {}): Response {
+  return new Response(JSON.stringify({ error, code, ...extra }), {
     status,
     headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
   });
@@ -21,21 +21,33 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // A recepção (papel global `operator`) não tem membership clínica: opera a
   // agenda por delegação persistida em `booking_staff_links`. A fronteira de
   // tenant e de billing é, portanto, a do PROFISSIONAL responsável — a mesma
-  // derivação que o handler usa em `preparePrincipal`. Resolver pelo ator
-  // bloqueava toda secretária com 409 (AUTHZ-P1-04). Sem vínculo ativo,
-  // fail-closed aqui mesmo, antes do handler.
+  // derivação que o handler usa (`resolveOperationsContext`, fonte única).
+  // Resolver pelo ator bloqueava toda secretária com 409 (AUTHZ-P1-04). Sem
+  // vínculo ativo, ou com mais de um profissional e nenhuma escolha, fail-closed
+  // aqui mesmo, antes do handler. O profissional escolhido (`?provider=`) é só um
+  // alvo solicitado e é validado contra o vínculo persistido.
   let tenantUserId = user.id;
+  let clinicId: string | null;
   if (user.role === "operator") {
-    const principal = await resolveOperationsPrincipal(context.env.DB, user);
-    if (!principal) {
-      return jsonError("Recepção ainda não vinculada a um profissional.", "STAFF_LINK_REQUIRED", 403);
+    const resolved = await resolveOperationsContext(context.env.DB, user, context.request);
+    if (!resolved.ok) {
+      if (resolved.code === "CLINIC_CONTEXT_REQUIRED") {
+        return jsonError(resolved.error, "BILLING_CLINIC_CONTEXT_REQUIRED", 409);
+      }
+      return jsonError(
+        resolved.error,
+        resolved.code,
+        resolved.status,
+        resolved.code === "PROVIDER_SELECTION_REQUIRED" ? { providers: resolved.providers } : {},
+      );
     }
-    tenantUserId = principal.providerUserId;
-  }
-
-  const clinicId = await resolveBillingClinicId(context.env.DB, tenantUserId, context.request);
-  if (!clinicId) {
-    return jsonError("Contexto de clínica obrigatório para agenda.", "BILLING_CLINIC_CONTEXT_REQUIRED", 409);
+    tenantUserId = resolved.principal.providerUserId;
+    clinicId = resolved.clinicId;
+  } else {
+    clinicId = await resolveBillingClinicId(context.env.DB, tenantUserId, context.request);
+    if (!clinicId) {
+      return jsonError("Contexto de clínica obrigatório para agenda.", "BILLING_CLINIC_CONTEXT_REQUIRED", 409);
+    }
   }
 
   const denial = await requireBillingEntitlement(context.env.DB, tenantUserId, clinicId, "clinical");
