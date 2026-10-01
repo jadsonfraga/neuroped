@@ -1,6 +1,6 @@
 /**
  * agendaProvider.ts — a recepção escolhe de qual profissional opera a agenda
- * (issue #1064, etapa C). Funções puras, testáveis sem navegador.
+ * (issue 1064, etapa C). Funções puras, testáveis sem navegador.
  *
  * O servidor é a autoridade: `?provider=<id>` é só um ALVO SOLICITADO e é validado
  * contra o vínculo ativo persistido (functions/api/operations/_context.ts). Nada
