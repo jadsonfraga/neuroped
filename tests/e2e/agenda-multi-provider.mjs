@@ -10,6 +10,12 @@
 // recusada pelo servidor; vínculo único (não manda provider); profissional (não vê a
 // barra); armazenamento que lança; acessibilidade (axe).
 //
+// Etapa D (visão unificada do dia): reúne as agendas no dia escolhido, ordenadas por
+// horário; só leitura (nenhum POST); cada profissional é buscado com o próprio
+// `provider`; falha de um não esconde os outros e a nova tentativa recupera; teto de
+// profissionais; "Abrir agenda de X" vai para a agenda do profissional; só aparece
+// para a recepção com mais de um profissional.
+//
 // Pré-requisito: VITE_AUTH_MODE=remote VITE_API_URL="" npm run build:client
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
@@ -29,7 +35,8 @@ const P3 = { id: "prof-3", name: "Profissional Três" };
 const STORAGE_KEY = `neuroped:agenda:provider:v1:${SEC.id}`;
 const TOMORROW = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
 
-let world = { actor: SEC, links: [P1, P2], blocked: new Set() };
+let world = { actor: SEC, links: [P1, P2], blocked: new Set(), failing: new Set() };
+const HOUR_OF = { "prof-1": "10", "prof-2": "09", "prof-3": "11" };
 let requests = [];
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".webp": "image/webp" };
 const send = (res, status, body) => { res.writeHead(status, { "Content-Type": "application/json", "Cache-Control": "no-store" }); res.end(JSON.stringify(body)); };
@@ -47,7 +54,7 @@ function dashboardFor(provider, actor) {
     rules: [], blocks: [], waitlist: [], reviews: [], notifications: [], staff: [], audit: [],
     appointments: [{
       id: `apt-${provider.id}`, providerUserId: provider.id, serviceId: `svc-${provider.id}`, patientId: null,
-      startsAtLocal: `${TOMORROW}T10:00`, endsAtLocal: `${TOMORROW}T11:00`, timezone: "America/Recife", status: "confirmed", source: "professional",
+      startsAtLocal: `${TOMORROW}T${HOUR_OF[provider.id] ?? "10"}:00`, endsAtLocal: `${TOMORROW}T${String(Number(HOUR_OF[provider.id] ?? "10") + 1).padStart(2, "0")}:00`, timezone: "America/Recife", status: "confirmed", source: "professional",
       guardianName: "Responsável Sintético", guardianEmail: null, guardianPhone: null, patientName: `Criança de ${provider.name}`,
       amountCents: null, paymentStatus: "pending", paymentMethod: null, checkedInAt: null, completedAt: null, cancelledAt: null, cancelReason: null,
       createdAt: "2026-09-01T00:00:00Z", updatedAt: "2026-09-01T00:00:00Z", serviceName: `Consulta ${provider.name}`, serviceModality: "in_person",
@@ -61,6 +68,9 @@ function operations(url, actor) {
   const requested = url.searchParams.get("provider");
   if (actor.role !== "operator") return { status: 200, body: dashboardFor(P1, actor) }; // profissional: o pedido é ignorado
   const links = world.links.filter((l) => !world.blocked.has(l.id));
+  if (requested && world.failing.has(requested)) {
+    return { status: 500, body: { error: "Não foi possível carregar a gestão operacional.", code: "OPERATIONS_LOAD_FAILED" } };
+  }
   if (requested) {
     const hit = links.find((l) => l.id === requested);
     return hit
@@ -105,7 +115,7 @@ const base = `http://127.0.0.1:${server.address().port}`;
 const browser = await chromium.launch(auditBrowserLaunchOptions());
 
 async function open(scenario, { storage = {}, breakStorage = false } = {}) {
-  world = { actor: SEC, links: [P1, P2], blocked: new Set(), ...scenario };
+  world = { actor: SEC, links: [P1, P2], blocked: new Set(), failing: new Set(), ...scenario };
   requests = [];
   const context = await browser.newContext({ viewport: { width: 1280, height: 1000 } });
   const page = await context.newPage();
@@ -253,7 +263,113 @@ try {
     await context.close();
   }
 
-  console.log("[agenda-multi-provider-e2e] ✓ escolhedor, troca sem misturar dados, ação e remarcação no profissional certo (query, nunca corpo), escolha lembrada por conta, escolha recusada, vínculo único, profissional, armazenamento bloqueado e axe");
+
+  // ── 6. Etapa D: visão unificada do dia ───────────────────────────────────
+  {
+    const { context, page, errors } = await open({}, { storage: { [STORAGE_KEY]: "prof-1" } });
+    await page.getByTestId("agenda-shell").waitFor();
+    await page.getByRole("tab", { name: "Dia de todos", exact: true }).click();
+    await page.getByTestId("agenda-unified-day").waitFor();
+
+    // O dia padrão é hoje: as consultas sintéticas são de amanhã.
+    await page.getByTestId("agenda-unified-empty").waitFor();
+    await page.locator("#agenda-unified-date").fill(TOMORROW);
+    await page.getByTestId("agenda-unified-row").first().waitFor();
+    const rows = page.getByTestId("agenda-unified-row");
+    assert.equal(await rows.count(), 2, "uma consulta de cada profissional no dia");
+    assert.deepEqual(
+      await rows.evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-provider-id"))),
+      ["prof-2", "prof-1"],
+      "ordenadas por horário: 09:00 do prof-2 antes das 10:00 do prof-1",
+    );
+    assert.match(await rows.nth(0).innerText(), /Criança de Profissional Dois/);
+    assert.match(await rows.nth(0).innerText(), /09:00–10:00/);
+    assert.match(await rows.nth(1).innerText(), /Criança de Profissional Um/);
+    assert.equal(await page.getByTestId("agenda-unified-error").count(), 0);
+
+    // Cada profissional é buscado com o PRÓPRIO provider; nenhum pedido sem ele; só leitura.
+    const asked = new Set(gets().map((r) => r.provider));
+    assert.deepEqual([...asked].sort(), ["prof-1", "prof-2"], "um pedido por profissional, sempre com provider");
+    assert.deepEqual(posts(), [], "a visão do dia é só leitura: nenhum POST");
+    await axeClean(page, '[data-testid="agenda-unified-day"]', "visão unificada do dia");
+
+    // Abrir a agenda de um profissional: troca de agenda e volta para a aba da agenda.
+    await page.getByRole("button", { name: "Abrir agenda de Profissional Dois", exact: true }).click();
+    await page.getByText("Novo agendamento manual").waitFor();
+    assert.match(await page.getByTestId("agenda-provider-label").innerText(), /Agenda de Profissional Dois/);
+    assert.equal(await page.getByTestId("agenda-provider-select").inputValue(), "prof-2");
+    assert.equal(await stored(page), "prof-2", "a escolha segue o fluxo normal e é lembrada");
+    assert.deepEqual(posts(), [], "abrir a agenda também não escreve nada");
+    assert.deepEqual(errors, [], "nenhum erro de página");
+    await context.close();
+  }
+
+  // ── 7. Falha de um profissional não esconde os outros; nova tentativa recupera ─
+  {
+    const { context, page, errors } = await open({ links: [P1, P2, P3], failing: new Set(["prof-3"]) }, { storage: { [STORAGE_KEY]: "prof-1" } });
+    await page.getByTestId("agenda-shell").waitFor();
+    await page.getByRole("tab", { name: "Dia de todos", exact: true }).click();
+    await page.locator("#agenda-unified-date").fill(TOMORROW);
+    await page.getByTestId("agenda-unified-error").waitFor();
+    assert.match(await page.getByTestId("agenda-unified-error").innerText(), /Profissional Três/);
+    assert.deepEqual(
+      await page.getByTestId("agenda-unified-row").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-provider-id"))),
+      ["prof-2", "prof-1"],
+      "as agendas que carregaram continuam na tela",
+    );
+    await axeClean(page, '[data-testid="agenda-unified-day"]', "visão unificada do dia com erro");
+
+    // Ainda falhando: continua o aviso, sem quebrar.
+    await page.getByRole("button", { name: "Tentar novamente", exact: true }).click();
+    await page.getByTestId("agenda-unified-error").waitFor();
+    // O servidor volta: a nova tentativa traz a terceira agenda.
+    world.failing = new Set();
+    await page.getByRole("button", { name: "Tentar novamente", exact: true }).click();
+    await page.waitForFunction(() => document.querySelectorAll('[data-testid="agenda-unified-row"]').length === 3);
+    assert.equal(await page.getByTestId("agenda-unified-error").count(), 0, "o aviso some quando todas carregam");
+    assert.deepEqual(
+      await page.getByTestId("agenda-unified-row").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-provider-id"))),
+      ["prof-2", "prof-1", "prof-3"],
+    );
+    assert.deepEqual(posts(), []);
+    assert.deepEqual(errors, [], "nenhum erro de página");
+    await context.close();
+  }
+
+  // ── 8. Teto de profissionais combinados ──────────────────────────────────
+  {
+    const many = Array.from({ length: 10 }, (_, index) => ({ id: `prof-${index + 1}`, name: `Profissional ${String(index + 1).padStart(2, "0")}` }));
+    const { context, page, errors } = await open({ links: many }, { storage: { [STORAGE_KEY]: "prof-1" } });
+    await page.getByTestId("agenda-shell").waitFor();
+    await page.getByRole("tab", { name: "Dia de todos", exact: true }).click();
+    await page.getByTestId("agenda-unified-hidden").waitFor();
+    assert.match(await page.getByTestId("agenda-unified-hidden").innerText(), /até 8 profissionais\. Há mais 2/);
+    assert.equal(await page.getByTestId("agenda-unified-providers").locator("li").count(), 8);
+    await page.locator("#agenda-unified-date").fill(TOMORROW);
+    await page.waitForFunction(() => document.querySelectorAll('[data-testid="agenda-unified-row"]').length === 8);
+    assert.deepEqual(
+      [...new Set(gets().map((r) => r.provider))].sort(),
+      many.slice(0, 8).map((p) => p.id).sort(),
+      "só os 8 primeiros são buscados; os demais não geram pedido",
+    );
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+
+  // ── 9. Só a recepção com mais de um profissional vê a visão do dia ───────
+  {
+    const single = await open({ links: [P1] }, { storage: { [STORAGE_KEY]: "prof-1" } });
+    await single.page.getByTestId("agenda-shell").waitFor();
+    assert.equal(await single.page.getByRole("tab", { name: "Dia de todos", exact: true }).count(), 0, "um só profissional: sem a aba");
+    await single.context.close();
+
+    const professional = await open({ actor: PROF1 });
+    await professional.page.getByTestId("agenda-shell").waitFor();
+    assert.equal(await professional.page.getByRole("tab", { name: "Dia de todos", exact: true }).count(), 0, "o profissional não vê a visão da recepção");
+    await professional.context.close();
+  }
+
+  console.log("[agenda-multi-provider-e2e] ✓ escolhedor, troca sem misturar dados, ação e remarcação no profissional certo (query, nunca corpo), escolha lembrada por conta, escolha recusada, vínculo único, profissional, armazenamento bloqueado, visão unificada do dia (ordem, só leitura, falha parcial com recuperação, teto, restrita à recepção com vários profissionais) e axe");
 } finally {
   await browser.close();
   server.close();

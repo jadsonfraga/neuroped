@@ -31,6 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { AgendaUnifiedDay } from "@/components/AgendaUnifiedDay";
 import { useClinic } from "@/contexts/ClinicContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -219,6 +220,8 @@ export default function AgendaPage() {
   const [busy, setBusy] = useState(false);
   const [staffEmail, setStaffEmail] = useState("");
   const [agendaDate, setAgendaDate] = useState(localDateInput);
+  // Aba controlada: "Abrir agenda de X", na visão do dia de todos, volta à aba da agenda.
+  const [tab, setTab] = useState("agenda");
 
   const [profile, setProfile] = useState({
     displayName: "",
@@ -338,6 +341,10 @@ export default function AgendaPage() {
   // Recepção: em qual agenda cada ação está sendo feita (e entre quais ela escolhe).
   const agendaOf = agendaOfSuffix(data.access.delegated, data.access.providerName);
   const providerChoices = data.access.availableProviders ?? [];
+  // A visão do dia de todos só existe para a recepção com mais de um profissional;
+  // se isso deixar de valer com a aba aberta, volta para a agenda.
+  const unifiedAvailable = data.access.delegated && providerChoices.length > 1;
+  const activeTab = tab === "dia" && !unifiedAvailable ? "agenda" : tab;
   // S13: o link compartilhado pela clínica já sai com `clinic=<slug da
   // clínica>`, então um profissional em mais de uma clínica nunca cai na
   // ambiguidade que faz o backend recusar o agendamento público (ver
@@ -417,9 +424,10 @@ export default function AgendaPage() {
         <Metric icon={ListPlus} label="Lista de espera" value={String(data.metrics.waitlist)} detail={`${data.metrics.noShow30d} faltas em 30 dias`} />
       </section>
 
-      <Tabs defaultValue="agenda" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setTab} className="space-y-4">
         <TabsList className="h-auto w-full justify-start overflow-x-auto rounded-2xl p-1">
           <TabsTrigger value="agenda">Agenda</TabsTrigger>
+          {unifiedAvailable && <TabsTrigger value="dia">Dia de todos</TabsTrigger>}
           <TabsTrigger value="espera">Espera</TabsTrigger>
           <TabsTrigger value="comunicacao">Comunicação</TabsTrigger>
           <TabsTrigger value="atividade">Atividade</TabsTrigger>
@@ -576,6 +584,20 @@ export default function AgendaPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {unifiedAvailable && (
+          <TabsContent value="dia" className="space-y-4">
+            <AgendaUnifiedDay
+              providers={providerChoices}
+              date={agendaDate}
+              onDateChange={setAgendaDate}
+              onOpenAgenda={(providerUserId) => {
+                chooseProvider(providerUserId);
+                setTab("agenda");
+              }}
+            />
+          </TabsContent>
+        )}
 
         <TabsContent value="espera">
           <Card><CardHeader><CardTitle className="text-base">Lista de espera</CardTitle></CardHeader><CardContent className="space-y-2">{data.waitlist.length === 0 ? <Empty text="Ninguém na lista de espera." /> : data.waitlist.map((item) => <div key={item.id} className="flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center"><div className="min-w-0 flex-1"><p className="font-semibold">{item.patientName || "Paciente"}</p><p className="text-xs text-muted-foreground">{item.serviceName} · {item.guardianName}{item.guardianPhone ? ` · ${item.guardianPhone}` : ""}</p></div><div className="flex gap-2"><Badge variant="outline">{item.status}</Badge>{item.status === "waiting" && <Button size="sm" onClick={() => mutate({ action: "waitlist_status", id: item.id, status: "offered" }, "Horário marcado como oferecido.")}>Oferecer</Button>}{item.status !== "closed" && <Button size="sm" variant="outline" onClick={() => mutate({ action: "waitlist_status", id: item.id, status: "closed" }, "Item encerrado.")}>Encerrar</Button>}</div></div>)}</CardContent></Card>

@@ -6,10 +6,10 @@ está na tabela abaixo.
 
 | Etapa | Escopo | Estado |
 | --- | --- | --- |
-| A | Migração 0032, bootstrap em runtime, workflow de migração, resolução do principal fail-closed com mais de um vínculo | PR A |
-| B | Seleção validada do profissional, middleware, vínculo com vários profissionais, revogação por vínculo, e-mail com contexto do profissional | PR B (empilhada sobre a A) |
-| C | Seletor na UI, rótulo "Agenda de X", `queryKey` com o profissional, texto de `/planos` | PR C (empilhada sobre a B) |
-| D | Visão unificada do dia (opcional, PR separada) | pendente |
+| A | Migração 0032, bootstrap em runtime, workflow de migração, resolução do principal fail-closed com mais de um vínculo | Na `main` (#1065), migração aplicada |
+| B | Seleção validada do profissional, middleware, vínculo com vários profissionais, revogação por vínculo, e-mail com contexto do profissional | Na `main`, junto com a C (#1067) |
+| C | Seletor na UI, rótulo "Agenda de X", `queryKey` com o profissional, texto de `/planos` | Na `main`, junto com a B (#1067) |
+| D | Visão unificada do dia (opcional, PR separada) | PR D (só front, sem endpoint novo) |
 
 ## Problema
 
@@ -196,3 +196,55 @@ etapa anterior roda só uma parte dos checks até o base virar `main`. Cada etap
 validada localmente (tipos, lint, `test:operations`, `test:quick-wins`) e o CI
 completo roda quando o base é retargetado para `main`, depois que a etapa anterior
 entra.
+
+## Etapa D — visão unificada do dia
+
+Aba "Dia de todos" da agenda, só para a recepção (`access.delegated`) com mais de um
+profissional (`availableProviders.length > 1`). Reúne, no dia escolhido, as consultas
+das agendas que a recepção atende, ordenadas por horário (empate: nome do
+profissional), cada uma com o nome do profissional e um botão "Abrir agenda de X".
+
+**Decisão de desenho: só front, sem endpoint novo.** Um endpoint que agregasse vários
+profissionais precisaria repetir, por profissional, o que o servidor já faz por
+requisição (vínculo, membership na clínica exata, billing 402/423) e driblar o
+`409 PROVIDER_SELECTION_REQUIRED` do middleware. Isso abriria uma superfície nova de
+tenant só para ler. Em vez disso, a visão combina no navegador os mesmos painéis que a
+etapa C já busca (`?provider=<id>`, uma chave de consulta por profissional): **cada
+pedido continua sendo exatamente um par (profissional, clínica)** validado no
+servidor, e o que a recepção vê é o que já podia ver trocando de agenda, com a mesma
+redação para a recepção (sem valor, pagamento ou avaliações). O custo é um painel
+completo por profissional ao abrir a aba (não há polling; o padrão do app nunca
+rebusca, então a aba rebusca ao montar, `staleTime: 0`).
+
+- **Só leitura.** Nenhuma ação sai daqui (sem `apiRequest`, `useMutation` nem `fetch`).
+  Para agir, "Abrir agenda de X" usa a escolha normal da etapa C (lembrada, nomeada na
+  barra e nas mensagens de ação) e volta à aba da agenda.
+- **Nunca o rótulo errado.** Uma consulta só é mostrada sob o nome do profissional que
+  é dono dela (`appointment.providerUserId`). Se o servidor devolver uma agenda cujo
+  dono (`access.providerUserId`) não é o profissional pedido, a fonte inteira vira
+  erro, em vez de ser exibida com o nome errado.
+- **Falha parcial.** Se um profissional não carrega (billing, clínica suspensa,
+  indisponível, rede), a tela diz de quem e mostra as outras; "Tentar novamente"
+  rebusca só as que falharam. O motivo não é detalhado para a recepção.
+- **Teto.** Combina até 8 profissionais (cada um custa um painel completo); acima
+  disso a tela avisa quantos ficaram de fora e orienta usar "Trocar profissional".
+- **Fusos.** Os horários são locais de cada profissional. Com fusos diferentes, a tela
+  avisa que não são comparáveis e rotula cada linha com o fuso.
+- **Cancelada e falta** ficam de fora, como na grade do dia da agenda.
+- **Se deixar de valer.** Com a aba aberta, se a recepção passar a ter um só
+  profissional, a tela volta para a aba da agenda.
+
+### Como foi provado
+
+- `tests/unit/agenda-unified-day.test.ts`: junção e ordem, dia e status, ids iguais em
+  agendas diferentes, consulta e agenda de dono errado descartadas, erro de um sem
+  esconder os outros, fusos, teto.
+- `tests/unit/agenda-multi-provider-static.test.mjs`: só leitura, sem endpoint novo,
+  mesma chave por profissional, teto, região rolável alcançável pelo teclado.
+- `tests/e2e/agenda-multi-provider.mjs` (cenários 6 a 9): ordem no navegador, um
+  pedido por profissional sempre com `provider`, nenhum POST, falha parcial com
+  recuperação, teto de 8, aba restrita à recepção com vários profissionais, axe.
+  Controles negativos: o e2e falha sem a ordenação por horário e com a aba aparecendo
+  para um só profissional.
+- Limites: a API do e2e é sintética (reproduz o contrato); a UI e o backend reais não
+  rodaram juntos; sem teste em celular nem leitor de tela real.
