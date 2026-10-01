@@ -96,8 +96,21 @@ assert.match(
 assert.doesNotMatch(context, /body/i, "o contexto da agenda não lê o corpo da requisição");
 assert.match(
   context,
-  /access\.strict && !\(await operatorHasActiveAssistantMembership\(db, user\.id, clinicId\)\)/,
-  "com escolha explícita ou vários vínculos a membership assistant ativa é exigida a cada requisição",
+  /access\.principal\.delegated && !\(await operatorHasActiveAssistantMembership\(db, user\.id, clinicId\)\)/,
+  "toda recepção precisa de membership assistant ativa na clínica da requisição, a cada requisição",
+);
+assert.doesNotMatch(access + context, /\bstrict\b/, "a exigência de membership não depende mais de um modo 'strict'");
+// O vínculo só vale com membership assistant ativa numa clínica em comum com o
+// profissional: sem isso a recepção não recebe nem a lista de nomes do 409.
+assert.match(
+  access,
+  /ms\.user_id = l\.staff_user_id AND ms\.role = 'assistant' AND ms\.active = 1\s+AND mp\.user_id = l\.provider_user_id AND mp\.active = 1/,
+  "o vínculo válido exige membership assistant ativa da recepção numa clínica em comum com o profissional",
+);
+assert.match(
+  access,
+  /ACTIVE_VALID_PROVIDER_LINK = `[^`]*\$\{OPERATOR_SHARES_CLINIC_WITH_PROVIDER\}/,
+  "a condição de clínica em comum faz parte do vínculo válido (lista, escolha e vínculo único)",
 );
 assert.match(professional, /reviews: principal\.canConfigure \? fullReviews : \[\]/, "recepção não deve receber reviews privados");
 

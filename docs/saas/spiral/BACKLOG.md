@@ -578,7 +578,9 @@ como `LEGAL_REVIEW_REQUIRED` em
 ## OPS-03 · agenda multiprofissional · EM ANDAMENTO (issue #1064)
 Uma recepção atender mais de um profissional (hoje `booking_staff_links.staff_user_id`
 é `UNIQUE`). Em PRs empilhadas: A (migração 0032, #1065), B (escolha validada no
-servidor, #1066) e C (UI). Desenho, ordem de publicação, rollback, o risco aberto da
-membership a cada requisição e o censo a rodar no D1 de produção estão em
-`docs/saas/MULTI_PROVIDER_AGENDA.md`. Continua aberto: a visão unificada do dia (D) e
-o endurecimento da membership para o vínculo único legado.
+servidor, #1066) e C (UI). Desenho, ordem de publicação, rollback, a membership a
+cada requisição e o censo a rodar no D1 de produção estão em
+`docs/saas/MULTI_PROVIDER_AGENDA.md`. A e B+C (#1067) estão na `main`. A membership
+`assistant` ativa passou a ser exigida de TODA recepção, a cada requisição, e o
+vínculo só vale com clínica em comum com o profissional (sem lista de nomes para quem
+a perdeu). Continua aberto: a visão unificada do dia (D).

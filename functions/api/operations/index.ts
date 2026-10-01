@@ -317,9 +317,10 @@ async function preparePrincipal(context: Parameters<PagesFunction<OperationsEnv>
   if (!user || !canOperate(user.role) || !context.env.DB) return null;
   await ensureOperationsSchema(context.env.DB);
   await ensureOperationsHardeningSchema(context.env.DB);
-  // A recepção/operator é delegada ao profissional e não recebe membership
-  // clínico só para operar a agenda. A fronteira tenant da agenda, portanto,
-  // é a clínica do provider responsável — nunca uma elevação clínica da secretária.
+  // A recepção/operator é delegada ao profissional e não ganha escopo clínico só
+  // para operar a agenda. A fronteira tenant da agenda, portanto, é a clínica do
+  // provider responsável — nunca uma elevação clínica da secretária. Ela precisa,
+  // porém, ser membro `assistant` ATIVO dessa clínica a cada requisição.
   // Com mais de um profissional, o escolhido (`?provider=`) é só um alvo
   // solicitado, validado em `resolveOperationsContext` (mesma fonte do middleware).
   const resolved = await resolveOperationsContext(context.env.DB, user, context.request);

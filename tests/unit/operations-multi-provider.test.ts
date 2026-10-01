@@ -313,7 +313,7 @@ for (const [id, name] of [["prof-1", "Consulta Um"], ["prof-2", "Consulta Dois"]
   raw.prepare(`UPDATE clinics SET status = 'active' WHERE id = 'clinic-y'`).run();
 }
 
-// ── 7. Membership assistant ativa a cada requisição (caminho com escolha) ──
+// ── 7. Membership assistant ativa a cada requisição, em TODOS os caminhos ──
 {
   // vários vínculos + membership desativada: nada abre, nem com escolha
   const chosen = await call("sec-revogada", "operator", { query: "?provider=prof-1" });
@@ -321,15 +321,56 @@ for (const [id, name] of [["prof-1", "Consulta Um"], ["prof-2", "Consulta Dois"]
   assert.equal(chosen.body.code, "PROVIDER_NOT_AVAILABLE");
   const chosenDirect = await call("sec-revogada", "operator", { query: "?provider=prof-2", direct: true });
   assert.equal(chosenDirect.status, 403, "o handler sozinho também exige a membership");
-  assert.equal((await call("sec-revogada", "operator")).body.code, "PROVIDER_SELECTION_REQUIRED", "sem escolha, segue pedindo a escolha");
 
-  // vínculo ÚNICO legado, sem membership e sem escolha: comportamento histórico
+  // Sem membership o vínculo não vale: nem a lista de nomes do 409 vaza.
+  const noChoice = await call("sec-revogada", "operator");
+  assert.equal(noChoice.status, 403);
+  assert.equal(noChoice.body.code, "STAFF_LINK_REQUIRED", "sem membership a recepção é tratada como não vinculada");
+  assert.ok(!JSON.stringify(noChoice.body).includes("Profissional"), "nenhum nome de profissional para quem perdeu a membership");
+  const noChoiceDirect = await call("sec-revogada", "operator", { direct: true });
+  assert.equal(noChoiceDirect.body.code, "STAFF_LINK_REQUIRED", "o handler sozinho também não lista");
+
+  // vínculo ÚNICO sem membership (o legado pré AUTHZ-P1-06): agora também exige.
   const legacy = await call("sec-legado", "operator");
-  assert.equal(legacy.status, 200, "um único vínculo e nenhuma escolha: comportamento inalterado");
-  assert.equal(legacy.body.access.providerUserId, "prof-1");
-  // ...mas escolher explicitamente passa a exigir a membership.
+  assert.equal(legacy.status, 403, "um único vínculo sem membership assistant ativa não abre a agenda");
+  assert.equal(legacy.body.code, "STAFF_LINK_REQUIRED");
+  assert.equal(legacy.handlerRan, false, "o gate barra antes do handler");
+  assert.equal((await call("sec-legado", "operator", { direct: true })).status, 403, "o handler sozinho também exige");
   const legacyChosen = await call("sec-legado", "operator", { query: "?provider=prof-1" });
   assert.equal(legacyChosen.status, 403, "escolha explícita exige membership assistant ativa");
+  assert.equal(legacyChosen.body.code, "PROVIDER_NOT_AVAILABLE");
+
+  // Dar a membership devolve o acesso; retirá-la o revoga na requisição seguinte
+  // (sem mexer no vínculo, que é o que a brecha antiga deixava aberta).
+  insertMembership("clinic-x", "sec-legado", "assistant");
+  const restored = await call("sec-legado", "operator");
+  assert.equal(restored.status, 200, "com membership assistant ativa o vínculo único abre a agenda");
+  assert.equal(restored.body.access.providerUserId, "prof-1");
+  raw.prepare(`UPDATE clinic_memberships SET active = 0 WHERE user_id = 'sec-legado' AND clinic_id = 'clinic-x'`).run();
+  assert.equal((await call("sec-legado", "operator")).status, 403, "membership removida revoga o acesso sem tocar no vínculo");
+  const linkStill = raw.prepare(`SELECT active FROM booking_staff_links WHERE provider_user_id = 'prof-1' AND staff_user_id = 'sec-legado'`).get() as { active: number };
+  assert.equal(linkStill.active, 1, "o vínculo continua ativo: o que revogou foi a membership");
+  raw.prepare(`UPDATE clinic_memberships SET active = 1 WHERE user_id = 'sec-legado' AND clinic_id = 'clinic-x'`).run();
+  assert.equal((await call("sec-legado", "operator")).status, 200, "reativar a membership devolve o acesso");
+
+  // Clínica em comum é por PROFISSIONAL: membership só na clínica Y não abre o
+  // prof-1 (clínica X), nem com um X-Tenant-Id que o prof-1 não tem.
+  insertUser("sec-so-y", "Secretária Só Y", "operator");
+  insertMembership("clinic-y", "sec-so-y", "assistant");
+  linkStaff("prof-1", "sec-so-y");
+  assert.equal((await call("sec-so-y", "operator")).body.code, "STAFF_LINK_REQUIRED", "sem clínica em comum com o profissional do vínculo");
+  assert.equal((await call("sec-so-y", "operator", { query: "?provider=prof-1" })).body.code, "PROVIDER_NOT_AVAILABLE");
+
+  // Clínica EXATA: membership em outra clínica do mesmo profissional não vale.
+  insertMembership("clinic-z", "prof-1", "professional"); // prof-1 passa a ter duas clínicas
+  const ambiguous = await call("sec-legado", "operator");
+  assert.equal(ambiguous.body.code, "BILLING_CLINIC_CONTEXT_REQUIRED", "profissional em duas clínicas exige o X-Tenant-Id");
+  const wrongClinic = await call("sec-legado", "operator", { tenantHeader: "clinic-z" });
+  assert.equal(wrongClinic.status, 403, "X-Tenant-Id de uma clínica onde o profissional é membro mas a recepção não");
+  assert.equal(wrongClinic.body.code, "PROVIDER_NOT_AVAILABLE");
+  assert.equal((await call("sec-legado", "operator", { tenantHeader: "clinic-x" })).status, 200, "na clínica onde a recepção é membro, passa");
+  raw.prepare(`DELETE FROM clinic_memberships WHERE clinic_id = 'clinic-z' AND user_id = 'prof-1'`).run();
+  raw.prepare(`UPDATE booking_staff_links SET active = 0 WHERE provider_user_id = 'prof-1' AND staff_user_id IN ('sec-legado', 'sec-so-y')`).run();
 }
 
 // ── 8. Operar o profissional escolhido: locks e dados isolados ─────────────

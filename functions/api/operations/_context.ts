@@ -15,8 +15,9 @@
  *   - Recepção com mais de um profissional e sem escolha: 409, nunca por acaso.
  *   - A clínica é a do PROFISSIONAL selecionado (`resolveBillingClinicId`); cada
  *     requisição opera exatamente um par (profissional, clínica).
- *   - Com escolha explícita ou vários vínculos, a membership `assistant` ativa da
- *     recepção na clínica da requisição é exigida a cada requisição.
+ *   - Toda recepção precisa, a cada requisição, de membership `assistant` ativa:
+ *     numa clínica em comum com o profissional (condição do próprio vínculo, em
+ *     `_access.ts`) e na clínica EXATA da requisição (aqui).
  */
 import type { PublicUser } from "../auth/_shared";
 import { resolveBillingClinicId } from "../billing/_guard";
@@ -88,7 +89,9 @@ export async function resolveOperationsContext(
     return { ok: false, code: "CLINIC_CONTEXT_REQUIRED", status: 409, error: "Contexto de clínica obrigatório para agenda." };
   }
 
-  if (access.strict && !(await operatorHasActiveAssistantMembership(db, user.id, clinicId))) {
+  // Toda recepção, a cada requisição, na clínica EXATA (a do profissional). O
+  // vínculo já exige uma clínica em comum; aqui se fecha o `X-Tenant-Id` forjado.
+  if (access.principal.delegated && !(await operatorHasActiveAssistantMembership(db, user.id, clinicId))) {
     // Mesma resposta de "profissional indisponível": não distingue o motivo.
     return { ok: false, code: "PROVIDER_NOT_AVAILABLE", status: 403, error: "Profissional indisponível para esta recepção." };
   }
