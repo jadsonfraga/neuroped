@@ -14,6 +14,13 @@
  *     reenvio automático em laço: um novo envio só acontece por ação explícita
  *     da equipe (`notification_retry_email`).
  *   - O destinatário nunca vai para log. `last_error` guarda só um código.
+ *   - Teto por destinatário (`EMAIL_RECIPIENT_MAX_PER_HOUR` / `_PER_DAY`): o
+ *     endereço do responsável é digitado num formulário público, então sem
+ *     teto qualquer pessoa poderia usar a clínica para encher a caixa de
+ *     terceiros (agendar, cancelar e remarcar em laço). Estourado o teto, o
+ *     e-mail NÃO sai, a reserva e a mensagem seguem normais na caixa de saída
+ *     (envio manual) com `last_error = 'rate_limited'`. O teto é gravado como
+ *     hash HMAC do endereço normalizado: nenhum e-mail em claro é persistido.
  */
 import {
   mailTransportConfigured,
@@ -23,6 +30,11 @@ import {
 } from "../auth/_mailTransport";
 
 export const MAX_EMAIL_ATTEMPTS = 3;
+/** Folgado para uma família legítima (vários filhos, remarcações) e curto para disparo em massa. */
+export const EMAIL_RECIPIENT_MAX_PER_HOUR = 10;
+export const EMAIL_RECIPIENT_MAX_PER_DAY = 30;
+const QUOTA_HOUR_MS = 60 * 60 * 1000;
+const QUOTA_DAY_MS = 24 * QUOTA_HOUR_MS;
 /** Janela mínima entre tentativas: evita envio duplo por cliques/abas concorrentes. */
 const RETRY_COOLDOWN_MS = 60_000;
 export const PATIENT_TIMEZONE = "America/Sao_Paulo";
@@ -53,6 +65,105 @@ export function emailDeliveryActive(env: MailTransportEnv): boolean {
 
 export function looksLikeEmail(value: string | null | undefined): value is string {
   return typeof value === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
+// ── Teto por destinatário ─────────────────────────────────────────────────
+
+/** Ambiente do envio: o transporte e a chave que dá o hash do destinatário. */
+export type DeliveryEnv = MailTransportEnv & { OPERATIONAL_DATA_KEY?: string };
+
+/**
+ * Forma canônica só para CONTAR: caixa baixa, sem `+etiqueta` e, no Gmail, sem
+ * pontos. Variações do mesmo endereço (`a+1@x`, `A@x`, `a.b@gmail.com`) caem na
+ * mesma caixa de entrada e precisam dividir o mesmo teto. Não é usada para enviar.
+ */
+export function normalizeRecipientForQuota(email: string): string {
+  const value = email.trim().toLowerCase();
+  const at = value.lastIndexOf("@");
+  if (at < 1) return value;
+  let local = value.slice(0, at);
+  let domain = value.slice(at + 1);
+  const plus = local.indexOf("+");
+  if (plus > 0) local = local.slice(0, plus);
+  if (domain === "googlemail.com") domain = "gmail.com";
+  if (domain === "gmail.com") local = local.replace(/\./g, "");
+  return `${local}@${domain}`;
+}
+
+async function recipientQuotaHash(env: DeliveryEnv, email: string): Promise<string | null> {
+  const secret = env.OPERATIONAL_DATA_KEY?.trim();
+  if (!secret) return null;
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(`neuroped-email-recipient-quota-v1:${normalizeRecipientForQuota(email)}`),
+  );
+  return Array.from(new Uint8Array(signature), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function ensureRecipientQuotaSchema(db: D1Database): Promise<void> {
+  await db.batch([
+    db.prepare(
+      `CREATE TABLE IF NOT EXISTS notification_email_quota (
+        recipient_hash TEXT NOT NULL,
+        sent_at TEXT NOT NULL
+      )`,
+    ),
+    db.prepare(
+      `CREATE INDEX IF NOT EXISTS idx_notification_email_quota_recipient
+         ON notification_email_quota(recipient_hash, sent_at)`,
+    ),
+    db.prepare(
+      `CREATE INDEX IF NOT EXISTS idx_notification_email_quota_sent
+         ON notification_email_quota(sent_at)`,
+    ),
+  ]);
+}
+
+type RecipientQuota = "ok" | "limited" | "error";
+
+/**
+ * Reserva UM envio para o destinatário, de forma atômica: o INSERT só acontece se
+ * as duas janelas (hora e dia) ainda têm folga, então pedidos concorrentes não
+ * furam o teto. Conta tentativas de envio, não entregas: o provedor pode ter
+ * entregado mesmo quando respondeu com erro.
+ */
+async function claimRecipientQuota(db: D1Database, env: DeliveryEnv, email: string, now: Date): Promise<RecipientQuota> {
+  try {
+    const hash = await recipientQuotaHash(env, email);
+    if (!hash) return "error";
+    await ensureRecipientQuotaSchema(db);
+    const at = now.toISOString();
+    const hourEdge = new Date(now.getTime() - QUOTA_HOUR_MS).toISOString();
+    const dayEdge = new Date(now.getTime() - QUOTA_DAY_MS).toISOString();
+    const claim = await db
+      .prepare(
+        `INSERT INTO notification_email_quota (recipient_hash, sent_at)
+         SELECT ?, ?
+          WHERE (SELECT COUNT(*) FROM notification_email_quota WHERE recipient_hash = ? AND sent_at > ?) < ?
+            AND (SELECT COUNT(*) FROM notification_email_quota WHERE recipient_hash = ? AND sent_at > ?) < ?`,
+      )
+      .bind(
+        hash, at,
+        hash, hourEdge, EMAIL_RECIPIENT_MAX_PER_HOUR,
+        hash, dayEdge, EMAIL_RECIPIENT_MAX_PER_DAY,
+      )
+      .run();
+    if ((claim.meta?.changes ?? 0) !== 1) return "limited";
+    // Retenção: nada além da janela de um dia fica guardado.
+    await db.prepare(`DELETE FROM notification_email_quota WHERE sent_at < ?`).bind(dayEdge).run();
+    return "ok";
+  } catch (error) {
+    console.error("[operations.notification-email.quota]", error instanceof Error ? error.name : "unknown");
+    return "error";
+  }
 }
 
 // ── Data e hora para a família ────────────────────────────────────────────
@@ -226,6 +337,7 @@ export type EmailDispatchResult =
   | "not_configured"
   | "not_eligible"
   | "no_email"
+  | "rate_limited"
   | "error";
 
 interface OutboxDeliveryRow {
@@ -233,6 +345,7 @@ interface OutboxDeliveryRow {
   template: string;
   attempts: number | null;
   last_attempt_at: string | null;
+  last_error: string | null;
 }
 
 /**
@@ -241,13 +354,13 @@ interface OutboxDeliveryRow {
  */
 export async function dispatchNotificationEmail(
   db: D1Database,
-  env: MailTransportEnv,
+  env: DeliveryEnv,
   input: { id: string; email: string | null | undefined; message: string; context: NotificationContext },
 ): Promise<EmailDispatchResult> {
   if (!mailTransportConfigured(env)) return "not_configured";
   try {
     const row = await db
-      .prepare(`SELECT status, template, attempts, last_attempt_at FROM notification_outbox WHERE id = ? LIMIT 1`)
+      .prepare(`SELECT status, template, attempts, last_attempt_at, last_error FROM notification_outbox WHERE id = ? LIMIT 1`)
       .bind(input.id)
       .first<OutboxDeliveryRow>();
     if (!row || row.status !== "pending_provider" || !EMAIL_NOTIFICATION_TEMPLATES.has(row.template)) {
@@ -270,6 +383,29 @@ export async function dispatchNotificationEmail(
       .bind(attempts + 1, now.toISOString(), now.toISOString(), input.id, attempts, cooldownEdge)
       .run();
     if ((claim.meta?.changes ?? 0) !== 1) return "not_eligible";
+
+    // Teto por destinatário. Se não há folga, devolve a tentativa reservada acima
+    // (o e-mail não saiu, então não conta contra MAX_EMAIL_ATTEMPTS nem ativa o
+    // intervalo de 1 minuto) e deixa a mensagem na caixa de saída para envio manual.
+    const quota = await claimRecipientQuota(db, env, input.email, now);
+    if (quota !== "ok") {
+      await db
+        .prepare(
+          `UPDATE notification_outbox
+              SET attempts = ?, last_attempt_at = ?, last_error = ?, updated_at = ?
+            WHERE id = ? AND status = 'pending_provider' AND COALESCE(attempts, 0) = ?`,
+        )
+        .bind(
+          attempts,
+          row.last_attempt_at,
+          quota === "limited" ? "rate_limited" : row.last_error,
+          new Date().toISOString(),
+          input.id,
+          attempts + 1,
+        )
+        .run();
+      return quota === "limited" ? "rate_limited" : "error";
+    }
 
     const delivered = await sendTransactionalEmail(env, {
       to: input.email.trim(),
