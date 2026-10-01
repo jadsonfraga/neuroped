@@ -165,8 +165,13 @@ jobs:
             --command "SELECT sql FROM sqlite_master WHERE type='table' AND name='booking_staff_links';" \
             > /tmp/staff-schema.txt 2>&1
           cat /tmp/staff-schema.txt
-          grep -Eq "staff_user_id[[:space:]]+TEXT[[:space:]]+NOT NULL[[:space:]]+UNIQUE" /tmp/staff-schema.txt || {
-            echo "::error::Operador sem vínculo único de profissional"
+          # A 0008 criou staff_user_id UNIQUE; a 0032 (staff-links-multi-d1.yml, issue
+          # #1064) removeu essa UNIQUE para uma recepção atender mais de um
+          # profissional. Este workflow reaplica a 0008 a cada push da agenda, então
+          # aceita as duas formas: o que NUNCA pode faltar é o par (profissional,
+          # recepção) único. A forma nova é verificada pelo workflow da 0032.
+          grep -Eq "PRIMARY KEY[[:space:]]*\([[:space:]]*provider_user_id[[:space:]]*,[[:space:]]*staff_user_id[[:space:]]*\)" /tmp/staff-schema.txt || {
+            echo "::error::Vínculo de equipe sem chave única (provider_user_id, staff_user_id)"
             exit 1
           }
           grep -q "created_by_user_id" /tmp/staff-schema.txt || {

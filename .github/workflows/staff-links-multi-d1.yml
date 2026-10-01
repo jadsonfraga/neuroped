@@ -1,0 +1,202 @@
+name: Staff links multi-provider D1
+
+# OPS-03 / issue #1064, PR A. Aplica a 0032: `booking_staff_links` deixa de ter
+# UNIQUE em staff_user_id, para que uma recepção possa atender mais de um
+# profissional. O arquivo SQL só relaxa o schema; quem passa a aceitar dois
+# vínculos é um PR posterior. Migração e deploy são etapas separadas: este
+# workflow não publica nada.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "db/migrations/0032_booking_staff_links_multi_provider.sql"
+      - "functions/api/operations/_access.ts"
+      - "tests/unit/staff-links-multi-provider-migration.test.ts"
+      - ".github/workflows/staff-links-multi-d1.yml"
+  push:
+    branches: [main]
+    paths:
+      - "db/migrations/0032_booking_staff_links_multi_provider.sql"
+      - "functions/api/operations/_access.ts"
+      - "tests/unit/staff-links-multi-provider-migration.test.ts"
+      - ".github/workflows/staff-links-multi-d1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  # Inclui a ref: execução de pull_request (só valida) não pode ocupar o
+  # único slot pendente e cancelar a migração pendente do main.
+  group: d1-staff-links-multi-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate-staff-links:
+    name: Validate staff links multi-provider
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+      - name: Migração 0032 — vínculos preservados, reexecução, interrupção e fail-closed
+        run: node --import tsx tests/unit/staff-links-multi-provider-migration.test.ts
+      - name: Contrato estático operacional
+        run: node tests/unit/operations-integration-static.test.mjs
+      - name: Bootstrap do schema com todas as migrações
+        run: node tests/unit/schema-bootstrap-contract.test.mjs
+      - name: TypeScript
+        run: npm run check
+
+  migrate-staff-links:
+    name: Apply staff links multi-provider to D1
+    needs: validate-staff-links
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 55 # inclui até 45 min de espera na fila D1
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      - name: Validate Cloudflare credentials
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          [ -n "$CF_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
+          [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
+      # Fila das escritas D1 sem pending slot: ver scripts/ci/wait-d1-writers.mjs.
+      # A fila também impede que a reaplicação da 0008 (operations-d1-migration)
+      # intercale com esta reconstrução de tabela.
+      - name: Aguardar fila de escritas D1 (migration)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          MODE: migration
+        run: node scripts/ci/wait-d1-writers.mjs
+
+      - name: Preflight — classificar o estado de booking_staff_links (somente leitura)
+        id: preflight
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          d1() { npx wrangler@4 d1 execute neuroped-db --remote --json --command "$1"; }
+          leia() { jq -r "[.. | objects | select(has(\"$2\")) | .\"$2\"] | first // empty" "$1"; }
+          numero() { [[ "$2" =~ ^[0-9]+$ ]] || { echo "::error::Preflight ilegível ($1): resposta do D1 mudou de formato; intervenção manual."; exit 1; }; }
+
+          d1 "SELECT
+                (SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='booking_staff_links') AS principal_existe,
+                (SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='booking_staff_links_legacy_0032') AS legado_existe;" \
+            > /tmp/staff-links-estado.json
+          cat /tmp/staff-links-estado.json
+          PRINCIPAL=$(leia /tmp/staff-links-estado.json principal_existe)
+          LEGADO=$(leia /tmp/staff-links-estado.json legado_existe)
+          numero principal_existe "$PRINCIPAL"
+          numero legado_existe "$LEGADO"
+
+          if [ "$LEGADO" != "0" ]; then
+            echo "::error::booking_staff_links_legacy_0032 existe: a 0032 foi interrompida. Nada foi alterado. Intervenção manual: confirmar o conteúdo da tabela legada e concluir os passos 3 a 6 do cabeçalho da migração."
+            exit 1
+          fi
+          if [ "$PRINCIPAL" != "1" ]; then
+            echo "::error::booking_staff_links ausente: aplique a 0008 (operations-d1-migration) antes da 0032."
+            exit 1
+          fi
+
+          d1 "SELECT
+                (SELECT sql FROM sqlite_master WHERE type='table' AND name='booking_staff_links') AS ddl,
+                (SELECT COUNT(*) FROM booking_staff_links) AS vinculos,
+                (SELECT COUNT(*) FROM booking_staff_links l
+                  WHERE NOT EXISTS (SELECT 1 FROM users u WHERE u.id = l.provider_user_id)
+                     OR NOT EXISTS (SELECT 1 FROM users u WHERE u.id = l.staff_user_id)
+                     OR NOT EXISTS (SELECT 1 FROM users u WHERE u.id = l.created_by_user_id)) AS orfaos;" \
+            > /tmp/staff-links-forma.json
+          cat /tmp/staff-links-forma.json
+          DDL=$(leia /tmp/staff-links-forma.json ddl)
+          VINCULOS=$(leia /tmp/staff-links-forma.json vinculos)
+          ORFAOS=$(leia /tmp/staff-links-forma.json orfaos)
+          numero vinculos "$VINCULOS"
+          numero orfaos "$ORFAOS"
+          [ -n "$DDL" ] || { echo "::error::DDL de booking_staff_links ilegível."; exit 1; }
+
+          if printf '%s' "$DDL" | grep -Eq 'staff_user_id[[:space:]]+TEXT[[:space:]]+NOT NULL[[:space:]]+UNIQUE'; then
+            if [ "$ORFAOS" != "0" ]; then
+              echo "::error::$ORFAOS vínculo(s) apontam para usuário inexistente. A cópia com chave estrangeira falharia no meio. Nada foi alterado; limpe os órfãos de forma auditada e rode de novo."
+              exit 1
+            fi
+            echo "aplicada=false" >> "$GITHUB_OUTPUT"
+            echo "vinculos=$VINCULOS" >> "$GITHUB_OUTPUT"
+            echo "0032 pendente: $VINCULOS vínculo(s) a preservar."
+          else
+            echo "aplicada=true" >> "$GITHUB_OUTPUT"
+            echo "0032 já aplicada."
+          fi
+      - name: Apply migration 0032
+        if: steps.preflight.outputs.aplicada == 'false'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0032_booking_staff_links_multi_provider.sql
+      - name: Verify table shape without reading clinic data
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          VINCULOS_ANTES: ${{ steps.preflight.outputs.vinculos }}
+          APLICADA_ANTES: ${{ steps.preflight.outputs.aplicada }}
+        run: |
+          set -euo pipefail
+          d1() { npx wrangler@4 d1 execute neuroped-db --remote --json --command "$1"; }
+          leia() { jq -r "[.. | objects | select(has(\"$2\")) | .\"$2\"] | first // empty" "$1"; }
+          numero() { [[ "$2" =~ ^[0-9]+$ ]] || { echo "::error::Verificação ilegível ($1)."; exit 1; }; }
+
+          d1 "SELECT
+                (SELECT sql FROM sqlite_master WHERE type='table' AND name='booking_staff_links') AS ddl,
+                (SELECT COUNT(*) FROM booking_staff_links) AS vinculos,
+                (SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='booking_staff_links_legacy_0032') AS legado_existe,
+                (SELECT COUNT(*) FROM sqlite_master WHERE type='index' AND name='idx_booking_staff_provider_active' AND tbl_name='booking_staff_links') AS idx_profissional,
+                (SELECT COUNT(*) FROM sqlite_master WHERE type='index' AND name='idx_booking_staff_staff_active' AND tbl_name='booking_staff_links') AS idx_recepcao;" \
+            > /tmp/staff-links-verify.json
+          cat /tmp/staff-links-verify.json
+          DDL=$(leia /tmp/staff-links-verify.json ddl)
+          VINCULOS=$(leia /tmp/staff-links-verify.json vinculos)
+          LEGADO=$(leia /tmp/staff-links-verify.json legado_existe)
+          IDX_PROF=$(leia /tmp/staff-links-verify.json idx_profissional)
+          IDX_REC=$(leia /tmp/staff-links-verify.json idx_recepcao)
+          for par in "vinculos:$VINCULOS" "legado_existe:$LEGADO" "idx_profissional:$IDX_PROF" "idx_recepcao:$IDX_REC"; do numero "${par%%:*}" "${par#*:}"; done
+
+          if printf '%s' "$DDL" | grep -Eq 'staff_user_id[[:space:]]+TEXT[[:space:]]+NOT NULL[[:space:]]+UNIQUE'; then
+            echo "::error::staff_user_id ainda é UNIQUE após a 0032 (outra instância pode ter recriado a tabela no formato antigo). Intervenção manual."
+            exit 1
+          fi
+          printf '%s' "$DDL" | grep -Eq 'PRIMARY KEY[[:space:]]*\([[:space:]]*provider_user_id[[:space:]]*,[[:space:]]*staff_user_id[[:space:]]*\)' \
+            || { echo "::error::booking_staff_links sem a chave primária (provider_user_id, staff_user_id)."; exit 1; }
+          printf '%s' "$DDL" | grep -q 'created_by_user_id' \
+            || { echo "::error::Vínculo de equipe sem autoria."; exit 1; }
+          [ "$LEGADO" = "0" ] || { echo "::error::Tabela legada ainda existe após a 0032."; exit 1; }
+          [ "$IDX_PROF" = "1" ] || { echo "::error::idx_booking_staff_provider_active ausente."; exit 1; }
+          [ "$IDX_REC" = "1" ] || { echo "::error::idx_booking_staff_staff_active ausente."; exit 1; }
+          if [ "$APLICADA_ANTES" = "false" ]; then
+            [ "$VINCULOS" -ge "$VINCULOS_ANTES" ] \
+              || { echo "::error::Vínculos após a 0032 ($VINCULOS) menores que antes ($VINCULOS_ANTES): possível perda. Intervenção manual."; exit 1; }
+          fi
+          echo "0032 verificada: booking_staff_links sem UNIQUE em staff_user_id, PK composta, índices e $VINCULOS vínculo(s)."

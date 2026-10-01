@@ -86,7 +86,15 @@ assert.match(
 assert.match(professional, /reviews: principal\.canConfigure \? fullReviews : \[\]/, "recepção não deve receber reviews privados");
 
 assert.match(access, /booking_staff_links/);
-assert.match(access, /staff_user_id TEXT NOT NULL UNIQUE/);
+// OPS-03 (migração 0032, issue #1064): a UNIQUE isolada de staff_user_id saiu —
+// uma recepção pode ter mais de um profissional. Contrato novo, mais forte que o
+// anterior: a chave composta continua impedindo vínculo duplicado, o operador
+// ganha índice próprio e a ambiguidade (mais de um vínculo ativo) é fail-closed.
+assert.doesNotMatch(access, /staff_user_id TEXT NOT NULL UNIQUE/, "bootstrap em runtime deve espelhar a tabela da 0032 (sem UNIQUE em staff_user_id)");
+assert.match(access, /PRIMARY KEY \(provider_user_id, staff_user_id\)/, "o par (profissional, recepção) segue único");
+assert.match(access, /idx_booking_staff_staff_active/, "consulta por operador precisa de índice próprio sem a UNIQUE");
+assert.match(access, /LIMIT 2/, "resolução do operador detecta ambiguidade");
+assert.match(access, /rows\.length !== 1\) return null/, "operador com mais de um vínculo ativo não recebe agenda escolhida por acaso");
 assert.match(access, /user\.role !== "operator"/);
 assert.match(
   access,
@@ -126,7 +134,14 @@ for (const table of [
   assert.match(migration, new RegExp(`CREATE TABLE IF NOT EXISTS ${table}`));
 }
 assert.match(hardeningMigration, /CREATE TABLE IF NOT EXISTS booking_staff_links/);
+// A 0008 é histórica (já aplicada): não se edita, e ainda carrega a UNIQUE. A 0032
+// é a migração forward-only que a remove.
 assert.match(hardeningMigration, /staff_user_id TEXT NOT NULL UNIQUE/);
+assert.match(
+  read("db/migrations/0032_booking_staff_links_multi_provider.sql"),
+  /ALTER TABLE booking_staff_links RENAME TO booking_staff_links_legacy_0032;[\s\S]*DROP TABLE booking_staff_links_legacy_0032;/,
+  "0032 reconstrói a tabela preservando os vínculos",
+);
 assert.match(hardeningMigration, /CREATE TABLE IF NOT EXISTS operations_audit_log/);
 assert.match(hardeningMigration, /idx_operations_audit_provider_time/);
 assert.match(hardeningMigration, /idx_operations_audit_actor_time/);
