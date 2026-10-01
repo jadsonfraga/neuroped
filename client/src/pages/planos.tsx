@@ -77,7 +77,7 @@ const INCLUDED = [
     icon: Users,
     title: "Equipe com papéis e assentos",
     body:
-      "Convide profissionais por e-mail, defina o papel de cada um, revogue o convite ou remova o acesso. A recepção pode operar a agenda do profissional ao qual está vinculada. O teto de assentos da assinatura é aplicado no servidor, não na tela.",
+      "Convide profissionais por e-mail, defina o papel de cada um, revogue o convite ou remova o acesso. A mesma recepção pode atender mais de um profissional da clínica, escolhendo de qual agenda opera, e cada ação fica na agenda escolhida. O teto de assentos da assinatura é aplicado no servidor, não na tela.",
   },
   {
     icon: Mail,

@@ -574,3 +574,11 @@ art. 16, que autoriza reter dado por cumprimento de obrigação legal mesmo
 contra pedido de eliminação), não uma correção puramente técnica. Registrado
 como `LEGAL_REVIEW_REQUIRED` em
 `docs/audits/LEGAL_REVIEW_REQUIRED_CLINICAL_RETENTION_FLOOR_2026-09-27.md`.
+
+## OPS-03 · agenda multiprofissional · EM ANDAMENTO (issue #1064)
+Uma recepção atender mais de um profissional (hoje `booking_staff_links.staff_user_id`
+é `UNIQUE`). Em PRs empilhadas: A (migração 0032, #1065), B (escolha validada no
+servidor, #1066) e C (UI). Desenho, ordem de publicação, rollback, o risco aberto da
+membership a cada requisição e o censo a rodar no D1 de produção estão em
+`docs/saas/MULTI_PROVIDER_AGENDA.md`. Continua aberto: a visão unificada do dia (D) e
+o endurecimento da membership para o vínculo único legado.

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -32,7 +32,19 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useClinic } from "@/contexts/ClinicContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiQueryKeyMatches } from "@/lib/apiQueryKey";
+import {
+  OPERATIONS_ENDPOINT,
+  agendaOfSuffix,
+  dashboardKeyFor,
+  isProviderUnavailable,
+  operationsUrlFor,
+  parseSelectionRequired,
+  readStoredProvider,
+  storeProvider,
+} from "@/lib/agendaProvider";
 import {
   formatMoneyBRL,
   minutesToClock,
@@ -41,7 +53,6 @@ import {
   type OperationsDashboard,
 } from "@shared/operations";
 
-const DASHBOARD_KEY = "/api/operations?resource=dashboard";
 const weekdays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const scheduleRows = Array.from({ length: 14 }, (_, index) => {
   const total = 7 * 60 + index * 60;
@@ -148,8 +159,47 @@ function auditActionLabel(value: string): string {
 export default function AgendaPage() {
   const { toast } = useToast();
   const { activeClinic } = useClinic();
-  const dashboard = useQuery<OperationsDashboard>({ queryKey: [DASHBOARD_KEY] });
+  const { user: actor } = useAuth();
+  // Só a recepção com mais de um profissional escolhe de qual agenda opera. O
+  // servidor valida o alvo contra o vínculo ativo persistido; aqui é conveniência.
+  // A escolha lembrada é por conta e a chave da consulta inclui o profissional,
+  // então o cache de uma agenda nunca aparece em outra.
+  const [providerId, setProviderId] = useState<string | null>(() => readStoredProvider(actor?.id));
+  const dashboardKey = dashboardKeyFor(providerId);
+  const dashboard = useQuery<OperationsDashboard>({ queryKey: [dashboardKey] });
   const data = dashboard.data;
+  function chooseProvider(next: string | null) {
+    setProviderId(next);
+    storeProvider(actor?.id, next);
+  }
+  const restoredFor = useRef<string | null>(null);
+  useEffect(() => {
+    // A conta só fica conhecida depois do primeiro render em alguns caminhos:
+    // quando aparecer, recupera a escolha que ela mesma fez. Uma vez por conta,
+    // para nunca competir com o esquecimento da escolha recusada pelo servidor.
+    if (!actor?.id || restoredFor.current === actor.id) return;
+    restoredFor.current = actor.id;
+    if (providerId !== null) return;
+    const remembered = readStoredProvider(actor.id);
+    if (remembered) setProviderId(remembered);
+  }, [actor?.id, providerId]);
+  useEffect(() => {
+    // Quem não é recepção com vários profissionais não manda `provider` (a
+    // escolha lembrada de outra época, ou de outra conta, é esquecida).
+    if (!data || !providerId) return;
+    if (!data.access.delegated || (data.access.availableProviders?.length ?? 0) <= 1) {
+      setProviderId(null);
+      storeProvider(actor?.id, null);
+    }
+  }, [data, providerId, actor?.id]);
+  useEffect(() => {
+    // A escolha lembrada que o servidor recusou (vínculo suspenso etc.) volta a
+    // pedir a escolha, em vez de prender a recepção num erro.
+    if (providerId && isProviderUnavailable(dashboard.error)) {
+      setProviderId(null);
+      storeProvider(actor?.id, null);
+    }
+  }, [dashboard.error, providerId, actor?.id]);
   const [patientSearch, setPatientSearch] = useState("");
   const clinicId = data?.access.clinicId ?? "";
   const patientSearchParam = encodeURIComponent(patientSearch.trim());
@@ -194,11 +244,20 @@ export default function AgendaPage() {
   const [dayBlock, setDayBlock] = useState({ date: "", reason: "Feriado" });
   const [rescheduling, setRescheduling] = useState<{ id: string; startsAtLocal: string } | null>(null);
   const [manual, setManual] = useState({ serviceId: "", startsAtLocal: "", patientId: "", guardianName: "", patientName: "", phone: "", email: "" });
+  const activeProviderId = data?.access.providerUserId ?? null;
+  useEffect(() => {
+    // Trocar de profissional descarta o que estava sendo digitado: serviço,
+    // horário e paciente pertencem à agenda anterior e seriam recusados (ou, pior,
+    // aplicados à agenda errada).
+    setManual({ serviceId: "", startsAtLocal: "", patientId: "", guardianName: "", patientName: "", phone: "", email: "" });
+    setRescheduling(null);
+    setPatientSearch("");
+  }, [activeProviderId]);
 
   async function mutate(payload: Record<string, unknown>, success: string): Promise<boolean> {
     setBusy(true);
     try {
-      await apiRequest("POST", "/api/operations", payload);
+      await apiRequest("POST", operationsUrlFor(providerId), payload);
     } catch (error) {
       toast({ title: "Não foi possível concluir.", description: String(error), variant: "destructive" });
       setBusy(false);
@@ -206,7 +265,8 @@ export default function AgendaPage() {
     }
 
     try {
-      await queryClient.invalidateQueries({ queryKey: [DASHBOARD_KEY] });
+      // Todas as agendas em cache (cada profissional tem a sua chave).
+      await queryClient.invalidateQueries({ predicate: (query) => apiQueryKeyMatches(query.queryKey, OPERATIONS_ENDPOINT) });
       const refreshed = await dashboard.refetch();
       if (refreshed.isError) throw refreshed.error ?? new Error("Falha ao atualizar a agenda.");
       toast({ title: success });
@@ -245,6 +305,12 @@ export default function AgendaPage() {
   if (dashboard.isLoading) {
     return <div className="rounded-3xl border p-8 text-sm text-muted-foreground" role="status">Carregando Agenda NeuroPed…</div>;
   }
+  // Recepção com mais de um profissional e nenhuma escolha: o servidor devolveu a
+  // lista (409). A tela pede a escolha em vez de mostrar um erro.
+  const selectionRequired = parseSelectionRequired(dashboard.error);
+  if (selectionRequired) {
+    return <ProviderChooser providers={selectionRequired} onChoose={chooseProvider} />;
+  }
   if (dashboard.isError || !data) {
     const detail = dashboard.error instanceof Error ? dashboard.error.message : "";
     return (
@@ -269,6 +335,9 @@ export default function AgendaPage() {
   const maxEmailAttempts = data.emailDelivery?.maxAttempts ?? 3;
 
   const canConfigure = data.access.canConfigure;
+  // Recepção: em qual agenda cada ação está sendo feita (e entre quais ela escolhe).
+  const agendaOf = agendaOfSuffix(data.access.delegated, data.access.providerName);
+  const providerChoices = data.access.availableProviders ?? [];
   // S13: o link compartilhado pela clínica já sai com `clinic=<slug da
   // clínica>`, então um profissional em mais de uma clínica nunca cai na
   // ambiguidade que faz o backend recusar o agendamento público (ver
@@ -297,6 +366,32 @@ export default function AgendaPage() {
           </div>
         </div>
       </header>
+
+      {data.access.delegated && (
+        <section
+          aria-label="Agenda em operação"
+          data-testid="agenda-provider-bar"
+          className="flex flex-col gap-3 rounded-2xl border border-primary/30 bg-primary/[0.08] p-3 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <p className="text-sm" data-testid="agenda-provider-label">
+            Agenda de <strong className="text-foreground">{data.access.providerName}</strong>
+          </p>
+          {providerChoices.length > 1 && (
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              Trocar profissional
+              <select
+                data-testid="agenda-provider-select"
+                className="min-h-11 rounded-xl border bg-background px-3 text-sm text-foreground"
+                value={data.access.providerUserId}
+                disabled={busy}
+                onChange={(event) => chooseProvider(event.target.value)}
+              >
+                {providerChoices.map((choice) => <option key={choice.id} value={choice.id}>{choice.name}</option>)}
+              </select>
+            </label>
+          )}
+        </section>
+      )}
 
       {data.access.delegated && (
         <div className="flex gap-2 rounded-2xl border border-primary/20 bg-primary/[0.06] p-3 text-xs text-muted-foreground">
@@ -451,11 +546,11 @@ export default function AgendaPage() {
                       )}
 
                       {(apt.status === "requested" || apt.status === "confirmed") && rescheduling?.id !== apt.id && (
-                        <Button size="sm" variant="outline" disabled={busy} className="gap-1.5" onClick={() => setRescheduling({ id: apt.id, startsAtLocal: apt.startsAtLocal })}>
+                        <Button size="sm" variant="outline" disabled={busy} className="gap-1.5" title={agendaOf ? `Remarcar${agendaOf}` : undefined} onClick={() => setRescheduling({ id: apt.id, startsAtLocal: apt.startsAtLocal })}>
                           <CalendarRange className="h-3.5 w-3.5" />Remarcar
                         </Button>
                       )}
-                      {(nextStatuses[apt.status] ?? []).map((status) => <Button key={status} size="sm" variant={status === "cancelled" || status === "no_show" ? "outline" : "default"} disabled={busy} onClick={() => mutate({ action: "appointment_status", id: apt.id, status }, `Consulta: ${statusLabel[status]}.`)}>{statusLabel[status]}</Button>)}
+                      {(nextStatuses[apt.status] ?? []).map((status) => <Button key={status} size="sm" variant={status === "cancelled" || status === "no_show" ? "outline" : "default"} disabled={busy} title={agendaOf ? `${statusLabel[status]}${agendaOf}` : undefined} onClick={() => mutate({ action: "appointment_status", id: apt.id, status }, `Consulta: ${statusLabel[status]}${agendaOf}.`)}>{statusLabel[status]}</Button>)}
                     </div>
                   </div>
                   {rescheduling?.id === apt.id && (
@@ -464,11 +559,12 @@ export default function AgendaPage() {
                         <Field label="Nova data e horário">
                           <Input type="datetime-local" value={rescheduling.startsAtLocal} onChange={(e) => setRescheduling({ id: apt.id, startsAtLocal: e.target.value })} />
                         </Field>
+                        {agendaOf && <p className="mt-1 text-[11px] font-semibold text-foreground" data-testid="reschedule-agenda-of">Remarcando na agenda de {data.access.providerName}.</p>}
                         <p className="mt-1 text-[11px] text-muted-foreground">A duração do serviço é mantida. Conflitos com outra consulta ou bloqueio são recusados, e uma mensagem de remarcação entra na caixa de saída.</p>
                       </div>
                       <div className="flex gap-2">
                         <Button size="sm" disabled={busy || !rescheduling.startsAtLocal || rescheduling.startsAtLocal === apt.startsAtLocal} onClick={async () => {
-                          const saved = await mutate({ action: "appointment_reschedule", id: apt.id, startsAtLocal: rescheduling.startsAtLocal }, "Consulta remarcada.");
+                          const saved = await mutate({ action: "appointment_reschedule", id: apt.id, startsAtLocal: rescheduling.startsAtLocal }, `Consulta remarcada${agendaOf}.`);
                           if (saved) setRescheduling(null);
                         }}>Confirmar remarcação</Button>
                         <Button size="sm" variant="ghost" disabled={busy} onClick={() => setRescheduling(null)}>Cancelar</Button>
@@ -671,6 +767,36 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 
 function Empty({ text }: { text: string }) {
   return <div className="rounded-2xl border border-dashed p-6 text-center text-sm text-muted-foreground">{text}</div>;
+}
+
+/** Recepção com mais de um profissional: pede de qual agenda ela vai operar. */
+function ProviderChooser({ providers, onChoose }: { providers: Array<{ id: string; name: string }>; onChoose: (providerId: string) => void }) {
+  return (
+    <section
+      className="space-y-4 rounded-3xl border border-primary/20 bg-primary/[0.04] p-6"
+      data-testid="agenda-provider-chooser"
+      aria-labelledby="agenda-provider-chooser-title"
+    >
+      <h1 id="agenda-provider-chooser-title" className="text-xl font-bold">Qual agenda você vai operar?</h1>
+      <p className="text-sm text-muted-foreground">
+        Sua conta de recepção atende mais de um profissional. Escolha a agenda; você pode trocar a qualquer momento e nada é misturado entre elas.
+      </p>
+      <ul className="grid gap-3 sm:grid-cols-2">
+        {providers.map((provider) => (
+          <li key={provider.id}>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-auto min-h-11 w-full justify-start whitespace-normal py-3 text-left"
+              onClick={() => onChoose(provider.id)}
+            >
+              Agenda de {provider.name}
+            </Button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
 }
 
 function PaymentRow({ appointment, busy, mutate }: { appointment: Appointment; busy: boolean; mutate: (payload: Record<string, unknown>, success: string) => Promise<boolean> }) {
