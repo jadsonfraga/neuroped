@@ -3,7 +3,8 @@
  * decisão da agenda interna (billing/_guard.requireBillingEntitlement).
  * Avaliação e assinatura ativa: pedido criado. Avaliação vencida, cobrança
  * suspensa: mensagem amigável e nenhum pedido criado
- * (nem consulta, nem lista de espera).
+ * (nem consulta, nem lista de espera, nem remarcação). Consultar e cancelar a
+ * própria reserva seguem liberados mesmo com a clínica bloqueada.
  *
  * Rodar: node --import tsx tests/unit/public-booking-billing-gate.test.ts
  */
@@ -113,8 +114,12 @@ const waitlist = () => pub({
   guardianName: "Resp Sintético", guardianEmail: "resp@example.test", guardianPhone: "11999998888",
   patientName: "Criança Sintética", privacyAccepted: true,
 });
+let bookingToken = "";
+const reschedule = (hour: string) => pub({ action: "reschedule", token: bookingToken, startsAtLocal: `${D}T${hour}` });
+const appointmentState = () => ({ ...(raw.prepare(`SELECT starts_at_local, ends_at_local, status FROM appointments WHERE booking_token_hash IS NOT NULL ORDER BY created_at, id LIMIT 1`).get() as Row) });
 async function assertBlocked(label: string) {
   const before = { appointments: count("appointments"), waitlist: count("waitlist_entries"), outbox: count("notification_outbox") };
+  const appointmentBefore = appointmentState();
   const booked = await book("15:00");
   assert.equal(booked.status, 409, `${label}: ${JSON.stringify(booked.body)}`);
   assert.equal(booked.body.code, "CLINIC_BOOKING_UNAVAILABLE");
@@ -122,6 +127,12 @@ async function assertBlocked(label: string) {
   const queued = await waitlist();
   assert.equal(queued.status, 409, `${label} (espera): ${JSON.stringify(queued.body)}`);
   assert.equal(queued.body.code, "CLINIC_BOOKING_UNAVAILABLE");
+  // Remarcar ocupa um horário novo e reabre a consulta: mesma decisão do agendamento.
+  const moved = await reschedule("12:00");
+  assert.equal(moved.status, 409, `${label} (remarcação): ${JSON.stringify(moved.body)}`);
+  assert.equal(moved.body.code, "CLINIC_BOOKING_UNAVAILABLE");
+  assert.match(moved.body.error, /remarcação online.*temporariamente indisponível.*contato diretamente com a clínica/);
+  assert.deepEqual(appointmentState(), appointmentBefore, `${label}: a consulta não foi remarcada`);
   assert.deepEqual(
     { appointments: count("appointments"), waitlist: count("waitlist_entries"), outbox: count("notification_outbox") },
     before,
@@ -132,7 +143,10 @@ async function assertBlocked(label: string) {
 // 1. Avaliação (criada pelo onboarding da clínica): inalterado.
 const customer = raw.prepare(`SELECT id, status FROM billing_customers WHERE clinic_id = 'clinic-alfa'`).get() as Row;
 assert.equal(customer?.status, "trial", "clínica nasce em avaliação");
-assert.equal((await book("09:00")).status, 201, "avaliação agenda normalmente");
+const first = await book("09:00");
+assert.equal(first.status, 201, "avaliação agenda normalmente");
+bookingToken = first.body.bookingToken;
+assert.ok(bookingToken, "a reserva devolve o código");
 assert.equal((await waitlist()).status, 201, "avaliação entra na lista de espera normalmente");
 
 // 2. Avaliação vencida sem assinatura: bloqueado.
@@ -144,11 +158,25 @@ await assertBlocked("avaliação vencida");
 raw.prepare(`UPDATE billing_customers SET status = 'active' WHERE id = ?`).run(customer.id);
 raw.prepare(`UPDATE billing_subscriptions SET status = 'active' WHERE customer_id = ?`).run(customer.id);
 assert.equal((await book("10:00")).status, 201, "assinatura ativa agenda normalmente");
+{
+  const moved = await reschedule("11:00");
+  assert.equal(moved.status, 200, `assinatura ativa remarca normalmente: ${JSON.stringify(moved.body)}`);
+  assert.equal(appointmentState().starts_at_local, `${D}T11:00`);
+}
 
 // 4. Cobrança suspensa: bloqueado.
 raw.prepare(`UPDATE billing_customers SET status = 'suspended' WHERE id = ?`).run(customer.id);
 raw.prepare(`UPDATE billing_subscriptions SET status = 'past_due' WHERE customer_id = ?`).run(customer.id);
 await assertBlocked("cobrança suspensa");
+{
+  // Consultar e cancelar a própria reserva nunca dependem da cobrança da clínica.
+  const managed = await pub({ action: "manage", token: bookingToken });
+  assert.equal(managed.status, 200, "consultar a reserva segue liberado");
+  assert.equal(managed.body.appointment.startsAtLocal, `${D}T11:00`);
+  const cancelled = await pub({ action: "cancel", token: bookingToken });
+  assert.equal(cancelled.status, 200, `cancelar segue liberado: ${JSON.stringify(cancelled.body)}`);
+  assert.equal(appointmentState().status, "cancelled");
+}
 
 // 5. Clínica encerrada já era recusada antes (resolução da clínica pública):
 //    continua 409 e sem pedido criado.
@@ -161,4 +189,4 @@ raw.prepare(`UPDATE clinics SET status = 'closed' WHERE id = 'clinic-alfa'`).run
   assert.equal(count("appointments"), before);
 }
 
-console.log("public-booking-billing-gate: avaliação e ativa agendam; vencida e suspensa bloqueiam com mensagem amigável; encerrada segue recusada sem criar pedido OK");
+console.log("public-booking-billing-gate: avaliação e ativa agendam e remarcam; vencida e suspensa bloqueiam agendar, espera e remarcação com mensagem amigável (consultar e cancelar seguem liberados); encerrada segue recusada sem criar pedido OK");

@@ -37,12 +37,25 @@ import { readJsonBody as readBody, nowInProviderTimezone as nowInTimezone } from
  * assinatura válida, suspensa ou encerrada não recebe pedido público.
  * Avaliação e assinatura ativa (inclusive em atraso ainda não suspenso)
  * seguem iguais.
+ *
+ * Vale para quem PEDE horário na clínica: marcar (`book`), entrar na lista de
+ * espera (`waitlist`) e remarcar (`reschedule`, que ocupa um horário novo e
+ * reabre a consulta como solicitada). Consultar (`manage`) e cancelar
+ * (`cancel`) ficam liberados: a família nunca perde o direito de desfazer a
+ * própria reserva por a clínica estar sem assinatura.
  */
-async function clinicBookingUnavailable(db: D1Database, providerUserId: string, clinicId: string): Promise<Response | null> {
+async function clinicBookingUnavailable(
+  db: D1Database,
+  providerUserId: string,
+  clinicId: string,
+  intent: "book" | "reschedule" = "book",
+): Promise<Response | null> {
   const denial = await requireBillingEntitlement(db, providerUserId, clinicId, "clinical");
   if (!denial) return null;
   return errorResponse(
-    "O agendamento online desta clínica está temporariamente indisponível. Entre em contato diretamente com a clínica para marcar sua consulta.",
+    intent === "reschedule"
+      ? "A remarcação online desta clínica está temporariamente indisponível. Entre em contato diretamente com a clínica para remarcar sua consulta."
+      : "O agendamento online desta clínica está temporariamente indisponível. Entre em contato diretamente com a clínica para marcar sua consulta.",
     "CLINIC_BOOKING_UNAVAILABLE",
     409,
   );
@@ -421,6 +434,8 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
         return errorResponse("Esta reserva não pode mais ser remarcada por autoatendimento.", "INVALID_TRANSITION", 409);
       }
       if (!appointment.clinic_id) return errorResponse("Configuração do agendamento indisponível.", "NOT_FOUND", 404);
+      const rescheduleDenied = await clinicBookingUnavailable(env.DB, appointment.provider_user_id, appointment.clinic_id, "reschedule");
+      if (rescheduleDenied) return rescheduleDenied;
       const service = await getService(env.DB, appointment.provider_user_id, appointment.service_id, true, appointment.clinic_id);
       const startsAtLocal = cleanText(body.startsAtLocal, 16);
       const provider = await env.DB.prepare(`SELECT * FROM booking_provider_profiles WHERE user_id = ? LIMIT 1`)
