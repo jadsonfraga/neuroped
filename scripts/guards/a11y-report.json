@@ -1,335 +1,278 @@
 {
-  "mode": "static-lint",
-  "total": 82,
-  "violations": [
-    {
-      "id": "input-name",
-      "where": "client/src/components/RecoveredAuthorialHub.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/components/RecoveredAuthorialHub.tsx"
-    },
-    {
-      "id": "textarea-name",
-      "where": "client/src/components/RecoveredAuthorialHub.tsx"
-    },
-    {
-      "id": "textarea-name",
-      "where": "client/src/components/RecoveredAuthorialHub.tsx"
-    },
-    {
-      "id": "textarea-name",
-      "where": "client/src/components/RecoveredAuthorialHub.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/components/Regula20Questionnaire.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/components/Regula20Questionnaire.tsx"
-    },
-    {
-      "id": "select-name",
-      "where": "client/src/components/Regula20Questionnaire.tsx"
-    },
-    {
-      "id": "textarea-name",
-      "where": "client/src/components/Regula20Questionnaire.tsx"
-    },
-    {
-      "id": "textarea-name",
-      "where": "client/src/components/Regula20Questionnaire.tsx"
-    },
-    {
-      "id": "select-name",
-      "where": "client/src/components/clinical/RemoteIntakePanel.tsx"
-    },
-    {
-      "id": "select-name",
-      "where": "client/src/components/clinical/RemoteIntakePanel.tsx"
-    },
-    {
-      "id": "select-name",
-      "where": "client/src/components/clinical/RemoteScalePanel.tsx"
-    },
-    {
-      "id": "select-name",
-      "where": "client/src/components/clinical/RemoteScalePanel.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/components/sonda-dez/SondaDigitalGuided.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/components/sonda-dez/SondaDigitalGuided.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/components/sonda-dez/SondaDigitalGuided.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/obs10/AgreementPanel.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/obs10/AgreementPanel.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/obs10/EvidencePanel.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/obs10/EvidencePanel.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/obs10/Orientation.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/obs10/Orientation.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/obs10/PilotConsolidation.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/obs10/SessionReview.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
-    },
-    {
-      "id": "textarea-name",
-      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
-    },
-    {
-      "id": "textarea-name",
-      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/obs60/Obs60Panel.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/obs60/Obs60Panel.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/obs60/Obs60Panel.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/visual-recognition/Workspace.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/visual-recognition/Workspace.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/visual-recognition/Workspace.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/visual-recognition/Workspace.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/visual-recognition/Workspace.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/features/visual-recognition/Workspace.tsx"
-    },
-    {
-      "id": "select-name",
-      "where": "client/src/pages/agenda.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/pages/escuta-clinica.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/pages/escuta-clinica.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/pages/escuta-clinica.tsx"
-    },
-    {
-      "id": "select-name",
-      "where": "client/src/pages/escuta-clinica.tsx"
-    },
-    {
-      "id": "duplicate-id",
-      "where": "client/src/pages/login.tsx (id=\"login-password\" ×2)"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/pages/pre-consulta-obs10.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/pages/pre-consulta-obs10.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/pages/pre-consulta-obs10.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/pages/pre-consulta-obs10.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/pages/pre-consulta-obs10.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/pages/pre-consulta-obs10.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/pages/pre-consulta-obs10.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/pages/pre-consulta-obs10.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/pages/pre-consulta-obs10.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/pages/pre-consulta-obs10.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/pages/pre-consulta-obs10.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/pages/pre-consulta-obs10.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/pages/pre-consulta-obs10.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/pages/pre-consulta-obs10.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/pages/pre-consulta-obs10.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/pages/pre-consulta-obs10.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/pages/pre-consulta-obs10.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/pages/pre-consulta-obs10.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/pages/pre-consulta-obs10.tsx"
-    },
-    {
-      "id": "input-name",
-      "where": "client/src/pages/pre-consulta-obs10.tsx"
-    },
-    {
-      "id": "textarea-name",
-      "where": "client/src/pages/pre-consulta-obs10.tsx"
-    },
-    {
-      "id": "textarea-name",
-      "where": "client/src/pages/pre-consulta-obs10.tsx"
-    },
-    {
-      "id": "textarea-name",
-      "where": "client/src/pages/pre-consulta-obs10.tsx"
-    },
-    {
-      "id": "textarea-name",
-      "where": "client/src/pages/pre-consulta-obs10.tsx"
-    },
-    {
-      "id": "textarea-name",
-      "where": "client/src/pages/pre-consulta-obs10.tsx"
-    },
-    {
-      "id": "textarea-name",
-      "where": "client/src/pages/pre-consulta-obs10.tsx"
+  "mode": "axe-playwright",
+  "total": 0,
+  "violations": [],
+  "routes": {
+    "/": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/testes-diretos": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/especialidades": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/filtro": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/marcacao": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/escuta-clinica": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/servicos-clinica": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/conecta": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/eletroencefalograma": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/nesplora/": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/agenda": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/pacientes": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/memoria-clinica": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/laudo-neuroped": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/laudo-super": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/receita-c1": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/manus": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/neuroacompanhamento": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/diario-escola": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/avaliacao-multiprofissional": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/neuropsicologia": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/fluxograma": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/filtro-escalas": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/bateria-jadson": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/pac": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/inventarios-auto": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/ahsd-tea": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/psiquiatria": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/caa": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/medicamentos": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/farmacologia": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/calculadora-dose": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/diario-sono": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/diario-alimentar": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/epilepsia": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/cefaleia": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/instrumentos-padronizados": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/biblioteca-instrumentos": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/fluxogramas": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/marcos-desenvolvimento": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/valores-referencia": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/curvas-crescimento": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/espasticidade": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/classificacoes": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/orientacao-parental": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/brincando-e-aprendendo": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/missao-saude": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/portal-familia/acesso": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/ajuda": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/sobre": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/sobre-neuroped": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/acessibilidade": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/qualidade": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
     }
-  ],
-  "reason": "Chromium não instalado no ambiente"
+  },
+  "allSeverityViolations": []
 }
