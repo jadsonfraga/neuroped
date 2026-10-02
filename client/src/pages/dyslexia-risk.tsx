@@ -250,7 +250,7 @@ export default function DyslexiaRiskPage() {
           <h2 className="snp-pixel text-base">Sons</h2>
           {CF.map((item, i) => (
             <div key={item.cmd} className="flex flex-wrap items-center gap-2 text-sm">
-              <span className="min-w-0 flex-1 font-bold">{item.exemplo ? `Ex.: ${item.exemplo}. ` : ""}{item.cmd} → {item.esp}</span>
+              <span className="min-w-0 flex-1 font-bold">{"exemplo" in item && item.exemplo ? `Ex.: ${item.exemplo}. ` : ""}{item.cmd} → {item.esp}</span>
               <button type="button" className={`snp-chip ${s.cf[i].ok ? "bg-[var(--snp-sun)]" : ""}`} onClick={() => { const cf = s.cf.slice(); cf[i] = { ok: true, err: false }; setS({ ...s, cf }); }}>certo</button>
               <button type="button" className={`snp-chip ${s.cf[i].err ? "bg-[var(--snp-sun)]" : ""}`} onClick={() => { const cf = s.cf.slice(); cf[i] = { ok: false, err: true }; setS({ ...s, cf }); }}>erro</button>
             </div>
