@@ -47,7 +47,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Audit full dependency graph
-        run: npm audit --audit-level=high
+        run: node scripts/guards/audit-high-critical.mjs
 
       # Gate técnico determinístico. `validate:safety` permanece no `npm run
       # verify` e exige homologação clínica explícita para instrumentos ainda

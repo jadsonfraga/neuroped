@@ -57,7 +57,7 @@ jobs:
           npm_config_ignore_scripts: false
 
       - name: Auditar dependências
-        run: npm audit --audit-level=high
+        run: node scripts/guards/audit-high-critical.mjs
 
       - name: Validar contrato operacional antes da migração
         run: |

@@ -56,7 +56,7 @@ jobs:
           npm_config_ignore_scripts: false
 
       - name: Audit dependency graph
-        run: npm audit --audit-level=high
+        run: node scripts/guards/audit-high-critical.mjs
 
       - name: Prove LIVE diary fail-closed contract
         run: node tests/unit/live-diary-persistence-guard.test.mjs

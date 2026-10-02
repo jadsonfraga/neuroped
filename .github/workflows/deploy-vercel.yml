@@ -95,7 +95,7 @@ jobs:
           npm_config_ignore_scripts: false
 
       - name: Audit full dependency graph
-        run: npm audit --audit-level=high
+        run: node scripts/guards/audit-high-critical.mjs
 
       - name: Instalar Chromium para os testes E2E
         run: npx playwright install --with-deps chromium

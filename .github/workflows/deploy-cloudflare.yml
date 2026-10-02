@@ -106,7 +106,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Auditar grafo completo de dependências
-        run: npm audit --audit-level=high
+        run: node scripts/guards/audit-high-critical.mjs
 
       - name: Catraca técnica completa de release
         run: npm run verify
