@@ -86,6 +86,9 @@ drizzle/
 *.tmp
 *.bak
 
+# PIDs de processos locais (nunca versionar)
+*.pid
+
 # Claude Code agent worktrees
 .claude/worktrees/
 
