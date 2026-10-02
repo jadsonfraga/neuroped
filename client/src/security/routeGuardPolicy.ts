@@ -7,6 +7,7 @@ export type RouteAccessDecision = "allow" | "checking" | "login" | "forbidden";
 
 export const SENSITIVE_ROUTES = [
   "/super-neuropad-game",
+  "/dyslexia-risk",
   "/avaliacao-pre-consulta-faixa-etaria",
   "/pant",
   "/assinatura-digital",

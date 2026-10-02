@@ -63,6 +63,14 @@ const superNeuroPadNavigation: NavItem = {
   description: "Pré-consulta integrada · 6 mundos · 2 a 17 anos · até 20 min · PDF",
 };
 
+const dyslexiaRiskNavigation: NavItem = {
+  href: "/dyslexia-risk",
+  label: "dyslexia risk",
+  icon: BookOpen,
+  tone: "priority",
+  description: "ICED-8 · 8 anos · trilha guiada · não diagnostica",
+};
+
 const obs10Navigation: NavItem = {
   href: "/avaliacao-pre-consulta-faixa-etaria",
   label: "OBS-10 · Pré-Consulta",
@@ -134,6 +142,7 @@ export const featuredNavigation: NavItem[] = [
     tone: "priority",
     description: "Ditado e leitura · 5–19 anos · acertos e erros em detalhe",
   },
+  dyslexiaRiskNavigation,
   {
     href: "/filtro",
     label: "Filtro de Escalas",
@@ -240,6 +249,7 @@ export const navSections: NavSection[] = [
         tone: "priority",
         description: "Ditado e leitura por faixa etária · 5–19 anos · acertos e erros em detalhe",
       },
+      dyslexiaRiskNavigation,
       {
         href: "/testes-diretos",
         label: "Sonda Dez · Avaliação Direta",
