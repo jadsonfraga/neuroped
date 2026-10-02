@@ -235,10 +235,27 @@ for (const [name, workflow] of [
 ]) {
   assert.match(
     workflow,
-    /npm audit --audit-level=high/,
-    `${name} deve bloquear high/critical no grafo completo`,
+    /node scripts\/guards\/audit-high-critical\.mjs/,
+    `${name} deve bloquear high/critical no grafo completo (gate centralizado)`,
   );
 }
+
+const auditGate = read("scripts/guards/audit-high-critical.mjs");
+assert.match(
+  auditGate,
+  /"--audit-level=high"/,
+  "o gate centralizado deve auditar high/critical no grafo completo",
+);
+assert.match(
+  auditGate,
+  /EXCEPTIONS = new Set\(\[/,
+  "exceções do gate centralizado devem ser declaradas explicitamente",
+);
+assert.match(
+  auditGate,
+  /blocking\.length > 0[\s\S]{0,80}exit\(1\)/,
+  "o gate centralizado deve reprovar qualquer high/critical fora as exceções",
+);
 
 assert.match(testAndBuild, /permissions:\s*\n\s*contents: read/);
 assert.match(
