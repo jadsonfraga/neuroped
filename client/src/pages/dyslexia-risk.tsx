@@ -102,7 +102,7 @@ export default function DyslexiaRiskPage() {
   }
 
   return (
-    <main className="snp space-y-4 pb-8" data-testid="dyslexia-risk">
+    <div className="snp space-y-4 pb-8" data-testid="dyslexia-risk">
       <header className="snp-panel snp-scanlines snp-sky-bg relative overflow-hidden p-4 sm:p-6">
         <div className="relative flex items-center gap-3">
           <img src="/dr-jadson-shield-badge.webp" alt="Dr. Jadson Fraga" width="256" height="256" decoding="async" className="drx-logo snp-sprite shrink-0 rounded-2xl border-[3px] border-[var(--snp-ink-fixed)]" />
@@ -312,6 +312,6 @@ export default function DyslexiaRiskPage() {
           <p className="text-xs font-bold opacity-70">Fora da soma: compreensão isolada, TDAH, TDL, TEA, ansiedade, inteligência, matemática, motivação. Diagnóstico permanece com o médico.</p>
         </section>
       )}
-    </main>
+    </div>
   );
 }

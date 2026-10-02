@@ -46,6 +46,7 @@ test("cabeçalho usa o escudo e a estética do Super NeuroPad", () => {
   assert.match(page, /dr-jadson-shield-badge\.webp/);
   assert.match(page, /super-neuropad-arcade\.css/);
   assert.match(page, /className="snp /);
+  assert.doesNotMatch(page, /<main/);
 });
 
 test("fluência do 2º ano pontua só na âncora", () => {
