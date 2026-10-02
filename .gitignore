@@ -86,7 +86,9 @@ drizzle/
 *.tmp
 *.bak
 
-# Claude Code agent worktrees
+*.pid
+
+# Claude Code agent worktrees/
 .claude/worktrees/
 
 # Claude Code local permissions (session/connector-specific)
