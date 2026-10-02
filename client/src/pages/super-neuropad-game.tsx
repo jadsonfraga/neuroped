@@ -11,6 +11,14 @@ import { play1Up, playCoin, playFlagPole, playJump, playPowerUp } from "@/lib/so
 import { downloadTextDocument, safeTextFilename } from "@/lib/shareText";
 import { createChiptune, type Chiptune } from "@/features/super-neuropad/music";
 import { buildGameDocSpec, issuerLines } from "@/features/super-neuropad/pdf";
+import {
+  buildFamilyDocSpec,
+  buildFamilySummary,
+  isValidFamilyEmail,
+  type FamilyContact,
+} from "@/features/super-neuropad/familyDelivery";
+import { formatPhoneNumber, isValidPhone } from "@/lib/phoneBr";
+import { openEmailDraft, shareWhatsAppDocument } from "@/lib/shareText";
 import { Stimulus as VrStimulus } from "@/features/visual-recognition/Stimulus";
 import {
   CHARACTERS,
@@ -547,6 +555,10 @@ export default function SuperNeuroPadGamePage() {
   const [skipped, setSkipped] = useState<SkippedPhase[]>([]);
   const [skipOpen, setSkipOpen] = useState(false);
   const [observations, setObservations] = useState("");
+  /** Encaminhamento automático à família: e-mail/WhatsApp cadastrados na 1ª página do teste.
+   *  Fica somente em memória da aba (nenhum dado sai sem o gesto de envio do cliente). */
+  const [familyContact, setFamilyContact] = useState<FamilyContact | null>(null);
+  const [familyDeliveryStatus, setFamilyDeliveryStatus] = useState<"" | "ready" | "done">("");
   const startedAt = useRef<string>("");
   const finishedAt = useRef<string | null>(null);
   const itemStart = useRef<number>(0);
@@ -572,6 +584,12 @@ export default function SuperNeuroPadGamePage() {
   const dirty = answers.length > 0;
   useSondaExitGuard(dirty, "Sair apaga os registros desta partida. Copie ou baixe o resultado antes de sair. Deseja sair mesmo assim?");
   const ready = Boolean(band && character);
+  // O encaminhamento só arma com cadastro válido; contato vazio nunca dispara no encerramento.
+  useEffect(() => {
+    if (!familyContact) { setFamilyDeliveryStatus(""); return; }
+    const valid = (familyContact.email && isValidFamilyEmail(familyContact.email)) || (familyContact.phone && isValidPhone(familyContact.phone));
+    setFamilyDeliveryStatus(valid ? "ready" : "");
+  }, [familyContact]);
 
   const session: GameSession | null = ageYears !== null && band && character ? {
     version: SUPER_NEUROPAD_VERSION,
@@ -685,6 +703,8 @@ export default function SuperNeuroPadGamePage() {
     setSkipOpen(false);
     setObservations("");
     setPaused(false);
+    setFamilyDeliveryStatus("");
+    setFamilyContact(null);
     finishedAt.current = null;
     lastAnswerAt.current = Number.NEGATIVE_INFINITY;
     setScreen("setup");
@@ -711,6 +731,49 @@ export default function SuperNeuroPadGamePage() {
     music.current?.stop();
     setPaused(false);
     setScreen("results");
+    if (familyContact && familyDeliveryStatus === "ready") void deliverToFamily(familyContact);
+  }
+
+  /** Encaminhamento automático ao encerrar: PDF familiar baixa, WhatsApp abre com o resumo e o e-mail abre em rascunho.
+   *  Nada é transmitido a servidor: o envio final é confirmado pela aplicadora no próprio cliente. */
+  async function deliverToFamily(contact: FamilyContact) {
+    if (!session) return;
+    const appliedAt = formatClinicalDateTime(new Date(session.finishedAt ?? session.startedAt));
+    const baseName = `super-neuropad-familia-${session.bandId}-${localIsoDate(new Date(session.startedAt))}`;
+    const summaryText = buildFamilySummary(session, contact);
+    try {
+      const { buildDocumentPdf } = await import("@/lib/documentPdf");
+      const bytes = await buildDocumentPdf(buildFamilyDocSpec(session, issuerLines(issuer, issuerCredentials(issuer)), appliedAt));
+      const blob = new Blob([bytes as BlobPart], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `${safeTextFilename(baseName)}.pdf`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setResultKept(true);
+    } catch {
+      toast({ title: "PDF para a família", description: "Não foi possível gerar o PDF agora; use \u201cBaixar PDF detalhado\u201d.", variant: "destructive" });
+    }
+    try {
+      if (contact.phone && isValidPhone(contact.phone)) {
+        await shareWhatsAppDocument({ title: `${SUPER_NEUROPAD_TITLE} — resumo para a família`, text: summaryText, phone: formatPhoneNumber(contact.phone), filename: baseName });
+      }
+      if (contact.email && isValidFamilyEmail(contact.email)) {
+        await openEmailDraft({
+          to: contact.email,
+          subject: `${SUPER_NEUROPAD_TITLE} — resumo da aventura (${summary?.band.label ?? ""})`,
+          body: `${summaryText}\n\nO PDF com o relatório completo foi baixado neste dispositivo: anexe-o antes de enviar.`,
+          filename: baseName,
+        });
+      }
+      setFamilyDeliveryStatus("done");
+      toast({ title: "Encaminhamento à família preparado", description: "WhatsApp/e-mail abertos com o resumo e o PDF baixado para anexar." });
+    } catch {
+      toast({ title: "Encaminhamento à família", description: "Cliente de e-mail/WhatsApp indisponível; copie o resumo nesta tela.", variant: "destructive" });
+    }
   }
 
   /** Toque duplo é comum em tablet (~100–250 ms): sem esta guarda, um segundo toque no mesmo botão, antes do próximo desafio montar, registra o item corrente duas vezes e pula o seguinte sem resposta. */
@@ -954,6 +1017,58 @@ export default function SuperNeuroPadGamePage() {
               </div>
             </div>
           )}
+
+          <div className="snp-panel p-5" data-testid="super-neuropad-family-delivery">
+            <h2 className="snp-pixel text-base">4 · Enviar o resultado para a família (opcional)</h2>
+            <p className="text-xs font-bold opacity-70">Cadastre e-mail e/ou WhatsApp: ao encerrar, o app gera o PDF em linguagem simples e prepara o envio automático. Os dados ficam só nesta tela e nada é enviado a servidor.</p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <label className="block">
+                <span className="text-xs font-black">E-mail da família</span>
+                <input
+                  type="email"
+                  inputMode="email"
+                  className="snp-option mt-1 w-full bg-[var(--snp-paper-fixed)] px-3 py-2 text-sm font-semibold"
+                  placeholder="familia@exemplo.com"
+                  value={familyContact?.email ?? ""}
+                  onChange={(event) => {
+                    const email = event.target.value.trim();
+                    const phone = familyContact?.phone ?? "";
+                    setFamilyContact(email || phone ? { email, phone } : null);
+                    setFamilyDeliveryStatus("");
+                  }}
+                />
+                {familyContact?.email && !isValidFamilyEmail(familyContact.email) && (
+                  <span className="text-xs font-black text-[var(--snp-berry-tint)]">Confira o e-mail digitado.</span>
+                )}
+              </label>
+              <label className="block">
+                <span className="text-xs font-black">WhatsApp da família</span>
+                <input
+                  type="tel"
+                  inputMode="tel"
+                  className="snp-option mt-1 w-full bg-[var(--snp-paper-fixed)] px-3 py-2 text-sm font-semibold"
+                  placeholder="(DD) 9xxxx-xxxx"
+                  value={familyContact?.phone ?? ""}
+                  onChange={(event) => {
+                    const phone = event.target.value.trim();
+                    const email = familyContact?.email ?? "";
+                    setFamilyContact(email || phone ? { email, phone } : null);
+                    setFamilyDeliveryStatus("");
+                  }}
+                />
+                {familyContact?.phone && !isValidPhone(familyContact.phone) && (
+                  <span className="text-xs font-black text-[var(--snp-berry-tint)]">Confira o telefone com DDD.</span>
+                )}
+              </label>
+            </div>
+            <p className="mt-2 text-[11px] font-semibold opacity-70" role="status">
+              {familyContact && (isValidFamilyEmail(familyContact.email) || isValidPhone(familyContact.phone))
+                ? familyDeliveryStatus === "done"
+                  ? "Encaminhamento da partida anterior concluído."
+                  : "Ativo: ao encerrar a partida, o resumo e o PDF serão preparados automaticamente."
+                : "Sem cadastro: o resultado continua disponível para baixar, copiar e salvar no prontuário."}
+            </p>
+          </div>
 
           <div className={`snp-panel ${ready ? "snp-panel--sun" : "snp-panel--soft"} flex flex-wrap items-center gap-3 p-5`}>
             <ArcadeButton tone={ready ? "grass" : "slate"} className="px-6 py-3 text-base" disabled={!ready} onClick={startGame}>
