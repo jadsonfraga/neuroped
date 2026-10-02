@@ -4,6 +4,8 @@ import "@/styles/super-neuropad-arcade.css";
 import "@/styles/dyslexia-risk.css";
 
 const KEY = "neuroped-dyslexia-risk-v1";
+type GateField = "nome" | "data" | "nasc" | "idade" | "escola" | "anosEsc" | "examinador";
+type PersistenceField = "a" | "b" | "c" | "d";
 type Phase = "mapa" | "portao" | "escudo" | "transicao" | "palavras" | "pseudo" | "fluencia" | "ditado" | "sons" | "formas" | "familia" | "ponte" | "tesouro";
 const WORLDS: { id: Phase; nome: string; emoji: string; fala: string }[] = [
   { id: "portao", nome: "Portão", emoji: "🚪", fala: "Nome, ano e escola." },
@@ -148,8 +150,8 @@ export default function DyslexiaRiskPage() {
       {phase === "portao" && (
         <section className="snp-panel space-y-2 p-4">
           <h2 className="snp-pixel text-base">Portão</h2>
-          {[["nome", "Nome completo"], ["data", "Data"], ["nasc", "Nascimento"], ["idade", "Idade"], ["escola", "Tipo de escola"], ["anosEsc", "Escolarização formal (anos)"], ["examinador", "Examinador"]].map(([k, lab]) => (
-            <label key={k} className="grid text-sm font-bold">{lab}<input className="mt-1 rounded-xl border-[3px] border-[var(--snp-ink-fixed)] px-2 py-1" value={(s as never)[k] || ""} onChange={(e) => setS({ ...s, [k]: e.target.value })} /></label>
+          {([["nome", "Nome completo"], ["data", "Data"], ["nasc", "Nascimento"], ["idade", "Idade"], ["escola", "Tipo de escola"], ["anosEsc", "Escolarização formal (anos)"], ["examinador", "Examinador"]] as const).map(([k, lab]) => (
+            <label key={k} className="grid text-sm font-bold">{lab}<input className="mt-1 rounded-xl border-[3px] border-[var(--snp-ink-fixed)] px-2 py-1" value={s[k as GateField]} onChange={(e) => setS((prev) => ({ ...prev, [k]: e.target.value }))} /></label>
           ))}
           <label className="grid text-sm font-bold">Ano escolar
             <select className="mt-1 rounded-xl border-[3px] border-[var(--snp-ink-fixed)] px-2 py-1" value={s.ano} onChange={(e) => setS({ ...s, ano: e.target.value as typeof s.ano })}>
@@ -290,7 +292,7 @@ export default function DyslexiaRiskPage() {
           {[["a", "Intervenção estruturada"], ["b", "Duração ≥ 3 meses"], ["c", "Frequência ≥ 1×/semana"], ["d", "Dificuldade desproporcional ao ganho"]].map(([k, lab]) => (
             <div key={k} className="flex flex-wrap gap-2 text-sm">
               <span className="min-w-0 flex-1 font-bold">{lab}</span>
-              {(["sim", "nao", "nv"] as Tri[]).map((v) => <button type="button" key={v} className={`snp-chip ${(s.pers as never)[k] === v ? "bg-[var(--snp-sun)]" : ""}`} onClick={() => setS({ ...s, pers: { ...s.pers, [k]: v } })}>{v}</button>)}
+              {(["sim", "nao", "nv"] as Tri[]).map((v) => <button type="button" key={v} className={`snp-chip ${s.pers[k as PersistenceField] === v ? "bg-[var(--snp-sun)]" : ""}`} onClick={() => setS({ ...s, pers: { ...s.pers, [k]: v } })}>{v}</button>)}
             </div>
           ))}
           <textarea className="w-full rounded-xl border-[3px] border-[var(--snp-ink-fixed)] p-2" placeholder="qual, com quem, tempo, progresso" value={s.pers.nota} onChange={(e) => setS({ ...s, pers: { ...s.pers, nota: e.target.value } })} />
