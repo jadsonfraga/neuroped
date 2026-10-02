@@ -1,278 +1,335 @@
 {
-  "mode": "axe-playwright",
-  "total": 0,
-  "violations": [],
-  "routes": {
-    "/": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+  "mode": "static-lint",
+  "total": 82,
+  "violations": [
+    {
+      "id": "input-name",
+      "where": "client/src/components/RecoveredAuthorialHub.tsx"
     },
-    "/#/testes-diretos": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/components/RecoveredAuthorialHub.tsx"
     },
-    "/#/especialidades": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "textarea-name",
+      "where": "client/src/components/RecoveredAuthorialHub.tsx"
     },
-    "/#/filtro": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "textarea-name",
+      "where": "client/src/components/RecoveredAuthorialHub.tsx"
     },
-    "/#/marcacao": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "textarea-name",
+      "where": "client/src/components/RecoveredAuthorialHub.tsx"
     },
-    "/#/escuta-clinica": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/components/Regula20Questionnaire.tsx"
     },
-    "/#/servicos-clinica": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/components/Regula20Questionnaire.tsx"
     },
-    "/#/conecta": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "select-name",
+      "where": "client/src/components/Regula20Questionnaire.tsx"
     },
-    "/#/eletroencefalograma": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "textarea-name",
+      "where": "client/src/components/Regula20Questionnaire.tsx"
     },
-    "/#/nesplora/": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "textarea-name",
+      "where": "client/src/components/Regula20Questionnaire.tsx"
     },
-    "/#/": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "select-name",
+      "where": "client/src/components/clinical/RemoteIntakePanel.tsx"
     },
-    "/#/agenda": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "select-name",
+      "where": "client/src/components/clinical/RemoteIntakePanel.tsx"
     },
-    "/#/pacientes": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "select-name",
+      "where": "client/src/components/clinical/RemoteScalePanel.tsx"
     },
-    "/#/memoria-clinica": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "select-name",
+      "where": "client/src/components/clinical/RemoteScalePanel.tsx"
     },
-    "/#/laudo-neuroped": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/components/sonda-dez/SondaDigitalGuided.tsx"
     },
-    "/#/laudo-super": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/components/sonda-dez/SondaDigitalGuided.tsx"
     },
-    "/#/receita-c1": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/components/sonda-dez/SondaDigitalGuided.tsx"
     },
-    "/#/manus": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/obs10/AgreementPanel.tsx"
     },
-    "/#/neuroacompanhamento": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/obs10/AgreementPanel.tsx"
     },
-    "/#/diario-escola": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/obs10/EvidencePanel.tsx"
     },
-    "/#/avaliacao-multiprofissional": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/obs10/EvidencePanel.tsx"
     },
-    "/#/neuropsicologia": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/obs10/Orientation.tsx"
     },
-    "/#/fluxograma": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/obs10/Orientation.tsx"
     },
-    "/#/filtro-escalas": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/obs10/PilotConsolidation.tsx"
     },
-    "/#/bateria-jadson": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/obs10/SessionReview.tsx"
     },
-    "/#/pac": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
     },
-    "/#/inventarios-auto": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
     },
-    "/#/ahsd-tea": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
     },
-    "/#/psiquiatria": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
     },
-    "/#/caa": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
     },
-    "/#/medicamentos": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
     },
-    "/#/farmacologia": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
     },
-    "/#/calculadora-dose": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
     },
-    "/#/diario-sono": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
     },
-    "/#/diario-alimentar": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
     },
-    "/#/epilepsia": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
     },
-    "/#/cefaleia": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
     },
-    "/#/instrumentos-padronizados": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
     },
-    "/#/biblioteca-instrumentos": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
     },
-    "/#/fluxogramas": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "textarea-name",
+      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
     },
-    "/#/marcos-desenvolvimento": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "textarea-name",
+      "where": "client/src/features/obs10/tablet/TabletWorkspace.tsx"
     },
-    "/#/valores-referencia": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/obs60/Obs60Panel.tsx"
     },
-    "/#/curvas-crescimento": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/obs60/Obs60Panel.tsx"
     },
-    "/#/espasticidade": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/obs60/Obs60Panel.tsx"
     },
-    "/#/classificacoes": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/visual-recognition/Workspace.tsx"
     },
-    "/#/orientacao-parental": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/visual-recognition/Workspace.tsx"
     },
-    "/#/brincando-e-aprendendo": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/visual-recognition/Workspace.tsx"
     },
-    "/#/missao-saude": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/visual-recognition/Workspace.tsx"
     },
-    "/#/portal-familia/acesso": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/visual-recognition/Workspace.tsx"
     },
-    "/#/ajuda": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/features/visual-recognition/Workspace.tsx"
     },
-    "/#/sobre": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "select-name",
+      "where": "client/src/pages/agenda.tsx"
     },
-    "/#/sobre-neuroped": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/pages/escuta-clinica.tsx"
     },
-    "/#/acessibilidade": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/pages/escuta-clinica.tsx"
     },
-    "/#/qualidade": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
+    {
+      "id": "input-name",
+      "where": "client/src/pages/escuta-clinica.tsx"
+    },
+    {
+      "id": "select-name",
+      "where": "client/src/pages/escuta-clinica.tsx"
+    },
+    {
+      "id": "duplicate-id",
+      "where": "client/src/pages/login.tsx (id=\"login-password\" ×2)"
+    },
+    {
+      "id": "input-name",
+      "where": "client/src/pages/pre-consulta-obs10.tsx"
+    },
+    {
+      "id": "input-name",
+      "where": "client/src/pages/pre-consulta-obs10.tsx"
+    },
+    {
+      "id": "input-name",
+      "where": "client/src/pages/pre-consulta-obs10.tsx"
+    },
+    {
+      "id": "input-name",
+      "where": "client/src/pages/pre-consulta-obs10.tsx"
+    },
+    {
+      "id": "input-name",
+      "where": "client/src/pages/pre-consulta-obs10.tsx"
+    },
+    {
+      "id": "input-name",
+      "where": "client/src/pages/pre-consulta-obs10.tsx"
+    },
+    {
+      "id": "input-name",
+      "where": "client/src/pages/pre-consulta-obs10.tsx"
+    },
+    {
+      "id": "input-name",
+      "where": "client/src/pages/pre-consulta-obs10.tsx"
+    },
+    {
+      "id": "input-name",
+      "where": "client/src/pages/pre-consulta-obs10.tsx"
+    },
+    {
+      "id": "input-name",
+      "where": "client/src/pages/pre-consulta-obs10.tsx"
+    },
+    {
+      "id": "input-name",
+      "where": "client/src/pages/pre-consulta-obs10.tsx"
+    },
+    {
+      "id": "input-name",
+      "where": "client/src/pages/pre-consulta-obs10.tsx"
+    },
+    {
+      "id": "input-name",
+      "where": "client/src/pages/pre-consulta-obs10.tsx"
+    },
+    {
+      "id": "input-name",
+      "where": "client/src/pages/pre-consulta-obs10.tsx"
+    },
+    {
+      "id": "input-name",
+      "where": "client/src/pages/pre-consulta-obs10.tsx"
+    },
+    {
+      "id": "input-name",
+      "where": "client/src/pages/pre-consulta-obs10.tsx"
+    },
+    {
+      "id": "input-name",
+      "where": "client/src/pages/pre-consulta-obs10.tsx"
+    },
+    {
+      "id": "input-name",
+      "where": "client/src/pages/pre-consulta-obs10.tsx"
+    },
+    {
+      "id": "input-name",
+      "where": "client/src/pages/pre-consulta-obs10.tsx"
+    },
+    {
+      "id": "input-name",
+      "where": "client/src/pages/pre-consulta-obs10.tsx"
+    },
+    {
+      "id": "textarea-name",
+      "where": "client/src/pages/pre-consulta-obs10.tsx"
+    },
+    {
+      "id": "textarea-name",
+      "where": "client/src/pages/pre-consulta-obs10.tsx"
+    },
+    {
+      "id": "textarea-name",
+      "where": "client/src/pages/pre-consulta-obs10.tsx"
+    },
+    {
+      "id": "textarea-name",
+      "where": "client/src/pages/pre-consulta-obs10.tsx"
+    },
+    {
+      "id": "textarea-name",
+      "where": "client/src/pages/pre-consulta-obs10.tsx"
+    },
+    {
+      "id": "textarea-name",
+      "where": "client/src/pages/pre-consulta-obs10.tsx"
     }
-  },
-  "allSeverityViolations": []
+  ],
+  "reason": "Chromium não instalado no ambiente"
 }
