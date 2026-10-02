@@ -1,0 +1,9 @@
+.snp .drx-shapes { display:grid; grid-template-columns:repeat(8, 1fr); gap:6px; }
+.snp .drx-shapes i { aspect-ratio:1; border:3px solid var(--snp-ink-fixed); background:var(--snp-paper-fixed); }
+.snp .drx-shapes i[data-s="circulo"] { border-radius:50%; }
+.snp .drx-shapes i[data-s="triangulo"] { clip-path:polygon(50% 8%, 96% 92%, 4% 92%); background:var(--snp-ink-fixed); }
+.snp .drx-shapes i[data-s="estrela"] { clip-path:polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); background:var(--snp-ink-fixed); }
+.snp .drx-word { border:0; background:transparent; padding:1px 2px; font-weight:800; }
+.snp .drx-word.read { background:var(--snp-sun); border-radius:6px; }
+.snp .drx-logo { width:3.5rem; height:3.5rem; object-fit:cover; }
+@media (max-width:420px) { .snp .drx-shapes { grid-template-columns:repeat(4, 1fr); } }
