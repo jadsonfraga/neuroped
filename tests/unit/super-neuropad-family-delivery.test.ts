@@ -63,7 +63,7 @@ test("resumo para a família é sistemático e recorrente: mesma estrutura em to
   const partial = buildFamilySummary({ ...play(8, (index) => (index === 1 ? "erro" : index === 2 ? "sem_resposta" : index === 3 ? "recusa" : "acerto")), answers: play(8).answers.slice(0, 10) }, { email: "", phone: "(11) 91234-5678" });
   for (const text of [complete, partial]) {
     assert.ok(text.includes(SUPER_NEUROPAD_TITLE));
-    assert.ok(text.includes("Desempenho por mundo"), "seção por mundo sempre presente");
+    assert.ok(text.includes("Por mundo"), "seção por mundo sempre presente");
     assert.match(text, /NÃO dá diagn/);
     assert.doesNotMatch(text.replace(/não gera escore normativo, percentil[^.]*\./i, ""), /percentil/i, "o aviso nega o percentil; não o usa");
     assert.doesNotMatch(text, /TDAH|TEA|diagnóstico de/i);
@@ -74,6 +74,15 @@ test("resumo para a família é sistemático e recorrente: mesma estrutura em to
   assert.deepEqual(fixed(complete), fixed(partial), "mesma ordem de seções em qualquer partida");
   assert.ok(complete.includes("Aventura completa: 30 de 30"));
   assert.ok(partial.includes("encerrada antes do fim"), "partida incompleta identificada para a família");
+});
+
+test("resumo cabe no link wa.me do WhatsApp (limite 1800 codificado)", () => {
+  for (const years of [2, 8, 17]) {
+    const session = play(years, (index) => (index % 4 === 1 ? "erro" : index % 4 === 2 ? "sem_resposta" : "acerto"));
+    const text = buildFamilySummary(session, CONTACT, new Date("2026-09-30T15:00:00"));
+    const encoded = encodeURIComponent(text).length;
+    assert.ok(encoded <= 1800, `resumo de ${years} anos codificado em ${encoded} caracteres estoura o wa.me`);
+  }
 });
 
 test("resumo cita todos os mundos e o herói, e não vaza dados da aplicação (número do caso)", () => {

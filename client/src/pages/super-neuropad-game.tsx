@@ -758,19 +758,34 @@ export default function SuperNeuroPadGamePage() {
       toast({ title: "PDF para a família", description: "Não foi possível gerar o PDF agora; use \u201cBaixar PDF detalhado\u201d.", variant: "destructive" });
     }
     try {
+      const channels: string[] = [];
       if (contact.phone && isValidPhone(contact.phone)) {
-        await shareWhatsAppDocument({ title: `${SUPER_NEUROPAD_TITLE} — resumo para a família`, text: summaryText, phone: formatPhoneNumber(contact.phone), filename: baseName });
+        const outcome = await shareWhatsAppDocument({ title: `${SUPER_NEUROPAD_TITLE} — resumo para a família`, text: summaryText, phone: formatPhoneNumber(contact.phone), filename: baseName });
+        if (outcome === "cancelled") {
+          setFamilyDeliveryStatus("done");
+          return;
+        }
+        if (outcome !== "failed") channels.push("WhatsApp aberto com o resumo");
       }
       if (contact.email && isValidFamilyEmail(contact.email)) {
+        // Duas navegações na mesma tacada se anulam (wa.me/mailto disputam a
+        // aba); a pausa deixa o cliente abrir antes do próximo redirecionamento.
+        await new Promise((resolve) => window.setTimeout(resolve, 400));
         await openEmailDraft({
           to: contact.email,
           subject: `${SUPER_NEUROPAD_TITLE} — resumo da aventura (${summary?.band.label ?? ""})`,
           body: `${summaryText}\n\nO PDF com o relatório completo foi baixado neste dispositivo: anexe-o antes de enviar.`,
           filename: baseName,
         });
+        channels.push("e-mail aberto em rascunho para anexar o PDF");
+      }
+      if (channels.length === 0) {
+        setFamilyDeliveryStatus("");
+        toast({ title: "Encaminhamento à família", description: "Não foi possível abrir o WhatsApp agora; copie o resumo nesta tela e envie manualmente.", variant: "destructive" });
+        return;
       }
       setFamilyDeliveryStatus("done");
-      toast({ title: "Encaminhamento à família preparado", description: "WhatsApp/e-mail abertos com o resumo e o PDF baixado para anexar." });
+      toast({ title: "Encaminhamento à família preparado", description: channels.join(" · ") + ". O PDF foi baixado neste dispositivo." });
     } catch {
       toast({ title: "Encaminhamento à família", description: "Cliente de e-mail/WhatsApp indisponível; copie o resumo nesta tela.", variant: "destructive" });
     }
