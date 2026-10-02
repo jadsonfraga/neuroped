@@ -59,7 +59,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Auditar dependências
-        run: npm audit --audit-level=high
+        run: node scripts/guards/npm-audit-gate.mjs
 
       - name: Testar contrato de importação
         run: node --import tsx tests/unit/boaconsulta-import-contract.test.ts

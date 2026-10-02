@@ -51,7 +51,7 @@ jobs:
           npm_config_ignore_scripts: false
 
       - name: Auditar dependências
-        run: npm audit --audit-level=high
+        run: node scripts/guards/npm-audit-gate.mjs
 
       - name: Validar isolamento de tenant da agenda antes da migração
         run: node --import tsx tests/unit/operations-tenant-isolation.test.ts
