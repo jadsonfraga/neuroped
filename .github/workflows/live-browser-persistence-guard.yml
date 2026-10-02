@@ -76,7 +76,7 @@ jobs:
           npm_config_ignore_scripts: false
 
       - name: Audit dependency graph
-        run: npm audit --audit-level=high
+        run: node scripts/guards/npm-audit-gate.mjs
 
       - name: Prove central persistence decisions and fail-closed routes
         run: node --import tsx tests/unit/clinical-browser-persistence-policy.test.ts

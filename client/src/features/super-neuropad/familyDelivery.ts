@@ -19,7 +19,6 @@ import type { DocLine, DocSpec } from "@/lib/documentPdf";
 import { formatClinicalDateTime } from "@/lib/clinicalDate";
 import {
   STATUS_LABELS,
-  SUPER_NEUROPAD_NATURE,
   SUPER_NEUROPAD_TITLE,
   SUPER_NEUROPAD_VERSION,
   formatDuration,
@@ -87,23 +86,23 @@ export function buildFamilySummary(session: GameSession, contact: FamilyContact,
     ? "Este resumo foi preparado para enviar por e-mail e WhatsApp."
     : contact.email ? "Este resumo foi preparado para enviar por e-mail." : "Este resumo foi preparado para enviar por WhatsApp.";
   const lines: Array<string | null> = [
-    `${SUPER_NEUROPAD_TITLE} — resumo da aventura da criança`,
+    `${SUPER_NEUROPAD_TITLE} — resumo da aventura`,
     when,
     greeting,
     "",
-    `Idade: ${session.ageYears} anos · Herói escolhido: ${summary.character.name}`,
+    `Idade: ${session.ageYears} anos · Herói: ${summary.character.name}`,
     summary.complete
       ? `Aventura completa: ${summary.hits} de ${summary.total} desafios certos.`
-      : `Aventura encerrada antes do fim: ${session.answers.length} de ${summary.total} desafios registrados. Sem classificação geral neste caso.`,
+      : `Aventura encerrada antes do fim: ${session.answers.length} de ${summary.total} registrados. Sem classificação geral.`,
     summary.level !== null ? `Leitura do jogo: ${LEVEL_FOR_FAMILY[summary.level]}.` : null,
     "",
-    "Desempenho por mundo (acertos / desafios):",
+    "Por mundo (acertos/desafios):",
     ...summary.phases.map((phase) => `• ${phase.phase.name}: ${phaseStatusText(phase, summary.complete)}`),
     "",
-    FAMILY_DISCLAIMER,
+    FAMILY_DISCLAIMER.replace("O Super NeuroPad Game é uma triagem lúdica de pré-consulta. Ele ", "Triagem lúdica de pré-consulta: ").replace("O resultado completo, com cada resposta registrada, fica com a equipe; a conclusão é do médico(a) na consulta.", "O registro completo fica com a equipe; a conclusão é do médico(a)."),
     "",
-    `Se a família tiver dúvidas sobre algum mundo, a aba "${SUPER_NEUROPAD_TITLE}" mostra o que foi testado. Proveniência: ${SUPER_NEUROPAD_NATURE}`,
-    `Versão do jogo: ${SUPER_NEUROPAD_VERSION}`,
+    "Dúvidas sobre os mundos? Veja o que foi testado na aba do jogo.",
+    `Versão: ${SUPER_NEUROPAD_VERSION}`,
   ];
   return lines.filter((line): line is string => line !== null).join("\n");
 }

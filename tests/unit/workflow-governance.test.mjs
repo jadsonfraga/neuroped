@@ -233,10 +233,17 @@ for (const [name, workflow] of [
   ["Test, Lint & Build", testAndBuild],
   ["Verify NeuroPed", verify],
 ]) {
+  // O gate substitui o npm audit literal: continua bloqueando high/critical,
+  // com exceções rastreáveis (advisory exato + pacote + motivo + validade).
   assert.match(
     workflow,
-    /npm audit --audit-level=high/,
-    `${name} deve bloquear high/critical no grafo completo`,
+    /node scripts\/guards\/npm-audit-gate\.mjs/,
+    `${name} deve bloquear high/critical no grafo completo via o gate rastreável`,
+  );
+  assert.doesNotMatch(
+    workflow,
+    /run:\s*npm audit --audit-level=high/,
+    `${name} não pode chamar npm audit sem o gate (exceções invisíveis)`,
   );
 }
 

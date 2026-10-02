@@ -56,7 +56,7 @@ jobs:
           npm_config_ignore_scripts: false
 
       - name: Audit dependency graph
-        run: npm audit --audit-level=high
+        run: node scripts/guards/npm-audit-gate.mjs
 
       - name: Prove previsit fail-closed contract
         run: node tests/unit/live-previsit-persistence-guard.test.mjs
