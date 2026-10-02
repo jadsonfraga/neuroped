@@ -9,7 +9,6 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
-  LEVEL_LABELS,
   PHASE_ORDER,
   SUPER_NEUROPAD_TITLE,
   itemsFor,
