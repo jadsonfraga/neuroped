@@ -1,37 +1,43 @@
 # HUMAN ACTION REQUIRED
 
-## Única ação de governança externa bloqueante: ativar proteção servidor-side de `main`
+## Ação única bloqueante (atualizada 02/10/2026): configurar criptografia clínica e bucket LGPD no Cloudflare
 
-**Por quê:** a API observada em 23/08/2026 continua reportando `main.protected=false` e enforcement de status checks `off`. A credencial conectada possui administração do repositório, mas o conector GitHub disponível nesta sessão não expõe criação/edição de ruleset ou branch protection. Alterar YAML no repositório não substitui essa proteção.
+**Por quê:** produção (`neuroped.pages.dev`) roda com `CLINICAL_LIVE_ENABLED=true`, mas
+`/api/health` reporta `clinicalCryptoConfigured: false` e
+`blockers: ["CLINICAL_CRYPTO_NOT_READY", "LGPD_BUCKET_NOT_CONFIGURED"]`. O CI
+`Clinical and LGPD production readiness audit` falha fechado pelo mesmo motivo (issue #926).
+O código e os gates estão corretos; falta a configuração no provider. A credencial desta sessão
+não tem acesso à conta Cloudflare (wrangler "not authenticated") e segredos de produção não
+devem ser gerados/instalados por agente sem acesso provider.
 
-### Ação única
+### Ação única (owner da conta Cloudflare; ~15 min; dashboard ou wrangler)
 
-No GitHub, abrir `jadsonfraga/neuroped` → **Settings → Rules → Rulesets → New branch ruleset** e criar um ruleset **Active** chamado `main-production`, direcionado somente à default branch `main`, com:
+1. Gerar dois segredos aleatórios ≥32 chars (ex.: `openssl rand -base64 48`):
+   - `CLINICAL_DATA_KEY`
+   - `CLINICAL_INDEX_KEY`
+2. Criar bucket R2 privado (ex.: `neuroped-lgpd-export`) na conta do Pages.
+3. No projeto Pages `neuroped` (Settings → Variables and Secrets / Bindings):
+   - Secret: `CLINICAL_DATA_KEY` (encrypted);
+   - Secret: `CLINICAL_INDEX_KEY` (encrypted);
+   - Var: `CLINICAL_DATA_KEY_ID` = `k1`;
+   - Binding R2 com nome **exatamente** `LGPD_EXPORT_BUCKET` → bucket criado.
+4. Redeploy (ou re-run do workflow `deploy-cloudflare` no HEAD atual do main).
 
-- Pull Request obrigatório antes de merge;
-- branch atualizada antes do merge (`strict`/require branch to be up to date), quando o GitHub oferecer essa opção para os status checks;
-- resolução de todas as conversations obrigatória;
-- deleção de `main` bloqueada;
-- force push bloqueado;
-- push direto bloqueado;
-- bypass list vazia, salvo exceção futura explicitamente documentada;
-- required status checks que efetivamente rodam em PR para `main`:
-  - `Verify NeuroPed` — job `TypeScript, catalog, access, identity, assets, clinical tests and build`;
-  - `Test, Lint & Build` — usar o agregador final `require-checks`;
-  - `PR Check` — job `Build & Lint`;
-  - `No password regression` — job `App opens without access password`;
-  - `Filter and scales spiral audit` — job `Filter, scales, aesthetics and lifecycle contracts`;
-  - `LIVE browser persistence guard` — job `Zero PHI browser-side in LIVE`;
-  - `LIVE tenant isolation guard` — job `test:tenant-isolation:live`;
-  - `Billing security guard` — job `Billing webhook and entitlement attacks`;
-  - `Dedicated E2E account readiness` — job `Dedicated E2E account only`, **somente depois** de `NEUROPED_E2E_EMAIL` e `NEUROPED_E2E_PASSWORD` estarem provisionados e o check ficar verde de forma estável.
+### Verificação (sem expor segredos)
 
-Não tornar required nenhum workflow que execute apenas depois do merge/push em `main` ou cujo filtro de paths possa fazer o check desaparecer em um PR arbitrário.
+```
+curl -s https://neuroped.pages.dev/api/health
+```
 
-### Prova necessária depois da ação
+Esperado: `clinicalCryptoConfigured: true`, `storageBindingPresent: true`,
+`lgpdExport.configured: true`, `blockers: []`.
 
-1. API GitHub deve deixar de reportar `protected=false`/ruleset ausente para `main`.
-2. Uma tentativa segura e descartável de push direto a `main` deve ser rejeitada pelo servidor.
-3. Merge deve continuar possível exclusivamente via PR com os required checks verdes.
+### Notas
 
-Enquanto essas três provas não existirem, **P0 #584 permanece aberto** e `PILOT_READY` deve permanecer `NO`.
+- Rotação futura: `CLINICAL_DATA_KEY_PREVIOUS` + `CLINICAL_DATA_KEY_PREVIOUS_ID` suportados
+  por `functions/api/tenant/_crypto.ts`.
+- Consumo: `functions/api/live/governance/_artifactStore.ts` (R2), `functions/api/health.ts`
+  (diagnóstico público, sem segredos).
+- Histórico: a ação anterior deste arquivo (proteger `main` via ruleset) foi concluída —
+  `main.protected=true` verificado e push direto rejeitado em prova prática (02/10/2026);
+  issue #584 fechada. Não remover esta seção sem evidência equivalente.
