@@ -49,6 +49,26 @@ test("cabeçalho usa o escudo e a estética do Super NeuroPad", () => {
   assert.doesNotMatch(page, /<main/);
 });
 
+test("anti-regressão visual: cada toggle snp-chip declara estado via aria-pressed", () => {
+  const page = readFileSync("client/src/pages/dyslexia-risk.tsx", "utf8");
+  const chips = page.match(/<button[^>]*className=\{`snp-chip/g) ?? [];
+  assert.ok(chips.length >= 8, `esperados >=8 toggles snp-chip, encontrados ${chips.length}`);
+  const pressed = page.match(/aria-pressed=/g) ?? [];
+  assert.equal(pressed.length >= chips.length, true, `todos os snp-chip devem ter aria-pressed (${pressed.length}/${chips.length})`);
+});
+
+test("anti-regressão: cronômetro da fluência trava em 60 s e campos numéricos não aceitam negativo", () => {
+  const page = readFileSync("client/src/pages/dyslexia-risk.tsx", "utf8");
+  assert.match(page, /secs < 60/, "o efeito do cronômetro deve parar em 60 s");
+  assert.match(page, /tempo: 60/, "ao atingir 60 s o tempo deve ser gravado como 60");
+  const numberInputs = page.match(/<input type="number"[\s\S]*?\/>/g) ?? [];
+  assert.ok(numberInputs.length >= 3, `esperados >=3 inputs numéricos, encontrados ${numberInputs.length}`);
+  for (const input of numberInputs) {
+    assert.match(input, /min=\{0\}/, `input numérico sem min 0: ${input}`);
+    assert.match(input, /Math\.max\(0/, `input numérico sem clamp Math.max(0): ${input}`);
+  }
+});
+
 test("fluência do 2º ano pontua só na âncora", () => {
   assert.equal(scoreIced({ ...empty, ano: "2", pcpm: 42 }).dominios[0].pontos, 3);
   assert.equal(scoreIced({ ...empty, ano: "2", pcpm: 50 }).dominios[0].pontos, 0);

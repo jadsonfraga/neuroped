@@ -53,6 +53,7 @@ export default function DyslexiaRiskPage() {
   const [child, setChild] = useState(false);
   const [secs, setSecs] = useState(0);
   const [running, setRunning] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     try { const raw = localStorage.getItem(KEY); if (raw) setS({ ...blank(), ...JSON.parse(raw) }); } catch { /* sessão nova */ }
@@ -63,6 +64,11 @@ export default function DyslexiaRiskPage() {
     const id = window.setInterval(() => setSecs((n) => n + 1), 1000);
     return () => window.clearInterval(id);
   }, [running]);
+  useEffect(() => {
+    if (!running || secs < 60) return;
+    setRunning(false);
+    setS((prev) => ({ ...prev, flu: { ...prev.flu, tempo: 60 } }));
+  }, [running, secs]);
 
   const input: IcedInput = useMemo(() => {
     const famSim = [s.fam.pai, s.fam.mae, s.fam.irmao].includes("sim");
@@ -118,10 +124,20 @@ export default function DyslexiaRiskPage() {
         </div>
       </header>
       <div className="flex flex-wrap gap-2">
-        <button type="button" className="snp-btn snp-btn--paper px-3 py-2 text-xs" onClick={() => setChild((v) => !v)}>{child ? "Tela da criança" : "Tela do examinador"}</button>
+        <button type="button" aria-pressed={child} className={`snp-btn px-3 py-2 text-xs ${child ? "snp-btn--grass" : "snp-btn--paper"}`} onClick={() => setChild((v) => !v)}>{child ? "Voltar ao examinador" : "Tela da criança"}</button>
         <button type="button" className="snp-btn snp-btn--sky px-3 py-2 text-xs" onClick={() => setPhase("mapa")}>Mapa</button>
         <ol className="flex flex-wrap gap-1" aria-label="Trilha">
-          {WORLDS.map((w, i) => <li key={w.id} className={`flex h-7 w-7 items-center justify-center rounded-full border-2 border-[var(--snp-ink-fixed)] text-[10px] font-black ${s.done[w.id] ? "bg-[var(--snp-grass)]" : phase === w.id ? "bg-[var(--snp-sun)]" : "bg-white"}`}>{s.done[w.id] ? "★" : i + 1}</li>)}
+          {WORLDS.map((w, i) => (
+            <li
+              key={w.id}
+              aria-current={phase === w.id ? "step" : undefined}
+              title={`${i + 1}. ${w.nome}${s.done[w.id] ? " · concluído" : ""}`}
+              className={`flex h-7 w-7 items-center justify-center rounded-full border-2 border-[var(--snp-ink-fixed)] text-[10px] font-black ${s.done[w.id] ? "bg-[var(--snp-grass)]" : phase === w.id ? "bg-[var(--snp-sun)]" : "bg-white"}`}
+            >
+              <span aria-hidden="true">{s.done[w.id] ? "★" : i + 1}</span>
+              <span className="sr-only">{w.nome}{s.done[w.id] ? " concluído" : ""}</span>
+            </li>
+          ))}
         </ol>
       </div>
 
@@ -169,7 +185,7 @@ export default function DyslexiaRiskPage() {
           {CONTROL.map(([k, lab]) => (
             <div key={k} className="flex flex-wrap items-center gap-2 text-sm">
               <span className="min-w-0 flex-1 font-bold">{lab}</span>
-              {(["sim", "nao", "nv"] as Tri[]).map((v) => <button type="button" key={v} className={`snp-chip ${s.controle[k] === v ? "bg-[var(--snp-sun)]" : ""}`} onClick={() => setS({ ...s, controle: { ...s.controle, [k]: v } })}>{v === "nv" ? "não verificado" : v}</button>)}
+              {(["sim", "nao", "nv"] as Tri[]).map((v) => <button type="button" key={v} aria-pressed={s.controle[k] === v} className={`snp-chip ${s.controle[k] === v ? "bg-[var(--snp-sun)]" : ""}`} onClick={() => setS({ ...s, controle: { ...s.controle, [k]: v } })}>{v === "nv" ? "não verificado" : v}</button>)}
             </div>
           ))}
           {result.trava && <p className="rounded-xl border-[3px] border-[var(--snp-berry)] bg-[var(--snp-berry-tint)] p-2 text-sm font-bold">Trava: {result.travaMotivo}. Não interpretar como evidência de dislexia.</p>}
@@ -216,7 +232,7 @@ export default function DyslexiaRiskPage() {
             <button type="button" className="snp-btn snp-btn--sun px-3 py-2" onClick={() => { setSecs(0); setRunning(true); }}>{running ? `${secs} s` : "Iniciar 60 s"}</button>
             <button type="button" className="snp-btn snp-btn--paper px-3 py-2" onClick={() => { setRunning(false); setS({ ...s, flu: { ...s.flu, tempo: secs || 60 } }); }}>Parar</button>
           </div>
-          <label className="mt-2 grid text-sm font-bold">Erros<input type="number" className="rounded-xl border-[3px] border-[var(--snp-ink-fixed)] px-2 py-1" value={s.flu.erros} onChange={(e) => setS({ ...s, flu: { ...s.flu, erros: Number(e.target.value) } })} /></label>
+          <label className="mt-2 grid text-sm font-bold">Erros<input type="number" min={0} className="rounded-xl border-[3px] border-[var(--snp-ink-fixed)] px-2 py-1" value={s.flu.erros} onChange={(e) => setS({ ...s, flu: { ...s.flu, erros: Math.max(0, Number(e.target.value) || 0) } })} /></label>
           <p className="text-sm font-black">PCPM {pcpmOf(s.flu.lidas, s.flu.erros, s.flu.tempo || 60) ?? "—"} · ano {s.ano || "não escolhido"}</p>
           <button type="button" className="snp-btn snp-btn--sun mt-2 px-4 py-2" onClick={() => stamp("fluencia", "ditado")}>Caverna do ditado</button>
         </section>
@@ -230,15 +246,15 @@ export default function DyslexiaRiskPage() {
             <div key={alvo} className="flex flex-wrap items-center gap-2 text-sm">
               <span className="min-w-40 font-bold">{alvo}</span>
               <input className="min-w-28 flex-1 rounded-xl border-[3px] border-[var(--snp-ink-fixed)] px-2 py-1" value={s.ditado[i].grafia} placeholder={frase} onChange={(e) => { const ditado = s.ditado.slice(); ditado[i] = { ...ditado[i], grafia: e.target.value }; setS({ ...s, ditado }); }} />
-              <button type="button" className={`snp-chip ${s.ditado[i].f ? "bg-[var(--snp-sun)]" : ""}`} onClick={() => { const ditado = s.ditado.slice(); ditado[i] = { ...ditado[i], f: !ditado[i].f }; setS({ ...s, ditado }); }}>F</button>
-              <button type="button" className={`snp-chip ${s.ditado[i].o ? "bg-[var(--snp-sun)]" : ""}`} onClick={() => { const ditado = s.ditado.slice(); ditado[i] = { ...ditado[i], o: !ditado[i].o }; setS({ ...s, ditado }); }}>O</button>
+              <button type="button" aria-pressed={s.ditado[i].f} className={`snp-chip ${s.ditado[i].f ? "bg-[var(--snp-sun)]" : ""}`} onClick={() => { const ditado = s.ditado.slice(); ditado[i] = { ...ditado[i], f: !ditado[i].f }; setS({ ...s, ditado }); }}>F</button>
+              <button type="button" aria-pressed={s.ditado[i].o} className={`snp-chip ${s.ditado[i].o ? "bg-[var(--snp-sun)]" : ""}`} onClick={() => { const ditado = s.ditado.slice(); ditado[i] = { ...ditado[i], o: !ditado[i].o }; setS({ ...s, ditado }); }}>O</button>
             </div>
           ))}
           {DITADO_PSEUDO.map((alvo, i) => (
             <div key={alvo} className="flex flex-wrap items-center gap-2 text-sm">
               <span className="w-24 font-bold">{alvo}</span>
               <input className="min-w-28 flex-1 rounded-xl border-[3px] border-[var(--snp-ink-fixed)] px-2 py-1" value={s.ditadoP[i].grafia} onChange={(e) => { const ditadoP = s.ditadoP.slice(); ditadoP[i] = { ...ditadoP[i], grafia: e.target.value }; setS({ ...s, ditadoP }); }} />
-              <button type="button" className={`snp-chip ${s.ditadoP[i].ok ? "bg-[var(--snp-sun)]" : ""}`} onClick={() => { const ditadoP = s.ditadoP.slice(); ditadoP[i] = { ...ditadoP[i], ok: !ditadoP[i].ok }; setS({ ...s, ditadoP }); }}>certa</button>
+              <button type="button" aria-pressed={s.ditadoP[i].ok} className={`snp-chip ${s.ditadoP[i].ok ? "bg-[var(--snp-sun)]" : ""}`} onClick={() => { const ditadoP = s.ditadoP.slice(); ditadoP[i] = { ...ditadoP[i], ok: !ditadoP[i].ok }; setS({ ...s, ditadoP }); }}>certa</button>
             </div>
           ))}
           <button type="button" className="snp-btn snp-btn--sun px-4 py-2" onClick={() => stamp("ditado", "sons")}>Templo dos sons</button>
@@ -251,8 +267,8 @@ export default function DyslexiaRiskPage() {
           {CF.map((item, i) => (
             <div key={item.cmd} className="flex flex-wrap items-center gap-2 text-sm">
               <span className="min-w-0 flex-1 font-bold">{"exemplo" in item && item.exemplo ? `Ex.: ${item.exemplo}. ` : ""}{item.cmd} → {item.esp}</span>
-              <button type="button" className={`snp-chip ${s.cf[i].ok ? "bg-[var(--snp-sun)]" : ""}`} onClick={() => { const cf = s.cf.slice(); cf[i] = { ok: true, err: false }; setS({ ...s, cf }); }}>certo</button>
-              <button type="button" className={`snp-chip ${s.cf[i].err ? "bg-[var(--snp-sun)]" : ""}`} onClick={() => { const cf = s.cf.slice(); cf[i] = { ok: false, err: true }; setS({ ...s, cf }); }}>erro</button>
+              <button type="button" aria-pressed={s.cf[i].ok} className={`snp-chip ${s.cf[i].ok ? "bg-[var(--snp-sun)]" : ""}`} onClick={() => { const cf = s.cf.slice(); cf[i] = { ok: true, err: false }; setS({ ...s, cf }); }}>certo</button>
+              <button type="button" aria-pressed={s.cf[i].err} className={`snp-chip ${s.cf[i].err ? "bg-[var(--snp-sun)]" : ""}`} onClick={() => { const cf = s.cf.slice(); cf[i] = { ok: false, err: true }; setS({ ...s, cf }); }}>erro</button>
             </div>
           ))}
           <button type="button" className="snp-btn snp-btn--sun px-4 py-2" onClick={() => stamp("sons", "formas")}>Arena das formas</button>
@@ -264,8 +280,8 @@ export default function DyslexiaRiskPage() {
           <h2 className="snp-pixel text-base">Formas · 40</h2>
           <p className="text-sm font-semibold">Treino fora do cronômetro. Forma, não cor.</p>
           <div className="drx-shapes my-3">{RAN.map((sh, i) => <i key={i} data-s={sh} />)}</div>
-          <label className="grid text-sm font-bold">Tempo (s)<input type="number" className="rounded-xl border-[3px] border-[var(--snp-ink-fixed)] px-2 py-1" value={s.ran.seg} onChange={(e) => setS({ ...s, ran: { ...s.ran, seg: Number(e.target.value) } })} /></label>
-          <label className="grid text-sm font-bold">Erros<input type="number" className="rounded-xl border-[3px] border-[var(--snp-ink-fixed)] px-2 py-1" value={s.ran.erros} onChange={(e) => setS({ ...s, ran: { ...s.ran, erros: Number(e.target.value) } })} /></label>
+          <label className="grid text-sm font-bold">Tempo (s)<input type="number" min={0} className="rounded-xl border-[3px] border-[var(--snp-ink-fixed)] px-2 py-1" value={s.ran.seg} onChange={(e) => setS({ ...s, ran: { ...s.ran, seg: Math.max(0, Number(e.target.value) || 0) } })} /></label>
+          <label className="grid text-sm font-bold">Erros<input type="number" min={0} className="rounded-xl border-[3px] border-[var(--snp-ink-fixed)] px-2 py-1" value={s.ran.erros} onChange={(e) => setS({ ...s, ran: { ...s.ran, erros: Math.max(0, Number(e.target.value) || 0) } })} /></label>
           <label className="flex items-center gap-2 text-xs font-bold"><input type="checkbox" checked={s.ran.norma} onChange={(e) => setS({ ...s, ran: { ...s.ran, norma: e.target.checked } })} /> RAN normatizado ≤ −1 DP prevalece</label>
           <button type="button" className="snp-btn snp-btn--sun mt-2 px-4 py-2" onClick={() => stamp("formas", "familia")}>Árvore</button>
         </section>
@@ -278,7 +294,7 @@ export default function DyslexiaRiskPage() {
           {(["pai", "mae", "irmao"] as const).map((k) => (
             <div key={k} className="flex flex-wrap gap-2 text-sm">
               <span className="w-16 font-bold">{k}</span>
-              {(["sim", "nao", "nv"] as Tri[]).map((v) => <button type="button" key={v} className={`snp-chip ${s.fam[k] === v ? "bg-[var(--snp-sun)]" : ""}`} onClick={() => setS({ ...s, fam: { ...s.fam, [k]: v } })}>{v}</button>)}
+              {(["sim", "nao", "nv"] as Tri[]).map((v) => <button type="button" key={v} aria-pressed={s.fam[k] === v} className={`snp-chip ${s.fam[k] === v ? "bg-[var(--snp-sun)]" : ""}`} onClick={() => setS({ ...s, fam: { ...s.fam, [k]: v } })}>{v}</button>)}
             </div>
           ))}
           <button type="button" className="snp-btn snp-btn--sun px-4 py-2" onClick={() => stamp("familia", "ponte")}>Ponte</button>
@@ -292,7 +308,7 @@ export default function DyslexiaRiskPage() {
           {[["a", "Intervenção estruturada"], ["b", "Duração ≥ 3 meses"], ["c", "Frequência ≥ 1×/semana"], ["d", "Dificuldade desproporcional ao ganho"]].map(([k, lab]) => (
             <div key={k} className="flex flex-wrap gap-2 text-sm">
               <span className="min-w-0 flex-1 font-bold">{lab}</span>
-              {(["sim", "nao", "nv"] as Tri[]).map((v) => <button type="button" key={v} className={`snp-chip ${s.pers[k as PersistenceField] === v ? "bg-[var(--snp-sun)]" : ""}`} onClick={() => setS({ ...s, pers: { ...s.pers, [k]: v } })}>{v}</button>)}
+              {(["sim", "nao", "nv"] as Tri[]).map((v) => <button type="button" key={v} aria-pressed={s.pers[k as PersistenceField] === v} className={`snp-chip ${s.pers[k as PersistenceField] === v ? "bg-[var(--snp-sun)]" : ""}`} onClick={() => setS({ ...s, pers: { ...s.pers, [k]: v } })}>{v}</button>)}
             </div>
           ))}
           <textarea className="w-full rounded-xl border-[3px] border-[var(--snp-ink-fixed)] p-2" placeholder="qual, com quem, tempo, progresso" value={s.pers.nota} onChange={(e) => setS({ ...s, pers: { ...s.pers, nota: e.target.value } })} />
@@ -308,7 +324,7 @@ export default function DyslexiaRiskPage() {
           <ul className="space-y-1 text-sm">{result.dominios.map((d) => <li key={d.id}><b>{d.nome}:</b> {d.examinado ? d.pontos : "não examinado"} / {d.peso} — {d.detalhe}</li>)}</ul>
           <textarea className="w-full rounded-xl border-[3px] border-[var(--snp-ink-fixed)] p-2" placeholder="Fenômeno observado" value={s.fenomeno} onChange={(e) => setS({ ...s, fenomeno: e.target.value })} />
           <p className="text-sm leading-relaxed">{result.frase}</p>
-          <button type="button" className="snp-btn snp-btn--sky px-4 py-2" onClick={() => navigator.clipboard.writeText(result.frase)}>Copiar devolução</button>
+          <button type="button" className="snp-btn snp-btn--sky px-4 py-2" onClick={() => { navigator.clipboard.writeText(result.frase); setCopied(true); window.setTimeout(() => setCopied(false), 2000); }}>{copied ? "Copiado ✓" : "Copiar devolução"}</button>
           <p className="text-xs font-bold opacity-70">Fora da soma: compreensão isolada, TDAH, TDL, TEA, ansiedade, inteligência, matemática, motivação. Diagnóstico permanece com o médico.</p>
         </section>
       )}
