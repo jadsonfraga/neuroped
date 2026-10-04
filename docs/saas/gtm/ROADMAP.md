@@ -9,7 +9,8 @@ Legenda: ✅ feito · 🔒 bloqueio externo (ação do proprietário) · ⏳ em 
 ## Now
 - ✅ Ciclo 1 / Fase 0: auditoria de prontidão (ver METRICS.md e DECISIONS.md D-001).
 - ✅ ICP provisório A decidido (D-002) e proposta de valor v1 escrita (`VALUE_PROPOSITION.md`).
-- ⏳ Ciclo 2: realizar as 3 primeiras entrevistas com o roteiro (`INTERVIEW_PLAYBOOK.md`) e registrar em `INTERVIEW_LOG.md`.
+- ✅ Ciclo 3: kit de convites + roteiro de demo fictícia (`INVITE_AND_DEMO_KIT.md`).
+- ⏳ Ciclo 2/3 (ação do proprietário): realizar as 3 primeiras entrevistas com o roteiro (`INTERVIEW_PLAYBOOK.md`) e registrar em `INTERVIEW_LOG.md`.
 - 🔒 Fechar P0 clínico/LGPD em produção: `CLINICAL_CRYPTO_NOT_READY` e
   `LGPD_BUCKET_NOT_CONFIGURED` (`docs/audits/BLOCKED_EXTERNAL_CLINICAL_LGPD_PROVISIONING_2026-09-26.md`).
 - 🔒 S9 (P0): associação legítima de dados clínicos legados a clínica

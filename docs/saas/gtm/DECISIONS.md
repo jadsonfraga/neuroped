@@ -41,3 +41,11 @@ landing nova, feature de WhatsApp, tiers, preço novo.
 (`ready: true`); `/planos` já descreve cifra, hoje inativa em produção. Decisão de remover ou
 qualificar o texto é do proprietário (D-004 pendente).
 **Consequência.** O ciclo só fecha com ≥3 entrevistas registradas; entrevistas são ação humana.
+
+## D-005 · 2026-10-04 · Ciclo 3 — convites primeiro; sem tenant de demonstração por ora
+**Contexto.** O gargalo da prova de demanda são as conversas, não o software.
+**Decisão.** Entregar convites e roteiro de demo com telas sem dado real. NÃO criar tenant de
+demonstração semeado agora: o caminho LIVE está bloqueado (cripto clínica) e semear dados em
+produção, mesmo fictícios, mistura demo com ambiente clínico.
+**Consequência.** A demo no Ciclo 3 é limitada a telas públicas e escala em modo sem persistência.
+Reavaliar um ambiente de demo isolado quando houver ≥1 entrevista pedindo demonstração.
