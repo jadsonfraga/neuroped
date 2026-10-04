@@ -10,6 +10,10 @@ Valores atuais são zero por ausência de fatos persistidos (regra de honestidad
 | Assinatura | Evento `charge_paid` persistido (`billing_invoice_events`) | 5 | 0 |
 | Retenção | Assinantes ativos no mês seguinte | ≥80% | n/d |
 
+## Medição de time-to-first-value
+- Roteiro: `docs/SMOKE_CLIENTE_ZERO.md` (Fase B, passos 1–11, alvo < 30 min).
+- Última medição: pendente (exige smoke na instalação publicada).
+
 ## Instrumentação existente (fontes canônicas)
 - Onboarding: `GET /api/tenants/:id/onboarding` (10 marcos, projeção server-side).
 - Billing: `billing_invoice_events.kind = 'charge_paid' AND status = 'done'`.

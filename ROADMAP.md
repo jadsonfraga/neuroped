@@ -9,6 +9,7 @@ Critério de sucesso macro: um médico externo se cadastra sozinho, ativa, emite
 - [ ] Definir ICP inicial (decisão do criador; bloqueia posicionamento e pricing)
 - [ ] Proposta de valor em uma frase validável
 - [ ] Fechar bloqueio externo Asaas: checkout + webhook real em ambiente autorizado (hoje `BLOCKED_EXTERNAL`)
+- [x] ✅ Ciclo 2 — Runbook de smoke pós-deploy publicável (`docs/SMOKE_CLIENTE_ZERO.md`): jornada cliente-zero clique a clique, critérios de aceite e medição de time-to-first-value
 - [ ] Fechar bloqueio externo Resend (e-mail de verificação/convite em produção)
 - [ ] Smoke pós-deploy publicado do fluxo cliente-zero (cadastro → clínica → paciente → documento)
 
