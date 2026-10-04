@@ -18,6 +18,8 @@ Legenda: ✅ feito · 🔒 bloqueio externo (ação do proprietário) · ⏳ em 
 
 - ✅ Ciclo 4 / Fase 3: gate de confiabilidade G1–G7 (`PHASE3_GATE.md`).
 
+- ✅ Ciclo 5: memo de decisão do S9 com inferência dos 4 legados (`S9_DECISION_MEMO.md`).
+
 ## Next
 - Cliente Zero em LIVE: a própria clínica do proprietário rodando 14 dias no fluxo
   multi-tenant real, com o checklist de onboarding (`shared/onboarding.ts`).

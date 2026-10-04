@@ -59,3 +59,13 @@ revisão jurídica).
 autorização de destino dos registros legados (G3), por ser pequena (4 linhas) e destravar a
 remoção do bypass de admin.
 **Consequência.** Nenhum terceiro em LIVE antes do gate. Engenharia só executa G3 depois de G1/G4.
+
+## D-007 · 2026-10-04 · Ciclo 5 — S9: inferência, não autorização
+**Contexto.** O proprietário não soube responder às 3 perguntas do S9. Regra do loop: seguir com a
+melhor suposição declarada.
+**Decisão.** Registrar a leitura mais provável (os 3 legados sem owner são os fixtures
+`demo-001..003`; o 4º é do owner existente) apoiada em `db/seed_demo.sql` e no censo de 26/09, e
+exigir confirmação por contagem (2 números) antes de qualquer ação. A inferência NÃO autoriza
+backfill, exclusão nem remoção do bypass.
+**Consequência.** Caminho de G3 reduzido a: confirmar 2 números → G1/G4 → arquivar fixtures →
+decisão do 4º paciente → backfill → remover bypass.
