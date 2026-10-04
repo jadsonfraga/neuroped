@@ -77,3 +77,13 @@ S9 estão abertos. A própria página declara que só entra capacidade existente
 Aplicar exige aprovação do proprietário e PR atômica em branch própria.
 **Consequência.** Enquanto não aplicado, o risco (publicidade médica/LGPD) permanece na página.
 Recomendação: aprovar antes de qualquer divulgação pública ou convite que cite a página.
+
+## D-009 · 2026-10-04 · Ciclo 7 — G6: briefing jurídico antes de qualquer contrato
+**Contexto.** Os Termos de Uso públicos descrevem um app educativo ("não é dispositivo médico,
+sem relação médico-paciente"), incompatível com um SaaS B2B de prontuário. Revisão jurídica
+formal nunca foi feita (COMPLIANCE_LGPD.md).
+**Decisão.** Preparar o briefing (perguntas P1/P2, fatos, o que enviar) e tratar Termos B2B + DPA
+como pré-requisito do primeiro terceiro pagante. Referências normativas são do assistente e
+precisam de confirmação do advogado; nada foi tratado como parecer.
+**Consequência.** G6 sai de "não iniciado" para "pronto para o advogado"; o gargalo passa a ser a
+contratação do advogado (ação do proprietário).

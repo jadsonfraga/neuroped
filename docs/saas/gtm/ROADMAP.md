@@ -22,6 +22,8 @@ Legenda: ✅ feito · 🔒 bloqueio externo (ação do proprietário) · ⏳ em 
 
 - ✅ Ciclo 6: rascunho D-004 de `/planos` sem promessa não cumprida (`PLANOS_COPY_D004.md`), aguardando aprovação.
 
+- ✅ Ciclo 7: briefing jurídico G6 pronto para o advogado (`LEGAL_BRIEFING.md`).
+
 ## Next
 - Cliente Zero em LIVE: a própria clínica do proprietário rodando 14 dias no fluxo
   multi-tenant real, com o checklist de onboarding (`shared/onboarding.ts`).
