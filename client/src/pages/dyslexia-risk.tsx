@@ -1,7 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
-import { CONTROL, DITADO, DITADO_PSEUDO, CF, FLUENCY_TEXT, PSEUDO, RAN, WORDS, scoreIced, type IcedInput, type Tri } from "@/features/dyslexia-risk/model";
+import { Suspense, lazy, useEffect, useMemo, useState } from "react";
+import { CONTROL, DITADO, DITADO_PSEUDO, CF, FLUENCY_TEXT, ICED_VERSION, PSEUDO, RAN, WORDS, scoreIced, type IcedInput, type Tri } from "@/features/dyslexia-risk/model";
+import { buildIcedDocSpec, buildIcedFullRecord, buildIcedSummary, icedInputOf, icedResponseItems } from "@/features/dyslexia-risk/report";
+import { useToast } from "@/hooks/use-toast";
+import { useIssuer } from "@/lib/issuer";
+import { issuerCredentials } from "@/lib/issuer";
+import { issuerLines } from "@/features/super-neuropad/pdf";
+import { formatClinicalDateTime } from "@/lib/clinicalDate";
+import { safeTextFilename } from "@/lib/shareText";
 import "@/styles/super-neuropad-arcade.css";
 import "@/styles/dyslexia-risk.css";
+
+const LazySaveToPatient = lazy(() =>
+  import("@/components/SaveToPatient").then(({ SaveToPatient: Component }) => ({ default: Component })),
+);
 
 const KEY = "neuroped-dyslexia-risk-v1";
 type GateField = "nome" | "data" | "nasc" | "idade" | "escola" | "anosEsc" | "examinador";
@@ -53,7 +64,9 @@ export default function DyslexiaRiskPage() {
   const [child, setChild] = useState(false);
   const [secs, setSecs] = useState(0);
   const [running, setRunning] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [savedPatient, setSavedPatient] = useState(false);
+  const { toast } = useToast();
+  const { issuer } = useIssuer();
 
   useEffect(() => {
     try { const raw = localStorage.getItem(KEY); if (raw) setS({ ...blank(), ...JSON.parse(raw) }); } catch { /* sessão nova */ }
@@ -70,33 +83,7 @@ export default function DyslexiaRiskPage() {
     setS((prev) => ({ ...prev, flu: { ...prev.flu, tempo: 60 } }));
   }, [running, secs]);
 
-  const input: IcedInput = useMemo(() => {
-    const famSim = [s.fam.pai, s.fam.mae, s.fam.irmao].includes("sim");
-    const famNao = [s.fam.pai, s.fam.mae, s.fam.irmao].includes("nao");
-    const four = s.pers.a === "sim" && s.pers.b === "sim" && s.pers.c === "sim" && s.pers.d === "sim";
-    const persSeen = [s.pers.a, s.pers.b, s.pers.c, s.pers.d].some(Boolean);
-    return {
-      ano: s.ano, controle: s.controle,
-      palavrasAcertos: s.done.palavras ? s.palavras.filter((x) => x.ok).length : null,
-      palavrasF: s.done.palavras ? s.palavras.filter((x) => x.err).length : null,
-      palavrasNorma: s.normas.palavras,
-      pseudoAcertos: s.done.pseudo ? s.pseudo.filter((x) => x.ok).length : null,
-      pseudoLex: s.done.pseudo ? s.pseudo.filter((x) => x.lex).length : null,
-      pseudoNorma: s.normas.pseudo,
-      pcpm: s.done.fluencia ? pcpmOf(s.flu.lidas, s.flu.erros, s.flu.tempo) : null,
-      fluenciaNorma: s.normas.flu,
-      ditadoF: s.done.ditado ? s.ditado.filter((x) => x.f).length : null,
-      ditadoPseudoCertas: s.done.ditado ? s.ditadoP.filter((x) => x.ok).length : null,
-      ditadoNorma: s.normas.ditado,
-      cfAcertos: s.done.sons ? s.cf.filter((x) => x.ok).length : null,
-      cfNorma: s.normas.cf,
-      ranSeg: s.done.formas ? s.ran.seg : null,
-      ranErros: s.done.formas ? s.ran.erros : null,
-      ranNorma: s.ran.norma,
-      familiar: s.done.familia ? (famSim ? "sim" : famNao ? "nao" : "nv") : "",
-      persistencia4: s.done.ponte && persSeen ? four : null,
-    };
-  }, [s]);
+  const input: IcedInput = useMemo(() => icedInputOf(s), [s]);
   const result = scoreIced(input);
   const words = FLUENCY_TEXT.split(/\s+/);
 
@@ -105,6 +92,44 @@ export default function DyslexiaRiskPage() {
     setCursor(0);
     setNextWorld(WORLDS.findIndex((w) => w.id === next));
     setPhase("transicao");
+  }
+
+  async function exportPdf() {
+    try {
+      const { buildDocumentPdf } = await import("@/lib/documentPdf");
+      const bytes = await buildDocumentPdf(buildIcedDocSpec(s, result, issuerLines(issuer, issuerCredentials(issuer)), formatClinicalDateTime(new Date())));
+      const blob = new Blob([bytes as BlobPart], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `${safeTextFilename(`iced-8-${s.nome || "registro"}`)}.pdf`;
+      anchor.rel = "noopener";
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast({ title: "PDF gerado", description: "Registro clínico ICED-8 baixado." });
+    } catch {
+      toast({ title: "PDF", description: "Não foi possível gerar o PDF agora; use \u201cCopiar registro completo\u201d.", variant: "destructive" });
+    }
+  }
+
+  async function copyText(text: string, label: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({ title: label, description: "Texto copiado." });
+    } catch {
+      toast({ title: label, description: "Não foi possível copiar; baixe o PDF.", variant: "destructive" });
+    }
+  }
+
+  function newApplication() {
+    if (!window.confirm("Nova aplicação apaga os registros atuais (depois de salvar/copiar). Continuar?")) return;
+    localStorage.removeItem(KEY);
+    setS(blank());
+    setSavedPatient(false);
+    setCursor(0);
+    setPhase("mapa");
   }
 
   return (
@@ -220,6 +245,7 @@ export default function DyslexiaRiskPage() {
               <button type="button" className="snp-btn snp-btn--sun px-4 py-2" onClick={() => { const pseudo = s.pseudo.slice(); pseudo[cursor] = { ...pseudo[cursor], lex: !pseudo[cursor].lex, ok: false, err: true }; setS({ ...s, pseudo }); }}>Lexicalizou</button>
             </div>
           </> : <button type="button" className="snp-btn snp-btn--sun px-4 py-2" onClick={() => stamp("pseudo", "fluencia")}>Corrida do parque</button>}
+          <label className="mt-3 flex items-center justify-center gap-2 text-xs font-bold"><input type="checkbox" checked={s.normas.pseudo} onChange={(e) => setS({ ...s, normas: { ...s.normas, pseudo: e.target.checked } })} /> Norma ≤ −1 DP prevalece</label>
         </section>
       )}
 
@@ -324,7 +350,24 @@ export default function DyslexiaRiskPage() {
           <ul className="space-y-1 text-sm">{result.dominios.map((d) => <li key={d.id}><b>{d.nome}:</b> {d.examinado ? d.pontos : "não examinado"} / {d.peso} — {d.detalhe}</li>)}</ul>
           <textarea className="w-full rounded-xl border-[3px] border-[var(--snp-ink-fixed)] p-2" placeholder="Fenômeno observado" value={s.fenomeno} onChange={(e) => setS({ ...s, fenomeno: e.target.value })} />
           <p className="text-sm leading-relaxed">{result.frase}</p>
-          <button type="button" className="snp-btn snp-btn--sky px-4 py-2" onClick={() => { navigator.clipboard.writeText(result.frase); setCopied(true); window.setTimeout(() => setCopied(false), 2000); }}>{copied ? "Copiado ✓" : "Copiar devolução"}</button>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className="snp-btn snp-btn--sky px-4 py-2" onClick={() => void copyText(result.frase, "Devolução")}>Copiar devolução</button>
+            <button type="button" className="snp-btn snp-btn--sky px-4 py-2" onClick={() => void copyText(buildIcedSummary(s, result, formatClinicalDateTime(new Date())), "Resumo")}>Copiar resumo</button>
+            <button type="button" className="snp-btn snp-btn--paper px-4 py-2" onClick={() => void copyText(buildIcedFullRecord(s, result, formatClinicalDateTime(new Date())), "Registro completo")}>Copiar registro completo</button>
+            <button type="button" className="snp-btn snp-btn--sun px-4 py-2" onClick={() => void exportPdf()}>Baixar PDF</button>
+          </div>
+          <Suspense fallback={<p className="text-xs font-bold opacity-70" role="status">Carregando salvar no prontuário…</p>}>
+            <LazySaveToPatient
+              scaleName="ICED-8 — dyslexia risk"
+              responses={icedResponseItems(s, result)}
+              patientAge={s.idade || "8 anos"}
+              applicationDate={new Date()}
+              instrumentVersion={ICED_VERSION}
+              onSaved={() => setSavedPatient(true)}
+            />
+          </Suspense>
+          <button type="button" className="snp-btn snp-btn--paper px-4 py-2" onClick={newApplication}>Nova aplicação</button>
+          {savedPatient && <p className="text-xs font-bold opacity-70" role="status">Salvo no prontuário. "Nova aplicação" libera a tela sem aviso.</p>}
           <p className="text-xs font-bold opacity-70">Fora da soma: compreensão isolada, TDAH, TDL, TEA, ansiedade, inteligência, matemática, motivação. Diagnóstico permanece com o médico.</p>
         </section>
       )}
