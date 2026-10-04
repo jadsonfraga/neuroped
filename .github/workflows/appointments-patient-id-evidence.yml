@@ -1,0 +1,72 @@
+name: Evidence appointments x live_patients
+
+# #783: evidência read-only do D1 remoto para decidir se appointments.patient_id
+# e live_patients.id compartilham o mesmo espaço de identificadores.
+# Nenhuma mutação: apenas SELECT COUNT. Sem PHI (contagens agregadas).
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: appointments-patient-id-evidence
+  cancel-in-progress: true
+
+jobs:
+  evidence:
+    name: Read-only identifier space evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Query remote D1 (read-only)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/appointments-evidence
+          npx wrangler@4 d1 execute neuroped-db --remote --json --command "
+            SELECT
+              (SELECT COUNT(*) FROM appointments a
+                JOIN live_patients p ON p.id = a.patient_id) AS matched_ids,
+              (SELECT COUNT(*) FROM appointments WHERE patient_id IS NOT NULL) AS total_appointments_with_patient,
+              (SELECT COUNT(*) FROM live_patients) AS total_live_patients" \
+            > artifacts/appointments-evidence/evidence.json
+          cat artifacts/appointments-evidence/evidence.json
+
+      - name: Interpret evidence
+        run: |
+          set -euo pipefail
+          node -e '
+            const fs = require("fs");
+            const raw = JSON.parse(fs.readFileSync("artifacts/appointments-evidence/evidence.json", "utf8"));
+            const rows = Array.isArray(raw) ? raw[0]?.results : raw?.results;
+            const row = rows?.[0];
+            if (!row) { console.error("EVIDENCE_INVALID"); process.exit(1); }
+            const { matched_ids, total_appointments_with_patient, total_live_patients } = row;
+            fs.writeFileSync("artifacts/appointments-evidence/summary.md",
+              `## Evidence appointments x live_patients (#783)\n` +
+              `- appointments with patient_id: ${total_appointments_with_patient}\n` +
+              `- live_patients total: ${total_live_patients}\n` +
+              `- matched ids (JOIN): ${matched_ids}\n\n` +
+              (Number(matched_ids) === 0
+                ? `Conclusion: identifier spaces are DISTINCT (zero matches). ` +
+                  `The PURGE_UNREACHABLE_DATA:appointments fail-closed guard must remain.`
+                : `Conclusion: there IS overlap between identifier spaces. ` +
+                  `Domain decision required before any purge mapping change (#783).`));
+            console.log(fs.readFileSync("artifacts/appointments-evidence/summary.md", "utf8"));
+          '
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: appointments-patient-id-evidence
+          path: artifacts/appointments-evidence/
+          retention-days: 90

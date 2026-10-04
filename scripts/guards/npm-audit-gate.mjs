@@ -23,19 +23,11 @@ const ALLOWLIST = [
     reason: "sem versao corrigida upstream; uso limitado a decodificar PKCS#12 em @signpdf/signer-p12, fora do vetor do advisory",
     expiresOn: "2026-11-02",
   },
-  // GHSA-vfj7-8cjw-p6xm (braces <= 3.0.3, exaustao de pilha por padroes
-  // aninhados). A correcao exige braces 4.x, indisponivel na cadeia do
-  // tailwindcss 3.4 (micromatch@4.0.8 fixa braces ~3.0.2); `npm audit fix`
-  // rebaixaria @tailwindcss/typography de major. Chega ao projeto apenas no
-  // build do frontend (chokidar/fast-glob/micromatch do tailwindcss),
-  // processando arquivos locais do repositorio — nunca entrada nao
-  // confiavel em runtime. Re-check: remover quando tailwindcss 4.x ou
-  // micromatch atualizado entrarem na cadeia, ou na expiracao.
   {
     ghsa: "GHSA-vfj7-8cjw-p6xm",
     packageName: "braces",
-    reason: "build-time apenas via cadeia tailwindcss (chokidar/fast-glob/micromatch), sem entrada nao confiavel; sem versao 3.x corrigida disponivel",
-    expiresOn: "2026-11-03",
+    reason: "DoS por padroes aninhados (CWE-674, CVSS 7.5, impacto apenas em disponibilidade); sem versao corrigida upstream (<=3.0.3 e a ultima publicada). Chega ao projeto apenas via cadeia de build do tailwindcss/chokidar/fast-glob/micromatch, sem exposicao em runtime no browser. Re-check: remover a excecao assim que sair release corrigida do braces",
+    expiresOn: "2026-11-04",
   },
 ];
 
