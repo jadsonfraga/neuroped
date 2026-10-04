@@ -28,3 +28,10 @@ ARPA, churn, ativação comercial. Nenhum número acima é receita real.
 | Distribuição e GTM | 1 | sem canal, parceria ou conteúdo mapeado |
 | Métricas e instrumentação | 3 | evidência SQL por clínica; sem funil de aquisição |
 | Prova de demanda | 0 | sem entrevista nem piloto pago registrados |
+
+## Prova de demanda (Ciclo 2)
+| Indicador | Valor | Alvo |
+|---|---|---|
+| Entrevistas realizadas (ICP A) | 0 | 3 → 10 |
+| Compromissos de demo/piloto | 0 | ≥1 → 3 pilotos pagos |
+| Faixa de preço aceita (mediana) | n/d | validar R$ 99/assento |

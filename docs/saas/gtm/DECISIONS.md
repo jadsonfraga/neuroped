@@ -31,3 +31,13 @@ clínica própria em LIVE). Regra do loop: seguir com a melhor suposição decla
 ICP; a Fase 1 (Cliente Zero) continua bloqueada até a cripto clínica existir.
 **Como invalidar.** Qualquer entrevista que mostre outro pagador primário (ex.: neuropediatra
 individual) reabre este item.
+
+## D-003 · 2026-10-04 · Ciclo 2 — alavanca: proposta de valor + roteiro de entrevistas
+**Contexto.** Prova de demanda = 0. Sem ela, qualquer feature extra é aposta.
+**Decisão.** Uma única entrega: `VALUE_PROPOSITION.md` (frase v1 + 4 hipóteses) e
+`INTERVIEW_PLAYBOOK.md` (10 entrevistas, compromisso obrigatório ao final). Não foi feito:
+landing nova, feature de WhatsApp, tiers, preço novo.
+**Alerta registrado.** Não divulgar promessa de registro cifrado até o audit Clinical/LGPD passar
+(`ready: true`); `/planos` já descreve cifra, hoje inativa em produção. Decisão de remover ou
+qualificar o texto é do proprietário (D-004 pendente).
+**Consequência.** O ciclo só fecha com ≥3 entrevistas registradas; entrevistas são ação humana.
