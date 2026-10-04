@@ -20,6 +20,8 @@ Legenda: ✅ feito · 🔒 bloqueio externo (ação do proprietário) · ⏳ em 
 
 - ✅ Ciclo 5: memo de decisão do S9 com inferência dos 4 legados (`S9_DECISION_MEMO.md`).
 
+- ✅ Ciclo 6: rascunho D-004 de `/planos` sem promessa não cumprida (`PLANOS_COPY_D004.md`), aguardando aprovação.
+
 ## Next
 - Cliente Zero em LIVE: a própria clínica do proprietário rodando 14 dias no fluxo
   multi-tenant real, com o checklist de onboarding (`shared/onboarding.ts`).

@@ -69,3 +69,11 @@ exigir confirmação por contagem (2 números) antes de qualquer ação. A infer
 backfill, exclusão nem remoção do bypass.
 **Consequência.** Caminho de G3 reduzido a: confirmar 2 números → G1/G4 → arquivar fixtures →
 decisão do 4º paciente → backfill → remover bypass.
+
+## D-008 · 2026-10-04 · Ciclo 6 — D-004: rascunho, não aplicação
+**Contexto.** `/planos` descreve cifra, LGPD executável e isolamento absoluto; em produção G1/G2 e
+S9 estão abertos. A própria página declara que só entra capacidade existente.
+**Decisão.** Preparar o texto exato (antes/depois) e um bloco "Em implantação", sem editar a página.
+Aplicar exige aprovação do proprietário e PR atômica em branch própria.
+**Consequência.** Enquanto não aplicado, o risco (publicidade médica/LGPD) permanece na página.
+Recomendação: aprovar antes de qualquer divulgação pública ou convite que cite a página.
