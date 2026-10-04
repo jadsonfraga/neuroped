@@ -23,6 +23,12 @@ const ALLOWLIST = [
     reason: "sem versao corrigida upstream; uso limitado a decodificar PKCS#12 em @signpdf/signer-p12, fora do vetor do advisory",
     expiresOn: "2026-11-02",
   },
+  {
+    ghsa: "GHSA-vfj7-8cjw-p6xm",
+    packageName: "braces",
+    reason: "DoS por padroes aninhados (CWE-674, CVSS 7.5, impacto apenas em disponibilidade); sem versao corrigida upstream (<=3.0.3 e a ultima publicada). Chega ao projeto apenas via cadeia de build do tailwindcss/chokidar/fast-glob/micromatch, sem exposicao em runtime no browser. Re-check: remover a excecao assim que sair release corrigida do braces",
+    expiresOn: "2026-11-04",
+  },
 ];
 
 const today = new Date().toISOString().slice(0, 10);
