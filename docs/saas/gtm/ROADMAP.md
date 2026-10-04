@@ -16,6 +16,8 @@ Legenda: ✅ feito · 🔒 bloqueio externo (ação do proprietário) · ⏳ em 
 - 🔒 S9 (P0): associação legítima de dados clínicos legados a clínica
   (`docs/saas/spiral/BACKLOG.md`, `BLOCKED_EXTERNAL_LEGACY_TENANT_CENSUS_2026-09-26.md`).
 
+- ✅ Ciclo 4 / Fase 3: gate de confiabilidade G1–G7 (`PHASE3_GATE.md`).
+
 ## Next
 - Cliente Zero em LIVE: a própria clínica do proprietário rodando 14 dias no fluxo
   multi-tenant real, com o checklist de onboarding (`shared/onboarding.ts`).

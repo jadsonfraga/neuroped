@@ -49,3 +49,13 @@ demonstração semeado agora: o caminho LIVE está bloqueado (cripto clínica) e
 produção, mesmo fictícios, mistura demo com ambiente clínico.
 **Consequência.** A demo no Ciclo 3 é limitada a telas públicas e escala em modo sem persistência.
 Reavaliar um ambiente de demo isolado quando houver ≥1 entrevista pedindo demonstração.
+
+## D-006 · 2026-10-04 · Ciclo 4 (Fase 3) — gate G1–G7 e ordem obrigatória
+**Contexto.** O usuário pediu Fase 3 sem entrevistas feitas. O mapeamento mostra que o gargalo
+de confiabilidade é um conjunto pequeno e ordenado de P0, quase todos dependentes de ação do
+proprietário (chaves, token R2, destino de 4 registros legados, credencial Asaas sandbox,
+revisão jurídica).
+**Decisão.** Publicar o gate G1–G7 com ordem G1 → G4 → G3. A alavanca única do ciclo é a
+autorização de destino dos registros legados (G3), por ser pequena (4 linhas) e destravar a
+remoção do bypass de admin.
+**Consequência.** Nenhum terceiro em LIVE antes do gate. Engenharia só executa G3 depois de G1/G4.
