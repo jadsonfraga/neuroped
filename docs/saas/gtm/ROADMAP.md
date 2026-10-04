@@ -24,6 +24,8 @@ Legenda: ✅ feito · 🔒 bloqueio externo (ação do proprietário) · ⏳ em 
 
 - ✅ Ciclo 7: briefing jurídico G6 pronto para o advogado (`LEGAL_BRIEFING.md`).
 
+- ✅ Ciclo 8: roteiro do Cliente Zero em 14 dias (`CLIENTE_ZERO_14D.md`).
+
 ## Next
 - Cliente Zero em LIVE: a própria clínica do proprietário rodando 14 dias no fluxo
   multi-tenant real, com o checklist de onboarding (`shared/onboarding.ts`).

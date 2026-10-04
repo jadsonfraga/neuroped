@@ -87,3 +87,10 @@ como pré-requisito do primeiro terceiro pagante. Referências normativas são d
 precisam de confirmação do advogado; nada foi tratado como parecer.
 **Consequência.** G6 sai de "não iniciado" para "pronto para o advogado"; o gargalo passa a ser a
 contratação do advogado (ação do proprietário).
+
+## D-010 · 2026-10-04 · Ciclo 8 — Cliente Zero: pré-condições antes de qualquer dia 1
+**Contexto.** O próximo marco comercial real é o proprietário usar o LIVE com a própria clínica.
+**Decisão.** Roteiro de 14 dias com pré-condições P1–P5 (cripto, DR com cifra real, S9, backup,
+trial), smoke sintético nos dias 1–2, uso real só com novos atendimentos, critérios de parada com
+rollback sem perda e limites do LIVE declarados.
+**Consequência.** O dia 1 só começa depois de G1, G4 e G3; até lá o roteiro fica parado.
