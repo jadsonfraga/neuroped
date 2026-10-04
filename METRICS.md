@@ -24,4 +24,5 @@ Valores atuais são zero por ausência de fatos persistidos (regra de honestidad
 
 ## Lacunas de instrumentação
 - Visitante → cadastro: nenhum evento de aquisição/origem; definir na Fase 4.
+- Funil de entrevistas (Fase 4): alvos e tabela de registro em `docs/GTM_ENTREVISTAS_E_PILOTO.md` — 25 convites → 10 entrevistas → ≥6 dores espontâneas → 3 pilotos pagos → 2 segundas faturas.
 - Time-to-first-value: ainda não medido ponta a ponta; alvo <30 min do critério macro.

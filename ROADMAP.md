@@ -20,6 +20,7 @@ Critério de sucesso macro: um médico externo se cadastra sozinho, ativa, emite
 - [ ] Níveis de permissão já existem (owner/members); validar papéis secretaria vs. médico na prática
 
 ## Later (Fase 4–5)
+- [x] ✅ Ciclo 3 — Kit GTM pronto: roteiro de 10 entrevistas (Mom Test) + oferta de piloto pago R$ 99/mês + regra de desempate de segmento (`docs/GTM_ENTREVISTAS_E_PILOTO.md`)
 - [ ] 10+ entrevistas com ICP; 3+ pilotos pagos
 - [ ] Instrumentação de funil (visitante → cadastro → ativação → assinatura → retenção)
 - [ ] GTM: sociedades de neuropediatria, conteúdo médico ético, indicação
