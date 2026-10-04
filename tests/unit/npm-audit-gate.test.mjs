@@ -19,6 +19,25 @@ test("gate: nenhuma high/critical fora da allowlist ativa no grafo atual", () =>
   assert.match(stdout, /GHSA-86w9-cpqp-85rv/);
 });
 
+test("gate: excecao braces cobre a cadeia tailwindcss e expira sozinha", () => {
+  const source = readFileSync(GATE, "utf8");
+  assert.match(source, /GHSA-vfj7-8cjw-p6xm/, "advisory braces documentado no fonte");
+  assert.match(source, /expiresOn: "2026-11-03"/, "prazo curto da excecao documentado");
+  const expired = source.replace('expiresOn: "2026-11-03"', 'expiresOn: "2020-01-01"');
+  const tmp = `${process.env.RUNNER_TEMP ?? "/tmp"}/npm-audit-gate-braces-expired.mjs`;
+  writeFileSync(tmp, expired);
+  try {
+    execFileSync("node", [tmp], { encoding: "utf8" });
+    assert.fail("excecao braces vencida nao pode passar no gate");
+  } catch (error) {
+    // Com a excecao vencida, a cadeia inteira do tailwindcss volta a bloquear.
+    assert.match(String(error.stderr ?? ""), /BLOQUEADO: braces/);
+    assert.match(String(error.stderr ?? ""), /BLOQUEADO: tailwindcss/);
+  } finally {
+    unlinkSync(tmp);
+  }
+});
+
 test("gate: exceção vencida volta a bloquear a esteira", () => {
   const source = readFileSync(GATE, "utf8");
   assert.match(source, /expiresOn: "2026-11-02"/, "prazo da exceção documentado no fonte");
