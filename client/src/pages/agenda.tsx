@@ -6,7 +6,6 @@ import {
   CalendarClock,
   CalendarOff,
   CalendarRange,
-  CheckCircle2,
   CircleDollarSign,
   Clock3,
   Copy,
@@ -15,14 +14,12 @@ import {
   ListPlus,
   Mail,
   MailWarning,
-  MessageSquareText,
   Plus,
   ShieldCheck,
   Star,
   Trash2,
   UserPlus,
   Users,
-  WalletCards,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,6 +29,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { AgendaUnifiedDay } from "@/components/AgendaUnifiedDay";
+import { AgendaFinancialReport } from "@/components/AgendaFinancialReport";
 import { useClinic } from "@/contexts/ClinicContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -52,7 +50,6 @@ import {
   minutesToClock,
   notificationTemplateLabel,
   waitlistStatusLabel,
-  type Appointment,
   type AppointmentStatus,
   type OperationsDashboard,
 } from "@shared/operations";
@@ -132,6 +129,7 @@ function auditActionLabel(value: string): string {
     create_day_block: "dia inteiro bloqueado",
     appointment_status: "status da consulta alterado",
     appointment_payment: "financeiro atualizado",
+    financial_report_export: "relatório financeiro exportado (CSV)",
     waitlist_status: "lista de espera alterada",
     notification_status: "comunicação atualizada",
     notification_retry_email: "reenvio de e-mail solicitado",
@@ -751,8 +749,7 @@ export default function AgendaPage() {
 
         {canConfigure && (
           <TabsContent value="financeiro">
-            <div className="grid gap-4 lg:grid-cols-3"><Metric icon={WalletCards} label="Previsto" value={formatMoneyBRL(data.metrics.expectedCents)} /><Metric icon={CheckCircle2} label="Recebido" value={formatMoneyBRL(data.metrics.paidCents)} /><Metric icon={MessageSquareText} label="Pendências de comunicação" value={String(data.metrics.pendingNotifications)} /></div>
-            <Card className="mt-4"><CardHeader><CardTitle className="text-base">Consultas e recebimentos</CardTitle></CardHeader><CardContent className="space-y-2">{data.appointments.slice(0, 100).map((apt) => <PaymentRow key={apt.id} appointment={apt} busy={busy} mutate={mutate} />)}</CardContent></Card>
+            <AgendaFinancialReport today={localDateInput()} busy={busy} mutate={mutate} />
           </TabsContent>
         )}
       </Tabs>
@@ -814,9 +811,4 @@ function ProviderChooser({ providers, onChoose }: { providers: Array<{ id: strin
       </ul>
     </section>
   );
-}
-
-function PaymentRow({ appointment, busy, mutate }: { appointment: Appointment; busy: boolean; mutate: (payload: Record<string, unknown>, success: string) => Promise<boolean> }) {
-  const [amount, setAmount] = useState(appointment.amountCents !== null ? String(appointment.amountCents / 100) : "");
-  return <div className="grid gap-3 rounded-2xl border p-4 md:grid-cols-[minmax(0,1fr)_140px_150px_auto] md:items-end"><div><p className="font-semibold">{appointment.patientName || "Paciente"}</p><p className="text-xs text-muted-foreground">{dateTimeLabel(appointment.startsAtLocal)} · {appointment.serviceName}</p></div><Field label="Valor R$"><Input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" /></Field><Field label="Situação"><select className="min-h-11 w-full rounded-xl border bg-background px-3 text-sm" defaultValue={appointment.paymentStatus} id={`payment-${appointment.id}`}><option value="pending">Pendente</option><option value="paid">Pago</option><option value="waived">Cortesia</option><option value="refunded">Estornado</option></select></Field><Button disabled={busy} onClick={() => { const select = document.getElementById(`payment-${appointment.id}`) as HTMLSelectElement | null; return mutate({ action: "appointment_payment", id: appointment.id, amountCents: amount ? Math.round(Number(amount.replace(",", ".")) * 100) : null, paymentStatus: select?.value || appointment.paymentStatus, paymentMethod: "manual" }, "Financeiro atualizado."); }}>Salvar</Button></div>;
 }
