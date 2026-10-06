@@ -448,7 +448,7 @@ function safeAuditMetadata(value: Record<string, unknown> | undefined): string |
   if (!value) return null;
   const allowed: Record<string, unknown> = {};
   for (const [key, item] of Object.entries(value)) {
-    if (!/^(status|previousStatus|source|serviceId|paymentStatus|staffUserId|bookingEnabled|count|modality)$/.test(key)) {
+    if (!/^(status|previousStatus|source|serviceId|paymentStatus|paymentMethod|staffUserId|bookingEnabled|count|modality)$/.test(key)) {
       continue;
     }
     if (typeof item === "string" || typeof item === "number" || typeof item === "boolean" || item === null) {
