@@ -56,7 +56,7 @@ const stripComments = (source) => source.replace(/\/\*[\s\S]*?\*\//g, "").replac
 const unifiedCode = stripComments(unified + unifiedLib);
 assert.match(agenda, /const unifiedAvailable = data\.access\.delegated && providerChoices\.length > 1/, "só a recepção com mais de um profissional vê a aba");
 assert.match(agenda, /\{unifiedAvailable && <TabsTrigger value="dia">Dia de todos<\/TabsTrigger>\}/);
-assert.match(agenda, /const activeTab = tab === "dia" && !unifiedAvailable \? "agenda" : tab/, "sem direito à aba, volta para a agenda");
+assert.match(  agenda,  /\(tab === "dia" && !unifiedAvailable\) \|\| \(tab === "clinica" && !clinicDayAvailable\)/,  "sem direito à aba (dia de todos ou clínica), volta para a agenda",);
 assert.match(
   agenda,
   /onOpenAgenda=\{\(providerUserId\) => \{\s+chooseProvider\(providerUserId\);\s+setTab\("agenda"\);\s+\}\}/,

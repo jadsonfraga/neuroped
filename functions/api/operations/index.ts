@@ -1,3 +1,4 @@
+import { roleHasPermission } from "../../../shared/permissions";
 import { getContextUser } from "../auth/_authorization";
 import {
   appointmentToApi,
@@ -123,6 +124,95 @@ async function appointmentsForPrincipal(env: OperationsEnv, principal: Operation
 }
 
 const RECEPTION_DAY_LIMIT = 200;
+
+/**
+ * Agenda da clínica inteira num dia (só leitura) para owner/clinic_admin.
+ *
+ * A fronteira é a membership ATIVA da própria clínica resolvida no contexto
+ * (`clinicId`): a consulta só sai se o ator for membro `owner`/`clinic_admin`
+ * ATIVO daquela clínica exata (`roleHasPermission(role,
+ * "organization.metrics.read")` é a mesma matriz RBAC do restante do tenant
+ * — só owner/clinic_admin —, fail-closed para qualquer outro
+ * papel). Profissional, recepção e leitor recebem 403 sem revelar nada.
+ *
+ * Cada linha carrega o dono real (`provider_user_id` vem da própria consulta),
+ * então o front nunca rotula uma consulta com o nome errado. Como a recepção
+ * não tem direito a financeiro, mas dono/admin têm, o payload mantém os valores
+ * de `appointmentToApi` — o gate acima já restringe quem chega aqui.
+ */
+const CLINIC_DAY_LIMIT = 400;
+
+async function getClinicDay(
+  db: D1Database,
+  env: OperationsEnv,
+  authUser: { id: string; name: string },
+  clinicId: string,
+  date: string,
+) {
+  const membership = await db
+    .prepare(
+      `SELECT role FROM clinic_memberships
+        WHERE clinic_id = ? AND user_id = ? AND active = 1
+        LIMIT 1`,
+    )
+    .bind(clinicId, authUser.id)
+    .first<{ role: string }>();
+  if (!membership || !roleHasPermission(membership.role, "organization.metrics.read")) {
+    return errorResponse(
+      "Agenda da clínica restrita ao responsável pela clínica.",
+      "FORBIDDEN",
+      403,
+    );
+  }
+  const clinic = await db
+    .prepare(`SELECT timezone FROM clinics WHERE id = ? AND status = 'active' LIMIT 1`)
+    .bind(clinicId)
+    .first<{ timezone: string }>();
+  if (!clinic?.timezone || !isValidTimeZone(clinic.timezone)) {
+    return errorResponse("Clínica sem fuso horário válido.", "CLINIC_TIMEZONE_REQUIRED", 409);
+  }
+  const dayStart = `${date}T00:00`;
+  const dayEnd = addMinutesLocal(dayStart, 24 * 60);
+  const { results } = await db
+    .prepare(
+      `SELECT a.*, s.name AS service_name, s.modality AS service_modality,
+              p.name AS provider_name
+         FROM appointments a
+         JOIN booking_services s ON s.id = a.service_id
+         JOIN users p ON p.id = a.provider_user_id
+        WHERE a.clinic_id = ?
+          AND a.starts_at_local >= ? AND a.starts_at_local < ?
+        ORDER BY a.starts_at_local ASC, a.id ASC
+        LIMIT ${CLINIC_DAY_LIMIT + 1}`,
+    )
+    .bind(clinicId, dayStart, dayEnd)
+    .all<AppointmentRow & { provider_name: string }>();
+  const rows = results ?? [];
+  const appointments = await Promise.all(
+    rows.slice(0, CLINIC_DAY_LIMIT).map((row) => appointmentToApi(env, row)),
+  );
+  const providers = new Map<string, { providerUserId: string; providerName: string; count: number }>();
+  for (const row of rows.slice(0, CLINIC_DAY_LIMIT)) {
+    const entry = providers.get(row.provider_user_id) ?? {
+      providerUserId: row.provider_user_id,
+      providerName: row.provider_name,
+      count: 0,
+    };
+    entry.count += 1;
+    providers.set(row.provider_user_id, entry);
+  }
+  return {
+    date,
+    timezone: clinic.timezone,
+    nowLocal: localNow(clinic.timezone),
+    clinicId,
+    appointments,
+    providers: [...providers.values()].sort(
+      (a, b) => a.providerName.localeCompare(b.providerName, "pt-BR") || a.providerUserId.localeCompare(b.providerUserId),
+    ),
+    truncated: rows.length > CLINIC_DAY_LIMIT,
+  };
+}
 
 /**
  * Consultas de UM dia da agenda (todos os estados), para a Recepção do dia.
@@ -462,6 +552,16 @@ export const onRequestGet: PagesFunction<OperationsEnv> = async (context) => {
       return jsonResponse(
         await getReceptionDay(env.DB, env, prepared.provider, prepared.principal, prepared.clinicId, date),
       );
+    }
+    if (url.searchParams.get("resource") === "clinic_day") {
+      if (prepared.principal.delegated) {
+        return errorResponse("Agenda da clínica restrita ao responsável pela clínica.", "FORBIDDEN", 403);
+      }
+      const date = (url.searchParams.get("date") ?? "").trim();
+      if (!isValidLocalDate(date)) return errorResponse("Data inválida.", "VALIDATION_ERROR", 400);
+      const clinicDayResult = await getClinicDay(env.DB!, env, prepared.authUser, prepared.clinicId, date);
+      if (clinicDayResult instanceof Response) return clinicDayResult;
+      return jsonResponse(clinicDayResult);
     }
     if (url.searchParams.get("resource") === "financial_report") {
       return await financialReportResponse(env, url, prepared.principal, prepared.provider, prepared.clinicId);

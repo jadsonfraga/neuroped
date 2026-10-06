@@ -344,6 +344,21 @@ export interface OperationsAuditEntry {
   createdAt: string;
 }
 
+/**
+ * GET /api/operations?resource=clinic_day&date=AAAA-MM-DD — agenda da clínica
+ * inteira num dia (só leitura, para owner/clinic_admin da clínica).
+ */
+export interface ClinicDayProvider {  providerUserId: string;  providerName: string;  /** Total de consultas do dia deste profissional (inclui as ocultas da grade). */  count: number;}
+export interface ClinicDay {
+  date: string;
+  timezone: string;
+  nowLocal: string;
+  clinicId: string;
+  appointments: Appointment[];
+  providers: ClinicDayProvider[];
+  truncated: boolean;
+}
+
 /** GET /api/operations?resource=day&date=AAAA-MM-DD — consultas de um dia (Recepção do dia). */
 export interface ReceptionDay {
   date: string;
