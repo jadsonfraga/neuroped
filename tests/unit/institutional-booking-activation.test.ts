@@ -85,6 +85,8 @@ const rejects = (promise: Promise<unknown>, code: string) => assert.rejects(prom
 // 1. Configuração do repositório é válida e começa SEM consentimento.
 {
   const cfg = normalizeBookingConfig(repoConfig);
+  assert.equal(cfg.confirmedByOwner, true, "proprietário confirmou em 06/10 17:37 BRT");
+  assert.equal(cfg.profile.locationLabel, null, "local em branco");
   assert.equal(cfg.service.durationMinutes, 60, "#963: serviço de 60 minutos");
   assert.equal(cfg.service.modality, "in_person", "#963: presencial");
   assert.equal(cfg.rules.length, 5);
@@ -116,7 +118,9 @@ assert.equal(provisioned.status, "configured");
 {
   const before = (await publicGet(t.d1, "action=providers")).body.providers;
   assert.deepEqual(before, [], "estado de produção hoje: diretório vazio");
-  const result = await activateInstitutionalBooking(t.adapter, opts(repoConfig));
+  // A trava de consentimento é exercitada com confirmedByOwner=false explícito:
+  // o arquivo do repositório pode estar true (ativação aprovada) sem enfraquecer o teste.
+  const result = await activateInstitutionalBooking(t.adapter, opts({ ...repoConfig, confirmedByOwner: false }));
   assert.equal(result.status, "awaiting_owner_confirmation");
   assert.equal(result.writes, 0);
   assert.equal(result.snapshot.institutionalContextReady, true);
