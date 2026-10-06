@@ -302,6 +302,8 @@ jobs:
           E2E_PW: ${{ secrets.NEUROPED_E2E_PASSWORD }}
           E2E_MAIL: ${{ secrets.NEUROPED_E2E_EMAIL }}
           E2E_NM: ${{ secrets.NEUROPED_E2E_NAME }}
+          OP_KEY: ${{ secrets.OPERATIONAL_DATA_KEY }}
+          OP_KEY_ID: ${{ secrets.OPERATIONAL_DATA_KEY_ID }}
         run: |
           set -euo pipefail
           jwt_secret="$JWT_SECRET"
@@ -311,7 +313,9 @@ jobs:
           e2e_pw="$E2E_PW"
           e2e_mail="$E2E_MAIL"
           e2e_name="$E2E_NM"
-          unset JWT_SECRET ADMIN_PW ADMIN_MAIL ADMIN_NM E2E_PW E2E_MAIL E2E_NM
+          op_key="$OP_KEY"
+          op_key_id="$OP_KEY_ID"
+          unset JWT_SECRET ADMIN_PW ADMIN_MAIL ADMIN_NM E2E_PW E2E_MAIL E2E_NM OP_KEY OP_KEY_ID
           put_required() {
             [ -n "$2" ] || { echo "::error::$1 ausente"; exit 1; }
             printf '%s' "$2" | npx wrangler@4 pages secret put "$1" --project-name neuroped >/dev/null
@@ -333,6 +337,11 @@ jobs:
           put_optional NEUROPED_E2E_PASSWORD "$e2e_pw"
           put_optional NEUROPED_E2E_EMAIL "$e2e_mail"
           put_optional NEUROPED_E2E_NAME "$e2e_name"
+          # Agenda pública: sem chave operacional dedicada (>=32 chars) o POST
+          # book responde 503 CRYPTO_NOT_CONFIGURED. Opcional para não quebrar o
+          # deploy; a chave é do dono e precisa de backup (perda = dados ilegíveis).
+          put_optional OPERATIONAL_DATA_KEY "$op_key"
+          put_optional OPERATIONAL_DATA_KEY_ID "$op_key_id"
 
       - name: Provisionar bucket LGPD (R2) e binding (idempotente, condicional)
         # O binding LGPD_EXPORT_BUCKET só entra no wrangler.toml desta execução
