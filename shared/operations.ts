@@ -344,6 +344,17 @@ export interface OperationsAuditEntry {
   createdAt: string;
 }
 
+/** GET /api/operations?resource=day&date=AAAA-MM-DD — consultas de um dia (Recepção do dia). */
+export interface ReceptionDay {
+  date: string;
+  timezone: string;
+  /** "Agora" no fuso do profissional (AAAA-MM-DDTHH:MM). */
+  nowLocal: string;
+  providerName: string;
+  appointments: Appointment[];
+  truncated: boolean;
+}
+
 export interface OperationsDashboard {
   profile: ProviderProfile;
   services: BookingService[];

@@ -30,6 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { AgendaUnifiedDay } from "@/components/AgendaUnifiedDay";
 import { AgendaFinancialReport } from "@/components/AgendaFinancialReport";
+import { AgendaReceptionDay } from "@/components/AgendaReceptionDay";
 import { useClinic } from "@/contexts/ClinicContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -418,6 +419,7 @@ export default function AgendaPage() {
       <Tabs value={activeTab} onValueChange={setTab} className="space-y-4">
         <TabsList className="h-auto w-full justify-start overflow-x-auto rounded-2xl p-1">
           <TabsTrigger value="agenda">Agenda</TabsTrigger>
+          <TabsTrigger value="recepcao" data-testid="tab-reception-day">Recepção do dia</TabsTrigger>
           {unifiedAvailable && <TabsTrigger value="dia">Dia de todos</TabsTrigger>}
           <TabsTrigger value="espera">Espera</TabsTrigger>
           <TabsTrigger value="comunicacao">Comunicação</TabsTrigger>
@@ -574,6 +576,18 @@ export default function AgendaPage() {
               ))}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="recepcao" className="space-y-4">
+          <AgendaReceptionDay
+            providerId={providerId}
+            today={localDateInput()}
+            date={agendaDate}
+            onDateChange={setAgendaDate}
+            busy={busy}
+            agendaOf={agendaOf}
+            mutate={mutate}
+          />
         </TabsContent>
 
         {unifiedAvailable && (

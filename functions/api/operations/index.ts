@@ -109,6 +109,61 @@ async function patientBelongsToClinic(
   return Boolean(row?.id);
 }
 
+/** Financeiro da consulta só para quem configura; a recepção recebe redigido. */
+async function appointmentsForPrincipal(env: OperationsEnv, principal: OperationsPrincipal, rows: AppointmentRow[]) {
+  const full = await Promise.all(rows.map((row) => appointmentToApi(env, row)));
+  return principal.canConfigure
+    ? full
+    : full.map((item) => ({
+        ...item,
+        amountCents: null,
+        paymentStatus: "pending" as const,
+        paymentMethod: null,
+      }));
+}
+
+const RECEPTION_DAY_LIMIT = 200;
+
+/**
+ * Consultas de UM dia da agenda (todos os estados), para a Recepção do dia.
+ *
+ * O painel traz no máximo 250 consultas, priorizando as futuras: numa agenda
+ * cheia, as consultas da manhã de hoje (já com check-in) podiam ficar de fora.
+ * Aqui o recorte é exato por dia, no fuso do profissional, com o mesmo escopo
+ * (profissional + clínica) e a mesma redação do financeiro para a recepção.
+ */
+async function getReceptionDay(
+  db: D1Database,
+  env: OperationsEnv,
+  provider: { id: string; name: string },
+  principal: OperationsPrincipal,
+  clinicId: string,
+  date: string,
+) {
+  const profile = await ensureProviderProfile(db, provider);
+  const { results } = await db
+    .prepare(
+      `SELECT a.*, s.name AS service_name, s.modality AS service_modality
+         FROM appointments a
+         JOIN booking_services s ON s.id = a.service_id
+        WHERE a.provider_user_id = ? AND a.clinic_id = ?
+          AND a.starts_at_local >= ? AND a.starts_at_local < ?
+        ORDER BY a.starts_at_local ASC, a.id ASC
+        LIMIT ${RECEPTION_DAY_LIMIT + 1}`,
+    )
+    .bind(provider.id, clinicId, `${date}T00:00`, addMinutesLocal(`${date}T00:00`, 24 * 60))
+    .all<AppointmentRow>();
+  const rows = results ?? [];
+  return {
+    date,
+    timezone: profile.timezone,
+    nowLocal: localNow(profile.timezone),
+    providerName: principal.providerName,
+    appointments: await appointmentsForPrincipal(env, principal, rows.slice(0, RECEPTION_DAY_LIMIT)),
+    truncated: rows.length > RECEPTION_DAY_LIMIT,
+  };
+}
+
 async function getDashboard(
   db: D1Database,
   env: OperationsEnv,
@@ -188,17 +243,7 @@ async function getDashboard(
   const services = principal.canConfigure
     ? fullServices
     : fullServices.map((item) => ({ ...item, priceCents: null }));
-  const fullAppointments = await Promise.all(
-    (appointmentsResult.results ?? []).map((row) => appointmentToApi(env, row)),
-  );
-  const appointments = principal.canConfigure
-    ? fullAppointments
-    : fullAppointments.map((item) => ({
-        ...item,
-        amountCents: null,
-        paymentStatus: "pending" as const,
-        paymentMethod: null,
-      }));
+  const appointments = await appointmentsForPrincipal(env, principal, appointmentsResult.results ?? []);
   const waitlist = await Promise.all(
     (waitlistResult.results ?? []).map(async (row) => ({
       id: row.id,
@@ -411,6 +456,13 @@ export const onRequestGet: PagesFunction<OperationsEnv> = async (context) => {
       return deniedResponse(getContextUser(context), prepared?.failure);
     }
     const url = new URL(context.request.url);
+    if (url.searchParams.get("resource") === "day") {
+      const date = (url.searchParams.get("date") ?? "").trim();
+      if (!isValidLocalDate(date)) return errorResponse("Data inválida.", "VALIDATION_ERROR", 400);
+      return jsonResponse(
+        await getReceptionDay(env.DB, env, prepared.provider, prepared.principal, prepared.clinicId, date),
+      );
+    }
     if (url.searchParams.get("resource") === "financial_report") {
       return await financialReportResponse(env, url, prepared.principal, prepared.provider, prepared.clinicId);
     }
