@@ -22,6 +22,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 
 import { onRequestPost as signupPost } from "../../functions/api/auth/signup";
+import { currentLegalVersions } from "../../shared/legal";
 import { onRequestPost as verifyEmailPost } from "../../functions/api/auth/verify-email";
 import { onRequestPost as changePasswordPost } from "../../functions/api/auth/change-password";
 import { onRequestPost as tenantsPost } from "../../functions/api/tenants/index";
@@ -186,7 +187,7 @@ const linkDoEmail = (destinatario: string, padrao: RegExp): string => {
 // ═══ 1-5. Visitante → conta → confirmação de posse do e-mail ════════════════
 async function cadastrar(nome: string, email: string): Promise<Sessao> {
   const resposta = await signupPost(
-    ctx(req("https://x.test/api/auth/signup", "POST", { name: nome, email, password: SENHA }), null),
+    ctx(req("https://x.test/api/auth/signup", "POST", { name: nome, email, password: SENHA, acceptedLegal: currentLegalVersions() }), null),
   );
   assert.equal(resposta.status, 201, `cadastro de ${email}`);
   const corpo = (await resposta.json()) as {
