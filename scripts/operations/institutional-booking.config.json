@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "confirmedByOwner": false,
+  "sources": [
+    "#963 bloco A: serviço presencial de 60 minutos",
+    "docs/audits/SECRETARIA_BOACONSULTA_WHATSAPP_2026-09-01.md: seg–sex 09:30–14:30, 1 h, feriados, R$ 800 pagos no local",
+    "client/src/pages/login.tsx: Dr. Jadson Fraga, Neuropediatria"
+  ],
+  "profile": {
+    "displayName": "Dr. Jadson Fraga",
+    "specialty": "Neuropediatria",
+    "locationLabel": null,
+    "slug": null,
+    "timezone": "America/Recife"
+  },
+  "service": {
+    "name": "Consulta neuropediátrica",
+    "durationMinutes": 60,
+    "priceCents": 80000,
+    "modality": "in_person"
+  },
+  "rules": [
+    { "weekday": 1, "start": "09:30", "end": "14:30", "slotMinutes": 60 },
+    { "weekday": 2, "start": "09:30", "end": "14:30", "slotMinutes": 60 },
+    { "weekday": 3, "start": "09:30", "end": "14:30", "slotMinutes": 60 },
+    { "weekday": 4, "start": "09:30", "end": "14:30", "slotMinutes": 60 },
+    { "weekday": 5, "start": "09:30", "end": "14:30", "slotMinutes": 60 }
+  ],
+  "holidays": [
+    { "date": "2026-10-12", "reason": "Feriado nacional" },
+    { "date": "2026-11-02", "reason": "Feriado nacional" },
+    { "date": "2026-11-20", "reason": "Feriado nacional" },
+    { "date": "2026-12-25", "reason": "Feriado nacional" },
+    { "date": "2027-01-01", "reason": "Feriado nacional" },
+    { "date": "2027-03-26", "reason": "Feriado nacional" },
+    { "date": "2027-04-21", "reason": "Feriado nacional" }
+  ]
+}
