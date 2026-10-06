@@ -42,6 +42,8 @@ export const PUBLIC_ROUTES = [
   "/sobre", // Sobre
   "/servicos-clinica", // Serviços institucionais da Clínica Jadson Fraga
   "/termos", // Termos de uso e aviso legal público
+  "/termos-de-uso", // Termos de Uso da assinatura (versionados, aceitos no cadastro)
+  "/privacidade", // Política de Privacidade (versionada, aceita no cadastro)
   "/sobre-neuroped", // Sobre o NeuroPed
   "/ajuda", // Ajuda
   "/acessibilidade", // Acessibilidade

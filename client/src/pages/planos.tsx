@@ -231,7 +231,16 @@ export default function PlanosPage() {
             </li>
           </ul>
           <p className="mt-3 text-xs text-muted-foreground">
-            Detalhes de uso e limites legais em{" "}
+            Condições da assinatura nos{" "}
+            <Link href="/termos-de-uso" className="underline">
+              Termos de Uso
+            </Link>{" "}
+            e tratamento de dados na{" "}
+            <Link href="/privacidade" className="underline">
+              Política de Privacidade
+            </Link>
+            , aceitos com versão registrada no cadastro. Limites do conteúdo
+            educativo em{" "}
             <Link href="/termos" className="underline">
               Termos de uso
             </Link>

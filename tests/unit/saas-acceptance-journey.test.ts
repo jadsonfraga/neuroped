@@ -17,6 +17,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import { onRequestPost as signupPost } from "../../functions/api/auth/signup";
+import { currentLegalVersions } from "../../shared/legal";
 import { onRequestPost as verifyEmailPost } from "../../functions/api/auth/verify-email";
 import { onRequestPost as tenantsPost } from "../../functions/api/tenants/index";
 import {
@@ -138,7 +139,7 @@ function jsonRequest(url: string, method: string, body?: unknown): Request {
 
 async function signup(name: string, email: string): Promise<SessionUser> {
   const response = await signupPost(
-    context(jsonRequest("https://x.test/api/auth/signup", "POST", { name, email, password: STRONG_PASSWORD }), null),
+    context(jsonRequest("https://x.test/api/auth/signup", "POST", { name, email, password: STRONG_PASSWORD, acceptedLegal: currentLegalVersions() }), null),
   );
   assert.equal(response.status, 201, `signup de ${email}`);
   const body = (await response.json()) as {

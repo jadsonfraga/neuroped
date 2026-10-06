@@ -1,0 +1,111 @@
+name: SaaS legal acceptance D1
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "db/migrations/0033_saas_legal_acceptance.sql"
+      - "functions/api/auth/_legal.ts"
+      - "functions/api/auth/signup.ts"
+      - "shared/legal.ts"
+      - "tests/unit/saas-legal-acceptance.test.ts"
+      - ".github/workflows/saas-legal-acceptance-d1.yml"
+  push:
+    branches: [main]
+    paths:
+      - "db/migrations/0033_saas_legal_acceptance.sql"
+      - "functions/api/auth/_legal.ts"
+      - "functions/api/auth/signup.ts"
+      - "shared/legal.ts"
+      - "tests/unit/saas-legal-acceptance.test.ts"
+      - ".github/workflows/saas-legal-acceptance-d1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  # Inclui a ref: execução de pull_request (só valida) não pode ocupar o
+  # único slot pendente e cancelar a migração pendente do main.
+  group: d1-saas-legal-acceptance-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate-legal-acceptance:
+    name: Validate SaaS legal acceptance
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+      - name: Aceite versionado no cadastro — obrigatório, atômico, trava de versão
+        run: node --import tsx tests/unit/saas-legal-acceptance.test.ts
+      - name: Bootstrap do schema com todas as migrações
+        run: node tests/unit/schema-bootstrap-contract.test.mjs
+      - name: TypeScript
+        run: npm run check
+
+  migrate-legal-acceptance:
+    name: Apply SaaS legal acceptance to D1
+    needs: validate-legal-acceptance
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 55 # inclui até 45 min de espera na fila D1
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      - name: Validate Cloudflare credentials
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          [ -n "$CF_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
+          [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
+      # Fila das escritas D1 sem pending slot: ver scripts/ci/wait-d1-writers.mjs.
+      - name: Aguardar fila de escritas D1 (migration)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          MODE: migration
+        run: node scripts/ci/wait-d1-writers.mjs
+
+      # A 0033 é só CREATE TABLE/INDEX IF NOT EXISTS (idempotente) e o cadastro
+      # também cria a tabela em runtime; aplicar de novo é inofensivo.
+      - name: Apply migration 0033
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0033_saas_legal_acceptance.sql
+      - name: Verify table shape without reading account data
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT COUNT(*) AS colunas FROM pragma_table_info('saas_legal_acceptances') WHERE name IN ('user_id', 'document', 'version', 'content_sha256', 'source', 'accepted_at');" \
+            > /tmp/legal-acceptance-verify.txt 2>&1
+          cat /tmp/legal-acceptance-verify.txt
+          if ! grep -qE '(colunas[^0-9]*6[^0-9]|"colunas":\s*6)' /tmp/legal-acceptance-verify.txt; then
+            echo "::error::saas_legal_acceptances sem as seis colunas esperadas após a 0033."
+            exit 1
+          fi
+          echo "0033 verificada: saas_legal_acceptances com o formato esperado."

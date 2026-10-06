@@ -15,6 +15,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import { onRequestPost as signupPost } from "../../functions/api/auth/signup";
+import { currentLegalVersions } from "../../shared/legal";
 import {
   onRequestGet as profileGet,
   onRequestPut as profilePut,
@@ -184,6 +185,7 @@ globalThis.fetch = async (input, init) => {
         name: "Nova Médica",
         email: "nova@example.com",
         password: STRONG_PASSWORD,
+        acceptedLegal: currentLegalVersions(),
       }),
       env: {},
     }),
@@ -230,6 +232,7 @@ globalThis.fetch = async (input, init) => {
         name: "Nova Médica",
         email: "Nova@Example.com ",
         password: STRONG_PASSWORD,
+        acceptedLegal: currentLegalVersions(),
       }),
       env: enabledEnv,
     }),
@@ -271,6 +274,7 @@ globalThis.fetch = async (input, init) => {
           name: "Outra Pessoa",
           email,
           password: STRONG_PASSWORD,
+          acceptedLegal: currentLegalVersions(),
         }),
         env: enabledEnv,
       }),
