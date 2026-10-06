@@ -49,6 +49,7 @@ export const D1_MIGRATION_WORKFLOWS = Object.freeze([
   ".github/workflows/public-submission-audit-d1.yml",
   ".github/workflows/remote-scale-response-d1.yml",
   ".github/workflows/saas-identity-settings-d1.yml",
+  ".github/workflows/saas-legal-acceptance-d1.yml",
   ".github/workflows/saas-remote-intake-d1.yml",
   ".github/workflows/staff-links-multi-d1.yml",
 ]);

@@ -26,6 +26,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import Database from "better-sqlite3";
 import { onRequestPost as signup } from "../../functions/api/auth/signup";
+import { currentLegalVersions } from "../../shared/legal";
 import { onRequestPost as verifyEmail } from "../../functions/api/auth/verify-email";
 import { onRequestPost as resendVerification } from "../../functions/api/auth/resend-verification";
 import { onRequestPost as createClinic } from "../../functions/api/tenants/index";
@@ -252,6 +253,7 @@ const signupResponse = await signup(
     name: "Profissional Novo",
     email: NEW_EMAIL,
     password: STRONG_PASSWORD,
+    acceptedLegal: currentLegalVersions(),
   }),
 );
 assert.equal(signupResponse.status, 201);
@@ -310,6 +312,7 @@ assert.ok(
         name: "Conta Morta",
         email: "conta.morta@example.test",
         password: STRONG_PASSWORD,
+        acceptedLegal: currentLegalVersions(),
       },
       { envOverride: semEntrega },
     ),

@@ -50,6 +50,9 @@ const MUST_BE_PUBLIC = [
   "/marcos-desenvolvimento", "/curvas-crescimento", "/caa",
   "/brincando-e-aprendendo", "/missao-saude",
   "/sobre", "/sobre-neuroped", "/servicos-clinica", "/termos", "/ajuda", "/acessibilidade", "/consentimento-lgpd",
+  // Termos de Uso da assinatura e Política de Privacidade: quem vai se cadastrar
+  // precisa lê-los antes de existir uma conta. Texto institucional, sem dado clínico.
+  "/termos-de-uso", "/privacidade",
   // Filtro Clínico de Escalas: recomenda escalas por queixa/idade, sem exibir
   // nem armazenar dado de paciente — aberto por decisão do autor.
   "/filtro", "/filtro-escalas",

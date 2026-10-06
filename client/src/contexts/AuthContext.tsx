@@ -25,7 +25,8 @@ interface AuthContextValue {
   accessMode: AccessMode;
   remoteConfigured: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (name: string, email: string, password: string) => Promise<void>;
+  /** `acceptedLegal`: versões aceitas dos Termos e da Política (shared/legal.ts). */
+  signup: (name: string, email: string, password: string, acceptedLegal: Record<string, string>) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -114,8 +115,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user);
   }, []);
 
-  const signup = useCallback(async (name: string, email: string, password: string): Promise<void> => {
-    const data = await signupRequest(name, email, password);
+  const signup = useCallback(async (name: string, email: string, password: string, acceptedLegal: Record<string, string>): Promise<void> => {
+    const data = await signupRequest(name, email, password, acceptedLegal);
     await clearSessionScopedClientState();
     setUser(data.user);
   }, []);

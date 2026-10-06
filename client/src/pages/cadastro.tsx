@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
+import { LEGAL_DOCUMENTS, currentLegalVersions } from "@shared/legal";
 
 function readableSignupError(error: unknown): string {
   const code = (error as { code?: string })?.code ?? "";
@@ -12,6 +13,7 @@ function readableSignupError(error: unknown): string {
   if (code === "SIGNUP_DISABLED") {
     return "O cadastro self-service ainda não está habilitado nesta instalação. Peça um convite à sua clínica ou fale com o suporte.";
   }
+  if (code === "LEGAL_ACCEPTANCE_REQUIRED" || code === "LEGAL_VERSION_OUTDATED") return message;
   if (code === "EMAIL_IN_USE") return "Este e-mail não está disponível para cadastro. Se a conta já é sua, entre pelo login.";
   if (code === "WEAK_PASSWORD" || /senha/i.test(message)) return message;
   if (/429|rate/i.test(message)) return "Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.";
@@ -24,15 +26,20 @@ export default function CadastroPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [acceptedLegal, setAcceptedLegal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    if (!acceptedLegal) {
+      setError("Para criar a conta, leia e aceite os Termos de Uso e a Política de Privacidade.");
+      return;
+    }
     setSubmitting(true);
     try {
-      await signup(name.trim(), email.trim(), password);
+      await signup(name.trim(), email.trim(), password, currentLegalVersions());
       setLocation("/onboarding");
     } catch (signupError) {
       setError(readableSignupError(signupError));
@@ -74,8 +81,25 @@ export default function CadastroPage() {
           </div>
           <p className="text-[11px] leading-4 text-muted-foreground">Use ao menos 12 caracteres com maiúscula, minúscula, número e símbolo.</p>
         </div>
+        <label className="flex cursor-pointer items-start gap-3 rounded-2xl border p-3 text-xs leading-relaxed" data-testid="signup-legal-acceptance">
+          <input
+            type="checkbox"
+            name="acceptedLegal"
+            required
+            checked={acceptedLegal}
+            onChange={(event) => setAcceptedLegal(event.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0"
+          />
+          <span className="text-muted-foreground">
+            Li e aceito os{" "}
+            <a href={`#${LEGAL_DOCUMENTS.saas_terms.path}`} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary underline-offset-2 hover:underline">Termos de Uso</a>{" "}
+            e a{" "}
+            <a href={`#${LEGAL_DOCUMENTS.privacy_policy.path}`} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary underline-offset-2 hover:underline">Política de Privacidade</a>
+            <span className="block text-[11px]">Termos {LEGAL_DOCUMENTS.saas_terms.version} · Política {LEGAL_DOCUMENTS.privacy_policy.version}. A versão aceita e a data ficam registradas na sua conta.</span>
+          </span>
+        </label>
         {error && <p role="alert" className="rounded-xl border border-destructive/25 bg-destructive/5 p-3 text-xs leading-relaxed text-destructive">{error}</p>}
-        <Button type="submit" disabled={submitting} className="w-full gap-2 rounded-xl bg-gradient-to-r from-primary to-chart-2">
+        <Button type="submit" disabled={submitting || !acceptedLegal} className="w-full gap-2 rounded-xl bg-gradient-to-r from-primary to-chart-2">
           {submitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <ShieldCheck className="h-4 w-4" aria-hidden="true" />}
           {submitting ? "Criando conta…" : "Criar conta"}
         </Button>

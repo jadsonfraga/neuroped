@@ -119,6 +119,8 @@ const SobrePage = lazy(() => import("@/pages/sobre"));
 const ServicosClinicaPage = lazy(() => import("@/pages/servicos-clinica"));
 const EletroencefalogramaPage = lazy(() => import("@/pages/eletroencefalograma"));
 const TermosPage = lazy(() => import("@/pages/termos"));
+const TermosDeUsoPage = lazy(() => import("@/pages/termos-de-uso"));
+const PrivacidadePage = lazy(() => import("@/pages/privacidade"));
 const NeuropsicologiaPage = lazy(() => import("@/pages/neuropsicologia"));
 const PacPage = lazy(() => import("@/pages/pac"));
 const AhsdTeaPage = lazy(() => import("@/pages/ahsd-tea"));
@@ -372,6 +374,8 @@ function AppRouter() {
             <Route path="/servicos-clinica" component={ServicosClinicaPage} />
             <Route path="/eletroencefalograma" component={EletroencefalogramaPage} />
             <Route path="/termos" component={TermosPage} />
+            <Route path="/termos-de-uso" component={TermosDeUsoPage} />
+            <Route path="/privacidade" component={PrivacidadePage} />
             <Route path="/neuropsicologia" component={NeuropsicologiaPage} />
             <Route path="/pac" component={PacPage} />
             <Route path="/ahsd-tea" component={AhsdTeaPage} />

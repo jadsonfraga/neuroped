@@ -4,6 +4,7 @@ import {
   issueEmailVerification,
   type EmailVerificationEnv,
 } from "./_emailVerification";
+import { ensureLegalAcceptanceSchema, legalAcceptanceStatements } from "./_legal";
 import { passwordPolicyError } from "./_passwordPolicy";
 import {
   enforceLoginAbuseLimit,
@@ -12,6 +13,7 @@ import {
 import { createSessionTokens } from "./_sessions";
 import { getUserByEmail, json, publicUser, type UserRow } from "./_shared";
 import { isPlainObject } from "../_request";
+import { checkLegalAcceptance } from "../../../shared/legal";
 
 const EMAIL_MAX = 254;
 
@@ -106,6 +108,10 @@ export const onRequestPost: PagesFunction<EmailVerificationEnv> = async (
   const policyError = passwordPolicyError(password);
   if (policyError)
     return json({ error: policyError, code: "WEAK_PASSWORD" }, 400);
+  // Aceite versionado obrigatório (shared/legal.ts): a conta só nasce com a
+  // prova de QUAL versão dos Termos e da Política foi aceita.
+  const legal = checkLegalAcceptance(body.acceptedLegal);
+  if (!legal.ok) return json({ error: legal.error, code: legal.code }, 400);
 
   const reservedEmails = [env.NEUROPED_E2E_EMAIL, env.ADMIN_EMAIL]
     .map((value) => value?.trim().toLowerCase())
@@ -131,16 +137,19 @@ export const onRequestPost: PagesFunction<EmailVerificationEnv> = async (
   const now = new Date().toISOString();
 
   try {
-    const inserted = await env.DB.prepare(
-      `INSERT INTO users
-           (id, name, email, password_hash, must_change_password, failed_login_attempts,
-            role, is_active, created_at, updated_at)
-         SELECT ?, ?, ?, ?, 0, 0, 'professional', 1, ?, ?
-          WHERE NOT EXISTS (SELECT 1 FROM users WHERE lower(email) = ?)`,
-    )
-      .bind(userId, name, email, passwordHash, now, now, email)
-      .run();
-    if ((inserted.meta?.changes ?? 0) !== 1) {
+    await ensureLegalAcceptanceSchema(env.DB);
+    // Conta e aceite no MESMO batch: ou os dois existem, ou nenhum.
+    const [inserted] = await env.DB.batch([
+      env.DB.prepare(
+        `INSERT INTO users
+             (id, name, email, password_hash, must_change_password, failed_login_attempts,
+              role, is_active, created_at, updated_at)
+           SELECT ?, ?, ?, ?, 0, 0, 'professional', 1, ?, ?
+            WHERE NOT EXISTS (SELECT 1 FROM users WHERE lower(email) = ?)`,
+      ).bind(userId, name, email, passwordHash, now, now, email),
+      ...legalAcceptanceStatements(env.DB, userId, now, "signup"),
+    ]);
+    if ((inserted?.meta?.changes ?? 0) !== 1) {
       try {
         await registerLoginAbuseFailure(env, request, secret);
       } catch {

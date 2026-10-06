@@ -183,11 +183,16 @@ export async function loginRequest(email: string, password: string): Promise<Log
  * SAAS_SIGNUP_ENABLED no backend; caso contrário o servidor responde 503 e a
  * UI mostra o estado honesto.
  */
-export async function signupRequest(name: string, email: string, password: string): Promise<LoginResponse> {
+export async function signupRequest(
+  name: string,
+  email: string,
+  password: string,
+  acceptedLegal: Record<string, string>,
+): Promise<LoginResponse> {
   const r = await fetch(`${API_BASE}/api/auth/signup`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, email, password }),
+    body: JSON.stringify({ name, email, password, acceptedLegal }),
   });
   const data = await r.json().catch(() => ({}));
   if (!r.ok) {
