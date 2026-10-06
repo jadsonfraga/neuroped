@@ -304,6 +304,12 @@ jobs:
           E2E_NM: ${{ secrets.NEUROPED_E2E_NAME }}
           OP_KEY: ${{ secrets.OPERATIONAL_DATA_KEY }}
           OP_KEY_ID: ${{ secrets.OPERATIONAL_DATA_KEY_ID }}
+          CLIN_KEY: ${{ secrets.CLINICAL_DATA_KEY }}
+          CLIN_KEY_ID: ${{ secrets.CLINICAL_DATA_KEY_ID }}
+          CLIN_INDEX: ${{ secrets.CLINICAL_INDEX_KEY }}
+          CLIN_PREV: ${{ secrets.CLINICAL_DATA_KEY_PREVIOUS }}
+          CLIN_PREV_ID: ${{ secrets.CLINICAL_DATA_KEY_PREVIOUS_ID }}
+          IMPORT_KEY: ${{ secrets.NEUROPED_IMPORT_ENCRYPTION_KEY }}
         run: |
           set -euo pipefail
           jwt_secret="$JWT_SECRET"
@@ -315,7 +321,13 @@ jobs:
           e2e_name="$E2E_NM"
           op_key="$OP_KEY"
           op_key_id="$OP_KEY_ID"
-          unset JWT_SECRET ADMIN_PW ADMIN_MAIL ADMIN_NM E2E_PW E2E_MAIL E2E_NM OP_KEY OP_KEY_ID
+          clin_key="$CLIN_KEY"
+          clin_key_id="$CLIN_KEY_ID"
+          clin_index="$CLIN_INDEX"
+          clin_prev="$CLIN_PREV"
+          clin_prev_id="$CLIN_PREV_ID"
+          import_key="$IMPORT_KEY"
+          unset JWT_SECRET ADMIN_PW ADMIN_MAIL ADMIN_NM E2E_PW E2E_MAIL E2E_NM OP_KEY OP_KEY_ID CLIN_KEY CLIN_KEY_ID CLIN_INDEX CLIN_PREV CLIN_PREV_ID IMPORT_KEY
           put_required() {
             [ -n "$2" ] || { echo "::error::$1 ausente"; exit 1; }
             printf '%s' "$2" | npx wrangler@4 pages secret put "$1" --project-name neuroped >/dev/null
@@ -342,6 +354,16 @@ jobs:
           # deploy; a chave é do dono e precisa de backup (perda = dados ilegíveis).
           put_optional OPERATIONAL_DATA_KEY "$op_key"
           put_optional OPERATIONAL_DATA_KEY_ID "$op_key_id"
+          # Prontuário LIVE / Escuta: sem CLINICAL_DATA_KEY + CLINICAL_INDEX_KEY
+          # (>=32 chars, distintas) o runtime responde CLINICAL_CRYPTO_NOT_READY.
+          # Opcionais: ausente = no-op. IDs e PREVIOUS só se o dono os definir.
+          put_optional CLINICAL_DATA_KEY "$clin_key"
+          put_optional CLINICAL_DATA_KEY_ID "$clin_key_id"
+          put_optional CLINICAL_INDEX_KEY "$clin_index"
+          put_optional CLINICAL_DATA_KEY_PREVIOUS "$clin_prev"
+          put_optional CLINICAL_DATA_KEY_PREVIOUS_ID "$clin_prev_id"
+          # Staging BoaConsulta (AES-GCM 32 bytes em Base64). Sem promoção a live_patients.
+          put_optional NEUROPED_IMPORT_ENCRYPTION_KEY "$import_key"
 
       - name: Provisionar bucket LGPD (R2) e binding (idempotente, condicional)
         # O binding LGPD_EXPORT_BUCKET só entra no wrangler.toml desta execução

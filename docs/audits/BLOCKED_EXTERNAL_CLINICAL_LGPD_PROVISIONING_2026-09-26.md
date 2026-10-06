@@ -111,3 +111,18 @@ workflow **Clinical and LGPD production readiness audit** com
 
 Esta documentação não altera secrets, chaves, bucket, dados nem o deploy.
 Rollback: reverter apenas o commit documental/regressão correspondente.
+
+## Atualização 06/10/2026 — sincronização GitHub → Pages
+
+O workflow `deploy-cloudflare.yml` passou a espelhar, como secrets **opcionais**,
+`CLINICAL_DATA_KEY`, `CLINICAL_DATA_KEY_ID`, `CLINICAL_INDEX_KEY`,
+`CLINICAL_DATA_KEY_PREVIOUS[_ID]` e `NEUROPED_IMPORT_ENCRYPTION_KEY` do GitHub
+para o projeto Pages (mesmo padrão de `OPERATIONAL_DATA_KEY`: valor por stdin,
+log só "definido", ausente = no-op).
+
+Isso **não** substitui a custódia humana nem autoriza gerar/substituir cegamente
+uma chave existente com ciphertext histórico. Continua valendo: se houver
+registros cifrados com uma chave anterior, restaurar a original ou rotacionar
+com `PREVIOUS`. O bloqueio R2 (`Workers R2 Storage: Edit` no
+`CLOUDFLARE_API_TOKEN`) permanece externo e independente do keyring.
+
