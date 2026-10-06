@@ -38,6 +38,20 @@ test("wrangler.toml versionado continua sem o binding: ele só existe na execuç
   assert.doesNotMatch(readFileSync("wrangler.toml", "utf8"), /r2_buckets|LGPD_EXPORT_BUCKET/);
 });
 
+test("secrets do Pages: sincroniza keyring clínico e chave de import BoaConsulta como opcionais (mesmo padrão da operacional)", () => {
+  const step = between(deploy, "Configurar secrets/vars de auth no Pages", "- name: Provisionar bucket LGPD");
+  assert.match(step, /put_optional CLINICAL_DATA_KEY/);
+  assert.match(step, /put_optional CLINICAL_DATA_KEY_ID/);
+  assert.match(step, /put_optional CLINICAL_INDEX_KEY/);
+  assert.match(step, /put_optional CLINICAL_DATA_KEY_PREVIOUS/);
+  assert.match(step, /put_optional CLINICAL_DATA_KEY_PREVIOUS_ID/);
+  assert.match(step, /put_optional NEUROPED_IMPORT_ENCRYPTION_KEY/);
+  assert.match(step, /put_optional OPERATIONAL_DATA_KEY/);
+  assert.match(step, /secrets\.CLINICAL_DATA_KEY/);
+  assert.match(step, /secrets\.CLINICAL_INDEX_KEY/);
+  assert.doesNotMatch(step, /put_required CLINICAL_DATA_KEY/, "chave clínica continua opcional para não derrubar o deploy");
+});
+
 test("gerador do keyring: aleatório, separado, sem gravar em disco, sem enviar a lugar algum", () => {
   assert.match(generator, /randomBytes\(48\)\.toString\("base64url"\)/);
   assert.match(generator, /while \(indexKey === dataKey\)/);
