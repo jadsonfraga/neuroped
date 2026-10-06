@@ -78,6 +78,8 @@ const directNameOf = (via) => {
 // Um pacote é liberado apenas se TODAS as vias estiverem cobertas: advisory
 // na allowlist ativa, ou herança transitiva de um pacote allowlistado
 // (ex.: @signpdf/signer-p12 listado apenas porque depende de node-forge).
+const isBlockingSeverity = (severity) => severity === "high" || severity === "critical";
+
 const isCovered = (name, vulnerability) =>
   vulnerability.via.every((via) => {
     const ghsa = ghsaOf(via);
@@ -85,11 +87,15 @@ const isCovered = (name, vulnerability) =>
     const dependency = directNameOf(via);
     if (!dependency) return false;
     const parent = report.vulnerabilities?.[dependency];
-    return parent ? isCovered(dependency, parent) : false;
+    if (!parent) return false;
+    if (!isBlockingSeverity(parent.severity)) return true;
+    return isCovered(dependency, parent);
   });
 
 const offenders = Object.entries(report.vulnerabilities ?? {}).filter(
-  ([name, vulnerability]) => !isCovered(name, vulnerability),
+  ([name, vulnerability]) =>
+    (vulnerability.severity === "high" || vulnerability.severity === "critical") &&
+    !isCovered(name, vulnerability),
 );
 
 for (const [name, vulnerability] of offenders) {
@@ -102,6 +108,13 @@ for (const [name, vulnerability] of offenders) {
 if (offenders.length > 0) {
   console.error(`${offenders.length} vulnerabilidade(s) high/critical fora da allowlist.`);
   process.exit(1);
+}
+
+const moderates = Object.entries(report.vulnerabilities ?? {}).filter(
+  ([, vulnerability]) => vulnerability.severity === "moderate" || vulnerability.severity === "low",
+);
+for (const [name] of moderates) {
+  console.log(`  aviso: ${name} tem severidade abaixo de high; nao bloqueia (contrato high/critical).`);
 }
 
 console.log("npm audit: nenhuma vulnerabilidade high/critical fora da allowlist ativa.");

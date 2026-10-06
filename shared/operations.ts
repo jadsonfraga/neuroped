@@ -27,6 +27,109 @@ export const appointmentStatusLabel: Record<AppointmentStatus, string> = {
 export const paymentStatuses = ["pending", "paid", "waived", "refunded"] as const;
 export type PaymentStatus = (typeof paymentStatuses)[number];
 
+export const paymentStatusLabel: Record<PaymentStatus, string> = {
+  pending: "pendente",
+  paid: "pago",
+  waived: "cortesia",
+  refunded: "estornado",
+};
+
+/**
+ * Formas de pagamento registráveis pela clínica. `manual` é o valor que a tela
+ * gravava antes desta lista existir: continua aceito e rotulado para que
+ * registros antigos não virem "desconhecido" no relatório.
+ */
+export const paymentMethods = [
+  "pix",
+  "credit_card",
+  "debit_card",
+  "cash",
+  "bank_transfer",
+  "health_plan",
+  "other",
+] as const;
+export type PaymentMethod = (typeof paymentMethods)[number];
+export const LEGACY_PAYMENT_METHOD = "manual";
+
+export const paymentMethodLabel: Record<PaymentMethod | typeof LEGACY_PAYMENT_METHOD, string> = {
+  pix: "Pix",
+  credit_card: "Cartão de crédito",
+  debit_card: "Cartão de débito",
+  cash: "Dinheiro",
+  bank_transfer: "Transferência",
+  health_plan: "Convênio",
+  other: "Outra",
+  manual: "Não detalhada (registro anterior)",
+};
+
+export function isAcceptedPaymentMethod(value: string): value is PaymentMethod | typeof LEGACY_PAYMENT_METHOD {
+  return value === LEGACY_PAYMENT_METHOD || (paymentMethods as readonly string[]).includes(value);
+}
+
+/** Rótulo de forma de pagamento; ausente vira "Não informada", desconhecida volta como veio. */
+export function paymentMethodText(value: string | null | undefined): string {
+  if (!value) return "Não informada";
+  return isAcceptedPaymentMethod(value) ? paymentMethodLabel[value] : value;
+}
+
+/** Relatório financeiro por período (GET /api/operations?resource=financial_report). */
+export const FINANCIAL_REPORT_MAX_DAYS = 366;
+export const FINANCIAL_REPORT_MAX_ROWS = 5000;
+
+export interface FinancialReportRow {
+  id: string;
+  startsAtLocal: string;
+  status: AppointmentStatus;
+  serviceName: string | null;
+  patientName: string | null;
+  guardianName: string | null;
+  amountCents: number | null;
+  paymentStatus: PaymentStatus;
+  paymentMethod: string | null;
+}
+
+export interface FinancialReportGroup {
+  key: string;
+  label: string;
+  count: number;
+  cents: number;
+}
+
+export interface FinancialReport {
+  period: { from: string; to: string; basis: "appointment_date" };
+  summary: {
+    appointments: number;
+    attended: number;
+    completed: number;
+    cancelled: number;
+    noShow: number;
+    expectedCents: number;
+    paidCents: number;
+    pendingCents: number;
+    refundedCents: number;
+    waivedCount: number;
+    noAmountCount: number;
+  };
+  byPaymentMethod: FinancialReportGroup[];
+  byService: FinancialReportGroup[];
+  rows: FinancialReportRow[];
+  truncated: boolean;
+}
+
+/** Soma dias a uma data AAAA-MM-DD (calendário puro, sem fuso). */
+export function addDaysToLocalDate(date: string, days: number): string {
+  const [year, month, day] = date.split("-").map(Number);
+  const value = new Date(Date.UTC(year, month - 1, day + days));
+  return value.toISOString().slice(0, 10);
+}
+
+/** Dias corridos entre duas datas AAAA-MM-DD, contando as duas pontas. */
+export function inclusiveDaySpan(from: string, to: string): number {
+  const start = Date.parse(`${from}T00:00:00Z`);
+  const end = Date.parse(`${to}T00:00:00Z`);
+  return Math.round((end - start) / 86_400_000) + 1;
+}
+
 export const bookingModalities = ["in_person", "remote"] as const;
 export type BookingModality = (typeof bookingModalities)[number];
 

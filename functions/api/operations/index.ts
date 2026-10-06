@@ -48,7 +48,14 @@ import {
 } from "./_access";
 import { resolveOperationsContext, type OperationsContextFailure } from "./_context";
 import {
+  buildFinancialReport,
+  financialReportCsv,
+  financialReportFilename,
+  parseFinancialPeriod,
+} from "./_financialReport";
+import {
   addMinutesLocal,
+  isAcceptedPaymentMethod,
   isValidLocalDate,
   isValidTimeZone,
   type AppointmentStatus,
@@ -400,6 +407,45 @@ function deniedResponse(
   );
 }
 
+/**
+ * GET ?resource=financial_report&from=AAAA-MM-DD&to=AAAA-MM-DD[&format=csv]
+ *
+ * Restrito a quem configura a agenda (o financeiro nunca vai para a recepção).
+ * A exportação CSV leva nomes de pacientes e responsáveis, então fica registrada
+ * na trilha operacional (só a contagem de linhas, nunca o conteúdo).
+ */
+async function financialReportResponse(
+  env: OperationsEnv,
+  url: URL,
+  principal: OperationsPrincipal,
+  provider: { id: string; name: string },
+  clinicId: string,
+): Promise<Response> {
+  if (!principal.canConfigure) {
+    return errorResponse("Relatório financeiro restrito ao profissional responsável.", "FORBIDDEN", 403);
+  }
+  const period = parseFinancialPeriod(url);
+  if (!period.ok) return errorResponse(period.error, period.code, 400);
+  const report = await buildFinancialReport(env.DB!, env, provider.id, clinicId, period.from, period.to);
+  if (url.searchParams.get("format") !== "csv") return jsonResponse(report);
+
+  await logOperationsAudit(env.DB!, principal, clinicId, {
+    action: "financial_report_export",
+    targetType: "financial_report",
+    targetId: `${period.from}_${period.to}`,
+    metadata: { count: report.rows.length },
+  });
+  return new Response(financialReportCsv(report), {
+    status: 200,
+    headers: {
+      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Disposition": `attachment; filename="${financialReportFilename(period.from, period.to)}"`,
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff",
+    },
+  });
+}
+
 export const onRequestGet: PagesFunction<OperationsEnv> = async (context) => {
   const { env } = context;
   if (!env.DB) return errorResponse("Agenda exige banco persistente.", "DB_REQUIRED", 503);
@@ -416,6 +462,9 @@ export const onRequestGet: PagesFunction<OperationsEnv> = async (context) => {
       return jsonResponse(
         await getReceptionDay(env.DB, env, prepared.provider, prepared.principal, prepared.clinicId, date),
       );
+    }
+    if (url.searchParams.get("resource") === "financial_report") {
+      return await financialReportResponse(env, url, prepared.principal, prepared.provider, prepared.clinicId);
     }
     return jsonResponse(
       await getDashboard(env.DB, env, prepared.provider, prepared.principal, prepared.clinicId, prepared.availableProviders),
@@ -835,14 +884,20 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const id = cleanText(body.id, 80);
       const status = parsePaymentStatus(body.paymentStatus);
       if (!id || !status) return errorResponse("Pagamento inválido.", "VALIDATION_ERROR", 400);
+      // Forma de pagamento da lista fechada (relatório por forma); `manual` é o
+      // valor que a tela gravava antes e continua aceito. Ausente = não informada.
+      const paymentMethod = cleanOptionalText(body.paymentMethod, 60);
+      if (paymentMethod && !isAcceptedPaymentMethod(paymentMethod)) {
+        return errorResponse("Forma de pagamento inválida.", "VALIDATION_ERROR", 400);
+      }
       const result = await env.DB.prepare(
         `UPDATE appointments SET amount_cents = COALESCE(?, amount_cents), payment_status = ?, payment_method = ?, updated_at = ?
           WHERE id = ? AND provider_user_id = ? AND clinic_id = ?`,
-      ).bind(moneyCents(body.amountCents), status, cleanOptionalText(body.paymentMethod, 60), now, id, user.id, clinicId).run();
+      ).bind(moneyCents(body.amountCents), status, paymentMethod, now, id, user.id, clinicId).run();
       if ((result.meta?.changes ?? 0) !== 1) return errorResponse("Consulta não encontrada.", "NOT_FOUND", 404);
       auditTargetType = "appointment_payment";
       auditTargetId = id;
-      auditMetadata = { paymentStatus: status };
+      auditMetadata = { paymentStatus: status, paymentMethod };
     } else if (action === "waitlist_status") {
       const id = cleanText(body.id, 80);
       const status = cleanText(body.status, 20);

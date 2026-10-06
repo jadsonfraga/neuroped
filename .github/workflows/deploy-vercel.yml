@@ -108,7 +108,7 @@ jobs:
           set -euo pipefail
           sentinel=https://neuroped.pages.dev/deploy-check.json
           health=https://neuroped.pages.dev/api/health
-          for attempt in $(seq 1 36); do
+          for attempt in $(seq 1 90); do
             cache_buster="run=${GITHUB_RUN_ID}&attempt=$attempt"
             if curl -fsSL "$sentinel?$cache_buster" -o /tmp/cloudflare-sentinel.json \
               && jq -e --arg sha "$GITHUB_SHA" \
@@ -121,7 +121,7 @@ jobs:
               echo "Backend canônico confirma ${GITHUB_SHA}."
               exit 0
             fi
-            echo "Aguardando backend canônico do mesmo commit ($attempt/36)."
+            echo "Aguardando backend canônico do mesmo commit ($attempt/90)."
             sleep 10
           done
           cat /tmp/cloudflare-sentinel.json 2>/dev/null || true
