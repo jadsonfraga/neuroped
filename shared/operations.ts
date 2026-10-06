@@ -318,6 +318,8 @@ export interface OperationsAccessContext {
   providerName: string;
   delegated: boolean;
   canConfigure: boolean;
+  /** Dono/administrador da clínica: pode ver a agenda da clínica inteira. */
+  clinicWide?: boolean;
   /**
    * Só para a recepção: os profissionais entre os quais ela escolhe de qual
    * agenda opera (`?provider=<id>`). Ausente para o profissional.
@@ -352,6 +354,24 @@ export interface ReceptionDay {
   nowLocal: string;
   providerName: string;
   appointments: Appointment[];
+  truncated: boolean;
+}
+
+/** Profissional da clínica no dia inteiro (GET ?resource=clinic_day). */
+export interface ClinicDayProvider {
+  providerUserId: string;
+  providerName: string;
+  appointments: Appointment[];
+}
+
+/** GET /api/operations?resource=clinic_day&date=AAAA-MM-DD — agenda da clínica inteira (dono/administrador). */
+export interface ClinicDay {
+  date: string;
+  timezone: string;
+  nowLocal: string;
+  clinicId: string;
+  providers: ClinicDayProvider[];
+  totalAppointments: number;
   truncated: boolean;
 }
 

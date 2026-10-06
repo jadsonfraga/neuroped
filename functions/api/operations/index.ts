@@ -164,6 +164,99 @@ async function getReceptionDay(
   };
 }
 
+/** Limite por profissional no dia da clínica inteira. */
+const CLINIC_DAY_PER_PROVIDER_LIMIT = 100;
+
+/** Membership ativa de dono/administrador da clínica na requisição. */
+async function hasClinicAdminMembership(
+  db: D1Database,
+  actorUserId: string,
+  clinicId: string,
+): Promise<boolean> {
+  const row = await db
+    .prepare(
+      `SELECT 1 AS ok
+         FROM clinic_memberships
+        WHERE clinic_id = ? AND user_id = ? AND role IN ('owner','clinic_admin') AND active = 1
+        LIMIT 1`,
+    )
+    .bind(clinicId, actorUserId)
+    .first<{ ok: number }>();
+  return Boolean(row);
+}
+
+/**
+ * Agenda da clínica inteira, um dia, por profissional — dono e administrador.
+ *
+ * Só leitura, mesmo recorte exato do dia da recepção (`resource=day`), mas de
+ * TODOS os profissionais com membership ativa na clínica. Quem não é
+ * `owner`/`clinic_admin` da clínica não recebe nada (o profissional continua
+ * vendo só a própria agenda pelo painel; para agir numa consulta de outro
+ * profissional, continua na própria aba, pois cada ação valida o par
+ * (profissional, clínica) no servidor).
+ */
+async function getClinicDay(
+  db: D1Database,
+  env: OperationsEnv,
+  provider: { id: string; name: string },
+  clinicId: string,
+  date: string,
+) {
+  const profile = await ensureProviderProfile(db, provider);
+  const { results: providerRows } = await db
+    .prepare(
+      `SELECT m.user_id AS id, u.name AS name
+         FROM clinic_memberships m
+         JOIN users u ON u.id = m.user_id
+        WHERE m.clinic_id = ? AND m.active = 1 AND u.is_active = 1
+          AND m.role IN ('owner','clinic_admin','professional')
+        ORDER BY u.name, m.user_id`,
+    )
+    .bind(clinicId)
+    .all<{ id: string; name: string }>();
+
+  const dayStart = `${date}T00:00`;
+  const dayEnd = addMinutesLocal(dayStart, 24 * 60);
+  const providers: {
+    providerUserId: string;
+    providerName: string;
+    appointments: Awaited<ReturnType<typeof appointmentToApi>>[];
+  }[] = [];
+  let totalAppointments = 0;
+  let truncated = false;
+  for (const row of providerRows ?? []) {
+    const { results } = await db
+      .prepare(
+        `SELECT a.*, s.name AS service_name, s.modality AS service_modality
+           FROM appointments a
+           JOIN booking_services s ON s.id = a.service_id
+          WHERE a.provider_user_id = ? AND a.clinic_id = ?
+            AND a.starts_at_local >= ? AND a.starts_at_local < ?
+          ORDER BY a.starts_at_local ASC, a.id ASC
+          LIMIT ${CLINIC_DAY_PER_PROVIDER_LIMIT + 1}`,
+      )
+      .bind(row.id, clinicId, dayStart, dayEnd)
+      .all<AppointmentRow>();
+    const rows = results ?? [];
+    if (rows.length > CLINIC_DAY_PER_PROVIDER_LIMIT) truncated = true;
+    const appointments = await Promise.all(
+      rows.slice(0, CLINIC_DAY_PER_PROVIDER_LIMIT).map((item) => appointmentToApi(env, item)),
+    );
+    totalAppointments += appointments.length;
+    providers.push({ providerUserId: row.id, providerName: row.name, appointments });
+  }
+
+  return {
+    date,
+    timezone: profile.timezone,
+    nowLocal: localNow(profile.timezone),
+    clinicId,
+    providers,
+    totalAppointments,
+    truncated,
+  };
+}
+
 async function getDashboard(
   db: D1Database,
   env: OperationsEnv,
@@ -358,7 +451,14 @@ async function getDashboard(
     metrics,
     // `availableProviders`: só a recepção escolhe de qual profissional opera; o
     // profissional não recebe a chave (payload inalterado).
-    access: { ...principal, clinicId, ...(principal.delegated ? { availableProviders } : {}) },
+    access: {
+      ...principal,
+      clinicId,
+      ...(principal.delegated ? { availableProviders } : {}),
+      ...(principal.canConfigure
+        ? { clinicWide: await hasClinicAdminMembership(db, principal.actorUserId, clinicId) }
+        : {}),
+    },
     staff: principal.canConfigure ? await listOperationsStaff(db, provider.id) : [],
     audit: await listOperationsAudit(db, provider.id, clinicId, 40),
   };
@@ -456,6 +556,16 @@ export const onRequestGet: PagesFunction<OperationsEnv> = async (context) => {
       return deniedResponse(getContextUser(context), prepared?.failure);
     }
     const url = new URL(context.request.url);
+    if (url.searchParams.get("resource") === "clinic_day") {
+      const date = (url.searchParams.get("date") ?? "").trim();
+      if (!isValidLocalDate(date)) return errorResponse("Data inválida.", "VALIDATION_ERROR", 400);
+      if (!(await hasClinicAdminMembership(env.DB, prepared.authUser.id, prepared.clinicId))) {
+        return errorResponse("Agenda da clínica restrita ao dono ou administrador da clínica.", "FORBIDDEN", 403);
+      }
+      return jsonResponse(
+        await getClinicDay(env.DB, env, prepared.provider, prepared.clinicId, date),
+      );
+    }
     if (url.searchParams.get("resource") === "day") {
       const date = (url.searchParams.get("date") ?? "").trim();
       if (!isValidLocalDate(date)) return errorResponse("Data inválida.", "VALIDATION_ERROR", 400);

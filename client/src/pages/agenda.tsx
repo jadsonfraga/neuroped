@@ -29,6 +29,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { AgendaUnifiedDay } from "@/components/AgendaUnifiedDay";
+import { AgendaClinicDay } from "@/components/AgendaClinicDay";
 import { AgendaFinancialReport } from "@/components/AgendaFinancialReport";
 import { AgendaReceptionDay } from "@/components/AgendaReceptionDay";
 import { useClinic } from "@/contexts/ClinicContext";
@@ -336,7 +337,8 @@ export default function AgendaPage() {
   // A visão do dia de todos só existe para a recepção com mais de um profissional;
   // se isso deixar de valer com a aba aberta, volta para a agenda.
   const unifiedAvailable = data.access.delegated && providerChoices.length > 1;
-  const activeTab = tab === "dia" && !unifiedAvailable ? "agenda" : tab;
+  const clinicWide = data.access.clinicWide === true;
+  const activeTab = (tab === "dia" && !unifiedAvailable) || (tab === "clinica" && !clinicWide) ? "agenda" : tab;
   // S13: o link compartilhado pela clínica já sai com `clinic=<slug da
   // clínica>`, então um profissional em mais de uma clínica nunca cai na
   // ambiguidade que faz o backend recusar o agendamento público (ver
@@ -421,6 +423,7 @@ export default function AgendaPage() {
           <TabsTrigger value="agenda">Agenda</TabsTrigger>
           <TabsTrigger value="recepcao" data-testid="tab-reception-day">Recepção do dia</TabsTrigger>
           {unifiedAvailable && <TabsTrigger value="dia">Dia de todos</TabsTrigger>}
+          {clinicWide && <TabsTrigger value="clinica" data-testid="tab-clinic-day">Clínica</TabsTrigger>}
           <TabsTrigger value="espera">Espera</TabsTrigger>
           <TabsTrigger value="comunicacao">Comunicação</TabsTrigger>
           <TabsTrigger value="atividade">Atividade</TabsTrigger>
@@ -590,6 +593,11 @@ export default function AgendaPage() {
           />
         </TabsContent>
 
+        {clinicWide && (
+          <TabsContent value="clinica" className="space-y-4">
+            <AgendaClinicDay today={localDateInput()} date={agendaDate} onDateChange={setAgendaDate} />
+          </TabsContent>
+        )}
         {unifiedAvailable && (
           <TabsContent value="dia" className="space-y-4">
             <AgendaUnifiedDay
