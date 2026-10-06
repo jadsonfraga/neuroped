@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "confirmedByOwner": false,
+  "confirmedByOwner": true,
   "sources": [
     "#963 bloco A: serviço presencial de 60 minutos",
     "docs/audits/SECRETARIA_BOACONSULTA_WHATSAPP_2026-09-01.md: seg–sex 09:30–14:30, 1 h, feriados, R$ 800 pagos no local",
