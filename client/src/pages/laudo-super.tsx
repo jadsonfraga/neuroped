@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { AssinaturaIcpPanel } from "@/components/AssinaturaIcpPanel";
-import { escapeHtml } from "@/lib/htmlEscape";
 import {
   gerarEValidarSuper,
   gerarLaudoSuper,
@@ -23,6 +22,7 @@ import {
   type DocumentIssuer,
 } from "@/lib/issuer";
 import { dateStamp } from "@/lib/printDocument";
+import { buildLaudoPantPrintHtml } from "@/lib/laudo/pantPrintTemplate";
 
 /* ────────────────────────────────────────────────────────────
    Laudo SuperNeuroPed — WebUI de geração assistida (embutida)
@@ -90,143 +90,25 @@ function vazia(e: SuperEntrada): boolean {
   return true;
 }
 
-// ── Impressão no perfil SuperNeuroPed ───────────────────────────────────────
+// ── Impressão no padrão PANT (client/src/lib/laudo/pantPrintTemplate.ts) ────
 
-function buildPrintHtmlSuper(texto: string, paciente: string, medico: SuperMedico): string {
-  const hoje = new Date().toLocaleDateString("pt-BR", {
-    day: "numeric", month: "long", year: "numeric",
+/** Raiz absoluta do app (respeita o base "./" do Vite e o subcaminho do GitHub Pages). */
+function appAssetBase(): string {
+  return new URL(import.meta.env.BASE_URL || "./", window.location.href).href;
+}
+
+/** Imprime só depois que as fontes e o brasão carregarem (com teto de espera). */
+function imprimirQuandoPronto(win: Window) {
+  const doc = win.document;
+  const imagens = Array.from(doc.images).map((img) =>
+    img.complete ? Promise.resolve() : img.decode().catch(() => undefined),
+  );
+  const fontes = doc.fonts?.ready ?? Promise.resolve();
+  const teto = new Promise((r) => setTimeout(r, 3500));
+  void Promise.race([Promise.all([fontes, ...imagens]), teto]).then(() => {
+    win.focus();
+    win.print();
   });
-  const safe = escapeHtml(texto.trim() || "Sem conteúdo informado.");
-  const protocolo = `SuperNeuroPed nº ${dateStamp()}`;
-  const esc = escapeHtml;
-
-  return `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<title>Laudo SuperNeuroPed — ${esc(paciente)}</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Carlito:ital,wght@0,400;0,700;1,400&family=Marcellus&display=swap" rel="stylesheet">
-<style>
-@page{size:A4;margin:13mm 15mm 19mm 15mm}
-:root{--navy:#1E2A4A;--navyd:#0B1024;--bordo:#7A1F2B;--gold:#C9A961;--goldd:#A88844;
-  --teal:#2E7163;--salmon:#A8463D;--ink:#2C2C3E;--graf:#3A3A4C;--ink2:#5B5B6B;--line:#D9D2C2;
-  --ivory:#FBF8F0;--box:#F7F4EC;--box2:#F3F5F2}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Carlito',Arial,sans-serif;font-size:10pt;color:var(--ink);background:#fff}
-
-/* ── capa ── */
-.cover{padding:10mm 10mm 8mm;border:1.6pt solid var(--navyd);border-radius:3mm}
-.cover .brand{text-align:center;letter-spacing:.55em;font-family:'Marcellus',serif;font-size:17pt;color:var(--navyd);text-transform:uppercase}
-.cover .kind{text-align:center;font-size:7pt;letter-spacing:.32em;color:var(--ink2);margin:1.5mm 0 7mm}
-.cover .cols{display:flex;gap:8mm;align-items:flex-end}
-.cover .left{flex:1.2}
-.cover .left .av{font-family:'Cormorant Garamond',serif;font-size:13pt;line-height:1.25;color:var(--navy);font-weight:600;font-style:italic}
-.cover .left .pat{font-size:7pt;letter-spacing:.22em;color:var(--ink2);margin:5mm 0 1mm}
-.cover .left .nm{font-family:'Cormorant Garamond',serif;font-size:24pt;font-weight:600;color:var(--navyd);line-height:1.05}
-.cover .left .meta{font-size:8.5pt;color:var(--ink2);margin-top:1.5mm}
-.cover .right{flex:1;text-align:right}
-.cover .right .bar{height:5mm;width:100%;background:linear-gradient(90deg,var(--gold) 0%,var(--bordo) 48%,var(--navyd) 100%)}
-.cover .right .proto{font-size:7pt;color:var(--ink2);margin-top:2mm}
-.cover .syn{margin-top:6mm;border:.6pt solid var(--line);background:var(--box);border-radius:2mm;padding:4mm 5mm;font-size:9.5pt;line-height:1.6;color:var(--graf)}
-.cover .cid{margin-top:3mm;border:.6pt solid var(--line);background:var(--box2);border-radius:2mm;padding:3mm 5mm;font-size:9pt;line-height:1.55;color:var(--navy)}
-.cover .medico{margin-top:6mm;padding-top:4mm;border-top:.5pt solid var(--line);font-size:7.5pt;color:var(--ink2);line-height:1.7}
-.cover .medico b{font-weight:700;color:var(--navyd)}
-
-/* ── corpo ── */
-.doc{margin-top:7mm;font-size:9.6pt;line-height:1.68;color:var(--ink)}
-.doc h2{font-family:'Cormorant Garamond',serif;font-size:14pt;font-weight:600;color:var(--navyd);border-bottom:.5pt solid var(--line);padding-bottom:1mm;margin:6mm 0 2.5mm}
-.doc h2 .num{font-family:'Marcellus',serif;font-size:10pt;color:var(--goldd);margin-right:2mm}
-.doc h3{font-family:'Marcellus',serif;font-size:10pt;font-weight:500;color:var(--navy);letter-spacing:.14em;text-transform:uppercase;margin:4mm 0 1.5mm}
-.doc p{margin-bottom:2.2mm}
-.doc .cap{font-size:7pt;font-weight:700;letter-spacing:.14em;color:var(--salmon);font-variant:small-caps;text-transform:uppercase;margin-right:1.5mm}
-.doc .box{border:.6pt solid var(--line);background:var(--box);border-radius:2mm;padding:3mm 4mm;margin:2.5mm 0}
-.doc .box h4{font-family:'Marcellus',serif;font-size:8.5pt;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-bottom:1.5mm}
-.doc .two{display:grid;grid-template-columns:1fr 1fr;gap:4mm;margin:2.5mm 0}
-.doc .col{border:.6pt solid var(--line);border-radius:2mm;padding:3mm 4mm}
-.doc .col.pro{background:var(--box2)}
-.doc .col.con{background:var(--box)}
-.doc .col b{font-family:'Marcellus',serif;font-size:8.5pt;letter-spacing:.12em;color:var(--navy);text-transform:uppercase;display:block;margin-bottom:1.2mm}
-.doc .col p{font-size:8.8pt;margin-bottom:1.2mm;line-height:1.45}
-.doc .b-pro{color:var(--teal)}
-.doc .b-con{color:var(--salmon)}
-.doc table{width:100%;border-collapse:collapse;margin:2.5mm 0;font-size:8.6pt}
-.doc th{background:var(--navyd);color:#fff;font-weight:700;text-align:left;padding:1.6mm 2.5mm}
-.doc td{border-bottom:.4pt solid var(--line);padding:1.6mm 2.5mm;vertical-align:top}
-.doc .sig{text-align:center;margin-top:9mm;padding-top:5mm;border-top:.6pt solid var(--navyd)}
-.doc .sig .nm{font-family:'Marcellus',serif;font-size:14pt;color:var(--navyd)}
-.doc .sig .tg{font-size:8pt;letter-spacing:.22em;color:var(--ink2);margin-top:1.5mm;font-variant:small-caps;text-transform:uppercase}
-.doc .sig .rg{font-size:8pt;letter-spacing:.2em;color:var(--ink2);margin-top:1mm}
-.doc .sig .motto{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:11pt;color:var(--gold);margin-top:4mm}
-.doc .sig .emp{font-size:6.5pt;color:var(--ink2);margin-top:1mm}
-.footer{margin-top:7mm;border-top:.4pt solid var(--line);padding-top:2mm;font-size:6.5pt;color:var(--ink2);display:flex;justify-content:space-between}
-@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-</style>
-</head>
-<body>
-<section class="cover">
-  <div class="brand">S u p e r N e u r o P e d</div>
-  <div class="kind">Laudo Neuropediátrico</div>
-  <div class="cols">
-    <div class="left">
-      <div class="av">Avaliação Neuropsiquiátrica<br>do Neurodesenvolvimento</div>
-      <div class="pat">PACIENTE</div>
-      <div class="nm">${esc(paciente || "—")}</div>
-      <div class="meta">${esc(hoje)}</div>
-    </div>
-    <div class="right">
-      <div class="bar"></div>
-      <div class="proto">${esc(protocolo)}</div>
-    </div>
-  </div>
-  <div class="syn">${safe.split("\\n").slice(0, 3).join("<br>").split("=".repeat(60))[0]}</div>
-  <div class="medico">
-    ${[medico.nome ? `<b>${esc(medico.nome)}</b>` : "", esc(medico.titulos || ""), esc(medico.registro)].filter(Boolean).join(" · ")}${medico.endereco ? `<br>\n    ${esc(medico.endereco)}` : ""}
-  </div>
-</section>
-<main class="doc">
-  ${safe.split("\n").map(l => {
-    const t = esc(l);
-    if (t.trim() === "") return "";
-    if (t.includes("=".repeat(60))) return "";
-    if (/^\d{2}\s{2,}/.test(t)) {
-      const m = t.match(/^(\d{2})\s+(.+)$/);
-      return m ? `<h2><span class="num">${m[1]}</span>${m[2]}</h2>` : `<h2>${t}</h2>`;
-    }
-    if (/^\[/.test(t) && t.includes("]")) {
-      const m = t.match(/^\[([^\]]+)\]\s*(.*)$/);
-      return m ? `<div class="box"><h4>${m[1]}</h4>${m[2] ? `<p>${m[2]}</p>` : ""}</div>` : `<div class="box"><p>${t}</p></div>`;
-    }
-    if (/^— /i.test(t)) {
-      const sub = t.replace(/^— /, "");
-      return `<h3>${sub}</h3>`;
-    }
-    if (/^◆ /.test(t)) return `<p><span class="b-pro">◆</span> ${t.slice(2)}</p>`;
-    if (/^■ /.test(t)) return `<p><span class="b-con">■</span> ${t.slice(2)}</p>`;
-    if (/^✦ /.test(t)) return `<p><span class="b-con">✦</span> ${t.slice(2)}</p>`;
-    if (/^· /.test(t) && t.includes("CID-10")) {
-      const m = t.match(/^· (.+) — CID-10 ([A-Z0-9.]+) · CID-11 ([0-9A-Z.]+) — (.+)$/);
-      if (m) return `<p><span class="cap">${m[1]}</span><br>CID-10 ${m[2]} · CID-11 ${m[3]} — ${m[4]}</p>`;
-    }
-    if (/^INDICAÇÃO:|^EVIDÊNCIA:|^SOLICITAÇÕES/i.test(t)) {
-      const m = t.match(/^(INDICAÇÃO|EVIDÊNCIA|SOLICITAÇÕES DESTA CONSULTA):\s*(.*)$/i);
-      return m ? `<p><span class="cap">${m[1]}:</span>${m[2]}</p>` : `<p>${t}</p>`;
-    }
-    // Bloco de assinatura formatado por COMPARAÇÃO com a identidade do
-    // emissor (issuer) — nunca por regex de nome/CRM fixos no template.
-    if (medico.nome && t === esc(medico.nome)) return `<div class="sig"><div class="nm">${t}</div></div>`;
-    if (medico.titulos && t === esc(medico.titulos)) return `<div class="sig"><div class="tg">${t}</div></div>`;
-    if (medico.registro && t === esc(medico.registro)) return `<div class="sig"><div class="rg">${t}</div></div>`;
-    if (medico.motto && t === esc(medico.motto)) return `<div class="sig"><div class="motto">${t}</div></div>`;
-    if (medico.empresa && t === esc(medico.empresa)) return `<div class="sig"><div class="emp">${t}</div></div>`;
-    return `<p>${t}</p>`;
-  }).join("\n")}
-</main>
-<div class="footer">
-  <span>${esc(paciente || "Paciente")} · Laudo SuperNeuroPed</span>
-  <span>${esc(protocolo)} · emitido em ${esc(hoje)}</span>
-</div>
-</body>
-</html>`;
 }
 
 // ── Formulários auxiliares (repetidores) ────────────────────────────────────
@@ -721,10 +603,21 @@ export default function LaudoSuperPage() {
     const win = window.open("", "_blank");
     if (!win) return;
     win.opener = null;
-    win.document.write(buildPrintHtmlSuper(texto, entrada.nome, medico));
+    win.document.write(
+      buildLaudoPantPrintHtml({
+        texto,
+        paciente: entrada.nome,
+        medico,
+        assetBase: appAssetBase(),
+        idade: entrada.idade,
+        tipoConsulta: entrada.tipoConsulta,
+        dataConsulta: entrada.dataConsulta,
+        protocoloPadrao: dateStamp(),
+        emitidoEm: new Date().toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" }),
+      }),
+    );
     win.document.close();
-    win.focus();
-    setTimeout(() => win.print(), 400);
+    imprimirQuandoPronto(win);
   };
 
   const aprovado = resultado?.qa.startsWith("APROVADO");
