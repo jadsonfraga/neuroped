@@ -107,8 +107,9 @@ function FeaturedShortcuts({
   const connections = visibleFeaturedNavigation.filter(
     (item) => item.tone === "connection",
   );
-  const heroes = clinicalShortcuts.slice(0, 1);
-  const tiles = clinicalShortcuts.slice(1);
+  // Herói (cartão vermelho): o primeiro atalho clínico e os marcados com `hero`.
+  const heroes = clinicalShortcuts.filter((item, index) => index === 0 || item.hero);
+  const tiles = clinicalShortcuts.filter((item) => !heroes.includes(item));
 
   const renderHero = (item: (typeof featuredNavigation)[number]) => {
     const Icon = item.icon;

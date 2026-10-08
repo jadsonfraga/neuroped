@@ -43,6 +43,12 @@ export interface NavItem {
   icon: LucideIcon;
   tone?: NavTone;
   description?: string;
+  /**
+   * Destaque vermelho de atalho clínico: no bloco "Atalhos clínicos" o item
+   * vira cartão-herói (np-side-hero), o mesmo tratamento do Super NeuroPad
+   * Game. O primeiro atalho clínico é sempre herói; esta flag soma outros.
+   */
+  hero?: boolean;
 }
 
 export interface NavSection {
@@ -65,10 +71,11 @@ const superNeuroPadNavigation: NavItem = {
 
 const dyslexiaRiskNavigation: NavItem = {
   href: "/dyslexia-risk",
-  label: "dyslexia risk",
+  label: "Dyslexia Risk · Jogo 5–18",
   icon: BookOpen,
   tone: "priority",
-  description: "ICED-8 · 8 anos · trilha guiada · não diagnostica",
+  hero: true,
+  description: "Jogo: ditado, leitura e aritmética · 5 a 18 anos · até 15 min · PDF · ICED-8 incluso",
 };
 
 const obs10Navigation: NavItem = {

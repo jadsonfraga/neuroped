@@ -1,0 +1,49 @@
+name: Dyslexia Risk game proof
+on:
+  pull_request:
+    paths:
+      - client/src/features/dyslexia-risk/**
+      - client/src/pages/dyslexia-risk.tsx
+      - client/src/styles/dyslexia-risk.css
+      - client/src/styles/super-neuropad-arcade.css
+      - client/src/styles/tokens.css
+      - client/src/data/navigation.ts
+      - client/src/components/Layout.tsx
+      - tests/unit/dyslexia-risk.test.ts
+      - tests/unit/dyslexia-game.test.ts
+      - tests/e2e/dyslexia-game.mjs
+      - tests/e2e/featured-navigation.mjs
+      - .github/workflows/dyslexia-risk.yml
+permissions:
+  contents: read
+concurrency:
+  group: dyslexia-risk-proof-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  game-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run test:dyslexia-risk
+      - run: npm run build:client
+        env:
+          VITE_AUTH_MODE: remote
+          VITE_OPEN_ACCESS: 'false'
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e:dyslexia-risk
+      - run: node tests/e2e/featured-navigation.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dyslexia-risk-proof
+          path: /tmp/dyslexia-game
+          if-no-files-found: error
+          retention-days: 7

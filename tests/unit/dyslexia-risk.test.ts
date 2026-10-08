@@ -24,9 +24,10 @@ test("dyslexia risk entra no destaque fora do topo fixo e na triagem", () => {
   const section = navSections.flatMap((item) => item.items).filter((item) => item.href === "/dyslexia-risk");
   assert.equal(featured.length, 1);
   assert.equal(section.length, 1);
-  assert.equal(featured[0].label, "dyslexia risk");
-  assert.equal(section[0].label, "dyslexia risk");
+  assert.equal(featured[0].label, "Dyslexia Risk · Jogo 5–18");
+  assert.equal(section[0].label, "Dyslexia Risk · Jogo 5–18");
   assert.equal(featured[0].tone, "priority");
+  assert.equal(featured[0].hero, true, "atalho em vermelho (cartão-herói), como o Super NeuroPad Game");
 });
 
 test("trava do bloco 0 impede leitura de dislexia", () => {
