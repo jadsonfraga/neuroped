@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { electronicRceBlockReason, electronicRceTransitionNotice } from "@/lib/sncrTransition";
 import {
   Pill,
   FileSignature,
@@ -49,6 +50,7 @@ function _canonicalExpressPayload(f: FormFields, issuedAt: string, issuer: Docum
     pdfSafe(issuerCredentials(issuer)),
     `Emitida em: ${issuedAt}`,
     `Paciente: ${f.paciente || "-"}`,
+    `CPF/passaporte: ${f.cpf || "-"}`,
     `Idade do paciente: ${f.idadePaciente || "-"}`,
     `Doses por dia: ${f.dosesPorDia || "-"}`,
     `Data de nascimento: ${fmtNasc(f.dataNasc) || "-"}`,
@@ -88,6 +90,7 @@ async function _buildC1PdfBytes(f: FormFields, issuer: DocumentIssuer): Promise<
         heading: "Dados do Paciente",
         body: [
           `Nome: ${f.paciente || "—"}`,
+          `CPF/passaporte: ${f.cpf || "—"}`,
           `Idade do paciente: ${f.idadePaciente || "—"}`,
           `Doses por dia: ${f.dosesPorDia || "—"}`,
           `Data de nascimento: ${fmtNasc(f.dataNasc) || "—"}`,
@@ -221,7 +224,11 @@ async function buildC1TemplatePdfBytes(f: FormFields, issuer: DocumentIssuer): P
     page.drawText(pdfSafe(issuer.clinicName), { x: m + 36, y: top - 39, size: 11, font: serif, color: rgb(1, 1, 1) });
     page.drawText(pdfSafe(issuer.specialty).toUpperCase(), { x: m + 36, y: top - 48, size: 4.4, font: bold, color: rgb(0.85, 0.88, 1) });
     page.drawText(`${via} VIA - ${destino}`, { x: A5.w - 83, y: top - 35, size: 4.8, font: bold, color: rgb(0.95, 0.9, 0.85) });
-    page.drawText("RECEITA DE CONTROLE ESPECIAL", { x: A5.w - 139, y: top - 46, size: 8, font: serif, color: rgb(1, 1, 1) });
+    // O título estourava a faixa bordô e era cortado na borda da página.
+    const tituloC1 = "RECEITA DE CONTROLE ESPECIAL";
+    let tituloSize = 8;
+    while (tituloSize > 5.6 && serif.widthOfTextAtSize(tituloC1, tituloSize) > 131) tituloSize -= 0.2;
+    page.drawText(tituloC1, { x: A5.w - 20 - serif.widthOfTextAtSize(tituloC1, tituloSize), y: top - 46, size: tituloSize, font: serif, color: rgb(1, 1, 1) });
     page.drawLine({ start: { x: m, y: top - 57 }, end: { x: A5.w - m, y: top - 57 }, thickness: 1.5, color: gold });
 
     page.drawRectangle({ x: m, y: top - 94, width: contentW, height: 32, color: rgb(0.97, 0.96, 0.92) });
@@ -230,23 +237,30 @@ async function buildC1TemplatePdfBytes(f: FormFields, issuer: DocumentIssuer): P
     drawFitted(page, [issuer.specialty, issuerCredentials(issuer)].filter(Boolean).join(" - "), m + 10, top - 82, contentW - 22, 5.6, helv);
     drawFitted(page, issuerContactLine(issuer), m + 10, top - 91, contentW - 22, 5.4, helv);
 
-    const tableY = top - 122;
+    // 4 linhas (CPF/CEP acrescentada); o quadro Rx abaixo é calculado a partir de tableY.
+    // A tabela começa abaixo do quadro "Identificação do emitente" (top - 94):
+    // antes ela subia sobre ele e deixava CRM/endereço ilegíveis.
+    const tableY = top - 152;
     const rowH = 13;
-    page.drawRectangle({ x: m, y: tableY, width: contentW, height: rowH * 3, borderWidth: 0.4, borderColor: line });
-    [1, 2].forEach((i) => page.drawLine({ start: { x: m, y: tableY + rowH * i }, end: { x: A5.w - m, y: tableY + rowH * i }, thickness: 0.35, color: line }));
-    [70, 236, 342].forEach((x) => page.drawLine({ start: { x: m + x, y: tableY }, end: { x: m + x, y: tableY + rowH * 3 }, thickness: 0.35, color: line }));
-    page.drawText("PACIENTE", { x: m + 6, y: tableY + 29, size: 4.5, font: helv, color: muted });
-    drawFitted(page, f.paciente, m + 74, tableY + 28, 160, 6.2, bold);
-    page.drawText("DATA NASC.", { x: m + 242, y: tableY + 29, size: 4.5, font: helv, color: muted });
-    drawFitted(page, fmtNasc(f.dataNasc), m + 346, tableY + 28, 60, 6.2, bold);
-    page.drawText("IDADE", { x: m + 6, y: tableY + 16, size: 4.5, font: helv, color: muted });
-    drawFitted(page, f.idadePaciente, m + 74, tableY + 15, 150, 6.2, bold);
-    page.drawText("DOSES/DIA", { x: m + 242, y: tableY + 16, size: 4.5, font: helv, color: muted });
-    drawFitted(page, f.dosesPorDia, m + 346, tableY + 15, 60, 6.2, bold);
-    page.drawText("ENDERECO", { x: m + 6, y: tableY + 3, size: 4.5, font: helv, color: muted });
-    drawFitted(page, f.endereco, m + 74, tableY + 2, 150, 6.2, bold);
-    page.drawText("MUNICIPIO/UF", { x: m + 242, y: tableY + 3, size: 4.5, font: helv, color: muted });
-    drawFitted(page, f.municipio, m + 346, tableY + 2, 60, 6.2, bold);
+    page.drawRectangle({ x: m, y: tableY, width: contentW, height: rowH * 4, borderWidth: 0.4, borderColor: line });
+    [1, 2, 3].forEach((i) => page.drawLine({ start: { x: m, y: tableY + rowH * i }, end: { x: A5.w - m, y: tableY + rowH * i }, thickness: 0.35, color: line }));
+    [70, 236, 342].forEach((x) => page.drawLine({ start: { x: m + x, y: tableY }, end: { x: m + x, y: tableY + rowH * 4 }, thickness: 0.35, color: line }));
+    page.drawText("PACIENTE", { x: m + 6, y: tableY + 42, size: 4.5, font: helv, color: muted });
+    drawFitted(page, f.paciente, m + 74, tableY + 41, 160, 6.2, bold);
+    page.drawText("DATA NASC.", { x: m + 242, y: tableY + 42, size: 4.5, font: helv, color: muted });
+    drawFitted(page, fmtNasc(f.dataNasc), m + 346, tableY + 41, 60, 6.2, bold);
+    page.drawText("IDADE", { x: m + 6, y: tableY + 29, size: 4.5, font: helv, color: muted });
+    drawFitted(page, f.idadePaciente, m + 74, tableY + 28, 150, 6.2, bold);
+    page.drawText("DOSES/DIA", { x: m + 242, y: tableY + 29, size: 4.5, font: helv, color: muted });
+    drawFitted(page, f.dosesPorDia, m + 346, tableY + 28, 60, 6.2, bold);
+    page.drawText("ENDERECO", { x: m + 6, y: tableY + 16, size: 4.5, font: helv, color: muted });
+    drawFitted(page, f.endereco, m + 74, tableY + 15, 150, 6.2, bold);
+    page.drawText("MUNICIPIO/UF", { x: m + 242, y: tableY + 16, size: 4.5, font: helv, color: muted });
+    drawFitted(page, f.municipio, m + 346, tableY + 15, 60, 6.2, bold);
+    page.drawText("CPF/PASSAPORTE", { x: m + 6, y: tableY + 3, size: 4.5, font: helv, color: muted });
+    drawFitted(page, f.cpf, m + 74, tableY + 2, 150, 6.2, bold);
+    page.drawText("CEP", { x: m + 242, y: tableY + 3, size: 4.5, font: helv, color: muted });
+    drawFitted(page, f.cep, m + 346, tableY + 2, 60, 6.2, bold);
 
     const rxY = 132;
     const rxH = tableY - rxY - 8;
@@ -336,6 +350,10 @@ function buildC1PrintHtml(f: FormFields, issuer: DocumentIssuer): string {
       <td class="val" style="width:18%">${escHtml(fmtNasc(f.dataNasc))}</td>
     </tr>
     <tr>
+      <td class="lbl">CPF / passaporte</td>
+      <td class="val" colspan="3">${escHtml(f.cpf)}</td>
+    </tr>
+    <tr>
       <td class="lbl">Idade</td>
       <td class="val">${escHtml(f.idadePaciente)}</td>
       <td class="lbl">Doses/dia</td>
@@ -371,6 +389,21 @@ function buildC1PrintHtml(f: FormFields, issuer: DocumentIssuer): string {
       <div class="sig-nm">${escHtml(issuer.doctorName)}</div>
       <div class="sig-info">${escHtml(issuerCredentials(issuer))}</div>
       <div class="sig-digital">Assinatura digital ICP-Brasil PAdES-BES</div>
+    </div>
+  </div>
+
+  <div class="disp">
+    <div class="disp-box">
+      <div class="disp-lbl">Identificação do comprador <span>(preenchimento na dispensação)</span></div>
+      <div class="disp-ln"></div><div class="disp-k">Nome</div>
+      <div class="disp-row"><div><div class="disp-ln"></div><div class="disp-k">Identidade / CPF</div></div><div><div class="disp-ln"></div><div class="disp-k">Órgão emissor</div></div></div>
+      <div class="disp-ln"></div><div class="disp-k">Endereço · Cidade/UF · Telefone</div>
+    </div>
+    <div class="disp-box">
+      <div class="disp-lbl">Identificação do fornecedor <span>(farmácia)</span></div>
+      <div class="disp-ln"></div><div class="disp-k">Estabelecimento / CNPJ</div>
+      <div class="disp-ln"></div><div class="disp-k">Data da dispensação</div>
+      <div class="disp-ln"></div><div class="disp-k">Assinatura do farmacêutico</div>
     </div>
   </div>
 </div>`;
@@ -429,6 +462,14 @@ table.dados{width:100%;border-collapse:collapse;font-size:8pt}
 .sig-info{font-size:6.5pt;color:var(--ink)}
 .sig-digital{font-size:6pt;color:var(--silver);font-style:italic}
 
+.disp{display:grid;grid-template-columns:1fr 1fr;gap:2mm;font-size:6.5pt;color:var(--ink)}
+.disp-box{border:.4pt solid var(--taupe);border-radius:1mm;padding:1.5mm 2mm}
+.disp-lbl{font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--graf)}
+.disp-lbl span{font-weight:400;text-transform:none;letter-spacing:0}
+.disp-ln{border-bottom:.35pt solid var(--mist);height:4mm}
+.disp-k{font-size:5.5pt}
+.disp-row{display:grid;grid-template-columns:1fr 1fr;gap:2mm}
+
 @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .via{min-height:auto}}
 </style>
@@ -443,6 +484,8 @@ ${via("2ª", "PACIENTE")}
 // ── Tipos ─────────────────────────────────────────────────────────
 interface FormFields {
   paciente: string;
+  /** CPF do paciente (ou passaporte) — Portaria 06/1999 art. 85, red. RDC 1.000/2025. */
+  cpf: string;
   idadePaciente: string;
   dosesPorDia: string;
   dataNasc: string;
@@ -459,7 +502,7 @@ interface FormFields {
 }
 
 const EMPTY_FORM: FormFields = {
-  paciente: "", idadePaciente: "", dosesPorDia: "", dataNasc: "", endereco: "", municipio: "", cep: "",
+  paciente: "", cpf: "", idadePaciente: "", dosesPorDia: "", dataNasc: "", endereco: "", municipio: "", cep: "",
   medicamento: "", concentracao: "", forma: "", quantidade: "", quantidadeExtenso: "",
   instrucoes: "", cid: "",
 };
@@ -523,10 +566,12 @@ export default function ReceitaC1ExpressPage() {
 
   // ── Gerar PDF + assinar ───────────────────────────────────────
   async function gerarEAssinar() {
+    const blocked = electronicRceBlockReason();
+    if (blocked) { setError(blocked); return; }
     if (!p12) { setError("Certificado não disponível."); return; }
     if (!senha) { setError("Informe a senha do certificado."); return; }
-    if (!form.paciente || !form.idadePaciente || !form.dosesPorDia || !form.medicamento || !form.instrucoes) {
-      setError("Preencha: paciente, idade do paciente, doses por dia, medicamento e instruções de uso.");
+    if (!form.paciente || !form.cpf.trim() || !form.idadePaciente || !form.dosesPorDia || !form.medicamento || !form.instrucoes) {
+      setError("Preencha: paciente, CPF (ou passaporte), idade do paciente, doses por dia, medicamento e instruções de uso.");
       return;
     }
     setError(""); setOk(""); setBusy("sign");
@@ -548,6 +593,7 @@ export default function ReceitaC1ExpressPage() {
         location: issuerCityLine(issuer) || undefined,
         widgetRect: [218, 44, 394, 110],
         widgetPageIndex: 0,
+        healthDocument: { kind: "prescricao", credentialsLine: issuer.credentialsLine },
       });
       downloadBytes(signed, `receita-c1-${dateStamp(false)}-assinada.pdf`);
       setOk("Receita assinada e baixada com sucesso.");
@@ -559,8 +605,8 @@ export default function ReceitaC1ExpressPage() {
 
   // ── Imprimir 2 vias ───────────────────────────────────────────
   function imprimirDuasVias() {
-    if (!form.paciente || !form.idadePaciente || !form.dosesPorDia || !form.medicamento || !form.instrucoes) {
-      setError("Preencha paciente, idade do paciente, doses por dia, medicamento e instruções antes de imprimir.");
+    if (!form.paciente || !form.cpf.trim() || !form.idadePaciente || !form.dosesPorDia || !form.medicamento || !form.instrucoes) {
+      setError("Preencha paciente, CPF (ou passaporte), idade do paciente, doses por dia, medicamento e instruções antes de imprimir.");
       return;
     }
     setError("");
@@ -575,8 +621,8 @@ export default function ReceitaC1ExpressPage() {
 
   // ── Baixar PDF sem assinatura ─────────────────────────────────
   async function baixarSemAssinar() {
-    if (!form.paciente || !form.idadePaciente || !form.dosesPorDia || !form.medicamento || !form.instrucoes) {
-      setError("Preencha paciente, idade do paciente, doses por dia, medicamento e instruções.");
+    if (!form.paciente || !form.cpf.trim() || !form.idadePaciente || !form.dosesPorDia || !form.medicamento || !form.instrucoes) {
+      setError("Preencha paciente, CPF (ou passaporte), idade do paciente, doses por dia, medicamento e instruções.");
       return;
     }
     setError(""); setOk(""); setBusy("plain");
@@ -725,9 +771,24 @@ export default function ReceitaC1ExpressPage() {
         )}
       </section>
 
+      <div className="rounded-2xl border border-sky-400/60 bg-sky-50/80 p-4 text-sm text-sky-950 dark:border-sky-700/60 dark:bg-sky-950/30 dark:text-sky-100" data-testid="sncr-transition-notice">
+        {electronicRceTransitionNotice()}
+      </div>
+
       {/* ── Dados do Paciente ────────────────────────────────────── */}
       <section className="rounded-2xl border border-border/70 bg-card/80 p-4 space-y-3">
         <h2 className="text-sm font-bold text-foreground">Dados do Paciente</h2>
+        <div className="max-w-xs">
+          <Label htmlFor="c1x-cpf" className="text-xs font-semibold text-muted-foreground">CPF do paciente (ou passaporte) *</Label>
+          <Input
+            id="c1x-cpf"
+            value={form.cpf}
+            onChange={set("cpf")}
+            placeholder="000.000.000-00"
+            className="mt-1"
+            data-testid="input-cpf"
+          />
+        </div>
         <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
           <div>
             <Label className="text-xs font-semibold text-muted-foreground">Nome completo *</Label>
@@ -886,7 +947,7 @@ export default function ReceitaC1ExpressPage() {
         <div className="flex flex-wrap gap-2.5">
           <Button
             onClick={gerarEAssinar}
-            disabled={!!busy || !p12 || !senha}
+            disabled={!!busy || !p12 || !senha || !!electronicRceBlockReason()}
             size="default"
             className="gap-2 font-semibold"
           >

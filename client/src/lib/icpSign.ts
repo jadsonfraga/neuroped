@@ -6,6 +6,12 @@
 import { Buffer } from "buffer";
 import { PDFDocument } from "pdf-lib";
 import forge from "node-forge";
+import {
+  addPadesPlaceholder,
+  applyItiHealthMetadata,
+  buildCadesDetachedSignature,
+  type HealthDocumentMeta,
+} from "./padesIcp";
 
 // @signpdf ainda publica módulos CommonJS que esperam `Buffer` como global.
 // O carregamento dinâmico abaixo acontece somente depois deste shim mínimo,
@@ -19,6 +25,11 @@ export interface SignMeta {
   contactInfo?: string;
   widgetRect?: number[];
   widgetPageIndex?: number;
+  /**
+   * Documento de saúde (VALIDAR/ITI): grava os OIDs de tipo de documento e de
+   * CRM/UF no PDF antes de assinar, para o validador reconhecer a prescrição.
+   */
+  healthDocument?: HealthDocumentMeta;
 }
 
 export interface CertInfo {
@@ -92,28 +103,6 @@ function orderCertChain(privateKey: forge.pki.rsa.PrivateKey, certs: forge.pki.C
   return [signingCert, ...certs.slice(0, signingCertIndex), ...certs.slice(signingCertIndex + 1)];
 }
 
-/**
- * Normaliza um PFX/P12 para 3DES, formato amplamente suportado por @signpdf/signer-p12.
- * Certificados ICP-Brasil antigos podem vir em RC2-40-CBC; o node-forge consegue
- * abrir esse legado e reempacotar mantendo a mesma senha e a cadeia de certificados.
- */
-function normalizePfxBuffer(p12: ArrayBuffer, passphrase: string): Buffer {
-  const { privateKey, certs } = parseP12(p12, passphrase);
-  const orderedCerts = orderCertChain(privateKey, certs);
-  assertCertificateDates(orderedCerts[0]);
-
-  const newAsn1 = forge.pkcs12.toPkcs12Asn1(privateKey, orderedCerts, passphrase, {
-    algorithm: "3des",
-    friendlyName: orderedCerts[0]?.subject?.getField("CN")?.value ?? undefined,
-  });
-
-  return Buffer.from(forge.asn1.toDer(newAsn1).getBytes(), "binary");
-}
-
-function originalPfxBuffer(p12: ArrayBuffer): Buffer {
-  return Buffer.from(p12);
-}
-
 export function icpErrorMessage(error: unknown): string {
   const msg = error instanceof Error ? error.message : String(error || "");
   if (/invalid password|mac verify failure|password|senha|pkcs12/i.test(msg)) {
@@ -175,40 +164,42 @@ export async function assertSignedPdfIntegrity(
 
 async function signPreparedPdf(
   pdfBytes: Uint8Array,
-  p12Buffer: Buffer,
-  passphrase: string,
+  signer: { privateKey: forge.pki.rsa.PrivateKey; certs: forge.pki.Certificate[] },
   signatureLength: number,
   meta: SignMeta,
 ): Promise<Uint8Array> {
-  const [
-    { SignPdf },
-    { P12Signer },
-    { pdflibAddPlaceholder },
-    { SUBFILTER_ETSI_CADES_DETACHED },
-  ] = await Promise.all([
+  const [{ SignPdf }, { Signer, SUBFILTER_ETSI_CADES_DETACHED, DEFAULT_BYTE_RANGE_PLACEHOLDER }] = await Promise.all([
     import("@signpdf/signpdf"),
-    import("@signpdf/signer-p12"),
-    import("@signpdf/placeholder-pdf-lib"),
     import("@signpdf/utils"),
   ]);
   const doc = await PDFDocument.load(pdfBytes);
   const pages = doc.getPages();
   const signaturePage = pages[Math.min(Math.max(meta.widgetPageIndex ?? 0, 0), pages.length - 1)];
 
-  pdflibAddPlaceholder({
-    pdfPage: signaturePage,
+  if (meta.healthDocument) applyItiHealthMetadata(doc, meta.healthDocument);
+
+  addPadesPlaceholder({
+    page: signaturePage,
     reason: meta.reason ?? "Assinatura digital ICP-Brasil",
     name: meta.name ?? "",
     location: meta.location ?? "",
     contactInfo: meta.contactInfo ?? "NeuroPed",
     subFilter: SUBFILTER_ETSI_CADES_DETACHED,
     signatureLength,
+    byteRangePlaceholder: DEFAULT_BYTE_RANGE_PLACEHOLDER,
     widgetRect: meta.widgetRect ?? [0, 0, 0, 0],
+    docMdpPermission: 2,
   });
 
+  // CAdES-BES com signing-certificate-v2 (exigido pelo SubFilter ETSI.CAdES.detached).
+  class CadesSigner extends Signer {
+    async sign(content: Buffer): Promise<Buffer> {
+      return Buffer.from(buildCadesDetachedSignature(new Uint8Array(content), signer));
+    }
+  }
+
   const withPlaceholder = Buffer.from(await doc.save({ useObjectStreams: false }));
-  const signer = new P12Signer(p12Buffer, { passphrase });
-  const signed = await new SignPdf().sign(withPlaceholder, signer);
+  const signed = await new SignPdf().sign(withPlaceholder, new CadesSigner());
   return new Uint8Array(signed);
 }
 
@@ -224,18 +215,19 @@ export async function signPdfWithP12(
   const original = await PDFDocument.load(pdfBytes);
   const expectedPageCount = original.getPageCount();
 
-  const candidateP12s = [normalizePfxBuffer(p12, passphrase), originalPfxBuffer(p12)];
+  // A chave e a cadeia são lidas uma vez (inclusive PFX legado RC2-40, que o
+  // node-forge abre) e usadas só em memória pelo assinador CAdES.
+  const { privateKey, certs } = parseP12(p12, passphrase);
+  const signer = { privateKey, certs: orderCertChain(privateKey, certs) };
   let lastError: unknown = null;
 
   for (const signatureLength of SIGNATURE_PLACEHOLDER_LENGTHS) {
-    for (const candidateP12 of candidateP12s) {
-      try {
-        const signed = await signPreparedPdf(pdfBytes, candidateP12, passphrase, signatureLength, meta);
-        await assertSignedPdfIntegrity(signed, expectedPageCount);
-        return signed;
-      } catch (error) {
-        lastError = error;
-      }
+    try {
+      const signed = await signPreparedPdf(pdfBytes, signer, signatureLength, meta);
+      await assertSignedPdfIntegrity(signed, expectedPageCount);
+      return signed;
+    } catch (error) {
+      lastError = error;
     }
   }
 

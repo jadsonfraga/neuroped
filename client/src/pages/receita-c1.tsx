@@ -21,6 +21,7 @@ import {
 } from "@/lib/issuer";
 import { dateStamp } from "@/lib/printDocument";
 import { readRouteParam } from "@/lib/routeQuery";
+import { electronicRceBlockReason, electronicRceTransitionNotice } from "@/lib/sncrTransition";
 
 /* ────────────────────────────────────────────────────────────
    Receita de Controle Especial (Lista C1) — 2 vias
@@ -30,6 +31,8 @@ import { readRouteParam } from "@/lib/routeQuery";
 
 interface ReceitaFields {
   pac: string;
+  /** CPF do paciente (ou passaporte, se estrangeiro) — Portaria 06/1999 art. 85, red. RDC 1.000/2025. */
+  cpf: string;
   idadePaciente: string;
   dosesPorDia: string;
   end: string;
@@ -41,7 +44,7 @@ interface ReceitaFields {
 }
 
 const RECEITA_TEMPLATE_VERSION = "Versão 2 — modelo Anvisa vigente para impressões desde 18/05/2026";
-const EMPTY: ReceitaFields = { pac: "", idadePaciente: "", dosesPorDia: "", end: "", med: "", qtd: "", qtde: "", poso: "", data: "" };
+const EMPTY: ReceitaFields = { pac: "", cpf: "", idadePaciente: "", dosesPorDia: "", end: "", med: "", qtd: "", qtde: "", poso: "", data: "" };
 
 function todayBR(): string {
   return new Intl.DateTimeFormat("pt-BR").format(new Date());
@@ -66,6 +69,7 @@ function _canonicalReceitaC1Payload(f: ReceitaFields, issuedAt: string, issuer: 
     RECEITA_TEMPLATE_VERSION,
     `Emitida em: ${issuedAt}`,
     `Paciente: ${f.pac || "-"}`,
+    `CPF/passaporte: ${f.cpf || "-"}`,
     `Idade do paciente: ${f.idadePaciente || "-"}`,
     `Doses por dia: ${f.dosesPorDia || "-"}`,
     `Endereco: ${f.end || "-"}`,
@@ -80,8 +84,8 @@ async function buildReceitaC1SignedPdfBytes(f: ReceitaFields, issuer: DocumentIs
   // Não gerar/assinar uma receita de controle especial incompleta: cada campo
   // essencial precisa ser revisado pelo prescritor antes de produzir o PDF.
   const missing = [
-    ["paciente", f.pac], ["idade do paciente", f.idadePaciente], ["doses por dia", f.dosesPorDia],
-    ["endereço", f.end], ["medicamento/substância", f.med],
+    ["paciente", f.pac], ["CPF (ou passaporte) do paciente", f.cpf], ["idade do paciente", f.idadePaciente],
+    ["doses por dia", f.dosesPorDia], ["medicamento/substância", f.med],
     ["quantidade", f.qtd], ["quantidade por extenso", f.qtde], ["posologia", f.poso], ["data", f.data],
   ].filter(([, value]) => !value?.trim()).map(([label]) => label);
   if (missing.length) throw new Error(`Preencha os campos obrigatórios: ${missing.join(", ")}.`);
@@ -161,7 +165,11 @@ async function buildReceitaC1SignedPdfBytes(f: ReceitaFields, issuer: DocumentIs
     page.drawText(pdfSafe(issuer.clinicName), { x: m + 38, y: top - 38, size: 10.6, font: serif, color: rgb(1, 1, 1) });
     page.drawText(pdfSafe(issuer.specialty).toUpperCase(), { x: m + 38, y: top - 48, size: 4.4, font: bold, color: rgb(0.85, 0.88, 1) });
     page.drawText(`${via} VIA - ${destino}`, { x: A5.w - 83, y: top - 35, size: 4.8, font: bold, color: rgb(0.95, 0.9, 0.85) });
-    page.drawText("RECEITA DE CONTROLE ESPECIAL", { x: A5.w - 139, y: top - 46, size: 8, font: serif, color: rgb(1, 1, 1) });
+    // O título estourava a faixa bordô e era cortado na borda da página.
+    const tituloC1 = "RECEITA DE CONTROLE ESPECIAL";
+    let tituloSize = 8;
+    while (tituloSize > 5.6 && serif.widthOfTextAtSize(tituloC1, tituloSize) > 131) tituloSize -= 0.2;
+    page.drawText(tituloC1, { x: A5.w - 20 - serif.widthOfTextAtSize(tituloC1, tituloSize), y: top - 46, size: tituloSize, font: serif, color: rgb(1, 1, 1) });
     page.drawLine({ start: { x: m, y: top - 57 }, end: { x: A5.w - m, y: top - 57 }, thickness: 1.5, color: gold });
 
     page.drawRectangle({ x: m, y: top - 94, width: contentW, height: 32, color: rgb(0.97, 0.96, 0.92) });
@@ -170,7 +178,9 @@ async function buildReceitaC1SignedPdfBytes(f: ReceitaFields, issuer: DocumentIs
     drawFitted(page, [issuer.specialty, issuerCredentials(issuer)].filter(Boolean).join(" - "), m + 10, top - 82, contentW - 22, 5.6, helv);
     drawFitted(page, issuerContactLine(issuer), m + 10, top - 91, contentW - 22, 5.4, helv);
 
-    const tableY = top - 122;
+    // A tabela começa abaixo do quadro "Identificação do emitente" (top - 94):
+    // antes ela subia sobre ele e deixava CRM/endereço ilegíveis.
+    const tableY = top - 152;
     const rowH = 13;
     page.drawRectangle({ x: m, y: tableY, width: contentW, height: rowH * 4, borderWidth: 0.4, borderColor: line });
     [1, 2, 3].forEach((i) => page.drawLine({ start: { x: m, y: tableY + rowH * i }, end: { x: A5.w - m, y: tableY + rowH * i }, thickness: 0.35, color: line }));
@@ -189,6 +199,8 @@ async function buildReceitaC1SignedPdfBytes(f: ReceitaFields, issuer: DocumentIs
     drawFitted(page, cidadeUf, m + 346, tableY + 15, 60, 6.2, bold);
     page.drawText("VALIDADE", { x: m + 6, y: tableY + 3, size: 4.5, font: helv, color: muted });
     page.drawText(valBr, { x: m + 74, y: tableY + 2, size: 6.2, font: bold, color: ink });
+    page.drawText("CPF/PASSAPORTE", { x: m + 242, y: tableY + 3, size: 4.5, font: helv, color: muted });
+    drawFitted(page, f.cpf, m + 346, tableY + 2, 44, 6.2, bold);
 
     const rxY = 132;
     const rxH = tableY - rxY - 8;
@@ -270,8 +282,9 @@ function viaHtml(tag: string, f: ReceitaFields, issuer: DocumentIssuer) {
         ${esc(issuerContactLine(issuer))}
       </div>
     </div>
-    <div class="row">
-      <div class="field"><span class="k">Paciente</span><span class="f">${esc(f.pac) || "&nbsp;"}</span></div>
+    <div class="row" style="gap:4mm">
+      <div class="field" style="flex:2"><span class="k">Paciente</span><span class="f">${esc(f.pac) || "&nbsp;"}</span></div>
+      <div class="field" style="flex:1"><span class="k">CPF (ou passaporte)</span><span class="f">${esc(f.cpf) || "&nbsp;"}</span></div>
     </div>
     <div class="row" style="gap:4mm">
       <div class="field" style="flex:1"><span class="k">Idade do paciente</span><span class="f">${esc(f.idadePaciente) || "&nbsp;"}</span></div>
@@ -477,6 +490,7 @@ export default function ReceitaC1Page() {
         setF((current) => ({
           ...current,
           pac: current.pac || patient?.name || "",
+          cpf: current.cpf || patient?.cpf || patient?.cpfDigits || "",
           end: current.end || patient?.address || patient?.guardianAddress || "",
           data: current.data || todayBR(),
         }));
@@ -494,8 +508,8 @@ export default function ReceitaC1Page() {
   }
 
   const missingRequiredFields = () => [
-    ["paciente", f.pac], ["idade do paciente", f.idadePaciente], ["doses por dia", f.dosesPorDia],
-    ["endereço", f.end], ["medicamento/substância", f.med],
+    ["paciente", f.pac], ["CPF (ou passaporte) do paciente", f.cpf], ["idade do paciente", f.idadePaciente],
+    ["doses por dia", f.dosesPorDia], ["medicamento/substância", f.med],
     ["quantidade", f.qtd], ["quantidade por extenso", f.qtde], ["posologia", f.poso], ["data", f.data],
   ].filter(([, value]) => !value?.trim()).map(([label]) => label);
 
@@ -554,6 +568,10 @@ export default function ReceitaC1Page() {
 
       <SncrIntegrationPanel />
 
+      <div className="rounded-2xl border border-sky-400/60 bg-sky-50/80 p-4 text-sm text-sky-950 dark:border-sky-700/60 dark:bg-sky-950/30 dark:text-sky-100" data-testid="sncr-transition-notice">
+        {electronicRceTransitionNotice()}
+      </div>
+
       {/* ── Assinatura ICP-Brasil — bloco em destaque ─────────── */}
       <section
         className="rounded-3xl border-2 p-5 sm:p-6"
@@ -575,6 +593,8 @@ export default function ReceitaC1Page() {
           reason="Receita de Controle Especial - Lista C1"
           widgetRect={[218, 44, 394, 110]}
           widgetPageIndex={0}
+          healthDocument={{ kind: "prescricao", credentialsLine: issuer.credentialsLine }}
+          signingBlockedReason={electronicRceBlockReason()}
           archivePdf={async (bytes, meta) => {
             await archiveClinicalPdf({
               bytes,
@@ -590,6 +610,7 @@ export default function ReceitaC1Page() {
               certificateValidUntil: meta.certificateValidUntil,
               metadata: {
                 patientName: f.pac,
+                patientDocument: f.cpf,
                 patientAge: f.idadePaciente,
                 dosesPerDay: f.dosesPorDia,
                 medication: f.med,
@@ -621,6 +642,18 @@ export default function ReceitaC1Page() {
           />
         </div>
 
+        <div className="max-w-xs">
+          <label htmlFor="receita-c1-cpf" className="text-xs font-semibold text-muted-foreground">CPF do paciente (ou passaporte) *</label>
+          <Input
+            id="receita-c1-cpf"
+            value={f.cpf}
+            onChange={set("cpf")}
+            placeholder="000.000.000-00"
+            className="mt-1"
+            data-testid="input-receita-cpf"
+          />
+        </div>
+
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <label className="text-xs font-semibold text-muted-foreground">Idade do paciente *</label>
@@ -644,7 +677,7 @@ export default function ReceitaC1Page() {
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-muted-foreground">Endereço do paciente</label>
+          <label className="text-xs font-semibold text-muted-foreground">Endereço do paciente (opcional)</label>
           <Input
             value={f.end}
             onChange={set("end")}

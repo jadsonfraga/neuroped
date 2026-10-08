@@ -4,6 +4,9 @@ on:
   pull_request:
     paths:
       - "client/src/lib/icpSign.ts"
+      - "client/src/lib/padesIcp.ts"
+      - "client/src/lib/sncrTransition.ts"
+      - "client/src/components/AssinaturaIcpPanel.tsx"
       - "client/src/lib/documentPdf.ts"
       - "client/src/lib/pdfTextWrap.ts"
       - "client/src/lib/secureStorage.ts"
@@ -16,6 +19,8 @@ on:
       - "client/src/data/caaBoard.ts"
       - "client/src/data/caaExpandedBoard.ts"
       - "tests/unit/pdf-p12-signing.test.ts"
+      - "tests/unit/pades-icp-iti.test.ts"
+      - "tests/unit/receita-c1-compliance-static.test.mjs"
       - "tests/unit/document-pdf-wrap.test.ts"
       - "tests/unit/caa-premium-catalog.test.ts"
       - "tests/unit/caa-persistence-static.test.mjs"
@@ -45,6 +50,12 @@ jobs:
 
       - name: Sign a real PDF with an ephemeral PFX/P12
         run: node --import tsx tests/unit/pdf-p12-signing.test.ts
+
+      - name: PAdES ICP-Brasil (signing-certificate-v2, DocMDP) + ITI health OIDs + SNCR transition
+        run: node --import tsx tests/unit/pades-icp-iti.test.ts
+
+      - name: Receita C1 legal fields, emitter layout and SNCR gate
+        run: node tests/unit/receita-c1-compliance-static.test.mjs
 
       - name: Keep long PDF tokens inside the printable width
         run: node --import tsx tests/unit/document-pdf-wrap.test.ts
