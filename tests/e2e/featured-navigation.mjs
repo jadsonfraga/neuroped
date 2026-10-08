@@ -39,7 +39,8 @@ page.on("request", (request) => {
   }
 });
 const sidebar = page.locator(".np-app-sidebar");
-// Herói = jogo; os cartões (tiles) seguem a ordem do destaque: Sonda, OBS.
+// Heróis = jogos (Super NeuroPad e Dyslexia Risk 5–18); os cartões (tiles)
+// seguem a ordem do destaque: Sonda, OBS.
 // Localizar por classe evita contar o mesmo destino quando ele também aparece
 // como item de seção (ex.: /testes-diretos em "Avaliação direta").
 const game = () => sidebar.locator(".np-side-hero:visible");
@@ -57,7 +58,8 @@ async function screenshot(name) {
 }
 
 async function assertExpandedNavigation() {
-  assert.deepEqual(await hrefs(game()), ["/super-neuropad-game"], "Super NeuroPad Game é o único cartão-herói");
+  assert.deepEqual(await hrefs(game()), ["/super-neuropad-game", "/dyslexia-risk"],
+    "cartões-herói (vermelhos): Super NeuroPad Game e, logo abaixo, o jogo Dyslexia Risk 5–18");
   assert.deepEqual(await hrefs(sonda()), ["/testes-diretos"], "Sonda é o primeiro tile, logo após o jogo");
   assert.deepEqual(await hrefs(obs()), ["/avaliacao-pre-consulta-faixa-etaria"], "OBS é o segundo tile");
   assert.equal((await sonda().textContent())?.includes("Sonda Dez · Avaliação Direta"), true);

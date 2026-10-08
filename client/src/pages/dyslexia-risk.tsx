@@ -10,11 +10,19 @@ import { safeTextFilename } from "@/lib/shareText";
 import "@/styles/super-neuropad-arcade.css";
 import "@/styles/dyslexia-risk.css";
 
+const LazyDyslexiaGame = lazy(() => import("@/features/dyslexia-risk/game/DyslexiaGame"));
+
 const LazySaveToPatient = lazy(() =>
   import("@/components/SaveToPatient").then(({ SaveToPatient: Component }) => ({ default: Component })),
 );
 
 const KEY = "neuroped-dyslexia-risk-v1";
+/** Aba ativa da página: o jogo 5–18 é a entrada padrão; o ICED-8 continua intacto na sua chave. */
+const MODE_KEY = "neuroped-dyslexia-risk-mode";
+type Mode = "jogo" | "iced";
+function initialMode(): Mode {
+  try { return localStorage.getItem(MODE_KEY) === "iced" ? "iced" : "jogo"; } catch { return "jogo"; }
+}
 type GateField = "nome" | "data" | "nasc" | "idade" | "escola" | "anosEsc" | "examinador";
 type PersistenceField = "a" | "b" | "c" | "d";
 type Phase = "mapa" | "portao" | "escudo" | "transicao" | "palavras" | "pseudo" | "fluencia" | "ditado" | "sons" | "formas" | "familia" | "ponte" | "tesouro";
@@ -57,6 +65,7 @@ function pcpmOf(lidas: number, erros: number, tempo: number) {
 }
 
 export default function DyslexiaRiskPage() {
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [s, setS] = useState(blank);
   const [phase, setPhase] = useState<Phase>("mapa");
   const [cursor, setCursor] = useState(0);
@@ -72,6 +81,7 @@ export default function DyslexiaRiskPage() {
     try { const raw = localStorage.getItem(KEY); if (raw) setS({ ...blank(), ...JSON.parse(raw) }); } catch { /* sessão nova */ }
   }, []);
   useEffect(() => { localStorage.setItem(KEY, JSON.stringify(s)); }, [s]);
+  useEffect(() => { try { localStorage.setItem(MODE_KEY, mode); } catch { /* modo só da sessão */ } }, [mode]);
   useEffect(() => {
     if (!running) return;
     const id = window.setInterval(() => setSecs((n) => n + 1), 1000);
@@ -133,14 +143,14 @@ export default function DyslexiaRiskPage() {
   }
 
   return (
-    <div className="snp space-y-4 pb-8" data-testid="dyslexia-risk">
+    <div className="snp drx-page space-y-4" data-testid="dyslexia-risk" data-mode={mode}>
       <header className="snp-panel snp-scanlines snp-sky-bg relative overflow-hidden p-4 sm:p-6">
         <div className="relative flex items-center gap-3">
           <img src="/dr-jadson-shield-badge.webp" alt="Dr. Jadson Fraga" width="256" height="256" decoding="async" className="drx-logo snp-sprite shrink-0 rounded-2xl border-[3px] border-[var(--snp-ink-fixed)]" />
           <div className="min-w-0 text-[var(--snp-stage-text)]">
             <div className="mb-1 flex flex-wrap gap-1.5">
-              <span className="snp-chip">ICED-8 · 8 anos</span>
-              <span className="snp-chip">operacional interno</span>
+              {mode === "jogo" ? <span className="snp-chip">Jogo · 5 a 18 anos</span> : <span className="snp-chip">ICED-8 · 8 anos</span>}
+              <span className="snp-chip">{mode === "jogo" ? "triagem lúdica" : "operacional interno"}</span>
               <span className="snp-chip">não diagnostica</span>
               <span className="snp-chip">Soli Deo Gloria</span>
             </div>
@@ -148,6 +158,18 @@ export default function DyslexiaRiskPage() {
           </div>
         </div>
       </header>
+      <div className="drx-modes grid grid-cols-2 gap-2" role="group" aria-label="Modo da aba">
+        <button type="button" aria-pressed={mode === "jogo"} className={`snp-btn drx-tap px-3 text-xs ${mode === "jogo" ? "snp-btn--sun" : "snp-btn--paper"}`} onClick={() => setMode("jogo")}>🎮 Jogo 5–18 anos</button>
+        <button type="button" aria-pressed={mode === "iced"} className={`snp-btn drx-tap px-3 text-xs ${mode === "iced" ? "snp-btn--sun" : "snp-btn--paper"}`} onClick={() => setMode("iced")}>📋 ICED-8 clínico</button>
+      </div>
+
+      {mode === "jogo" && (
+        <Suspense fallback={<p className="text-sm font-bold" role="status">Carregando o jogo…</p>}>
+          <LazyDyslexiaGame />
+        </Suspense>
+      )}
+
+      {mode === "iced" && <>
       <div className="flex flex-wrap gap-2">
         <button type="button" aria-pressed={child} className={`snp-btn px-3 py-2 text-xs ${child ? "snp-btn--grass" : "snp-btn--paper"}`} onClick={() => setChild((v) => !v)}>{child ? "Voltar ao examinador" : "Tela da criança"}</button>
         <button type="button" className="snp-btn snp-btn--sky px-3 py-2 text-xs" onClick={() => setPhase("mapa")}>Mapa</button>
@@ -371,6 +393,7 @@ export default function DyslexiaRiskPage() {
           <p className="text-xs font-bold opacity-70">Fora da soma: compreensão isolada, TDAH, TDL, TEA, ansiedade, inteligência, matemática, motivação. Diagnóstico permanece com o médico.</p>
         </section>
       )}
+      </>}
     </div>
   );
 }

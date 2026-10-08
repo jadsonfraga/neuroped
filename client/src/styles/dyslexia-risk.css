@@ -7,3 +7,30 @@
 .snp .drx-word.read { background:var(--snp-sun); border-radius:6px; }
 .snp .drx-logo { width:3.5rem; height:3.5rem; object-fit:cover; }
 @media (max-width:420px) { .snp .drx-shapes { grid-template-columns:repeat(4, 1fr); } }
+
+/* Jogo das Letras e Números (5–18): alvos grandes, cartões e movimento opcional. */
+.snp.drx-page { padding-bottom: 2rem; }
+@media screen and (max-width: 1023px) {
+  /* O dock inferior fixo (Início/Prontuário/Clínica/Agenda) não pode cobrir o fim da aba
+     nem o campo com foco: reserva espaço extra e margem de rolagem. */
+  .snp.drx-page { padding-bottom: calc(7rem + env(safe-area-inset-bottom)); }
+  .snp.drx-page :is(input, select, textarea, button, summary) { scroll-margin-bottom: calc(7.5rem + env(safe-area-inset-bottom)); }
+}
+.snp .drx-tap { min-height: 3.25rem; min-width: 3rem; }
+.snp .drx-input { border: 3px solid var(--snp-ink-fixed); border-radius: 0.75rem; padding: 0.4rem 0.6rem; background: var(--snp-paper-fixed); color: var(--snp-ink-fixed); }
+.snp .drx-input--big { font-size: 1.75rem; font-weight: 900; text-align: center; letter-spacing: 0.04em; min-height: 3.5rem; }
+.snp .drx-card { border: 4px solid var(--snp-ink-fixed); border-radius: 18px; background: var(--snp-paper-fixed); color: var(--snp-ink-fixed); padding: 1.25rem 0.75rem; box-shadow: 5px 5px 0 var(--snp-ink-fixed); }
+.snp .drx-reading { font-size: 1.15rem; line-height: 1.9; }
+.snp .drx-syllables .drx-word { font-size: 1.5rem; margin: 0 0.35rem; }
+.snp .drx-word { min-height: 2.25rem; }
+.snp .drx-stars { color: var(--snp-ink-fixed); font-size: 1.15rem; letter-spacing: 0.1em; }
+.snp .drx-cheer { display: inline-flex; background: var(--snp-grass-tint); color: var(--snp-ink-fixed); }
+@media (prefers-reduced-motion: no-preference) {
+  .snp .drx-bob { animation: drx-bob 2.4s ease-in-out infinite; }
+  .snp .drx-pulse { animation: drx-pulse 1.6s ease-in-out infinite; }
+  .snp .drx-cheer { animation: drx-pop 0.35s ease-out; }
+}
+@keyframes drx-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes drx-pulse { 0%, 100% { box-shadow: 0 0 0 0 var(--snp-sun); } 50% { box-shadow: 0 0 0 6px var(--snp-sun-soft); } }
+@keyframes drx-pop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.snp .drx-game-root { scroll-margin-top: 5rem; }
