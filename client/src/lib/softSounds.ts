@@ -14,9 +14,25 @@ const VOLUME_STORAGE_KEY = "neuroped:sound-volume";
 export const SOUND_PREFERENCE_EVENT = "neuroped:sound-preference-changed";
 const DEFAULT_VOLUME = 0.58;
 
+/**
+ * Antes do primeiro gesto do usuário o navegador recusa o áudio e registra um
+ * aviso no console ("The AudioContext was not allowed to start") — o que
+ * acontecia em TODO carregamento por link direto, porque o som de troca de
+ * rota roda na montagem do Layout. Sem gesto, não criamos o contexto: o som é
+ * só feedback e o primeiro clique já o libera. Navegadores sem
+ * `navigator.userActivation` mantêm o comportamento anterior.
+ */
+function hasUserActivation(): boolean {
+  if (typeof navigator === "undefined") return true;
+  const activation = (navigator as Navigator & { userActivation?: { hasBeenActive?: boolean } })
+    .userActivation;
+  return activation?.hasBeenActive !== false;
+}
+
 function getCtx(): AudioContext | null {
   if (typeof window === "undefined") return null;
   if (_ctx) return _ctx;
+  if (!hasUserActivation()) return null;
   try {
     const Ctx = window.AudioContext || (window as any).webkitAudioContext;
     if (!Ctx) return null;
