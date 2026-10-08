@@ -30,14 +30,11 @@ export const onRequestGet: PagesFunction<Env> = async (_context) => {
         "POST /api/scales/results",
       ],
     },
-    features: {
-      semanticSearch: false,
-      embedding: false,
-      cloudStorage: false,
-      smtp: false,
-      realPatientsEnabled: false,
-      mode: "DEMO_HOMOLOGACAO",
-    },
+    // Prontidão de runtime (cripto clínica, LGPD, banco, autenticação) é
+    // calculada a partir do ambiente real em GET /api/health. Este endpoint
+    // publicava aqui um bloco fixo ("DEMO_HOMOLOGACAO", realPatientsEnabled:
+    // false, smtp: false) que contradizia a produção; foi removido.
+    readiness: "/api/health",
   };
 
   return new Response(JSON.stringify(response), {
