@@ -104,6 +104,7 @@ const visivel = html
   .replace(/\s+/g, " ");
 
 console.log("\n[1] Padrão visual PANT (pasta Panty)");
+assert(!/undefined|null|NaN/.test(html.replace(/<style[\s\S]*?<\/style>/, "")) && !/:undefined|\$\{/.test(html), "nenhum valor indefinido no HTML/CSS gerado");
 assert(html.includes(`background:${PANT_PALETA.papel}`), "miolo em papel creme #F6F0E2");
 for (const [nome, cor] of Object.entries({ ouro: "#D4A83B", numeral: "#A8801F", titulo: "#0A1830", vermelho: "#A41E1E" })) {
   assert(html.includes(cor), `paleta: ${nome} ${cor}`);

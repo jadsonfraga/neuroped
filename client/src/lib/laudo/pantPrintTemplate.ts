@@ -23,8 +23,15 @@ export const PANT_PALETA = {
   numeral: "#A8801F",
   titulo: "#0A1830",
   vermelho: "#A41E1E",
-  capa: "#0A1830",
   tinta: "#1B2033",
+  // tons de apoio (capa, fios e rodapés)
+  creme: "#F3EAD6",
+  ouroFosco: "#B0904A",
+  fio: "#E3CF9B",
+  rodape: "#B1A688",
+  cinza: "#8F8F8F",
+  capaCinza: "#8B90A0",
+  traco: "#8A7A55",
 } as const;
 
 export const PANT_FONTES_URL =
@@ -447,10 +454,10 @@ export function buildLaudoPantPrintHtml(input: PantPrintInput): string {
   const vazio = !blocos.length && !abertura.length;
   const corpoHtml = vazio ? "<p>Sem conteúdo informado.</p>" : renderBlocos(blocos, medico);
 
-  const ornamento = (top: number) =>
-    `<div class="dia" style="top:${top}mm"><svg viewBox="0 0 52 4" aria-hidden="true"><circle cx="1" cy="2" r="0.35" fill="#c9a24e"/><circle cx="51" cy="2" r="0.35" fill="#c9a24e"/><path d="M24 2 L26 0.4 L28 2 L26 3.6 Z" fill="none" stroke="#d4ac57" stroke-width="0.3"/><circle cx="29.6" cy="2" r="0.3" fill="#d4ac57"/></svg></div>`;
-
   const P = PANT_PALETA;
+  const ornamento = (top: number) =>
+    `<div class="dia" style="top:${top}mm"><svg viewBox="0 0 52 4" aria-hidden="true"><circle cx="1" cy="2" r="0.35" fill="${P.ouro}"/><circle cx="51" cy="2" r="0.35" fill="${P.ouro}"/><path d="M24 2 L26 0.4 L28 2 L26 3.6 Z" fill="none" stroke="${P.ouro}" stroke-width="0.3"/><circle cx="29.6" cy="2" r="0.3" fill="${P.ouro}"/></svg></div>`;
+
   const esc = escapeHtml;
 
   return `<!DOCTYPE html>
@@ -467,40 +474,40 @@ export function buildLaudoPantPrintHtml(input: PantPrintInput): string {
 @page{size:A4;margin:35mm 28mm 27mm 28mm;
   background:${P.papel} url("${asset(input.assetBase, PANT_ASSETS.folha)}") no-repeat -28mm -35mm/210mm 297mm;
   @top-left{content:"SUPERNEUROPED";font:600 9.6pt "Cormorant Garamond",Georgia,serif;letter-spacing:.32em;color:${P.titulo};vertical-align:top;padding-top:17.6mm;padding-left:15mm;width:90mm;white-space:nowrap}
-  @top-right{content:${cssString([medico.nome, credCab].filter(Boolean).join("\n"))};white-space:pre;text-align:right;font:300 6.9pt Lato,Arial,sans-serif;line-height:1.6;color:#9d9e9e;letter-spacing:.02em;vertical-align:top;padding-top:15.2mm;width:80mm}
-  @bottom-left{content:${cssString(paciente)};font:300 6.4pt Lato,Arial,sans-serif;color:#b1a688;vertical-align:top;padding-top:12.3mm;width:55mm;white-space:nowrap}
-  @bottom-center{content:${cssString(protocolo)};font:italic 400 7pt "Cormorant Garamond",Georgia,serif;color:#b9a982;vertical-align:top;padding-top:12.1mm;width:60mm;white-space:nowrap}
+  @top-right{content:${cssString([medico.nome, credCab].filter(Boolean).join("\n"))};white-space:pre;text-align:right;font:300 6.9pt Lato,Arial,sans-serif;line-height:1.6;color:${P.cinza};letter-spacing:.02em;vertical-align:top;padding-top:15.2mm;width:80mm}
+  @bottom-left{content:${cssString(paciente)};font:300 6.4pt Lato,Arial,sans-serif;color:${P.rodape};vertical-align:top;padding-top:12.3mm;width:55mm;white-space:nowrap}
+  @bottom-center{content:${cssString(protocolo)};font:italic 400 7pt "Cormorant Garamond",Georgia,serif;color:${P.rodape};vertical-align:top;padding-top:12.1mm;width:60mm;white-space:nowrap}
   @bottom-right{content:"fl. " counter(page) " de " counter(pages);font:400 6.4pt Lato,Arial,sans-serif;color:${P.numeral};vertical-align:top;padding-top:12.3mm;width:45mm;text-align:right}
 }
-@page capa{margin:0;background:${P.capa} url("${asset(input.assetBase, PANT_ASSETS.capa)}") no-repeat 0 0/210mm 297mm;
+@page capa{margin:0;background:${P.titulo} url("${asset(input.assetBase, PANT_ASSETS.capa)}") no-repeat 0 0/210mm 297mm;
   @top-left{content:none}@top-right{content:none}@bottom-left{content:none}@bottom-center{content:none}@bottom-right{content:none}}
 *{box-sizing:border-box}
 html{font-family:"Cormorant Garamond",Georgia,serif;color:${P.tinta};-webkit-print-color-adjust:exact;print-color-adjust:exact}
 body{margin:0}
 @media screen{
-  body{background:#5b6170;padding:8mm 0}
-  .capa,.corpo{width:210mm;margin:0 auto 8mm;box-shadow:0 2mm 8mm rgba(0,0,0,.35)}
+  body{background:${P.cinza};padding:8mm 0}
+  .capa,.corpo{width:210mm;margin:0 auto 8mm;box-shadow:0 2mm 8mm ${P.titulo}59}
   .corpo{background:${P.papel} url("${asset(input.assetBase, PANT_ASSETS.folha)}") no-repeat 0 0/210mm 297mm;padding:35mm 28mm 27mm;min-height:297mm}
 }
 
 /* ── capa ── */
-.capa{page:capa;height:297mm;position:relative;overflow:hidden;text-align:center;color:#f3ead6;break-after:page;
-  background:${P.capa} url("${asset(input.assetBase, PANT_ASSETS.capa)}") no-repeat 0 0/210mm 297mm}
+.capa{page:capa;height:297mm;position:relative;overflow:hidden;text-align:center;color:${P.creme};break-after:page;
+  background:${P.titulo} url("${asset(input.assetBase, PANT_ASSETS.capa)}") no-repeat 0 0/210mm 297mm}
 .capa .brasao{position:absolute;left:50%;top:21mm;height:110mm;width:auto;transform:translateX(-50%)}
-.capa .marca{position:absolute;top:137.2mm;left:0;right:0;font:400 7.6pt Lato,Arial,sans-serif;letter-spacing:.52em;padding-left:.52em;color:#d4ac57}
+.capa .marca{position:absolute;top:137.2mm;left:0;right:0;font:400 7.6pt Lato,Arial,sans-serif;letter-spacing:.52em;padding-left:.52em;color:${P.ouro}}
 .capa .dia{position:absolute;left:0;right:0;height:4mm}
 .capa .dia svg{width:52mm;height:4mm}
-.capa h1{position:absolute;top:148mm;left:0;right:0;margin:0;font:400 34pt "Cormorant Garamond",Georgia,serif;letter-spacing:.005em;color:#f3ead6}
-.capa .sub{position:absolute;top:170.5mm;left:0;right:0;font:300 7.4pt Lato,Arial,sans-serif;letter-spacing:.3em;padding-left:.3em;color:#b49a62;text-transform:uppercase}
-.capa .rotulo{position:absolute;top:204mm;left:0;right:0;font:400 6.6pt Lato,Arial,sans-serif;letter-spacing:.42em;color:#d4ac57}
-.capa .rotulo span{display:inline-block;width:15mm;height:.3mm;background:#c9a24e;vertical-align:middle;margin:0 5mm}
-.capa .nome{position:absolute;top:210.3mm;left:12mm;right:12mm;font:600 23.5pt/1.1 "Cormorant Garamond",Georgia,serif;color:#f3ead6}
-.capa .meta{position:absolute;top:226mm;left:12mm;right:12mm;font:400 8.3pt Lato,Arial,sans-serif;color:#e9e1cf}
-.capa .meta i{font-style:normal;font-weight:300;color:#a9a392}
-.capa .curto{position:absolute;top:255.4mm;left:92mm;width:26mm;height:.25mm;background:#8f7a4c}
-.capa .medico{position:absolute;top:261.5mm;left:0;right:0;font:500 12.2pt "Cormorant Garamond",Georgia,serif;color:#f3ead6}
-.capa .crm{position:absolute;top:269.6mm;left:0;right:0;font:400 7pt Lato,Arial,sans-serif;letter-spacing:.24em;color:#a8873f;text-transform:uppercase}
-.capa .end{position:absolute;top:275.6mm;left:14mm;right:14mm;font:300 6.1pt Lato,Arial,sans-serif;color:#7f8597}
+.capa h1{position:absolute;top:148mm;left:0;right:0;margin:0;font:400 34pt "Cormorant Garamond",Georgia,serif;letter-spacing:.005em;color:${P.creme}}
+.capa .sub{position:absolute;top:170.5mm;left:0;right:0;font:300 7.4pt Lato,Arial,sans-serif;letter-spacing:.3em;padding-left:.3em;color:${P.ouroFosco};text-transform:uppercase}
+.capa .rotulo{position:absolute;top:204mm;left:0;right:0;font:400 6.6pt Lato,Arial,sans-serif;letter-spacing:.42em;color:${P.ouro}}
+.capa .rotulo span{display:inline-block;width:15mm;height:.3mm;background:${P.ouro};vertical-align:middle;margin:0 5mm}
+.capa .nome{position:absolute;top:210.3mm;left:12mm;right:12mm;font:600 23.5pt/1.1 "Cormorant Garamond",Georgia,serif;color:${P.creme}}
+.capa .meta{position:absolute;top:226mm;left:12mm;right:12mm;font:400 8.3pt Lato,Arial,sans-serif;color:${P.creme}}
+.capa .meta i{font-style:normal;font-weight:300;color:${P.capaCinza}}
+.capa .curto{position:absolute;top:255.4mm;left:92mm;width:26mm;height:.25mm;background:${P.traco}}
+.capa .medico{position:absolute;top:261.5mm;left:0;right:0;font:500 12.2pt "Cormorant Garamond",Georgia,serif;color:${P.creme}}
+.capa .crm{position:absolute;top:269.6mm;left:0;right:0;font:400 7pt Lato,Arial,sans-serif;letter-spacing:.24em;color:${P.ouroFosco};text-transform:uppercase}
+.capa .end{position:absolute;top:275.6mm;left:14mm;right:14mm;font:300 6.1pt Lato,Arial,sans-serif;color:${P.capaCinza}}
 
 /* ── miolo ── */
 .corpo{font-size:12.6pt}
@@ -517,7 +524,7 @@ p b,li b{font-weight:700;color:${P.titulo}}
 mark{background:none;color:${P.vermelho};font-weight:600}
 .legenda{font:400 6.6pt Lato,Arial,sans-serif;letter-spacing:.32em;text-transform:uppercase;color:${P.numeral};margin:5mm 0 2.2mm;break-after:avoid;page-break-after:avoid}
 .legenda::before{content:"";display:inline-block;width:6mm;height:.3mm;background:${P.ouro};vertical-align:middle;margin-right:2.5mm}
-.abertura{margin-bottom:9mm;padding-bottom:3mm;border-bottom:.25mm solid #e3cf9b}
+.abertura{margin-bottom:9mm;padding-bottom:3mm;border-bottom:.25mm solid ${P.fio}}
 .abertura .legenda:first-child{margin-top:0}
 p.cid{color:${P.titulo}}
 .rot{font:700 7pt Lato,Arial,sans-serif;letter-spacing:.16em;color:${P.vermelho};text-transform:uppercase}
@@ -535,19 +542,19 @@ p.dx .st{display:block;font-style:italic}
 .quadro .t::before{content:"";display:inline-block;width:6mm;height:.3mm;background:${P.ouro};vertical-align:middle;margin-right:2.5mm}
 .quadro table{width:100%;border-collapse:collapse}
 .quadro th{font:400 6.4pt Lato,Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:${P.numeral};text-align:left;padding:2.2mm 2mm 2.2mm 0;border-top:.45mm solid ${P.ouro};border-bottom:.25mm solid ${P.ouro}}
-.quadro td{font-size:10.4pt;line-height:13.4pt;vertical-align:top;padding:2.4mm 2.5mm 2.6mm 0;border-bottom:.2mm solid #e3cf9b;text-align:left}
+.quadro td{font-size:10.4pt;line-height:13.4pt;vertical-align:top;padding:2.4mm 2.5mm 2.6mm 0;border-bottom:.2mm solid ${P.fio};text-align:left}
 .quadro td:first-child{font-weight:700;color:${P.titulo};width:30mm}
 .quadro tr:last-child td{border-bottom:.45mm solid ${P.ouro}}
 /* fecho compacto e preso ao último parágrafo: folha de assinatura nunca sai sem texto */
 .fecho{break-inside:avoid;page-break-inside:avoid;break-before:avoid;page-break-before:avoid;margin-top:10mm}
 .sign{break-inside:avoid}
 .sign .who{width:92mm}
-.sign .line{height:11mm;border-bottom:.25mm solid #8a7a55;margin-bottom:2mm}
+.sign .line{height:11mm;border-bottom:.25mm solid ${P.traco};margin-bottom:2mm}
 .sign .nm{font:600 11.5pt "Cormorant Garamond",Georgia,serif;color:${P.titulo}}
-.sign .cr{font:300 6.8pt Lato,Arial,sans-serif;color:#8f8f8f;margin-top:.6mm;letter-spacing:.02em}
+.sign .cr{font:300 6.8pt Lato,Arial,sans-serif;color:${P.cinza};margin-top:.6mm;letter-spacing:.02em}
 p.sig-extra{text-align:left;font-size:10.5pt}
-.closing{margin-top:6mm;border-top:.2mm solid #e3cf9b;padding-top:3mm;text-align:center;break-inside:avoid}
-.closing .r{font:300 6.4pt Lato,Arial,sans-serif;color:#a59d8a}
+.closing{margin-top:6mm;border-top:.2mm solid ${P.fio};padding-top:3mm;text-align:center;break-inside:avoid}
+.closing .r{font:300 6.4pt Lato,Arial,sans-serif;color:${P.rodape}}
 .closing .s{font:italic 500 11pt "Cormorant Garamond",Georgia,serif;color:${P.numeral};margin-top:2mm;letter-spacing:.04em}
 </style>
 </head>
