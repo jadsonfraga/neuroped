@@ -17,7 +17,7 @@ A habilitação continua **fail-closed**. A presença do código e da migração
 | Documentos | `functions/api/live/documents/index.ts` | Versões append-only, conteúdo cifrado, visibilidade familiar explícita e auditoria |
 | Governança | `functions/api/live/governance/index.ts` | Retenção, exportação, eliminação controlada e workflow `requested → approved → processing → completed/rejected` |
 | Interface | `ClinicContext`, `ClinicSwitcher`, pacientes, detalhe, prontuário e `SaveToPatient` | Troca de clínica com limpeza de cache; rotas LIVE sem fallback silencioso para legado |
-| Billing | guards nas rotas LIVE e links de convite | Clinical/export/admin recalculados server-side; convite exige `APP_BASE_URL` válida |
+| Billing | guards nas rotas LIVE e links de convite | Clinical/export/admin recalculados server-side; convite exige `AUTH_PUBLIC_APP_URL` válida |
 | Operação | `.github/workflows/saas-billing-d1-migration.yml` | Aplicação idempotente da 0014 e verificação de tabelas/triggers no D1 remoto |
 
 ## Variáveis obrigatórias
@@ -30,7 +30,7 @@ A habilitação continua **fail-closed**. A presença do código e da migração
 | `CLINICAL_DATA_KEY_PREVIOUS` | Opcional durante rotação | Necessário para decifrar registros ainda vinculados à chave anterior |
 | `CLINICAL_DATA_KEY_PREVIOUS_ID` | Opcional; diferente do ID atual | Colisão de IDs bloqueia o keyring |
 | `CLINICAL_INDEX_KEY` | Segredo separado da chave de dados, com pelo menos 32 caracteres | Blind indexes não podem ser gerados; tráfego bloqueado |
-| `APP_BASE_URL` | URL válida; em produção deve usar HTTPS | Convites não são criados nem reenviados |
+| `AUTH_PUBLIC_APP_URL` | URL válida; em produção deve usar HTTPS | Convites e e-mails não saem; o checkout também a usa para os retornos (`APP_BASE_URL`, se definida, tem precedência) |
 | `ENVIRONMENT` | Use `production` no ambiente produtivo | Ativa a exigência de HTTPS para convites |
 
 > **Nunca** grave chaves clínicas no repositório, no frontend, em logs ou em variáveis compartilhadas com o blind index. A rotação usa a chave anterior somente para leitura; novas gravações usam a chave atual.
