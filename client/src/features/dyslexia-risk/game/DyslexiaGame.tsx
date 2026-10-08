@@ -171,8 +171,8 @@ export default function DyslexiaGame() {
   const level = game ? Math.floor(game.xp / 100) + 1 : 1;
 
   const hud = game && (screen === "mapa" || screen === "jogo") && (
-    <div className="snp-panel flex flex-wrap items-center gap-3 p-3" data-testid="drx-game-hud">
-      <span className="text-3xl" role="img" aria-label="Avatar">{game.avatar}</span>
+    <div className="snp-panel flex flex-wrap items-center gap-2 px-3 py-2" data-testid="drx-game-hud">
+      <span className="text-2xl" role="img" aria-label="Avatar">{game.avatar}</span>
       <div className="min-w-[8rem] flex-1">
         <p className="snp-pixel text-[11px]">Nível {level} · {game.xp} XP</p>
         <div className="snp-xp mt-1" aria-hidden="true">{Array.from({ length: 10 }, (_, i) => <i key={i} className={i < xpCells ? "on" : ""} />)}</div>
@@ -237,8 +237,11 @@ export default function DyslexiaGame() {
 
       {screen === "mapa" && !paused && (
         <section className="space-y-2" aria-label="Mapa de mundos">
-          <h2 className="snp-pixel text-base">Mapa · faixa {bank.label}</h2>
-          <ol className="drx-map grid gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="snp-pixel min-w-0 flex-1 text-base">Mapa · faixa {bank.label}</h2>
+            <button type="button" className="snp-btn snp-btn--paper drx-tap px-3 text-[11px]" onClick={() => { if (window.confirm("Encerrar a partida agora? Mundos não jogados ficam como não aplicados.")) setGame((g) => (g ? { ...g, endedReason: "encerrado" } : g)); }}>Encerrar partida</button>
+          </div>
+          <ol className="drx-map grid gap-1.5">
             {WORLDS.map((w, i) => {
               const progress = game.worlds[w.id];
               const stars = starsFor(progress, worldTarget(w.id, bank));
@@ -251,23 +254,19 @@ export default function DyslexiaGame() {
                     type="button"
                     disabled={done}
                     aria-current={isNext ? "step" : undefined}
-                    className={`snp-option drx-tap flex w-full items-center gap-3 p-3 text-left ${isNext ? "bg-[var(--snp-sun)] drx-pulse" : done ? "bg-[var(--snp-grass-tint)]" : "bg-[var(--snp-paper-fixed)]"}`}
+                    className={`snp-option drx-tap drx-map-row flex w-full items-center gap-3 px-3 py-2 text-left ${isNext ? "bg-[var(--snp-sun)] drx-pulse" : done ? "bg-[var(--snp-grass-tint)]" : "bg-[var(--snp-paper-fixed)]"}`}
                     onClick={() => { setCheer(""); setWorld(w.id); setScreen("jogo"); }}
                   >
-                    <span className="text-3xl" aria-hidden="true">{w.emoji}</span>
-                    <span className="min-w-0 flex-1">
-                      <strong className="snp-pixel text-xs">{i + 1}. {w.nome}</strong><br />
-                      <small className="font-bold">{done ? (progress.status === "pulado" ? "Pulado" : "Concluído") : isNext ? "Próximo mundo!" : w.fala}</small>
+                    <span className="text-2xl" aria-hidden="true">{w.emoji}</span>
+                    <span className="min-w-0 flex-1 leading-tight">
+                      <span className="flex flex-wrap items-center gap-x-2"><strong className="snp-pixel text-xs">{i + 1}. {w.nome}</strong><Stars n={stars} /></span>
+                      <small className="text-xs font-bold">{done ? (progress.status === "pulado" ? "Pulado" : "Concluído") : isNext ? "Próximo mundo!" : w.fala}</small>
                     </span>
-                    <Stars n={stars} />
                   </button>
                 </li>
               );
             })}
           </ol>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" className="snp-btn snp-btn--paper drx-tap px-3 text-xs" onClick={() => { if (window.confirm("Encerrar a partida agora? Mundos não jogados ficam como não aplicados.")) setGame((g) => (g ? { ...g, endedReason: "encerrado" } : g)); }}>Encerrar partida</button>
-          </div>
         </section>
       )}
 
@@ -405,16 +404,16 @@ function WorldScreen({ world, game, bank, speech, paused, onAnswer, onFluency, o
         <h2 className="snp-pixel min-w-0 flex-1 text-base">{meta.nome}</h2>
         {world !== "fluencia" && <span className="snp-chip">{Math.min(progress.responses.length + 1, target)} de {target}</span>}
       </div>
+      <div className="flex flex-wrap gap-2">
+        <button type="button" className="snp-btn snp-btn--paper drx-tap px-3 text-[11px]" onClick={onMap}>Mapa</button>
+        <button type="button" className="snp-btn snp-btn--slate drx-tap px-3 text-[11px]" onClick={() => { if (window.confirm("Pular este mundo? Ele fica como não aplicado.")) onSkip(); }}>Aplicador: pular mundo</button>
+      </div>
       <div className="snp-meter" aria-hidden="true">{Array.from({ length: target }, (_, i) => <i key={i} className={i < progress.responses.length ? "hit" : ""} />)}</div>
       {world === "ditado" && item && <DitadoView key={(item as DitadoItem).id} item={item as DitadoItem} speech={speech} onAnswer={onAnswer} />}
       {world === "decodificacao" && item && <DecodeView key={(item as DecodeItem).id} item={item as DecodeItem} onAnswer={onAnswer} />}
       {world === "compreensao" && item && <ComprehensionView key={(item as ComprehensionQuestion).id} bank={bank} question={item as ComprehensionQuestion} speech={speech} onAnswer={onAnswer} />}
       {world === "aritmetica" && item && <ArithView key={(item as ArithItem).id} item={item as ArithItem} young={bank.band === "5-6" || bank.band === "7-8"} speech={speech} onAnswer={onAnswer} />}
       {world === "fluencia" && <FluencyView bank={bank} onDone={onFluency} paused={paused} />}
-      <div className="flex flex-wrap gap-2 border-t-[3px] border-dashed border-[var(--snp-ink-fixed)] pt-2">
-        <button type="button" className="snp-btn snp-btn--paper drx-tap px-3 text-xs" onClick={onMap}>Mapa</button>
-        <button type="button" className="snp-btn snp-btn--slate drx-tap px-3 text-xs" onClick={() => { if (window.confirm("Pular este mundo? Ele fica como não aplicado.")) onSkip(); }}>Aplicador: pular mundo</button>
-      </div>
     </section>
   );
 }

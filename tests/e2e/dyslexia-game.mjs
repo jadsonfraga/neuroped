@@ -67,6 +67,15 @@ async function play(age) {
   await btn("Começar aventura").click();
   await page.locator('[data-testid="drx-game"][data-screen="mapa"]').waitFor();
   await shot("02-mapa");
+  // Nada essencial do mapa fica atrás do dock nem do balão de ajuda fixo.
+  const hidden = await page.evaluate(() => {
+    const dock = document.querySelector('[data-testid="mobile-primary-dock"] nav')?.getBoundingClientRect();
+    const help = document.querySelector('[data-testid="button-floating-help"]')?.getBoundingClientRect();
+    const hit = (a, b) => !!a && !!b && b.width > 0 && a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+    const nodes = [...document.querySelectorAll('[aria-label="Mapa de mundos"] button, [aria-label="Mapa de mundos"] .drx-stars, [data-testid="drx-game-hud"] button')];
+    return nodes.filter((n) => { const r = n.getBoundingClientRect(); return hit(r, dock) || hit(r, help); }).map((n) => n.textContent?.trim());
+  });
+  assert.deepEqual(hidden, [], "controle do mapa coberto pelo dock ou pelo balão de ajuda");
   await axe(page, `${age}-mapa`);
 
   // Pausa congela o relógio.

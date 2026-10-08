@@ -34,3 +34,9 @@
 @keyframes drx-pulse { 0%, 100% { box-shadow: 0 0 0 0 var(--snp-sun); } 50% { box-shadow: 0 0 0 6px var(--snp-sun-soft); } }
 @keyframes drx-pop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .snp .drx-game-root { scroll-margin-top: 5rem; }
+/* Mapa compacto: os 5 mundos cabem acima do dock em 390×844, e as estrelas
+   ficam junto do título (longe do balão de ajuda fixo no canto direito). */
+.snp .drx-map-row { min-height: 3.5rem; }
+@media screen and (max-width: 1023px) {
+  .snp .drx-map-row { padding-right: 3.75rem; }
+}
