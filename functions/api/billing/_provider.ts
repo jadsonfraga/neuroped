@@ -5,6 +5,7 @@ export interface BillingProviderEnv {
   ASAAS_WEBHOOK_TOKEN?: string;
   ASAAS_ENVIRONMENT?: string;
   APP_BASE_URL?: string;
+  AUTH_PUBLIC_APP_URL?: string;
 }
 
 export interface AsaasCheckout {
@@ -63,6 +64,18 @@ export function validateAsaasWebhook(request: Request, env: BillingProviderEnv):
   return diff === 0;
 }
 
+/**
+ * Base pública dos retornos do checkout. `AUTH_PUBLIC_APP_URL` é a variável
+ * que convites, e-mails e o verificador de go-live já exigem; `APP_BASE_URL`
+ * continua aceita (e tem precedência) por compatibilidade. Antes, só
+ * `APP_BASE_URL` valia: com o Asaas configurado e o go-live dizendo "cobrança
+ * pronta", todo checkout falhava com "temporariamente indisponível".
+ */
+export function checkoutReturnBaseUrl(env: BillingProviderEnv): URL {
+  const raw = env.APP_BASE_URL?.trim() || env.AUTH_PUBLIC_APP_URL?.trim() || "";
+  return new URL(requireSecret(raw, "APP_BASE_URL", 8));
+}
+
 export function checkoutExternalReference(customerId: string): string {
   return `neuroped:${customerId}:${crypto.randomUUID()}`;
 }
@@ -84,7 +97,7 @@ export async function createAsaasRecurringCheckout(
 
   const apiKey = requireSecret(env.ASAAS_API_KEY, "ASAAS_API_KEY");
   const baseUrl = asaasBaseUrl(env);
-  const appBaseUrl = new URL(requireSecret(env.APP_BASE_URL, "APP_BASE_URL", 8));
+  const appBaseUrl = checkoutReturnBaseUrl(env);
   const now = new Date();
   const requestedDue = params.trialEndsAt ? new Date(params.trialEndsAt) : now;
   const nextDueDate =
