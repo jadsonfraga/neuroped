@@ -48,12 +48,17 @@ async function makePdf(): Promise<Uint8Array> {
   return pdf.save({ useObjectStreams: false });
 }
 
-const signed = await signPdfWithP12(await makePdf(), makeChainP12(), PASSWORD, {
+const original = await makePdf();
+const signed = await signPdfWithP12(original, makeChainP12(), PASSWORD, {
   name: "MEDICO FICTICIO",
   widgetRect: [218, 44, 394, 110],
   healthDocument: { kind: "prescricao", credentialsLine: "CRM-PE 12345 · RQE 678" },
 });
 const latin1 = Buffer.from(signed).toString("latin1");
+
+// 0) Placeholder dimensionado pelo CMS real: o PDF assinado não pode inflar
+//    ~128 KB (estourava o limite de 240 KB do cofre LIVE em laudos longos).
+assert.ok(signed.length - original.length < 40_000, `PDF assinado cresceu ${signed.length - original.length} bytes`);
 
 // 1) CMS: signing-certificate-v2 presente, signing-time ausente (PAdES), cadeia completa.
 const hex = latin1.match(/\/Contents\s*<([0-9A-Fa-f]+)>/)?.[1] ?? "";

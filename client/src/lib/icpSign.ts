@@ -221,7 +221,15 @@ export async function signPdfWithP12(
   const signer = { privateKey, certs: orderCertChain(privateKey, certs) };
   let lastError: unknown = null;
 
-  for (const signatureLength of SIGNATURE_PLACEHOLDER_LENGTHS) {
+  // O tamanho do CMS é determinístico (cadeia + módulo RSA + atributos fixos):
+  // mede-se uma assinatura descartável e reserva-se só o necessário + folga.
+  // O placeholder fixo de 64 KB inflava cada PDF assinado em ~128 KB e fazia
+  // laudos de várias páginas estourarem o limite do cofre LIVE (240 KB).
+  const measured = buildCadesDetachedSignature(new Uint8Array(0), signer).length;
+  const fittedLength = (measured + 2048) * 2;
+  const placeholderLengths = [fittedLength, ...SIGNATURE_PLACEHOLDER_LENGTHS.filter((n) => n > fittedLength)];
+
+  for (const signatureLength of placeholderLengths) {
     try {
       const signed = await signPreparedPdf(pdfBytes, signer, signatureLength, meta);
       await assertSignedPdfIntegrity(signed, expectedPageCount);
