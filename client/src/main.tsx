@@ -18,6 +18,7 @@ import {
   isClinicalBrowserPersistenceDenied,
 } from "./lib/clinicalBrowserPersistencePolicy";
 import { isAuthorizedHost, printProprietaryNotice } from "./lib/domainGuard";
+import { pathDeepLinkToHash } from "./lib/pathDeepLink";
 import "./index.css";
 import "./styles/proportion-guards.css";
 import "./styles/visual-reset.css";
@@ -68,6 +69,13 @@ try {
     "dark",
     window.matchMedia("(prefers-color-scheme: dark)").matches,
   );
+}
+
+// Link por caminho (ex.: /agendar?provider=x) vira a rota por hash equivalente
+// antes de qualquer decisão de rota; sem isso, a família caía no login.
+const deepLinkTarget = pathDeepLinkToHash(window.location);
+if (deepLinkTarget) {
+  window.history.replaceState(window.history.state, "", deepLinkTarget);
 }
 
 if (!window.location.hash) {
