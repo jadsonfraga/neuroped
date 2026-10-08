@@ -374,6 +374,7 @@ export default function LaudoNeuropedPage() {
           signerName={issuer.doctorName || undefined}
           location={issuerCityLine(issuer) || undefined}
           reason="Laudo Neuropediatrico"
+          healthDocument={{ kind: "relatorio", credentialsLine: issuer.credentialsLine }}
           archivePdf={async (bytes, meta) => {
             await archiveClinicalPdf({
               bytes,

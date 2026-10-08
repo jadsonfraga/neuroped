@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { purgeLegacyCertificateCache } from "@/lib/certificateSession";
 import { buildAppHashUrl } from "@/lib/appUrl";
+import type { HealthDocumentMeta } from "@/lib/padesIcp";
 
 export interface ArchivePdfMeta {
   signatureStatus: "unsigned" | "signed";
@@ -34,6 +35,10 @@ interface Props {
   widgetPageIndex?: number;
   /** Persiste somente os bytes finais e metadados públicos; nunca recebe o .p12. */
   archivePdf?: (bytes: Uint8Array, meta: ArchivePdfMeta) => Promise<void>;
+  /** Documento de saúde: grava os OIDs do VALIDAR/ITI (tipo + CRM/UF) antes de assinar. */
+  healthDocument?: HealthDocumentMeta;
+  /** Quando presente, a assinatura eletrônica fica bloqueada com este motivo (ex.: regra SNCR). */
+  signingBlockedReason?: string | null;
 }
 
 function signingErrorMessage(error: unknown): string {
@@ -46,7 +51,7 @@ function signingErrorMessage(error: unknown): string {
  * O arquivo vem exclusivamente do seletor local, permanece somente na memória
  * da aba e nunca é persistido ou transferido pelo cliente.
  */
-export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, reason, widgetRect, widgetPageIndex, archivePdf }: Props) {
+export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, reason, widgetRect, widgetPageIndex, archivePdf, healthDocument, signingBlockedReason }: Props) {
   const uid = useId();
   const [p12, setP12] = useState<ArrayBuffer | null>(null);
   const [p12Name, setP12Name] = useState("");
@@ -134,6 +139,7 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
   }
 
   async function gerarEAssinar() {
+    if (signingBlockedReason) { setErro(signingBlockedReason); return; }
     if (!p12) { setErro("Selecione o arquivo .p12 do seu certificado A1."); return; }
     setErro(""); setOkMsg(""); setBusy("sign");
     try {
@@ -147,6 +153,7 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
         location,
         widgetRect,
         widgetPageIndex,
+        healthDocument,
       });
       downloadBytes(signed, `${filename}-assinado.pdf`);
       if (archivePdf) {
@@ -231,6 +238,13 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
         </div>
       </div>
 
+      {signingBlockedReason && (
+        <div className="mt-3 flex items-start gap-1.5 rounded-lg border border-amber-400 bg-amber-50 p-2.5 text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-100" role="status" data-testid="signing-blocked">
+          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+          <span>{signingBlockedReason}</span>
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-2 mt-3">
         <Button
           type="button"
@@ -246,7 +260,7 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
           type="button"
           size="sm"
           onClick={gerarEAssinar}
-          disabled={!!busy || !p12}
+          disabled={!!busy || !p12 || !!signingBlockedReason}
           data-testid="button-sign"
         >
           {busy === "sign" ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileSignature className="w-4 h-4" />}

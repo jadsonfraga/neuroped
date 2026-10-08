@@ -886,6 +886,7 @@ export default function LaudoSuperPage() {
               Selecione seu certificado .p12/.pfx. A assinatura ocorre localmente e o certificado permanece somente na memória desta aba.
             </p>
             <AssinaturaIcpPanel
+              healthDocument={{ kind: "relatorio", credentialsLine: issuer.credentialsLine }}
               buildPdf={async () => {
                 const { buildDocumentPdf } = await import("@/lib/documentPdf");
                 const textoAssinavel =
