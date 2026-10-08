@@ -82,11 +82,15 @@ export function cssString(value: string): string {
   );
 }
 
-/** Marcação inline herdada do motor PANT: **negrito** e ==destaque em vermelho==. */
+/**
+ * Marcação inline herdada do motor PANT: **negrito**, ==destaque em vermelho==
+ * e *itálico* (markdown comum em texto colado de outra IA na Íntegra).
+ */
 function inline(raw: string): string {
   return escapeHtml(raw)
     .replace(/\*\*([^*\n]+?)\*\*/g, "<b>$1</b>")
-    .replace(/==([^=\n]+?)==/g, '<mark>$1</mark>');
+    .replace(/==([^=\n]+?)==/g, '<mark>$1</mark>')
+    .replace(/(^|[^*\p{L}\d])\*(?!\s)([^*\n]+?)\*(?![*\p{L}\d])/gu, "$1<i>$2</i>");
 }
 
 // ── Leitura do texto final (editável) ───────────────────────────────────────
@@ -521,6 +525,7 @@ h3{font:600 italic 13.5pt/1.2 "Cormorant Garamond",Georgia,serif;color:${P.titul
 p{font-size:12.6pt;line-height:18.6pt;text-align:justify;margin:0 0 3.6mm;orphans:2;widows:2;hyphens:manual}
 p.drop .dc{float:left;font:600 50pt/.78 "Cormorant Garamond",Georgia,serif;color:${P.titulo};margin:1.6mm 1.6mm 0 0}
 p b,li b{font-weight:700;color:${P.titulo}}
+p i,li i{font-style:italic}
 mark{background:none;color:${P.vermelho};font-weight:600}
 .legenda{font:400 6.6pt Lato,Arial,sans-serif;letter-spacing:.32em;text-transform:uppercase;color:${P.numeral};margin:5mm 0 2.2mm;break-after:avoid;page-break-after:avoid}
 .legenda::before{content:"";display:inline-block;width:6mm;height:.3mm;background:${P.ouro};vertical-align:middle;margin-right:2.5mm}

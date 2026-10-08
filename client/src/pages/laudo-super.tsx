@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { FileText, Printer, RefreshCw, Sparkles, Copy, ClipboardPaste, CheckCircle2, AlertCircle, Plus, Trash2, ShieldCheck, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHero } from "@/components/PageHero";
@@ -22,7 +22,8 @@ import {
   type DocumentIssuer,
 } from "@/lib/issuer";
 import { dateStamp } from "@/lib/printDocument";
-import { buildLaudoPantPrintHtml } from "@/lib/laudo/pantPrintTemplate";
+import { buildLaudoPantPrintHtml, romano } from "@/lib/laudo/pantPrintTemplate";
+import { prepararIntegra } from "@/lib/laudo/pantIntegra";
 
 /* ────────────────────────────────────────────────────────────
    Laudo SuperNeuroPed — WebUI de geração assistida (embutida)
@@ -559,7 +560,11 @@ export default function LaudoSuperPage() {
   const [editando, setEditando] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
   const [copiado, setCopiado] = useState(false);
-  const [abertos, setAbertos] = useState<Record<string, boolean>>({ capa: true });
+  const [abertos, setAbertos] = useState<Record<string, boolean>>({});
+  // Íntegra: laudo inteiro colado de outra IA — basta para gerar/visualizar/imprimir.
+  const [integra, setIntegra] = useState("");
+  const [porSecoes, setPorSecoes] = useState(false);
+  const previaRef = useRef<HTMLDivElement>(null);
 
   const toggle = (k: string) => setAbertos((p) => ({ ...p, [k]: !p[k] }));
 
@@ -578,11 +583,44 @@ export default function LaudoSuperPage() {
 
   const resultado = useMemo(() => (configurado ? gerarEValidarSuper(entrada, medico) : null), [entrada, configurado, medico]);
 
+  const integraAtiva = integra.trim().length > 0;
+  const identidadePreenchida = [entrada.nome, entrada.idade, entrada.dataConsulta].some((v) => limpo(v).length > 0);
+  // Íntegra vence para o corpo; a capa usa Nome/idade/data quando preenchidos.
+  const integraPrep = useMemo(
+    () => (integraAtiva ? prepararIntegra(integra, { identidadePreenchida }) : null),
+    [integra, integraAtiva, identidadePreenchida],
+  );
+  const podeGerar = configurado || integraAtiva;
+  const podeImprimir = integraAtiva || !!texto;
+  const pacienteCapa = limpo(entrada.nome) || integraPrep?.paciente || "";
+
+  /** HTML no padrão PANT (pasta Panty) — só local: nada é gravado no prontuário. */
+  const montarHtmlImpressao = (): string =>
+    buildLaudoPantPrintHtml({
+      texto: integraPrep ? integraPrep.texto : texto,
+      paciente: integraPrep ? pacienteCapa : entrada.nome,
+      medico,
+      assetBase: appAssetBase(),
+      idade: entrada.idade,
+      tipoConsulta: entrada.tipoConsulta,
+      dataConsulta: entrada.dataConsulta,
+      protocoloPadrao: dateStamp(),
+      emitidoEm: new Date().toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" }),
+    });
+
+  const htmlPrevia = showPreview && podeImprimir ? montarHtmlImpressao() : "";
+
   const set = (k: keyof SuperEntrada) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => setEntrada((p) => ({ ...p, [k]: e.target.value }));
 
   const handleGerar = () => {
+    if (integraAtiva) {
+      // Íntegra: o PDF sai direto do texto colado — abre a prévia no padrão Panty.
+      setShowPreview(true);
+      requestAnimationFrame(() => previaRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+      return;
+    }
     if (!resultado) return;
     setTexto(laudoSuperParaTexto(resultado.laudo));
     setEditando(false);
@@ -599,23 +637,21 @@ export default function LaudoSuperPage() {
     }
   };
 
+  const handleColarIntegra = async () => {
+    try {
+      const colado = await navigator.clipboard.readText();
+      if (colado.trim()) setIntegra(colado);
+    } catch {
+      /* sem permissão de leitura da área de transferência: o usuário cola com Ctrl+V */
+    }
+  };
+
   const handlePrint = () => {
+    if (!podeImprimir) return;
     const win = window.open("", "_blank");
     if (!win) return;
     win.opener = null;
-    win.document.write(
-      buildLaudoPantPrintHtml({
-        texto,
-        paciente: entrada.nome,
-        medico,
-        assetBase: appAssetBase(),
-        idade: entrada.idade,
-        tipoConsulta: entrada.tipoConsulta,
-        dataConsulta: entrada.dataConsulta,
-        protocoloPadrao: dateStamp(),
-        emitidoEm: new Date().toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" }),
-      }),
-    );
+    win.document.write(montarHtmlImpressao());
     win.document.close();
     imprimirQuandoPronto(win);
   };
@@ -635,7 +671,7 @@ export default function LaudoSuperPage() {
         icon={ShieldCheck}
         eyebrow="documento clínico · perfil premium"
         title="Laudo SuperNeuroPed"
-        subtitle="Geração assistida 100% local (sem Claude, sem API externa) no perfil real do modelo PANT: capa rica, 14 seções, mapa funcional, hipóteses com a favor/a ponderar, prognóstico em 3 cenários e assinatura institucional do emissor."
+        subtitle="Cole o laudo inteiro no campo Íntegra e o app monta sozinho o PDF no padrão Panty: capa marinho com brasão, miolo creme, seções em romano, capitular e quadro de terapias. 100% local, sem API externa; o preenchimento por seções continua disponível como opção."
         gradient="from-primary to-chart-4"
       >
         <div className="flex flex-wrap gap-2">
@@ -643,24 +679,24 @@ export default function LaudoSuperPage() {
             <ClipboardPaste className="h-4 w-4" />
             {editando ? "Preenchendo" : "Voltar ao preenchimento"}
           </Button>
-          <Button onClick={handleGerar} disabled={!configurado} size="sm" className="gap-2">
+          <Button onClick={handleGerar} disabled={!podeGerar} size="sm" className="gap-2" data-testid="button-gerar-laudo-super">
             <Sparkles className="h-4 w-4" /> Gerar laudo
           </Button>
-          <Button onClick={() => setShowPreview((v) => !v)} variant="outline" size="sm" className="gap-2" disabled={!texto}>
+          <Button onClick={() => setShowPreview((v) => !v)} variant="outline" size="sm" className="gap-2" disabled={!podeImprimir} data-testid="button-visualizar-laudo-super">
             <FileText className="h-4 w-4" />
             {showPreview ? "Fechar prévia" : "Visualizar"}
           </Button>
-          <Button onClick={handlePrint} size="sm" className="gap-2" disabled={!texto}>
+          <Button onClick={handlePrint} size="sm" className="gap-2" disabled={!podeImprimir} data-testid="button-imprimir-laudo-super">
             <Printer className="h-4 w-4" /> Imprimir / Salvar PDF
           </Button>
-          <Button variant="secondary" size="sm" className="gap-2" onClick={() => { setEntrada(ENTRADA_VAZIA); setTexto(""); setShowPreview(false); }}>
+          <Button variant="secondary" size="sm" className="gap-2" onClick={() => { setEntrada(ENTRADA_VAZIA); setTexto(""); setIntegra(""); setShowPreview(false); }}>
             <RefreshCw className="h-4 w-4" /> Limpar
           </Button>
         </div>
       </PageHero>
 
       {/* ── Painel QA ── */}
-      {configurado && resultado && (
+      {configurado && resultado && !integraAtiva && (
         <div
           className={`rounded-xl border p-4 text-sm ${aprovado ? "border-emerald-400/60 bg-emerald-50/60 text-emerald-900" : "border-amber-400/70 bg-amber-50/70 text-amber-900"}`}
         >
@@ -677,7 +713,61 @@ export default function LaudoSuperPage() {
       {/* ── Editor ── */}
       {editando && (
         <div className="space-y-4">
-          <SecaoEditor titulo="Capa e identificação" chave="capa" aberto={!!abertos.capa} onToggle={() => toggle("capa")}>
+          {/* ── Íntegra: colar o laudo inteiro ── */}
+          <Card className="p-5 border-2 space-y-3" style={{ borderColor: "hsl(var(--primary) / 0.55)" }}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <ClipboardPaste className="h-5 w-5 text-primary" />
+                <Label htmlFor="super-integra" className="text-base font-bold">
+                  Íntegra
+                </Label>
+              </div>
+              <Button type="button" variant="outline" size="sm" className="gap-2" onClick={handleColarIntegra}>
+                <ClipboardPaste className="h-4 w-4" /> Colar da área de transferência
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Cole aqui o laudo inteiro que outra IA escreveu. Não precisa preencher seção por seção: os botões Gerar laudo, Visualizar e
+              Imprimir / Salvar PDF já funcionam só com este campo. Nada é gravado no prontuário ao colar, visualizar ou imprimir.
+            </p>
+            <Textarea
+              id="super-integra"
+              value={integra}
+              onChange={(e) => setIntegra(e.target.value)}
+              placeholder={
+                "Cole aqui o laudo completo, na íntegra (Ctrl+V).\n\n" +
+                "Pode vir com os títulos I a XIII do padrão (Em uma página, Quem é…, Como… chegou até aqui, … Quando nos revemos), " +
+                "com # capítulos, **negrito**, ==destaque== e tabelas | |. Uma linha \"Paciente: Nome, idade\" preenche a capa."
+              }
+              className="min-h-[38vh] resize-y text-sm leading-relaxed"
+              data-testid="textarea-laudo-integra"
+            />
+            {integraPrep && (
+              <div className="rounded-lg border border-border/60 bg-muted/30 p-3 text-xs space-y-2" data-testid="integra-resumo">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span className="font-semibold">
+                    {integraPrep.secoes.length
+                      ? `${integraPrep.secoes.length} ${integraPrep.secoes.length === 1 ? "seção reconhecida" : "seções reconhecidas"}`
+                      : "Nenhum título reconhecido: o texto entra inteiro, em prosa contínua"}
+                  </span>
+                  <span className="text-muted-foreground">
+                    Paciente na capa: {pacienteCapa || "— (preencha em Capa e identificação ou use uma linha “Paciente: …”)"}
+                  </span>
+                </div>
+                {integraPrep.secoes.length > 0 && (
+                  <ol className="flex flex-wrap gap-1.5">
+                    {integraPrep.secoes.map((t, i) => (
+                      <li key={`${i}-${t}`} className="rounded-full border border-border/70 bg-card px-2 py-0.5">
+                        <span className="font-semibold text-primary">{romano(i + 1)}</span> {t}
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </div>
+            )}
+          </Card>
+
+          <SecaoEditor titulo="Capa e identificação (opcional: sobrepõe o nome do texto colado)" chave="capa" aberto={!!abertos.capa} onToggle={() => toggle("capa")}>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <CampoTexto label="Nome do paciente" id="super-nome" value={entrada.nome} onChange={set("nome")} placeholder="Ex.: Luiza Gonçalves Silva" />
               <CampoTexto label="Idade" id="super-idade" value={entrada.idade} onChange={set("idade")} placeholder="Ex.: 17 anos" />
@@ -693,6 +783,21 @@ export default function LaudoSuperPage() {
             </div>
           </SecaoEditor>
 
+          <button
+            type="button"
+            onClick={() => setPorSecoes((v) => !v)}
+            className="w-full flex items-center justify-between rounded-2xl border border-dashed border-border/80 bg-card/50 px-4 py-3 text-left hover:bg-muted/40 transition-colors"
+            aria-expanded={porSecoes}
+            data-testid="toggle-preenchimento-secoes"
+          >
+            <span className="text-sm font-semibold text-muted-foreground">
+              Preenchimento por seções 01–14 (opcional{integraAtiva ? "; com a Íntegra preenchida, o corpo do PDF vem da Íntegra" : ""})
+            </span>
+            {porSecoes ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+          </button>
+
+          {porSecoes && (
+          <div className="space-y-4">
           <SecaoEditor titulo="01 · Quem é o paciente" chave="quem" aberto={!!abertos.quem} onToggle={() => toggle("quem")}>
             <TextareaArea label="Apresentação narrativa" id="super-quemE" value={entrada.quemE} onChange={set("quemE")} placeholder="Ex.: Luiza é uma adolescente de dezessete anos que chega a esta consulta trazendo uma história já em andamento…" />
             <TextareaArea label="Acompanhado por" id="super-acomp" value={entrada.acompanhadoPor} onChange={set("acompanhadoPor")} placeholder="Ex.: Chega acompanhada da mãe." />
@@ -768,6 +873,8 @@ export default function LaudoSuperPage() {
               A assinatura institucional configurada em Configurações › Perfil e Configurações › Clínica é inserida automaticamente no PDF; sem perfil configurado, o documento declara a ausência de registro profissional.
             </p>
           </SecaoEditor>
+          </div>
+          )}
 
           {/* ── Assinatura ICP-Brasil ── */}
           <Card className="p-5 border-2" style={{ borderColor: "hsl(var(--chart-4) / 0.5)" }}>
@@ -782,8 +889,9 @@ export default function LaudoSuperPage() {
               healthDocument={{ kind: "relatorio", credentialsLine: issuer.credentialsLine }}
               buildPdf={async () => {
                 const { buildDocumentPdf } = await import("@/lib/documentPdf");
-                const textoAssinavel =
-                  texto || laudoSuperParaTexto(gerarLaudoSuper(entrada, medico));
+                const textoAssinavel = integraAtiva
+                  ? integra
+                  : texto || laudoSuperParaTexto(gerarLaudoSuper(entrada, medico));
                 return buildDocumentPdf({
                   title: "Laudo Neuropediatrico — Perfil SuperNeuroPed",
                   subtitle: `SuperNeuroPed nº ${dateStamp()} · Gerado pela assistente embarcada NeuroPed EDJ`,
@@ -830,6 +938,31 @@ export default function LaudoSuperPage() {
             data-testid="textarea-laudo-super"
           />
         </section>
+      )}
+
+      {/* ── Prévia no padrão Panty (o mesmo HTML do Imprimir / Salvar PDF) ── */}
+      {htmlPrevia && (
+        <div ref={previaRef} className="rounded-2xl border border-border bg-card/80 overflow-hidden scroll-mt-4">
+          <div className="flex items-center justify-between px-4 py-2 border-b border-border/60">
+            <span className="text-sm font-semibold">Prévia no padrão Panty</span>
+            <div className="flex items-center gap-2">
+              <Button size="sm" className="gap-2" onClick={handlePrint}>
+                <Printer className="h-4 w-4" /> Imprimir / Salvar PDF
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setShowPreview(false)} aria-label="Fechar prévia">
+                ✕
+              </Button>
+            </div>
+          </div>
+          <iframe
+            srcDoc={htmlPrevia}
+            sandbox="allow-same-origin"
+            className="w-full"
+            style={{ height: "80vh", border: "none" }}
+            title="Prévia do laudo no padrão Panty"
+            data-testid="iframe-previa-laudo-super"
+          />
+        </div>
       )}
     </div>
   );
