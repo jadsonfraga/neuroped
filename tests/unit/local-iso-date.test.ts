@@ -48,4 +48,11 @@ describe("localIsoDate", () => {
       assert.doesNotMatch(source, /startedAt\.slice\(0, 10\)/, path);
     }
   });
+
+  it("prontuário recalcula hoje a cada uso e o diário de crises lê a data no fuso local", () => {
+    const prontuario = readFileSync(new URL("../../client/src/pages/prontuario.tsx", import.meta.url), "utf8");
+    assert.doesNotMatch(prontuario, /^const today\s*=/m, "data congelada no carregamento do módulo");
+    const diario = readFileSync(new URL("../../client/src/pages/diario-epilepsia.tsx", import.meta.url), "utf8");
+    assert.doesNotMatch(diario, /new Date\(c\.data\)/, "data do input lida como UTC");
+  });
 });

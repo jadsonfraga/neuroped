@@ -34,7 +34,9 @@ function localISODate(d = new Date()): string {
   const off = d.getTimezoneOffset() * 60000;
   return new Date(d.getTime() - off).toISOString().split("T")[0];
 }
-const today = localISODate();
+// "Hoje" é calculado na hora do uso: uma constante de módulo congelava a data
+// do carregamento e, com a aba aberta virando a noite, o prontuário seguia
+// datando a consulta (e o registro na nuvem) com o dia anterior.
 
 // Exibe uma data "YYYY-MM-DD" (input date) sem o desvio de fuso: `new Date("YYYY-
 // MM-DD")` é interpretada como meia-noite UTC e recuava um dia no horário do
@@ -296,7 +298,7 @@ function buildReport(
   issuer: DocumentIssuer
 ): string {
   const linha = "─".repeat(60);
-  const dateStr = formatInputDate(id.dataConsulta || today);
+  const dateStr = formatInputDate(id.dataConsulta || localISODate());
 
   // Identidade do emissor pela fonte única (issuer.ts): sem perfil configurado,
   // o relatório declara a ausência de registro — credencial nunca é inventada.
@@ -426,7 +428,7 @@ function printReport(
   if (!w) return false;
   w.opener = null;
 
-  const dateStr = formatInputDate(id.dataConsulta || today);
+  const dateStr = formatInputDate(id.dataConsulta || localISODate());
   const dn = id.dataNascimento ? new Date(id.dataNascimento + "T12:00:00").toLocaleDateString("pt-BR") : "—";
 
   const milestoneRows = milestoneConfigs.map(cfg => {
@@ -599,7 +601,7 @@ function defaultId(): Identificacao {
   return {
     nomeCompleto: "", dataNascimento: "", sexo: "", nomeResponsavel: "", parentesco: "",
     telefone: "", email: "", convenio: "", medicoResponsavel: "",
-    cid: "", hipoteseDiagnostica: "", dataConsulta: today,
+    cid: "", hipoteseDiagnostica: "", dataConsulta: localISODate(),
   };
 }
 function defaultAnamnese(): Anamnese {
@@ -805,7 +807,7 @@ export default function ProntuarioPage() {
             },
       );
 
-      const occurredAt = new Date(`${identificacao.dataConsulta || today}T12:00:00`).toISOString();
+      const occurredAt = new Date(`${identificacao.dataConsulta || localISODate()}T12:00:00`).toISOString();
       const nextIds = { ...eventIds };
       const postEvent = async (key: string, payload: Record<string, unknown>) => {
         const previousId = nextIds[key];
