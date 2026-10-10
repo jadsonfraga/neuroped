@@ -127,9 +127,12 @@ export default function DiarioEpilepsiaPage() {
   /* ─── Stats ─── */
   const totalCrises = crises.length;
   const last30 = crises.filter((c) => {
-    const d = new Date(c.data);
-    const now = new Date();
-    return now.getTime() - d.getTime() <= 30 * 24 * 60 * 60 * 1000;
+    // Data do input é local (YYYY-MM-DD); o parse direto da string a lia como meia-noite
+    // UTC (21h do dia anterior no Brasil). Ancora no horário local da crise e
+    // ignora datas futuras digitadas por engano.
+    const d = new Date(`${c.data}T${/^\d{2}:\d{2}$/.test(c.hora ?? "") ? c.hora : "00:00"}:00`);
+    const diff = Date.now() - d.getTime();
+    return Number.isFinite(diff) && diff >= 0 && diff <= 30 * 24 * 60 * 60 * 1000;
   });
   const crisesUltimos30 = last30.length;
 
