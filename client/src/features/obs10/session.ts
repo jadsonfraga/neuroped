@@ -1,3 +1,4 @@
+import { LEGACY_AUTHOR_SIGNATURE } from "../../lib/issuerSignature";
 import type { EvidenceBundle } from "./evidence";
 import type { PilotRecord } from "./pilot";
 import { AGE_BANDS, OUTCOMES, PHASES, clock, type Outcome } from "./protocol";
@@ -103,7 +104,7 @@ export function exportFilename(code: string, extension: "txt" | "json" | "md" | 
 }
 const textOrMissing = (s: string) => s.trim() || "Não informado";
 export const PREPARATION_DIRECT_LINE = "Preparação: modo direto; guia, kit item a item, checklist de segurança e ensaio dispensados pela aplicadora experiente, que responde pelo preparo.";
-export function makeReport(record: SessionRecord): string {
+export function makeReport(record: SessionRecord, signature: string = LEGACY_AUTHOR_SIGNATURE): string {
   const { context: c, observations } = record;
   const band = AGE_BANDS.find((b) => b.id === c.bandId);
   const lines = [
@@ -153,6 +154,6 @@ export function makeReport(record: SessionRecord): string {
     "ALCANCE E LIMITES", "Observações transcritas dos registros da aplicadora; eventuais comentários profissionais são identificados em seção separada. Nenhuma análise automática de vídeo, inferência diagnóstica, escore, percentil ou idade cognitiva foi realizada.",
     "Força segmentar, tônus, reflexos, sensibilidade e exame neurológico completo não foram examinados por este roteiro. Ausência de alteração na amostra não exclui dificuldade clínica.",
     "A assistente registra. O médico verifica as evidências, interpreta e decide. Risco e conteúdos sensíveis exigem atendimento presencial/confidencial, não espera por IA.",
-    "Dr. Jadson Fraga · Neuropediatra · CRM-PE 25227 · RQE 17756");
+    signature);
   return lines.join("\n");
 }

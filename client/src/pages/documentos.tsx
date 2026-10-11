@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PageHero } from "@/components/PageHero";
+import { issuerSignatureLine, useIssuer } from "@/lib/issuer";
 
 /* ────────────────────────────────────────────────────────────
    Central de Documentos — NeuroPed
@@ -55,6 +56,9 @@ const docCards = [
 
 export default function DocumentosPage() {
   const [, setLocation] = useLocation();
+  const { issuer } = useIssuer();
+  // Sem perfil salvo mantém o texto histórico; com perfil, nome e registro do emissor.
+  const assinatura = issuer.profileConfigured ? issuerSignatureLine(issuer) : "Dr. Jadson Fraga Araújo Júnior · CRM-PE 25.227 · RQE 17.756";
 
   return (
     <div className="space-y-5" data-testid="documentos-shell">
@@ -63,7 +67,7 @@ export default function DocumentosPage() {
         icon={FileText}
         eyebrow="documentos"
         title="Central de Documentos NeuroPed"
-        subtitle="Gere laudos neuropediátricos e receitas especiais C1 com templates clínicos oficiais. Dr. Jadson Fraga Araújo Júnior · CRM-PE 25.227 · RQE 17.756"
+        subtitle={`Gere laudos neuropediátricos e receitas especiais C1 com templates clínicos oficiais. ${assinatura}`}
         mascotContext="celebracao"
       />
 

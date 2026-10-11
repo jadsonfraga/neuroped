@@ -52,6 +52,8 @@ export function issuerCityLine(issuer: DocumentIssuer): string {
     .trim();
 }
 
+export { LEGACY_AUTHOR_SIGNATURE, issuerSignatureLine } from "./issuerSignature";
+
 const EMPTY_ISSUER: DocumentIssuer = {
   doctorName: "",
   credentialsLine: "",

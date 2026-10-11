@@ -25,6 +25,7 @@ import { StarCounter } from "@/components/aventura";
 import EasyGame, { type EasyStep } from "@/components/jogo-facil/EasyGame";
 import { buildObjectiveSteps, objectiveNature } from "@/components/jogo-facil/ObjectiveStep";
 import { OBJECTIVE_MAX_YEARS, OBJECTIVE_MIN_YEARS, objectiveBandForYears } from "@/components/jogo-facil/objectiveBank";
+import { issuerSignatureLine, useIssuer } from "@/lib/issuer";
 import "@/features/obs10/obs10.css";
 
 const CHECKS = [
@@ -63,6 +64,9 @@ const emptyDelivery = (): DeliveryState => ({
 });
 
 export default function PreConsultaObs10Page() {
+  // Assinatura do emissor logado (Configurações › Perfil); sem perfil, a histórica.
+  const { issuer } = useIssuer();
+  const signature = issuerSignatureLine(issuer);
   const [years, setYears] = useState("");
   const [months, setMonths] = useState("");
   const [corrected, setCorrected] = useState("");
@@ -239,8 +243,8 @@ export default function PreConsultaObs10Page() {
     ...(importedRecord ? { importedForReview: true, sourceRecording: importedRecord.sourceRecording } : {}), durationSeconds: elapsed, endReason, encodingSecond, recallSecond,
     recording: evidence.clips.length ? `${evidence.clips.length} clipe(s) associado(s) por declaração. JSON guarda referências, não o vídeo. Reanexe o arquivo para conferir seus bytes e abrir os trechos.` : importedRecord ? importedRecord.recording : cameraEnabled ? media.url ? "Vídeo local disponível; conteúdo e integridade ainda não verificados pelo médico." : "Câmera integrada solicitada; confirme a existência e a integridade do arquivo antes de sair." : "Filmagem externa orientada; nenhum vídeo recebido ou verificado por este aplicativo.",
   };
-  const report = `${makeReport(record)}\n\n${reviewText(record)}\n\n${evidenceText(record)}`;
-  const dossier = finished ? makeDossier(record) : "";
+  const report = `${makeReport(record, signature)}\n\n${reviewText(record)}\n\n${evidenceText(record)}`;
+  const dossier = finished ? makeDossier(record, signature) : "";
   const incomplete = observations.filter((o) => !usableObservation(o)).length;
   const kitItems = selectedBand ? KITS[selectedBand.id] : [];
   const kitChecked = kitItems.filter((item) => (kits[selectedBand?.id ?? ""] ?? {})[item.id]).length;
@@ -350,7 +354,7 @@ export default function PreConsultaObs10Page() {
           objective
           onProgress={setEasyProgress}
         />}
-        <footer className="obs10-footer obs10-no-print">Dr. Jadson Fraga · Neuropediatra · CRM-PE 25227 · RQE 17756 · OBS-10 v{OBS10_VERSION}</footer>
+        <footer className="obs10-footer obs10-no-print">{signature} · OBS-10 v{OBS10_VERSION}</footer>
       </div>
     );
   }
@@ -545,7 +549,7 @@ export default function PreConsultaObs10Page() {
       {finished && <div className="obs10-no-print"><EvidencePanel key={`${sessionId}-${reviewEpoch}`} record={record} onChange={(value) => { setEvidence(value); setHandoff(emptyHandoff()); }} onLocalClipConfirmed={() => setDelivered((d) => ({ ...d, externalClipConfirmed: true, externalVideoSavedConfirmed: false, videoUnavailableDeclared: false }))} /></div>}
       {finished && <section className="obs10-summary"><h2>Resumo para revisão médica</h2><pre>{report}</pre></section>}
       {urgent && <section className="obs10-emergency obs10-no-print" role="alert" aria-labelledby="obs10-emergency-title"><h2 id="obs10-emergency-title">Pare a avaliação. Chame o médico agora.</h2><p>Alteração de consciência, crise, dificuldade respiratória, fraqueza súbita, instabilidade nova, dor intensa ou risco imediato: acione o fluxo presencial da clínica. Em emergência, <a href="tel:192">SAMU 192</a>. Não espere vídeo ou IA.</p><p>Em crise: proteja de lesões, não contenha à força e não coloque nada na boca. Relato de autoagressão/abuso: pare a gravação sensível, acolha sem perguntas sugestivas e acione o médico; diante de risco imediato, não deixe sozinho.</p><button type="button" onClick={() => setUrgent(false)}>Entendido · manter aplicação encerrada</button></section>}
-      <footer className="obs10-footer obs10-no-print">{!running && <p><a href="/obs10-global/" target="_blank" rel="noopener noreferrer">Apresentação internacional · Português / English / Español</a> · Explore fora da coleta.</p>}<details><summary>Fontes, versão e limites clínicos</summary><p>OBS-10 v{OBS10_VERSION} · Manual e fichas de 17/09/2026. Tempos, comandos e fluxo são propostas autorais; nenhuma fonte valida o conjunto como teste diagnóstico. Revisão médica e aplicações supervisionadas antecedem uso rotineiro.</p><p>Não inferir força 5/5, tônus/reflexos preservados, normalidade do exame, QI, idade mental, CID ou risco ausente. Investigação de saúde mental e risco suicida segue fluxo clínico confidencial, não interrogatório filmado pela secretária.</p>{SOURCES.map(([label, href]) => <p key={href}><a href={href} target="_blank" rel="noreferrer">{label}</a></p>)}</details><p>Dr. Jadson Fraga · Neuropediatra · CRM-PE 25227 · RQE 17756</p></footer>
+      <footer className="obs10-footer obs10-no-print">{!running && <p><a href="/obs10-global/" target="_blank" rel="noopener noreferrer">Apresentação internacional · Português / English / Español</a> · Explore fora da coleta.</p>}<details><summary>Fontes, versão e limites clínicos</summary><p>OBS-10 v{OBS10_VERSION} · Manual e fichas de 17/09/2026. Tempos, comandos e fluxo são propostas autorais; nenhuma fonte valida o conjunto como teste diagnóstico. Revisão médica e aplicações supervisionadas antecedem uso rotineiro.</p><p>Não inferir força 5/5, tônus/reflexos preservados, normalidade do exame, QI, idade mental, CID ou risco ausente. Investigação de saúde mental e risco suicida segue fluxo clínico confidencial, não interrogatório filmado pela secretária.</p>{SOURCES.map(([label, href]) => <p key={href}><a href={href} target="_blank" rel="noreferrer">{label}</a></p>)}</details><p>{signature}</p></footer>
     </div>
   );
 }
