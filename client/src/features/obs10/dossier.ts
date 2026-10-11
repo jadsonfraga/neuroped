@@ -1,3 +1,4 @@
+import { LEGACY_AUTHOR_SIGNATURE } from "../../lib/issuerSignature";
 import { AGE_BANDS, APPLICATION_RULES, OBS10_VERSION, OUTCOMES, PHASES, clock, type AgeBand, type Outcome } from "./protocol";
 import { KITS, MATERIALS, PRACTICAL_TASKS, getTaskBudget, taskOmission, type PracticalTask } from "./practical";
 import { observationIssues, type Observation, type SessionRecord } from "./session";
@@ -56,7 +57,7 @@ function proposalLine(task: PracticalTask, record: SessionRecord, months: number
  * Markdown handed to the physician's own writing assistant, outside this app.
  * Structured as the "testagem direta" input of the PRÉ law: age-anchored, behaviour-only, source-labelled, gaps explicit.
  */
-export function makeDossier(record: SessionRecord): string {
+export function makeDossier(record: SessionRecord, signature: string = LEGACY_AUTHOR_SIGNATURE): string {
   const c = record.context;
   const band = bandOf(record);
   const months = c.correctedMonths ?? c.chronologicalMonths;
@@ -129,7 +130,7 @@ export function makeDossier(record: SessionRecord): string {
   lines.push("", "## 7. Limites deste material",
     "Roteiro observacional autoral não validado; sem sensibilidade, especificidade, escore, percentil, idade cognitiva ou ponto de corte. Nenhuma análise automática de vídeo, imagem ou som foi realizada.",
     "Uma amostra de até dez minutos, num dia, com um adulto pouco conhecido, não representa o funcionamento habitual. Ausência de alteração na amostra não exclui dificuldade; recusa e não demonstração não são alteração.",
-    "A assistente registrou. O médico verifica as evidências, interpreta e decide. Dr. Jadson Fraga · Neuropediatra · CRM-PE 25227 · RQE 17756");
+    `A assistente registrou. O médico verifica as evidências, interpreta e decide. ${signature}`);
   return lines.join("\n");
 }
 /** Full paper script of one sheet, to read beside the camera. Plain text for isolated printing. */

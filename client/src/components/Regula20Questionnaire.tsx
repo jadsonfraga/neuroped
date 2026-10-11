@@ -1,4 +1,5 @@
 import { lazy, Suspense, useState } from "react";
+import { issuerSignatureLine, useIssuer } from "@/lib/issuer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +29,7 @@ interface Snapshot { responses: Array<{ question: string; answer: string }>; ans
 
 /** Formulário dedicado. Nenhum rascunho ou identificador clínico vai para URL/storage. */
 export default function Regula20Page() {
+  const { issuer } = useIssuer();
   const [years, setYears] = useState("");
   const [months, setMonths] = useState("0");
   const [respondent, setRespondent] = useState("");
@@ -146,6 +148,6 @@ export default function Regula20Page() {
       {reviewGate ? <section role="alert" className="space-y-3 rounded-xl border border-destructive p-4"><h2 className="font-semibold">Há alerta ou informação de segurança incerta.</h2><p className="text-sm">Avise a equipe antes de prosseguir com uma conclusão rotineira. Em perigo imediato, interrompa e peça atendimento agora.</p><Button variant="outline" onClick={() => setReviewGate(false)}>Revisar os alertas</Button><Button onClick={() => finish(true)}>Mostrar registro para avaliação da equipe</Button></section> : <Button id="regula-finish" className="min-h-11 w-full" onClick={() => finish()}>Concluir registro para revisão</Button>}
     </>}
     <Button variant="outline" className="min-h-11" onClick={reset}>Nova família / limpar esta aplicação</Button>
-    <footer className="border-t pt-4 text-xs text-muted-foreground">Dr. Jadson Fraga · Neuropediatra · CRM-PE 25227 · RQE 17756<br />NeuroPed SDG · Soli Deo Gloria · {REGULA20_VERSION}</footer>
+    <footer className="border-t pt-4 text-xs text-muted-foreground">{issuerSignatureLine(issuer)}<br />NeuroPed SDG · Soli Deo Gloria · {REGULA20_VERSION}</footer>
   </article>;
 }
