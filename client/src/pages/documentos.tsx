@@ -16,7 +16,7 @@ const docCards = [
     path: "/laudo-neuroped",
     icon: Stethoscope,
     title: "Laudo Neuropediátrico",
-    desc: "Laudo estruturado em 10 seções (padrão PANT). Preencha os campos, visualize e imprima em PDF.",
+    desc: "Laudo estruturado em 10 seções (padrão PANT). Preencha os campos, visualize e imprima em PDF; a assinatura ICP-Brasil é feita na própria página do laudo.",
     badge: "Laudo",
     badgeVariant: "default" as const,
     status: "Disponível",
@@ -26,7 +26,7 @@ const docCards = [
     path: "/laudo-super",
     icon: ShieldCheck,
     title: "Laudo SuperNeuroPed",
-    desc: "Perfil premium do modelo PANT: 14 seções, mapa funcional, hipóteses com prós/contras, 3 cenários de prognóstico e assinatura Soli Deo Gloria.",
+    desc: "Perfil premium do modelo PANT: 14 seções, mapa funcional, hipóteses com prós/contras, 3 cenários de prognóstico e assinatura Soli Deo Gloria. Assinatura ICP-Brasil na própria página.",
     badge: "SuperNeuroPed",
     badgeVariant: "default" as const,
     status: "Disponível",
@@ -36,7 +36,7 @@ const docCards = [
     path: "/receita-c1",
     icon: ClipboardList,
     title: "Receita Especial C1",
-    desc: "Notificação de receita para medicamentos Lista C1. 2 vias, válida por 30 dias.",
+    desc: "Notificação de receita para medicamentos Lista C1. 2 vias, válida por 30 dias. Assinatura ICP-Brasil (PAdES) na própria página.",
     badge: "Receita",
     badgeVariant: "secondary" as const,
     status: "Disponível",
@@ -46,8 +46,8 @@ const docCards = [
     path: "/assinatura-digital",
     icon: FileText,
     title: "Assinatura Digital",
-    desc: "Assine documentos com certificado P12 (ICP-Brasil / eCFM).",
-    badge: "Assinatura",
+    desc: "Registro local de conferência (SHA-256 e QR). Não é assinatura ICP-Brasil: para assinar com certificado, use o laudo ou a receita.",
+    badge: "Conferência",
     badgeVariant: "outline" as const,
     status: "Disponível",
     ok: true,
@@ -126,7 +126,8 @@ export default function DocumentosPage() {
         </p>
         <p>
           <strong className="text-foreground">Assinatura Digital:</strong>{" "}
-          Assine com certificado P12 (ICP-Brasil). Compatível com eCFM.
+          Registro local de conferência por SHA-256, sem validade de assinatura ICP-Brasil.
+          A assinatura com certificado digital (admin) é feita dentro do Laudo, do SuperNeuroPed e da Receita C1.
         </p>
       </div>
     </div>
