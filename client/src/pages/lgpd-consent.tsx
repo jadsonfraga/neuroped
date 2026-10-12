@@ -19,6 +19,8 @@ import {
 import { softTap, softSuccess, softError, softTick } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { fadeIn, slideUpFadeIn } from "@/lib/motion";
+import { useIssuer } from "@/lib/issuer";
+import { consentTermsText, LEGACY_CONSENT_TERMS_TEXT } from "@/lib/issuerSignature";
 
 const CONSENT_VERSION = "2026-05-08-v1";
 const LOCAL_CONSENT_KEY = "neuroped:lgpd-consent";
@@ -30,7 +32,7 @@ const CONSENT_BLOCKS = [
     icon: FileText,
     title: "Termo de uso",
     short: "O NeuroPed é ferramenta clínica de apoio; não substitui julgamento médico.",
-    text: "O NeuroPed EDJ é ferramenta clínica do Dr. Jadson Fraga (CRM-PE 25227, RQE 17756), destinada ao apoio de profissionais de saúde habilitados e pacientes em acompanhamento.",
+    text: LEGACY_CONSENT_TERMS_TEXT,
     legalBasis: "Art. 7º, V — execução de contrato",
     purpose: "Disponibilização da plataforma para uso profissional",
   },
@@ -64,6 +66,11 @@ class RemoteConsentError extends Error {
 
 export default function LgpdConsentPage() {
   const [, setLocation] = useLocation();
+  const { issuer, loading: issuerLoading } = useIssuer();
+  // O termo de uso nomeia o controlador real (perfil salvo); sem perfil, o texto histórico.
+  const blocks = CONSENT_BLOCKS.map((b) =>
+    b.type === "termo_uso" ? { ...b, text: consentTermsText(issuer) } : b,
+  );
   const [granted, setGranted] = useState<Record<ConsentType, boolean>>({
     termo_uso: false,
     politica_privacidade: false,
@@ -106,7 +113,7 @@ export default function LgpdConsentPage() {
     const payload = {
       version: CONSENT_VERSION,
       acceptedAt,
-      consents: CONSENT_BLOCKS.map((b) => ({
+      consents: blocks.map((b) => ({
         consentType: b.type,
         consentVersion: CONSENT_VERSION,
         consentText: b.text,
@@ -216,7 +223,7 @@ export default function LgpdConsentPage() {
       )}
 
       <section className="grid gap-3 md:grid-cols-3">
-        {CONSENT_BLOCKS.map((block) => {
+        {blocks.map((block) => {
           const Icon = block.icon;
           return (
             <Card key={block.type} className="border-border/70 bg-card/90">
@@ -267,7 +274,7 @@ export default function LgpdConsentPage() {
             <Button variant="ghost" onClick={postpone} className="gap-2">
               <ArrowLeft className="h-4 w-4" /> Continuar sem registrar agora
             </Button>
-            <Button onClick={onSubmit} disabled={!allGranted || submitting} className="gap-2">
+            <Button onClick={onSubmit} disabled={!allGranted || submitting || issuerLoading} className="gap-2">
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
               {submitting ? "Registrando..." : "Registrar consentimento"}
             </Button>

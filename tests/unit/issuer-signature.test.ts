@@ -28,3 +28,22 @@ describe("issuerSignatureLine", () => {
     assert.equal(makeReport.length >= 1, true);
   });
 });
+
+import { LEGACY_CONSENT_TERMS_TEXT, consentTermsText } from "../../client/src/lib/issuerSignature";
+
+describe("consentTermsText (LGPD)", () => {
+  it("sem perfil mantém o termo histórico", () => {
+    assert.match(LEGACY_CONSENT_TERMS_TEXT, /Dr\. Jadson Fraga \(CRM-PE 25227, RQE 17756\)/);
+    assert.equal(consentTermsText(null), LEGACY_CONSENT_TERMS_TEXT);
+    assert.equal(consentTermsText({ doctorName: "Dra. Ana", specialty: "", credentialsLine: "CRM-SP 1", profileConfigured: false }), LEGACY_CONSENT_TERMS_TEXT);
+    assert.equal(consentTermsText({ doctorName: "  ", specialty: "", credentialsLine: "", profileConfigured: true }), LEGACY_CONSENT_TERMS_TEXT);
+  });
+  it("com perfil nomeia o controlador da outra clínica, sem o CRM histórico", () => {
+    const t = consentTermsText({ doctorName: "Dra. Ana Souza", specialty: "Neuropediatra", credentialsLine: "CRM-SP 123456", clinicName: "Clínica Aurora", profileConfigured: true });
+    assert.match(t, /Dra\. Ana Souza \(CRM-SP 123456\), Clínica Aurora, responsável pelo tratamento dos dados/);
+    assert.doesNotMatch(t, /25227|Jadson/);
+  });
+  it("a tela de consentimento não fixa mais o CRM no código", () => {
+    assert.doesNotMatch(readFileSync("client/src/pages/lgpd-consent.tsx", "utf8"), /CRM-PE 25227/);
+  });
+});
