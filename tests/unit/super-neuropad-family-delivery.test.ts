@@ -72,7 +72,7 @@ test("resumo para a família é sistemático e recorrente: mesma estrutura em to
   const sections = (text: string) => text.split("\n").filter((line) => /^[A-ZÀ-Ú]/.test(line)).map((line) => line.replace(/:.*/, ":").replace(/por e-mail e WhatsApp\.|por e-mail\.|por WhatsApp\./, "para a família.").replace(/Aventura completa:.*|Aventura encerrada antes do fim:.*/, "Situação da aventura:"));
   const fixed = (text: string) => sections(text).filter((line) => line !== "Leitura do jogo:");
   assert.deepEqual(fixed(complete), fixed(partial), "mesma ordem de seções em qualquer partida");
-  assert.ok(complete.includes("Aventura completa: 30 de 30"));
+  assert.ok(complete.includes("Aventura completa: 36 de 36"));
   assert.ok(partial.includes("encerrada antes do fim"), "partida incompleta identificada para a família");
 });
 
