@@ -20,6 +20,8 @@ import { PageHero } from "@/components/PageHero";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { purgeLegacyCertificateCache } from "@/lib/certificateSession";
+import { canUseCertificateVault, forgetCertificate, loadCertificate, saveCertificate } from "@/lib/certificateVault";
+import { useAuth } from "@/contexts/AuthContext";
 import { buildAppHashUrl } from "@/lib/appUrl";
 import { escapeHtml as escHtml } from "@/lib/htmlEscape";
 import {
@@ -524,6 +526,10 @@ export default function ReceitaC1ExpressPage() {
   // resolver deixa duas leituras assíncronas em paralelo; sem isso, o
   // certificado que acaba assinando pode não ser o último selecionado.
   const p12LoadIdRef = useRef(0);
+  const { user } = useAuth();
+  const vaultAllowed = canUseCertificateVault(user);
+  const [rememberCert, setRememberCert] = useState(true);
+  const [storedCert, setStoredCert] = useState<{ fileName: string; savedAt: string } | null>(null);
 
   const [busy, setBusy] = useState<"" | "sign" | "plain" | "verify">("");
   const [error, setError] = useState("");
@@ -534,6 +540,26 @@ export default function ReceitaC1ExpressPage() {
   useEffect(() => {
     void purgeLegacyCertificateCache();
   }, []);
+
+  // ── Admin master: carrega o .pfx memorizado neste dispositivo (sem senha) ─
+  useEffect(() => {
+    let cancelled = false;
+    if (!vaultAllowed) { setStoredCert(null); return; }
+    void loadCertificate(user).then((stored) => {
+      if (cancelled || !stored) return;
+      setP12(stored.p12);
+      setStoredCert({ fileName: stored.fileName, savedAt: stored.savedAt });
+      setCertStatus("ready");
+    }).catch(() => { /* cofre indisponível: segue com upload manual */ });
+    return () => { cancelled = true; };
+  }, [vaultAllowed, user?.id]);
+
+  async function esquecerCertificado() {
+    await forgetCertificate(user);
+    setStoredCert(null); setP12(null); setCertInfo(null); setSenha("");
+    setCertStatus("missing");
+    setOk("Certificado removido deste dispositivo.");
+  }
 
   // ── Verifica info do certificado quando p12 + senha disponíveis ─
   async function verificarCert() {
@@ -561,7 +587,18 @@ export default function ReceitaC1ExpressPage() {
     setP12(ab);
     setCertStatus("ready");
     setShowUpload(false);
-    setOk("Certificado carregado somente nesta aba; não foi salvo no navegador.");
+    if (vaultAllowed && rememberCert) {
+      try {
+        await saveCertificate(user, ab, f.name);
+        setStoredCert({ fileName: f.name, savedAt: new Date().toISOString() });
+        setOk("Certificado memorizado neste dispositivo (cifrado). A senha nunca é salva: digite-a a cada receita.");
+      } catch (err) {
+        setOk("Certificado carregado somente nesta aba.");
+        setError(err instanceof Error ? err.message : "Não foi possível memorizar o certificado.");
+      }
+    } else {
+      setOk("Certificado carregado somente nesta aba; não foi salvo no navegador.");
+    }
   }
 
   // ── Gerar PDF + assinar ───────────────────────────────────────
@@ -596,6 +633,7 @@ export default function ReceitaC1ExpressPage() {
         healthDocument: { kind: "prescricao", credentialsLine: issuer.credentialsLine },
       });
       downloadBytes(signed, `receita-c1-${dateStamp(false)}-assinada.pdf`);
+      setSenha("");
       setOk("Receita assinada e baixada com sucesso.");
     } catch (error) {
       const { icpErrorMessage } = await import("@/lib/icpSign");
@@ -647,7 +685,7 @@ export default function ReceitaC1ExpressPage() {
         icon={Pill}
         eyebrow="receita c1 · emissão rápida"
         title="Emissão Rápida — Receita C1"
-        subtitle="Preencha os dados da prescrição e informe a senha do certificado digital. O certificado fica somente na memória desta aba e não é salvo no navegador."
+        subtitle="Preencha os dados da prescrição e informe a senha do certificado digital. Para o administrador, o .pfx fica memorizado e cifrado neste dispositivo; a senha nunca é salva. Digite a senha e tecle Enter para gerar a receita assinada."
         gradient="from-primary to-chart-2"
       />
 
@@ -674,7 +712,7 @@ export default function ReceitaC1ExpressPage() {
             <div className="flex items-center gap-2 text-sm text-emerald-800 dark:text-emerald-200">
               <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
               <span>
-                Certificado carregado somente nesta aba
+                {storedCert ? `Certificado memorizado (${storedCert.fileName})` : "Certificado carregado somente nesta aba"}
                 {certInfo && ` · válido até ${certInfo.notAfter.toLocaleDateString("pt-BR")}`}
               </span>
             </div>
@@ -685,6 +723,16 @@ export default function ReceitaC1ExpressPage() {
             >
               Trocar
             </button>
+            {storedCert && (
+              <button
+                type="button"
+                onClick={() => void esquecerCertificado()}
+                className="text-xs text-red-700 dark:text-red-300 hover:underline flex-shrink-0"
+                data-testid="button-forget-cert"
+              >
+                Esquecer
+              </button>
+            )}
           </div>
         )}
         {certStatus === "missing" && (
@@ -715,6 +763,17 @@ export default function ReceitaC1ExpressPage() {
               onChange={onUploadP12}
               className="text-xs"
             />
+            {vaultAllowed && (
+              <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={rememberCert}
+                  onChange={(e) => setRememberCert(e.target.checked)}
+                  data-testid="checkbox-remember-cert"
+                />
+                Memorizar o certificado neste dispositivo (somente administrador; cifrado; a senha não é salva)
+              </label>
+            )}
           </div>
         )}
 
@@ -732,7 +791,8 @@ export default function ReceitaC1ExpressPage() {
                 onChange={(e) => setSenha(e.target.value)}
                 placeholder="Digite a senha do .pfx"
                 className="pr-9"
-                onKeyDown={(e) => e.key === "Enter" && verificarCert()}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); if (!busy) void gerarEAssinar(); } }}
+                autoComplete="off"
               />
               <button
                 type="button"
@@ -991,7 +1051,8 @@ export default function ReceitaC1ExpressPage() {
         </div>
 
         <p className="mt-3 text-xs text-muted-foreground leading-relaxed">
-          A chave privada e a senha permanecem somente na memória desta aba e são descartadas ao fechá-la.
+          A senha nunca é armazenada; a chave privada só é aberta na memória desta aba no momento da assinatura.
+          O .pfx do administrador, quando memorizado, fica cifrado (AES-GCM, chave não exportável) somente neste dispositivo.
           Assinatura no padrão PAdES-BES com certificado A1 ICP-Brasil. Validade da receita: <strong>30 dias</strong>.
         </p>
       </section>

@@ -11,6 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { purgeLegacyCertificateCache } from "@/lib/certificateSession";
+import { canUseCertificateVault, forgetCertificate, loadCertificate, saveCertificate } from "@/lib/certificateVault";
+import { useAuth } from "@/contexts/AuthContext";
 import { buildAppHashUrl } from "@/lib/appUrl";
 import type { HealthDocumentMeta } from "@/lib/padesIcp";
 
@@ -73,6 +75,29 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
     void purgeLegacyCertificateCache();
   }, []);
 
+  const { user } = useAuth();
+  const vaultAllowed = canUseCertificateVault(user);
+  const [rememberCert, setRememberCert] = useState(true);
+  const [stored, setStored] = useState(false);
+
+  // Admin master: o .pfx memorizado (cifrado) já vem acoplado; a senha nunca é salva.
+  useEffect(() => {
+    let cancelled = false;
+    if (!vaultAllowed) { setStored(false); return; }
+    void loadCertificate(user).then((rec) => {
+      if (cancelled || !rec) return;
+      p12LoadIdRef.current += 1;
+      setP12(rec.p12); setP12Name(rec.fileName); setStored(true);
+    }).catch(() => { /* segue com seleção manual */ });
+    return () => { cancelled = true; };
+  }, [vaultAllowed, user?.id]);
+
+  async function esquecer() {
+    await forgetCertificate(user);
+    setStored(false); setP12(null); setP12Name(""); setCert(null); setSenha("");
+    setOkMsg("Certificado removido deste dispositivo.");
+  }
+
   async function gerarComprovante(bytes: Uint8Array) {
     try {
       const { sha256Hex } = await import("@/lib/icpSign");
@@ -95,6 +120,16 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
     const bytes = await f.arrayBuffer();
     if (loadId !== p12LoadIdRef.current) return; // uma seleção mais recente já venceu
     setP12(bytes);
+    setStored(false);
+    if (vaultAllowed && rememberCert) {
+      try {
+        await saveCertificate(user, bytes, f.name);
+        setStored(true);
+        setOkMsg("Certificado memorizado neste dispositivo (cifrado). A senha nunca é salva.");
+      } catch (err) {
+        setErro(err instanceof Error ? err.message : "Não foi possível memorizar o certificado.");
+      }
+    }
   }
 
   async function verificar() {
@@ -156,6 +191,7 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
         healthDocument,
       });
       downloadBytes(signed, `${filename}-assinado.pdf`);
+      setSenha("");
       if (archivePdf) {
         try {
           await archivePdf(signed, {
@@ -196,8 +232,15 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
         <div className="mb-3 rounded-lg border border-blue-300 bg-blue-50 p-2 dark:border-blue-800 dark:bg-blue-950/30">
           <p className="flex items-center gap-1.5 text-xs text-blue-800 dark:text-blue-200">
             <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" />
-            Certificado carregado somente na memória desta aba; não será salvo no navegador.
+            {stored
+              ? `Certificado memorizado neste dispositivo (${p12Name}), cifrado; a senha não é salva.`
+              : "Certificado carregado somente na memória desta aba; não será salvo no navegador."}
           </p>
+          {stored && (
+            <button type="button" onClick={() => void esquecer()} className="mt-1 text-[11px] text-red-700 hover:underline" data-testid="button-forget-cert">
+              Esquecer certificado deste dispositivo
+            </button>
+          )}
         </div>
       )}
 
@@ -218,6 +261,12 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
             className="text-xs"
             data-testid="input-p12"
           />
+          {vaultAllowed && (
+            <label className="mt-1 flex items-center gap-1.5 text-[10px] text-muted-foreground">
+              <input type="checkbox" checked={rememberCert} onChange={(e) => setRememberCert(e.target.checked)} data-testid="checkbox-remember-cert" />
+              Memorizar neste dispositivo (admin; cifrado; senha não é salva)
+            </label>
+          )}
           {p12Name && (
             <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{p12Name}</p>
           )}
@@ -234,6 +283,10 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
             placeholder="••••••••"
             className="text-xs"
             data-testid="input-p12-senha"
+            autoComplete="off"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") { e.preventDefault(); if (!busy && p12) void gerarEAssinar(); }
+            }}
           />
         </div>
       </div>
