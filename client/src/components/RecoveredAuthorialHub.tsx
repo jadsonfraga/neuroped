@@ -7,6 +7,7 @@ import { pendingAuthorialScaleIntakes } from "@/data/pendingAuthorialScaleIntake
 import { monitorWithClinicalDetails, schoolSupportOptions, supportResponseOptions } from "@/data/recoveredMonitorDetails";
 import { calculateRecoveredMonitor, monitorComputedRows, monitorEligibility, monitorFocusOptions, monitorItemCount, monitorSafetyState, planRecoveredMonitors, type MonitorSelectionInput } from "@/lib/recoveredAuthorialLogic";
 import { readRouteParam } from "@/lib/routeQuery";
+import { issuerSignatureLine, useIssuer } from "@/lib/issuer";
 
 const ClinicalReport = lazy(() => import("@/components/ClinicalReport").then((m) => ({ default: m.ClinicalReport })));
 const SaveToPatient = lazy(() => import("@/components/SaveToPatient").then((m) => ({ default: m.SaveToPatient })));
@@ -65,6 +66,7 @@ export default function RecoveredAuthorialHub() {
 }
 
 function RecoveredQuestionnaire({ definition: d, input, onBack }: { definition: RecoveredMonitor; input: MonitorSelectionInput; onBack: () => void }) {
+  const { issuer } = useIssuer();
   const [answers, setAnswers] = useState<Array<number | undefined>>([]); const [safety, setSafety] = useState<string[]>([]);
   const [observer, setObserver] = useState(""); const [end, setEnd] = useState(today); const [schoolStart, setSchoolStart] = useState("");
   const [note, setNote] = useState(""); const [changes, setChanges] = useState(""); const [goal, setGoal] = useState("");
@@ -121,6 +123,6 @@ function RecoveredQuestionnaire({ definition: d, input, onBack }: { definition: 
       <Button id="monitor-finish" className="min-h-12 w-full" onClick={finish}>Concluir para revisão profissional</Button>
     </>}
     <Button variant="outline" onClick={onBack}>Voltar ao filtro / nova aplicação</Button>
-    <footer className="border-t pt-4 text-xs text-muted-foreground">Dr. Jadson Fraga · Neuropediatra · CRM-PE 25227 · RQE 17756<br />NeuroPed SDG · Soli Deo Gloria</footer>
+    <footer className="border-t pt-4 text-xs text-muted-foreground">{issuerSignatureLine(issuer)}<br />NeuroPed SDG · Soli Deo Gloria</footer>
   </article>;
 }
