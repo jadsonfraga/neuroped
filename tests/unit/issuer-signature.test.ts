@@ -21,7 +21,7 @@ describe("issuerSignatureLine", () => {
     assert.equal(issuerSignatureLine({ doctorName: " ", specialty: "", credentialsLine: "", profileConfigured: true }), LEGACY_AUTHOR_SIGNATURE);
   });
   it("geradores OBS-10 não carregam mais a identidade fixa", () => {
-    for (const path of ["client/src/features/obs10/dossier.ts", "client/src/features/obs10/session.ts", "client/src/pages/pre-consulta-obs10.tsx", "client/src/components/Regula20Questionnaire.tsx"]) {
+    for (const path of ["client/src/features/obs10/dossier.ts", "client/src/features/obs10/session.ts", "client/src/pages/pre-consulta-obs10.tsx", "client/src/components/Regula20Questionnaire.tsx", "client/src/components/RecoveredAuthorialHub.tsx"]) {
       assert.doesNotMatch(readFileSync(path, "utf8"), /CRM-PE 25227/, path);
     }
     assert.equal(typeof makeDossier, "function");
