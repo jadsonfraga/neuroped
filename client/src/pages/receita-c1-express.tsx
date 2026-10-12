@@ -552,7 +552,7 @@ export default function ReceitaC1ExpressPage() {
       setCertStatus("ready");
     }).catch(() => { /* cofre indisponível: segue com upload manual */ });
     return () => { cancelled = true; };
-  }, [vaultAllowed, user?.id]);
+  }, [vaultAllowed, user]);
 
   async function esquecerCertificado() {
     await forgetCertificate(user);

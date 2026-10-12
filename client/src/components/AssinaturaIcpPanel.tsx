@@ -90,7 +90,7 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
       setP12(rec.p12); setP12Name(rec.fileName); setStored(true);
     }).catch(() => { /* segue com seleção manual */ });
     return () => { cancelled = true; };
-  }, [vaultAllowed, user?.id]);
+  }, [vaultAllowed, user]);
 
   async function esquecer() {
     await forgetCertificate(user);
