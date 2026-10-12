@@ -32,12 +32,12 @@ const texts = (item: Item): string[] => {
   return [...base, item.expected, item.stimulus ?? "", item.gesture ?? ""];
 };
 
-test("contagem por faixa: 4 desafios por mundo até 5 anos (24), 5 a partir de 6 anos (30); seis mundos em todas as idades", () => {
+test("contagem por faixa: 4 desafios por mundo até 5 anos (24), 5 aos 6–7 anos (30), 6 a partir de 8 anos (36); seis mundos em todas as idades", () => {
   assert.deepEqual([...YEARS], Array.from({ length: 16 }, (_, index) => index + 2));
   assert.deepEqual(Object.keys(INTEGRATED_BANK).map(Number), [...YEARS]);
   for (const years of YEARS) {
     for (const phaseId of PHASE_ORDER) assert.equal(itemsFor(String(years), phaseId).length, itemsPerPhase(years), `${years}/${phaseId}`);
-    assert.equal(bandItemCount(String(years)), years <= 5 ? 24 : 30);
+    assert.equal(bandItemCount(String(years)), years <= 5 ? 24 : years <= 7 ? 30 : 36);
   }
   assert.ok(bandItemCount("2") < bandItemCount("6"), "2–3 anos: menos desafios");
 });
@@ -134,7 +134,9 @@ test("toque: 2 a 4 opções, rótulos únicos, uma certa; figuras do banco visua
       if (item.preview) {
         const shown = item.preview.split(/\s+/);
         const answerArt = item.options.find((option) => option.label === item.answer)!.art;
-        assert.equal(shown.includes(answerArt), !/NÃO apareceu/.test(item.prompt), `${item.id}: resposta coerente com o que foi mostrado`);
+        // sequência inteira: a resposta é a ordem exata mostrada; itens soltos: a figura está (ou não) entre as mostradas
+        const coherent = /mesma ordem/.test(item.prompt) ? answerArt === item.preview : shown.includes(answerArt) === !/NÃO apareceu/.test(item.prompt);
+        assert.ok(coherent, `${item.id}: resposta coerente com o que foi mostrado`);
       }
     }
   }
@@ -245,4 +247,37 @@ test("abas de origem continuam com os seus bancos intactos (o jogo só lê)", ()
   assert.equal(OBJECTIVE_BANDS.length, 13);
   for (const band of OBJECTIVE_BANDS) assert.equal(band.items.length, 20);
   for (let age = 1; age <= 19; age++) for (const items of Object.values(COGNITIVE_BANK[age])) assert.equal(items.length, 4);
+});
+
+test("ampliação dos 8 a 17 anos: um desafio autoral a mais por mundo, declarado como tal, com piso de fluência e dificuldade que não diminuem com a idade", () => {
+  let fluencyFloor = 0;
+  for (const years of YEARS) {
+    const extras = allItems(years).filter((item) => /ampliação autoral do jogo/.test(item.ref));
+    assert.equal(extras.length, years >= 8 ? PHASE_ORDER.length : 0, `${years} anos: ampliação só a partir de 8 anos, um item por mundo`);
+    if (years < 8) continue;
+    for (const phaseId of PHASE_ORDER) assert.equal(itemsFor(String(years), phaseId).filter((item) => /ampliação autoral do jogo/.test(item.ref)).length, 1, `${years}/${phaseId}`);
+    const fluency = extras.find((item) => item.kind === "fala" && /fluência verbal/.test(item.ref));
+    assert.ok(fluency && fluency.kind === "fala", `${years} anos: fluência verbal`);
+    const floor = Number(fluency.expected.match(/pelo menos (\d+) animais/)?.[1]);
+    assert.ok(floor >= fluencyFloor, `${years} anos: piso de fluência não diminui (${floor} < ${fluencyFloor})`);
+    assert.match(fluency.expected, /piso autoral, não norma/);
+    fluencyFloor = floor;
+    // controle mental e busca/sequência visual existem em toda idade ampliada
+    assert.ok(extras.some((item) => /controle mental|alternar número e letra/.test(item.ref)), `${years} anos: controle mental`);
+    assert.ok(extras.some((item) => item.kind === "toque" && /busca e contagem|memória visual sequencial/.test(item.ref)), `${years} anos: atenção/memória visual`);
+  }
+  // semelhanças: o par muda por faixa (grau crescente de abstração)
+  const pair = (years: number) => allItems(years).find((item) => /Em que .* se parecem/.test(item.prompt))?.prompt;
+  assert.notEqual(pair(12), pair(14));
+  assert.notEqual(pair(14), pair(16));
+  assert.equal(pair(12), pair(13));
+  // sequência visual: tamanho cresce com a idade; a certa é a única igual ao que foi mostrado
+  const seqLen = (years: number) => allItems(years).find((item) => item.kind === "toque" && /memória visual sequencial/.test(item.ref))!.kind === "toque"
+    ? (allItems(years).find((item) => item.kind === "toque" && /memória visual sequencial/.test(item.ref)) as TouchItem).preview!.split(/\s+/).length : 0;
+  assert.ok(seqLen(12) < seqLen(15) && seqLen(15) < seqLen(17));
+  // busca visual: a contagem certa confere com a fileira mostrada
+  for (const years of [8, 9, 10, 11]) {
+    const item = allItems(years).find((entry) => entry.kind === "toque" && /busca e contagem/.test(entry.ref)) as TouchItem;
+    assert.equal(item.stimulus!.split(/\s+/).filter((figure) => figure === "🐶").length, Number(item.answer), `${years} anos: contagem confere com a fileira`);
+  }
 });

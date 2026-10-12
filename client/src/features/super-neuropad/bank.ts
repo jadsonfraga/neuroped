@@ -32,9 +32,14 @@ export const MIN_AGE_YEARS = 2;
 export const MAX_AGE_YEARS = 17;
 export const YEARS: readonly number[] = Array.from({ length: MAX_AGE_YEARS - MIN_AGE_YEARS + 1 }, (_, index) => MIN_AGE_YEARS + index);
 
-/** 2 a 5 anos: 4 desafios por mundo (24); 6 a 17 anos: 5 por mundo (30). */
+/**
+ * 2 a 5 anos: 4 desafios por mundo (24); 6 e 7 anos: 5 por mundo (30); 8 a 17 anos: 6 por mundo (36).
+ * A criança maior sustenta mais itens e precisa de mais domínios cobertos (fluência, controle
+ * mental, busca visual, cognição social, dupla tarefa motora); o teto de 20 minutos é travado por teste.
+ */
 export function itemsPerPhase(years: number): number {
-  return years <= 5 ? 4 : 5;
+  if (years <= 5) return 4;
+  return years <= 7 ? 5 : 6;
 }
 
 // ─────────────────────────────── nomes das figuras (registro e PDF) ───────────────────────────────
@@ -269,7 +274,7 @@ function vila(years: number): Draft<Item>[] {
   ];
   const older = years >= 15;
   return [
-    fala("sonda10", SONDA("12–17 anos", "narrativa da rotina"), "Peça: “Me conta como está sendo sua rotina ultimamente.”", "Descreve a rotina de forma organizada (horários ou sequência) e mantém a conversa", { seconds: 40 }),
+    fala("sonda10", SONDA("12–17 anos", "narrativa da rotina"), "Peça: “Me conta como está sendo sua rotina ultimamente.”", "Descreve a rotina de forma organizada (horários ou sequência) e mantém a conversa", { seconds: 35 }),
     fala("sonda10", SONDA("12–17 anos", "cognição social"), "Pergunte: “Você mandou uma mensagem, ela foi visualizada e ninguém respondeu. Que explicações podem existir?”", "Dá pelo menos 2 explicações diferentes e plausíveis (ocupado, sem bateria, esqueceu…)", { seconds: 30 }),
     fala("sonda10", SONDA("12–17 anos", "cognição social + flexibilidade"), "Pergunte: “E qual seria uma resposta adequada nessa situação?”", "Propõe uma atitude adequada (esperar, perguntar com calma), sem hostilidade"),
     older
@@ -408,8 +413,12 @@ function palavras(years: number): Draft<Item>[] {
       obj(11, "Qual está escrita certa?"),
     ];
     default: {
-      const abstraction = fala("obs10", OBS("12–17 anos", "linguagem e raciocínio"), "Pergunte: “Em que uma bicicleta e um ônibus se parecem?”",
-        "Dá uma semelhança plausível (meios de transporte, têm rodas, levam pessoas)");
+      const similarity = years <= 13
+        ? { pair: "uma bicicleta e um ônibus", ok: "Dá uma semelhança plausível (meios de transporte, têm rodas, levam pessoas)" }
+        : years <= 15
+          ? { pair: "um relógio e uma régua", ok: "Diz que os dois servem para medir (tempo e tamanho) ou são instrumentos de medida" }
+          : { pair: "um poema e uma estátua", ok: "Diz que os dois são obras de arte ou formas de expressão criadas por alguém (semelhança abstrata, não só “são coisas”)" };
+      const abstraction = fala("obs10", OBS("12–17 anos", "linguagem e raciocínio (semelhanças, grau crescente com a idade)"), `Pergunte: “Em que ${similarity.pair} se parecem?”`, similarity.ok);
       const reading = COGNITIVE_BANK[years].leitura;
       const objectiveReading = objectiveBand(years).items.filter((entry) => entry.domain === "leitura");
       return [
@@ -562,7 +571,7 @@ function memoria(years: number): Draft<Item>[] {
       fala("sonda10", SONDA("12–17 anos", "inibição + troca de regra"), "Regra: “DIREITA → responda ESQUERDA; ESQUERDA → responda DIREITA.” Sequência: DIREITA – ESQUERDA – ESQUERDA – DIREITA – ESQUERDA – DIREITA",
         "Erra no máximo 1 das 6 respostas", { seconds: 35 }),
       fala("sonda10", SONDA("12–17 anos", "planejamento executivo"), "Diga: “Entre 18h e 22h você tem prova amanhã, um trabalho da escola, banho, jantar e quer 30 minutos livres. Como organiza?”",
-        "Encaixa todas as tarefas no horário e deixa o tempo livre depois do estudo", { seconds: 60 }),
+        "Encaixa todas as tarefas no horário e deixa o tempo livre depois do estudo", { seconds: 45 }),
       recall(years),
     ];
   }
@@ -573,7 +582,7 @@ const MOTOR = (band: string) => OBS(band, "movimentar com segurança (núcleo mo
 const HANDS = (band: string) => OBS(band, "mãos, desenho e escrita");
 const oneFoot = (band: string, seconds: number, both = false): Draft<DoItem> => fazer("obs10", MOTOR(band),
   `Peça: “Fique em um pé só${both ? ", depois no outro" : ""}.” Conte até ${seconds} em voz alta. Fique perto; olhos abertos.`,
-  `Mantém ${seconds} segundos${both ? " em cada pé" : ""} sem apoiar o outro pé`, { stimulus: "🦩", seconds: 15 + seconds * (both ? 2 : 1) });
+  `Mantém ${seconds} segundos${both ? " em cada pé" : ""} sem apoiar o outro pé`, { stimulus: "🦩", seconds: (both ? 10 : 15) + seconds * (both ? 2 : 1) });
 const copyShape = (band: string, shape: DoItem["shape"] & string, name: string, criterion: string): Draft<DoItem> => fazer("obs10", HANDS(band),
   `Mostre ${name} e peça: “Desenhe igual aqui, com o dedo.”`, criterion, { shape, draw: true, seconds: 30 });
 
@@ -641,6 +650,93 @@ function corpo(years: number): Draft<Item>[] {
   }
 }
 
+
+// ─────────────────────────────── ampliação dos 8 a 17 anos (sexto desafio de cada mundo) ───────────────────────────────
+// Itens autorais do jogo (v2026-10-12): cobrem o que os bancos de origem não alcançam nas idades maiores. A
+// referência diz que são ampliação autoral; os limiares são pisos conservadores para déficit GROSSEIRO, não norma.
+const EXT = (band: string, what: string) => `${band} · ${what} (ampliação autoral do jogo)`;
+
+/** Mínimo de animais em 60 s: piso autoral conservador, bem abaixo do que a idade costuma alcançar. */
+const FLUENCY_FLOOR: Record<number, number> = { 8: 8, 9: 9, 10: 10, 11: 10, 12: 11, 13: 11, 14: 12, 15: 12, 16: 13, 17: 13 };
+
+function vilaExtra(years: number): Draft<Item> {
+  if (years <= 9) return fala("sonda10", EXT(SONDA("8–11 anos", "flexibilidade social"), "negociar"), "Pergunte: “Você e um colega querem brincar de coisas diferentes. O que vocês podem fazer?”",
+    "Propõe um acordo (revezar, escolher uma e depois a outra, brincar junto de outra coisa), sem agressão nem desistir sempre", { seconds: 20 });
+  if (years <= 11) return fala("sonda10", EXT(SONDA("8–11 anos", "cognição social"), "gafe social"), "Diga: “Lia contou para Bia que o cabelo novo dela estava horrível, sem saber que Bia tinha acabado de cortá-lo.” Pergunte: “Alguém disse algo que não devia? Por quê? Como a Bia se sente?”",
+    "Percebe que Lia falou o que não devia sem perceber (não foi por maldade) e que Bia fica chateada ou magoada", { seconds: 35 });
+  if (years <= 13) return fala("sonda10", EXT(SONDA("12–17 anos", "cognição social"), "perspectiva de dois lados"), "Pergunte: “Dois amigos brigaram por causa de um jogo e cada um conta a história de um jeito. Como descobrir o que é justo?”",
+    "Considera os dois lados (ouvir os dois, conversar com ambos, chamar um adulto para mediar), sem escolher um lado de saída", { seconds: 30 });
+  if (years <= 15) return fala("sonda10", EXT(SONDA("12–17 anos", "cognição social"), "assertividade"), "Pergunte: “Um amigo pede um favor que você acha errado e os outros estão olhando. Como dizer não sem perder a amizade?”",
+    "Recusa com clareza e respeito, oferecendo outra saída ou explicando, sem agressão e sem ceder", { seconds: 30 });
+  return fala("sonda10", EXT(SONDA("12–17 anos", "cognição social"), "limite e consequência"), "Pergunte: “Um amigo posta uma foto sua na internet sem pedir. Que motivos ele pode ter tido e o que você faz?”",
+    "Dá pelo menos 1 motivo plausível e uma atitude firme e proporcional (conversar, pedir para apagar, falar com um adulto), sem vingança nem exposição", { seconds: 30 });
+}
+
+function olhosExtra(years: number): Draft<Item> {
+  if (years <= 11) {
+    const grid = { 8: { row: "🐱 🐶 🐱 🐱 🐶 🐱 🐶 🐱 🐱 🐱 🐱 🐱", answer: "3", options: ["2", "3", "4", "5"] },
+      9: { row: "🐶 🐱 🐱 🐶 🐱 🐱 🐱 🐶 🐱 🐶 🐱 🐱 🐱 🐱", answer: "4", options: ["3", "4", "5", "6"] },
+      10: { row: "🐱 🐶 🐱 🐱 🐶 🐱 🐶 🐱 🐱 🐶 🐱 🐱 🐱 🐶 🐱 🐱", answer: "5", options: ["4", "5", "6", "7"] },
+      11: { row: "🐱 🐱 🐶 🐱 🐱 🐶 🐱 🐶 🐱 🐱 🐶 🐱 🐶 🐱 🐱 🐱 🐶 🐱", answer: "6", options: ["5", "6", "7", "8"] } }[years]!;
+    return toque("cognitivo", EXT(`Cognitivos ${years} anos`, "atenção visual seletiva (busca e contagem)"), "Olhe a fileira com calma. Quantos 🐶 (cachorros) há?",
+      grid.options.map((value) => opt(value)), grid.answer, { stimulus: grid.row, seconds: 25 });
+  }
+  const sequence = { 12: ["🔴", "🔵", "🟢", "🔵"], 13: ["🟡", "🔵", "🔴", "🟢", "🔵"], 14: ["🔴", "🟡", "🔵", "🟢", "🔴"], 15: ["🟢", "🔴", "🔵", "🟡", "🔵", "🔴"],
+    16: ["🔵", "🟡", "🔴", "🟢", "🔵", "🟡"], 17: ["🔴", "🟢", "🔵", "🔴", "🟡", "🟢", "🔵"] }[years]!;
+  const swap = (list: string[], a: number, b: number) => { const copy = [...list]; [copy[a], copy[b]] = [copy[b], copy[a]]; return copy; };
+  const wrong = [swap(sequence, 0, 1), swap(sequence, sequence.length - 2, sequence.length - 1), [...sequence].reverse()].filter((entry, index, list) =>
+    entry.join("") !== sequence.join("") && list.findIndex((other) => other.join("") === entry.join("")) === index);
+  const options = [sequence, ...wrong.slice(0, 3)].map((entry) => opt(entry.join(" ")));
+  return toque("cognitivo", EXT(`Cognitivos ${years} anos`, "memória visual sequencial"), "Qual sequência de bolinhas você VIU, na mesma ordem?", options, options[0].label,
+    { preview: sequence.join(" "), seconds: 20 });
+}
+
+function palavrasExtra(years: number): Draft<Item> {
+  const floor = FLUENCY_FLOOR[years];
+  return fala("sonda10", EXT(SONDA(years >= 12 ? "12–17 anos" : "8–11 anos", "linguagem expressiva"), "fluência verbal semântica"),
+    "Diga: “Fale o máximo de ANIMAIS que você conseguir, até eu avisar.” Conte 60 segundos e vá contando as palavras diferentes (sem repetir).",
+    `Diz pelo menos ${floor} animais diferentes em 60 segundos (piso autoral, não norma)`, { stimulus: "🗣️ 🐶 🐱", seconds: 60 });
+}
+
+function numerosExtra(years: number): Draft<Item> {
+  if (years <= 9) return fala("sonda10", EXT(SONDA("8–11 anos", "cálculo mental"), "contagem de 3 em 3"), "Diga: “Conte de 3 em 3, começando no 3, até chegar no 30.”",
+    "Conta 3 – 6 – 9 – 12 – 15 – 18 – 21 – 24 – 27 – 30 com no máximo 1 erro espontaneamente corrigido", { seconds: 25 });
+  if (years <= 11) return fala("sonda10", EXT(SONDA("8–11 anos", "cálculo mental"), "tabuada"), "Pergunte: “Quanto é 7 vezes 8? E 56 dividido por 7?”",
+    "Responde 56 e 8", { seconds: 25 });
+  if (years <= 13) return fala("sonda10", EXT(SONDA("12–17 anos", "cálculo mental"), "porcentagem do dia a dia"), "Pergunte: “Uma camisa de R$ 80 está com 25% de desconto. Quanto vai custar?”",
+    "Responde R$ 60", { seconds: 25 });
+  if (years <= 15) return fala("sonda10", EXT(SONDA("12–17 anos", "cálculo mental"), "subtração seriada"), "Diga: “Comece em 100 e vá tirando 7 de cada vez. Diga os resultados em voz alta.” Pare após 5 respostas.",
+    "Acerta pelo menos 4 das 5 (93 – 86 – 79 – 72 – 65), contando cada resposta a partir da anterior", { seconds: 30 });
+  return fala("sonda10", EXT(SONDA("12–17 anos", "cálculo mental"), "problema de compra"), "Pergunte: “Um celular custa R$ 1.200 à vista ou 10 parcelas de R$ 135. Quanto a mais você paga parcelado?”",
+    "Responde R$ 150 (10 × 135 = 1.350 e 1.350 – 1.200)", { seconds: 30 });
+}
+
+function memoriaExtra(years: number): Draft<Item> {
+  if (years <= 9) return fala("sonda10", EXT(SONDA("8–11 anos", "memória operacional"), "controle mental"), "Diga: “Fale os dias da semana ao contrário, começando no domingo.”",
+    "Diz domingo – sábado – sexta – quinta – quarta – terça – segunda com no máximo 1 erro espontaneamente corrigido", { seconds: 30 });
+  if (years <= 13) return fala("sonda10", EXT(SONDA(years >= 12 ? "12–17 anos" : "8–11 anos", "memória operacional"), "controle mental"), "Diga: “Fale os meses do ano ao contrário, começando em dezembro.”",
+    "Diz os 12 meses em ordem inversa com no máximo 1 erro espontaneamente corrigido", { seconds: 30 });
+  if (years <= 15) return fala("sonda10", EXT(SONDA("12–17 anos", "memória operacional"), "controle mental"), "Diga: “Soletre a palavra MUNDO de trás para frente.”",
+    "Diz O – D – N – U – M", { stimulus: "🗣️ ↩", seconds: 20 });
+  return fala("sonda10", EXT(SONDA("12–17 anos", "flexibilidade cognitiva"), "alternar número e letra"), "Diga: “Alterne número e letra, em ordem: 1 – A – 2 – B – 3 – C… vá até o 6 – F.” Dê o começo e deixe a criança continuar.",
+    "Completa 4 – D – 5 – E – 6 – F sem perder a alternância (no máximo 1 erro corrigido)", { seconds: 30 });
+}
+
+function corpoExtra(years: number): Draft<Item> {
+  if (years <= 9) return fazer("obs10", EXT(OBS("6–11 anos", "movimentar com segurança (núcleo motor)"), "equilíbrio sem a visão"), "Fique ao lado. Peça: “Fique num pé só, com os olhos fechados.” Conte até 5 em voz alta.",
+    "Mantém 5 segundos sem apoiar o outro pé nem pular de lugar", { stimulus: "🦩", seconds: 25 });
+  if (years <= 11) return fazer("obs10", EXT(OBS("9–11 anos", "movimentar com segurança (núcleo motor)"), "saltos em um pé"), "Demonstre e peça: “Pule num pé só, 5 vezes seguidas. Agora no outro pé.”",
+    "Dá 5 pulos seguidos em cada pé sem apoiar o outro pé nem perder o ritmo", { stimulus: "🦩", seconds: 30 });
+  if (years <= 13) return fazer("obs10", EXT(OBS("12–17 anos", "movimentar com segurança (núcleo motor)"), "coordenação de quatro membros"), "Demonstre e peça: “Faça polichinelo, 10 vezes seguidas, no ritmo.”",
+    "Coordena braços e pernas nos 10 saltos, sem parar nem trocar o movimento", { stimulus: "🙌", seconds: 30 });
+  return fazer("obs10", EXT(OBS("12–17 anos", "movimentar com segurança (núcleo motor)"), "dupla tarefa motora e cognitiva"), "Peça: “Ande na junta do piso, calcanhar encostando na ponta, 8 passos, enquanto fala os meses do ano em ordem.”",
+    "Cumpre os 8 passos sem sair da linha e diz os meses em ordem sem parar de andar", { stimulus: "👣 🗣️", seconds: 30 });
+}
+
+const EXTRAS: Record<PhaseId, (years: number) => Draft<Item>> = {
+  vila: vilaExtra, olhos: olhosExtra, palavras: palavrasExtra, numeros: numerosExtra, memoria: memoriaExtra, corpo: corpoExtra,
+};
+
 // ─────────────────────────────── montagem ───────────────────────────────
 const BUILDERS: Record<PhaseId, (years: number) => Draft<Item>[]> = { vila, olhos, palavras, numeros, memoria, corpo };
 
@@ -649,7 +745,7 @@ function build(): Record<number, Record<PhaseId, Item[]>> {
   for (const years of YEARS) {
     const perPhase = {} as Record<PhaseId, Item[]>;
     for (const phaseId of PHASE_ORDER) {
-      const drafts = BUILDERS[phaseId](years);
+      const drafts = years >= 8 ? [...BUILDERS[phaseId](years), EXTRAS[phaseId](years)] : BUILDERS[phaseId](years);
       perPhase[phaseId] = drafts.map((draft, index) => ({ ...draft, id: `${years}.${phaseId}.${index + 1}` }) as Item);
     }
     bank[years] = perPhase;

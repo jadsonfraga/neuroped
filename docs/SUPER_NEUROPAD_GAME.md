@@ -13,7 +13,7 @@ intactos; o jogo **lê** os bancos delas e não os modifica.
   Memória e Torre do Corpo.
 - Faixas **anuais** de 2 a 17 anos (o banco objetivo e o cognitivo já são anuais). Menos de 2
   anos: o jogo não é aplicado; a tela bloqueia e encaminha para OBS-10 (0–23 meses) e Sonda 10.
-- 4 desafios por mundo até 5 anos (24 na partida); 5 por mundo a partir de 6 anos (30).
+- 4 desafios por mundo até 5 anos (24 na partida); 5 por mundo aos 6–7 anos (30); 6 por mundo a partir de 8 anos (36).
 - Efeitos sonoros 8-bit compartilhados do app (moeda ao registrar, power-up ao fechar fase,
   pulo ao trocar de mundo, bandeira ao concluir).
 - Todo item tem certo e errado explícitos. Toque e montagem de palavra são conferidos pelo jogo;
@@ -63,22 +63,34 @@ Contagens geradas do banco (`INTEGRATED_BANK`); tempo por `estimateBandSeconds`.
 | 5 anos | 24 (4) | 8 | 7 | 3 | 6 | 12/7/5/0 | 0 | 15.2 min |
 | 6 anos | 30 (5) | 11 | 10 | 2 | 7 | 14/11/5/0 | 0 | 13.9 min |
 | 7 anos | 30 (5) | 8 | 12 | 2 | 8 | 14/11/4/1 | 0 | 13.7 min |
-| 8 anos | 30 (5) | 10 | 10 | 1 | 9 | 14/11/4/1 | 0 | 14.3 min |
-| 9 anos | 30 (5) | 7 | 13 | 1 | 9 | 14/11/4/1 | 0 | 14.4 min |
-| 10 anos | 30 (5) | 11 | 9 | 1 | 9 | 14/11/4/1 | 0 | 14.4 min |
-| 11 anos | 30 (5) | 9 | 11 | 1 | 9 | 14/11/4/1 | 0 | 14.3 min |
-| 12 anos | 30 (5) | 11 | 9 | 1 | 9 | 14/11/4/1 | 0 | 15.2 min |
-| 13 anos | 30 (5) | 7 | 13 | 1 | 9 | 14/11/4/1 | 0 | 15.1 min |
-| 14 anos | 30 (5) | 11 | 9 | 1 | 9 | 14/11/4/1 | 0 | 15.4 min |
-| 15 anos | 30 (5) | 7 | 13 | 1 | 9 | 14/11/4/1 | 0 | 15.4 min |
-| 16 anos | 30 (5) | 11 | 9 | 1 | 9 | 14/11/4/1 | 0 | 15.5 min |
-| 17 anos | 30 (5) | 7 | 13 | 1 | 9 | 14/11/4/1 | 0 | 15.4 min |
+| 8 anos | 36 (6) | 14 | 11 | 1 | 10 | 15/15/5/1 | 0 | 17.8 min |
+| 9 anos | 36 (6) | 11 | 14 | 1 | 10 | 15/15/5/1 | 0 | 17.9 min |
+| 10 anos | 36 (6) | 15 | 10 | 1 | 10 | 15/15/5/1 | 0 | 18.2 min |
+| 11 anos | 36 (6) | 13 | 12 | 1 | 10 | 15/15/5/1 | 0 | 18.1 min |
+| 12 anos | 36 (6) | 15 | 10 | 1 | 10 | 15/15/5/1 | 0 | 18.6 min |
+| 13 anos | 36 (6) | 11 | 14 | 1 | 10 | 15/15/5/1 | 0 | 18.6 min |
+| 14 anos | 36 (6) | 15 | 10 | 1 | 10 | 15/15/5/1 | 0 | 18.8 min |
+| 15 anos | 36 (6) | 11 | 14 | 1 | 10 | 15/15/5/1 | 0 | 18.8 min |
+| 16 anos | 36 (6) | 15 | 10 | 1 | 10 | 15/15/5/1 | 0 | 19.1 min |
+| 17 anos | 36 (6) | 11 | 14 | 1 | 10 | 15/15/5/1 | 0 | 19.1 min |
 
 **Tempo estimado**: toque 12 s (+1 s a cada 25 caracteres de leitura, máx. +25 s), fala 20 s,
 ação 25 s, montar 30 s + 2 s por letra (ou o tempo próprio do item); fator de criança pequena
 ×1,5 até 3 anos e ×1,25 até 5; 10 % de folga para repetições; preparação 60 s, 15 s de
 apresentação por mundo, 5 s por exposição de memória e pausa planejada de 90 s até 5 anos.
 O teste exige ≤ 20 min em todas as idades; a tela de preparação mostra a estimativa.
+
+**Ampliação dos 8 a 17 anos (2026-10-12).** A partir dos 8 anos entra um sexto desafio em cada
+mundo, autoral do jogo (a referência do item diz "ampliação autoral do jogo"): cognição social
+graduada (negociar, gafe social, dois lados, assertividade, limite digital), busca visual com
+contagem (8–11) e memória visual sequencial (12–17, sequência de 5 a 7 bolinhas), fluência verbal
+semântica (animais em 60 s, com piso autoral crescente de 8 a 13), cálculo mental graduado
+(contar de 3 em 3, tabuada, porcentagem, subtração seriada, problema de compra), controle mental
+(dias da semana, meses, soletrar ao contrário, alternar número e letra) e motor ampliado
+(equilíbrio sem visão, saltos em um pé, polichinelo, dupla tarefa). As semelhanças de 12–17 também
+passaram a subir de abstração com a idade (transporte → medida → obra de arte). Os pisos de
+fluência e os critérios são **conservadores e autorais, para déficit grosseiro**: não são norma, e a
+leitura final continua sendo do médico. O teto de 20 minutos segue travado por teste (máx. 19,1 min).
 
 **Critérios de calibração** (sem norma, sem inflar escore, sem mudar corte):
 
