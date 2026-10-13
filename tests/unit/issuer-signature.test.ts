@@ -47,3 +47,12 @@ describe("consentTermsText (LGPD)", () => {
     assert.doesNotMatch(readFileSync("client/src/pages/lgpd-consent.tsx", "utf8"), /CRM-PE 25227/);
   });
 });
+
+describe("Central de Documentos não promete assinatura ICP que não realiza", () => {
+  it("o cartão de Assinatura Digital é registro de conferência, não ICP-Brasil", () => {
+    const src = readFileSync("client/src/pages/documentos.tsx", "utf8");
+    assert.doesNotMatch(src, /Assine (documentos )?com certificado P12/);
+    assert.doesNotMatch(src, /Compatível com eCFM/);
+    assert.match(src, /Não é assinatura ICP-Brasil/);
+  });
+});
