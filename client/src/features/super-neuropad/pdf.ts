@@ -39,6 +39,32 @@ import {
   type GameSession,
 } from "./model";
 
+/**
+ * Marcador textual de resultado, impresso junto da cor (azul/vermelho/cinza)
+ * para leitura por daltônicos e em impressão monocromática.
+ */
+export const RESULT_MARKER: Record<GameSession["answers"][number]["status"], string> = {
+  acerto: "[CUMPRE]",
+  erro: "[NAO CUMPRE]",
+  sem_resposta: "[SEM RESPOSTA]",
+  recusa: "[RECUSOU]",
+};
+
+/** Legenda de cores do PDF (sempre presente no documento). */
+export const RESULT_LEGEND: DocLine[] = [
+  { text: "Legenda das cores (também marcadas em texto para impressão em preto e branco):", bold: true },
+  { text: `  ${RESULT_MARKER.acerto} AZUL - a criança acertou (cumpre o critério do item)`, bold: true, tone: "correct" },
+  { text: `  ${RESULT_MARKER.erro} VERMELHO - a criança errou (não cumpre o critério do item)`, bold: true, tone: "wrong" },
+  { text: `  ${RESULT_MARKER.sem_resposta} / ${RESULT_MARKER.recusa} CINZA - não respondeu ou recusou (não acertado, registrado à parte do erro)`, bold: true, tone: "neutral" },
+];
+
+/** Barra textual de 10 posições (WinAnsi-safe) para o perfil por domínio. */
+export function profileBar(hits: number, total: number): string {
+  if (total <= 0) return "[----------]";
+  const filled = Math.round((hits / total) * 10);
+  return `[${"#".repeat(filled)}${"-".repeat(10 - filled)}]`;
+}
+
 export interface IssuerLines {
   doctorName: string;
   specialty: string;
@@ -99,6 +125,25 @@ export function buildGameDocSpec(session: GameSession, issuer: IssuerLines, appl
     "Esperado para a idade = referência operacional autoral do jogo (proporção de acertos), não norma populacional nem ponto de corte validado.",
   ].join("\n");
 
+  const strengths = summary.phases.filter((phase) => phase.level === "esperado").map((phase) => phase.phase.domain);
+  const attention = summary.phases.filter((phase) => phase.level === "observar" || phase.level === "alerta").map((phase) => `${phase.phase.domain}${phase.level === "alerta" ? " (sinal de alerta)" : ""}`);
+  const profile: DocLine[] = [
+    { text: "Perfil visual por mundo/domínio (acertos sobre itens; # = acerto proporcional, - = não acertado):", bold: true },
+    ...summary.phases.map((phase): DocLine => ({
+      text: `  ${profileBar(phase.hits, phase.total)} ${phase.hits}/${phase.total} - ${phase.phase.name} (${phase.phase.domain})${phase.level === null ? " - " + phaseStatusText(phase, false) : ""}`,
+    })),
+    { text: "" },
+    ...(summary.level === null ? [{ text: "Partida incompleta: sem pontos fortes ou pontos de atenção (regra da partida incompleta).", tone: "neutral" as const }] : [
+      { text: `Pontos fortes nesta partida: ${strengths.length ? strengths.join(", ") : "nenhum domínio dentro do esperado"}.`, bold: true, tone: "correct" as const },
+      { text: `Pontos para olhar na consulta: ${attention.length ? attention.join(", ") : "nenhum"}.`, bold: true, tone: attention.length ? "wrong" as const : "neutral" as const },
+    ]),
+    { text: "" },
+    ...RESULT_LEGEND,
+    { text: "Leitura descritiva e autoral, comparação interna à partida; não é norma, percentil nem diagnóstico.", tone: "neutral" },
+  ];
+
+  const objectiveWithProfile = `${objective}\n\n${profile.map((line) => line.text).join("\n")}`;
+
   const consultation = reading ? [
     "Leitura descritiva e autoral do registro, para orientar a consulta. Comparações internas à partida; nenhuma norma, percentil, idade equivalente ou diagnóstico.",
     "",
@@ -121,8 +166,8 @@ export function buildGameDocSpec(session: GameSession, issuer: IssuerLines, appl
       { text: `   Origem: ${ORIGIN_LABELS[answer.origin]} - ${describeArt(answer.ref)}` },
       { text: `   Tipo: ${KIND_LABELS[answer.kind]}` },
       { text: `   Resposta esperada: ${describeArt(answer.expected)}` },
-      { text: `   Resposta da criança: ${describeArt(answer.given)}`, bold: true, tone: ANSWER_TONE[answer.status] },
-      { text: `   Resultado: ${STATUS_LABELS[answer.status]} - tempo: ${answer.seconds} s - repetições do comando: ${answer.repeated ? 1 : 0}${answer.via === "gesto" ? " - via: gesto/apontar" : ""}` },
+      { text: `   Resposta da criança: ${describeArt(answer.given)} ${RESULT_MARKER[answer.status]}`, bold: true, tone: ANSWER_TONE[answer.status] },
+      { text: `   Resultado: ${STATUS_LABELS[answer.status]} - tempo: ${answer.seconds} s - repetições do comando: ${answer.repeated ? 1 : 0}${answer.via === "gesto" ? " - via: gesto/apontar" : ""} - ${RESULT_MARKER[answer.status]}` },
     ] satisfies DocLine[]);
     const rich: DocLine[] = phase.answers.length === 0
       ? [{ text: notApplied, tone: "neutral" }]
@@ -171,7 +216,7 @@ export function buildGameDocSpec(session: GameSession, issuer: IssuerLines, appl
     sections: [
       { heading: "Identificação da sessão", body: identification },
       { heading: "O que foi testado por instrumento de origem", body: origins },
-      { heading: "Desempenho por domínio x esperado para a idade", body: objective },
+      { heading: "Desempenho por domínio x esperado para a idade", body: objectiveWithProfile },
       ...(reading ? [{ heading: "Leitura para a consulta", body: consultation }] : []),
       ...phaseSections,
       { heading: "Observações da aplicadora", body: observations ? describeArt(observations) : "Sem observações registradas." },
