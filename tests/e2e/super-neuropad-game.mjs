@@ -5,7 +5,7 @@
 // montagem conferidos pelo jogo; fala/ação conferidas pela aplicadora, com
 // "Recusou" separado de "Errou"; desenho com o dedo; observações; resultado por
 // domínio e por instrumento; PDF detalhado gerado localmente; mundo pulado vira
-// "não aplicado"; 3 anos com menos desafios e acerto por gesto.
+// "não aplicado"; 3 anos com bateria dedicada, relato do cuidador e sinais de alerta.
 // Sem câmera, sem persistência, sem rede clínica. Acessibilidade via axe em cada tela.
 import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -392,7 +392,7 @@ try {
   const partialText = pdfText(`${dir}/partial.pdf`);
   if (partialText) assert.match(partialText.replace(/\s+/g, " "), /não aplicado/i, "PDF parcial informa o mundo não aplicado");
 
-  // 3 anos: menos desafios (4 por mundo) e fala que aceita apontar/gesto como acerto.
+  // 3 anos: bateria dedicada (4 por mundo); o primeiro mundo começa por um item de relato do cuidador.
   await button("Nova partida").click();
   await waitScreen("setup");
   await page.getByRole("group", { name: "Idade em anos" }).getByRole("button", { name: "3", exact: true }).click();
@@ -400,24 +400,14 @@ try {
   assert.match(await page.getByTestId("super-neuropad-estimate").innerText(), /24 desafios/);
   await button("Começar a aventura").click();
   await page.getByRole("button", { name: /Entrar na fase/ }).click();
-  let gestureDone = false;
-  for (let item = 1; item <= 4 && !gestureDone; item++) {
-    await page.getByText(`Desafio ${item} de 4`).waitFor();
-    const gesture = page.getByRole("button", { name: /Acertou por gesto/ });
-    if (await gesture.count()) {
-      await page.getByText(/Alternativa aceita/).first().waitFor();
-      await screen("09-tres-anos-gesto");
-      await pace();
-      await gesture.click();
-      gestureDone = true;
-    } else {
-      await skipCurrent();
-    }
-  }
-  assert.ok(gestureDone, "3 anos: há fala com alternativa por gesto no primeiro mundo");
+  await page.getByText("Desafio 1 de 4").waitFor();
+  await page.getByTestId("super-neuropad-caregiver").first().waitFor();
+  await screen("09-tres-anos-relato-cuidador");
+  await skipCurrent();
+  await page.getByText("Desafio 2 de 4").waitFor();
   await button("Encerrar").click();
   await waitScreen("results");
-  await root.locator("details li").filter({ hasText: /por gesto\/apontar/ }).first().waitFor({ state: "attached" });
+  await page.getByTestId("super-neuropad-red-flags").waitFor({ state: "attached" });
 
   const storage = await page.evaluate(() => Object.keys(localStorage).filter((key) => /neuropad|super/i.test(key)));
   assert.deepEqual(storage, [], "nada do jogo persistido no navegador");

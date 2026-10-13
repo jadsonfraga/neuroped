@@ -42,8 +42,14 @@ import {
   type ShapeId,
   type SpeakItem,
   type TouchItem,
+  RED_FLAG_LABEL,
+  TODDLER_DOMAIN_LABELS,
+  TODDLER_DOMAIN_ORDER,
+  type ToddlerDomain,
 } from "./items";
 
+export { RED_FLAG_LABEL, TODDLER_DOMAIN_LABELS, TODDLER_DOMAIN_ORDER };
+export type { ToddlerDomain };
 export { buildMatches, isJudged, itemExpected, KIND_LABELS, ORIGIN_LABELS, ORIGIN_ORDER, ORIGIN_ROUTES, MAX_AGE_YEARS, MIN_AGE_YEARS, PHASE_ORDER, YEARS, itemsPerPhase };
 export type { BuildItem, DoItem, Item, JudgedItem, Option, OriginId, PhaseId, ShapeId, SpeakItem, TouchItem };
 
@@ -66,6 +72,16 @@ export const SUPER_NEUROPAD_MILESTONE_SOURCES = [
 
 /** Teto da sessão inteira, em segundos (20 minutos). */
 export const SESSION_LIMIT_SECONDS = 20 * 60;
+/** Faixas com bateria dedicada (2 e 3 anos): mundos por domínio, tetos menores. */
+export function isToddlerYears(years: number): boolean {
+  return years === 2 || years === 3;
+}
+/** Teto por idade: 12 min aos 2 anos, 15 min aos 3 anos, 20 min nas demais. */
+export function sessionLimitSeconds(years: number): number {
+  if (years === 2) return 12 * 60;
+  if (years === 3) return 15 * 60;
+  return SESSION_LIMIT_SECONDS;
+}
 
 // ─────────────────────────────── faixas etárias (um ano cada) ───────────────────────────────
 export type BandId = string;
@@ -218,9 +234,40 @@ export const PHASES: readonly Phase[] = [
   },
 ] as const;
 
-export function phaseById(id: PhaseId): Phase {
+/**
+ * Baterias dedicadas de 2 e 3 anos: os mesmos seis mundos do jogo, cada um com UM domínio do
+ * neurodesenvolvimento (formato inspirado em avaliação gamificada; conteúdo autoral).
+ */
+type ToddlerPhaseText = Pick<Phase, "name" | "emoji" | "domain" | "tagline" | "badge" | "operator" | "consult"> & { toddlerDomain: ToddlerDomain };
+const TODDLER_SOURCE = "Bateria autoral 2–3 anos (base descritiva: marcos CDC 2022, Denver II, conceitos M-CHAT-R/F) · Sonda 10 · OBS-10";
+const TODDLER_PHASE_TEXT: Record<PhaseId, ToddlerPhaseText> = {
+  vila: { name: "Vila dos Amigos", emoji: "🏡", toddlerDomain: "interacao_social", domain: TODDLER_DOMAIN_LABELS.interacao_social, tagline: "Sorrir, imitar e brincar junto.", badge: "Amigo da Vila",
+    operator: "Comece pelo acolhimento, com o cuidador por perto (a criança pode ficar no colo). Itens “Relato do cuidador” são perguntados a ele e marcados como Cumpre / Não cumpre conforme a resposta.",
+    consult: "Conferir sorriso social, imitação, revezamento, interesse por outras crianças e qualquer perda de habilidade relatada." },
+  olhos: { name: "Floresta do Olhar", emoji: "🌳", toddlerDomain: "atencao_conjunta", domain: TODDLER_DOMAIN_LABELS.atencao_conjunta, tagline: "Olhar junto para a mesma coisa.", badge: "Explorador do Olhar",
+    operator: "Chame o nome sem tocar; aponte para a figura grande da tela. Não insista mais de 2 vezes.",
+    consult: "Conferir resposta ao nome, seguir apontar e olhar, apontar para mostrar e trazer objetos para compartilhar." },
+  palavras: { name: "Ilha do Escutar", emoji: "🏝️", toddlerDomain: "linguagem_receptiva", domain: TODDLER_DOMAIN_LABELS.linguagem_receptiva, tagline: "Entender o que a gente fala.", badge: "Ouvido de Ouro",
+    operator: "Fale uma vez, sem apontar nem fazer o gesto; pode repetir uma única vez.",
+    consult: "Conferir audição, compreensão de palavras e ordens simples em contexto e diferença entre não entender e não querer." },
+  numeros: { name: "Montanha das Palavrinhas", emoji: "⛰️", toddlerDomain: "linguagem_expressiva", domain: TODDLER_DOMAIN_LABELS.linguagem_expressiva, tagline: "Falar o nome das coisas.", badge: "Falador da Montanha",
+    operator: "Mostre a figura grande e espere até 5 segundos. Vale palavra aproximada ou som do objeto quando o critério disser.",
+    consult: "Conferir vocabulário, combinação de palavras, pronomes, inteligibilidade e história de audição." },
+  memoria: { name: "Caverna da Espera", emoji: "🔦", toddlerDomain: "atencao", domain: TODDLER_DOMAIN_LABELS.atencao, tagline: "Olhar, esperar o sinal e ficar paradinho.", badge: "Mestre da Espera",
+    operator: "Movimento e pouca espera são esperados nessa idade: marque só o que o critério pede. A observação do nível de atividade vale pelo jogo inteiro.",
+    consult: "Conferir atenção, espera e atividade em casa e na escola, sono e rotina; agitação isolada nessa idade não define quadro." },
+  corpo: { name: "Casinha do Faz de Conta", emoji: "🏠", toddlerDomain: "brincar_simbolico", domain: TODDLER_DOMAIN_LABELS.brincar_simbolico, tagline: "Brincar de mentirinha.", badge: "Rei do Faz de Conta",
+    operator: "Brinque junto, com as figuras da tela e as mãos. Se quiser, use um brinquedo comum da sala (opcional).",
+    consult: "Conferir brincar funcional e simbólico, sequências de faz de conta e uso de um objeto como outro." },
+};
+
+export function phaseById(id: PhaseId, years?: number): Phase {
   const phase = PHASES.find((entry) => entry.id === id);
   if (!phase) throw new Error(`Mundo desconhecido: ${id}`);
+  if (years !== undefined && isToddlerYears(years)) {
+    const { toddlerDomain: _domain, ...text } = TODDLER_PHASE_TEXT[id];
+    return { ...phase, ...text, source: TODDLER_SOURCE, origins: ["sonda10", "obs10", "visual", "cognitivo"] };
+  }
   return phase;
 }
 
@@ -579,7 +626,28 @@ export interface OriginSummary {
   refs: string[];
 }
 
+/** Resultado por domínio nas baterias de 2–3 anos (vazio nas demais idades). */
+export interface DomainSummary {
+  domain: ToddlerDomain;
+  label: string;
+  hits: number;
+  total: number;
+  registered: number;
+  caregiverItems: number;
+  level: Level | null;
+}
+
+/** Sinal de alerta (estilo M-CHAT): item marcado não cumprido. Descreve e encaminha; não diagnostica. */
+export interface RedFlag {
+  itemId: string;
+  phaseId: PhaseId;
+  text: string;
+  informant: "cuidador" | "observado";
+}
+
 export interface GameSummary {
+  domains: DomainSummary[];
+  redFlags: RedFlag[];
   band: AgeBand;
   character: Character;
   phases: PhaseSummary[];
@@ -604,7 +672,7 @@ export function summarize(session: GameSession): GameSummary {
     && session.answers.length === expected.length
     && expected.every(({ item, phaseId }) => session.answers.filter((answer) => answer.itemId === item.id && answer.phaseId === phaseId).length === 1);
   const phases: PhaseSummary[] = PHASE_ORDER.map((phaseId) => {
-    const phase = phaseById(phaseId);
+    const phase = phaseById(phaseId, band.min);
     const answers = session.answers.filter((answer) => answer.phaseId === phaseId);
     const total = itemsFor(band.id, phaseId).length;
     const count = (status: AnswerStatus) => answers.filter((answer) => answer.status === status).length;
@@ -629,7 +697,25 @@ export function summarize(session: GameSession): GameSummary {
   const hits = phases.reduce((sum, phase) => sum + phase.hits, 0);
   const total = phases.reduce((sum, phase) => sum + phase.total, 0);
   const durationSeconds = session.answers.reduce((sum, answer) => sum + answer.seconds, 0);
+  const itemOf = (answer: AnswerRecord) => expected.find(({ item, phaseId }) => item.id === answer.itemId && phaseId === answer.phaseId)?.item;
+  const domains: DomainSummary[] = isToddlerYears(band.min) ? TODDLER_DOMAIN_ORDER.map((domain) => {
+    const planned = expected.filter(({ item }) => item.domain === domain);
+    const answered = session.answers.filter((answer) => itemOf(answer)?.domain === domain);
+    const domainHits = answered.filter((answer) => answer.status === "acerto").length;
+    return {
+      domain, label: TODDLER_DOMAIN_LABELS[domain], hits: domainHits, total: planned.length, registered: answered.length,
+      caregiverItems: planned.filter(({ item }) => item.informant === "cuidador").length, level: complete && planned.length > 0 ? phaseLevel(domainHits, planned.length) : null,
+    };
+  }).filter((entry) => entry.total > 0) : [];
+  const redFlags: RedFlag[] = [];
+  for (const answer of session.answers) {
+    const item = itemOf(answer);
+    if (item?.redFlag && (answer.status === "erro" || answer.status === "sem_resposta")) {
+      redFlags.push({ itemId: answer.itemId, phaseId: answer.phaseId, text: item.redFlag, informant: item.informant === "cuidador" ? "cuidador" : "observado" });
+    }
+  }
   return {
+    domains, redFlags,
     band, character, phases, origins, hits, total, level: complete ? overallLevel(hits, total) : null, durationSeconds: Math.round(durationSeconds), complete,
     expectedMin: levelCuts(total, "total").esperado,
   };
@@ -867,16 +953,19 @@ export function buildGameBrief(session: GameSession, date = sessionDate(session)
   const day = formatClinicalDate(date);
   const observations = cleanObservations(session.observations ?? "");
   const obsText = observations ? ` Observações da aplicadora: ${sentence(observations)}` : "";
+  const flagText = summary.redFlags.length ? ` ${RED_FLAG_LABEL}: ${summary.redFlags.map((flag) => flag.text).join("; ")}.` : "";
   if (!reading || summary.level === null) {
     return `Registro lúdico de pré-consulta (${SUPER_NEUROPAD_TITLE}, ${summary.band.label}) em ${day}: partida incompleta, ${session.answers.length} de ${summary.total} itens registrados. Sem classificação ou interpretação.`
       + ` Por mundo: ${summary.phases.map((phase) => `${phase.phase.name} ${phaseStatusText(phase, false)}`).join(", ")}.${skippedText(summary)} `
       + session.answers.map((answer) => `${answer.prompt}: ${answer.given} (${STATUS_LABELS[answer.status].toLowerCase()}; ${answer.seconds} s).`).join(" ")
-      + obsText;
+      + flagText + obsText;
   }
   const parts: string[] = [
     `Avaliação lúdica de pré-consulta (${SUPER_NEUROPAD_TITLE}, ${summary.band.label}) aplicada em ${day}: ${summary.hits} de ${summary.total} acertos, ${LEVEL_LABELS[summary.level].toLowerCase()}.`,
     `Por mundo: ${summary.phases.map((phase) => `${phase.phase.name} ${phase.hits}/${phase.total}`).join(", ")}.`,
   ];
+  if (summary.domains.length) parts.push(`Por domínio: ${summary.domains.map((entry) => `${entry.label} ${entry.hits}/${entry.total}`).join(", ")}.`);
+  if (flagText) parts.push(flagText.trim());
   if (reading.missed.length > 0) {
     parts.push(`Itens perdidos: ${reading.missed.map((answer) => `${answer.prompt} (${STATUS_LABELS[answer.status].toLowerCase()})`).join("; ")}.`);
   }
@@ -884,6 +973,22 @@ export function buildGameBrief(session: GameSession, date = sessionDate(session)
   if (observations) parts.push(`Observações da aplicadora: ${sentence(observations)}`);
   parts.push("Contagem autoral, não normativa; a leitura e a conclusão são do médico.");
   return parts.join(" ");
+}
+
+// ─────────────────────────────── baterias de 2–3 anos: domínios e sinais de alerta ───────────────────────────────
+/** Linhas por domínio + sinais de alerta (só 2–3 anos). Sem diagnóstico: descreve e encaminha. */
+export function toddlerReportLines(summary: GameSummary): string[] {
+  if (summary.domains.length === 0) return [];
+  const lines = [
+    "RESULTADO POR DOMÍNIO (BATERIA 2–3 ANOS; CRITÉRIOS SÃO PISO AUTORAL, NÃO NORMA)",
+    ...summary.domains.map((entry) => `- ${entry.label}: ${entry.level === null ? `${entry.registered} de ${entry.total} registrados, ${entry.hits} cumpre` : `${entry.hits}/${entry.total} cumpre · ${LEVEL_LABELS[entry.level]}`}${entry.caregiverItems ? ` · ${entry.caregiverItems} item(ns) por relato do cuidador` : ""}`),
+    "",
+    "SINAIS DE ALERTA (ESTILO M-CHAT; NÃO É DIAGNÓSTICO)",
+  ];
+  if (summary.redFlags.length === 0) lines.push("Nenhum sinal de alerta nos itens registrados.");
+  else lines.push(...summary.redFlags.map((flag) => `- ${RED_FLAG_LABEL}: ${flag.text}${flag.informant === "cuidador" ? " [relato do cuidador]" : " [observado]"}`));
+  lines.push("");
+  return lines;
 }
 
 // ─────────────────────────────── bloco estruturado (leitura por IA) ───────────────────────────────
@@ -906,7 +1011,7 @@ export function buildStructuredLines(session: GameSession, date = sessionDate(se
     esperado_minimo_total: summary.expectedMin, nivel_total: summary.level, duracao_tarefas_s: summary.durationSeconds,
     duracao_sessao_s: wall, tempo_estimado_s: estimateBandSeconds(summary.band.min).totalSeconds,
     pausas: session.pauseCount ?? 0, tempo_em_pausa_s: Math.round(session.pausedSeconds ?? 0), desfeitos: session.undoCount ?? 0,
-    mundos_nao_aplicados: (session.skipped ?? []).map((entry) => ({ mundo: phaseById(entry.phaseId).name, motivo: entry.reason })),
+    mundos_nao_aplicados: (session.skipped ?? []).map((entry) => ({ mundo: phaseById(entry.phaseId, summary.band.min).name, motivo: entry.reason })),
   })}`);
   for (const phase of summary.phases) {
     lines.push(`DOMINIO ${json({
@@ -916,15 +1021,19 @@ export function buildStructuredLines(session: GameSession, date = sessionDate(se
     })}`);
   }
   for (const origin of summary.origins) {
-    lines.push(`ORIGEM ${json({ instrumento: origin.label, itens_previstos: origin.planned, registrados: origin.applied, acertos: origin.hits, mundos: origin.phases.map((id) => phaseById(id).name) })}`);
+    lines.push(`ORIGEM ${json({ instrumento: origin.label, itens_previstos: origin.planned, registrados: origin.applied, acertos: origin.hits, mundos: origin.phases.map((id) => phaseById(id, summary.band.min).name) })}`);
   }
   for (const answer of session.answers) {
     lines.push(`ITEM ${json({
-      id: answer.itemId, mundo: phaseById(answer.phaseId).name, origem: ORIGIN_LABELS[answer.origin], referencia: answer.ref, tipo: answer.kind,
+      id: answer.itemId, mundo: phaseById(answer.phaseId, summary.band.min).name, origem: ORIGIN_LABELS[answer.origin], referencia: answer.ref, tipo: answer.kind,
       pergunta: answer.prompt, esperado: answer.expected, resposta: answer.given, resultado: answer.status, tempo_s: answer.seconds,
       repeticoes: answer.repeated ? 1 : 0, via: answer.via ?? "padrao",
     })}`);
   }
+  for (const entry of summary.domains) {
+    lines.push(`DOMINIO_2_3 ${json({ dominio: entry.label, itens: entry.total, registrados: entry.registered, cumpre: entry.hits, itens_relato_cuidador: entry.caregiverItems, nivel: entry.level })}`);
+  }
+  for (const flag of summary.redFlags) lines.push(`ALERTA ${json({ id: flag.itemId, texto: flag.text, fonte: flag.informant, conduta: RED_FLAG_LABEL })}`);
   lines.push(`OBSERVACOES ${json({ texto: cleanObservations(session.observations ?? "") || null })}`);
   return lines;
 }
@@ -941,12 +1050,13 @@ export function buildGameReport(session: GameSession, date = sessionDate(session
     `Data e hora (local): ${formatClinicalDateTime(date)} · Tempo somado nas tarefas: ${formatDuration(summary.durationSeconds)}${wall !== null ? ` · Duração da sessão: ${formatDuration(wall)}` : ""} · ${session.pauseCount ?? 0} pausa(s) · ${summary.complete ? "Jogo completo" : "Jogo incompleto"}`,
     "",
     "O QUE FOI TESTADO POR INSTRUMENTO DE ORIGEM",
-    ...summary.origins.map((origin) => `- ${origin.label}: ${origin.planned} item(ns) nos mundos ${origin.phases.map((id) => phaseById(id).name).join(", ")} · registrados ${origin.applied}, acertos ${origin.hits}`),
+    ...summary.origins.map((origin) => `- ${origin.label}: ${origin.planned} item(ns) nos mundos ${origin.phases.map((id) => phaseById(id, summary.band.min).name).join(", ")} · registrados ${origin.applied}, acertos ${origin.hits}`),
     "",
     "RESULTADO OBJETIVO — CONTAGEM DE ACERTOS (NÃO É ESCORE NORMATIVO, PERCENTIL NEM DIAGNÓSTICO)",
     summary.level === null ? `Partida incompleta: ${session.answers.length} de ${summary.total} itens registrados. Sem classificação ou interpretação.` : `Total: ${summary.hits} de ${summary.total} acertos (esperado para a idade: ${summary.expectedMin} ou mais) · ${LEVEL_LABELS[summary.level]}`,
     ...summary.phases.map((phase) => `Mundo ${phase.phase.order} · ${phase.phase.name} (${phase.phase.domain}): ${phase.level === null ? phaseStatusText(phase, false) : `${phase.hits}/${phase.total} acertos (esperado: ${phase.expectedMin} ou mais), ${phase.errors} erros, ${phase.noResponse} sem resposta, ${phase.refused} recusa(s) · ${LEVEL_LABELS[phase.level]} · ${formatDuration(phase.seconds)}`}`),
     "",
+    ...toddlerReportLines(summary),
     ...(reading ? ["LEITURA PARA A CONSULTA (DESCRITIVA, AUTORAL, NÃO NORMATIVA)", ...reading.notes.map((note) => `- ${note}`), ""] : []),
     "OBSERVAÇÕES DA APLICADORA",
     observations || "Sem observações registradas.",
@@ -1003,12 +1113,14 @@ export function buildPatientRecordItems(session: GameSession): Array<{ question:
         `${session.pauseCount ?? 0} pausa(s) · ${session.undoCount ?? 0} desfeito(s)`,
       ].join(" · "),
     },
+    ...(summary.domains.length ? [{ question: "Resultado por domínio (2–3 anos)", answer: summary.domains.map((entry) => `${entry.label}: ${entry.hits}/${entry.total} cumpre`).join(" · ") }] : []),
+    ...(summary.redFlags.length ? [{ question: RED_FLAG_LABEL, answer: summary.redFlags.map((flag) => flag.text).join(" · ") }] : []),
     { question: "O que foi testado por instrumento", answer: summary.origins.map((origin) => `${origin.label}: ${origin.applied}/${origin.planned} itens registrados, ${origin.hits} acertos`).join(" · ") },
     ...summary.phases.filter((phase) => phase.skipReason).map((phase) => ({ question: `Mundo ${phase.phase.order} · ${phase.phase.name}`, answer: `Não aplicado — ${phase.skipReason}` })),
     ...(observations ? [{ question: "Observações da aplicadora", answer: observations }] : []),
   ];
   for (const answer of session.answers) {
-    const phase = phaseById(answer.phaseId);
+    const phase = phaseById(answer.phaseId, summary.band.min);
     rows.push({
       question: `Mundo ${phase.order} · ${phase.name} · ${ORIGIN_LABELS[answer.origin]} · ${answer.prompt}`,
       answer: `${STATUS_LABELS[answer.status]} · registrado: ${answer.given} · esperado: ${answer.expected} · ${answer.seconds} s${answer.repeated ? " · comando repetido 1x" : ""}${answer.via === "gesto" ? " · por gesto/apontar" : ""}`,

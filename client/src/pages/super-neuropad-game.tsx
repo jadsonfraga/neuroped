@@ -55,6 +55,8 @@ import {
   itemsFor,
   judgeShortcut,
   phaseById,
+  sessionLimitSeconds,
+  RED_FLAG_LABEL,
   phaseStatusText,
   recordBuild,
   recordJudged,
@@ -197,10 +199,11 @@ function CharacterCard({ character, selected, onPick }: { character: Character; 
   );
 }
 
-function PhaseTrail({ current, done, character }: { current: number; done: boolean[]; character: Character }) {
+function PhaseTrail({ current, done, character, years }: { current: number; done: boolean[]; character: Character; years?: number }) {
+  const phases = PHASE_ORDER.map((id) => phaseById(id, years));
   return (
     <ol className="flex flex-wrap items-center gap-1.5" aria-label={`Trilha dos mundos: ${done.filter(Boolean).length} de ${PHASES.length} concluídos`}>
-      {PHASES.map((phase, index) => {
+      {phases.map((phase, index) => {
         const isDone = done[index];
         const isNow = index === current;
         return (
@@ -220,8 +223,8 @@ function PhaseTrail({ current, done, character }: { current: number; done: boole
   );
 }
 
-function Hud({ character, answered, total, phaseIndex, done, musicOn, paused, canPause, canUndo, canFinish, onToggleMusic, onUndo, onPause, onFinish, onRestart }: {
-  character: Character; answered: number; total: number; phaseIndex: number; done: boolean[]; musicOn: boolean; paused: boolean; canPause: boolean; canUndo: boolean; canFinish: boolean;
+function Hud({ years, character, answered, total, phaseIndex, done, musicOn, paused, canPause, canUndo, canFinish, onToggleMusic, onUndo, onPause, onFinish, onRestart }: {
+  years?: number; character: Character; answered: number; total: number; phaseIndex: number; done: boolean[]; musicOn: boolean; paused: boolean; canPause: boolean; canUndo: boolean; canFinish: boolean;
   onToggleMusic: () => void; onUndo: () => void; onPause: () => void; onFinish: () => void; onRestart: () => void;
 }) {
   return (
@@ -234,7 +237,7 @@ function Hud({ character, answered, total, phaseIndex, done, musicOn, paused, ca
             <div className="text-[11px] font-bold opacity-80">Mundo {phaseIndex + 1} · <span aria-live="polite">{answered * XP_PER_ITEM} XP</span> · 🪙 {answered}</div>
           </div>
         </div>
-        <PhaseTrail current={phaseIndex} done={done} character={character} />
+        <PhaseTrail current={phaseIndex} done={done} character={character} years={years} />
         <div className="flex flex-wrap items-center gap-1.5">
           <ArcadeButton tone={musicOn ? "sky" : "paper"} className="px-3 py-1.5 text-xs" aria-pressed={musicOn} onClick={onToggleMusic} aria-label={musicOn ? "Música ligada" : "Música desligada"}>
             {musicOn ? <Music2 className="h-4 w-4" /> : <Music className="h-4 w-4" />} Música
@@ -256,7 +259,7 @@ function Hud({ character, answered, total, phaseIndex, done, musicOn, paused, ca
         </div>
       </div>
       <XpBar answered={answered} total={total} />
-      <BadgeShelf done={done} />
+      <BadgeShelf done={done} years={years} />
     </div>
   );
 }
@@ -296,8 +299,8 @@ function SpeechBubble({ character, text }: { character: Character; text: string 
   );
 }
 
-function BadgeShelf({ done }: { done: boolean[] }) {
-  const earned = PHASES.filter((_, index) => done[index]);
+function BadgeShelf({ done, years }: { done: boolean[]; years?: number }) {
+  const earned = PHASE_ORDER.map((id) => phaseById(id, years)).filter((_, index) => done[index]);
   if (earned.length === 0) return null;
   return (
     <ul className="flex flex-wrap gap-1.5" aria-label={`Conquistas: ${earned.length} de ${PHASES.length}`}>
@@ -442,10 +445,12 @@ function JudgeStage({ item, onJudge }: { item: JudgedItem; onJudge: (status: Ans
       <div className="snp-panel snp-panel--soft p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="snp-pixel text-[11px] opacity-80">Aplicadora · {KIND_LABELS[item.kind]} · {ORIGIN_LABELS[item.origin]}</div>
+          {item.informant === "cuidador" && <span className="snp-chip bg-[var(--snp-sun-tint)]" data-testid="super-neuropad-caregiver">Relato do cuidador</span>}
           <TurnCue who="aplicadora" />
         </div>
         <p className="mt-1 text-lg font-black leading-snug">{item.prompt}</p>
         <p className="mt-2 text-sm"><span className="font-black">Conta como acerto:</span> {item.expected}</p>
+        {item.redFlag && <p className="mt-1 text-xs font-bold opacity-80">Se não cumprir: {RED_FLAG_LABEL.toLowerCase()} ({item.redFlag}).</p>}
         {item.gesture && <p className="mt-1 text-sm"><span className="font-black">Alternativa aceita:</span> {item.gesture}</p>}
         <div className={`mt-4 grid gap-3 ${item.gesture ? "sm:grid-cols-5" : "sm:grid-cols-4"}`}>
           <ArcadeButton tone="grass" className="min-h-14 text-base" aria-keyshortcuts="1" onClick={(event) => onJudge("acerto", event)}>
@@ -575,7 +580,7 @@ export default function SuperNeuroPadGamePage() {
 
   const band = ageYears === null ? undefined : bandForYears(ageYears);
   const phaseId = PHASE_ORDER[phaseIndex];
-  const phase = phaseById(phaseId);
+  const phase = phaseById(phaseId, ageYears ?? undefined);
   const items = band ? itemsFor(band.id, phaseId) : [];
   const item = items[itemIndex];
   const done = PHASE_ORDER.map((id) => band ? answers.filter((answer) => answer.phaseId === id).length >= itemsFor(band.id, id).length : false);
@@ -946,8 +951,8 @@ export default function SuperNeuroPadGamePage() {
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <span className="snp-chip">pré-consulta · aplicadora com a criança · {MIN_AGE_YEARS}–{MAX_AGE_YEARS} anos</span>
                 <span className="snp-chip">v{SUPER_NEUROPAD_VERSION}</span>
-                <span className="snp-chip">{PHASES.length} mundos · 4–5 desafios cada</span>
-                <span className="snp-chip">até 20 min</span>
+                <span className="snp-chip">{PHASES.length} mundos · 3–6 desafios cada</span>
+                <span className="snp-chip">até 20 min (12 min aos 2 anos, 15 min aos 3)</span>
                 <span className="snp-chip">sem câmera · sem material externo</span>
               </div>
             )}
@@ -1000,8 +1005,8 @@ export default function SuperNeuroPadGamePage() {
               <div className="mt-3 flex flex-wrap items-center gap-2 text-sm" data-testid="super-neuropad-estimate">
                 <span className="text-xl" aria-hidden="true">{band.icon}</span>
                 <span className="snp-pixel text-xs">{band.label}</span>
-                <span className="font-bold opacity-70">· {totalItems} desafios em {PHASES.length} mundos · cerca de {Math.ceil(estimate.minutes)} minutos (máximo 20)</span>
-                {band.min <= 3 && <span className="snp-chip bg-[var(--snp-sun-tint)]">2–3 anos: menos desafios, respostas por gesto aceitas, pausa rápida à vontade</span>}
+                <span className="font-bold opacity-70">· {totalItems} desafios em {PHASES.length} mundos · cerca de {Math.ceil(estimate.minutes)} minutos (máximo {Math.round(sessionLimitSeconds(band.min) / 60)})</span>
+                {band.min <= 3 && <span className="snp-chip bg-[var(--snp-sun-tint)]">Bateria dedicada de 2–3 anos: um domínio por mundo, itens de relato do cuidador, respostas por gesto aceitas, pausa rápida à vontade</span>}
               </div>
             )}
           </div>
@@ -1121,6 +1126,7 @@ export default function SuperNeuroPadGamePage() {
 
       {screen !== "setup" && screen !== "results" && character && (
         <Hud
+          years={ageYears ?? undefined}
           character={character}
           answered={answers.length}
           total={totalItems}
@@ -1234,7 +1240,7 @@ export default function SuperNeuroPadGamePage() {
           <p className="mt-1 text-base font-bold opacity-90">{character.name} {character.role} subiu para o nível {phaseIndex + 2}.</p>
           <div className="mt-4"><SpeechBubble character={character} text={HERO_LINES[character.id]?.done ?? "Conquista no bolso!"} /></div>
           <ArcadeButton tone="sun" className="mt-5 px-6 py-3 text-base" onClick={nextPhase}>
-            Próximo mundo: {phaseById(PHASE_ORDER[phaseIndex + 1]).emoji} {phaseById(PHASE_ORDER[phaseIndex + 1]).name}
+            Próximo mundo: {phaseById(PHASE_ORDER[phaseIndex + 1], ageYears ?? undefined).emoji} {phaseById(PHASE_ORDER[phaseIndex + 1], ageYears ?? undefined).name}
           </ArcadeButton>
         </section>
       )}
@@ -1245,7 +1251,7 @@ export default function SuperNeuroPadGamePage() {
             <div className="snp-bounce text-6xl" aria-hidden="true">{summary.complete ? "🏆" : "🚩"}</div>
             <h2 className="snp-pixel mt-2 text-2xl sm:text-3xl">{summary.complete ? "Aventura concluída!" : "Aventura encerrada antes do fim"}</h2>
             <p className="text-base font-bold">{summary.character.emoji} {summary.character.name} {summary.character.role} · {answers.length * XP_PER_ITEM} XP · {done.filter(Boolean).length} conquistas</p>
-            <div className="mt-3 flex justify-center"><BadgeShelf done={done} /></div>
+            <div className="mt-3 flex justify-center"><BadgeShelf done={done} years={summary.band.min} /></div>
             <p className="mt-3 text-xs font-black opacity-80">Aplicadora: vire a tela para você. O que vem abaixo é o registro objetivo.</p>
             <p className="mt-1 text-xs font-bold opacity-80" data-testid="super-neuropad-when">
               {formatClinicalDateTime(new Date(session.finishedAt ?? session.startedAt))} · {summary.band.label} (faixa anual)
@@ -1323,6 +1329,16 @@ export default function SuperNeuroPadGamePage() {
             )}
           </div>)}
 
+          {summary.domains.length > 0 && (
+            <div className={`snp-panel ${summary.redFlags.length ? "snp-panel--berry" : "snp-panel--soft"} p-4`} data-testid="super-neuropad-red-flags" role={summary.redFlags.length ? "alert" : undefined}>
+              <div className="snp-pixel text-xs">Sinais de alerta (estilo M-CHAT) · não é diagnóstico</div>
+              {summary.redFlags.length === 0
+                ? <p className="mt-1 text-sm font-semibold">Nenhum sinal de alerta nos itens registrados.</p>
+                : <ul className="mt-1 space-y-1 text-sm font-bold">{summary.redFlags.map((flag) => <li key={flag.itemId}>⚠️ {RED_FLAG_LABEL}: {flag.text}{flag.informant === "cuidador" ? " (relato do cuidador)" : ""}</li>)}</ul>}
+              <p className="mt-1 text-[11px] font-semibold opacity-80">Critérios da bateria de 2–3 anos são piso autoral, não norma.</p>
+            </div>
+          )}
+
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-testid="super-neuropad-domains">
             {summary.phases.map((entry) => (
               <div key={entry.phase.id} className={`snp-panel ${entry.level !== null ? LEVEL_PANEL[entry.level] : "snp-panel--soft"} p-4`}>
@@ -1344,7 +1360,7 @@ export default function SuperNeuroPadGamePage() {
               {summary.origins.map((origin) => (
                 <li key={origin.origin} className="rounded-xl border-2 border-[var(--snp-ink-40)] bg-[var(--snp-paper-fixed)] p-3">
                   <div className="font-black">{origin.label}</div>
-                  <div className="text-xs font-semibold opacity-80">{origin.planned} desafio(s) em {origin.phases.map((id) => phaseById(id).name).join(", ")} · registrados {origin.applied} · acertos {origin.hits}</div>
+                  <div className="text-xs font-semibold opacity-80">{origin.planned} desafio(s) em {origin.phases.map((id) => phaseById(id, summary.band.min).name).join(", ")} · registrados {origin.applied} · acertos {origin.hits}</div>
                 </li>
               ))}
             </ul>
@@ -1408,7 +1424,7 @@ export default function SuperNeuroPadGamePage() {
                 {reading.missed.map((answer) => (
                   <li key={answer.itemId} className="rounded-xl border-[3px] border-[var(--snp-ink-fixed)] bg-[var(--snp-paper-fixed)] p-3 text-sm text-[var(--snp-ink-fixed)]">
                     <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div className="font-bold">{phaseById(answer.phaseId).emoji} {answer.prompt}</div>
+                      <div className="font-bold">{phaseById(answer.phaseId, summary.band.min).emoji} {answer.prompt}</div>
                       <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-black ${STATUS_TONE[answer.status]}`}>{STATUS_LABELS[answer.status]}</span>
                     </div>
                     <div className="mt-1 text-xs"><span className="font-black">Esperado:</span> {answer.expected} · <span className="font-black">Registrado:</span> <span className={`snp-answer snp-answer--${ANSWER_TONE[answer.status]}`} data-answer-tone={ANSWER_TONE[answer.status]}>{answer.given}</span> · {answer.seconds} s{answer.repeated ? " · comando repetido 1x" : ""} · {ORIGIN_LABELS[answer.origin]}</div>
