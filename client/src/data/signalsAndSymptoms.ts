@@ -643,6 +643,17 @@ export const aprendizagemSignals: QueixaSignalMap[] = [
           { id: "aprendizagem-rendimento-discrepante", label: "Rendimento muito abaixo do potencial", description: "Esforça-se, mas desempenho não acompanha capacidade aparente." },
         ],
       },
+      {
+        id: "aprendizagem-ahsd",
+        label: "Altas Habilidades / Superdotação",
+        signals: [
+          { id: "aprendizagem-ahsd-suspeita", label: "Suspeita de altas habilidades / superdotação", description: "Família ou escola percebe capacidade, interesse ou desempenho muito acima da idade." },
+          { id: "aprendizagem-ahsd-aprende-rapido", label: "Aprende muito rápido, à frente da idade", description: "Aprende com poucas explicações e retém o que aprendeu." },
+          { id: "aprendizagem-ahsd-interesse-intenso", label: "Interesse intenso e conhecimento aprofundado", description: "Sabe muito sobre um tema e pesquisa por conta própria." },
+          { id: "aprendizagem-ahsd-assincronia", label: "Raciocínio avançado com assincronia emocional", description: "Pensa de forma avançada, mas a maturidade emocional ou motora não acompanha." },
+          { id: "aprendizagem-ahsd-dupla-excepcionalidade", label: "Possível dupla excepcionalidade", description: "Sinais de habilidade alta junto com desatenção, rigidez ou dificuldade específica." },
+        ],
+      },
     ],
   },
 ];

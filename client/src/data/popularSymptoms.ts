@@ -113,6 +113,8 @@ export const popularSymptomsByQueixa: Record<string, PopularSymptom[]> = {
     { id: "aprendizagem-esquece-licao", label: "Esquece o que estudou", emoji: "🧠" },
     { id: "aprendizagem-odeia-escola", label: "Não quer ir à escola", emoji: "🏫" },
     { id: "aprendizagem-letra-feia", label: "Letra muito ruim", emoji: "🖍️" },
+    { id: "aprendizagem-altas-habilidades", label: "Suspeita de altas habilidades / superdotação", emoji: "🌟" },
+    { id: "aprendizagem-aprende-muito-rapido", label: "Aprende muito rápido, à frente da idade", emoji: "🚀" },
   ],
   sono: [
     { id: "sono-custa-dormir", label: "Custa pegar no sono", emoji: "🌙" },

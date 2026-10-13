@@ -15,6 +15,7 @@ import { escalasIpnTea200 } from "./escalasIpnTea200";
 import { escalasIpnTdahFe200 } from "./escalasIpnTdahFe200";
 import { escalasIpnPcFun200 } from "./escalasIpnPcFun200";
 import { escalasIpnLfc200 } from "./escalasIpnLfc200";
+import { escalaAhsdPais } from "./escalasAhsdPais";
 import { escalasIpnEpiSeg200 } from "./escalasIpnEpiSeg200";
 import { authorialMonitoringCatalog } from "./authorialMonitoring";
 
@@ -164,4 +165,5 @@ export const escalasAplicaveisNexus2026: ScaleEntry[] = [
   ...escalasIpnPcFun200,
   ...escalasIpnLfc200,
   ...escalasIpnEpiSeg200,
+  escalaAhsdPais,
 ];

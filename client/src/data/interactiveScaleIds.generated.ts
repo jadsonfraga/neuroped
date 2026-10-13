@@ -2,6 +2,7 @@
 export const INTERACTIVE_SCALE_IDS = new Set([
   "ace",
   "afi12-sdg",
+  "ahsd-inventario-pais",
   "apgar",
   "aq10-adolescente",
   "ari",
@@ -277,6 +278,7 @@ export const INTERACTIVE_SCALE_IDS = new Set([
 export const INTERACTIVE_SCALE_ITEM_COUNTS: Readonly<Record<string, number>> = {
   "ace": 10,
   "afi12-sdg": 12,
+  "ahsd-inventario-pais": 66,
   "apgar": 5,
   "aq10-adolescente": 10,
   "ari": 6,

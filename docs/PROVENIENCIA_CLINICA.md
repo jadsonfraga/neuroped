@@ -3,10 +3,10 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 274
-- **Com fonte declarada:** 274 (100.0%)
+- **Total de instrumentos:** 275
+- **Com fonte declarada:** 275 (100.0%)
 - **Sem fonte declarada:** 0
-- **Aguardando validação psicométrica publicada:** 110 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
+- **Aguardando validação psicométrica publicada:** 111 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
 
 > As duas últimas linhas medem coisas diferentes e não se somam: um
 > instrumento pode ter fonte e ainda assim aguardar validação.
@@ -17,6 +17,7 @@
 | `ace` | ACE | Felitti VJ et al., 1998 (Adverse Childhood Experiences) | não | não |
 | `adapta-18-sdg` | ADAPTA-18 SDG | github:jadsonfraga/neuroped@b7adca686b8dba657b4b1317583f485cede7a0c8:client/src/data/interactiveScaleItemsAuthorial20260910.ts | não | sim |
 | `afi12-sdg` | AFI-12 SDG | Base documental autoral: 01_AFI12_Atencao_Freio_Impacto_NeuroPed_SDG.pdf; integridade sha256:f2123c61e7f03c52e20a24348b444f5c66293457c76b87756c0800435221b74d. Revisão clínica/editorial aprovada pelo autor em 2026-09-08; conteúdo clínico, domínios e pontuação preservados. | não | sim |
+| `ahsd-inventario-pais` | Inventário AH/SD · Pais | Dr. Jadson Fraga / NeuroPed (2026), adaptação familiar do Inventário Escolar de Altas Habilidades. Itens autorais inspirados na concepção dos três anéis de Renzulli e no modelo de Gagné. | não | sim |
 | `apgar` | APGAR | Apgar V, 1953 (APGAR Score) | não | não |
 | `aq10-adolescente` | AQ-10 Adolescente | Allison C, Auyeung B, Baron-Cohen S, 2012 (AQ-10) | não | não |
 | `ari` | ARI | Stringaris A, Goodman R, Ferdinando S, Razdan V, Muhrer E, Leibenluft E, Brotman MA, 2012 (Affective Reactivity Index) — J Child Psychol Psychiatry 53(11):1109-17. PMID 22574736 · doi:10.1111/j.1469-7610.2012.02561.x | não | não |
