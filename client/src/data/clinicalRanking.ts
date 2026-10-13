@@ -166,6 +166,11 @@ export const clinicalRanking: ClinicalTierRule[] = [
     ouro: "j26-004", prata: "testes-reconhecimento", bronze: "efdi",
     reason: "Cognição precoce 0–18m e tarefas de reconhecimento são a base da avaliação no lactente/toddler." },
 
+  // ======================= ALTAS HABILIDADES / AH-SD ====================
+  { queixa: "altas-habilidades", ageMin: 72, ageMax: 216,
+    ouro: "ahsd-inventario-pais", prata: "ahsd-tea-triagem",
+    reason: "Inventário familiar de observação das 10 áreas de altas habilidades (descritivo, sem ponto de corte); a triagem AH/SD × TEA apoia o diferencial clínico." },
+
   // ================================ MOTOR ===============================
   { queixa: "motor", ageMin: 48, ageMax: 144,
     ouro: "motricidade-teste", prata: "j26-108", bronze: "escrita-desenho",

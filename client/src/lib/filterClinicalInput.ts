@@ -86,6 +86,7 @@ export const COMPLAINT_SEARCH_TERMS: Readonly<Record<string, readonly string[]>>
   tea: ["autismo", "autista", "espectro autista", "mchat", "m-chat"],
   tdah: ["adhd", "atencao", "hiperatividade", "impulsividade", "desatencao", "desatento"],
   linguagem: ["fala", "comunicacao", "fonologia", "vocabulario", "fala pouco"],
+  "altas-habilidades": ["altas habilidades", "super inteligente", "superinteligente", "superdotado", "superdotada", "superdotacao", "ahsd", "ah/sd", "talentoso", "talentosa", "genio", "muito inteligente", "aprende muito rapido", "precoce", "dupla excepcionalidade"],
   aprendizagem: ["escola", "escolar", "leitura", "escrita", "dislexia", "matematica"],
   ansiedade: ["medo", "panico", "fobia", "preocupacao"],
   depressao: ["humor", "tristeza", "depressivo", "desanimo"],

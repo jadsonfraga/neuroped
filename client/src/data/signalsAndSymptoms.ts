@@ -766,6 +766,25 @@ export const allSignalsMap: Record<string, QueixaSignalMap[]> = {
   sensorial: sensorialSignals,
   funcionalidade: funcionalidadeSignals,
   social: [...teaSignals, ...teaExtendedSignals],
+  "altas-habilidades": [
+    {
+      queixaId: "altas-habilidades",
+      queixaLabel: "Altas habilidades / super inteligente",
+      ageRange: "6-18a",
+      ageMin: 72,
+      ageMax: 216,
+      clusters: [
+        {
+          id: "altas-habilidades-sinais",
+          label: "Altas Habilidades / Superdotação",
+          signals: [
+            { id: "altas-habilidades-super-inteligente", label: "Altas habilidades / super inteligente", description: "Família ou escola percebe capacidade, interesse ou desempenho muito acima da idade." },
+            ...(aprendizagemSignals[0].clusters.find((c) => c.id === "aprendizagem-ahsd")?.signals ?? []),
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 export function getSignalsForQueixaAndAge(queixaId: string, ageMonths: number): SymptomCluster[] {

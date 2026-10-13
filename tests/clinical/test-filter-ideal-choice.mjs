@@ -96,7 +96,11 @@ function plausibleAges(q) {
   );
 }
 
-const queixaIds = queixas.map((q) => q.id);
+// Queixas adicionadas depois da bateria original entram NO FIM e não entram no
+// sorteio de combinações, para que os 672 casos históricos fiquem idênticos
+// (mesma sequência do LCG) e a nova queixa ganhe casos próprios.
+const APPENDED_QUEIXAS = ["altas-habilidades"];
+const queixaIds = queixas.map((q) => q.id).filter((id) => !APPENDED_QUEIXAS.includes(id));
 const respondents = ["pais", "clinico", "professor", "autoaplicavel", null];
 // LCG deterministico: bateria reprodutivel, sem Math.random.
 let rngState = 42;
@@ -106,7 +110,7 @@ const pick = (arr) => arr[Math.floor(rng() * arr.length)];
 
 const cases = [];
 let caseNum = 0;
-for (const q of queixaIds) {
+for (const q of [...queixaIds, ...APPENDED_QUEIXAS.filter((id) => queixas.some((x) => x.id === id))]) {
   const ages = plausibleAges(q);
   if (!ages.length) continue;
   for (let k = 0; k < CASES_PER_QUEIXA; k++) {
