@@ -4,6 +4,7 @@
 // calibração por idade, adaptações para 2–3 anos, nada fora do aplicativo e
 // sessão estimada em até 20 minutos em todas as faixas.
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { COGNITIVE_BANK } from "../../client/src/features/cognitive-age/bank";
 import { OBJECTIVE_BANDS } from "../../client/src/components/jogo-facil/objectiveBank";
@@ -283,5 +284,16 @@ test("ampliação dos 8 a 17 anos: um desafio autoral a mais por mundo, declarad
   for (const years of [8, 9, 10, 11]) {
     const item = allItems(years).find((entry) => entry.kind === "toque" && /busca e contagem/.test(entry.ref)) as TouchItem;
     assert.equal(item.stimulus!.split(/\s+/).filter((figure) => figure === "🐶").length, Number(item.answer), `${years} anos: contagem confere com a fileira`);
+  }
+});
+
+test("documentação: a tabela de calibração por idade confere com o banco (itens e tempo estimado)", () => {
+  const doc = readFileSync("docs/SUPER_NEUROPAD_GAME.md", "utf8");
+  for (const years of YEARS) {
+    const row = doc.match(new RegExp(`^\\| ${years} anos \\| (\\d+) \\((\\d+)\\)[^\\n]*\\| ([\\d.]+) min \\|$`, "m"));
+    assert.ok(row, `${years} anos: linha na tabela do doc`);
+    assert.equal(Number(row[1]), bandItemCount(String(years)), `${years} anos: itens no doc`);
+    assert.equal(Number(row[2]), itemsPerPhase(years), `${years} anos: itens por mundo no doc`);
+    assert.equal(row[3], estimateBandSeconds(years).minutes.toFixed(1), `${years} anos: tempo no doc`);
   }
 });

@@ -6,6 +6,7 @@ import test from "node:test";
 import { buildGameDocSpec } from "../../client/src/features/super-neuropad/pdf";
 import {
   PHASE_ORDER,
+  RED_FLAG_INCOMPLETE_LABEL,
   RED_FLAG_LABEL,
   TODDLER_DOMAIN_ORDER,
   bandForYears,
@@ -136,4 +137,29 @@ test("relatório, resumo, prontuário, bloco estruturado e PDF mostram domínios
     const text = `${item.prompt} ${isJudged(item) ? item.expected : ""} ${item.redFlag ?? ""}`;
     assert.doesNotMatch(text, diagnostic, item.id);
   }
+});
+
+test("relato do cuidador sem resposta não vira alerta (não afirma o que não foi relatado); observado sem resposta continua alerta", () => {
+  for (const years of [2, 3]) {
+    const caregiverSilent = summarize(play(years, (item) => (item.informant === "cuidador" ? "sem_resposta" : "acerto")));
+    assert.deepEqual(caregiverSilent.redFlags, [], `${years} anos: cuidador que não respondeu não gera "perda de fala (relato)"`);
+    const caregiverYes = summarize(play(years, (item) => (item.informant === "cuidador" && item.redFlag ? "erro" : "acerto")));
+    assert.ok(caregiverYes.redFlags.length > 0 && caregiverYes.redFlags.every((flag) => flag.informant === "cuidador"), `${years} anos: relato do achado gera alerta`);
+    const observedSilent = summarize(play(years, (item) => (item.redFlag && item.informant !== "cuidador" ? "sem_resposta" : "acerto")));
+    assert.ok(observedSilent.redFlags.length > 0 && observedSilent.redFlags.every((flag) => flag.informant === "observado"), `${years} anos: sem reação observada é o próprio achado`);
+  }
+});
+
+test("partida incompleta: alerta registrado continua visível, mas sem conduta (sem classificar nem interpretar)", () => {
+  const full = play(2, (item) => (/perda de habilidades/.test(item.ref) ? "erro" : "acerto"));
+  const partial: GameSession = { ...full, answers: full.answers.slice(0, 3) };
+  const summary = summarize(partial);
+  assert.equal(summary.complete, false);
+  assert.equal(summary.redFlags.length, 1, "o relato de perda não some");
+  const outputs = [buildGameBrief(partial), buildGameReport(partial), JSON.stringify(buildPatientRecordItems(partial)), buildStructuredLines(partial).join("\n"), JSON.stringify(buildGameDocSpec(partial, ISSUER, "13/10/2026 09:00"))];
+  for (const output of outputs) {
+    assert.ok(output.includes(RED_FLAG_INCOMPLETE_LABEL), "achado presente como item a conferir");
+    assert.ok(!output.includes(RED_FLAG_LABEL) && !/encaminhar avalia/.test(output), "sem conduta em partida incompleta");
+  }
+  assert.ok(buildGameBrief(full).includes(RED_FLAG_LABEL), "partida completa mantém a conduta");
 });

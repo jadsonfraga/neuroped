@@ -49,6 +49,11 @@ import {
 } from "./items";
 
 export { RED_FLAG_LABEL, TODDLER_DOMAIN_LABELS, TODDLER_DOMAIN_ORDER };
+/**
+ * Rótulo dos alertas em partida incompleta: o achado registrado continua visível (esconder um relato de
+ * perda de habilidade seria inseguro), mas sem conduta, porque partida incompleta não classifica nem interpreta.
+ */
+export const RED_FLAG_INCOMPLETE_LABEL = "Item de alerta registrado (partida incompleta; conferir na consulta)";
 export type { ToddlerDomain };
 export { buildMatches, isJudged, itemExpected, KIND_LABELS, ORIGIN_LABELS, ORIGIN_ORDER, ORIGIN_ROUTES, MAX_AGE_YEARS, MIN_AGE_YEARS, PHASE_ORDER, YEARS, itemsPerPhase };
 export type { BuildItem, DoItem, Item, JudgedItem, Option, OriginId, PhaseId, ShapeId, SpeakItem, TouchItem };
@@ -710,7 +715,9 @@ export function summarize(session: GameSession): GameSummary {
   const redFlags: RedFlag[] = [];
   for (const answer of session.answers) {
     const item = itemOf(answer);
-    if (item?.redFlag && (answer.status === "erro" || answer.status === "sem_resposta")) {
+    // Relato do cuidador sem resposta não é relato do achado: fica como item perdido, não vira alerta.
+    const failed = answer.status === "erro" || (answer.status === "sem_resposta" && item?.informant !== "cuidador");
+    if (item?.redFlag && failed) {
       redFlags.push({ itemId: answer.itemId, phaseId: answer.phaseId, text: item.redFlag, informant: item.informant === "cuidador" ? "cuidador" : "observado" });
     }
   }
@@ -953,7 +960,7 @@ export function buildGameBrief(session: GameSession, date = sessionDate(session)
   const day = formatClinicalDate(date);
   const observations = cleanObservations(session.observations ?? "");
   const obsText = observations ? ` Observações da aplicadora: ${sentence(observations)}` : "";
-  const flagText = summary.redFlags.length ? ` ${RED_FLAG_LABEL}: ${summary.redFlags.map((flag) => flag.text).join("; ")}.` : "";
+  const flagText = summary.redFlags.length ? ` ${redFlagLabel(summary)}: ${summary.redFlags.map((flag) => flag.text).join("; ")}.` : "";
   if (!reading || summary.level === null) {
     return `Registro lúdico de pré-consulta (${SUPER_NEUROPAD_TITLE}, ${summary.band.label}) em ${day}: partida incompleta, ${session.answers.length} de ${summary.total} itens registrados. Sem classificação ou interpretação.`
       + ` Por mundo: ${summary.phases.map((phase) => `${phase.phase.name} ${phaseStatusText(phase, false)}`).join(", ")}.${skippedText(summary)} `
@@ -976,6 +983,11 @@ export function buildGameBrief(session: GameSession, date = sessionDate(session)
 }
 
 // ─────────────────────────────── baterias de 2–3 anos: domínios e sinais de alerta ───────────────────────────────
+/** Rótulo do alerta conforme a partida: com conduta só quando completa. */
+export function redFlagLabel(summary: Pick<GameSummary, "complete">): string {
+  return summary.complete ? RED_FLAG_LABEL : RED_FLAG_INCOMPLETE_LABEL;
+}
+
 /** Linhas por domínio + sinais de alerta (só 2–3 anos). Sem diagnóstico: descreve e encaminha. */
 export function toddlerReportLines(summary: GameSummary): string[] {
   if (summary.domains.length === 0) return [];
@@ -986,7 +998,7 @@ export function toddlerReportLines(summary: GameSummary): string[] {
     "SINAIS DE ALERTA (ESTILO M-CHAT; NÃO É DIAGNÓSTICO)",
   ];
   if (summary.redFlags.length === 0) lines.push("Nenhum sinal de alerta nos itens registrados.");
-  else lines.push(...summary.redFlags.map((flag) => `- ${RED_FLAG_LABEL}: ${flag.text}${flag.informant === "cuidador" ? " [relato do cuidador]" : " [observado]"}`));
+  else lines.push(...summary.redFlags.map((flag) => `- ${redFlagLabel(summary)}: ${flag.text}${flag.informant === "cuidador" ? " [relato do cuidador]" : " [observado]"}`));
   lines.push("");
   return lines;
 }
@@ -1033,7 +1045,7 @@ export function buildStructuredLines(session: GameSession, date = sessionDate(se
   for (const entry of summary.domains) {
     lines.push(`DOMINIO_2_3 ${json({ dominio: entry.label, itens: entry.total, registrados: entry.registered, cumpre: entry.hits, itens_relato_cuidador: entry.caregiverItems, nivel: entry.level })}`);
   }
-  for (const flag of summary.redFlags) lines.push(`ALERTA ${json({ id: flag.itemId, texto: flag.text, fonte: flag.informant, conduta: RED_FLAG_LABEL })}`);
+  for (const flag of summary.redFlags) lines.push(`ALERTA ${json({ id: flag.itemId, texto: flag.text, fonte: flag.informant, conduta: redFlagLabel(summary) })}`);
   lines.push(`OBSERVACOES ${json({ texto: cleanObservations(session.observations ?? "") || null })}`);
   return lines;
 }
@@ -1114,7 +1126,7 @@ export function buildPatientRecordItems(session: GameSession): Array<{ question:
       ].join(" · "),
     },
     ...(summary.domains.length ? [{ question: "Resultado por domínio (2–3 anos)", answer: summary.domains.map((entry) => `${entry.label}: ${entry.hits}/${entry.total} cumpre`).join(" · ") }] : []),
-    ...(summary.redFlags.length ? [{ question: RED_FLAG_LABEL, answer: summary.redFlags.map((flag) => flag.text).join(" · ") }] : []),
+    ...(summary.redFlags.length ? [{ question: redFlagLabel(summary), answer: summary.redFlags.map((flag) => flag.text).join(" · ") }] : []),
     { question: "O que foi testado por instrumento", answer: summary.origins.map((origin) => `${origin.label}: ${origin.applied}/${origin.planned} itens registrados, ${origin.hits} acertos`).join(" · ") },
     ...summary.phases.filter((phase) => phase.skipReason).map((phase) => ({ question: `Mundo ${phase.phase.order} · ${phase.phase.name}`, answer: `Não aplicado — ${phase.skipReason}` })),
     ...(observations ? [{ question: "Observações da aplicadora", answer: observations }] : []),
