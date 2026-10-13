@@ -11,6 +11,7 @@ export const AHSD_SIGNAL_LABELS = [
   "Interesse intenso e conhecimento aprofundado",
   "Raciocínio avançado com assincronia emocional",
   "Possível dupla excepcionalidade",
+  "Altas habilidades / super inteligente",
 ] as const;
 
 export const escalaAhsdPais: ScaleEntry = {
@@ -19,7 +20,7 @@ export const escalaAhsdPais: ScaleEntry = {
   fullName: "Inventário de Altas Habilidades/Superdotação — versão para pais",
   ageMin: 72,
   ageMax: 215,
-  queixas: ["aprendizagem"],
+  queixas: ["aprendizagem", "altas-habilidades"],
   respondente: ["pais"],
   prioridade: "triagem",
   tempo: "15–20 min",

@@ -184,6 +184,10 @@ export const popularSymptomsByQueixa: Record<string, PopularSymptom[]> = {
     { id: "dor-falta-escola", label: "Falta aula pela dor", emoji: "🏫" },
     { id: "dor-enjoo-luz", label: "Enjoo e sensível à luz", emoji: "💡" },
   ],
+  "altas-habilidades": [
+    { id: "altas-habilidades-super-inteligente", label: "Altas habilidades / super inteligente", emoji: "🌟" },
+    { id: "altas-habilidades-aprende-rapido", label: "Aprende muito rápido, à frente da idade", emoji: "🚀" },
+  ],
   cognicao: [
     { id: "cognicao-aprende-devagar", label: "Aprende devagar", emoji: "🐢" },
     { id: "cognicao-esquece", label: "Esquece o que acabou de ver", emoji: "🧠" },

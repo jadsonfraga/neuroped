@@ -145,6 +145,7 @@ export const QUEIXA_COOCORRENCIA: Record<string, string[]> = {
   autonomia: ["funcionalidade"],
   social: ["tea", "tdah", "ansiedade"],
   cognicao: ["aprendizagem", "atraso"],
+  "altas-habilidades": ["aprendizagem", "cognicao"],
   enurese: ["sono"],
   substancias: ["comportamento", "depressao"],
   neonatal: ["atraso", "motor"],
@@ -178,6 +179,7 @@ export const queixas: QueixaCategory[] = [
   { id: "sensorial", label: "Sensorial / Integração", icon: "hand", color: "from-amber-500 to-yellow-500", bgLight: "bg-amber-50 dark:bg-amber-950/30", iconColor: "text-amber-600 dark:text-amber-400", emoji: "👋", appRoute: "/generic-scale/sensorial", parentHint: "Incomoda com som, textura ou luz"},
   { id: "social", label: "Social / Relações", icon: "users", color: "from-blue-500 to-indigo-500", bgLight: "bg-blue-50 dark:bg-blue-950/30", iconColor: "text-blue-600 dark:text-blue-400", emoji: "🤝", appRoute: "/generic-scale/social", parentHint: "Custa fazer amigos e conviver"},
   { id: "autonomia", label: "Autonomia / AVDs", icon: "home", color: "from-cyan-500 to-sky-500", bgLight: "bg-cyan-50 dark:bg-cyan-950/30", iconColor: "text-cyan-600 dark:text-sky-400", emoji: "🏠", appRoute: "/generic-scale/autonomia", parentHint: "Custa se vestir, comer, se cuidar sozinho"},
+  { id: "altas-habilidades", label: "Altas habilidades / super inteligente", icon: "sparkles", color: "from-amber-400 to-yellow-500", bgLight: "bg-amber-50 dark:bg-amber-950/30", iconColor: "text-amber-600 dark:text-amber-400", emoji: "🌟", appRoute: "/generic-scale/altas-habilidades", parentHint: "Aprende muito rápido, sabe muito, à frente da idade"},
   { id: "evolucao", label: "Reavaliação / Evolução", icon: "trending-up", color: "from-emerald-500 to-green-600", bgLight: "bg-emerald-50 dark:bg-emerald-950/30", iconColor: "text-emerald-600 dark:text-emerald-400", emoji: "📈", appRoute: "/generic-scale/evolucao", parentHint: "Reavaliar após início do tratamento"},
   { id: "substancias", label: "Uso de Substâncias", icon: "wine", color: "from-rose-500 to-pink-600", bgLight: "bg-rose-50 dark:bg-rose-950/30", iconColor: "text-rose-600 dark:text-rose-400", emoji: "🍷", appRoute: "/generic-scale/substancias", parentHint: "Uso de álcool ou drogas"},
 ];

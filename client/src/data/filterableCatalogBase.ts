@@ -99,7 +99,7 @@ export const supplementalFilterableInstruments: ScaleEntry[] = [
     fullName: "Altas habilidades/superdotação com diferencial para perfil autista",
     ageMin: 72,
     ageMax: 216,
-    queixas: ["cognicao", "tea", "social", "aprendizagem"],
+    queixas: ["cognicao", "tea", "social", "aprendizagem", "altas-habilidades"],
     respondente: ["clinico"],
     prioridade: "triagem",
     tempo: "10–20 min",
