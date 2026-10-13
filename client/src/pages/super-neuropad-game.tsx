@@ -339,7 +339,7 @@ function TouchStage({ item, seed, paused, onAnswer }: { item: TouchItem; seed: n
     return (
       <div className="flex flex-col items-center gap-6 py-6">
         <p className="snp-pixel text-center text-sm opacity-80">Olhe bem para as figuras…</p>
-        <div className="snp-float text-7xl sm:text-8xl" aria-label={`Figuras mostradas: ${item.preview}`}>{item.preview}</div>
+        <div className={`snp-float ${item.sequence ? "whitespace-nowrap text-3xl tracking-tight sm:text-6xl" : "text-7xl sm:text-8xl"}`} aria-label={`Figuras mostradas: ${item.preview}`}>{item.preview}</div>
         <div className="snp-pixel flex h-14 w-14 items-center justify-center rounded-full border-[4px] border-[var(--snp-ink-fixed)] bg-[var(--snp-sun)] text-2xl text-[var(--snp-ink-fixed)]" role="timer" aria-label={`Esconde em ${left} segundos`}>{left}</div>
         <ArcadeButton tone="sky" className="px-6 py-3 text-base" onClick={() => { softTap(); setRevealed(true); }}>
           <Check className="h-5 w-5" /> Já olhou · esconder
@@ -358,13 +358,13 @@ function TouchStage({ item, seed, paused, onAnswer }: { item: TouchItem; seed: n
       <p className="text-center text-2xl font-black leading-snug sm:text-3xl">{item.context ? item.prompt.replace(`Leia: “${item.context}” Depois: `, "") : item.prompt}</p>
       {item.stimulusVr && <div className="flex justify-center" aria-label="Modelo"><span className="rounded-2xl border-[3px] border-[var(--snp-ink-fixed)] bg-white p-2"><VrFigure id={item.stimulusVr} /></span></div>}
       {item.stimulus && <p className={`mx-auto max-w-3xl whitespace-pre-line break-words text-center font-black leading-snug ${item.stimulus.length > 40 ? "text-lg sm:text-xl" : "text-4xl sm:text-5xl"}`} aria-label={`Estímulo: ${item.stimulus}`}>{item.stimulus}</p>}
-      <div className={`grid gap-4 ${options.length <= 2 ? "grid-cols-2" : options.length === 3 ? "grid-cols-3" : "grid-cols-2 sm:grid-cols-4"}`} role="group" aria-label="Opções">
+      <div className={`grid gap-4 ${item.sequence ? "grid-cols-1 sm:grid-cols-2" : options.length <= 2 ? "grid-cols-2" : options.length === 3 ? "grid-cols-3" : "grid-cols-2 sm:grid-cols-4"}`} role="group" aria-label="Opções">
         {options.map((option, index) => (
           <button
             key={`${option.label}-${index}`}
             type="button"
             onClick={(event) => onAnswer(option, event)}
-            className={`snp-option flex min-h-32 items-center justify-center p-3 text-center font-black ${option.vr ? "bg-white" : OPTION_TINTS[index % OPTION_TINTS.length]} ${item.big ? (option.size === "lg" ? "text-8xl" : option.size === "sm" ? "text-4xl" : "text-6xl") : "text-xl sm:text-2xl"}`}
+            className={`snp-option flex min-h-32 items-center justify-center p-3 text-center font-black ${option.vr ? "bg-white" : OPTION_TINTS[index % OPTION_TINTS.length]} ${item.sequence ? "whitespace-nowrap text-2xl tracking-tight sm:text-4xl" : item.big ? (option.size === "lg" ? "text-8xl" : option.size === "sm" ? "text-4xl" : "text-6xl") : "text-xl sm:text-2xl"}`}
             aria-label={option.vr ? `Opção ${index + 1}` : option.label}
           >
             {option.vr ? <VrFigure id={option.vr} /> : <span aria-hidden="true">{option.art}</span>}

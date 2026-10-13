@@ -62,6 +62,8 @@ export interface TouchItem extends ItemMeta {
   /** Estímulo mostrado antes das opções e escondido depois (memória visual). */
   preview?: string;
   big?: boolean;
+  /** A ordem é o que se avalia (sequência de figuras): exposição e opções ficam numa linha só, sem quebra. */
+  sequence?: boolean;
 }
 
 /** A aplicadora faz a pergunta e confere a resposta falada contra o critério. */

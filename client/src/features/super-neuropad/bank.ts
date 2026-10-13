@@ -204,7 +204,7 @@ function fala(origin: OriginId, ref: string, prompt: string, expected: string, e
 function fazer(origin: OriginId, ref: string, prompt: string, expected: string, extra: Partial<Pick<DoItem, "stimulus" | "shape" | "draw" | "gesture" | "seconds">> = {}): Draft<DoItem> {
   return { kind: "fazer", prompt, expected, origin, ref, ...extra };
 }
-function toque(origin: OriginId, ref: string, prompt: string, options: Option[], answer: string, extra: Partial<Pick<TouchItem, "stimulus" | "preview" | "big" | "seconds">> = {}): Draft<TouchItem> {
+function toque(origin: OriginId, ref: string, prompt: string, options: Option[], answer: string, extra: Partial<Pick<TouchItem, "stimulus" | "preview" | "big" | "seconds" | "sequence">> = {}): Draft<TouchItem> {
   if (!options.some((entry) => entry.label === answer)) throw new Error(`Resposta fora das opções: ${prompt}`);
   return { kind: "toque", prompt, options, answer, origin, ref, ...extra };
 }
@@ -688,7 +688,7 @@ function olhosExtra(years: number): Draft<Item> {
     entry.join("") !== sequence.join("") && list.findIndex((other) => other.join("") === entry.join("")) === index);
   const options = [sequence, ...wrong.slice(0, 3)].map((entry) => opt(entry.join(" ")));
   return toque("cognitivo", EXT(`Cognitivos ${years} anos`, "memória visual sequencial"), "Qual sequência de bolinhas você VIU, na mesma ordem?", options, options[0].label,
-    { preview: sequence.join(" "), seconds: 20 });
+    { preview: sequence.join(" "), sequence: true, seconds: 20 });
 }
 
 function palavrasExtra(years: number): Draft<Item> {
