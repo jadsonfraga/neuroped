@@ -25,6 +25,7 @@ import { driveImport2026Items } from "./interactiveScaleItemsDrive2026";
 import { gapsPodium2026Items } from "./interactiveScaleItemsGaps2026";
 import { nexusAplicaveis2026Items } from "./interactiveScaleItemsNexusAplicaveis2026";
 import { podjTeaPrimeItems } from "./interactiveScaleItemsPodjTeaPrime";
+import { ahsdPaisItems } from "./interactiveScaleItemsAhsdPais";
 
 export interface InteractiveBand {
   /** Percentual mínimo do escore máximo (0-100) para cair nesta faixa. */
@@ -70,6 +71,12 @@ export interface InteractiveScaleDef {
    * na proveniência longitudinal do paciente.
    */
   instrumentVersion?: string;
+  /**
+   * Modo estritamente descritivo (instrumentos sem ponto de corte): cada
+   * domínio mostra soma e média das respostas de múltipla escolha, ignorando
+   * campos de texto livre no máximo possível. Não aplica faixas por domínio.
+   */
+  descriptiveDomainSummary?: boolean;
 }
 
 // ------------------------------------------------------------
@@ -128,6 +135,59 @@ export function makeInteractiveConfig(scale: ScaleEntry, def: InteractiveScaleDe
   const maxTotal = maxPerItem * nItems;
   // Título limpo: remove o código "(NEXUS-xxx)" do fim, se houver.
   const cleanTitle = scale.name.replace(/\s*\(NEXUS-\d+\)\s*$/i, "").trim() || scale.name;
+
+  if (def.descriptiveDomainSummary) {
+    const isChoice = (item: ScaleItem) => typeof item === "string" || item.responseType !== "text";
+    const band = pickBand(def.bands, 0);
+    const fmt = (n: number) => n.toFixed(1).replace(".", ",");
+    return {
+      title: cleanTitle,
+      subtitle: scale.fullName,
+      icon: def.icon ?? ClipboardList,
+      gradient: def.gradient ?? "from-primary to-chart-2",
+      instruction: def.instruction,
+      labels,
+      infoBox: def.infoBox,
+      scaleId: scale.id,
+      instrumentVersion: def.instrumentVersion,
+      domains: def.domains.map((d) => ({ name: d.name, color: d.color ?? "text-primary", items: d.items })),
+      onCalculate: (answers) => {
+        let total = 0;
+        let totalMax = 0;
+        const domainResults = def.domains.map((d, di) => {
+          let dscore = 0;
+          let answered = 0;
+          let dmax = 0;
+          d.items.forEach((item, ii) => {
+            if (!isChoice(item)) return;
+            dmax += maxPerItem;
+            const ans = answers[`${di}-${ii}`];
+            if (ans !== undefined) {
+              dscore += pts[ans] ?? 0;
+              answered += 1;
+            }
+          });
+          total += dscore;
+          totalMax += dmax;
+          const mean = answered ? dscore / answered : 0;
+          return {
+            domain: d.name,
+            score: dscore,
+            classification: `Soma ${dscore} de ${dmax} · média ${fmt(mean)} (descritivo)`,
+            color: band.color,
+          };
+        });
+        return {
+          total,
+          totalLabel: `${def.totalLabel ?? "Perfil descritivo"} — ${total} de ${totalMax}`,
+          classification: band.classification,
+          color: band.color,
+          description: band.description,
+          domainResults,
+        };
+      },
+    };
+  }
 
   return {
     title: cleanTitle,
@@ -2757,6 +2817,8 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
   ...freeBatch2Items,
   ...freeBatch3Items,
   ...podjTeaPrimeItems,
+  // Inventário de altas habilidades — versão para pais (descritivo, sem corte).
+  ...ahsdPaisItems,
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */
