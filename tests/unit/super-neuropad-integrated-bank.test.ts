@@ -275,6 +275,11 @@ test("ampliação dos 8 a 17 anos: um desafio autoral a mais por mundo, declarad
   const seqLen = (years: number) => allItems(years).find((item) => item.kind === "toque" && /memória visual sequencial/.test(item.ref))!.kind === "toque"
     ? (allItems(years).find((item) => item.kind === "toque" && /memória visual sequencial/.test(item.ref)) as TouchItem).preview!.split(/\s+/).length : 0;
   assert.ok(seqLen(12) < seqLen(15) && seqLen(15) < seqLen(17));
+  // a ordem é o que se avalia: o item pede exibição numa linha só (exposição e opções sem quebra)
+  for (const years of [12, 13, 14, 15, 16, 17]) {
+    const item = allItems(years).find((entry) => entry.kind === "toque" && /memória visual sequencial/.test(entry.ref)) as TouchItem;
+    assert.equal(item.sequence, true, `${years} anos: sequência marcada para exibição sem quebra`);
+  }
   // busca visual: a contagem certa confere com a fileira mostrada
   for (const years of [8, 9, 10, 11]) {
     const item = allItems(years).find((entry) => entry.kind === "toque" && /busca e contagem/.test(entry.ref)) as TouchItem;
