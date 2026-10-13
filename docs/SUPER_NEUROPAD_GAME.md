@@ -304,3 +304,11 @@ para remover listeners antes de um redirecionamento obrigatório desmontar a tel
 O CI executa a jornada nos builds remoto e local; o remoto também simula o evento
 real de expiração após uma partida e exige login visível sem confirmação obsoleta.
 Testes Diretos, Sonda guiada e Cognitivos compartilham a mesma decisão de sessão.
+
+### Refino dos critérios da ampliação (8–17 anos)
+
+- Itens motores e de cálculo novos dizem explicitamente **Cumpre / Não cumpre** (o motor continua binário; não há escore parcial).
+- Equilíbrio de olhos fechados (8–9): instrução de segurança (piso livre, mão pronta para segurar) e saída por medo, marcada como não cumprida com registro na observação.
+- Fluência de animais: regra do que conta e do que não conta (repetição, diminutivo, nome próprio, categoria solta).
+- 14–15 anos, Caverna da Memória: “soletrar MUNDO ao contrário” (mais fácil que meses ao contrário, usado aos 10–13) trocado por ordenar 6 números do menor para o maior, para a dificuldade não cair com a idade.
+- Todos os limiares novos seguem rotulados como **piso autoral, não norma**.
