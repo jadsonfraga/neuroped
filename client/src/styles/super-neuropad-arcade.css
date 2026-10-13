@@ -67,3 +67,15 @@
 .snp .snp-answer--correct { color: var(--snp-answer-correct); }
 .snp .snp-answer--wrong { color: var(--snp-answer-wrong); }
 .snp .snp-answer--neutral { color: var(--snp-answer-neutral); }
+
+/* Evolução v2: alto contraste do sistema, alvos de toque mínimos e movimento reduzido. */
+@media (prefers-contrast: more) {
+  .snp-btn, .snp-option { border-width: 4px; box-shadow: none; }
+  .snp-btn:focus-visible, .snp-option:focus-visible { outline-width: 5px; outline-color: #000; }
+}
+@media (pointer: coarse) {
+  .snp-btn, .snp-option { min-height: 48px; min-width: 48px; touch-action: manipulation; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .snp-btn, .snp-option, .snp-xp * { transition: none !important; animation: none !important; }
+}
