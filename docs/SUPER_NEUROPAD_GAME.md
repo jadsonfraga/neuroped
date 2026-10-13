@@ -312,3 +312,35 @@ Testes Diretos, Sonda guiada e Cognitivos compartilham a mesma decisão de sess�
 - Fluência de animais: regra do que conta e do que não conta (repetição, diminutivo, nome próprio, categoria solta).
 - 14–15 anos, Caverna da Memória: “soletrar MUNDO ao contrário” (mais fácil que meses ao contrário, usado aos 10–13) trocado por ordenar 6 números do menor para o maior, para a dificuldade não cair com a idade.
 - Todos os limiares novos seguem rotulados como **piso autoral, não norma**.
+
+## Baterias dedicadas de 2 e 3 anos (v2026-10-13)
+
+Aos 2 anos (24–35 meses) e aos 3 anos (36–47 meses) o jogo deixa de usar o banco integrado
+genérico e passa a aplicar uma **bateria própria por domínio do neurodesenvolvimento**. O
+formato é inspirado em avaliação cognitiva gamificada (mundos curtos, figuras grandes, toque
+simples, pausas); **o conteúdo é 100% autoral** e não copia itens de nenhum instrumento.
+Base descritiva de referência (não copiada): marcos do CDC 2022 ("Learn the Signs. Act Early",
+24 e 36 meses), áreas do Denver II e conceitos de sinais de alerta do M-CHAT-R/F (apontar,
+resposta ao nome, imitação, interesse por crianças, perda de habilidades).
+
+| Mundo (2–3 anos) | Domínio | 2 anos | 3 anos |
+|---|---|---|---|
+| 🏡 Vila dos Amigos | Interação social | perda de habilidades (relato ⚠), sorriso social ⚠, imitação ⚠ | perda de habilidades (relato ⚠), revezar a vez, imitação de sequência ⚠, interesse por crianças (relato ⚠) |
+| 🌳 Floresta do Olhar | Atenção conjunta | resposta ao nome ⚠, segue o apontar ⚠, aponta/mostra (relato ⚠) | resposta ao nome ⚠, segue o apontar ⚠, segue o olhar, aponta/mostra (relato ⚠) |
+| 🏝️ Ilha do Escutar | Linguagem receptiva | identifica figura (2 opções), 2 partes do corpo, ordem de 1 etapa | identifica figura, compreende função, partes do corpo, ordem de 2 etapas |
+| ⛰️ Montanha das Palavrinhas | Linguagem expressiva | nomeia 2 figuras, frases de 2 palavras (relato ⚠) | nomeia figura, frase de 3 palavras, nome e pronome, conversa com trocas (relato ⚠) |
+| 🔦 Caverna da Espera | Atenção, impulsividade e atividade | atenção sustentada 10 s, espera o sinal, nível de atividade (observação) | atenção sustentada 20 s, espera o sinal, estátua 5 s, nível de atividade (observação) |
+| 🏠 Casinha do Faz de Conta | Brincar simbólico | dar comida ao bebê, telefone de mentira, interesse por crianças (relato ⚠, conta em interação social) | cuidar do bebê, sequência de faz de conta, objeto como outro, faz de conta com papéis (relato ⚠) |
+
+- **Contagem e tempo:** 2 anos = 18 itens (3 por mundo), estimativa ≈ 11,3 min (teto 12 min);
+  3 anos = 24 itens (4 por mundo), ≈ 14,3 min (teto 15 min). Cada mundo fica abaixo de 3 min. Pausa planejada mantida.
+- **Registro:** o mesmo modelo binário do jogo (Cumpre / Não cumpre, mais "não respondeu" e
+  "recusou" à parte) e o campo de observações da sessão. Itens de **relato do cuidador** começam
+  com "Relato do cuidador — pergunte:" e o critério termina em "(relato do cuidador)".
+- **Sinais de alerta:** itens marcados (⚠) geram "Sinal de alerta — encaminhar avaliação" quando
+  registrados como erro ou sem resposta (recusa não gera). Aparecem na tela de resultado, no
+  relatório, no resumo para o prontuário, no bloco estruturado (`ALERTA`) e no PDF. Não há
+  diagnóstico, rótulo nosológico nem escore normativo.
+- **Resultado por domínio:** `summary.domains` (e a linha `DOMINIO_2_3` do bloco estruturado).
+- **Limiares** (segundos de atenção, tentativas de espera, rodadas) são **piso autoral, não norma**.
+- 4 anos ou mais: sem alteração.

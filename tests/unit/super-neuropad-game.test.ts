@@ -63,7 +63,7 @@ test("faixas etárias: um ano cada, de 2 a 17, sem lacuna; menores de 2 anos blo
     assert.equal(band.min, years);
     assert.equal(band.max, years);
     assert.equal(band.label, `${years} anos`);
-    assert.equal(band.perPhase, years <= 5 ? 4 : years <= 7 ? 5 : 6);
+    assert.equal(band.perPhase, years === 2 ? 3 : years <= 5 ? 4 : years <= 7 ? 5 : 6);
     const gate = ageGate(years);
     assert.equal(gate.ok, true);
   }
@@ -150,7 +150,7 @@ test("registros: toque e montagem conferidos pelo jogo; julgado pelo critério; 
   assert.equal(recordJudged(judged.item, judged.phaseId, "recusa", 1).given, "Recusou");
   assert.equal("via" in recordJudged(judged.item, judged.phaseId, "acerto", 1, false, "gesto"), false, "sem alternativa prevista, gesto não vira via");
 
-  const gesture = firstOf(2, "fala", (entry) => Boolean(entry.gesture));
+  const gesture = firstOf(2, "fazer", (entry) => Boolean(entry.gesture));
   const viaGesture = recordJudged(gesture.item, gesture.phaseId, "acerto", 3, false, "gesto");
   assert.equal(viaGesture.via, "gesto");
   assert.equal(viaGesture.given, "Cumpriu o critério por gesto/apontar");
@@ -234,7 +234,7 @@ test("resumo conta acertos por mundo e no total, com esperado para a idade e com
   assert.deepEqual(perfect.phases.map((phase) => phase.hits), [6, 6, 6, 6, 6, 6]);
   assert.ok(perfect.phases.every((phase) => phase.expectedMin === 5));
 
-  const young = summarize(play(3));
+  const young = summarize(play(4));
   assert.equal(young.total, 24);
   assert.equal(young.expectedMin, 20);
   assert.ok(young.phases.every((phase) => phase.total === 4 && phase.expectedMin === 3));
@@ -258,7 +258,7 @@ test("resumo conta acertos por mundo e no total, com esperado para a idade e com
 });
 
 test("mundo pulado: aparece como não aplicado com motivo; partida fica incompleta, sem classificação, e o resto é preservado", () => {
-  const session = play(3);
+  const session = play(4);
   session.answers = session.answers.filter((entry) => entry.phaseId !== "corpo");
   session.skipped = [{ phaseId: "corpo", reason: "Criança cansada ou sem colaboração" }];
   const summary = summarize(session);
@@ -466,7 +466,7 @@ test("leitura para a consulta: prioridades, padrão com recusa agrupada, gesto, 
     return (item.kind === "fala" || item.kind === "fazer") && item.gesture ? recordJudged(item, entry.phaseId, "acerto", 5, false, "gesto") : entry;
   });
   const gestureReading = readComplete(gestures);
-  assert.ok(gestureReading.gestures >= 3);
+  assert.ok(gestureReading.gestures >= 1);
   assert.ok(gestureReading.notes.some((note) => /acerto\(s\) por gesto\/apontar/.test(note)));
 
   const slowSession = play(10);
@@ -639,7 +639,7 @@ test("página: menores de 2 anos bloqueados, estimativa de tempo, ambiente sem m
   assert.match(page, /\{UNDER_TWO_MESSAGE\}/);
   assert.match(page, /setUnderTwo\(true\); setAgeYears\(null\);/, "menor de 2 anos nunca tem faixa selecionada");
   assert.match(page, /estimateBandSeconds\(band\.min\)/);
-  assert.match(page, /\(máximo 20\)/);
+  assert.match(page, /\(máximo \{Math\.round\(sessionLimitSeconds\(band\.min\) \/ 60\)\}\)/);
   assert.match(page, /band\.ambient/);
   assert.doesNotMatch(page, /band\.kit/);
   assert.match(page, /function skipPhase\(reason: string\)/);
@@ -722,6 +722,7 @@ test("banco: toque tem uma opção certa e a posição dela varia (sem gabarito 
         positions.add(touch.options.findIndex((option) => option.label === touch.answer));
       }
     }
-    assert.ok(positions.size >= 2, `${band.id}: correta em ${positions.size} posições distintas (o jogo ainda embaralha a cada partida)`);
+    const touches = PHASE_ORDER.flatMap((phaseId) => itemsFor(band.id, phaseId)).filter((item) => item.kind === "toque").length;
+    if (touches >= 2) assert.ok(positions.size >= 2, `${band.id}: correta em ${positions.size} posições distintas (o jogo ainda embaralha a cada partida)`);
   }
 });

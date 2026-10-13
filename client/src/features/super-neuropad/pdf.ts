@@ -22,6 +22,8 @@ import {
   LEVEL_LABELS,
   ORIGIN_LABELS,
   phaseById,
+  sessionLimitSeconds,
+  toddlerReportLines,
   phaseStatusText,
   sessionWallSeconds,
   STATUS_LABELS,
@@ -68,7 +70,7 @@ export function buildGameDocSpec(session: GameSession, issuer: IssuerLines, appl
     `Data e hora da aplicação (horário local, America/Sao_Paulo): ${appliedAt}`,
     `Personagem escolhido: ${summary.character.name} ${summary.character.role} (${summary.character.power})`,
     `Aplicação: aplicadora junto com a criança, no próprio aplicativo; sem câmera e sem instrumento externo`,
-    `Duração da sessão (relógio): ${wall !== null ? formatDuration(wall) : "não disponível"} - tempo somado nas tarefas: ${formatDuration(summary.durationSeconds)} - tempo estimado para a idade: ${formatDuration(estimate.totalSeconds)} (máximo 20 min)`,
+    `Duração da sessão (relógio): ${wall !== null ? formatDuration(wall) : "não disponível"} - tempo somado nas tarefas: ${formatDuration(summary.durationSeconds)} - tempo estimado para a idade: ${formatDuration(estimate.totalSeconds)} (máximo ${Math.round(sessionLimitSeconds(summary.band.min) / 60)} min)`,
     `Pausas: ${session.pauseCount ?? 0} (${formatDuration(session.pausedSeconds ?? 0)} em pausa) - registros desfeitos e refeitos: ${session.undoCount ?? 0} - comandos repetidos: ${session.answers.filter((answer) => answer.repeated).length} - acertos por gesto/apontar: ${session.answers.filter((answer) => answer.via === "gesto").length}`,
     `Situação: ${summary.complete ? `jogo completo (${summary.phases.length} mundos, ${summary.total} itens)` : `jogo incompleto (${session.answers.length} de ${summary.total} itens registrados)`}`,
     `Mundos não aplicados: ${skipped.length === 0 ? "nenhum" : skipped.map((phase) => `${phase.phase.name} (${phase.skipReason})`).join("; ")}`,
@@ -79,7 +81,7 @@ export function buildGameDocSpec(session: GameSession, issuer: IssuerLines, appl
     "",
     ...summary.origins.map((origin) => [
       `${origin.label} (${origin.route}): ${origin.planned} item(ns) previstos para ${summary.band.label}; registrados ${origin.applied}; acertos ${origin.hits}.`,
-      `  Mundos: ${origin.phases.map((id) => phaseById(id).name).join(", ") || "nenhum nesta idade"}`,
+      `  Mundos: ${origin.phases.map((id) => phaseById(id, summary.band.min).name).join(", ") || "nenhum nesta idade"}`,
       `  Referências: ${origin.refs.join(" | ") || "-"}`,
     ].join("\n")),
   ].join("\n");
@@ -93,6 +95,7 @@ export function buildGameDocSpec(session: GameSession, issuer: IssuerLines, appl
         : `${phase.hits}/${phase.total} acertos (esperado: ${phase.expectedMin} ou mais), ${phase.errors} erros, ${phase.noResponse} sem resposta, ${phase.refused} recusa(s) - ${LEVEL_LABELS[phase.level]} - ${formatDuration(phase.seconds)}`}`,
     ),
     "",
+    ...toddlerReportLines(summary).map((line) => describeArt(line)),
     "Esperado para a idade = referência operacional autoral do jogo (proporção de acertos), não norma populacional nem ponto de corte validado.",
   ].join("\n");
 

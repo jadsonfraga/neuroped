@@ -13,7 +13,7 @@ import {
   AGE_BANDS,
   ORIGIN_ORDER,
   PHASE_ORDER,
-  SESSION_LIMIT_SECONDS,
+  sessionLimitSeconds,
   YEARS,
   bandItemCount,
   estimateBandSeconds,
@@ -32,12 +32,12 @@ const texts = (item: Item): string[] => {
   return [...base, item.expected, item.stimulus ?? "", item.gesture ?? ""];
 };
 
-test("contagem por faixa: 4 desafios por mundo até 5 anos (24), 5 aos 6–7 anos (30), 6 a partir de 8 anos (36); seis mundos em todas as idades", () => {
+test("contagem por faixa: 3 por mundo aos 2 anos (18), 4 dos 3 aos 5 anos (24), 5 aos 6–7 anos (30), 6 a partir de 8 anos (36); seis mundos em todas as idades", () => {
   assert.deepEqual([...YEARS], Array.from({ length: 16 }, (_, index) => index + 2));
   assert.deepEqual(Object.keys(INTEGRATED_BANK).map(Number), [...YEARS]);
   for (const years of YEARS) {
     for (const phaseId of PHASE_ORDER) assert.equal(itemsFor(String(years), phaseId).length, itemsPerPhase(years), `${years}/${phaseId}`);
-    assert.equal(bandItemCount(String(years)), years <= 5 ? 24 : years <= 7 ? 30 : 36);
+    assert.equal(bandItemCount(String(years)), years === 2 ? 18 : years <= 5 ? 24 : years <= 7 ? 30 : 36);
   }
   assert.ok(bandItemCount("2") < bandItemCount("6"), "2–3 anos: menos desafios");
 });
@@ -167,13 +167,12 @@ test("fala/ação têm critério explícito; montar tem letras suficientes; dese
   }
 });
 
-test("2–3 anos: menos desafios, alternativa por gesto/apontar nos itens de fala, sem letras, leitura, numerais ou nomeação de cor", () => {
+test("2–3 anos: bateria dedicada, gesto só onde previsto (nunca na linguagem expressiva), sem letras, leitura, numerais ou nomeação de cor", () => {
   for (const years of [2, 3]) {
     const items = allItems(years);
-    const speech = items.filter((item) => item.kind === "fala");
     const gestures = items.filter((item) => (item.kind === "fala" || item.kind === "fazer") && item.gesture);
-    assert.ok(gestures.length >= 3, `${years} anos: ${gestures.length} itens aceitam gesto`);
-    if (years === 2) assert.ok(speech.every((item) => item.kind === "fala" && (item.gesture || /Repita: BOLA|Junta 2 palavras/.test(item.prompt + item.expected))), "2 anos: fala com alternativa, exceto repetição e combinação de palavras");
+    assert.ok(gestures.length >= 1, `${years} anos: ${gestures.length} itens aceitam gesto`);
+    assert.ok(gestures.every((item) => item.domain !== "linguagem_expressiva"), `${years} anos: gesto não substitui fala na linguagem expressiva`);
     for (const item of items) {
       assert.doesNotMatch(item.prompt, /letra|Leia|escrit|número \d|Toque no número/i, `${item.id}: sem letramento aos ${years} anos`);
       if (item.kind === "toque") for (const option of item.options) assert.doesNotMatch(option.art, /^\d+$/, `${item.id}: sem numeral como alternativa aos ${years} anos (quantidade × quantidade)`);
@@ -230,7 +229,7 @@ test("tempo estimado: sessão inteira em até 20 minutos em toda faixa, com mais
   const table: string[] = [];
   for (const years of YEARS) {
     const estimate = estimateBandSeconds(years);
-    assert.ok(estimate.totalSeconds <= SESSION_LIMIT_SECONDS, `${years} anos: ${estimate.totalSeconds}s > 20 min`);
+    assert.ok(estimate.totalSeconds <= sessionLimitSeconds(years), `${years} anos: ${estimate.totalSeconds}s > 20 min`);
     assert.ok(estimate.totalSeconds >= 8 * 60, `${years} anos: estimativa plausível (${estimate.totalSeconds}s)`);
     assert.equal(estimate.items, bandItemCount(String(years)));
     assert.deepEqual(Object.keys(estimate.byPhase), [...PHASE_ORDER]);
