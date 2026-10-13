@@ -694,7 +694,7 @@ function olhosExtra(years: number): Draft<Item> {
 function palavrasExtra(years: number): Draft<Item> {
   const floor = FLUENCY_FLOOR[years];
   return fala("sonda10", EXT(SONDA(years >= 12 ? "12–17 anos" : "8–11 anos", "linguagem expressiva"), "fluência verbal semântica"),
-    "Diga: “Fale o máximo de ANIMAIS que você conseguir, até eu avisar.” Conte 60 segundos e vá contando as palavras diferentes (sem repetir).",
+    "Diga: “Fale o máximo de ANIMAIS que você conseguir, até eu avisar.” Marque 60 segundos no relógio e conte os acertos. Contam: animais diferentes de qualquer tipo (peixes, aves e insetos também). Não contam: repetições, diminutivo do mesmo animal (gato/gatinho), nome próprio de bicho (Rex) e categorias soltas (“bicho”, “animal”).",
     `Diz pelo menos ${floor} animais diferentes em 60 segundos (piso autoral, não norma)`, { stimulus: "🗣️ 🐶 🐱", seconds: 60 });
 }
 
@@ -702,13 +702,13 @@ function numerosExtra(years: number): Draft<Item> {
   if (years <= 9) return fala("sonda10", EXT(SONDA("8–11 anos", "cálculo mental"), "contagem de 3 em 3"), "Diga: “Conte de 3 em 3, começando no 3, até chegar no 30.”",
     "Conta 3 – 6 – 9 – 12 – 15 – 18 – 21 – 24 – 27 – 30 com no máximo 1 erro espontaneamente corrigido", { seconds: 25 });
   if (years <= 11) return fala("sonda10", EXT(SONDA("8–11 anos", "cálculo mental"), "tabuada"), "Pergunte: “Quanto é 7 vezes 8? E 56 dividido por 7?”",
-    "Responde 56 e 8", { seconds: 25 });
+    "Cumpre: responde 56 e 8, as duas certas, sem papel. Não cumpre: erra qualquer uma ou conta nos dedos por mais de 15 s", { seconds: 25 });
   if (years <= 13) return fala("sonda10", EXT(SONDA("12–17 anos", "cálculo mental"), "porcentagem do dia a dia"), "Pergunte: “Uma camisa de R$ 80 está com 25% de desconto. Quanto vai custar?”",
-    "Responde R$ 60", { seconds: 25 });
+    "Cumpre: responde R$ 60 (aceita R$ 20 de desconto seguido do valor final certo), sem papel. Não cumpre: outro valor ou só o desconto sem o preço final", { seconds: 25 });
   if (years <= 15) return fala("sonda10", EXT(SONDA("12–17 anos", "cálculo mental"), "subtração seriada"), "Diga: “Comece em 100 e vá tirando 7 de cada vez. Diga os resultados em voz alta.” Pare após 5 respostas.",
     "Acerta pelo menos 4 das 5 (93 – 86 – 79 – 72 – 65), contando cada resposta a partir da anterior", { seconds: 30 });
   return fala("sonda10", EXT(SONDA("12–17 anos", "cálculo mental"), "problema de compra"), "Pergunte: “Um celular custa R$ 1.200 à vista ou 10 parcelas de R$ 135. Quanto a mais você paga parcelado?”",
-    "Responde R$ 150 (10 × 135 = 1.350 e 1.350 – 1.200)", { seconds: 30 });
+    "Cumpre: responde R$ 150 (10 × 135 = 1.350; 1.350 – 1.200), pode pensar em voz alta, sem papel. Não cumpre: outro valor ou só o total parcelado (R$ 1.350)", { seconds: 30 });
 }
 
 function memoriaExtra(years: number): Draft<Item> {
@@ -716,21 +716,21 @@ function memoriaExtra(years: number): Draft<Item> {
     "Diz domingo – sábado – sexta – quinta – quarta – terça – segunda com no máximo 1 erro espontaneamente corrigido", { seconds: 30 });
   if (years <= 13) return fala("sonda10", EXT(SONDA(years >= 12 ? "12–17 anos" : "8–11 anos", "memória operacional"), "controle mental"), "Diga: “Fale os meses do ano ao contrário, começando em dezembro.”",
     "Diz os 12 meses em ordem inversa com no máximo 1 erro espontaneamente corrigido", { seconds: 30 });
-  if (years <= 15) return fala("sonda10", EXT(SONDA("12–17 anos", "memória operacional"), "controle mental"), "Diga: “Soletre a palavra MUNDO de trás para frente.”",
-    "Diz O – D – N – U – M", { stimulus: "🗣️ ↩", seconds: 20 });
+  if (years <= 15) return fala("sonda10", EXT(SONDA("12–17 anos", "memória operacional"), "controle mental (ordenar números)"), "Diga: “Vou falar uns números. Repita colocando em ordem, do menor para o maior: 8 – 3 – 6 – 1 – 9 – 4.” Fale um número por segundo e diga a sequência uma única vez.",
+    "Cumpre: diz 1 – 3 – 4 – 6 – 8 – 9 sem pular nem trocar nenhum. Não cumpre: omissão, troca ou pedido de repetição (piso autoral, não norma)", { stimulus: "🗣️ ↩", seconds: 25 });
   return fala("sonda10", EXT(SONDA("12–17 anos", "flexibilidade cognitiva"), "alternar número e letra"), "Diga: “Alterne número e letra, em ordem: 1 – A – 2 – B – 3 – C… vá até o 6 – F.” Dê o começo e deixe a criança continuar.",
     "Completa 4 – D – 5 – E – 6 – F sem perder a alternância (no máximo 1 erro corrigido)", { seconds: 30 });
 }
 
 function corpoExtra(years: number): Draft<Item> {
-  if (years <= 9) return fazer("obs10", EXT(OBS("6–11 anos", "movimentar com segurança (núcleo motor)"), "equilíbrio sem a visão"), "Fique ao lado. Peça: “Fique num pé só, com os olhos fechados.” Conte até 5 em voz alta.",
-    "Mantém 5 segundos sem apoiar o outro pé nem pular de lugar", { stimulus: "🦩", seconds: 25 });
-  if (years <= 11) return fazer("obs10", EXT(OBS("9–11 anos", "movimentar com segurança (núcleo motor)"), "saltos em um pé"), "Demonstre e peça: “Pule num pé só, 5 vezes seguidas. Agora no outro pé.”",
-    "Dá 5 pulos seguidos em cada pé sem apoiar o outro pé nem perder o ritmo", { stimulus: "🦩", seconds: 30 });
-  if (years <= 13) return fazer("obs10", EXT(OBS("12–17 anos", "movimentar com segurança (núcleo motor)"), "coordenação de quatro membros"), "Demonstre e peça: “Faça polichinelo, 10 vezes seguidas, no ritmo.”",
-    "Coordena braços e pernas nos 10 saltos, sem parar nem trocar o movimento", { stimulus: "🙌", seconds: 30 });
-  return fazer("obs10", EXT(OBS("12–17 anos", "movimentar com segurança (núcleo motor)"), "dupla tarefa motora e cognitiva"), "Peça: “Ande na junta do piso, calcanhar encostando na ponta, 8 passos, enquanto fala os meses do ano em ordem.”",
-    "Cumpre os 8 passos sem sair da linha e diz os meses em ordem sem parar de andar", { stimulus: "👣 🗣️", seconds: 30 });
+  if (years <= 9) return fazer("obs10", EXT(OBS("6–11 anos", "movimentar com segurança (núcleo motor)"), "equilíbrio sem a visão"), "Segurança: piso plano e livre, sem móveis por perto; fique ao lado, com a mão pronta para segurar. Peça: “Fique num pé só, com os olhos fechados.” Conte até 5 em voz alta. Se a criança tiver medo ou cambalear logo no início, segure, pare e marque como não cumprido (registre na observação).",
+    "Cumpre: mantém 5 segundos sem apoiar o outro pé, sem pular de lugar e sem abrir os olhos. Não cumpre: apoia o pé, abre os olhos, precisa ser segurada ou recusa (piso autoral, não norma)", { stimulus: "🦩", seconds: 25 });
+  if (years <= 11) return fazer("obs10", EXT(OBS("9–11 anos", "movimentar com segurança (núcleo motor)"), "saltos em um pé"), "Piso plano e não escorregadio, criança calçada ou descalça (não de meia). Fique perto. Demonstre e peça: “Pule num pé só, 5 vezes seguidas. Agora no outro pé.”",
+    "Cumpre: 5 pulos seguidos em cada pé sem apoiar o outro pé. Não cumpre: apoia o pé, para no meio ou só consegue de um lado (piso autoral, não norma)", { stimulus: "🦩", seconds: 30 });
+  if (years <= 13) return fazer("obs10", EXT(OBS("12–17 anos", "movimentar com segurança (núcleo motor)"), "coordenação de quatro membros"), "Demonstre 2 polichinelos e peça: “Faça polichinelo, 10 vezes seguidas, no ritmo.” Conte em voz alta.",
+    "Cumpre: coordena braços e pernas em pelo menos 8 dos 10 saltos, sem parar. Não cumpre: para, perde a sincronia na maioria dos saltos ou só mexe braços ou pernas (piso autoral, não norma)", { stimulus: "🙌", seconds: 30 });
+  return fazer("obs10", EXT(OBS("12–17 anos", "movimentar com segurança (núcleo motor)"), "dupla tarefa motora e cognitiva"), "Use uma linha reta no chão (a junta do piso, cerca de 3 m) e fique ao lado. Demonstre 2 passos. Peça: “Ande sobre a linha, calcanhar encostando na ponta do outro pé, 8 passos, enquanto fala os meses do ano em ordem.”",
+    "Cumpre: 8 passos com no máximo 1 saída da linha e os meses em ordem sem parar de andar. Não cumpre: sai da linha 2 vezes ou mais, para de andar para pensar ou erra a ordem dos meses (piso autoral, não norma)", { stimulus: "👣 🗣️", seconds: 30 });
 }
 
 const EXTRAS: Record<PhaseId, (years: number) => Draft<Item>> = {
