@@ -57,6 +57,7 @@ import {
   phaseById,
   sessionLimitSeconds,
   RED_FLAG_LABEL,
+  redFlagLabel,
   phaseStatusText,
   recordBuild,
   recordJudged,
@@ -1334,7 +1335,7 @@ export default function SuperNeuroPadGamePage() {
               <div className="snp-pixel text-xs">Sinais de alerta (estilo M-CHAT) · não é diagnóstico</div>
               {summary.redFlags.length === 0
                 ? <p className="mt-1 text-sm font-semibold">Nenhum sinal de alerta nos itens registrados.</p>
-                : <ul className="mt-1 space-y-1 text-sm font-bold">{summary.redFlags.map((flag) => <li key={flag.itemId}>⚠️ {RED_FLAG_LABEL}: {flag.text}{flag.informant === "cuidador" ? " (relato do cuidador)" : ""}</li>)}</ul>}
+                : <ul className="mt-1 space-y-1 text-sm font-bold">{summary.redFlags.map((flag) => <li key={flag.itemId}>⚠️ {redFlagLabel(summary)}: {flag.text}{flag.informant === "cuidador" ? " (relato do cuidador)" : ""}</li>)}</ul>}
               <p className="mt-1 text-[11px] font-semibold opacity-80">Critérios da bateria de 2–3 anos são piso autoral, não norma.</p>
             </div>
           )}

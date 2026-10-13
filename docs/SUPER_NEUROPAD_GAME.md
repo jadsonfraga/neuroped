@@ -57,8 +57,8 @@ Contagens geradas do banco (`INTEGRATED_BANK`); tempo por `estimateBandSeconds`.
 
 | Idade | Itens (por mundo) | Sonda 10 | OBS-10 | Rec. visual | Cognitiva | Tipos (toque/fala/ação/montar) | Com gesto | Tempo estimado |
 |---|---|---|---|---|---|---|---|---|
-| 2 anos | 24 (4) | 10 | 6 | 4 | 4 | 9/5/10/0 | 4 | 16.0 min |
-| 3 anos | 24 (4) | 11 | 5 | 3 | 5 | 9/6/9/0 | 3 | 16.2 min |
+| 2 anos | 18 (3) | 12 | 4 | 1 | 1 | 1/6/11/0 | 1 | 11.3 min |
+| 3 anos | 24 (4) | 16 | 6 | 1 | 1 | 2/8/14/0 | 1 | 14.3 min |
 | 4 anos | 24 (4) | 8 | 7 | 3 | 6 | 9/11/4/0 | 0 | 14.8 min |
 | 5 anos | 24 (4) | 8 | 7 | 3 | 6 | 12/7/5/0 | 0 | 15.2 min |
 | 6 anos | 30 (5) | 11 | 10 | 2 | 7 | 14/11/5/0 | 0 | 13.9 min |
@@ -70,7 +70,7 @@ Contagens geradas do banco (`INTEGRATED_BANK`); tempo por `estimateBandSeconds`.
 | 12 anos | 36 (6) | 15 | 10 | 1 | 10 | 15/15/5/1 | 0 | 18.6 min |
 | 13 anos | 36 (6) | 11 | 14 | 1 | 10 | 15/15/5/1 | 0 | 18.6 min |
 | 14 anos | 36 (6) | 15 | 10 | 1 | 10 | 15/15/5/1 | 0 | 18.8 min |
-| 15 anos | 36 (6) | 11 | 14 | 1 | 10 | 15/15/5/1 | 0 | 18.8 min |
+| 15 anos | 36 (6) | 11 | 14 | 1 | 10 | 15/15/5/1 | 0 | 18.9 min |
 | 16 anos | 36 (6) | 15 | 10 | 1 | 10 | 15/15/5/1 | 0 | 19.1 min |
 | 17 anos | 36 (6) | 11 | 14 | 1 | 10 | 15/15/5/1 | 0 | 19.1 min |
 
@@ -78,7 +78,8 @@ Contagens geradas do banco (`INTEGRATED_BANK`); tempo por `estimateBandSeconds`.
 ação 25 s, montar 30 s + 2 s por letra (ou o tempo próprio do item); fator de criança pequena
 ×1,5 até 3 anos e ×1,25 até 5; 10 % de folga para repetições; preparação 60 s, 15 s de
 apresentação por mundo, 5 s por exposição de memória e pausa planejada de 90 s até 5 anos.
-O teste exige ≤ 20 min em todas as idades; a tela de preparação mostra a estimativa.
+O teste exige a estimativa dentro do teto da idade (12 min aos 2 anos, 15 min aos 3 anos, 20 min nas demais);
+a tela de preparação mostra a estimativa. Outro teste confere esta tabela contra o banco, para ela não defasar.
 
 **Ampliação dos 8 a 17 anos (2026-10-12).** A partir dos 8 anos entra um sexto desafio em cada
 mundo, autoral do jogo (a referência do item diz "ampliação autoral do jogo"): cognição social
@@ -256,7 +257,7 @@ equivalente ou diagnóstico, exibida na tela de resultado, no relatório em text
 - `npm run test:super-neuropad` (também encadeado em `test:direct-track`): motor, relatório,
   PDF e `super-neuropad-integrated-bank.test.ts` (contagens por ano, ids e conteúdos sem
   duplicata, origens, reuso fiel, alternativas, figuras visuais por idade, adaptações de 2–3
-  anos, nada externo, tudo legível no PDF, ≤ 20 min em todas as idades).
+  anos, nada externo, tudo legível no PDF, dentro do teto de tempo da idade).
 - `npm run build:client && npm run test:e2e:super-neuropad` — jornada completa no navegador
   com capturas, axe e download do PDF, incluindo pausa, desfazer, comando repetido e o painel
   de leitura para a consulta; também pausa automática por tela oculta, atalho `1`, painel de
