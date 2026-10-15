@@ -445,7 +445,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
               <p className="text-sm leading-relaxed text-red-900 dark:text-red-100">
                 Uma ou mais respostas indicam possível ideação suicida ou
                 autolesão. Não trate esta tela como conclusão rotineira: faça
-                avaliação clínica imediata, mantenha o adolescente acompanhado e
+                avaliação clínica imediata, mantenha a pessoa acompanhada e
                 acione a rede de cuidado ou o serviço de emergência local
                 conforme o risco atual.
               </p>

@@ -8,6 +8,7 @@ import { escalasPsiquiatricasImportadas2026 } from "./escalasPsiquiatricasImport
 import { escalasImportadasDrive2026 } from "./escalasImportadasDrive2026";
 import { escalasCompendio2026 } from "./escalasCompendio2026";
 import { escalasAplicaveisNexus2026 } from "./escalasAplicaveisNexus2026";
+import { escalasOnda1_2026 } from "./escalasOnda1_2026";
 import { descricoesMelhoradas } from "./descricoesMelhoradas";
 import { exemplosPais2026 } from "./exemplosPais2026";
 // Manifesto gerado: ids e contagens sem carregar centenas de itens clínicos
@@ -181,6 +182,7 @@ export const queixas: QueixaCategory[] = [
   { id: "autonomia", label: "Autonomia / AVDs", icon: "home", color: "from-cyan-500 to-sky-500", bgLight: "bg-cyan-50 dark:bg-cyan-950/30", iconColor: "text-cyan-600 dark:text-sky-400", emoji: "🏠", appRoute: "/generic-scale/autonomia", parentHint: "Custa se vestir, comer, se cuidar sozinho"},
   { id: "altas-habilidades", label: "Altas habilidades / super inteligente", icon: "sparkles", color: "from-amber-400 to-yellow-500", bgLight: "bg-amber-50 dark:bg-amber-950/30", iconColor: "text-amber-600 dark:text-amber-400", emoji: "🌟", appRoute: "/generic-scale/altas-habilidades", parentHint: "Aprende muito rápido, sabe muito, à frente da idade"},
   { id: "evolucao", label: "Reavaliação / Evolução", icon: "trending-up", color: "from-emerald-500 to-green-600", bgLight: "bg-emerald-50 dark:bg-emerald-950/30", iconColor: "text-emerald-600 dark:text-emerald-400", emoji: "📈", appRoute: "/generic-scale/evolucao", parentHint: "Reavaliar após início do tratamento"},
+  { id: "saude-cuidador", label: "Saúde mental do cuidador", icon: "heart", color: "from-rose-400 to-pink-500", bgLight: "bg-rose-50 dark:bg-rose-950/30", iconColor: "text-rose-600 dark:text-rose-400", emoji: "🫶", appRoute: "/generic-scale/cuidador", parentHint: "Quem cuida está esgotado, triste ou ansioso"},
   { id: "substancias", label: "Uso de Substâncias", icon: "wine", color: "from-rose-500 to-pink-600", bgLight: "bg-rose-50 dark:bg-rose-950/30", iconColor: "text-rose-600 dark:text-rose-400", emoji: "🍷", appRoute: "/generic-scale/substancias", parentHint: "Uso de álcool ou drogas"},
 ];
 
@@ -853,6 +855,8 @@ const allScalesBase: ScaleEntry[] = [
   // comerciais retirados na regra de ouro total (EAD-NP, TDN-Bebê, QEC-NP,
   // PSN-NP, ERP-NP, TPP-NP — 2026-07-12).
   ...escalasAplicaveisNexus2026,
+  // Onda 1 do plano de escalas (15/10/2026): efeitos de medicação, seguimento e cuidador.
+  ...escalasOnda1_2026,
   // NOTA: o "Lote 2" da varredura do Drive (NEF-360, NEUROFUNC-360, Maria Clara)
   // foi RETIRADO por redundância/qualidade (julgado regressão): NEF-360/NEUROFUNC-360
   // repetiam a família broadband já coberta por NDI-360 + MATRIX-100; a Escala Maria
@@ -912,6 +916,16 @@ export const EXPECTED_INTERACTIVE_ITEM_COUNTS: Readonly<Record<string, number>> 
   "j26-208": 24,
   "j26-209": 18,
   "j26-210": 24,
+  // Onda 1 (15/10/2026): contagem autoritativa de cada instrumento.
+  "phq9-cuidador": 9,
+  "gad7-cuidador": 7,
+  "aims-efeitos": 12,
+  sas: 10,
+  "cgi-s": 1,
+  "cgi-i": 1,
+  puts: 10,
+  "p-ymrs": 11,
+  swan: 18,
 };
 
 export function getDeliveredInteractiveItemCount(scaleId: string): number {

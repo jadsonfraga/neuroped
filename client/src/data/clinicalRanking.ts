@@ -219,6 +219,11 @@ export const clinicalRanking: ClinicalTierRule[] = [
     ouro: "ygtss",
     reason: "YGTSS é o padrão-ouro de gravidade de tiques (Tourette) aplicável em toda a faixa pediátrica." },
 
+  // ========================= SAÚDE DO CUIDADOR ==========================
+  { queixa: "saude-cuidador", ageMin: 0, ageMax: 216,
+    ouro: "phq9-cuidador", prata: "gad7-cuidador",
+    reason: "Rastreio de depressão (PHQ-9) e de ansiedade (GAD-7) de quem cuida: a saúde mental do cuidador interfere na adesão e no desfecho da criança. Respostas sobre o próprio cuidador, nunca somadas às da criança." },
+
   // ================================ DOR =================================
   { queixa: "dor", ageMin: 36, ageMax: 216,
     ouro: "cefaleia-calendario",
