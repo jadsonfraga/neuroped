@@ -113,16 +113,16 @@ export function buildGameDocSpec(session: GameSession, issuer: IssuerLines, appl
   ].join("\n");
 
   const objective = [
-    summary.level === null ? incomplete : `TOTAL: ${summary.hits} acertos em ${summary.total} itens (esperado para a idade: ${summary.expectedMin} ou mais) - ${LEVEL_LABELS[summary.level]}`,
+    summary.level === null ? incomplete : `TOTAL: ${summary.hits} acertos em ${summary.total} itens (referência interna para a idade: ${summary.expectedMin} ou mais) - ${LEVEL_LABELS[summary.level]}`,
     "",
     ...summary.phases.map((phase) =>
       `Mundo ${phase.phase.order} - ${phase.phase.name} (${phase.phase.domain}): ${phase.level === null
         ? phaseStatusText(phase, false)
-        : `${phase.hits}/${phase.total} acertos (esperado: ${phase.expectedMin} ou mais), ${phase.errors} erros, ${phase.noResponse} sem resposta, ${phase.refused} recusa(s) - ${LEVEL_LABELS[phase.level]} - ${formatDuration(phase.seconds)}`}`,
+        : `${phase.hits}/${phase.total} acertos (referência interna: ${phase.expectedMin} ou mais), ${phase.errors} erros, ${phase.noResponse} sem resposta, ${phase.refused} recusa(s) - ${LEVEL_LABELS[phase.level]} - ${formatDuration(phase.seconds)}`}`,
     ),
     "",
     ...toddlerReportLines(summary).map((line) => describeArt(line)),
-    "Esperado para a idade = referência operacional autoral do jogo (proporção de acertos), não norma populacional nem ponto de corte validado.",
+    "Referência interna para a idade = proporção autoral de acertos do jogo, não norma populacional nem ponto de corte validado.",
   ].join("\n");
 
   const strengths = summary.phases.filter((phase) => phase.level === "esperado").map((phase) => phase.phase.domain);
@@ -134,7 +134,7 @@ export function buildGameDocSpec(session: GameSession, issuer: IssuerLines, appl
     })),
     { text: "" },
     ...(summary.level === null ? [{ text: "Partida incompleta: sem pontos fortes ou pontos de atenção (regra da partida incompleta).", tone: "neutral" as const }] : [
-      { text: `Pontos fortes nesta partida: ${strengths.length ? strengths.join(", ") : "nenhum domínio dentro do esperado"}.`, bold: true, tone: "correct" as const },
+      { text: `Pontos fortes nesta partida: ${strengths.length ? strengths.join(", ") : "nenhum domínio dentro da referência interna"}.`, bold: true, tone: "correct" as const },
       { text: `Pontos para olhar na consulta: ${attention.length ? attention.join(", ") : "nenhum"}.`, bold: true, tone: attention.length ? "wrong" as const : "neutral" as const },
     ]),
     { text: "" },
@@ -216,7 +216,7 @@ export function buildGameDocSpec(session: GameSession, issuer: IssuerLines, appl
     sections: [
       { heading: "Identificação da sessão", body: identification },
       { heading: "O que foi testado por instrumento de origem", body: origins },
-      { heading: "Desempenho por domínio x esperado para a idade", body: objectiveWithProfile },
+      { heading: "Desempenho por domínio x referência interna do jogo", body: objectiveWithProfile },
       ...(reading ? [{ heading: "Leitura para a consulta", body: consultation }] : []),
       ...phaseSections,
       { heading: "Observações da aplicadora", body: observations ? describeArt(observations) : "Sem observações registradas." },

@@ -41,12 +41,16 @@ function itemLine(r: ItemResponse): DocLine {
 
 export const decimalBr = (n: number | null) => (n == null ? "—" : String(n).replace(".", ","));
 
+/** Aviso fixo ao lado da taxa de fluência do jogo. */
+export const FLUENCY_NO_NORM = "sem referência normativa nesta triagem";
+
 export function fluencyText(s: GameSummary): string {
   const flu = s.leitura.fluencia;
   if (!flu) return "não aplicada";
   const unidade = s.band?.fluencia.kind === "silabas" ? "sílabas" : "palavras";
   const curta = flu.segundos < 30 ? " (leitura com menos de 30 s: taxa extrapolada, pouco confiável)" : "";
-  return `${flu.lidas} ${unidade} lidas · ${flu.erros} erros · ${flu.segundos} s · ${flu.wcpm ?? "—"} ${unidade} corretas por minuto${curta}`;
+  // A taxa é medida, não interpretada: a triagem não tem referência normativa de fluência.
+  return `${flu.lidas} ${unidade} lidas · ${flu.erros} erros · ${flu.segundos} s · ${flu.wcpm ?? "—"} ${unidade} corretas por minuto${curta} · ${FLUENCY_NO_NORM}`;
 }
 
 export function domainLines(s: GameSummary): string[] {

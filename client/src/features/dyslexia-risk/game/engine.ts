@@ -357,15 +357,20 @@ export function summarizeGame(state: GameState): GameSummary {
     minutos: Math.round((state.activeMs / 60000) * 10) / 10,
   };
   const s = summary.sinais;
-  if (dit.status === "concluido" && finalLevelOf(dit) === 1) s.push("Ditado: nível demonstrado 1 (abaixo do esperado para a faixa nesta aplicação).");
+  if (dit.status === "concluido" && finalLevelOf(dit) === 1) s.push("Ditado: nível demonstrado 1 (abaixo da referência interna da faixa nesta aplicação; não normativa).");
   if (summary.ditado.fonologicos >= 3) s.push(`${summary.ditado.fonologicos} erros fonológicos no ditado (troca, omissão ou acréscimo de sons).`);
-  if (dec.status === "concluido" && finalLevelOf(dec) === 1) s.push("Leitura de palavras: nível demonstrado 1 (abaixo do esperado para a faixa nesta aplicação).");
+  if (dec.status === "concluido" && finalLevelOf(dec) === 1) s.push("Leitura de palavras: nível demonstrado 1 (abaixo da referência interna da faixa nesta aplicação; não normativa).");
   const ps = summary.leitura.decodificacao.pseudo;
   if (ps.total >= 2 && ps.corretos / ps.total < 0.5) s.push(`Pseudopalavras lidas: ${ps.corretos}/${ps.total} (decodificação fonológica merece investigação).`);
   if (comp.status === "concluido" && compTally.corretos <= 1) s.push(`Compreensão: ${compTally.corretos}/${compTally.total}.`);
-  if (ari.status === "concluido" && finalLevelOf(ari) === 1) s.push("Aritmética: nível demonstrado 1 (abaixo do esperado para a faixa nesta aplicação).");
+  if (ari.status === "concluido" && finalLevelOf(ari) === 1) s.push("Aritmética: nível demonstrado 1 (abaixo da referência interna da faixa nesta aplicação; não normativa).");
   if (state.endedReason === "tempo") s.push("Sessão encerrada pelo limite de 15 minutos; mundos não concluídos ficam como não aplicados.");
   return summary;
 }
 
-export const LEVEL_LABEL: Record<Level, string> = { 1: "nível demonstrado 1 · abaixo da faixa", 2: "nível demonstrado 2 · esperado para a faixa", 3: "nível demonstrado 3 · acima da faixa" };
+/** Graduação INTERNA do jogo por faixa (não normativa): o texto nunca sugere norma populacional. */
+export const LEVEL_LABEL: Record<Level, string> = {
+  1: "nível demonstrado 1 · abaixo da referência interna da faixa (não normativa)",
+  2: "nível demonstrado 2 · na referência interna da faixa (não normativa)",
+  3: "nível demonstrado 3 · acima da referência interna da faixa (não normativa)",
+};

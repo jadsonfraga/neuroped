@@ -345,7 +345,7 @@ test("relatório e PDF: metadados, o que foi testado por instrumento, domínio �
   const session: GameSession = { ...play(7, (index) => (index === 3 ? "erro" : index === 9 ? "sem_resposta" : index === 12 ? "recusa" : "acerto")), pauseCount: 2, pausedSeconds: 95, undoCount: 1, observations: "Tímida no início, soltou depois." };
   session.answers[5] = { ...session.answers[5], repeated: true };
   const report = buildGameReport(session, new Date("2026-09-30T17:05:00Z"));
-  assert.match(report, /27 de 30 acertos \(esperado para a idade: 24 ou mais\)/);
+  assert.match(report, /27 de 30 acertos \(referência interna para a idade: 24 ou mais\)/);
   assert.match(report, /Data e hora \(local\): 30\/09\/2026/);
   assert.match(report, /O QUE FOI TESTADO POR INSTRUMENTO DE ORIGEM/);
   for (const label of ["Sonda 10", "Observa 10 (OBS-10)", "Reconhecimento visual", "Avaliação cognitiva infantil"]) assert.ok(report.includes(`- ${label}: `), label);
@@ -365,7 +365,7 @@ test("relatório e PDF: metadados, o que foi testado por instrumento, domínio �
   assert.match(spec.title, /Super NeuroPad Game/);
   assert.equal(spec.sections.length, 4 + 6 + 4, "identificação, instrumentos, domínios, leitura, 6 mundos, observações, critérios, estruturado, proveniência");
   assert.deepEqual(spec.sections.slice(0, 4).map((section) => section.heading), [
-    "Identificação da sessão", "O que foi testado por instrumento de origem", "Desempenho por domínio x esperado para a idade", "Leitura para a consulta",
+    "Identificação da sessão", "O que foi testado por instrumento de origem", "Desempenho por domínio x referência interna do jogo", "Leitura para a consulta",
   ]);
   assert.deepEqual(spec.sections.slice(-4).map((section) => section.heading), ["Observações da aplicadora", "Critérios de leitura", STRUCTURED_HEADER, "Proveniência e natureza"]);
   const identification = spec.sections[0].body;
@@ -377,8 +377,8 @@ test("relatório e PDF: metadados, o que foi testado por instrumento, domínio �
   assert.match(identification, /Mundos não aplicados: nenhum/);
   assert.match(spec.sections[1].body, /Sonda 10 \(\/testes-diretos\): \d+ item\(ns\) previstos para 7 anos/);
   assert.match(spec.sections[1].body, /Reconhecimento visual \(\/testes-reconhecimento\)/);
-  assert.match(spec.sections[2].body, /TOTAL: 27 acertos em 30 itens \(esperado para a idade: 24 ou mais\)/);
-  assert.match(spec.sections[2].body, /Mundo 1 - Vila da Conversa \(Interação e comunicação\): \d\/5 acertos \(esperado: 4 ou mais\)/);
+  assert.match(spec.sections[2].body, /TOTAL: 27 acertos em 30 itens \(referência interna para a idade: 24 ou mais\)/);
+  assert.match(spec.sections[2].body, /Mundo 1 - Vila da Conversa \(Interação e comunicação\): \d\/5 acertos \(referência interna: 4 ou mais\)/);
   assert.match(spec.sections[3].body, /Itens para checar na consulta \(3\)/);
   const bodies = spec.sections.map((section) => section.body).join("\n");
   for (const entry of session.answers) {
@@ -445,7 +445,7 @@ test("leitura para a consulta: prioridades, padrão com recusa agrupada, gesto, 
   const perfect = readComplete(play(8));
   assert.deepEqual(perfect.priorities, []);
   assert.equal(perfect.pattern, "nenhum");
-  assert.ok(perfect.notes.some((note) => /dentro do esperado para a idade/.test(note) && /não exclui dificuldades sutis/.test(note)));
+  assert.ok(perfect.notes.some((note) => /dentro da referência interna do jogo para a idade/.test(note) && /não exclui dificuldades sutis/.test(note)));
   assert.equal(perfect.notes.some((note) => /Aprofundar/.test(note)), false);
 
   // Mundo 5 (memória) todo recusado, mundo 3 (palavras) com dois erros.
@@ -519,7 +519,7 @@ test("leitura: toques impulsivos, não resposta por tipo e fadiga", () => {
 test("resumo para o prontuário é prosa curta com idade, contagem, mundos, itens perdidos, observações e ressalva autoral", () => {
   const session = { ...play(6, (index) => (index === 1 ? "erro" : index === 13 ? "sem_resposta" : "acerto")), observations: "Colaborou bem" };
   const brief = buildGameBrief(session, new Date("2026-09-30T12:00:00Z"));
-  assert.match(brief, /^Avaliação lúdica de pré-consulta \(Super NeuroPad Game, 6 anos\) aplicada em 30\/09\/2026: 28 de 30 acertos, dentro do esperado para a idade\./);
+  assert.match(brief, /^Avaliação lúdica de pré-consulta \(Super NeuroPad Game, 6 anos\) aplicada em 30\/09\/2026: 28 de 30 acertos, dentro da referência interna do jogo \(não normativa\)\./);
   assert.match(brief, /Por mundo: Vila da Conversa 4\/5, Floresta dos Olhos 5\/5, Ilha das Palavras 4\/5, Montanha dos Números 5\/5, Caverna da Memória 5\/5, Torre do Corpo 5\/5\./);
   assert.match(brief, /Itens perdidos: .*\(errou\); .*\(não respondeu\)\./);
   assert.match(brief, /Observações da aplicadora: Colaborou bem\. Contagem autoral/);
@@ -552,7 +552,7 @@ test("partidas interrompidas ou com itens duplicados não pontuam nem interpreta
     for (const output of [buildGameReport(partial), buildGameBrief(partial), JSON.stringify(pdf)]) {
       assert.match(output, /incompleta/);
       assert.match(output, /Sem classificação ou interpretação/);
-      assert.doesNotMatch(output, /sinal de alerta|dentro do esperado para|prioridade para|ritmo regular|roteiro sugerido|"nivel":"/i);
+      assert.doesNotMatch(output, /sinal de alerta|dentro do esperado para|dentro da referência interna|prioridade para|ritmo regular|roteiro sugerido|"nivel":"/i);
     }
     assert.ok(!pdf.sections.some((section) => /Leitura para a consulta|Critérios de leitura/.test(section.heading)));
     assert.equal(pdf.sections.length, 3 + 6 + 3);
@@ -596,7 +596,7 @@ test("salvar no prontuário: resumo, partida, instrumentos, observações e cada
     assert.doesNotMatch(partialRows[1].answer, /duração da sessão/);
     const text = partialRows.map((row) => `${row.question} ${row.answer}`).join("\n");
     assert.match(text, /Sem classificação ou interpretação/);
-    assert.doesNotMatch(text, /sinal de alerta|dentro do esperado para|prioridade para|roteiro sugerido/i);
+    assert.doesNotMatch(text, /sinal de alerta|dentro do esperado para|dentro da referência interna|prioridade para|roteiro sugerido/i);
   }
 });
 

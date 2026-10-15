@@ -94,9 +94,9 @@
     "test:saas-self-service": "node tests/unit/saas-membership-owner-regression.test.mjs && node --import tsx --test tests/unit/tenant-management-authorization.test.ts && node --import tsx tests/unit/saas-onboarding-progress.test.ts && node --import tsx --test tests/unit/onboarding-progress-ui.test.tsx && node --import tsx tests/unit/saas-self-service.test.ts && node --import tsx tests/unit/saas-acceptance-journey.test.ts && node --import tsx tests/unit/cliente-zero-journey.test.ts && node --import tsx tests/unit/saas-legal-acceptance.test.ts && node tests/unit/saas-loop-artifacts-static.test.mjs",
     "test:sonda": "node --import tsx tests/unit/sonda-dez-consolidation.test.ts && node --import tsx tests/unit/sonda-dez-digital.test.ts && node --import tsx tests/unit/sonda-dez-quality.test.ts && node tests/unit/sonda-dez-aventura-static.test.mjs",
     "test:e2e:sonda": "node --import tsx tests/e2e/sonda-dez-digital.mjs",
-    "test:super-neuropad": "node --import tsx --test tests/unit/super-neuropad-game.test.ts tests/unit/super-neuropad-integrated-bank.test.ts tests/unit/super-neuropad-extension-criteria.test.ts tests/unit/super-neuropad-evolution.test.ts",
+    "test:super-neuropad": "node --import tsx --test tests/unit/super-neuropad-game.test.ts tests/unit/super-neuropad-integrated-bank.test.ts tests/unit/super-neuropad-extension-criteria.test.ts tests/unit/super-neuropad-evolution.test.ts tests/unit/super-neuropad-toddler.test.ts tests/unit/super-neuropad-family-delivery.test.ts tests/unit/super-neuropad-diagnostico.test.ts",
     "test:e2e:super-neuropad": "node tests/e2e/super-neuropad-game.mjs",
-    "test:dyslexia-risk": "node --import tsx --test tests/unit/dyslexia-risk.test.ts tests/unit/dyslexia-game.test.ts",
+    "test:dyslexia-risk": "node --import tsx --test tests/unit/dyslexia-risk.test.ts tests/unit/dyslexia-game.test.ts tests/unit/dyslexia-risk-diagnostico.test.ts",
     "test:e2e:dyslexia-risk": "node tests/e2e/dyslexia-game.mjs"
   },
   "dependencies": {

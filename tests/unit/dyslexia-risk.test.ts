@@ -151,14 +151,14 @@ test("icedResponseItems alimenta o SaveToPatient sem lacunas", () => {
   const items = icedResponseItems(state, result);
   assert.equal(items.length > 15, true);
   assert.equal(items.every((item) => item.question && item.answer), true);
-  assert.match(items.find((item) => item.question === "Escore ICED-8")?.answer ?? "", /^\d+\/15$/);
+  assert.match(items.find((item) => item.question === "Escore ICED-8")?.answer ?? "", /^\d+\/15 \(possíveis nos domínios examinados: \d+\)$/);
 });
 
 test("resumo curto mant\u00e9m trava e disclaimers", () => {
   const state = stateFor({ controle: { esc: "sim", alf: "sim", freq: "sim", aud: "nao", vis: "sim", di: "sim", pers: "sim" } });
   const result = scoreIced(icedInputOf(state));
   const summary = buildIcedSummary(state, result, "01/01/2026 10:00");
-  assert.match(summary, /Trava ativa/);
+  assert.match(summary, /Trava de controle: ativa/);
   assert.match(summary, /n\u00e3o diagnostica/i);
 });
 
@@ -171,7 +171,7 @@ test("p\u00e1gina wired de ponta a ponta: exporta\u00e7\u00e3o, salvar e anti-re
   assert.match(page, /LazySaveToPatient/);
   assert.match(page, /exportPdf/);
   assert.match(page, /newApplication/);
-  assert.match(page, /localStorage\.removeItem\(KEY\)/);
+  assert.match(page, /clearDraft\(KEY\)/, "nova aplicação apaga o rascunho local");
   assert.match(page, /aria-pressed/);
   assert.match(page, /normas\.pseudo/);
   assert.doesNotMatch(page, /sessionStorage/);

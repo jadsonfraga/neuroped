@@ -99,6 +99,12 @@ export interface IcedInput {
 export interface IcedResult {
   trava: boolean;
   travaMotivo: string;
+  /** Controles de exclusão sem resposta "sim"/"não" (vazio ou "não verificado"). Ausente ≠ normal: deixa o escore descritivo. */
+  controlesPendentes: string[];
+  /** Soma dos pesos dos domínios examinados (o máximo alcançável nesta aplicação). */
+  pontosExaminaveis: number;
+  /** Avisos de leitura: ano sem âncora de fluência, domínios não examinados etc. */
+  avisos: string[];
   dominios: DomainScore[];
   total: number;
   naoExaminados: string[];
@@ -121,6 +127,16 @@ export function fluencyAnchor(ano: IcedInput["ano"], pcpm: number | null) {
   return { pontua: false, examinado: true, detalhe: `PCPM ${pcpm} acima da âncora do 3º ano.` };
 }
 
+/** Controles que, respondidos "não", travam a leitura (e, sem resposta, a deixam descritiva). */
+export const TRAVA_CONTROLS = ["esc", "alf", "aud", "vis", "di"] as const;
+
+/** Texto único da situação da trava, usado em tela, PDF, prontuário e devolução. */
+export function travaStatusText(result: Pick<IcedResult, "trava" | "travaMotivo" | "controlesPendentes">): string {
+  if (result.trava) return `ativa — ${result.travaMotivo}`;
+  if (result.controlesPendentes.length) return `pendente — controles não confirmados: ${result.controlesPendentes.join("; ")}`;
+  return "liberada";
+}
+
 export function scoreIced(input: IcedInput): IcedResult {
   const travaInstr = input.controle.alf === "nao" || input.controle.esc === "nao";
   const travaSensor = input.controle.aud === "nao" || input.controle.vis === "nao";
@@ -131,6 +147,10 @@ export function scoreIced(input: IcedInput): IcedResult {
     travaSensor ? "alteração sensorial não corrigida" : "",
     travaDi ? "deficiência intelectual como explicação suficiente" : "",
   ].filter(Boolean).join("; ");
+  const controlLabel = new Map<string, string>(CONTROL.map(([key, label]) => [key, label]));
+  const controlesPendentes = trava ? [] : TRAVA_CONTROLS
+    .filter((key) => input.controle[key] !== "sim" && input.controle[key] !== "nao")
+    .map((key) => controlLabel.get(key) ?? key);
 
   const dominios: DomainScore[] = [];
 
@@ -203,6 +223,14 @@ export function scoreIced(input: IcedInput): IcedResult {
 
   const total = dominios.reduce((s, d) => s + (d.examinado ? d.pontos : 0), 0);
   const naoExaminados = dominios.filter((d) => !d.examinado).map((d) => d.nome);
+  const pontosExaminaveis = dominios.reduce((s, d) => s + (d.examinado ? d.peso : 0), 0);
+  const avisos: string[] = [];
+  if (!input.fluenciaNorma && (input.ano === "outro" || !input.ano)) {
+    avisos.push("Ano escolar sem âncora de fluência: a fluência não pontua (3 pontos fora do alcance), então o limiar de 9/15 não é equivalente ao do 2º e 3º ano. Use norma formal do ano, se houver.");
+  }
+  if (naoExaminados.length) {
+    avisos.push(`Escore sobre ${pontosExaminaveis} pontos possíveis (domínios examinados), não sobre 15. Não examinados: ${naoExaminados.join(", ")}. Ausente não é normal.`);
+  }
   const nucleo = dominios.some((d) => (d.id === "fluencia" || d.id === "ortografia") && d.pontos > 0) ? "presente" : "ausente";
 
   let faixa: IcedResult["faixa"] = "limitada";
@@ -210,6 +238,9 @@ export function scoreIced(input: IcedInput): IcedResult {
   if (trava) {
     faixa = "descritiva";
     leitura = "Escore descritivo. Não interpretado como evidência de dislexia.";
+  } else if (controlesPendentes.length) {
+    faixa = "descritiva";
+    leitura = "Escore descritivo: controles de exclusão não confirmados (escolarização, alfabetização, audição, visão ou deficiência intelectual). Confirmar antes de interpretar.";
   } else if (total >= 9 && nucleo === "presente") {
     faixa = "elevada";
     leitura = "Evidência elevada de dificuldade persistente de leitura/escrita.";
@@ -220,9 +251,12 @@ export function scoreIced(input: IcedInput): IcedResult {
     faixa = "intermediaria";
     leitura = "Evidência intermediária. Investigar, intervir e rever.";
   }
+  if (faixa === "limitada" && naoExaminados.length) {
+    leitura = "Evidência limitada nos domínios examinados; há domínios não examinados, o que não equivale a resultado normal.";
+  }
 
   const frase = [
-    `ICED-8 = ${total}/15.`,
+    `ICED-8 = ${total}/15 (pontos possíveis nos domínios examinados: ${pontosExaminaveis}).`,
     `Fluência ${dominios[0].examinado ? dominios[0].pontos : "não examinada"}.`,
     `Ortografia ${dominios[1].examinado ? dominios[1].pontos : "não examinada"}.`,
     `Pseudopalavras ${dominios[2].examinado ? dominios[2].pontos : "não examinado"}.`,
@@ -232,11 +266,11 @@ export function scoreIced(input: IcedInput): IcedResult {
     `Familiar ${dominios[6].examinado ? dominios[6].pontos : "não examinado"}.`,
     `Intervenção ${dominios[7].examinado ? dominios[7].pontos : "não examinada"}.`,
     `Ano escolar usado na fluência: ${input.ano || "não informado"}.`,
-    `Trava de controle: ${trava ? "ativa" : "liberada"}.`,
+    `Trava de controle: ${trava ? "ativa" : controlesPendentes.length ? "pendente (controles não confirmados)" : "liberada"}.`,
     `Leitura operacional: ${faixa}.`,
     `Núcleo funcional (fluência ou ortografia): ${nucleo}.`,
     "Resultado não constitui diagnóstico. Integrar escolarização, linguagem, desenvolvimento e diferencial.",
   ].join(" ");
 
-  return { trava, travaMotivo, dominios, total, naoExaminados, faixa, nucleo, leitura, frase };
+  return { trava, travaMotivo, controlesPendentes, pontosExaminaveis, avisos, dominios, total, naoExaminados, faixa, nucleo, leitura, frase };
 }

@@ -57,6 +57,7 @@ import {
   phaseById,
   sessionLimitSeconds,
   RED_FLAG_LABEL,
+  TODDLER_FEW_ITEMS_NOTE,
   redFlagLabel,
   phaseStatusText,
   recordBuild,
@@ -115,7 +116,7 @@ const OPTION_TINTS = ["bg-[var(--snp-berry-tint)]", "bg-[var(--snp-sky-tint)]", 
 
 const LEVEL_PANEL: Record<Level, string> = { esperado: "snp-panel--grass", observar: "snp-panel--sun", alerta: "snp-panel--berry" };
 const LEVEL_ICON: Record<Level, string> = { esperado: "🟢", observar: "🟡", alerta: "🔴" };
-const LEVEL_SHORT: Record<Level, string> = { esperado: "Esperado", observar: "Observar", alerta: "Alerta" };
+const LEVEL_SHORT: Record<Level, string> = { esperado: "Na referência", observar: "Observar", alerta: "Alerta" };
 
 const STATUS_TONE: Record<AnswerStatus, string> = {
   acerto: "bg-emerald-600 text-white",
@@ -1269,7 +1270,7 @@ export default function SuperNeuroPadGamePage() {
           ) : (<div className={`snp-panel ${LEVEL_PANEL[summary.level]} p-5`}>
             <div className="snp-pixel text-[11px] opacity-80">Resultado objetivo · {summary.band.label} · {summary.complete ? "partida completa" : `partida incompleta (${session.answers.length} de ${summary.total} itens)`}</div>
             <div className="mt-1 text-3xl font-black">{LEVEL_ICON[summary.level]} {summary.hits} de {summary.total} acertos</div>
-            <div className="text-xs font-bold opacity-80">Esperado para {summary.band.label}: {summary.expectedMin} ou mais (referência autoral do jogo)</div>
+            <div className="text-xs font-bold opacity-80">Referência interna para {summary.band.label}: {summary.expectedMin} ou mais (autoral, não normativa)</div>
             <div className="text-base font-black">{LEVEL_LABELS[summary.level]}</div>
             <div className="mt-1 text-xs font-semibold opacity-80">Tempo somado nas tarefas: {formatDuration(summary.durationSeconds)} · contagem autoral, não normativa; leitura é do médico.</div>
           </div>)}
@@ -1336,7 +1337,7 @@ export default function SuperNeuroPadGamePage() {
               {summary.redFlags.length === 0
                 ? <p className="mt-1 text-sm font-semibold">Nenhum sinal de alerta nos itens registrados.</p>
                 : <ul className="mt-1 space-y-1 text-sm font-bold">{summary.redFlags.map((flag) => <li key={flag.itemId}>⚠️ {redFlagLabel(summary)}: {flag.text}{flag.informant === "cuidador" ? " (relato do cuidador)" : ""}</li>)}</ul>}
-              <p className="mt-1 text-[11px] font-semibold opacity-80">Critérios da bateria de 2–3 anos são piso autoral, não norma.</p>
+              <p className="mt-1 text-[11px] font-semibold opacity-80">Critérios da bateria de 2–3 anos são piso autoral, não norma. {TODDLER_FEW_ITEMS_NOTE}</p>
             </div>
           )}
 
@@ -1347,7 +1348,7 @@ export default function SuperNeuroPadGamePage() {
                 <div className="snp-pixel text-[11px]">{entry.phase.name}</div>
                 <div className="text-[11px] font-semibold opacity-80">{entry.phase.domain}</div>
                 <div className="mt-2 text-2xl font-black">{entry.level !== null ? `${entry.hits}/${entry.total}` : entry.applied ? `${entry.answers.length} registros` : "—"}</div>
-                <div className="text-[11px] font-bold opacity-80">Esperado para a idade: {entry.expectedMin} ou mais de {entry.total}</div>
+                <div className="text-[11px] font-bold opacity-80">Referência interna: {entry.expectedMin} ou mais de {entry.total}</div>
                 <div className="mt-1"><PhaseMeter phase={entry} /></div>
                 <div className="mt-1 text-xs font-black">{entry.level !== null ? `${LEVEL_ICON[entry.level]} ${LEVEL_SHORT[entry.level]}` : entry.skipReason ? `Não aplicado — ${entry.skipReason}` : entry.applied ? "Registro parcial" : "Não aplicado"}</div>
                 <div className="mt-1 text-[11px] font-semibold opacity-80">{entry.applied ? `${entry.errors} erros · ${entry.noResponse} sem resposta · ${entry.refused} recusa(s) · ${formatDuration(entry.seconds)}` : "nenhum item registrado"}</div>
