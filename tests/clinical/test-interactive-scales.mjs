@@ -90,7 +90,14 @@ for (const [id, def] of itemEntries) {
   const totalItems = (def.domains ?? []).reduce((acc, d) => acc + (d.items?.length ?? 0), 0);
   ok(totalItems >= 1, `${id}: tem ≥1 item (em ${def.domains?.length ?? 0} domínios)`);
   ok((def.domains ?? []).every((d) => Array.isArray(d.items) && d.items.length >= 1), `${id}: todo domínio tem ≥1 item`);
-  ok(Array.isArray(def.labels) && def.labels.length >= 2, `${id}: ≥2 opções de resposta`);
+  // Cada item de escolha precisa de ≥2 opções: as da escala ou as próprias do item
+  // (ex.: EPDS). Itens de texto (ex.: dias no PedMIDAS) não usam opções.
+  const allItems = (def.domains ?? []).flatMap((d) => d.items ?? []);
+  const choiceOptions = allItems
+    .filter((it) => typeof it === "string" || it.responseType !== "text")
+    .map((it) => (typeof it !== "string" && Array.isArray(it.options) && it.options.length ? it.options : def.labels));
+  ok(choiceOptions.every((opts) => Array.isArray(opts) && opts.length >= 2), `${id}: ≥2 opções de resposta em todo item de escolha`);
+  ok(allItems.every((it) => typeof it === "string" || !it.options || !it.optionPoints || it.optionPoints.length === it.options.length), `${id}: pontos por item casam com as opções do item`);
   if (def.optionPoints) ok(def.optionPoints.length === def.labels.length, `${id}: optionPoints casa com labels`);
 
   ok(Array.isArray(def.bands) && def.bands.length >= 1, `${id}: tem ≥1 faixa de interpretação`);
