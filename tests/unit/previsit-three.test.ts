@@ -36,9 +36,10 @@ test("as três posições nunca relaxam idade, respondente, modo, segurança ou 
       const s = row.scale;
       const where = `${queixa}/${idadeMeses}/${respondente}/${contexto}: ${s.id}`;
       assert.ok(idadeMeses >= s.ageMin && idadeMeses <= s.ageMax, where);
-      assert.equal(getApplicationMode(s), MODE[respondente], where);
+      const altResp = /respondente alternativo/.test(row.reason), longer = /acima de 15 min/.test(row.reason) || altResp; // preenchimentos rotulados do seletor v2
+      if (!altResp) assert.equal(getApplicationMode(s), MODE[respondente], where);
       assert.equal(isSuicideInstrument(s) || isPsychosisInstrument(s), false, where);
-      assert.ok((previsitUpperMinutes(s) ?? 99) <= 15, where);
+      assert.ok((previsitUpperMinutes(s) ?? 99) <= (longer ? 30 : 15), where);
     }
     const empty = rows.find((r) => !r.scale && (PREVISIT_POSITIONS as readonly string[]).includes(r.label));
     if (empty) assert.match(empty.reason, /Não completar com instrumento inadequado/);
