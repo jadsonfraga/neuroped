@@ -33,3 +33,7 @@ Observações de honestidade clínica:
 
 ## Não implementadas (sem fonte aberta verificável em português ou exigem recurso inexistente)
 POSI (exige múltipla escolha/opções por item), PHQ-9/GAD-7 cuidador (sem cópia PT-BR livre recuperável), SWAN, PedMIDAS-BR, AEP/LAEP, QOLCE-55, PUTS, P-YMRS/YMRS, PGBI-10M, PQ-B, DCDQ ("no charge" sem permissão de reprodução), Simpson-Angus (sem texto PT oficial encontrado).
+
+
+## Atualização (15/10/2026): lacunas cobertas por instrumentos AUTORAIS
+SWAN, PUTS, P-YMRS/YMRS, Simpson-Angus, SCAS, PedMIDAS e PHQ-9/GAD-7 do cuidador já estão no catálogo executável (mergeados pelo responsável). As demais lacunas (AEP, QOLCE, PGBI, PQ-B, CES-DC, DCDQ, POSI, ICU, FMS, SDSC, RBS-R, S2BI e categorias) foram cobertas por **35 instrumentos autorais NeuroPed** — texto original, sem validação psicométrica, sem corte. Ver `docs/ESCALAS_AUTORAIS_NEUROPED.md`.

@@ -1,0 +1,177 @@
+// Instrumentos autorais NeuroPed — neurodesenvolvimento, aprendizagem, sensorial, sono e alimentação (itens originais).
+import { authorial, SKILL4 } from "./authorialKit";
+import type { OpenScaleSpec } from "./openScaleKit";
+
+const SEM_OBS = ["Nunca observo", "Observo às vezes", "Observo com frequência", "Observo sempre"];
+
+export const neurodesenvSpecs: OpenScaleSpec[] = [
+  authorial({
+    wave: 2, id: "na-coordenacao-motora-pais", name: "Coordenação motora (pais)", fullName: "Coordenação motora fina e grossa no dia a dia — relato dos pais",
+    construct: "coordenação motora e planejamento motor em atividades cotidianas", ageMin: 60, ageMax: 180, queixas: ["motor", "funcionalidade"], respondente: ["pais"],
+    applicationMode: "questionario_pais", assessmentUse: "triagem", tempo: "4–6 min", primaryDomain: "motor", overlapGroup: "na-coordenacao", higherBetter: true, labels: ["Muito pior que os colegas", "Pior que os colegas", "Parecido com os colegas", "Melhor que os colegas"],
+    signalTags: ["desajeitado", "cai muito", "letra feia", "dificuldade para amarrar o cadarço", "dificuldade com bola", "coordenação motora", "dispraxia"],
+    description: "Compara a criança com colegas da mesma idade em atividades motoras comuns. Maior pontuação = desempenho motor mais próximo ou melhor que o esperado; serve para sinalizar quem precisa de avaliação motora.",
+    instruction: "Compare a criança com outras da mesma idade em cada situação e marque a opção que mais se aproxima da realidade.",
+    blocks: [
+      { name: "Movimento amplo", items: ["Pega e arremessa bola.", "Corre, pula e sobe em brinquedos sem tropeçar nem cair muito.", "Anda de bicicleta ou patinete (conforme a idade).", "Aprende novos movimentos de jogos e esportes."] },
+      { name: "Movimento fino e planejamento", items: ["Amarra o cadarço, abotoa e fecha zíper.", "Recorta com tesoura e desenha ou pinta dentro das linhas.", "Escreve com letra legível na velocidade da turma.", "Usa talheres sem derrubar muita comida.", "Arruma a mochila e organiza materiais de forma coordenada."] },
+    ],
+    extraInfo: "Triagem para encaminhar à avaliação motora (fisioterapia ou terapia ocupacional); não diagnostica transtorno da coordenação.",
+  }),
+  authorial({
+    wave: 2, id: "na-interacao-social-precoce-pais", name: "Interação social precoce (pais)", fullName: "Sinais de interação social e comunicação em bebês e crianças pequenas — observação dos pais",
+    construct: "sinais precoces de atenção compartilhada, reciprocidade social e comunicação", ageMin: 12, ageMax: 48, queixas: ["tea", "social", "linguagem"], respondente: ["pais"],
+    applicationMode: "questionario_pais", assessmentUse: "triagem", tempo: "4–6 min", primaryDomain: "social", overlapGroup: "na-social-precoce", higherBetter: true, labels: SEM_OBS,
+    signalTags: ["não responde ao nome", "não aponta", "pouco contato visual", "não imita", "brinca sozinho", "atenção compartilhada", "não sorri de volta"],
+    description: "O que os pais veem no dia a dia sobre olhar, resposta ao nome, apontar, imitar e brincar com os outros. Maior pontuação = mais sinais sociais presentes; ajuda a decidir se vale um rastreio específico de TEA.",
+    instruction: "Marque com que frequência você observa cada comportamento na criança, em situações comuns de casa.",
+    blocks: [
+      { name: "Olhar e resposta", items: ["Olha para o seu rosto quando você fala ou brinca.", "Responde quando é chamado(a) pelo nome.", "Sorri ou faz sons em resposta ao seu sorriso ou voz.", "Mostra interesse por outras crianças."] },
+      { name: "Compartilhar e imitar", items: ["Aponta para mostrar algo que quer ou que achou interessante.", "Olha para onde você aponta.", "Imita gestos, sons ou palavras (tchau, palmas, caretas).", "Traz objetos para mostrar a você.", "Brinca de faz de conta de forma simples (dar de comer à boneca, falar ao telefone)."] },
+    ],
+    extraInfo: "Não substitui rastreio estruturado de TEA nem avaliação do desenvolvimento; use para organizar a conversa e decidir o próximo passo.",
+  }),
+  authorial({
+    wave: 2, id: "na-sono-crianca-pais", name: "Sono da criança (pais)", fullName: "Hábitos e problemas de sono — relato dos pais",
+    construct: "problemas de sono na infância (início, manutenção, despertares, sonolência diurna, respiração e movimentos)", ageMin: 36, ageMax: 192, queixas: ["sono"], respondente: ["pais"],
+    applicationMode: "questionario_pais", assessmentUse: "triagem", tempo: "4–6 min", primaryDomain: "sono", overlapGroup: "na-sono-crianca",
+    signalTags: ["dificuldade para dormir", "acorda à noite", "ronco", "pesadelos", "sonolência durante o dia", "sono agitado", "terror noturno", "xixi na cama"],
+    description: "Frequência de problemas de sono em 5 blocos: dormir, despertares, respiração, comportamentos durante o sono e sonolência diurna. Descreve; não diagnostica distúrbio do sono.",
+    instruction: "Pense nas últimas 4 semanas e marque com que frequência cada situação acontece.",
+    blocks: [
+      { name: "Para dormir", items: ["Demora mais de meia hora para pegar no sono.", "Resiste ou protesta na hora de ir para a cama.", "Só dorme com a presença de um adulto ou com a TV/tela ligada."] },
+      { name: "Durante a noite", items: ["Acorda várias vezes durante a noite.", "Tem pesadelos ou acorda assustado(a).", "Levanta e anda dormindo, ou tem terror noturno (grita sem acordar de verdade).", "Faz xixi na cama durante o sono (para a idade em que isso já não seria esperado)."] },
+      { name: "Respiração e movimento", items: ["Ronca alto ou faz pausas na respiração durante o sono.", "Dorme de boca aberta ou com muita transpiração.", "Mexe muito as pernas ou o corpo durante o sono."] },
+      { name: "Durante o dia", items: ["Tem dificuldade de acordar de manhã.", "Fica com sono ou dorme durante atividades do dia (escola, carro).", "Fica irritado(a) ou agitado(a) por falta de sono."] },
+    ],
+    extraInfo: "Ronco com pausas, sonolência intensa ou crises noturnas repetidas pedem avaliação específica (polissonografia, neurologia ou otorrino).",
+  }),
+  authorial({
+    wave: 2, id: "na-comportamentos-repetitivos-pais", name: "Comportamentos repetitivos (pais)", fullName: "Movimentos repetitivos, rotinas rígidas e interesses restritos — relato dos pais",
+    construct: "comportamentos restritos e repetitivos em crianças com e sem autismo", ageMin: 24, ageMax: 216, queixas: ["tea", "comportamento"], respondente: ["pais"],
+    applicationMode: "questionario_pais", assessmentUse: "seguimento", prioridade: "monitorizacao", tempo: "5–7 min", primaryDomain: "tea", overlapGroup: "na-repetitivos",
+    signalTags: ["estereotipias", "balançar o corpo", "flapping", "rituais", "rigidez com rotina", "interesse restrito", "alinha objetos", "insistência na mesmice"],
+    description: "Descreve a frequência de movimentos repetidos, rituais, resistência a mudanças e interesses muito restritos. Serve para acompanhar a evolução e o impacto na rotina; não diagnostica autismo.",
+    instruction: "Pense no último mês e marque com que frequência cada comportamento aparece.",
+    blocks: [
+      { name: "Movimentos e uso de objetos", items: ["Balança o corpo, bate as mãos ou faz movimentos repetidos com o corpo.", "Gira, alinha ou empilha objetos de modo repetitivo.", "Repete sons, palavras ou frases fora do contexto."] },
+      { name: "Rotinas e interesses", items: ["Fica muito aflito(a) com mudanças de rotina, trajeto ou ordem das coisas.", "Insiste em fazer certas coisas sempre do mesmo jeito.", "Tem interesse muito intenso por um assunto ou objeto e dificuldade de falar de outras coisas.", "Reage de forma exagerada a pequenas mudanças (roupa, comida, lugar)."] },
+      { name: "Impacto", items: ["Esses comportamentos atrapalham a rotina da família.", "Esses comportamentos atrapalham o aprendizado ou a convivência com outras crianças."] },
+    ],
+  }),
+  authorial({
+    wave: 2, id: "na-selecao-alimentar-pais", name: "Seletividade e evitação alimentar (pais)", fullName: "Seletividade alimentar, medo de comer e baixo interesse por alimento — relato dos pais",
+    construct: "seletividade alimentar e transtorno alimentar evitativo/restritivo (aspectos funcionais)", ageMin: 18, ageMax: 192, queixas: ["alimentacao", "sensorial"], respondente: ["pais"],
+    applicationMode: "questionario_pais", assessmentUse: "triagem", tempo: "4–6 min", primaryDomain: "alimentacao", overlapGroup: "na-selecao-alimentar",
+    signalTags: ["seletividade alimentar", "só come poucos alimentos", "recusa de texturas", "medo de engasgar", "pouco apetite", "baixo peso", "recusa alimentar"],
+    description: "Aborda variedade de alimentos, texturas, medo de comer, pouco interesse e impacto no crescimento e na família. Descreve; não diagnostica transtorno alimentar.",
+    instruction: "Pense nas últimas 4 semanas e marque com que frequência cada situação acontece.",
+    blocks: [
+      { name: "Variedade e sensorial", items: ["Come menos de 10 alimentos diferentes.", "Recusa alimentos pela textura, cor, cheiro ou temperatura.", "Recusa alimentos que já aceitou antes.", "Só aceita certas marcas ou embalagens."] },
+      { name: "Medo e interesse", items: ["Tem medo de engasgar, vomitar ou sentir dor ao comer.", "Parece ter pouco interesse por comida ou esquece de comer.", "A refeição dura mais de 40 minutos."] },
+      { name: "Impacto", items: ["A família preocupa-se com o peso ou a altura da criança por causa da alimentação.", "Há conflitos graves nas refeições (choro, briga, força).", "A criança precisa de suplemento, TV ou tela para comer."] },
+    ],
+    extraInfo: "Perda de peso, desidratação, engasgos frequentes ou recusa total de alimento exigem avaliação pediátrica sem demora.",
+  }),
+  authorial({
+    wave: 2, id: "na-sensorial-casa-pais", name: "Perfil sensorial em casa (pais)", fullName: "Reações a sons, toques, luzes, cheiros e movimento no dia a dia — relato dos pais",
+    construct: "modulação e processamento sensorial no cotidiano (hiper e hiporresposta)", ageMin: 24, ageMax: 180, queixas: ["sensorial", "tea"], respondente: ["pais"],
+    applicationMode: "questionario_pais", assessmentUse: "triagem", tempo: "5–7 min", primaryDomain: "sensorial", overlapGroup: "na-sensorial-casa",
+    signalTags: ["incômodo com barulho", "não gosta de etiqueta na roupa", "não gosta de banho de cabelo", "procura movimento", "não sente dor", "cobre os ouvidos", "sensibilidade sensorial"],
+    description: "Frequência de reações intensas ou pouco intensas a estímulos do dia a dia. Não faz diagnóstico de transtorno de processamento sensorial.",
+    instruction: "Pense no último mês e marque com que frequência cada situação acontece.",
+    blocks: [
+      { name: "Sons, luz e cheiros", items: ["Cobre os ouvidos ou fica aflito(a) com barulhos comuns (liquidificador, secador, aspirador).", "Incomoda-se com luz forte ou com mudanças de iluminação.", "Reclama de cheiros que outras pessoas nem notam."] },
+      { name: "Toque e corpo", items: ["Incomoda-se com etiquetas, costuras ou certos tecidos.", "Evita sujar as mãos (areia, tinta, massa) ou, ao contrário, procura muito sujar-se.", "Parece não sentir dor ou temperatura como outras crianças.", "Evita ou fica aflito(a) com banho, corte de cabelo ou unhas."] },
+      { name: "Movimento e procura de estímulo", items: ["Procura movimento o tempo todo (balançar, pular, rodar) e não se cansa.", "Esbarra, bate ou machuca-se com frequência sem parecer notar.", "Mastiga ou morde objetos, roupas ou as próprias mãos."] },
+    ],
+  }),
+  authorial({
+    wave: 2, id: "na-sensorial-escola-professor", name: "Comportamento sensorial na escola (professor)", fullName: "Reações sensoriais e regulação em sala de aula e recreio — relato do professor",
+    construct: "modulação sensorial e impacto no ambiente escolar", ageMin: 36, ageMax: 180, queixas: ["sensorial", "tea", "comportamento"], respondente: ["professor"],
+    applicationMode: "questionario_professor", assessmentUse: "triagem", tempo: "4–6 min", primaryDomain: "sensorial", overlapGroup: "na-sensorial-escola",
+    signalTags: ["barulho da sala", "refeitório barulhento", "recreio difícil", "não gosta de fila", "sensibilidade sensorial na escola", "inquietação em sala"],
+    description: "O que o professor observa sobre barulho, toque, movimento e transições na escola. Ajuda a combinar adaptações simples (cantinho calmo, fones, pausas).",
+    instruction: "Pense nas últimas 4 semanas de aula e marque com que frequência cada situação acontece com este aluno.",
+    blocks: [
+      { name: "Ambiente", items: ["Fica aflito(a) com barulho da sala, do pátio ou do refeitório.", "Evita ou reage mal ao contato físico de colegas (fila, abraço, brincadeiras).", "Reage mal a cheiros, texturas ou atividades que envolvem sujar as mãos."] },
+      { name: "Corpo e atenção", items: ["Precisa se mover, balançar ou mexer em objetos para se manter atento(a).", "Procura sensações intensas (bater, pular, esbarrar) sem aparente intenção de machucar.", "Cansa-se rapidamente em dias com muito estímulo e depois fica irritadiço(a) ou 'desliga'."] },
+      { name: "Adaptações", items: ["Melhora quando recebe pausas, local mais calmo ou recursos de apoio.", "Mudanças na rotina da escola (evento, substituto, barulho) desorganizam o comportamento."] },
+    ],
+  }),
+  authorial({
+    wave: 3, id: "na-leitura-dislexia-professor", name: "Leitura e consciência fonológica (professor)", fullName: "Sinais de dificuldade de leitura — observação do professor",
+    construct: "dificuldades de leitura de base fonológica (decodificação, fluência, nomeação) em escolares", ageMin: 72, ageMax: 192, queixas: ["aprendizagem"], respondente: ["professor"],
+    applicationMode: "questionario_professor", assessmentUse: "triagem", tempo: "4–6 min", primaryDomain: "aprendizagem", overlapGroup: "na-leitura-professor",
+    signalTags: ["dificuldade para ler", "troca letras", "lê devagar", "soletra", "dislexia", "não relaciona som e letra", "evita leitura em voz alta"],
+    description: "Frequência de sinais de dificuldade na leitura em sala de aula. Triagem para encaminhar à avaliação; não diagnostica dislexia e não considera oportunidades de ensino sozinhas.",
+    instruction: "Pense no desempenho do aluno comparado à turma, nas últimas 4 semanas, e marque com que frequência cada situação ocorre.",
+    blocks: [
+      { name: "Decodificação", items: ["Lê palavras sílaba por sílaba mesmo após longo período de alfabetização.", "Troca, omite ou inverte letras e sons ao ler.", "Tem dificuldade de ler palavras novas ou inventadas.", "Lê palavras isoladas melhor do que textos; adivinha palavras pelo contexto."] },
+      { name: "Fluência e compreensão", items: ["Lê de forma lenta e com esforço evidente.", "Evita ler em voz alta ou fica muito ansioso(a) com isso.", "Compreende melhor quando o texto é lido por outra pessoa.", "Tem dificuldade em rimar ou dividir palavras em sílabas e sons (crianças menores)."] },
+    ],
+    extraInfo: "Considerar antes: visão, audição, oportunidades de ensino, língua falada em casa, atenção e linguagem. Encaminhar para avaliação psicopedagógica/neuropsicológica quando houver persistência.",
+  }),
+  authorial({
+    wave: 3, id: "na-escrita-professor", name: "Escrita e ortografia (professor)", fullName: "Sinais de dificuldade na escrita — observação do professor",
+    construct: "dificuldades de escrita: ortografia, produção textual e grafomotricidade", ageMin: 72, ageMax: 192, queixas: ["aprendizagem", "motor"], respondente: ["professor"],
+    applicationMode: "questionario_professor", assessmentUse: "triagem", tempo: "4–6 min", primaryDomain: "aprendizagem", overlapGroup: "na-escrita-professor",
+    signalTags: ["letra ilegível", "erros de ortografia", "disortografia", "disgrafia", "dificuldade para copiar do quadro", "escrita lenta", "caderno desorganizado"],
+    description: "Frequência de sinais de dificuldade com ortografia, velocidade, organização e traçado da letra. Triagem; não diagnostica disgrafia nem disortografia.",
+    instruction: "Pense nas últimas 4 semanas de aula, comparando com a turma, e marque com que frequência cada situação ocorre.",
+    blocks: [
+      { name: "Ortografia e texto", items: ["Comete muitos erros de ortografia mesmo em palavras comuns já ensinadas.", "Escreve textos curtos e pobres em ideias em relação ao que fala.", "Tem dificuldade de organizar a frase, a pontuação e os parágrafos."] },
+      { name: "Traçado e velocidade", items: ["A letra é difícil de ler, mesmo com tempo.", "Escreve muito mais devagar que a turma ou se cansa ao escrever.", "Tem dificuldade de copiar do quadro ou de manter o caderno organizado.", "Segura o lápis com muita força, queixa-se de dor na mão ou evita escrever."] },
+    ],
+  }),
+  authorial({
+    wave: 3, id: "na-matematica-professor", name: "Matemática e raciocínio numérico (professor)", fullName: "Sinais de dificuldade com números e cálculo — observação do professor",
+    construct: "dificuldades de senso numérico, cálculo e raciocínio matemático em escolares", ageMin: 72, ageMax: 192, queixas: ["aprendizagem"], respondente: ["professor"],
+    applicationMode: "questionario_professor", assessmentUse: "triagem", tempo: "4–6 min", primaryDomain: "aprendizagem", overlapGroup: "na-matematica-professor",
+    signalTags: ["dificuldade em matemática", "discalculia", "não memoriza tabuada", "conta nos dedos", "troca sinais", "dificuldade com problemas", "dificuldade com horas e dinheiro"],
+    description: "Frequência de sinais de dificuldade com quantidades, cálculo e problemas. Triagem para encaminhar; não diagnostica discalculia.",
+    instruction: "Pense nas últimas 4 semanas de aula, comparando com a turma, e marque com que frequência cada situação ocorre.",
+    blocks: [
+      { name: "Número e cálculo", items: ["Tem dificuldade de comparar quantidades e entender o valor dos números.", "Continua contando nos dedos ou nos objetos em contas simples, com idade em que isso já não seria esperado.", "Não memoriza fatos básicos (somas e tabuada) mesmo com treino.", "Erra sinais e passos nas contas, ou perde a ordem dos passos."] },
+      { name: "Aplicação", items: ["Tem dificuldade de montar a conta a partir de um problema escrito.", "Tem dificuldade com horas, calendário, dinheiro ou medidas.", "Tem ansiedade ou evita atividades de matemática.", "Vai bem em outras áreas, mas a matemática fica muito abaixo do esperado."] },
+    ],
+  }),
+  authorial({
+    wave: 3, id: "na-comportamento-adaptativo-pais", name: "Comportamento adaptativo (pais)", fullName: "Habilidades da vida diária, comunicação e socialização — relato dos pais",
+    construct: "comportamento adaptativo e autonomia em crianças com suspeita de deficiência intelectual ou atraso global", ageMin: 36, ageMax: 216, queixas: ["cognicao", "atraso", "autonomia"], respondente: ["pais"],
+    applicationMode: "questionario_pais", assessmentUse: "seguimento", prioridade: "monitorizacao", tempo: "6–8 min", primaryDomain: "cognicao", overlapGroup: "na-adaptativo", higherBetter: true, labels: SKILL4,
+    signalTags: ["deficiência intelectual", "atraso global", "autonomia na vida diária", "higiene sozinho", "segurança na rua", "dinheiro", "comunicação funcional"],
+    description: "O que a criança/adolescente já faz sozinho na vida diária (cuidado pessoal, casa, comunidade, comunicação e convivência). Maior pontuação = mais autonomia; não mede QI nem faz diagnóstico de deficiência intelectual.",
+    instruction: "Marque o que melhor descreve o que a criança/adolescente faz hoje, no dia a dia, sem ser no melhor dia. Considere a idade dela.",
+    blocks: [
+      { name: "Cuidado pessoal e casa", items: ["Come sozinho(a) com talher.", "Usa o banheiro e faz a higiene sozinho(a).", "Veste-se e escolhe a roupa de acordo com o clima.", "Ajuda em tarefas de casa (guardar, arrumar, preparar algo simples)."] },
+      { name: "Comunidade e comunicação", items: ["Conta o que aconteceu no dia de forma compreensível.", "Atravessa a rua com segurança ou pede ajuda quando necessário.", "Compra algo simples ou entende o valor do dinheiro.", "Segue regras de convivência (esperar a vez, pedir licença)."] },
+    ],
+  }),
+  authorial({
+    wave: 3, id: "na-saude-mental-pre-escolar-pais", name: "Saúde emocional do pré-escolar (pais)", fullName: "Emoções, comportamento e relacionamentos de crianças de 3 a 6 anos — relato dos pais",
+    construct: "saúde mental de crianças em idade pré-escolar (emoções, comportamento, vínculo, brincar)", ageMin: 36, ageMax: 72, queixas: ["comportamento", "ansiedade"], respondente: ["pais"],
+    applicationMode: "questionario_pais", assessmentUse: "triagem", tempo: "4–6 min", primaryDomain: "comportamento", overlapGroup: "na-pre-escolar-saude-mental",
+    signalTags: ["birras", "medo na escola", "separação", "agressividade na pré-escola", "choro fácil", "não brinca com outras crianças", "mordidas"],
+    description: "Frequência de comportamentos e emoções que costumam preocupar famílias de crianças de 3 a 6 anos. Descreve; não diagnostica e deve ser lido junto ao contexto da família e da escola.",
+    instruction: "Pense no último mês e marque com que frequência cada situação aconteceu.",
+    blocks: [
+      { name: "Emoções", items: ["Fica muito assustado(a) ou aflito(a) em situações novas.", "Chora ou fica triste com facilidade durante o dia.", "Tem muita dificuldade de se separar de você na escola ou ao dormir."] },
+      { name: "Comportamento", items: ["Tem birras intensas ou longas.", "Bate, morde ou machuca outras crianças ou adultos.", "Não consegue ficar quieto(a) nem em atividades curtas e tranquilas.", "Desobedece de forma persistente às regras combinadas."] },
+      { name: "Brincar e relações", items: ["Brinca pouco com outras crianças.", "Mostra pouco prazer em brincar ou em atividades que antes gostava.", "A família tem dificuldade de passear ou frequentar lugares por causa do comportamento."] },
+    ],
+    extraInfo: "Para menores de 6 anos, considerar sempre trauma, negligência, sono, linguagem e desenvolvimento antes de rotular comportamento.",
+  }),
+  authorial({
+    wave: 3, id: "na-funcoes-executivas-casa-pais", name: "Funções executivas no dia a dia (pais)", fullName: "Planejamento, memória de trabalho, inibição e flexibilidade em casa — relato dos pais",
+    construct: "funções executivas em tarefas cotidianas (planejar, lembrar, iniciar, controlar impulsos, mudar de estratégia)", ageMin: 60, ageMax: 216, queixas: ["tdah", "aprendizagem", "cognicao"], respondente: ["pais"],
+    applicationMode: "questionario_pais", assessmentUse: "triagem", tempo: "5–7 min", primaryDomain: "tdah", overlapGroup: "na-funcoes-executivas",
+    signalTags: ["esquece tarefas", "desorganizado", "dificuldade para começar a tarefa", "impulsividade", "dificuldade de mudar de atividade", "perde objetos", "não termina o que começa"],
+    description: "Frequência de dificuldades em iniciar, organizar, lembrar e controlar impulsos nas tarefas do dia a dia. Não faz diagnóstico de TDAH nem de disfunção executiva.",
+    instruction: "Pense no último mês e marque com que frequência cada situação acontece, comparando com crianças da mesma idade.",
+    blocks: [
+      { name: "Iniciar e organizar", items: ["Precisa de muitos lembretes para começar tarefas simples (tema, banho, arrumar o quarto).", "Perde ou esquece material, agasalho ou objetos pessoais.", "Tem dificuldade de organizar o espaço e o tempo para terminar uma tarefa.", "Começa várias atividades e não termina."] },
+      { name: "Lembrar e controlar", items: ["Esquece instruções com mais de dois passos logo depois de ouvi-las.", "Age sem pensar e depois se arrepende.", "Tem dificuldade de esperar a vez.", "Fica travado(a) quando o plano muda ou a primeira estratégia não funciona."] },
+    ],
+  }),
+];
