@@ -1,4 +1,5 @@
 import type { ScaleEntry } from "./scaleFilter";
+import { openScaleLicenseRecords } from "./openScalesIndex";
 
 /**
  * Registro de licença/proveniência por escala (Onda 0 do banco de escalas).
@@ -99,6 +100,8 @@ export const SCALE_LICENSE_RECORDS: readonly ScaleLicenseRecord[] = [
   })),
   { id: "cats", canonicalId: "cats", status: "open_free", basis: "catalog_field_unverified", softwareAllowed: "unverified" },
   { id: "world-cats", canonicalId: "cats", status: "restricted", basis: "catalog_field_unverified", softwareAllowed: false, note: "Alias de `cats` marcado restrito/external_only; fora do filtro." },
+  // ---- Ondas 1–3: escalas abertas com fonte oficial verificada (geradas das especificações) ----
+  ...openScaleLicenseRecords,
 ];
 
 /**
