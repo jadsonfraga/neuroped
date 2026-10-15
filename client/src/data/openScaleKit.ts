@@ -38,6 +38,11 @@ export interface OpenScaleSpec {
     note?: string;
   };
   def: InteractiveScaleDef;
+  /** Instrumento AUTORAL NeuroPed (texto original, sem validação psicométrica). */
+  authorial?: boolean;
+  /** Classificação de segurança explícita (default false). */
+  psychosisRisk?: boolean;
+  suicideRisk?: boolean;
 }
 
 export function toScaleEntry(spec: OpenScaleSpec): ScaleEntry {
@@ -46,7 +51,7 @@ export function toScaleEntry(spec: OpenScaleSpec): ScaleEntry {
     queixas: spec.queixas, respondente: spec.respondente, prioridade: spec.prioridade, tempo: spec.tempo,
     appRoute: `/generic-scale/${spec.id}`, description: spec.description, fonte: spec.fonte,
     validacaoBrasil: spec.validacaoBrasil, scoringCutoff: spec.scoringCutoff,
-    licencaUso: "livre", suicideRiskInstrument: false, psychosisRiskInstrument: false,
+    licencaUso: spec.authorial ? "autoral" : "livre", suicideRiskInstrument: spec.suicideRisk ?? false, psychosisRiskInstrument: spec.psychosisRisk ?? false,
     assessmentUse: spec.assessmentUse, applicationMode: spec.applicationMode, implementationStatus: "complete",
     verbalRequirement: spec.verbalRequirement ?? "indiferente", literacyRequirement: spec.literacyRequirement ?? "indiferente",
     signalTags: spec.signalTags, primaryDomain: spec.primaryDomain, overlapGroup: spec.overlapGroup,

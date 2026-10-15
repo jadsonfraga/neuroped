@@ -3,10 +3,10 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 300
-- **Com fonte declarada:** 300 (100.0%)
+- **Total de instrumentos:** 306
+- **Com fonte declarada:** 306 (100.0%)
 - **Sem fonte declarada:** 0
-- **Aguardando validação psicométrica publicada:** 125 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
+- **Aguardando validação psicométrica publicada:** 131 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
 
 > As duas últimas linhas medem coisas diferentes e não se somam: um
 > instrumento pode ter fonte e ainda assim aguardar validação.
@@ -221,6 +221,12 @@
 | `mutismo-seletivo-observacao-20` | Mutismo seletivo · Observação 20 | Mutismo seletivo — pré-consulta qualitativa NeuroPed, v1.0, 2026-08-04. Dr. Jadson Fraga / NeuroPed SDG. | não | sim |
 | `mutismo-seletivo-seguranca-10` | Mutismo seletivo · Segurança 10 | Mutismo seletivo — pré-consulta qualitativa NeuroPed, v1.0, 2026-08-04. Dr. Jadson Fraga / NeuroPed SDG. | não | sim |
 | `mutismo-seletivo-sintese-50` | Mutismo seletivo · Síntese 50 | Mutismo seletivo — pré-consulta qualitativa NeuroPed, v1.0, 2026-08-04. Dr. Jadson Fraga / NeuroPed SDG. | não | sim |
+| `na-adesao-tratamento-pais` | Adesão ao tratamento (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de adesão a tratamento medicamentoso e terapêutico na infância e barreiras práticas; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
+| `na-apoio-rede-cuidador` | Apoio e rede do cuidador (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de apoio social percebido e acesso a serviços em famílias de crianças em acompanhamento; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
+| `na-efeitos-estimulantes-pais` | Efeitos do tratamento (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de monitorização de efeitos adversos comuns de psicoestimulantes e outros psicofármacos em crianças; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
+| `na-efeitos-psicofarmacos-adolescente` | Efeitos do tratamento (adolescente) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de monitorização de efeitos adversos de psicofármacos em adolescentes (sedação, peso, sono, sexualidade, movimento); itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
+| `na-sobrecarga-cuidador` | Sobrecarga do cuidador (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de sobrecarga de cuidado em famílias de crianças com condições crônicas; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
+| `na-transicao-saude-adolescente` | Transição para autonomia em saúde (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de prontidão para transição do cuidado pediátrico ao cuidado de adulto e autonomia em saúde; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `navi-ped-84` | NAVI-PED 84 | 2026-06-23_ESCALA_AUTORAL_NAVI-PED_84 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/165Y_M33XQ7wOclJ_oO47mkGHre9KUsdxo7LC6BgWyqo/edit | não | sim |
 | `nddie` | NDDI-E | Gilliam FG et al., 2006 (NDDI-E) | não | não |
 | `ndi-360` | Escala Integrada Neurodesenvolvimental e Neuropsiquiátrica… | ESCALA AUTORAL NDI-360 V1 (2026-07-01_ESCALA_AUTORAL_NDI-360_V1) — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://docs.google.com/document/d/1xKSm4urW_cgv5qZJzEk6jMMThe8Z_5oGm7PqUSvsSZ8/edit | não | sim |
