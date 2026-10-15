@@ -6,7 +6,7 @@ import type { OpenScaleSpec } from "./openScaleKit";
  * brasileiro: família, escola, UBS/SUS), inspirado apenas no CONSTRUTO clínico — nenhum item copiado de
  * instrumento protegido. Sem validação psicométrica, sem ponto de corte: interpretação descritiva.
  */
-export const AUTORAL_NOTICE = "Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte: leia as respostas item a item e a soma/média por bloco como descrição, junto da história clínica.";
+export const AUTORAL_NOTICE = "Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.";
 const SOURCE_URL = "https://github.com/jadsonfraga/neuroped/blob/main/docs/ESCALAS_AUTORAIS_NEUROPED.md";
 
 export const FREQ4 = ["Nunca", "Às vezes", "Frequentemente", "Quase sempre"];
@@ -44,6 +44,10 @@ export interface AuthorialInput {
 export function authorial(a: AuthorialInput): OpenScaleSpec {
   const labels = a.labels ?? FREQ4;
   const n = a.blocks.reduce((t, b) => t + b.items.length, 0);
+  // Escalas em que a última opção é a melhor: o runner colore pela posição da opção (primeira = verde); `reversed`
+  // espelha a cor e os pontos, então os pontos já entram invertidos para a opção melhor valer mais.
+  const pts = labels.map((_, i) => (a.higherBetter ? labels.length - 1 - i : i));
+  const blocks = a.blocks.map((b) => ({ ...b, items: b.items.map((t) => (a.higherBetter ? { text: t, reversed: true } : t)) }));
   return {
     wave: a.wave, id: a.id, name: `${a.name} (autoral)`, fullName: a.fullName,
     ageMin: a.ageMin, ageMax: a.ageMax, queixas: a.queixas, respondente: a.respondente,
@@ -51,7 +55,7 @@ export function authorial(a: AuthorialInput): OpenScaleSpec {
     description: `${a.description} ${AUTORAL_NOTICE}`,
     fonte: `Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de ${a.construct}; itens originais em português do Brasil, sem reprodução de instrumento protegido.`,
     validacaoBrasil: "Nenhuma: instrumento autoral NeuroPed, sem validação psicométrica.",
-    scoringCutoff: "Sem ponto de corte (descritivo): soma e média por bloco, lidas com a história clínica. Apoio à decisão clínica, não diagnóstico.",
+    scoringCutoff: "Sem ponto de corte nem classificação (descritivo): o app entrega as respostas por extenso, lidas item a item com a história clínica. Apoio à decisão clínica, não diagnóstico.",
     assessmentUse: a.assessmentUse, applicationMode: a.applicationMode, primaryDomain: a.primaryDomain,
     overlapGroup: a.overlapGroup, signalTags: a.signalTags,
     verbalRequirement: a.verbalRequirement, literacyRequirement: a.literacyRequirement,
@@ -60,11 +64,11 @@ export function authorial(a: AuthorialInput): OpenScaleSpec {
     def: {
       instruction: a.instruction,
       infoBox: `${AUTORAL_NOTICE} ${n} itens. ${a.extraInfo ?? ""}`.trim(),
-      labels, optionPoints: labels.map((_, i) => i), scoreDirection: a.higherBetter ? "higher_better" : "higher_worse",
+      labels, optionPoints: pts, scoreDirection: a.higherBetter ? "higher_better" : "higher_worse",
       totalLabel: `${a.name} — soma`, instrumentVersion: `${a.id}-autoral-v1-2026-10-15`,
       descriptiveDomainSummary: true,
       bands: [{ minPct: 0, classification: "Descritivo", color: "amber", description: "Sem faixa interpretativa: instrumento autoral sem validação. Leia item a item e por bloco." }],
-      domains: a.blocks,
+      domains: blocks,
     },
   };
 }
