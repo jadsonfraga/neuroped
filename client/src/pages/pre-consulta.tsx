@@ -9,12 +9,14 @@ import { Input } from "@/components/ui/input";
 import { PremiumVisualPanel } from "@/components/PremiumVisualPanel";
 import { brandAssets } from "@/components/BrandAssets";
 import { useAuth } from "@/contexts/AuthContext";
+import { getPrevisitSelectorMode } from "@/lib/previsitSelectorMode";
 import {
   buildPreConsultaSummary,
   clearPreConsultas,
   createPreConsultaRecord,
   loadPreConsultas,
   preConsultaQueixas,
+  preConsultaQueixasV2,
   recommendPreConsultaScales,
   sanitizeAgeInput,
   savePreConsultas,
@@ -202,7 +204,7 @@ export default function PreConsultaPage() {
             <fieldset className="space-y-2">
               <legend className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Queixa principal</legend>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {preConsultaQueixas.map((item) => (
+                {(getPrevisitSelectorMode() === "v2" ? [...preConsultaQueixas, ...preConsultaQueixasV2] : preConsultaQueixas).map((item) => (
                   <button key={item.id} type="button" onClick={() => setQueixa(item.id)} aria-pressed={queixa === item.id} className={`rounded-2xl border px-3 py-2 text-left text-xs font-bold transition ${queixa === item.id ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}>
                     {item.label}
                   </button>

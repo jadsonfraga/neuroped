@@ -96,6 +96,10 @@ export interface ScaleEntry {
   applicationMode?: ApplicationMode;   // modo concreto de aplicação (sobrepõe a derivação por respondente)
   implementationStatus?: ImplementationStatus; // status real no app (sobrepõe a derivação por appRoute/licença)
   signalTags?: string[];               // pistas clínicas/sintomas que refinam o ranking do filtro
+  /** Seletor v2 (aditivo): grupo de redundância; duas escalas do mesmo grupo não entram juntas nas 3 vagas. */
+  overlapGroup?: string;
+  /** Seletor v2 (aditivo): domínio clínico fino de uso principal; quando presente, impede "vazamento" por `queixas` amplas. */
+  primaryDomain?: string;
   // Exemplo prático em linguagem de pais: o que observar no dia a dia ao
   // responder o questionário (sem jargão, sem sugerir diagnóstico). Populado
   // a partir de exemplosPais2026.ts para escalas respondidas por pais/professor.

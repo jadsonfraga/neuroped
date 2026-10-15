@@ -4,6 +4,8 @@ import { noCostWorldScales } from "@/data/noCostWorldScales";
 import { regula20CatalogEntry, regula20Eligibility } from "@/data/regula20";
 import { recoveredMonitorCatalog } from "@/data/recoveredAuthorialMonitors";
 import { safePrevisitRecommendations } from "./preConsultaSafeRanking";
+import { recommendPrevisitV2, type PrevisitV2Input } from "./previsitSelectorV2";
+import { ageBandOf, getPrevisitSelectorMode, recordPrevisitShadow } from "./previsitSelectorMode";
 import {
   PREVISIT_SECURE_KEYS,
   previsitLegacyGet,
@@ -29,9 +31,13 @@ export interface PreConsultaRecord {
   createdAt: string;
 }
 export interface PreConsultaRecommendation {
-  label: "Ouro" | "Prata" | "Questionário escolar" | "Monitor autoral";
+  label: "Ouro" | "Prata" | "Bronze" | "Questionário escolar" | "Monitor autoral";
   scale?: ScaleEntry;
   reason: string;
+  /** Seletor v2: vaga ocupada, motivos explicáveis e, quando não é o ajuste ideal, por que é a escala aplicável mais próxima. */
+  slot?: "principal" | "complementar" | "comorbidade";
+  reasons?: string[];
+  fallbackReason?: string;
 }
 export interface AgeValidationInput { years: string | number; months: string | number }
 export interface AgeValidationResult { isValid: boolean; years: number; months: number; totalMonths: number; errors: string[]; label: string }
@@ -60,6 +66,13 @@ export const preConsultaQueixas = [
   { id: "tiques-funcional", label: "Tiques · monitor autoral" },
   { id: "generalizacao-funcional", label: "Generalização · monitor autoral" },
   { id: "escola-funcional", label: "Escola · monitor autoral" },
+];
+/** Queixas adicionais, oferecidas só quando o seletor v2 está ativo (a v1 não tem cobertura para elas). */
+export const preConsultaQueixasV2 = [
+  { id: "atraso", label: "Atraso do desenvolvimento (0–5 anos)" },
+  { id: "toc", label: "TOC / obsessões" },
+  { id: "dor", label: "Dor de cabeça / cefaleia" },
+  { id: "pc", label: "Paralisia cerebral / motor" },
 ];
 const catalog = mergeFilterableCatalog([...allScales, ...noCostWorldScales]);
 const recoveredByGoal: Record<string, string> = {
@@ -91,7 +104,7 @@ export function validateAge({ years, months }: AgeValidationInput): AgeValidatio
   return { isValid: errors.length === 0, years: safeYears, months: safeMonths, totalMonths, errors, label: errors.length === 0 ? formatAgeLabel(totalMonths) : "" };
 }
 
-export function recommendPreConsultaScales(form: Pick<PreConsultaRecord, "idadeMeses" | "queixa" | "respondente" | "contexto">): PreConsultaRecommendation[] {
+export function recommendPreConsultaScales(form: Pick<PreConsultaRecord, "idadeMeses" | "queixa" | "respondente" | "contexto"> & Partial<Pick<PrevisitV2Input, "sintomas" | "diagnosticos">>): PreConsultaRecommendation[] {
   if (form.queixa === "irritabilidade-funcional") {
     const purpose = ["retorno", "acompanhamento"].includes(form.contexto) ? "seguimento-funcional" : "basal-funcional";
     const eligibility = regula20Eligibility({ ageMonths: form.idadeMeses, respondent: form.respondente === "secretaria" ? "pais" : form.respondente, purpose, focus: form.queixa });
@@ -106,7 +119,16 @@ export function recommendPreConsultaScales(form: Pick<PreConsultaRecord, "idadeM
     return [{ label: "Monitor autoral", scale: compatible ? scale : undefined,
       reason: compatible ? "Abrir o acervo autoral e confirmar finalidade funcional, contexto e observação direta antes de iniciar. Uma indicação não libera a aplicação sem esses dados. Não repetir instrumento já aplicado." : "Este instrumento não é adequado à idade ou ao respondente informado. Não substituir por formulário de outro observador." }];
   }
-  return safePrevisitRecommendations(catalog, form);
+  const mode = getPrevisitSelectorMode();
+  if (mode === "v2") return recommendPrevisitV2(catalog, form);
+  const v1 = safePrevisitRecommendations(catalog, form);
+  if (mode === "shadow") {
+    try {
+      const v2 = recommendPrevisitV2(catalog, form);
+      recordPrevisitShadow({ ageBand: ageBandOf(form.idadeMeses), queixa: form.queixa, contexto: form.contexto, respondente: form.respondente, v1: v1.flatMap((r) => (r.scale ? [r.scale.id] : [])), v2: v2.flatMap((r) => (r.scale ? [r.scale.id] : [])) });
+    } catch { /* modo sombra nunca afeta o resultado */ }
+  }
+  return v1;
 }
 
 export async function loadPreConsultas(): Promise<PreConsultaRecord[]> {
