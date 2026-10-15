@@ -30,15 +30,20 @@ export function previsitFamily(scale: ScaleEntry): string {
   return scale.name.split(/\s+[·—–-]\s+/)[0].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "");
 }
 
-type Tier = "direta" | "seguimento" | "coocorrencia" | "banda-larga";
+type Tier = "direta" | "seguimento" | "coocorrencia" | "banda-larga" | "tempo-maior" | "respondente-alternativo" | "dominio-proximo";
 const TIER_REASON: Record<Tier, string> = {
   direta: "Compatível com idade exata, queixa, respondente e finalidade; a curadoria clínica só ordena depois desses critérios.",
   seguimento: "Sem instrumento de seguimento compatível para esta queixa: reaplicar este instrumento de triagem para comparar com a aplicação anterior.",
   coocorrencia: "Complementar — menor aderência à queixa: cobre um domínio que costuma acompanhar esta queixa.",
   "banda-larga": "Complementar — menor aderência à queixa: rastreio amplo apropriado à idade e ao respondente.",
+  "tempo-maior": "Complementar — instrumento relevante mais próximo, com tempo acima de 15 min (até 30 min informados no catálogo): não há alternativa mais curta compatível.",
+  "dominio-proximo": "Complementar — domínio mais próximo disponível: não há instrumento aberto para esta queixa nesta idade; rastreio de desenvolvimento/comportamento apropriado à idade.",
+  "respondente-alternativo": "Complementar — respondente alternativo: não há instrumento aberto para o respondente pedido nesta idade/queixa; quem responde são os pais/cuidadores (não é a escola).",
 };
+/** `fill`: completa posições vazias com o instrumento relevante mais próximo (rotulado). Sem `fill`, comportamento anterior. */
+export interface PrevisitOptions { fill?: boolean }
 
-export function safePrevisitRecommendations(catalog: ScaleEntry[], input: Input): PreConsultaRecommendation[] {
+export function safePrevisitRecommendations(catalog: ScaleEntry[], input: Input, options: PrevisitOptions = {}): PreConsultaRecommendation[] {
   if (!Number.isInteger(input.idadeMeses) || input.idadeMeses < 1 || input.idadeMeses > 227 || !input.queixa || !contexts.has(input.contexto)) return [];
   const respondent: Respondente | null = input.respondente === "pais" || input.respondente === "secretaria" ? "pais" : input.respondente === "professor" ? "professor" : input.respondente === "adolescente" ? "autoaplicavel" : null;
   if (!respondent) return [];
@@ -73,22 +78,22 @@ export function safePrevisitRecommendations(catalog: ScaleEntry[], input: Input)
     };
     return [...matches].sort((a, b) => position(a.scale) - position(b.scale) || b.relevanceScore - a.relevanceScore || a.scale.id.localeCompare(b.scale.id));
   }
-  const withinTime = ({ scale }: RefinedScaleMatch) => {
+  const withinTimeMax = (max: number) => ({ scale }: RefinedScaleMatch) => {
     const upper = previsitUpperMinutes(scale);
-    return upper !== null && upper <= 15;
+    return upper !== null && upper <= max;
   };
-  function rankFor(role: Respondente, useMonitoring: boolean, domains: string[]): ScaleEntry[] {
+  function rankFor(role: Respondente, useMonitoring: boolean, domains: string[], maxMin = 15): ScaleEntry[] {
     const tierCtx: FilterContext = { ...ctx, queixas: domains, respondente: role, assessmentUse: useMonitoring ? "monitorizacao" : "triagem" };
     const candidates = base.map((s) => previsitRespondentVariant(s, role)).filter((s) => suitable(s, role, useMonitoring, domains));
-    return prioritize(filterScalesWithClinicalRescue(candidates, tierCtx).filter(withinTime), useMonitoring).map((m) => m.scale);
+    return prioritize(filterScalesWithClinicalRescue(candidates, tierCtx).filter(withinTimeMax(maxMin)), useMonitoring).map((m) => m.scale);
   }
-  function broadband(role: Respondente): ScaleEntry[] {
+  function broadband(role: Respondente, maxMin = 15): ScaleEntry[] {
     return BROADBAND_SCREENER_IDS.flatMap((id) => {
       const found = base.find((s) => s.id === id);
       const scale = found && previsitRespondentVariant(found, role);
       if (!scale || !suitable(scale, role, false, scale.queixas)) return [];
       const upper = previsitUpperMinutes(scale);
-      return upper !== null && upper <= 15 ? [scale] : [];
+      return upper !== null && upper <= maxMin ? [scale] : [];
     });
   }
   function pickThree(role: Respondente, exclude: ReadonlySet<string>): Array<{ scale: ScaleEntry; tier: Tier }> {
@@ -99,6 +104,24 @@ export function safePrevisitRecommendations(catalog: ScaleEntry[], input: Input)
       ["coocorrencia", () => neighbours.length ? rankFor(role, false, neighbours) : []],
       ["banda-larga", () => broadband(role)],
     ];
+    if (options.fill) {
+      const near = (r: Respondente, maxMin: number) => [
+        ...rankFor(r, monitoring, queixas, maxMin),
+        ...(neighbours.length ? rankFor(r, false, neighbours, maxMin) : []),
+        ...broadband(r, maxMin),
+      ];
+      const closest = (r: Respondente, maxMin: number) => base
+        .map((sc) => previsitRespondentVariant(sc, r))
+        .filter((sc) => ["atraso", "comportamento"].includes(sc.primaryDomain ?? sc.queixas[0] ?? "") && suitable(sc, r, false, sc.queixas) && (previsitUpperMinutes(sc) ?? 99) <= maxMin)
+        .sort((a, b) => (previsitUpperMinutes(a) ?? 99) - (previsitUpperMinutes(b) ?? 99) || a.id.localeCompare(b.id));
+      ladder.push(["tempo-maior", () => near(role, 30)]);
+      ladder.push(["dominio-proximo", () => closest(role, 30)]);
+      if (role !== "pais") {
+        ladder.push(["respondente-alternativo", () => near("pais", 15)]);
+        ladder.push(["respondente-alternativo", () => near("pais", 30)]);
+        ladder.push(["respondente-alternativo", () => closest("pais", 30)]);
+      }
+    }
     const picked: Array<{ scale: ScaleEntry; tier: Tier }> = [];
     const families = new Set<string>();
     for (const [tier, list] of ladder) {
