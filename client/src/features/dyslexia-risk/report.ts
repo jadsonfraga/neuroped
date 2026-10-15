@@ -147,10 +147,7 @@ export function buildIcedSummary(s: IcedState, result: IcedResult, appliedAt: st
 /** Resumo para a família: linguagem acessível, sem jargão normativo, ≤ 1800 chars codificados (wa.me). */
 export function buildIcedFamilySummary(s: IcedState, result: IcedResult, appliedAt: string): string {
   const FAIXA_FAMILIA: Record<IcedResult["faixa"], string> = {
-    limitada: "poucas áreas sinalizaram atenção nesta aplicação",
-    intermediaria: "algumas áreas sinalizaram atenção e merecem acompanhamento",
-    elevada: "várias áreas sinalizaram atenção de forma persistente",
-    descritiva: "não foi possível interpretar a soma porque o Bloco 0 indicou outra prioridade (escolarização, audição, visão ou desenvolvimento)",
+    descritiva: "o resultado é apenas descritivo, sem ponto de corte; a leitura é feita pelo médico na consulta",
   };
   const dominioNome: Record<DomainScore["id"], string> = {
     fluencia: "leitura fluida",

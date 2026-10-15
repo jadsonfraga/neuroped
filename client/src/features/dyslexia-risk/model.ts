@@ -108,7 +108,7 @@ export interface IcedResult {
   dominios: DomainScore[];
   total: number;
   naoExaminados: string[];
-  faixa: "limitada" | "intermediaria" | "elevada" | "descritiva";
+  faixa: "descritiva";
   nucleo: "presente" | "ausente";
   leitura: string;
   frase: string;
@@ -226,33 +226,22 @@ export function scoreIced(input: IcedInput): IcedResult {
   const pontosExaminaveis = dominios.reduce((s, d) => s + (d.examinado ? d.peso : 0), 0);
   const avisos: string[] = [];
   if (!input.fluenciaNorma && (input.ano === "outro" || !input.ano)) {
-    avisos.push("Ano escolar sem âncora de fluência: a fluência não pontua (3 pontos fora do alcance), então o limiar de 9/15 não é equivalente ao do 2º e 3º ano. Use norma formal do ano, se houver.");
+    avisos.push("Ano escolar sem âncora de fluência: a fluência não pontua (3 pontos fora do alcance) e a soma não é comparável entre anos escolares. Use norma formal do ano, se houver.");
   }
   if (naoExaminados.length) {
     avisos.push(`Escore sobre ${pontosExaminaveis} pontos possíveis (domínios examinados), não sobre 15. Não examinados: ${naoExaminados.join(", ")}. Ausente não é normal.`);
   }
   const nucleo = dominios.some((d) => (d.id === "fluencia" || d.id === "ortografia") && d.pontos > 0) ? "presente" : "ausente";
 
-  let faixa: IcedResult["faixa"] = "limitada";
-  let leitura = "Evidência atual limitada.";
+  // Sem pontos de corte (decisão do Dr. Jadson, 15/10): o escore é sempre descritivo; a interpretação é da consulta.
+  const faixa: IcedResult["faixa"] = "descritiva";
+  let leitura = "Escore descritivo, sem ponto de corte: somar não classifica nem interpreta. Integrar com escolarização, linguagem, desenvolvimento e diferencial.";
   if (trava) {
-    faixa = "descritiva";
     leitura = "Escore descritivo. Não interpretado como evidência de dislexia.";
   } else if (controlesPendentes.length) {
-    faixa = "descritiva";
     leitura = "Escore descritivo: controles de exclusão não confirmados (escolarização, alfabetização, audição, visão ou deficiência intelectual). Confirmar antes de interpretar.";
-  } else if (total >= 9 && nucleo === "presente") {
-    faixa = "elevada";
-    leitura = "Evidência elevada de dificuldade persistente de leitura/escrita.";
-  } else if (total >= 9 && nucleo === "ausente") {
-    faixa = "intermediaria";
-    leitura = "9–15 sem núcleo (fluência ou ortografia). Reclassificado como intermediário.";
-  } else if (total >= 5) {
-    faixa = "intermediaria";
-    leitura = "Evidência intermediária. Investigar, intervir e rever.";
-  }
-  if (faixa === "limitada" && naoExaminados.length) {
-    leitura = "Evidência limitada nos domínios examinados; há domínios não examinados, o que não equivale a resultado normal.";
+  } else if (naoExaminados.length) {
+    leitura = "Escore descritivo nos domínios examinados; há domínios não examinados, o que não equivale a resultado normal.";
   }
 
   const frase = [

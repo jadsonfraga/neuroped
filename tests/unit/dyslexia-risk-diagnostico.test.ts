@@ -21,20 +21,20 @@ const base: IcedInput = {
   familiar: "nao", persistencia4: false,
 };
 
-test("golden ICED-8: cortes e faixas congelados (controles confirmados)", () => {
+test("golden ICED-8: escore e núcleo congelados; sem pontos de corte (faixa sempre descritiva)", () => {
   const cases: Array<[Partial<IcedInput>, number, string, string]> = [
-    [{}, 0, "limitada", "ausente"],
-    [{ pcpm: 70 }, 3, "limitada", "presente"],
-    [{ pcpm: 71 }, 0, "limitada", "ausente"],
-    [{ ano: "2", pcpm: 42 }, 3, "limitada", "presente"],
-    [{ ano: "2", pcpm: 43 }, 0, "limitada", "ausente"],
-    [{ ditadoF: 4 }, 3, "limitada", "presente"],
-    [{ ditadoPseudoCertas: 2 }, 3, "limitada", "presente"],
-    [{ pcpm: 60, ditadoF: 5 }, 6, "intermediaria", "presente"],
-    [{ pcpm: 60, ditadoF: 5, pseudoAcertos: 10 }, 8, "intermediaria", "presente"],
-    [{ pcpm: 60, ditadoF: 5, pseudoAcertos: 10, cfAcertos: 6 }, 10, "elevada", "presente"],
-    [{ pseudoAcertos: 10, cfAcertos: 6, ranSeg: 46, familiar: "sim", persistencia4: true, palavrasAcertos: 15 }, 9, "intermediaria", "ausente"],
-    [{ palavrasAcertos: 16, palavrasF: 3 }, 0, "limitada", "ausente"],
+    [{}, 0, "descritiva", "ausente"],
+    [{ pcpm: 70 }, 3, "descritiva", "presente"],
+    [{ pcpm: 71 }, 0, "descritiva", "ausente"],
+    [{ ano: "2", pcpm: 42 }, 3, "descritiva", "presente"],
+    [{ ano: "2", pcpm: 43 }, 0, "descritiva", "ausente"],
+    [{ ditadoF: 4 }, 3, "descritiva", "presente"],
+    [{ ditadoPseudoCertas: 2 }, 3, "descritiva", "presente"],
+    [{ pcpm: 60, ditadoF: 5 }, 6, "descritiva", "presente"],
+    [{ pcpm: 60, ditadoF: 5, pseudoAcertos: 10 }, 8, "descritiva", "presente"],
+    [{ pcpm: 60, ditadoF: 5, pseudoAcertos: 10, cfAcertos: 6 }, 10, "descritiva", "presente"],
+    [{ pseudoAcertos: 10, cfAcertos: 6, ranSeg: 46, familiar: "sim", persistencia4: true, palavrasAcertos: 15 }, 9, "descritiva", "ausente"],
+    [{ palavrasAcertos: 16, palavrasF: 3 }, 0, "descritiva", "ausente"],
   ];
   for (const [patch, total, faixa, nucleo] of cases) {
     const result = scoreIced({ ...base, ...patch });
@@ -44,7 +44,9 @@ test("golden ICED-8: cortes e faixas congelados (controles confirmados)", () => 
 
 test("controle de exclusão vazio ou 'não verificado' deixa o escore descritivo (ausente ≠ normal)", () => {
   const strong = { ...base, pcpm: 60, ditadoF: 5, pseudoAcertos: 10, cfAcertos: 6 };
-  assert.equal(scoreIced(strong).faixa, "elevada");
+  assert.equal(scoreIced(strong).faixa, "descritiva");
+  assert.equal(scoreIced(strong).total, 10);
+  assert.equal(scoreIced(strong).controlesPendentes.length, 0);
   for (const value of ["", "nv"] as const) {
     for (const key of ["esc", "alf", "aud", "vis", "di"]) {
       const result = scoreIced({ ...strong, controle: { ...FULL, [key]: value } });
@@ -56,7 +58,7 @@ test("controle de exclusão vazio ou 'não verificado' deixa o escore descritivo
     }
   }
   // freq e pers não fazem parte da trava: vazios não bloqueiam
-  assert.equal(scoreIced({ ...strong, controle: { ...FULL, freq: "", pers: "nv" } }).faixa, "elevada");
+  assert.equal(scoreIced({ ...strong, controle: { ...FULL, freq: "", pers: "nv" } }).controlesPendentes.length, 0);
   // trava "não" prevalece sobre pendência
   const locked = scoreIced({ ...strong, controle: { ...FULL, aud: "nao", vis: "" } });
   assert.equal(locked.trava, true);

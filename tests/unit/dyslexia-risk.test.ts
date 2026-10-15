@@ -37,10 +37,11 @@ test("trava do bloco 0 impede leitura de dislexia", () => {
   assert.match(result.frase, /não constitui diagnóstico/);
 });
 
-test("9–15 sem núcleo reclassifica para intermediário", () => {
+test("sem pontos de corte: 9–15 sem núcleo permanece descritivo", () => {
   const result = scoreIced({ ...empty, pseudoAcertos: 4, cfAcertos: 2, ranSeg: 70, familiar: "sim", persistencia4: true, pcpm: 110, ditadoF: 0, ditadoPseudoCertas: 5 });
   assert.equal(result.nucleo, "ausente");
-  assert.equal(result.faixa, "intermediaria");
+  assert.equal(result.faixa, "descritiva");
+  assert.doesNotMatch(result.leitura, /elevada|intermedi/i);
 });
 
 test("cabeçalho usa o escudo e a estética do Super NeuroPad", () => {
