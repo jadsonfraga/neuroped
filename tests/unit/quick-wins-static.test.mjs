@@ -210,8 +210,10 @@ assert.match(
 assert.doesNotMatch(layout, /clearAuth\(\)/);
 
 const filter = `${read("client/src/pages/filtro.tsx")}\n${read("client/src/pages/filtro-engine.tsx")}`;
-assert.match(filter, /type AvailabilityMode = "complete" \| "all"/);
-assert.match(filter, /aria-pressed=\{availabilityMode === "all"\}/);
+// Filtro só com instrumentos que abrem integralmente (decisão de 15/10/2026): sem modo "Todas"/fichas.
+assert.match(filter, /type AvailabilityMode = "complete";/);
+assert.doesNotMatch(filter, /availabilityMode === "all"/);
+assert.match(filter, /\.filter\(opensInApp\)\.filter\(isFullApp\)/);
 
 const worker = read("client/public/sw.js");
 assert.match(worker, /__NEUROPED_BUILD_ID__/);

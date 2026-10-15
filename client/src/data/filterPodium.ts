@@ -271,7 +271,9 @@ export function selectPodium(
     const coveragePick =
       options.coverageFirst && coverageWeight > 0
         ? pickByClinicalFit(eligibleExact.filter(covers), coveredQueixas, preferredIds, coverageWeight) ??
-          pickByClinicalFit(eligible.filter(covers), coveredQueixas, preferredIds, coverageWeight)
+          // Cobertura não atropela a idade: fora da faixa só cobre a queixa
+          // quando nenhuma candidata elegível contém a idade exata.
+          (anyEligibleContainsAge ? undefined : pickByClinicalFit(eligible.filter(covers), coveredQueixas, preferredIds, coverageWeight))
         : undefined;
     const found = coveragePick ?? (options.preferCuratedFirst
       ? pickByClinicalFit(preferredHighQuality, coveredQueixas, preferredIds, coverageWeight) ??

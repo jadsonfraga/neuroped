@@ -59,7 +59,6 @@ import { OPBRecommendationCards } from "@/components/OPBRecommendationCards";
 import { AssessmentPlanCard } from "@/components/AssessmentPlanCard";
 import {
   allScales,
-  scales,
   faixasEtarias,
   queixas,
   QUEIXA_COOCORRENCIA,
@@ -68,7 +67,6 @@ import {
 import { INTERACTIVE_SCALE_IDS } from "@/data/interactiveScaleIds.generated";
 import { norm, guessQueixas, guessRespondente } from "@/data/queixaMapping";
 import { mergeFilterableCatalog } from "@/data/filterableCatalog";
-import { buildUploadedReferenceCatalogForApp } from "@/data/uploadedInstrumentFilterBridge";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
 import { parseAgeRangeMonths } from "@/lib/ageRangeParse";
 import type {
@@ -101,7 +99,6 @@ import {
   type FilterExportMeta,
 } from "@/lib/filterExport";
 import {
-  loadFilterPreferences,
   saveFilterPreferences,
 } from "@/lib/filterPreferences";
 import {
@@ -118,7 +115,8 @@ type Slot =
   | "Teste Direto"
   | "Questionário Escolar"
   | "Satisfação Medicação";
-type AvailabilityMode = "complete" | "all";
+/** O filtro mostra somente instrumentos que abrem integralmente no app (decisão de 15/10/2026). */
+type AvailabilityMode = "complete";
 type Tier = "ouro" | "prata" | "bronze";
 type Row =
   | [
@@ -161,7 +159,6 @@ const REGISTRY_URL = `${import.meta.env.BASE_URL}data/neuroped_escalas_neuropsiq
 // EUSM-10 agora vive no catálogo canônico (filterableCatalog, id "eusm10") — sem
 // duplicata. CORE_FILTERABLE_CATALOG já o inclui.
 const CORE_FILTERABLE_CATALOG = mergeFilterableCatalog(allScales);
-const REFERENCE_ONLY_CATALOG = buildUploadedReferenceCatalogForApp(scales);
 
 // Conjunto canônico de ids que abrem como ficha técnica via catch-all
 // (/generic-scale/:id renderiza qualquer escala de allScales — página real).
@@ -1100,7 +1097,6 @@ function clearFilterNavigationPrefill(): void {
 
 export default function FiltroPage() {
   const flashMode = isFlashRoute();
-  const [preferences] = useState(loadFilterPreferences);
   const [navigationPrefill] = useState(readFilterNavigationPrefill);
   const [sessionFilters] = useState(() =>
     flashMode ? null : loadFilterSessionState(),
@@ -1174,9 +1170,8 @@ export default function FiltroPage() {
   const [selectedSignalIds, setSelectedSignalIds] = useState<string[]>(
     flashMode || useNavigationPrefill ? [] : sessionSignalIds,
   );
-  const [availabilityMode, setAvailabilityMode] = useState<AvailabilityMode>(
-    flashMode ? "complete" : preferences.availability,
-  );
+  // Preferência antiga "all" (fichas) é ignorada e regravada como "complete".
+  const availabilityMode: AvailabilityMode = "complete";
   const [copiedRec, setCopiedRec] = useState(false);
   const [compareIds, setCompareIds] = useState<string[]>([]);
   // Deep-link: `#/filtro?idade=5a6m&queixas=tea&resp=pais` reproduz a busca.
@@ -1445,18 +1440,12 @@ export default function FiltroPage() {
     );
   }, [world]);
 
-  // O padrão preserva somente aplicações completas. A opção "Todas" acrescenta
-  // fichas/referências que possuem rota real, sempre rotuladas como não
-  // preenchíveis; itens sem destino continuam excluídos.
-  const catalog = useMemo(() => {
-    const references = availabilityMode === "all" ? REFERENCE_ONLY_CATALOG : [];
-    const routed = unique([
-      ...CORE_FILTERABLE_CATALOG,
-      ...dedupedWorld,
-      ...references,
-    ]).filter(opensInApp);
-    return availabilityMode === "all" ? routed : routed.filter(isFullApp);
-  }, [dedupedWorld, availabilityMode]);
+  // Somente aplicações completas: fichas e referências sem preenchimento no app
+  // não entram no filtro.
+  const catalog = useMemo(
+    () => unique([...CORE_FILTERABLE_CATALOG, ...dedupedWorld]).filter(opensInApp).filter(isFullApp),
+    [dedupedWorld],
+  );
 
   const resolvedAge = useMemo(
     () => resolveFilterAge(exactAge, selectedAge, search, faixasEtarias),
@@ -1487,8 +1476,7 @@ export default function FiltroPage() {
     Boolean(selectedLiteracy) ||
     Boolean(selectedAssessmentType) ||
     selectedSignalIds.length > 0 ||
-    timeBudget !== null ||
-    availabilityMode === "all";
+    timeBudget !== null;
 
   // === MOTOR CLÍNICO (advancedFilterLogic) — fonte ÚNICA de verdade ===
   const filterContext = useMemo<FilterContext>(() => {
@@ -1965,7 +1953,6 @@ export default function FiltroPage() {
     setSelectedLiteracy(null);
     setSelectedAssessmentType(null);
     setSelectedSignalIds([]);
-    setAvailabilityMode("complete");
     setTimeBudget(null);
     setSortMode("relevancia");
     setCompareIds([]);
@@ -2685,40 +2672,8 @@ export default function FiltroPage() {
               <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                 Disponibilidade no app
               </p>
-              <div
-                className="grid grid-cols-2 gap-1.5 sm:gap-2"
-                role="group"
-                aria-label="Filtrar escalas pela forma de uso"
-              >
-                <button
-                  type="button"
-                  aria-pressed={availabilityMode === "complete"}
-                  onMouseEnter={() => softHover()}
-                  onClick={() => setAvailabilityMode("complete")}
-                  className={`min-h-10 rounded-xl border px-2 py-2 text-left text-xs font-bold transition sm:rounded-2xl sm:px-3 ${availabilityMode === "complete" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
-                >
-                  <span aria-hidden="true">✅</span> Completas
-                  <span className="mt-0.5 block text-[10px] font-semibold">
-                    preenchíveis
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={availabilityMode === "all"}
-                  onMouseEnter={() => softHover()}
-                  onClick={() => setAvailabilityMode("all")}
-                  className={`min-h-10 rounded-xl border px-2 py-2 text-left text-xs font-bold transition sm:rounded-2xl sm:px-3 ${availabilityMode === "all" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
-                >
-                  <span aria-hidden="true">📚</span> Todas
-                  <span className="mt-0.5 block text-[10px] font-semibold">
-                    inclui fichas
-                  </span>
-                </button>
-              </div>
-              <p className="text-[10px] leading-relaxed text-muted-foreground">
-                {availabilityMode === "all"
-                  ? "Fichas técnicas aparecem com identificação clara; nenhuma é apresentada como aplicação completa."
-                  : "Mostrando somente instrumentos com aplicação preenchível dentro do app."}
+              <p className="text-[10px] leading-relaxed text-muted-foreground" data-testid="filter-availability-note">
+                <span aria-hidden="true">✅</span> Somente instrumentos que abrem e são preenchidos integralmente dentro do app.
               </p>
             </div>
           </section>
@@ -3425,9 +3380,7 @@ export default function FiltroPage() {
             <Card className="border-amber-200/70 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/20">
               <CardContent className="p-4 text-xs leading-relaxed text-amber-900 dark:text-amber-100">
                 <strong>Leitura prudente:</strong>{" "}
-                {availabilityMode === "all"
-                  ? "o modo Todas inclui aplicações e fichas técnicas com rota real; confirme o selo antes de abrir."
-                  : "o modo Completas mostra apenas instrumentos preenchíveis no app."}{" "}
+                o filtro mostra apenas instrumentos preenchíveis no app.{" "}
                 O filtro organiza opções e não substitui avaliação clínica.
               </CardContent>
             </Card>
