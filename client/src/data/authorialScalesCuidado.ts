@@ -1,5 +1,5 @@
 // Instrumentos autorais NeuroPed — cuidador, adesão e efeitos de medicação (itens originais; ver authorialKit.ts).
-import { authorial, IMPACT4, FREQ4, INTENS4 } from "./authorialKit";
+import { authorial, FREQ4, INTENS4 } from "./authorialKit";
 import type { OpenScaleSpec } from "./openScaleKit";
 
 export const cuidadoSpecs: OpenScaleSpec[] = [
