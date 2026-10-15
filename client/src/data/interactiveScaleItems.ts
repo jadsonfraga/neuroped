@@ -132,8 +132,16 @@ export function makeInteractiveConfig(scale: ScaleEntry, def: InteractiveScaleDe
   const pts = def.optionPoints ?? labels.map((_, i) => i);
   const reversedPts = [...pts].reverse();
   const maxPerItem = Math.max(...pts);
+  // Itens com opções próprias (ex.: EPDS) pontuam pelas próprias opções.
+  const pointsOf = (item: ScaleItem): number[] => {
+    if (typeof item !== "string" && item.responseType !== "text" && item.options?.length) {
+      return item.optionPoints ?? item.options.map((_, i) => i);
+    }
+    return itemReversed(item) ? reversedPts : pts;
+  };
+  const maxOf = (item: ScaleItem) => Math.max(...pointsOf(item));
   const nItems = def.domains.reduce((s, d) => s + d.items.length, 0);
-  const maxTotal = maxPerItem * nItems;
+  const maxTotal = def.domains.reduce((s, d) => s + d.items.reduce((m, item) => m + maxOf(item), 0), 0) || maxPerItem * nItems;
   // Título limpo: remove o código "(NEXUS-xxx)" do fim, se houver.
   const cleanTitle = scale.name.replace(/\s*\(NEXUS-\d+\)\s*$/i, "").trim() || scale.name;
 
@@ -161,10 +169,10 @@ export function makeInteractiveConfig(scale: ScaleEntry, def: InteractiveScaleDe
           let dmax = 0;
           d.items.forEach((item, ii) => {
             if (!isChoice(item)) return;
-            dmax += maxPerItem;
+            dmax += maxOf(item);
             const ans = answers[`${di}-${ii}`];
             if (ans !== undefined) {
-              dscore += pts[ans] ?? 0;
+              dscore += pointsOf(item)[ans] ?? 0;
               answered += 1;
             }
           });
@@ -212,11 +220,11 @@ export function makeInteractiveConfig(scale: ScaleEntry, def: InteractiveScaleDe
         d.items.forEach((item, ii) => {
           const ans = answers[`${di}-${ii}`];
           if (ans !== undefined) {
-            dscore += (itemReversed(item) ? reversedPts : pts)[ans] ?? 0;
+            dscore += pointsOf(item)[ans] ?? 0;
           }
         });
         total += dscore;
-        const dmax = maxPerItem * d.items.length || 1;
+        const dmax = d.items.reduce((m, item) => m + maxOf(item), 0) || 1;
         const band = pickBand(def.bands, (dscore / dmax) * 100);
         return { domain: d.name, score: dscore, classification: band.classification, color: band.color };
       });

@@ -274,4 +274,62 @@ export const onda1Items2026: Record<string, InteractiveScaleDef> = {
       ] },
     ],
   },
+  // ── Depressão perinatal do cuidador (opções próprias por item) ─────────
+  "epds": {
+    instruction: "Estas perguntas são sobre VOCÊ (mãe ou cuidador principal), não sobre o bebê. Marque a resposta que mais se aproxima do que sentiu nos ÚLTIMOS 7 DIAS, não só hoje.",
+    infoBox: "EPDS — Escala de Depressão Pós-Natal de Edimburgo (Cox, Holden & Sagovsky, 1987; © Royal College of Psychiatrists, reprodução permitida com citação). Redação própria; as opções vão sempre da menor (0) para a maior pontuação (3), sem a alternância de ordem do original. Total 0–30: ≥ 10 possível depressão (corte da validação brasileira, Santos et al., 2007) · ≥ 13 provável depressão. QUALQUER resposta diferente de \"Nunca\" no item 10 exige avaliação de segurança no mesmo dia. Rastreio, não diagnóstico.",
+    labels: ["0", "1", "2", "3"],
+    optionPoints: [0, 1, 2, 3],
+    scoreDirection: "higher_worse",
+    totalLabel: "EPDS (0–30)",
+    instrumentVersion: "epds-v1",
+    bands: [
+      { minPct: 0, classification: "Abaixo do corte (0–9)", color: "emerald", description: "Sem indicação de depressão perinatal neste rastreio. Repetir se surgirem sinais." },
+      { minPct: 33.3, classification: "Possível depressão (10–12)", color: "orange", description: "Orientar avaliação da mãe ou cuidador na rede de saúde." },
+      { minPct: 43.3, classification: "Provável depressão (≥ 13)", color: "red", description: "Encaminhar para avaliação e tratamento sem demora." },
+    ],
+    domains: [{ name: "Últimos 7 dias (sobre você)", items: [
+      { text: "Tenho conseguido rir e ver o lado engraçado das coisas", options: ["Tanto quanto antes", "Um pouco menos que antes", "Bem menos que antes", "De jeito nenhum"] },
+      { text: "Tenho pensado no futuro com alegria", options: ["Tanto quanto antes", "Um pouco menos que antes", "Bem menos que antes", "Quase nunca"] },
+      { text: "Tenho me culpado sem necessidade quando as coisas dão errado", options: ["Não, nunca", "Raramente", "Sim, às vezes", "Sim, na maior parte do tempo"] },
+      { text: "Tenho ficado ansiosa(o) ou preocupada(o) sem um bom motivo", options: ["Não, de jeito nenhum", "Quase nunca", "Sim, às vezes", "Sim, muitas vezes"] },
+      { text: "Tenho sentido medo ou pânico sem um bom motivo", options: ["Não, de jeito nenhum", "Não muito", "Sim, às vezes", "Sim, muitas vezes"] },
+      { text: "Tenho sentido que as coisas estão demais para mim", options: ["Não, tenho dado conta como sempre", "Não, quase sempre tenho dado conta", "Sim, às vezes não dou conta como antes", "Sim, quase sempre não dou conta"] },
+      { text: "Tenho me sentido tão infeliz que tenho dificuldade para dormir", options: ["Não, de jeito nenhum", "Raramente", "Sim, às vezes", "Sim, na maior parte do tempo"] },
+      { text: "Tenho me sentido triste ou arrasada(o)", options: ["Não, de jeito nenhum", "Raramente", "Sim, muitas vezes", "Sim, na maior parte do tempo"] },
+      { text: "Tenho me sentido tão infeliz que tenho chorado", options: ["Não, nunca", "Só de vez em quando", "Sim, muitas vezes", "Sim, na maior parte do tempo"] },
+      {
+        text: "Tenho pensado em fazer mal a mim mesma(o)",
+        options: ["Nunca", "Quase nunca", "Às vezes", "Sim, muitas vezes"],
+        example: "Se a resposta não for \"Nunca\", fale hoje com a equipe ou procure ajuda (CVV 188, SAMU 192).",
+        sentinel: { positiveOptionIndexes: [1, 2, 3], label: "Pensamento de se ferir (mãe/cuidador)" },
+      },
+    ] }],
+  },
+
+  // ── Cefaleia: incapacidade (dias) ──────────────────────────────────────
+  "pedmidas": {
+    instruction: "Responda pensando nos ÚLTIMOS 3 MESES e escreva o NÚMERO DE DIAS em cada pergunta (0 se não aconteceu). Um adulto pode ajudar a lembrar.",
+    infoBox: "PedMIDAS — Pediatric Migraine Disability Assessment (Hershey et al., 2001; © Cincinnati Children's, uso clínico livre). Redação própria. Escore = soma dos dias das 6 perguntas: 0–10 pouca ou nenhuma incapacidade (grau I) · 11–30 leve (II) · 31–50 moderada (III) · > 50 grave (IV). Some os dias na leitura do resultado; não conte o mesmo dia em duas perguntas.",
+    labels: ["—"],
+    scoreDirection: "higher_worse",
+    totalLabel: "PedMIDAS — some os dias informados",
+    instrumentVersion: "pedmidas-v1",
+    descriptiveDomainSummary: true,
+    bands: [
+      { minPct: 0, classification: "Some os dias para o grau", color: "amber", description: "0–10 grau I · 11–30 grau II · 31–50 grau III · > 50 grau IV. Compare com a aplicação anterior para avaliar resposta ao tratamento." },
+    ],
+    domains: [
+      { name: "Escola", items: [
+        { text: "Quantos dias inteiros de aula você perdeu por causa da dor de cabeça?", responseType: "text", required: true, maxLength: 3, placeholder: "Nº de dias (0 a 90)" },
+        { text: "Quantos dias você saiu mais cedo ou chegou atrasado(a) por causa da dor de cabeça? (não conte os dias da pergunta anterior)", responseType: "text", required: true, maxLength: 3, placeholder: "Nº de dias" },
+        { text: "Em quantos dias de aula você rendeu menos da metade do normal por causa da dor de cabeça? (não conte os dias já contados acima)", responseType: "text", required: true, maxLength: 3, placeholder: "Nº de dias" },
+      ] },
+      { name: "Casa e atividades", items: [
+        { text: "Em quantos dias você não conseguiu fazer as coisas de casa (tarefas, lição de casa) por causa da dor de cabeça?", responseType: "text", required: true, maxLength: 3, placeholder: "Nº de dias" },
+        { text: "Em quantos dias você deixou de participar de outras atividades (brincar, sair, esportes) por causa da dor de cabeça?", responseType: "text", required: true, maxLength: 3, placeholder: "Nº de dias" },
+        { text: "Em quantos dias você participou dessas atividades, mas rendeu menos da metade do normal? (não conte os dias da pergunta anterior)", responseType: "text", required: true, maxLength: 3, placeholder: "Nº de dias" },
+      ] },
+    ],
+  },
 };

@@ -300,7 +300,7 @@ export const scales: ScaleEntry[] = [
   { id: "cefaleia-calendario", name: "Calendário de Cefaleia", fullName: "Calendário de Cefaleia — Registro Diário", ageMin: 36, ageMax: 216, queixas: ["dor"], respondente: ["pais", "autoaplicavel"], prioridade: "monitorizacao", tempo: "5 min/registro", signalTags: ["cefaleia", "frequência", "intensidade", "duração", "gatilhos", "medicação"], appRoute: "/cefaleia", description: "Intensidade, tipo, localização, aura, triggers e resposta medicamentosa." },
   { id: "wongbaker", name: "Wong-Baker FACES", fullName: "Wong-Baker FACES Pain Rating Scale", ageMin: 36, ageMax: 216, queixas: ["dor"], respondente: ["autoaplicavel"], prioridade: "triagem", tempo: "1 min", description: "6 faces para autoavaliação de intensidade da dor (0–10).", appRoute: "/generic-scale/wongbaker"},
   { id: "flacc", name: "FLACC", fullName: "Face, Legs, Activity, Cry, Consolability", ageMin: 0, ageMax: 84, queixas: ["dor"], respondente: ["clinico"], prioridade: "triagem", tempo: "2 min", description: "Avaliação comportamental de dor em crianças pré-verbais.", fonte: "Merkel SI et al., 1997 - University of Michigan", validacaoBrasil: "Sim", scoringCutoff: "0-3 nenhuma/dor mínima; 4-6 dor moderada; 7-10 dor severa", licencaUso: "livre", signalTags: ["dor", "expressão facial", "choro", "consolabilidade", "movimento das pernas"], appRoute: "/generic-scale/flacc"},
-  { id: "pedmidas", name: "PedMIDAS", fullName: "Pediatric Migraine Disability Assessment", ageMin: 72, ageMax: 216, queixas: ["dor"], respondente: ["autoaplicavel"], prioridade: "monitorizacao", tempo: "5 min", description: "6 itens avaliando impacto funcional da enxaqueca nos últimos 3 meses.", appRoute: "/generic-scale/pedmidas"},
+  { id: "pedmidas", name: "PedMIDAS", fullName: "Pediatric Migraine Disability Assessment", ageMin: 72, ageMax: 216, queixas: ["dor"], respondente: ["autoaplicavel", "pais"], prioridade: "monitorizacao", tempo: "5 min", description: "6 perguntas sobre dias de escola, casa e lazer perdidos ou prejudicados pela cefaleia nos últimos 3 meses.", fonte: "Hershey AD et al., 2001 — Neurology 57(11):2034-9 (© Cincinnati Children's, uso clínico livre)", scoringCutoff: "Soma de dias: 0–10 grau I · 11–30 II · 31–50 III · > 50 IV.", licencaUso: "livre", applicationMode: "autoquestionario_crianca_adolescente", appRoute: "/generic-scale/pedmidas"},
 
   // ===== COGNIÇÃO =====
   { id: "wppsi", name: "WPPSI-IV", fullName: "Wechsler Preschool and Primary Scale of Intelligence IV", ageMin: 24, ageMax: 90, queixas: ["cognicao"], respondente: ["clinico"], prioridade: "diagnostica", tempo: "30–60 min", description: "Avaliação de inteligência para pré-escolares — QI verbal, execução e total.", appRoute: "/generic-scale/wppsi", licencaUso: "comercial", implementationStatus: "external_only",},
@@ -926,6 +926,8 @@ export const EXPECTED_INTERACTIVE_ITEM_COUNTS: Readonly<Record<string, number>> 
   puts: 10,
   "p-ymrs": 11,
   swan: 18,
+  epds: 10,
+  pedmidas: 6,
 };
 
 export function getDeliveredInteractiveItemCount(scaleId: string): number {

@@ -221,8 +221,8 @@ export const escalasPsiquiatricasImportadas2026: ScaleEntry[] = [
     fullName: "Edinburgh Postnatal Depression Scale — depressão materna/parental",
     ageMin: 0,
     ageMax: 24,
-    queixas: ["neonatal", "evolucao"],
-    respondente: ["autoaplicavel"],
+    queixas: ["saude-cuidador", "neonatal"],
+    respondente: ["pais"],
     prioridade: "triagem",
     tempo: "5 min",
     description:
@@ -232,8 +232,9 @@ export const escalasPsiquiatricasImportadas2026: ScaleEntry[] = [
       "Cada item 0–3; total 0–30. ≥10 (alguns serviços ≥12) sugere provável depressão; qualquer pontuação no item 10 exige avaliação de risco imediata.",
     licencaUso: "livre",
     assessmentUse: "triagem",
-    applicationMode: "autoquestionario_crianca_adolescente",
-    literacyRequirement: "alfabetizado",
+    // Respondida pela mãe/cuidador sobre si mesmo(a); o item 10 é sentinela de risco.
+    applicationMode: "questionario_pais",
+    suicideRiskInstrument: true,
   },
   {
     id: "hads",

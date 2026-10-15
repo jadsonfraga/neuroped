@@ -70,3 +70,38 @@ test("instrumentos sem corte aplicável ficam descritivos (AIMS, PUTS, P-YMRS, S
     assert.equal(result.classification, "Perfil descritivo", id);
   }
 });
+
+test("EPDS: opções próprias por item, cortes 10 e 13 e item 10 sentinela; respondida pelo cuidador", async () => {
+  const { itemOptions } = await import("../../client/src/components/GenericScale");
+  const def = interactiveScaleItems.epds;
+  const items = def.domains[0].items;
+  assert.equal(items.length, 10);
+  for (const item of items) assert.equal(itemOptions(item, def.labels).length, 4);
+  assert.equal(itemOptions(items[0], def.labels)[0], "Tanto quanto antes");
+  const ten = items[9];
+  assert.ok(typeof ten === "object" && "sentinel" in ten && ten.sentinel?.positiveOptionIndexes.join() === "1,2,3");
+  const epds = (t: number) => scoreWith("epds", spread(t, 10, 3)).classification;
+  assert.deepEqual([9, 10, 12, 13, 30].map(epds), ["Abaixo do corte (0–9)", "Possível depressão (10–12)", "Possível depressão (10–12)", "Provável depressão (≥ 13)", "Provável depressão (≥ 13)"]);
+  const scale = allScales.find((s) => s.id === "epds")!;
+  assert.deepEqual(scale.respondente, ["pais"]);
+  assert.equal(isSuicideInstrument(scale), true);
+});
+
+test("PedMIDAS: 6 perguntas de dias (texto), aplicação completa e licença livre", () => {
+  const def = interactiveScaleItems.pedmidas;
+  const items = def.domains.flatMap((d) => d.items);
+  assert.equal(items.length, 6);
+  assert.ok(items.every((item) => typeof item === "object" && item.responseType === "text"));
+  const scale = allScales.find((s) => s.id === "pedmidas")!;
+  assert.equal(getImplementationStatus(scale), "complete");
+  assert.equal(scale.licencaUso, "livre");
+});
+
+test("escalas sem opções por item mantêm o mesmo escore máximo (sem regressão)", async () => {
+  const { itemOptions } = await import("../../client/src/components/GenericScale");
+  for (const [id, def] of Object.entries(interactiveScaleItems)) {
+    const items = def.domains.flatMap((d) => d.items);
+    if (items.some((item) => typeof item === "object" && item.responseType !== "text" && "options" in item && item.options?.length)) continue;
+    for (const item of items) assert.deepEqual(itemOptions(item, def.labels), def.labels, id);
+  }
+});

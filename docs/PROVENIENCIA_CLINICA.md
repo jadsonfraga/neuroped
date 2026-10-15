@@ -3,8 +3,8 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 284
-- **Com fonte declarada:** 284 (100.0%)
+- **Total de instrumentos:** 286
+- **Com fonte declarada:** 286 (100.0%)
 - **Sem fonte declarada:** 0
 - **Aguardando validação psicométrica publicada:** 111 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
 
@@ -80,6 +80,7 @@
 | `emdi` | EMDI | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não | não |
 | `ems` | EMS-NEXUS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não | não |
 | `engel` | Engel Classification | Engel J et al., 1993 (Engel Surgical Outcome Classification) | não | não |
+| `epds` | EPDS | Cox JL, Holden JM, Sagovsky R, 1987; validação BR: Santos IS et al., 2007 (domínio público) | não | não |
 | `epilepsia-diario` | Diário de Crises | Ferramenta de registro clínico NeuroPed (diário de crises) | não | não |
 | `erc` | ERC | Shields A, Cicchetti D, 1997 (Emotion Regulation Checklist) | não | não |
 | `erp-np` | ERP-NP | Instrumento autoral NeuroPed — Dr. Jadson Fraga, 2026. Construto: estados mentais de risco. | não | sim |
@@ -241,6 +242,7 @@
 | `pant-v7-074` | Autorregulação corporal | Ebook PANT — 100 Escalas Passivas (Obra-Prima v7, item por item) — Dr. Jadson Fraga | não | não |
 | `pant-v7-078` | Controle esfincteriano funcional | Ebook PANT — 100 Escalas Passivas (Obra-Prima v7, item por item) — Dr. Jadson Fraga | não | não |
 | `pdae` | PDAE | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não | não |
+| `pedmidas` | PedMIDAS | Hershey AD et al., 2001 — Neurology 57(11):2034-9 (© Cincinnati Children's, uso clínico livre) | não | não |
 | `pedsql` | PedsQL | Varni JW et al., 2001 | não | não |
 | `phq9-cuidador` | PHQ-9 do cuidador | Kroenke K, Spitzer RL, Williams JB, 2001 (domínio público) | não | não |
 | `phqa` | PHQ-A | Johnson JG et al., 2002 | não | não |
