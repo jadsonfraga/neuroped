@@ -76,9 +76,16 @@ const resolveRoute = (s) => {
 // escalas aplicáveis; cards mundiais (não aplicáveis) ficam fora.
 const catalog = uniq(mergeFilterableCatalog(allScales)).filter(resolveRoute);
 
+// Escalas das ondas 1–3 (banco de escalas abertas, com registro de licença `wave`≥1) NÃO entram no
+// SORTEIO (vocabulário de sinais e idades plausíveis): isso congela os 672 casos históricos —
+// uma tag nova deslocaria o LCG e trocaria os casos. Elas continuam no catálogo avaliado (ranking
+// real) e têm testes próprios (ex.: test-open-scales-wave1).
+const { getExplicitLicenseRecord } = await imp("client/src/data/scaleLicenseRegistry.ts");
+const drawCatalog = catalog.filter((s) => (getExplicitLicenseRecord(s.id)?.wave ?? 0) < 1);
+
 // Vocabulario de sinais por queixa, extraido do proprio catalogo.
 const signalsByQueixa = new Map();
-for (const s of catalog) {
+for (const s of drawCatalog) {
   for (const q of s.queixas) {
     if (!signalsByQueixa.has(q)) signalsByQueixa.set(q, new Set());
     for (const t of s.signalTags ?? []) signalsByQueixa.get(q).add(t);
@@ -90,7 +97,7 @@ const AGE_GRID = [
 function plausibleAges(q) {
   return AGE_GRID.filter(
     (a) =>
-      catalog.filter(
+      drawCatalog.filter(
         (s) => s.queixas.includes(q) && s.ageMin <= a && s.ageMax >= a,
       ).length >= 3,
   );

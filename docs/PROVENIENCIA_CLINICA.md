@@ -3,10 +3,10 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 275
-- **Com fonte declarada:** 275 (100.0%)
+- **Total de instrumentos:** 290
+- **Com fonte declarada:** 290 (100.0%)
 - **Sem fonte declarada:** 0
-- **Aguardando validação psicométrica publicada:** 111 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
+- **Aguardando validação psicométrica publicada:** 126 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
 
 > As duas últimas linhas medem coisas diferentes e não se somam: um
 > instrumento pode ter fonte e ainda assim aguardar validação.
@@ -18,6 +18,7 @@
 | `adapta-18-sdg` | ADAPTA-18 SDG | github:jadsonfraga/neuroped@b7adca686b8dba657b4b1317583f485cede7a0c8:client/src/data/interactiveScaleItemsAuthorial20260910.ts | não | sim |
 | `afi12-sdg` | AFI-12 SDG | Base documental autoral: 01_AFI12_Atencao_Freio_Impacto_NeuroPed_SDG.pdf; integridade sha256:f2123c61e7f03c52e20a24348b444f5c66293457c76b87756c0800435221b74d. Revisão clínica/editorial aprovada pelo autor em 2026-09-08; conteúdo clínico, domínios e pontuação preservados. | não | sim |
 | `ahsd-inventario-pais` | Inventário AH/SD · Pais | Dr. Jadson Fraga / NeuroPed (2026), adaptação familiar do Inventário Escolar de Altas Habilidades. Itens autorais inspirados na concepção dos três anéis de Renzulli e no modelo de Gagné. | não | sim |
+| `aims-pt` | AIMS (movimentos involuntários) | Guy W. ECDEU Assessment Manual for Psychopharmacology. Rockville: NIMH, 1976 (domínio público, governo dos EUA); texto em português: Portaria Conjunta SAES/SCTIE nº 7, de 14/05/2021 — PCDT do Transtorno Esquizoafetivo (Ministério da Saúde). | não | sim |
 | `apgar` | APGAR | Apgar V, 1953 (APGAR Score) | não | não |
 | `aq10-adolescente` | AQ-10 Adolescente | Allison C, Auyeung B, Baron-Cohen S, 2012 (AQ-10) | não | não |
 | `ari` | ARI | Stringaris A, Goodman R, Ferdinando S, Razdan V, Muhrer E, Leibenluft E, Brotman MA, 2012 (Affective Reactivity Index) — J Child Psychol Psychiatry 53(11):1109-17. PMID 22574736 · doi:10.1111/j.1469-7610.2012.02561.x | não | não |
@@ -269,6 +270,20 @@
 | `smfq` | SMFQ | Angold A, Costello EJ, Messer SC, et al., 1995 (SMFQ) — Int J Methods Psychiatr Res 5:237-249 (original não indexado no PubMed); validação psicométrica: Turner N, Joinson C, Peters TJ, Wiles N, Lewis G, 2014 — Psychol Assess 26(3):752-62. PMID 24749755 · doi:10.1037/a0036572 | não | não |
 | `snap` | SNAP-IV | Swanson JM et al., 2001 - University of California | não | não |
 | `ssq` | SSQ | Cramer JA, Baker GA, Jacoby A, 2002 (Seizure Severity Questionnaire) — Epilepsy Res 48(3):187-97. PMID 11904237 · doi:10.1016/s0920-1211(02)00003-7 · RESSALVA: desenvolvido e validado em adultos; uso pediátrico é extrapolação sem validação publicada. | não | não |
+| `swyc-bpsc` | SWYC BPSC (bebê) | Perrin EC, Sheldrick RC et al. The SWYC: User's Manual v1.01 (2016); formulário BPSC em português v1.07 (01/04/2017), theSWYC.org. © Tufts Medical Center. | não | sim |
+| `swyc-marcos-12m` | SWYC Marcos 12m | Perrin EC, Sheldrick RC, Visco Z, Mattern K. The SWYC: User's Manual v1.01 (2016); formulário em português v2 (23/05/2016), theSWYC.org. © Tufts Medical Center. | não | sim |
+| `swyc-marcos-15m` | SWYC Marcos 15m | Perrin EC, Sheldrick RC, Visco Z, Mattern K. The SWYC: User's Manual v1.01 (2016); formulário em português v2 (23/05/2016), theSWYC.org. © Tufts Medical Center. | não | sim |
+| `swyc-marcos-18m` | SWYC Marcos 18m | Perrin EC, Sheldrick RC, Visco Z, Mattern K. The SWYC: User's Manual v1.01 (2016); formulário em português v2 (23/05/2016), theSWYC.org. © Tufts Medical Center. | não | sim |
+| `swyc-marcos-24m` | SWYC Marcos 24m | Perrin EC, Sheldrick RC, Visco Z, Mattern K. The SWYC: User's Manual v1.01 (2016); formulário em português v2 (23/05/2016), theSWYC.org. © Tufts Medical Center. | não | sim |
+| `swyc-marcos-2m` | SWYC Marcos 2m | Perrin EC, Sheldrick RC, Visco Z, Mattern K. The SWYC: User's Manual v1.01 (2016); formulário em português v2 (23/05/2016), theSWYC.org. © Tufts Medical Center. | não | sim |
+| `swyc-marcos-30m` | SWYC Marcos 30m | Perrin EC, Sheldrick RC, Visco Z, Mattern K. The SWYC: User's Manual v1.01 (2016); formulário em português v2 (23/05/2016), theSWYC.org. © Tufts Medical Center. | não | sim |
+| `swyc-marcos-36m` | SWYC Marcos 36m | Perrin EC, Sheldrick RC, Visco Z, Mattern K. The SWYC: User's Manual v1.01 (2016); formulário em português v2 (23/05/2016), theSWYC.org. © Tufts Medical Center. | não | sim |
+| `swyc-marcos-48m` | SWYC Marcos 48m | Perrin EC, Sheldrick RC, Visco Z, Mattern K. The SWYC: User's Manual v1.01 (2016); formulário em português v2 (23/05/2016), theSWYC.org. © Tufts Medical Center. | não | sim |
+| `swyc-marcos-4m` | SWYC Marcos 4m | Perrin EC, Sheldrick RC, Visco Z, Mattern K. The SWYC: User's Manual v1.01 (2016); formulário em português v2 (23/05/2016), theSWYC.org. © Tufts Medical Center. | não | sim |
+| `swyc-marcos-60m` | SWYC Marcos 60m | Perrin EC, Sheldrick RC, Visco Z, Mattern K. The SWYC: User's Manual v1.01 (2016); formulário em português v2 (23/05/2016), theSWYC.org. © Tufts Medical Center. | não | sim |
+| `swyc-marcos-6m` | SWYC Marcos 6m | Perrin EC, Sheldrick RC, Visco Z, Mattern K. The SWYC: User's Manual v1.01 (2016); formulário em português v2 (23/05/2016), theSWYC.org. © Tufts Medical Center. | não | sim |
+| `swyc-marcos-9m` | SWYC Marcos 9m | Perrin EC, Sheldrick RC, Visco Z, Mattern K. The SWYC: User's Manual v1.01 (2016); formulário em português v2 (23/05/2016), theSWYC.org. © Tufts Medical Center. | não | sim |
+| `swyc-ppsc` | SWYC PPSC (pré-escolar) | Perrin EC, Sheldrick RC et al. The SWYC: User's Manual v1.01 (2016); formulário PPSC em português v1.07 (01/04/2017), theSWYC.org. © Tufts Medical Center. | não | sim |
 | `tdl-aprendizagem` | Escala Dr. Jadson — TDL e Aprendizagem Escolar | NeuroPed EDJ — Escala Dr. Jadson: TDL e Dificuldades de Aprendizagem Escolar (versão infantil até 8 anos) — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://drive.google.com/file/d/10GV_krIChucIRIS-er_w0c_WFEtEAZZA/view | não | sim |
 | `tdn-bebe` | TDN-Bebê | Instrumento autoral NeuroPed — Dr. Jadson Fraga, 2026. Construto: desenvolvimento do lactente. | não | sim |
 | `tea-checklists` | Checklists TEA | Compilação clínica NeuroPed dos instrumentos ADOS-2, ADI-R, CARS-2, GARS-3 e SRS-2 | não | não |

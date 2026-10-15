@@ -1,6 +1,6 @@
 {
  "total": 4770,
- "incompleteCount": 1379,
+ "incompleteCount": 1367,
  "incompleteByCombo": {
   "linguagem|adolescente|primeira-consulta": 4,
   "linguagem|adolescente|retorno": 4,
@@ -23,13 +23,10 @@
   "tdah|professor|ajuste-medicacao": 6,
   "tdah|professor|acompanhamento": 6,
   "comportamento|pais|primeira-consulta": 3,
-  "comportamento|pais|retorno": 2,
   "comportamento|pais|avaliacao-escolar": 3,
-  "comportamento|pais|ajuste-medicacao": 2,
-  "comportamento|pais|acompanhamento": 2,
-  "comportamento|professor|primeira-consulta": 7,
+  "comportamento|professor|primeira-consulta": 4,
   "comportamento|professor|retorno": 7,
-  "comportamento|professor|avaliacao-escolar": 7,
+  "comportamento|professor|avaliacao-escolar": 4,
   "comportamento|professor|ajuste-medicacao": 7,
   "comportamento|professor|acompanhamento": 7,
   "sono|professor|primeira-consulta": 7,
