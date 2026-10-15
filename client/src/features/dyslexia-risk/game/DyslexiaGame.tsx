@@ -6,7 +6,7 @@ import { useIssuer, issuerCredentials } from "@/lib/issuer";
 import { issuerLines } from "@/features/super-neuropad/pdf";
 import { formatClinicalDateTime } from "@/lib/clinicalDate";
 import { safeTextFilename } from "@/lib/shareText";
-import { MAX_GAME_AGE, MIN_GAME_AGE, bandForAge, fluencyWords, type ArithItem, type BandBank, type ComprehensionQuestion, type DecodeItem, type DitadoItem } from "./bank";
+import { MAX_GAME_AGE, MIN_GAME_AGE, bandForAge, fluencyProbe, fluencyWords, type ArithItem, type FluencyForm, type BandBank, type ComprehensionQuestion, type DecodeItem, type DitadoItem } from "./bank";
 import {
   FLUENCY_SECONDS, GAME_STORAGE_KEY, GAME_VERSION, LEVEL_LABEL, SESSION_CAP_SECONDS, WORLDS,
   classifyDitado, encouragementFor, newGame, nextItemFor, recordFluency, recordResponse, skipWorld, starsFor, summarizeGame, tick, worldTarget,
@@ -515,7 +515,8 @@ function ArithView({ item, young, speech, onAnswer }: { item: ArithItem; young: 
 }
 
 function FluencyView({ bank, onDone, paused }: { bank: BandBank; onDone: WorldScreenProps["onFluency"]; paused: boolean }) {
-  const probe = bank.fluencia;
+  const [form, setForm] = useState<FluencyForm>("A");
+  const probe = fluencyProbe(bank, form);
   const words = useMemo(() => fluencyWords(probe), [probe]);
   const [secs, setSecs] = useState(0);
   const [running, setRunning] = useState(false);
@@ -533,6 +534,13 @@ function FluencyView({ bank, onDone, paused }: { bank: BandBank; onDone: WorldSc
   return (
     <div className="space-y-3">
       <p className="font-bold">{probe.kind === "silabas" ? "Leia as sílabas em voz alta, uma por uma." : "Leia o texto em voz alta, do começo, no seu ritmo."}</p>
+      {!started && (
+        <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Forma do texto">
+          <span className="text-xs font-bold">Forma:</span>
+          <button type="button" className={`snp-btn ${form === "A" ? "snp-btn--sky" : "snp-btn--paper"} drx-tap px-4`} aria-pressed={form === "A"} onClick={() => { setForm("A"); setLidas(0); }}>A · 1ª aplicação</button>
+          <button type="button" className={`snp-btn ${form === "B" ? "snp-btn--sky" : "snp-btn--paper"} drx-tap px-4`} aria-pressed={form === "B"} onClick={() => { setForm("B"); setLidas(0); }}>B · reteste</button>
+        </div>
+      )}
       <p className="text-xs font-bold">Aplicador: inicie o cronômetro, marque os erros e, ao final, toque na última {probe.kind === "silabas" ? "sílaba" : "palavra"} lida.</p>
       <div className="flex flex-wrap items-center gap-2">
         <button type="button" className="snp-btn snp-btn--sun drx-tap px-4" disabled={running || secs >= FLUENCY_SECONDS} onClick={() => setRunning(true)}>{secs ? "▶ Retomar" : "▶ Iniciar 60 s"}</button>
