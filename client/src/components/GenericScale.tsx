@@ -556,6 +556,16 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
           fala="Respostas registradas! Abaixo estão as perguntas e as respostas selecionadas, por extenso — a análise clínica fica com você, profissional."
         />
 
+        {config.infoBox ? (
+          <div
+            className="rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 p-4"
+            data-testid="scale-info-box-result"
+            role="note"
+          >
+            <p className="text-xs text-amber-900 dark:text-amber-200 leading-relaxed">{config.infoBox}</p>
+          </div>
+        ) : null}
+
         {triggeredSafetyItems.length > 0 && (
           <Card
             className="border-red-500 bg-red-50 dark:bg-red-950/30"
@@ -847,6 +857,15 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
           <strong>Instruções:</strong> {config.instruction}
         </p>
       </div>
+      {config.infoBox ? (
+        <div
+          className="rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 p-4"
+          data-testid="scale-info-box"
+          role="note"
+        >
+          <p className="text-xs text-amber-900 dark:text-amber-200 leading-relaxed">{config.infoBox}</p>
+        </div>
+      ) : null}
 
       {visibleItemsByDomain.map(
         ({ domain, domainIndex: di, items: visibleDomainItems }) => {
