@@ -83,7 +83,7 @@ export const cuidadoSpecs: OpenScaleSpec[] = [
     instruction: "Marque o quanto você já consegue fazer cada coisa. Não é uma prova; serve para combinar os próximos passos com a equipe.",
     blocks: [
       { name: "Conhecer a própria condição", items: ["Sei explicar com minhas palavras o que tenho e por que acompanho.", "Sei o nome e para que serve cada remédio que uso.", "Sei quais sinais me avisam que preciso procurar ajuda."] },
-      { name: "Fazer", items: ["Tomo meus remédios sem ninguém lembrar.", "Falo com o médico sobre minhas dúvidas na consulta.", "Sei marcar consulta, pegar receita e retirar remédio na farmácia ou UBS.", "Levo meus documentos e cartão do SUS quando preciso."] },
+      { name: "Fazer", items: ["Tomo meus remédios sem ninguém lembrar.", "Falo com o médico sobre minhas dúvidas na consulta.", "Sei marcar consulta, pegar receita e retirar remédio na farmácia ou UBS.", "Levo meus documentos e cartão do SUS quando preciso.", "Sei dizer à equipe quando não entendi uma orientação ou quando discordo dela."] },
     ],
   }),
 ];

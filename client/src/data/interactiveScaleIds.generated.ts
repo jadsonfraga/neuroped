@@ -533,7 +533,7 @@ export const INTERACTIVE_SCALE_ITEM_COUNTS: Readonly<Record<string, number>> = {
   "na-efeitos-estimulantes-pais": 12,
   "na-efeitos-psicofarmacos-adolescente": 10,
   "na-sobrecarga-cuidador": 12,
-  "na-transicao-saude-adolescente": 7,
+  "na-transicao-saude-adolescente": 8,
   "navi-ped-84": 84,
   "nddie": 6,
   "ndi-360": 48,
