@@ -299,6 +299,8 @@ export const escalasPsiquiatricasImportadas2026: ScaleEntry[] = [
       "Soma dos 17 primeiros itens (referência clássica): 0–7 sem depressão; 8–13 leve; 14–18 moderada; 19–22 grave; ≥23 muito grave.",
     licencaUso: "livre",
     assessmentUse: "monitorizacao",
+    // Item 3 (ideias de morte/suicídio) é sentinela na aplicação.
+    suicideRiskInstrument: true,
     applicationMode: "entrevista_clinica",
     verbalRequirement: "indiferente",
     literacyRequirement: "indiferente",

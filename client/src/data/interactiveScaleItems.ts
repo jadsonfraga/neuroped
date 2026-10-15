@@ -27,6 +27,7 @@ import { nexusAplicaveis2026Items } from "./interactiveScaleItemsNexusAplicaveis
 import { podjTeaPrimeItems } from "./interactiveScaleItemsPodjTeaPrime";
 import { ahsdPaisItems } from "./interactiveScaleItemsAhsdPais";
 import { onda1Items2026 } from "./interactiveScaleItemsOnda1_2026";
+import { onda2Items2026 } from "./interactiveScaleItemsOnda2_2026";
 
 export interface InteractiveBand {
   /** Percentual mínimo do escore máximo (0-100) para cair nesta faixa. */
@@ -2830,6 +2831,8 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
   ...ahsdPaisItems,
   // Onda 1 do plano de escalas (15/10/2026).
   ...onda1Items2026,
+  // Onda 2 (15/10/2026): saúde mental ampla, seguimento e mobilidade.
+  ...onda2Items2026,
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */

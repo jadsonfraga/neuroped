@@ -928,6 +928,12 @@ export const EXPECTED_INTERACTIVE_ITEM_COUNTS: Readonly<Record<string, number>> 
   swan: 18,
   epds: 10,
   pedmidas: 6,
+  phq2: 2,
+  psc35: 35,
+  "ces-dc": 20,
+  hamd: 17,
+  cgas: 1,
+  fms: 3,
 };
 
 export function getDeliveredInteractiveItemCount(scaleId: string): number {
