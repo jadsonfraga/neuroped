@@ -3,10 +3,10 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 286
-- **Com fonte declarada:** 286 (100.0%)
+- **Total de instrumentos:** 300
+- **Com fonte declarada:** 300 (100.0%)
 - **Sem fonte declarada:** 0
-- **Aguardando validação psicométrica publicada:** 111 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
+- **Aguardando validação psicométrica publicada:** 125 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
 
 > As duas últimas linhas medem coisas diferentes e não se somam: um
 > instrumento pode ter fonte e ainda assim aguardar validação.
@@ -280,6 +280,20 @@
 | `snap` | SNAP-IV | Swanson JM et al., 2001 - University of California | não | não |
 | `ssq` | SSQ | Cramer JA, Baker GA, Jacoby A, 2002 (Seizure Severity Questionnaire) — Epilepsy Res 48(3):187-97. PMID 11904237 · doi:10.1016/s0920-1211(02)00003-7 · RESSALVA: desenvolvido e validado em adultos; uso pediátrico é extrapolação sem validação publicada. | não | não |
 | `swan` | SWAN | Swanson JM et al., 2012; adhd.net (domínio público) | não | não |
+| `swyc-bpsc` | SWYC BPSC (bebê) | Perrin EC, Sheldrick RC et al. The SWYC: User's Manual v1.01 (2016); formulário BPSC em português v1.07 (01/04/2017), theSWYC.org. © Tufts Medical Center. | não | sim |
+| `swyc-marcos-12m` | SWYC Marcos 12m | Perrin EC, Sheldrick RC, Visco Z, Mattern K. The SWYC: User's Manual v1.01 (2016); formulário em português v2 (23/05/2016), theSWYC.org. © Tufts Medical Center. | não | sim |
+| `swyc-marcos-15m` | SWYC Marcos 15m | Perrin EC, Sheldrick RC, Visco Z, Mattern K. The SWYC: User's Manual v1.01 (2016); formulário em português v2 (23/05/2016), theSWYC.org. © Tufts Medical Center. | não | sim |
+| `swyc-marcos-18m` | SWYC Marcos 18m | Perrin EC, Sheldrick RC, Visco Z, Mattern K. The SWYC: User's Manual v1.01 (2016); formulário em português v2 (23/05/2016), theSWYC.org. © Tufts Medical Center. | não | sim |
+| `swyc-marcos-24m` | SWYC Marcos 24m | Perrin EC, Sheldrick RC, Visco Z, Mattern K. The SWYC: User's Manual v1.01 (2016); formulário em português v2 (23/05/2016), theSWYC.org. © Tufts Medical Center. | não | sim |
+| `swyc-marcos-2m` | SWYC Marcos 2m | Perrin EC, Sheldrick RC, Visco Z, Mattern K. The SWYC: User's Manual v1.01 (2016); formulário em português v2 (23/05/2016), theSWYC.org. © Tufts Medical Center. | não | sim |
+| `swyc-marcos-30m` | SWYC Marcos 30m | Perrin EC, Sheldrick RC, Visco Z, Mattern K. The SWYC: User's Manual v1.01 (2016); formulário em português v2 (23/05/2016), theSWYC.org. © Tufts Medical Center. | não | sim |
+| `swyc-marcos-36m` | SWYC Marcos 36m | Perrin EC, Sheldrick RC, Visco Z, Mattern K. The SWYC: User's Manual v1.01 (2016); formulário em português v2 (23/05/2016), theSWYC.org. © Tufts Medical Center. | não | sim |
+| `swyc-marcos-48m` | SWYC Marcos 48m | Perrin EC, Sheldrick RC, Visco Z, Mattern K. The SWYC: User's Manual v1.01 (2016); formulário em português v2 (23/05/2016), theSWYC.org. © Tufts Medical Center. | não | sim |
+| `swyc-marcos-4m` | SWYC Marcos 4m | Perrin EC, Sheldrick RC, Visco Z, Mattern K. The SWYC: User's Manual v1.01 (2016); formulário em português v2 (23/05/2016), theSWYC.org. © Tufts Medical Center. | não | sim |
+| `swyc-marcos-60m` | SWYC Marcos 60m | Perrin EC, Sheldrick RC, Visco Z, Mattern K. The SWYC: User's Manual v1.01 (2016); formulário em português v2 (23/05/2016), theSWYC.org. © Tufts Medical Center. | não | sim |
+| `swyc-marcos-6m` | SWYC Marcos 6m | Perrin EC, Sheldrick RC, Visco Z, Mattern K. The SWYC: User's Manual v1.01 (2016); formulário em português v2 (23/05/2016), theSWYC.org. © Tufts Medical Center. | não | sim |
+| `swyc-marcos-9m` | SWYC Marcos 9m | Perrin EC, Sheldrick RC, Visco Z, Mattern K. The SWYC: User's Manual v1.01 (2016); formulário em português v2 (23/05/2016), theSWYC.org. © Tufts Medical Center. | não | sim |
+| `swyc-ppsc` | SWYC PPSC (pré-escolar) | Perrin EC, Sheldrick RC et al. The SWYC: User's Manual v1.01 (2016); formulário PPSC em português v1.07 (01/04/2017), theSWYC.org. © Tufts Medical Center. | não | sim |
 | `tdl-aprendizagem` | Escala Dr. Jadson — TDL e Aprendizagem Escolar | NeuroPed EDJ — Escala Dr. Jadson: TDL e Dificuldades de Aprendizagem Escolar (versão infantil até 8 anos) — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://drive.google.com/file/d/10GV_krIChucIRIS-er_w0c_WFEtEAZZA/view | não | sim |
 | `tdn-bebe` | TDN-Bebê | Instrumento autoral NeuroPed — Dr. Jadson Fraga, 2026. Construto: desenvolvimento do lactente. | não | sim |
 | `tea-checklists` | Checklists TEA | Compilação clínica NeuroPed dos instrumentos ADOS-2, ADI-R, CARS-2, GARS-3 e SRS-2 | não | não |

@@ -27,6 +27,7 @@ import { nexusAplicaveis2026Items } from "./interactiveScaleItemsNexusAplicaveis
 import { podjTeaPrimeItems } from "./interactiveScaleItemsPodjTeaPrime";
 import { ahsdPaisItems } from "./interactiveScaleItemsAhsdPais";
 import { onda1Items2026 } from "./interactiveScaleItemsOnda1_2026";
+import { openScaleItems } from "./openScalesIndex";
 
 export interface InteractiveBand {
   /** Percentual mínimo do escore máximo (0-100) para cair nesta faixa. */
@@ -78,6 +79,16 @@ export interface InteractiveScaleDef {
    * campos de texto livre no máximo possível. Não aplica faixas por domínio.
    */
   descriptiveDomainSummary?: boolean;
+  /**
+   * Regra de ponto de corte OFICIAL por domínio (ex.: BPSC ≥3 em qualquer subescala; PPSC ≥9 no total).
+   * Só usar quando o corte vem da fonte do instrumento (AGENTS.md: sem corte sem apoio). Resultado
+   * positivo = escore do domínio ≥ `minScore`; o geral é positivo se QUALQUER domínio for positivo.
+   */
+  domainCutoff?: {
+    minScore: number;
+    positive: Omit<InteractiveBand, "minPct">;
+    negative: Omit<InteractiveBand, "minPct">;
+  };
 }
 
 // ------------------------------------------------------------
@@ -144,6 +155,47 @@ export function makeInteractiveConfig(scale: ScaleEntry, def: InteractiveScaleDe
   const maxTotal = def.domains.reduce((s, d) => s + d.items.reduce((m, item) => m + maxOf(item), 0), 0) || maxPerItem * nItems;
   // Título limpo: remove o código "(NEXUS-xxx)" do fim, se houver.
   const cleanTitle = scale.name.replace(/\s*\(NEXUS-\d+\)\s*$/i, "").trim() || scale.name;
+
+  if (def.domainCutoff && !def.descriptiveDomainSummary) {
+    const rule = def.domainCutoff;
+    return {
+      title: cleanTitle,
+      subtitle: scale.fullName,
+      icon: def.icon ?? ClipboardList,
+      gradient: def.gradient ?? "from-primary to-chart-2",
+      instruction: def.instruction,
+      labels,
+      infoBox: def.infoBox,
+      scaleId: scale.id,
+      instrumentVersion: def.instrumentVersion,
+      domains: def.domains.map((d) => ({ name: d.name, color: d.color ?? "text-primary", items: d.items })),
+      onCalculate: (answers) => {
+        let total = 0;
+        let anyPositive = false;
+        const domainResults = def.domains.map((d, di) => {
+          let dscore = 0;
+          d.items.forEach((item, ii) => {
+            const ans = answers[`${di}-${ii}`];
+            if (ans !== undefined) dscore += (itemReversed(item) ? reversedPts : pts)[ans] ?? 0;
+          });
+          total += dscore;
+          const positive = dscore >= rule.minScore;
+          if (positive) anyPositive = true;
+          const r = positive ? rule.positive : rule.negative;
+          return { domain: d.name, score: dscore, classification: `${r.classification} (${dscore} de ${maxPerItem * d.items.length}; corte ≥${rule.minScore})`, color: r.color };
+        });
+        const r = anyPositive ? rule.positive : rule.negative;
+        return {
+          total,
+          totalLabel: def.totalLabel ?? `Escore total ${total} de ${maxTotal}`,
+          classification: r.classification,
+          color: r.color,
+          description: r.description,
+          domainResults: def.domains.length > 1 ? domainResults : undefined,
+        };
+      },
+    };
+  }
 
   if (def.descriptiveDomainSummary) {
     const isChoice = (item: ScaleItem) => typeof item === "string" || item.responseType !== "text";
@@ -2830,6 +2882,7 @@ export const interactiveScaleItems: Record<string, InteractiveScaleDef> = {
   ...ahsdPaisItems,
   // Onda 1 do plano de escalas (15/10/2026).
   ...onda1Items2026,
+  ...openScaleItems,
 };
 
 /** Retorna a definição interativa de uma escala, se existir. */

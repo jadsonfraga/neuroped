@@ -18,6 +18,7 @@ import { escalasIpnLfc200 } from "./escalasIpnLfc200";
 import { escalaAhsdPais } from "./escalasAhsdPais";
 import { escalasIpnEpiSeg200 } from "./escalasIpnEpiSeg200";
 import { authorialMonitoringCatalog } from "./authorialMonitoring";
+import { openScaleCatalog } from "./openScalesIndex";
 
 const PENDENCIA_VALIDACAO_AUTORAL =
   "Instrumento autoral em desenvolvimento; conteúdo, propriedades psicométricas e uso clínico aguardam validação formal.";
@@ -166,4 +167,6 @@ export const escalasAplicaveisNexus2026: ScaleEntry[] = [
   ...escalasIpnLfc200,
   ...escalasIpnEpiSeg200,
   escalaAhsdPais,
+  // Ondas 1–3: escalas abertas (fonte oficial verificada; ver openScalesIndex).
+  ...openScaleCatalog,
 ];
