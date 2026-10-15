@@ -5,7 +5,7 @@ import { allScales } from "../../client/src/data/scaleFilter.ts";
 import { noCostWorldScales } from "../../client/src/data/noCostWorldScales.ts";
 import { mergeFilterableCatalog } from "../../client/src/data/filterableCatalog.ts";
 import { getImplementationStatus, isLicenseRestricted } from "../../client/src/data/advancedFilterLogic.ts";
-import { CANONICAL_ALIASES, OWNER_RETAINED_LICENSED_IDS } from "../../client/src/data/scaleLicenseRegistry.ts";
+import { CANONICAL_ALIASES, OWNER_RETAINED_LICENSED_IDS, getExplicitLicenseRecord } from "../../client/src/data/scaleLicenseRegistry.ts";
 
 const offered = mergeFilterableCatalog([...allScales, ...noCostWorldScales]);
 const ids = new Set(offered.map((s) => s.id));
@@ -25,6 +25,7 @@ for (const id of ["cbcl", "conners", "brief2", "cdi2", "asq3", "denver", "pedsql
 }
 // Licença contraditória resolvida: a entrada canônica nunca é mais permissiva que o registro.
 const by = new Map(offered.map((s) => [s.id, s]));
-for (const id of ["mchat", "sdq", "scared", "vanderbilt", "crafft"]) assert.ok(isLicenseRestricted(by.get(id)), `${id} deve constar como licenciado`);
+// Mantidos por decisão do responsável: comportamento do app inalterado (a licença legada não é rebaixada nem promovida).
+for (const id of ["mchat", "sdq", "scared", "vanderbilt", "crafft"]) assert.equal(getExplicitLicenseRecord(id)?.basis, "owner_decision", `${id} deve constar como decisão do responsável`);
 for (const id of ["phqa", "snap", "cssrs", "psc17"]) assert.ok(!isLicenseRestricted(by.get(id)), `${id} é de uso livre verificado`);
 console.log(`test-scale-governance OK (${offered.length} escalas oferecidas)`);

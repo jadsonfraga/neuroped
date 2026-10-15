@@ -154,7 +154,9 @@ export function effectiveLicencaUso(scale: ScaleEntry): ScaleEntry["licencaUso"]
   const rec = BY_ID.get(scale.id);
   if (!rec) return scale.licencaUso;
   const legacyRestricted = scale.licencaUso === "comercial" || scale.licencaUso === "restrita" || scale.licencaUso === "contato_autor";
-  if (rec.basis === "owner_decision" || rec.status === "restricted" || rec.status === "proprietary") {
+  // Mantidos por decisão do responsável: o app segue como está (sem rebaixar nem promover a licença legada).
+  if (rec.basis === "owner_decision") return scale.licencaUso;
+  if (rec.status === "restricted" || rec.status === "proprietary") {
     return legacyRestricted ? scale.licencaUso : "restrita";
   }
   if (rec.basis === "verified_official_source" && rec.softwareAllowed === true) return "livre";
