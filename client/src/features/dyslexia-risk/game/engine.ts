@@ -24,7 +24,7 @@ export const WORLDS: { id: WorldId; nome: string; emoji: string; dominio: "ditad
   { id: "ditado", nome: "Caverna do Ditado", emoji: "✏️", dominio: "ditado", fala: "Ouça a palavra e escreva do seu jeito." },
   { id: "decodificacao", nome: "Vila das Palavras", emoji: "📖", dominio: "leitura", fala: "Leia em voz alta. Algumas palavras são inventadas!" },
   { id: "fluencia", nome: "Corrida da Leitura", emoji: "🏃", dominio: "leitura", fala: "Leia em voz alta por 1 minuto, no seu ritmo." },
-  { id: "compreensao", nome: "Torre das Histórias", emoji: "🏰", dominio: "leitura", fala: "Uma história curta e três perguntas." },
+  { id: "compreensao", nome: "Torre das Histórias", emoji: "🏰", dominio: "leitura", fala: "Uma história curta e quatro perguntas." },
   { id: "aritmetica", nome: "Ponte dos Números", emoji: "🔢", dominio: "aritmetica", fala: "Toque na resposta certa." },
 ];
 
@@ -362,7 +362,8 @@ export function summarizeGame(state: GameState): GameSummary {
   if (dec.status === "concluido" && finalLevelOf(dec) === 1) s.push("Leitura de palavras: nível demonstrado 1 (abaixo da referência interna da faixa nesta aplicação; não normativa).");
   const ps = summary.leitura.decodificacao.pseudo;
   if (ps.total >= 2 && ps.corretos / ps.total < 0.5) s.push(`Pseudopalavras lidas: ${ps.corretos}/${ps.total} (decodificação fonológica merece investigação).`);
-  if (comp.status === "concluido" && compTally.corretos <= 1) s.push(`Compreensão: ${compTally.corretos}/${compTally.total}.`);
+  // Proporcional ao número de perguntas: ≤ 1/3 de acerto (com 3 perguntas é o mesmo "≤ 1" de antes).
+  if (comp.status === "concluido" && compTally.total > 0 && compTally.corretos / compTally.total <= 1 / 3) s.push(`Compreensão: ${compTally.corretos}/${compTally.total}.`);
   if (ari.status === "concluido" && finalLevelOf(ari) === 1) s.push("Aritmética: nível demonstrado 1 (abaixo da referência interna da faixa nesta aplicação; não normativa).");
   if (state.endedReason === "tempo") s.push("Sessão encerrada pelo limite de 15 minutos; mundos não concluídos ficam como não aplicados.");
   return summary;

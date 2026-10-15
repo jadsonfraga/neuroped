@@ -29,6 +29,8 @@ export interface BandBank {
   aritmetica: ArithItem[];
   compreensao: ComprehensionSet;
   fluencia: FluencyProbe;
+  /** Forma paralela para reteste (mesmo tamanho e tipo de texto da forma A; evita efeito de memória). */
+  fluenciaB: FluencyProbe;
 }
 
 const d = (id: string, level: Level, target: string, sentence: string, feature: string, pseudo = false): DitadoItem => ({ id, level, target, sentence, pseudo, feature });
@@ -46,10 +48,12 @@ export const BANDS: BandBank[] = [
       d("d56-5", 2, "sapo", "O sapo pulou.", "CV-CV com fricativa"),
       d("d56-6", 2, "fita", "A fita é vermelha.", "CV-CV com fricativa"),
       d("d56-7", 2, "suco", "Bebi suco de uva.", "CV-CV com fricativa"),
+      d("d56-13", 2, "nafo", "Uma palavra inventada: nafo.", "pseudopalavra CV-CV", true),
       d("d56-8", 2, "vela", "Apaguei a vela.", "CV-CV com fricativa"),
       d("d56-9", 3, "boneca", "A boneca caiu.", "trissílaba CV"),
       d("d56-10", 3, "macaco", "O macaco come banana.", "trissílaba CV"),
       d("d56-11", 3, "tomate", "O tomate é vermelho.", "trissílaba CV"),
+      d("d56-14", 3, "bomila", "Uma palavra inventada: bomila.", "pseudopalavra trissílaba CV", true),
       d("d56-12", 3, "janela", "Abra a janela.", "trissílaba CV"),
     ],
     decodificacao: [
@@ -87,11 +91,16 @@ export const BANDS: BandBank[] = [
         { id: "c56-1", kind: "literal", question: "Por que a Lia pegou o guarda-chuva?", answer: "☔ Porque estava chovendo", options: ["☀️ Porque fazia sol", "☔ Porque estava chovendo", "🎂 Porque era aniversário"] },
         { id: "c56-2", kind: "literal", question: "Como é o cachorro do Téo?", answer: "🐶 Pequeno, com manchas pretas", options: ["🐶 Pequeno, com manchas pretas", "🐕 Grande e todo branco", "🐱 É um gato"] },
         { id: "c56-3", kind: "inferencial", question: "O Davi gostou da sopa?", answer: "😋 Sim, gostou", options: ["😋 Sim, gostou", "🤢 Não gostou", "🤷 Ele não comeu"] },
+        { id: "c56-4", kind: "inferencial", question: "O cachorro do Téo cabe no colo dele?", answer: "🐶 Sim, porque é pequeno", options: ["🐘 Não, porque é enorme", "🐶 Sim, porque é pequeno", "🐟 Não, porque mora na água"] },
       ],
     },
     fluencia: {
       id: "f56", kind: "silabas", title: "Corrida das sílabas",
       text: "pa bo li mu te da fi ne lo su va ca pe ti mo ba lu di fe na ro si to me ja bu le go ri sa ze nu po fa de ve ma lo ta bi",
+    },
+    fluenciaB: {
+      id: "f56b", kind: "silabas", title: "Corrida das sílabas (forma B)",
+      text: "le ma bi ro fu de sa po ni ta ve lu ca mi bo te ja ri du ze pa fi lo nu se ga vo me di ba ru ti co la pe su mo ne fa ju",
     },
   },
   {
@@ -145,11 +154,16 @@ export const BANDS: BandBank[] = [
         { id: "c78-1", kind: "literal", question: "Onde a Bia plantou a semente?", answer: "Num copo com algodão", options: ["Num copo com algodão", "Na terra do quintal", "Num vaso de flores"] },
         { id: "c78-2", kind: "literal", question: "Quanto tempo levou para aparecer o broto?", answer: "Uma semana", options: ["Um dia", "Uma semana", "Um ano"] },
         { id: "c78-3", kind: "inferencial", question: "Por que o broto apareceu?", answer: "Porque a Bia cuidou e molhou todo dia", options: ["Porque a Bia cuidou e molhou todo dia", "Porque choveu muito", "Porque a semente era de plástico"] },
+        { id: "c78-4", kind: "inferencial", question: "Por que a Bia mostrou o copo para a turma?", answer: "Porque estava feliz com o broto", options: ["Porque o copo quebrou", "Porque a professora mandou", "Porque estava feliz com o broto"] },
       ],
     },
     fluencia: {
       id: "f78", kind: "texto", title: "O gato da vizinha",
       text: "A vizinha da Duda tem um gato cinza chamado Bolinha. Todo dia de manhã, o gato pula o muro e vem tomar sol na varanda. A Duda deixa um pote de água perto da porta. O Bolinha bebe, se espreguiça e dorme em cima do tapete. Um dia, choveu muito e o gato não apareceu. A Duda ficou preocupada e foi perguntar à vizinha. O Bolinha estava seco e quentinho, dormindo dentro de uma caixa de sapatos. No dia seguinte, o sol voltou e o gato também.",
+    },
+    fluenciaB: {
+      id: "f78b", kind: "texto", title: "O peixe Faísca",
+      text: "O Caio ganhou um peixinho laranja num saquinho de água. Em casa, a mãe ajudou a colocar o peixe num aquário com pedrinhas coloridas. Todo dia, o Caio dava um pouco de ração e olhava o peixe nadar de um lado para o outro. Ele deu ao peixinho o nome de Faísca. Numa manhã fria, o Faísca ficou parado no fundo e não quis comer. O Caio chamou a mãe correndo. Ela trocou a água, que estava suja, e logo o peixe voltou a nadar bem feliz.",
     },
   },
   {
@@ -203,11 +217,16 @@ export const BANDS: BandBank[] = [
         { id: "c910-1", kind: "literal", question: "O que os alunos fizeram antes de plantar?", answer: "Tiraram as pedras e afofaram a terra", options: ["Compraram verduras na feira", "Tiraram as pedras e afofaram a terra", "Pintaram o muro da escola"] },
         { id: "c910-2", kind: "literal", question: "Como a rega foi organizada?", answer: "Cada grupo regava em um dia da semana", options: ["A professora regava sozinha", "Ninguém regava", "Cada grupo regava em um dia da semana"] },
         { id: "c910-3", kind: "inferencial", question: "Por que os alunos comeram a salada com orgulho?", answer: "Porque eles mesmos cultivaram as alfaces", options: ["Porque a salada era de graça", "Porque eles mesmos cultivaram as alfaces", "Porque não gostavam de salada"] },
+        { id: "c910-4", kind: "inferencial", question: "Por que cada grupo regava em um dia diferente?", answer: "Para dividir o trabalho e a horta nunca ficar sem água", options: ["Para dividir o trabalho e a horta nunca ficar sem água", "Porque só havia um regador por mês", "Para as plantas secarem"] },
       ],
     },
     fluencia: {
       id: "f910", kind: "texto", title: "O mapa do avô",
       text: "No sótão da casa do avô, Lucas encontrou um mapa antigo dentro de uma lata enferrujada. O papel estava amarelado e cheio de setas desenhadas a lápis. No canto, havia um X vermelho perto de uma árvore torta. Lucas desceu a escada correndo e mostrou o achado para a irmã. Os dois seguiram as setas pelo quintal, contando passos e procurando a árvore. Encontraram uma goiabeira inclinada perto do muro. Cavaram com uma colher velha até ouvir um som de metal. Era uma caixinha com bolinhas de gude coloridas e um bilhete: para quem gosta de aventura. O avô, da janela, ria baixinho.",
+    },
+    fluenciaB: {
+      id: "f910b", kind: "texto", title: "A barraca de pescaria",
+      text: "Na festa junina, a turma da Sofia ficou responsável pela barraca de pescaria. Durante a semana, eles pintaram peixes de papelão, colaram ímãs na boca de cada um e prepararam varas com barbante. No sábado, a fila de crianças dava a volta no pátio. Sofia cuidava das fichas, enquanto o amigo Pedro entregava os prêmios. Perto do fim da festa, os ímãs começaram a cair e ninguém conseguia pescar nada. Sofia teve uma ideia: prendeu os ímãs com fita adesiva e a brincadeira voltou a funcionar. No final, a turma contou as fichas e ficou surpresa com o dinheiro arrecadado para a excursão.",
     },
   },
   {
@@ -261,11 +280,16 @@ export const BANDS: BandBank[] = [
         { id: "c1112-1", kind: "literal", question: "Onde o pólen gruda na abelha?", answer: "Nos pelos do corpo", options: ["Nas asas molhadas", "Nos pelos do corpo", "Dentro do ferrão"] },
         { id: "c1112-2", kind: "literal", question: "O que a polinização permite?", answer: "Que as plantas formem frutos e sementes", options: ["Que as plantas formem frutos e sementes", "Que as abelhas fiquem maiores", "Que chova mais na região"] },
         { id: "c1112-3", kind: "inferencial", question: "Por que chuva e adubo não bastam para uma boa colheita de maçã?", answer: "Porque sem abelhas falta polinização", options: ["Porque a maçã não precisa de água", "Porque sem abelhas falta polinização", "Porque o adubo espanta as abelhas"] },
+        { id: "c1112-4", kind: "inferencial", question: "O que pode acontecer com a colheita de café numa região sem abelhas?", answer: "Pode diminuir", options: ["Aumenta muito", "Não muda nada", "Pode diminuir"] },
       ],
     },
     fluencia: {
       id: "f1112", kind: "texto", title: "A feira de ciências",
       text: "Faltavam duas semanas para a feira de ciências, e o grupo da Marina ainda não tinha um projeto. Depois de muita discussão, decidiram construir um pequeno filtro de água com garrafa plástica, areia, carvão e pedras. Na primeira tentativa, a água saiu mais suja do que entrou, e todo mundo riu do fracasso. Marina sugeriu lavar a areia antes e trocar a ordem das camadas. Na segunda tentativa, a água ficou bem mais clara, embora ainda não fosse própria para beber. No dia da feira, o grupo explicou cada etapa, inclusive o erro inicial. A professora elogiou justamente essa parte, porque mostrava como a ciência avança: testando, errando e corrigindo.",
+    },
+    fluenciaB: {
+      id: "f1112b", kind: "texto", title: "A biblioteca do bairro",
+      text: "Quando a biblioteca do bairro anunciou que fecharia por falta de voluntários, Júlio e três colegas resolveram ajudar. No primeiro sábado, encontraram caixas de livros empoeirados, estantes tortas e um computador que ninguém sabia usar. Dividiram as tarefas: dois limpavam e organizavam os livros por assunto, enquanto os outros cadastravam cada título numa planilha simples. Logo perceberam que muitos livros estavam repetidos, então decidiram trocá-los com outra biblioteca por obras que faltavam. Em dois meses, o espaço voltou a abrir três tardes por semana. A diretora contou que o número de leitores tinha dobrado, e Júlio ficou orgulhoso por ter ajudado a manter vivo um lugar de que tanto gostava.",
     },
   },
   {
@@ -319,11 +343,16 @@ export const BANDS: BandBank[] = [
         { id: "c1314-1", kind: "literal", question: "O que a melatonina faz, segundo o texto?", answer: "Facilita o sono", options: ["Deixa o corpo mais agitado", "Facilita o sono", "Aumenta a fome à noite"] },
         { id: "c1314-2", kind: "inferencial", question: "Por que se forma uma dívida de sono?", answer: "Porque o jovem dorme tarde e acorda cedo", options: ["Porque o jovem dorme tarde e acorda cedo", "Porque a escola dá muita tarefa", "Porque a melatonina acaba"] },
         { id: "c1314-3", kind: "inferencial", question: "Qual conclusão o último período sugere?", answer: "Mudar o horário da aula ajuda, mas não resolve tudo", options: ["Telas melhoram o sono", "Mudar o horário da aula ajuda, mas não resolve tudo", "As aulas devem começar à meia-noite"] },
+        { id: "c1314-4", kind: "literal", question: "O que aconteceu onde as aulas passaram a começar mais tarde?", answer: "Os estudantes faltaram menos e relataram mais disposição", options: ["As notas caíram", "Os estudantes faltaram menos e relataram mais disposição", "Os estudantes passaram a dormir na escola"] },
       ],
     },
     fluencia: {
       id: "f1314", kind: "texto", title: "O primeiro emprego",
       text: "Aos quinze anos, Rafael conseguiu um trabalho de fim de semana numa livraria pequena do bairro. Nas primeiras semanas, ele achava que bastava organizar as prateleiras e passar o cartão no caixa. Logo percebeu que os clientes faziam perguntas difíceis: queriam um livro de capa azul cujo título não lembravam, ou um presente para uma tia que gostava de histórias tristes. Rafael começou a anotar os pedidos num caderno e a ler as orelhas dos livros nos intervalos. Em poucos meses, já sabia indicar autores, comparar edições e reconhecer os clientes pelo nome. O dono da livraria, um senhor desconfiado, passou a deixar a loja inteira sob a responsabilidade dele aos sábados de manhã. Rafael descobriu que gostava menos de vender e mais de conversar sobre histórias.",
+    },
+    fluenciaB: {
+      id: "f1314b", kind: "texto", title: "Aprender errando",
+      text: "No início do ano, Beatriz decidiu aprender a programar sozinha, usando vídeos gratuitos e um computador antigo herdado do irmão mais velho. Nas primeiras semanas, quase desistiu: os programas travavam, as mensagens de erro pareciam escritas em outra língua e os exemplos dos vídeos nunca funcionavam do mesmo jeito. Em vez de abandonar, ela começou a anotar cada erro num caderno, junto com a solução que encontrava em fóruns. Aos poucos, percebeu que muitos problemas se repetiam e que bastava ler a mensagem com calma para entender o que estava errado. Em seis meses, criou um pequeno aplicativo que lembrava os colegas das datas das provas. A professora de matemática pediu para usar o aplicativo com outras turmas, e Beatriz descobriu que errar fazia parte do caminho.",
     },
   },
   {
@@ -377,11 +406,16 @@ export const BANDS: BandBank[] = [
         { id: "c1518-1", kind: "literal", question: "Segundo o texto, por que notícias falsas se espalham mais rápido?", answer: "Porque surpreendem e provocam emoções fortes", options: ["Porque são escritas por jornalistas", "Porque surpreendem e provocam emoções fortes", "Porque são sempre mais curtas"] },
         { id: "c1518-2", kind: "inferencial", question: "Qual contraste o texto faz entre checar e compartilhar?", answer: "Checar exige esforço; compartilhar é quase instantâneo", options: ["Checar é mais rápido que compartilhar", "Checar exige esforço; compartilhar é quase instantâneo", "Os dois levam o mesmo tempo"] },
         { id: "c1518-3", kind: "inferencial", question: "O que a expressão \"multiplicador de boatos\" quer dizer?", answer: "Alguém que espalha boatos sem perceber", options: ["Alguém que cria notícias falsas de propósito", "Alguém que espalha boatos sem perceber", "Um aplicativo que bloqueia notícias"] },
+        { id: "c1518-4", kind: "literal", question: "Qual destas é uma estratégia que os educadores defendem?", answer: "Procurar a mesma notícia em outras fontes", options: ["Compartilhar logo para avisar os amigos", "Ler só o título", "Procurar a mesma notícia em outras fontes"] },
       ],
     },
     fluencia: {
       id: "f1518", kind: "texto", title: "A decisão",
       text: "Faltando poucos meses para o vestibular, Helena ainda não sabia se escolheria engenharia ou música. Os pais insistiam que a engenharia garantiria estabilidade, enquanto o professor de violão dizia que talento raro não deveria ser desperdiçado. Durante semanas, ela fez listas de vantagens e desvantagens, conversou com profissionais das duas áreas e assistiu a aulas abertas na universidade. Percebeu que gostava de resolver problemas com números, mas que só perdia a noção do tempo quando estava tocando. Também descobriu que existiam cursos de engenharia acústica, que combinavam física, tecnologia e som. A descoberta não encerrou a dúvida, mas mudou a pergunta: em vez de escolher entre duas vidas, Helena passou a procurar um caminho que aproveitasse o que havia de melhor em cada uma. Na véspera da inscrição, preencheu o formulário com calma, sabendo que poderia ajustar a rota mais tarde.",
+    },
+    fluenciaB: {
+      id: "f1518b", kind: "texto", title: "De volta à sala de aula",
+      text: "Depois de dois anos trabalhando numa padaria para ajudar em casa, Diego voltou a estudar à noite com a intenção de terminar o ensino médio. No começo, sentia-se deslocado entre colegas mais novos e tinha vergonha de fazer perguntas que pareciam simples. A rotina era pesada: acordava antes das cinco, trabalhava até o fim da tarde e chegava à escola cansado. Um professor de história percebeu seu desânimo e propôs que ele contasse à turma como funcionava o comércio do bairro, comparando com o conteúdo sobre a economia do século passado. A apresentação surpreendeu a todos, porque mostrava na prática conceitos que pareciam distantes. Diego descobriu que sua experiência tinha valor também dentro da sala de aula. No fim do ano, mesmo com o cansaço da rotina, foi aprovado em todas as matérias e começou a pensar seriamente em cursar administração.",
     },
   },
 ];
@@ -392,6 +426,19 @@ export const MAX_GAME_AGE = 18;
 export function bandForAge(age: number | null | undefined): BandBank | null {
   if (age == null || !Number.isInteger(age) || age < MIN_GAME_AGE || age > MAX_GAME_AGE) return null;
   return BANDS.find((b) => age >= b.minAge && age <= b.maxAge) ?? null;
+}
+
+export type FluencyForm = "A" | "B";
+
+/** Forma A é a padrão; a B serve para reteste do mesmo aluno. */
+export function fluencyProbe(bank: BandBank, form: FluencyForm): FluencyProbe {
+  return form === "B" ? bank.fluenciaB : bank.fluencia;
+}
+
+/** Forma aplicada a partir do id gravado no resultado (null se o id não for desta faixa). */
+export function fluencyFormOf(bank: BandBank | null, probeId: string | undefined): FluencyForm | null {
+  if (!bank || !probeId) return null;
+  return probeId === bank.fluenciaB.id ? "B" : probeId === bank.fluencia.id ? "A" : null;
 }
 
 export function fluencyWords(probe: FluencyProbe): string[] {

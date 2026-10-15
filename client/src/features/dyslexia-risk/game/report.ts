@@ -1,7 +1,7 @@
 import type { DocLine, DocSpec } from "@/lib/documentPdf";
 import type { IssuerLines } from "@/features/super-neuropad/pdf";
 import { GAME_VERSION, LEVEL_LABEL, WORLDS, summarizeGame, type GameState, type GameSummary, type ItemResponse, type Tally } from "./engine";
-import type { ArithOp } from "./bank";
+import { fluencyFormOf, type ArithOp } from "./bank";
 
 export const GAME_TITLE = "Jogo das Letras e Números · 5–18 anos";
 export const GAME_DISCLAIMER =
@@ -48,9 +48,11 @@ export function fluencyText(s: GameSummary): string {
   const flu = s.leitura.fluencia;
   if (!flu) return "não aplicada";
   const unidade = s.band?.fluencia.kind === "silabas" ? "sílabas" : "palavras";
+  const form = fluencyFormOf(s.band, flu.probeId);
+  const forma = form ? `forma ${form}${form === "B" ? " (reteste)" : ""} · ` : "";
   const curta = flu.segundos < 30 ? " (leitura com menos de 30 s: taxa extrapolada, pouco confiável)" : "";
   // A taxa é medida, não interpretada: a triagem não tem referência normativa de fluência.
-  return `${flu.lidas} ${unidade} lidas · ${flu.erros} erros · ${flu.segundos} s · ${flu.wcpm ?? "—"} ${unidade} corretas por minuto${curta} · ${FLUENCY_NO_NORM}`;
+  return `${forma}${flu.lidas} ${unidade} lidas · ${flu.erros} erros · ${flu.segundos} s · ${flu.wcpm ?? "—"} ${unidade} corretas por minuto${curta} · ${FLUENCY_NO_NORM}`;
 }
 
 export function domainLines(s: GameSummary): string[] {
