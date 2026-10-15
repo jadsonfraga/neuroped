@@ -96,7 +96,7 @@
     "test:e2e:sonda": "node --import tsx tests/e2e/sonda-dez-digital.mjs",
     "test:super-neuropad": "node --import tsx --test tests/unit/super-neuropad-game.test.ts tests/unit/super-neuropad-integrated-bank.test.ts tests/unit/super-neuropad-extension-criteria.test.ts tests/unit/super-neuropad-evolution.test.ts tests/unit/super-neuropad-toddler.test.ts tests/unit/super-neuropad-family-delivery.test.ts tests/unit/super-neuropad-diagnostico.test.ts",
     "test:e2e:super-neuropad": "node tests/e2e/super-neuropad-game.mjs",
-    "test:dyslexia-risk": "node --import tsx --test tests/unit/dyslexia-risk.test.ts tests/unit/dyslexia-game.test.ts tests/unit/dyslexia-risk-diagnostico.test.ts",
+    "test:dyslexia-risk": "node --import tsx --test tests/unit/dyslexia-risk.test.ts tests/unit/dyslexia-game.test.ts tests/unit/dyslexia-risk-diagnostico.test.ts tests/unit/dyslexia-game-conteudo.test.ts",
     "test:e2e:dyslexia-risk": "node tests/e2e/dyslexia-game.mjs"
   },
   "dependencies": {

@@ -114,6 +114,8 @@ async function play(age) {
   // 3. Fluência (sonda de 60 s; o aplicador para antes)
   await nextWorld().click();
   await page.getByTestId("drx-world-fluencia").waitFor();
+  // 15 anos: forma B (reteste) — texto paralelo, mesma contagem.
+  if (age >= 15) await btn("B · reteste").click();
   await btn("▶ Iniciar 60 s").click();
   await page.waitForTimeout(2100);
   await btn("⏸ Parar").click();
@@ -128,7 +130,7 @@ async function play(age) {
   await page.getByTestId("drx-world-compreensao").waitFor();
   if (age <= 6) await btn("Aplicador: mostrar texto").click();
   await shot("07-compreensao");
-  for (let i = 0; i < 3; i++) await page.getByRole("group", { name: "Opções" }).getByRole("button").first().click();
+  for (let i = 0; i < 4; i++) await page.getByRole("group", { name: "Opções" }).getByRole("button").first().click();
   await page.locator('[data-testid="drx-game"][data-screen="mapa"]').waitFor();
 
   // 5. Aritmética
@@ -148,6 +150,7 @@ async function play(age) {
   assert.match(text, /sem validação normativa brasileira/);
   assert.match(text, /Erros fonológicos: \d/);
   assert.match(text, /corretas por minuto/);
+  assert.match(text, age >= 15 ? /forma B \(reteste\)/ : /forma A · /);
   assert.ok(await results.locator(".snp-answer--correct").count() > 0, "acertos em azul");
   if (!allCorrect) assert.ok(await results.locator(".snp-answer--wrong").count() > 0, "erros em vermelho");
   assert.match(text, /Acertou/);
