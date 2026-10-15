@@ -53,6 +53,13 @@ interface ScaleItemBase {
 
 interface ScaleChoiceItem extends ScaleItemBase {
   responseType?: "choice";
+  /**
+   * Opções próprias deste item (instrumentos cujas respostas mudam de item
+   * para item, como a EPDS). Sem isso, vale `config.labels` da escala.
+   */
+  options?: string[];
+  /** Pontos de cada opção própria do item (default: o índice). */
+  optionPoints?: number[];
   sentinel?: {
     positiveOptionIndexes: number[];
     label: string;
@@ -90,6 +97,12 @@ export function itemExample(item: ScaleItem): string | undefined {
 }
 export function itemResponseType(item: ScaleItem): "choice" | "text" {
   return typeof item === "string" ? "choice" : (item.responseType ?? "choice");
+}
+/** Opções de resposta do item: as próprias do item ou as da escala. */
+export function itemOptions(item: ScaleItem, scaleLabels: string[]): string[] {
+  return typeof item === "string" || item.responseType === "text" || !item.options?.length
+    ? scaleLabels
+    : item.options;
 }
 export function itemSentinel(
   item: ScaleItem,
@@ -200,6 +213,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
           emoji: itemEmoji(item),
           example: itemExample(item),
           responseType: itemResponseType(item),
+          options: itemOptions(item, config.labels),
           sentinel: itemSentinel(item),
           placeholder: itemPlaceholder(item),
           maxLength: itemMaxLength(item),
@@ -209,7 +223,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
           color: d.color,
         })),
       ),
-    [config.domains],
+    [config.domains, config.labels],
   );
   const domainOffsets = useMemo(() => {
     let offset = 0;
@@ -224,9 +238,9 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
       Object.fromEntries(
         allItems
           .filter((item) => item.responseType === "choice")
-          .map((item) => [item.key, config.labels.length]),
+          .map((item) => [item.key, item.options.length]),
       ),
-    [allItems, config.labels.length],
+    [allItems],
   );
   const {
     answers,
@@ -492,7 +506,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
       const answer =
         item.responseType === "text"
           ? textAnswers[item.key]?.trim() || "Não respondida"
-          : (config.labels[answers[item.key] ?? -1] ?? "Não respondida");
+          : (item.options[answers[item.key] ?? -1] ?? "Não respondida");
       const isPositiveSentinel =
         item.sentinel?.positiveOptionIndexes.includes(
           answers[item.key] ?? Number.NaN,
@@ -614,7 +628,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                         itemResponseType(item) === "text"
                           ? textResponse || "Não respondida"
                           : idx !== undefined
-                            ? (config.labels[idx] ?? `Opção ${idx + 1}`)
+                            ? (itemOptions(item, config.labels)[idx] ?? `Opção ${idx + 1}`)
                             : "Não respondida";
                       const resp = positiveSentinel
                         ? `⚠️ ALERTA POSITIVO — ${rawResponse}`
@@ -984,8 +998,8 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                           }}
                           className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap"
                         >
-                          {config.labels.map((label, j) => {
-                            const maxIdx = config.labels.length - 1;
+                          {itemOptions(item, config.labels).map((label, j, options) => {
+                            const maxIdx = options.length - 1;
                             const rawRatio = maxIdx > 0 ? j / maxIdx : 0;
                             const ratio = itemReversed(item)
                               ? 1 - rawRatio
