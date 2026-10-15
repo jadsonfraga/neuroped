@@ -529,7 +529,7 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
     monitoring: {
       ouro: ["brief2"],
       prata: ["funcoes-executivas"],
-      bronze: [],
+      bronze: ["na-comportamento-adaptativo-pais"],
     },
   },
 
@@ -723,7 +723,7 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
     ],
     monitoring: {
       ouro: ["ygtss"],
-      prata: [],
+      prata: ["na-tiques-seguimento-pais"],
       bronze: [],
     },
   },
