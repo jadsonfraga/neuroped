@@ -99,7 +99,7 @@ function plausibleAges(q) {
 // Queixas adicionadas depois da bateria original entram NO FIM e não entram no
 // sorteio de combinações, para que os 672 casos históricos fiquem idênticos
 // (mesma sequência do LCG) e a nova queixa ganhe casos próprios.
-const APPENDED_QUEIXAS = ["altas-habilidades"];
+const APPENDED_QUEIXAS = ["altas-habilidades", "saude-cuidador"];
 const queixaIds = queixas.map((q) => q.id).filter((id) => !APPENDED_QUEIXAS.includes(id));
 const respondents = ["pais", "clinico", "professor", "autoaplicavel", null];
 // LCG deterministico: bateria reprodutivel, sem Math.random.
