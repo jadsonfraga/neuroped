@@ -3,8 +3,8 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 275
-- **Com fonte declarada:** 275 (100.0%)
+- **Total de instrumentos:** 284
+- **Com fonte declarada:** 284 (100.0%)
 - **Sem fonte declarada:** 0
 - **Aguardando validação psicométrica publicada:** 111 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
 
@@ -18,6 +18,7 @@
 | `adapta-18-sdg` | ADAPTA-18 SDG | github:jadsonfraga/neuroped@b7adca686b8dba657b4b1317583f485cede7a0c8:client/src/data/interactiveScaleItemsAuthorial20260910.ts | não | sim |
 | `afi12-sdg` | AFI-12 SDG | Base documental autoral: 01_AFI12_Atencao_Freio_Impacto_NeuroPed_SDG.pdf; integridade sha256:f2123c61e7f03c52e20a24348b444f5c66293457c76b87756c0800435221b74d. Revisão clínica/editorial aprovada pelo autor em 2026-09-08; conteúdo clínico, domínios e pontuação preservados. | não | sim |
 | `ahsd-inventario-pais` | Inventário AH/SD · Pais | Dr. Jadson Fraga / NeuroPed (2026), adaptação familiar do Inventário Escolar de Altas Habilidades. Itens autorais inspirados na concepção dos três anéis de Renzulli e no modelo de Gagné. | não | sim |
+| `aims-efeitos` | AIMS-DT | Guy W, 1976 (ECDEU Assessment Manual, NIMH — manual não indexado no PubMed); convenções de aplicação: Munetz MR, Benjamin S, 1988 — Hosp Community Psychiatry 39(11):1172-7. PMID 2906320 · doi:10.1176/ps.39.11.1172 | não | não |
 | `apgar` | APGAR | Apgar V, 1953 (APGAR Score) | não | não |
 | `aq10-adolescente` | AQ-10 Adolescente | Allison C, Auyeung B, Baron-Cohen S, 2012 (AQ-10) | não | não |
 | `ari` | ARI | Stringaris A, Goodman R, Ferdinando S, Razdan V, Muhrer E, Leibenluft E, Brotman MA, 2012 (Affective Reactivity Index) — J Child Psychol Psychiatry 53(11):1109-17. PMID 22574736 · doi:10.1111/j.1469-7610.2012.02561.x | não | não |
@@ -43,6 +44,8 @@
 | `cdi2` | CDI-2 | Kovacs M, 2011 - Multi-Health Systems | não | não |
 | `cefaleia-calendario` | Calendário de Cefaleia | Ferramenta de registro clínico NeuroPed (calendário de cefaleia) | não | não |
 | `cfcs` | CFCS | Hidecker MJC et al., 2011 (CFCS) | não | não |
+| `cgi-i` | CGI-I | Guy W, 1976 (ECDEU Assessment Manual, NIMH — domínio público) | não | não |
+| `cgi-s` | CGI-S | Guy W, 1976 (ECDEU Assessment Manual, NIMH — domínio público) | não | não |
 | `cheops` | CHEOPS | McGrath PJ et al., 1985 | não | não |
 | `comfort-b` | COMFORT-B | van Dijk M et al., 2005 (COMFORT-Behavioral Scale) | não | não |
 | `conners` | Conners 3 | Conners CK, 2008 - Multi-Health Systems | não | não |
@@ -92,6 +95,7 @@
 | `flacc` | FLACC | Merkel SI et al., 1997 - University of Michigan | não | não |
 | `fps-r` | FPS-R | Hicks CL, von Baeyer CL, Spafford PA, van Korlaar I, Goodenough B, 2001 (Faces Pain Scale-Revised) — Pain 93(2):173-183. PMID 11427329 · doi:10.1016/S0304-3959(01)00314-1 | não | não |
 | `gad7` | GAD-7 | Spitzer RL et al., 2006 - Arch Intern Med | não | não |
+| `gad7-cuidador` | GAD-7 do cuidador | Spitzer RL et al., 2006 (domínio público) | não | não |
 | `gad7ped` | GAD-7 Pediátrico | Spitzer RL et al., 2006 | não | não |
 | `gmfcs` | GMFCS | Palisano R et al., 2007 | não | não |
 | `hague-szs` | Hague Seizure Severity | Carpay HA et al., 1997 (Hague Seizure Severity Scale) | não | não |
@@ -230,6 +234,7 @@
 | `nrs-pain` | NRS Pain | von Baeyer CL, Spagrud LJ, McCormick JC, Choo E, Neville K, Connelly MA, 2009 (NRS-11) — Pain 143(3):223-227. PMID 19359097 · doi:10.1016/j.pain.2009.03.002 · RESSALVA: os autores apoiam o uso a partir de 8 anos; abaixo disso a evidência é insuficiente. | não | não |
 | `oci-cv` | OCI-CV | Foa EB et al., 2010 (OCI-CV) | não | não |
 | `orbita-neurofuncional` | ORBITA-Neurofuncional | Conteúdo autoral criado em 2026-07-08 no projeto Escalas Autorais Dr. Jadson; documento do Drive não confirmado nesta integração. | não | sim |
+| `p-ymrs` | P-YMRS | Gracious BL et al., 2002 (uso livre) | não | não |
 | `pant` | PANT | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) — Protocolo PANT (100 escalas passivas) | não | não |
 | `pant-v7-067` | Mastigação e coordenação oral | Ebook PANT — 100 Escalas Passivas (Obra-Prima v7, item por item) — Dr. Jadson Fraga | não | não |
 | `pant-v7-068` | Controle postural | Ebook PANT — 100 Escalas Passivas (Obra-Prima v7, item por item) — Dr. Jadson Fraga | não | não |
@@ -237,6 +242,7 @@
 | `pant-v7-078` | Controle esfincteriano funcional | Ebook PANT — 100 Escalas Passivas (Obra-Prima v7, item por item) — Dr. Jadson Fraga | não | não |
 | `pdae` | PDAE | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não | não |
 | `pedsql` | PedsQL | Varni JW et al., 2001 | não | não |
+| `phq9-cuidador` | PHQ-9 do cuidador | Kroenke K, Spitzer RL, Williams JB, 2001 (domínio público) | não | não |
 | `phqa` | PHQ-A | Johnson JG et al., 2002 | não | não |
 | `podj-tea-prime-1-6a` | PODJ-TEA PRIME 1–6A | PODJ-TEA PRIME — Kit Fichas por Paciente, Dr. Jadson Fraga | não | não |
 | `podj-tea-prime-12-19a` | PODJ-TEA PRIME 12–19A | PODJ-TEA PRIME — Kit Fichas por Paciente, Dr. Jadson Fraga | não | não |
@@ -250,6 +256,7 @@
 | `prisma-nf-60` | PRISMA-NF 60 | 2026-07-11_ESCALA_AUTORAL_PRISMA_NF_60_V1 — Dr. Jadson Fraga · Documento original: https://docs.google.com/document/d/1hf2yqGeJd2sBW8QFNrTAbNJP_Fqv9Hu8jk3INh2lyT0/edit | não | sim |
 | `psc17` | PSC-17 | Jellinek MS et al., 1988 (Pediatric Symptom Checklist); PSC-17 Gardner W et al., 1999 | não | não |
 | `psn-np` | PSN-NP | Instrumento autoral NeuroPed — Dr. Jadson Fraga, 2026. Construto: processamento sensorial. | não | sim |
+| `puts` | PUTS | Woods DW et al., 2005 (uso livre) | não | não |
 | `q-chat-10` | Q-CHAT-10 | Allison C, Auyeung B, Baron-Cohen S, 2012 (Q-CHAT-10) — J Am Acad Child Adolesc Psychiatry 51(2):202-212.e7. PMID 22265366 · doi:10.1016/j.jaac.2011.11.003 | não | não |
 | `qec-np` | QEC-NP | Instrumento autoral NeuroPed — Dr. Jadson Fraga, 2026. Construto: estresse do cuidador. | não | sim |
 | `regula-20-sdg` | REGULA-20 SDG | Dr. Jadson Fraga · NeuroPed SDG · REGULA_20_SDG_v1_0_12-09-2026.pdf · sha256:035f93b584f7b2580de5567e1fd8b8eeaf0a32a88d042dca442d9bbc3151777a | não | sim |
@@ -258,6 +265,7 @@
 | `ritmo-sono-20-sdg` | RITMO-SONO 20 SDG | RITMO_SONO_20_SDG_v1_0_12-09-2026.pdf · sha256:e710cf4a8fbc596698e3e41c4d8a9e959927233774309d8d868e7ddceff47e01 | não | sim |
 | `rota-aut-18-sdg` | ROTA-AUT 18 SDG | ROTA_AUT_18_SDG_v1_0_11-09-2026.pdf · sha256:1bc9ce1fda6ae6b57012621e6a803917169f8f09928ca7db68d5345447161aca | não | sim |
 | `sarf12-sdg` | SARF-12 SDG | Base documental autoral: 03_SARF12_Seletividade_Alimentar_Repertorio_Funcional_NeuroPed_SDG.pdf; integridade sha256:d0c55e5b29718bdf7b0ccfdb869914ce4f81d69b9dc5c38586c8ffb60194d8e9. Revisão clínica/editorial aprovada pelo autor em 2026-09-08; conteúdo e pontuação preservados. | não | sim |
+| `sas` | Simpson-Angus | Simpson GM, Angus JW, 1970 (uso livre) | não | não |
 | `scared` | SCARED | Birmaher B et al., 1997 - University of Pittsburgh | não | não |
 | `scas` | SCAS | Spence SH, 1998 (Spence Children's Anxiety Scale) | não | não |
 | `scoff` | SCOFF | Morgan JF et al., 1999 - BMJ | não | não |
@@ -269,6 +277,7 @@
 | `smfq` | SMFQ | Angold A, Costello EJ, Messer SC, et al., 1995 (SMFQ) — Int J Methods Psychiatr Res 5:237-249 (original não indexado no PubMed); validação psicométrica: Turner N, Joinson C, Peters TJ, Wiles N, Lewis G, 2014 — Psychol Assess 26(3):752-62. PMID 24749755 · doi:10.1037/a0036572 | não | não |
 | `snap` | SNAP-IV | Swanson JM et al., 2001 - University of California | não | não |
 | `ssq` | SSQ | Cramer JA, Baker GA, Jacoby A, 2002 (Seizure Severity Questionnaire) — Epilepsy Res 48(3):187-97. PMID 11904237 · doi:10.1016/s0920-1211(02)00003-7 · RESSALVA: desenvolvido e validado em adultos; uso pediátrico é extrapolação sem validação publicada. | não | não |
+| `swan` | SWAN | Swanson JM et al., 2012; adhd.net (domínio público) | não | não |
 | `tdl-aprendizagem` | Escala Dr. Jadson — TDL e Aprendizagem Escolar | NeuroPed EDJ — Escala Dr. Jadson: TDL e Dificuldades de Aprendizagem Escolar (versão infantil até 8 anos) — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://drive.google.com/file/d/10GV_krIChucIRIS-er_w0c_WFEtEAZZA/view | não | sim |
 | `tdn-bebe` | TDN-Bebê | Instrumento autoral NeuroPed — Dr. Jadson Fraga, 2026. Construto: desenvolvimento do lactente. | não | sim |
 | `tea-checklists` | Checklists TEA | Compilação clínica NeuroPed dos instrumentos ADOS-2, ADI-R, CARS-2, GARS-3 e SRS-2 | não | não |
