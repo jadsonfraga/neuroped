@@ -12,5 +12,6 @@ Instrumentos **originais**, escritos para este projeto: itens próprios em portu
 ## Escalas (por PR)
 - Cuidado/medicação: `na-sobrecarga-cuidador`, `na-apoio-rede-cuidador`, `na-efeitos-estimulantes-pais`, `na-efeitos-psicofarmacos-adolescente`, `na-adesao-tratamento-pais`, `na-transicao-saude-adolescente`.
 - Epilepsia, cefaleia e paralisia cerebral: `na-efeitos-antiepilepticos-pais`, `na-qualidade-vida-epilepsia`, `na-mobilidade-funcional-pc`, `na-funcao-pc-pais`, `na-funcao-pc-escola-professor`, `na-cefaleia-gatilhos-rotina`.
+- Humor, regulação, psicose (observação), seguimentos e substâncias: `na-labilidade-humor-pais`, `na-regulacao-emocional-pais`, `na-experiencias-perceptivas-adolescente`, `na-sinais-iniciais-psicose-pais`, `na-humor-depressivo-adolescente`, `na-ansiedade-seguimento-pais`, `na-tiques-seguimento-pais`, `na-toc-seguimento-pais`, `na-uso-substancias-adolescente`, `na-tracos-insensiveis-pais`.
 
 Marcadores de sintoma (`signalTags`) e domínio (`primaryDomain`, `overlapGroup`) alimentam o filtro e o seletor v2 da pré-consulta.
