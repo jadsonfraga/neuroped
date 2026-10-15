@@ -124,8 +124,8 @@ test("pré-consulta aplica idade/observador/rota completos antes de qualquer ran
       assert.ok(s.respondente.includes("pais"));
       assert.equal(getApplicationMode(s), "questionario_pais");
       assert.equal(isSuicideInstrument(s) || isPsychosisInstrument(s), false);
-      assert.ok(s.queixas.includes(queixa) || /^Complementar — menor aderência/.test(row.reason), `${queixa}: ${s.id} fora da queixa sem rótulo de complementar`);
-      assert.ok(previsitUpperMinutes(s)! <= 15);
+      assert.ok(s.queixas.includes(queixa) || /^Complementar — /.test(row.reason), `${queixa}: ${s.id} fora da queixa sem rótulo de complementar`);
+      assert.ok(previsitUpperMinutes(s)! <= (/acima de 15 min/.test(row.reason) ? 30 : 15)); // v2: preenchimento rotulado de tempo maior
     }
   }
   const sourceInput = { idadeMeses: 96, queixa: "sono-funcional", respondente: "pais" as const, contexto: "retorno" as const };
