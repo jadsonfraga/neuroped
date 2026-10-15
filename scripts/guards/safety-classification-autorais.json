@@ -10,5 +10,15 @@
   "na-mobilidade-funcional-pc": "00|indiferente|indiferente",
   "na-funcao-pc-pais": "00|indiferente|indiferente",
   "na-funcao-pc-escola-professor": "00|indiferente|indiferente",
-  "na-cefaleia-gatilhos-rotina": "00|indiferente|indiferente"
+  "na-cefaleia-gatilhos-rotina": "00|indiferente|indiferente",
+  "na-labilidade-humor-pais": "00|indiferente|indiferente",
+  "na-regulacao-emocional-pais": "00|indiferente|indiferente",
+  "na-experiencias-perceptivas-adolescente": "01|indiferente|alfabetizado",
+  "na-sinais-iniciais-psicose-pais": "01|indiferente|indiferente",
+  "na-humor-depressivo-adolescente": "00|indiferente|alfabetizado",
+  "na-ansiedade-seguimento-pais": "00|indiferente|indiferente",
+  "na-tiques-seguimento-pais": "00|indiferente|indiferente",
+  "na-toc-seguimento-pais": "00|indiferente|indiferente",
+  "na-uso-substancias-adolescente": "00|indiferente|alfabetizado",
+  "na-tracos-insensiveis-pais": "00|indiferente|indiferente"
 }
