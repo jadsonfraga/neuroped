@@ -238,7 +238,7 @@ try {
   assert.deepEqual(await toneColor("neutral"), ["rgb(75, 85, 99)", "900"]);
   // Desempenho por domínio x esperado e o que veio de cada instrumento de origem.
   const domains = page.getByTestId("super-neuropad-domains");
-  assert.equal(await domains.getByText(/Esperado para a idade: \d+ ou mais de 5/).count(), WORLDS, "cada domínio mostra o esperado para a idade");
+  assert.equal(await domains.getByText(/Referência interna: \d+ ou mais de 5/).count(), WORLDS, "cada domínio mostra o esperado para a idade");
   const origins = page.getByTestId("super-neuropad-origins");
   for (const label of ["Sonda 10", "Observa 10 (OBS-10)", "Reconhecimento visual", "Avaliação cognitiva infantil"]) {
     await origins.getByText(label, { exact: false }).first().waitFor();
@@ -329,7 +329,7 @@ try {
   if (text) {
     const flat = text.replace(/\s+/g, " ");
     const upper = flat.toLocaleUpperCase("pt-BR");
-    for (const heading of ["Identificação da sessão", "O que foi testado por instrumento de origem", "Desempenho por domínio x esperado para a idade", "Observações da aplicadora", "DADOS ESTRUTURADOS"]) {
+    for (const heading of ["Identificação da sessão", "O que foi testado por instrumento de origem", "Desempenho por domínio x referência interna do jogo", "Observações da aplicadora", "DADOS ESTRUTURADOS"]) {
       assert.ok(upper.includes(heading.toLocaleUpperCase("pt-BR")), `PDF: seção ${heading}`);
     }
     for (const label of ["Sonda 10", "OBS-10", "Reconhecimento visual", "Avaliação cognitiva infantil"]) assert.ok(flat.includes(label), `PDF: origem ${label}`);
@@ -382,7 +382,7 @@ try {
   await page.getByTestId("super-neuropad-incomplete").getByText(new RegExp(`1 de ${TOTAL} itens registrados`)).waitFor();
   assert.equal(await page.getByTestId("super-neuropad-reading").count(), 0);
   assert.equal(await root.locator("details li").count(), 1);
-  assert.doesNotMatch(await root.innerText(), new RegExp(`sinal de alerta|dentro do esperado|ritmo estável|ritmo regular|\\d+ de ${TOTAL} acertos`, "i"));
+  assert.doesNotMatch(await root.innerText(), new RegExp(`sinal de alerta|dentro do esperado|dentro da referência interna|ritmo estável|ritmo regular|\\d+ de ${TOTAL} acertos`, "i"));
   const skippedDomain = page.getByTestId("super-neuropad-domains");
   await skippedDomain.getByText(/Não aplicado — /).first().waitFor();
   assert.ok(((await skippedDomain.textContent()) ?? "").includes(reason), "motivo do mundo pulado aparece no domínio");

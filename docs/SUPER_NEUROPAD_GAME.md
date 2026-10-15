@@ -24,7 +24,7 @@ intactos; o jogo **lê** os bancos delas e não os modifica.
 - Acabamento arcade anos 90 (`client/src/styles/super-neuropad-arcade.css`). Animações só sob
   `prefers-reduced-motion: no-preference`; modo escuro pelos tokens do app.
 
-## Pré-consulta integrada (v2026-09-30.1)
+## Pré-consulta integrada (v2026-10-15.1)
 
 ### De onde vem cada item
 
@@ -126,12 +126,12 @@ leitura final continua sendo do médico. O teto de 20 minutos segue travado por 
 
 ### Resultado, PDF e prontuário
 
-- Tela: resumo, desempenho por domínio × esperado para a idade (mínimo esperado conforme o
+- Tela: resumo, desempenho por domínio × referência interna do jogo (mínimo autoral conforme o
   número de itens do mundo), painel "O que foi testado por instrumento de origem",
   observações da aplicadora (chips + texto livre, até 1200 caracteres) e registros item a item.
 - PDF (`pdf.ts`): Identificação da sessão (data e hora locais, idade, duração, pausas e tempo em
   pausa, repetições, acertos por gesto, mundos não aplicados); O que foi testado por
-  instrumento de origem; Desempenho por domínio x esperado para a idade; Leitura para a
+  instrumento de origem; Desempenho por domínio x referência interna do jogo; Leitura para a
   consulta (só partida completa); um bloco por mundo com cada item (origem, tipo, resposta
   esperada, resposta da criança, resultado, tempo e repetições); Observações da aplicadora;
   Critérios de leitura; **Dados estruturados** (uma linha por registro `SESSAO`, `DOMINIO`,
@@ -345,3 +345,37 @@ resposta ao nome, imitação, interesse por crianças, perda de habilidades).
 - **Resultado por domínio:** `summary.domains` (e a linha `DOMINIO_2_3` do bloco estruturado).
 - **Limiares** (segundos de atenção, tentativas de espera, rodadas) são **piso autoral, não norma**.
 - 4 anos ou mais: sem alteração.
+
+## Correções do diagnóstico de 14/10/2026 (v2026-10-15.1)
+
+Aplicadas em código, com testes (`tests/unit/super-neuropad-diagnostico.test.ts` e
+`tests/unit/dyslexia-risk-diagnostico.test.ts`):
+
+- **Rótulos sem norma.** "Dentro do esperado para a idade" virou "Dentro da referência interna do
+  jogo (não normativa)"; "esperado: N ou mais" virou "referência interna: N ou mais" em tela, PDF,
+  prontuário e texto da família. No Dyslexia Risk (jogo), "esperado/abaixo/acima da faixa" virou
+  "referência interna da faixa (não normativa)".
+- **Cortes congelados.** Teste dourado fixa os cortes por mundo e no total (75/50 % e 80/60 %) e, no
+  ICED-8, escore, faixa e núcleo de um conjunto de casos; mudar qualquer valor exige justificativa.
+  Conferido em 432.000 combinações de entrada do ICED-8 com controles confirmados: nenhuma diferença
+  de escore, faixa, núcleo ou trava em relação à versão anterior.
+- **Família.** Total na referência com um mundo inteiro em alerta não sai só tranquilizador: o texto
+  cita o mundo que merece conversa com o médico(a).
+- **2–3 anos.** Relatório e tela avisam que, com 3 a 4 itens por domínio, um único item muda o rótulo.
+- **Versão.** `SUPER_NEUROPAD_VERSION` acompanha o banco atual (vai em tela, PDF, prontuário e bloco
+  estruturado).
+- **CI.** `npm run test:super-neuropad` passou a incluir os testes de 2–3 anos, da entrega à família e
+  do diagnóstico (antes o CI rodava só 4 dos 7 arquivos).
+- **Dyslexia Risk / ICED-8.** Controle de exclusão vazio ou "não verificado" (escolarização,
+  alfabetização, audição, visão, DI) deixa o escore **descritivo** até ser confirmado (ausente ≠
+  normal); ano "outro" avisa que a fluência não pontua e que o limiar 9/15 não é equivalente; o
+  escore mostra os pontos possíveis nos domínios examinados; "limitada" com domínio não examinado
+  diz que isso não equivale a resultado normal; fluência do jogo traz "sem referência normativa
+  nesta triagem".
+- **Privacidade.** Rascunhos locais do jogo e do ICED-8 expiram em 72 h (`localDraft.ts`); sessão em
+  andamento no formato antigo não se perde; armazenamento bloqueado não derruba a tela (antes, a
+  gravação do ICED-8 lançava erro sem tratamento).
+
+Pendente de decisão clínica (não alterado): conteúdo novo (pseudopalavras no ditado de 5–6 anos,
+mais perguntas de compreensão, segunda forma de fluência, mais itens por domínio aos 2–3 anos),
+recalibração de cortes e validação com amostra de crianças.

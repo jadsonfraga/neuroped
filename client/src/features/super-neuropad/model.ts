@@ -58,7 +58,7 @@ export type { ToddlerDomain };
 export { buildMatches, isJudged, itemExpected, KIND_LABELS, ORIGIN_LABELS, ORIGIN_ORDER, ORIGIN_ROUTES, MAX_AGE_YEARS, MIN_AGE_YEARS, PHASE_ORDER, YEARS, itemsPerPhase };
 export type { BuildItem, DoItem, Item, JudgedItem, Option, OriginId, PhaseId, ShapeId, SpeakItem, TouchItem };
 
-export const SUPER_NEUROPAD_VERSION = "2026-09-30.1";
+export const SUPER_NEUROPAD_VERSION = "2026-10-15.1";
 export const SUPER_NEUROPAD_TITLE = "Super NeuroPad Game";
 export const SUPER_NEUROPAD_ROUTE = "/super-neuropad-game";
 export const SUPER_NEUROPAD_NATURE =
@@ -559,7 +559,7 @@ export function undoLastAnswer(answers: readonly AnswerRecord[]): { answers: Ans
 export type Level = "esperado" | "observar" | "alerta";
 
 export const LEVEL_LABELS: Record<Level, string> = {
-  esperado: "Dentro do esperado para a idade",
+  esperado: "Dentro da referência interna do jogo (não normativa)",
   observar: "Observar na consulta",
   alerta: "Sinal de alerta — priorizar na consulta",
 };
@@ -870,7 +870,7 @@ export function interpret(session: GameSession): GameReading | null {
 
   const notes: string[] = [];
   if (applied.length > 0 && priorities.length === 0) {
-    notes.push("Todos os mundos ficaram dentro do esperado para a idade nesta triagem de déficits grosseiros. Isso não exclui dificuldades sutis; a consulta segue o roteiro habitual.");
+    notes.push("Todos os mundos ficaram dentro da referência interna do jogo para a idade nesta triagem de déficits grosseiros. Isso não exclui dificuldades sutis; a consulta segue o roteiro habitual.");
   }
   if (priorities.length > 0) {
     notes.push(`Prioridade para a consulta: ${priorities.map((phase) => `${shortPhase(phase)} (${phase.level})`).join("; ")}.`);
@@ -983,6 +983,9 @@ export function buildGameBrief(session: GameSession, date = sessionDate(session)
 }
 
 // ─────────────────────────────── baterias de 2–3 anos: domínios e sinais de alerta ───────────────────────────────
+/** Aos 2–3 anos cada domínio tem 3 ou 4 itens: um único item muda o rótulo, então a leitura é só descritiva. */
+export const TODDLER_FEW_ITEMS_NOTE = "Poucos itens por domínio (3 a 4): um único item muda o rótulo; ler como descrição, não como medida estável.";
+
 /** Rótulo do alerta conforme a partida: com conduta só quando completa. */
 export function redFlagLabel(summary: Pick<GameSummary, "complete">): string {
   return summary.complete ? RED_FLAG_LABEL : RED_FLAG_INCOMPLETE_LABEL;
@@ -993,6 +996,7 @@ export function toddlerReportLines(summary: GameSummary): string[] {
   if (summary.domains.length === 0) return [];
   const lines = [
     "RESULTADO POR DOMÍNIO (BATERIA 2–3 ANOS; CRITÉRIOS SÃO PISO AUTORAL, NÃO NORMA)",
+    TODDLER_FEW_ITEMS_NOTE,
     ...summary.domains.map((entry) => `- ${entry.label}: ${entry.level === null ? `${entry.registered} de ${entry.total} registrados, ${entry.hits} cumpre` : `${entry.hits}/${entry.total} cumpre · ${LEVEL_LABELS[entry.level]}`}${entry.caregiverItems ? ` · ${entry.caregiverItems} item(ns) por relato do cuidador` : ""}`),
     "",
     "SINAIS DE ALERTA (ESTILO M-CHAT; NÃO É DIAGNÓSTICO)",
@@ -1065,8 +1069,8 @@ export function buildGameReport(session: GameSession, date = sessionDate(session
     ...summary.origins.map((origin) => `- ${origin.label}: ${origin.planned} item(ns) nos mundos ${origin.phases.map((id) => phaseById(id, summary.band.min).name).join(", ")} · registrados ${origin.applied}, acertos ${origin.hits}`),
     "",
     "RESULTADO OBJETIVO — CONTAGEM DE ACERTOS (NÃO É ESCORE NORMATIVO, PERCENTIL NEM DIAGNÓSTICO)",
-    summary.level === null ? `Partida incompleta: ${session.answers.length} de ${summary.total} itens registrados. Sem classificação ou interpretação.` : `Total: ${summary.hits} de ${summary.total} acertos (esperado para a idade: ${summary.expectedMin} ou mais) · ${LEVEL_LABELS[summary.level]}`,
-    ...summary.phases.map((phase) => `Mundo ${phase.phase.order} · ${phase.phase.name} (${phase.phase.domain}): ${phase.level === null ? phaseStatusText(phase, false) : `${phase.hits}/${phase.total} acertos (esperado: ${phase.expectedMin} ou mais), ${phase.errors} erros, ${phase.noResponse} sem resposta, ${phase.refused} recusa(s) · ${LEVEL_LABELS[phase.level]} · ${formatDuration(phase.seconds)}`}`),
+    summary.level === null ? `Partida incompleta: ${session.answers.length} de ${summary.total} itens registrados. Sem classificação ou interpretação.` : `Total: ${summary.hits} de ${summary.total} acertos (referência interna para a idade: ${summary.expectedMin} ou mais) · ${LEVEL_LABELS[summary.level]}`,
+    ...summary.phases.map((phase) => `Mundo ${phase.phase.order} · ${phase.phase.name} (${phase.phase.domain}): ${phase.level === null ? phaseStatusText(phase, false) : `${phase.hits}/${phase.total} acertos (referência interna: ${phase.expectedMin} ou mais), ${phase.errors} erros, ${phase.noResponse} sem resposta, ${phase.refused} recusa(s) · ${LEVEL_LABELS[phase.level]} · ${formatDuration(phase.seconds)}`}`),
     "",
     ...toddlerReportLines(summary),
     ...(reading ? ["LEITURA PARA A CONSULTA (DESCRITIVA, AUTORAL, NÃO NORMATIVA)", ...reading.notes.map((note) => `- ${note}`), ""] : []),

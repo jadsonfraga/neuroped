@@ -7,6 +7,7 @@ import { issuerCredentials } from "@/lib/issuer";
 import { issuerLines } from "@/features/super-neuropad/pdf";
 import { formatClinicalDateTime } from "@/lib/clinicalDate";
 import { safeTextFilename } from "@/lib/shareText";
+import { clearDraft, readDraft, writeDraft } from "@/features/dyslexia-risk/localDraft";
 import "@/styles/super-neuropad-arcade.css";
 import "@/styles/dyslexia-risk.css";
 
@@ -78,9 +79,11 @@ export default function DyslexiaRiskPage() {
   const { issuer } = useIssuer();
 
   useEffect(() => {
-    try { const raw = localStorage.getItem(KEY); if (raw) setS({ ...blank(), ...JSON.parse(raw) }); } catch { /* sessão nova */ }
+    // Rascunho com validade de 72 h; armazenamento bloqueado começa sessão nova.
+    const saved = readDraft<Partial<ReturnType<typeof blank>>>(KEY);
+    if (saved && typeof saved === "object") setS({ ...blank(), ...saved });
   }, []);
-  useEffect(() => { localStorage.setItem(KEY, JSON.stringify(s)); }, [s]);
+  useEffect(() => { writeDraft(KEY, s); }, [s]);
   useEffect(() => { try { localStorage.setItem(MODE_KEY, mode); } catch { /* modo só da sessão */ } }, [mode]);
   useEffect(() => {
     if (!running) return;
@@ -135,7 +138,7 @@ export default function DyslexiaRiskPage() {
 
   function newApplication() {
     if (!window.confirm("Nova aplicação apaga os registros atuais (depois de salvar/copiar). Continuar?")) return;
-    localStorage.removeItem(KEY);
+    clearDraft(KEY);
     setS(blank());
     setSavedPatient(false);
     setCursor(0);
@@ -236,6 +239,7 @@ export default function DyslexiaRiskPage() {
             </div>
           ))}
           {result.trava && <p className="rounded-xl border-[3px] border-[var(--snp-berry)] bg-[var(--snp-berry-tint)] p-2 text-sm font-bold">Trava: {result.travaMotivo}. Não interpretar como evidência de dislexia.</p>}
+          {!result.trava && result.controlesPendentes.length > 0 && <p className="rounded-xl border-[3px] border-[var(--snp-sun)] bg-[var(--snp-sun-tint)] p-2 text-sm font-bold" role="status">Controles não confirmados: {result.controlesPendentes.join("; ")}. Até responder “sim” ou “não”, o escore fica descritivo.</p>}
           <button type="button" className="snp-btn snp-btn--sun px-4 py-2" onClick={() => stamp("escudo", "palavras")}>Vila das Palavras</button>
         </section>
       )}
@@ -367,8 +371,11 @@ export default function DyslexiaRiskPage() {
       {phase === "tesouro" && (
         <section className="snp-panel space-y-2 p-4">
           <h2 className="snp-pixel text-base">{result.total}/15 · {result.faixa}</h2>
+          <p className="text-xs font-bold opacity-80">Pontos possíveis nos domínios examinados: {result.pontosExaminaveis} de 15.</p>
           {result.trava && <p className="rounded-xl border-[3px] border-[var(--snp-berry)] bg-[var(--snp-berry-tint)] p-2 text-sm font-bold">Trava ativa. Não interpretado como evidência de dislexia.</p>}
+          {!result.trava && result.controlesPendentes.length > 0 && <p className="rounded-xl border-[3px] border-[var(--snp-sun)] bg-[var(--snp-sun-tint)] p-2 text-sm font-bold">Controles não confirmados: {result.controlesPendentes.join("; ")}. Escore descritivo até confirmar.</p>}
           <p className="text-sm font-bold">{result.leitura} Núcleo: {result.nucleo}.</p>
+          {result.avisos.length > 0 && <ul className="space-y-1 text-xs font-semibold" aria-label="Avisos de leitura">{result.avisos.map((aviso) => <li key={aviso}>⚠️ {aviso}</li>)}</ul>}
           <ul className="space-y-1 text-sm">{result.dominios.map((d) => <li key={d.id}><b>{d.nome}:</b> {d.examinado ? d.pontos : "não examinado"} / {d.peso} — {d.detalhe}</li>)}</ul>
           <textarea className="w-full rounded-xl border-[3px] border-[var(--snp-ink-fixed)] p-2" placeholder="Fenômeno observado" value={s.fenomeno} onChange={(e) => setS({ ...s, fenomeno: e.target.value })} />
           <p className="text-sm leading-relaxed">{result.frase}</p>

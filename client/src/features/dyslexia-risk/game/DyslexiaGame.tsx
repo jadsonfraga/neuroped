@@ -1,4 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Pause } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSpeech } from "@/hooks/useSpeech";
 import { useIssuer, issuerCredentials } from "@/lib/issuer";
@@ -11,6 +12,7 @@ import {
   classifyDitado, encouragementFor, newGame, nextItemFor, recordFluency, recordResponse, skipWorld, starsFor, summarizeGame, tick, worldTarget,
   type GameState, type ItemResponse, type WorldId,
 } from "./engine";
+import { clearDraft, readDraft, writeDraft } from "../localDraft";
 import { GAME_DISCLAIMER, OP_LABEL, decimalBr, fluencyText, buildGameDocSpec, buildGameRecord, gameResponseItems, outcomeLabel, tallyText } from "./report";
 
 const LazySaveToPatient = lazy(() =>
@@ -21,14 +23,9 @@ const AVATARS = [["🦊", "Raposa"], ["🐼", "Panda"], ["🦖", "Dino"], ["🚀
 type Screen = "inicio" | "mapa" | "jogo" | "fim" | "painel";
 
 function loadSaved(): GameState | null {
-  try {
-    const raw = localStorage.getItem(GAME_STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as GameState;
-    return parsed && parsed.version === 1 && parsed.worlds ? parsed : null;
-  } catch {
-    return null;
-  }
+  // Rascunho com validade de 72 h (dados de criança não ficam no aparelho indefinidamente).
+  const parsed = readDraft<GameState>(GAME_STORAGE_KEY);
+  return parsed && parsed.version === 1 && parsed.worlds ? parsed : null;
 }
 
 function Stars({ n }: { n: number }) {
@@ -64,7 +61,7 @@ export default function DyslexiaGame() {
   const bank: BandBank | null = useMemo(() => bandForAge(game?.idade ?? null), [game?.idade]);
 
   useEffect(() => {
-    if (game) localStorage.setItem(GAME_STORAGE_KEY, JSON.stringify(game));
+    if (game) writeDraft(GAME_STORAGE_KEY, game);
   }, [game]);
 
   // Relógio ativo da sessão: corre só no mapa/jogo e fora da pausa.
@@ -128,7 +125,7 @@ export default function DyslexiaGame() {
   function reset() {
     if (game && !savedPatient && !window.confirm("Nova partida apaga o resultado atual (salve ou baixe o PDF antes). Continuar?")) return;
     speech.cancel();
-    localStorage.removeItem(GAME_STORAGE_KEY);
+    clearDraft(GAME_STORAGE_KEY);
     setGame(null);
     setWorld(null);
     setPaused(false);
@@ -171,15 +168,18 @@ export default function DyslexiaGame() {
   const level = game ? Math.floor(game.xp / 100) + 1 : 1;
 
   const hud = game && (screen === "mapa" || screen === "jogo") && (
-    <div className="snp-panel flex flex-wrap items-center gap-2 px-3 py-2" data-testid="drx-game-hud">
+    <div className="snp-panel flex flex-nowrap items-center gap-2 px-3 py-2 sm:flex-wrap" data-testid="drx-game-hud">
       <span className="text-2xl" role="img" aria-label="Avatar">{game.avatar}</span>
-      <div className="min-w-[8rem] flex-1">
-        <p className="snp-pixel text-[11px]">Nível {level} · {game.xp} XP</p>
+      <div className="min-w-0 flex-1">
+        <p className="snp-pixel truncate text-[11px]">Nível {level} · {game.xp} XP</p>
         <div className="snp-xp mt-1" aria-hidden="true">{Array.from({ length: 10 }, (_, i) => <i key={i} className={i < xpCells ? "on" : ""} />)}</div>
       </div>
-      <span className="snp-chip" aria-label={`Sequência de ${game.streak} respostas`}>🔥 {game.streak}</span>
-      <span className="snp-chip" aria-label={`Faltam ${Math.ceil(remaining / 60)} minutos`}>⏱ {Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, "0")}</span>
-      <button type="button" className="snp-btn snp-btn--paper drx-tap px-3 py-2 text-xs" aria-pressed={paused} aria-label="Pausar" onClick={() => { speech.cancel(); setPaused((p) => !p); }}><span aria-hidden="true">{paused ? "⏸ Pausado" : "⏸ Pausar"}</span></button>
+      <span className="snp-chip shrink-0" aria-label={`Sequência de ${game.streak} respostas`}>🔥 {game.streak}</span>
+      <span className="snp-chip shrink-0" aria-label={`Faltam ${Math.ceil(remaining / 60)} minutos`}>⏱ {Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, "0")}</span>
+      <button type="button" className="snp-btn snp-btn--paper drx-tap inline-flex shrink-0 items-center justify-center gap-1 px-3 py-2 text-xs" aria-pressed={paused} aria-label="Pausar" onClick={() => { speech.cancel(); setPaused((p) => !p); }}>
+        {/* No celular só o ícone: o HUD cabe numa linha e o mapa não desce até o balão de ajuda (alvo de toque segue ≥ 48 px). */}
+        <Pause className="h-4 w-4" aria-hidden="true" /><span aria-hidden="true" className="hidden sm:inline">{paused ? " Pausado" : " Pausar"}</span>
+      </button>
     </div>
   );
 

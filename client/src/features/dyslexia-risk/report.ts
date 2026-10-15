@@ -1,4 +1,4 @@
-import { CF, CONTROL, DITADO, DITADO_PSEUDO, ICED_MAX, ICED_VERSION, PSEUDO, WORDS, scoreIced, type DomainScore, type IcedInput, type IcedResult } from "./model";
+import { CF, CONTROL, DITADO, DITADO_PSEUDO, ICED_MAX, ICED_VERSION, PSEUDO, WORDS, scoreIced, travaStatusText, type DomainScore, type IcedInput, type IcedResult } from "./model";
 import type { DocLine, DocSpec } from "@/lib/documentPdf";
 import type { IssuerLines } from "@/features/super-neuropad/pdf";
 
@@ -79,7 +79,7 @@ export function buildIcedFullRecord(s: IcedState, result: IcedResult, appliedAt:
     `Examinador: ${s.examinador || "não informado"} · Emissão: ${appliedAt}`,
     `Criança: ${s.nome || "não informado"} · Nascimento: ${s.nasc || "não informado"} · Idade: ${s.idade || "não informado"}`,
     `Escola: ${s.escola || "não informado"} · Escolarização formal: ${s.anosEsc || "não informado"} anos · Ano: ${TRI_LABEL[s.ano] ?? s.ano}`,
-    `Trava de controle: ${result.trava ? `ativa — ${result.travaMotivo}` : "liberada"}`,
+    `Trava de controle: ${travaStatusText(result)}`,
     "",
     "Bloco 0 (controle):",
     ...CONTROL.map(([k, lab]) => `- ${lab}: ${TRI_LABEL[s.controle[k]] ?? s.controle[k]}`),
@@ -114,7 +114,8 @@ export function buildIcedFullRecord(s: IcedState, result: IcedResult, appliedAt:
     "",
     ...domainLines(result),
     "",
-    `Escore ICED-8: ${result.total}/${ICED_MAX} · Leitura operacional: ${result.faixa} · Núcleo funcional: ${result.nucleo}.`,
+    `Escore ICED-8: ${result.total}/${ICED_MAX} (possíveis nos domínios examinados: ${result.pontosExaminaveis}) · Leitura operacional: ${result.faixa} · Núcleo funcional: ${result.nucleo}.`,
+    ...result.avisos.map((aviso) => `Aviso: ${aviso}`),
     result.frase,
     "",
     ICED_DISCLAIMER,
@@ -134,8 +135,9 @@ export function buildIcedSummary(s: IcedState, result: IcedResult, appliedAt: st
   return [
     `ICED-8 — Dyslexia Risk · resumo`,
     `Criança: ${s.nome || "não informado"} · ${appliedAt}`,
-    `Escore: ${result.total}/${ICED_MAX} · ${result.faixa} · núcleo ${result.nucleo}.`,
-    result.trava ? `Trava ativa: ${result.travaMotivo}.` : "Trava liberada.",
+    `Escore: ${result.total}/${ICED_MAX} (possíveis nos domínios examinados: ${result.pontosExaminaveis}) · ${result.faixa} · núcleo ${result.nucleo}.`,
+    `Trava de controle: ${travaStatusText(result)}.`,
+    ...result.avisos.map((aviso) => `Aviso: ${aviso}`),
     ...domainLines(result),
     "",
     ICED_DISCLAIMER,
@@ -171,7 +173,7 @@ export function buildIcedFamilySummary(s: IcedState, result: IcedResult, applied
     `ICED-8 — resumo para a família`,
     `Criança: ${s.nome || "não informado"} · ${appliedAt}`,
     "",
-    `Nesta aplicação, ${FAIXA_FAMILIA[result.faixa]}.`,
+    `Nesta aplicação, ${result.faixa === "descritiva" && !result.trava ? "não foi possível interpretar a soma porque ainda faltam confirmar escolarização, audição, visão ou desenvolvimento" : FAIXA_FAMILIA[result.faixa]}.`,
     atencao.length > 0 ? `Áreas que pedem atenção: ${atencao.join(", ")}.` : "",
     pontos.length > 0 ? `Áreas registradas sem sinalização hoje: ${pontos.join(", ")}.` : "",
     result.naoExaminados.length > 0 ? `Não aplicado: ${result.naoExaminados.join(", ")}.` : "",
@@ -204,13 +206,13 @@ export function buildIcedDocSpec(s: IcedState, result: IcedResult, issuer: Issue
           `Criança: ${s.nome || "não informado"} · Nascimento: ${s.nasc || "não informado"} · Idade: ${s.idade || "não informado"}`,
           `Escola: ${s.escola || "não informado"} · Escolarização formal: ${s.anosEsc || "não informado"} anos · Ano: ${s.ano || "não informado"}`,
           `Examinador: ${s.examinador || "não informado"} · Data: ${s.data || appliedAt}`,
-          `Trava de controle: ${result.trava ? `ativa — ${result.travaMotivo}` : "liberada"}`,
+          `Trava de controle: ${travaStatusText(result)}`,
         ].join("\n"),
         rich: bloco0Rich.length > 0 ? [
           { text: `Criança: ${s.nome || "não informado"} · Nascimento: ${s.nasc || "não informado"} · Idade: ${s.idade || "não informado"}` },
           { text: `Escola: ${s.escola || "não informado"} · Escolarização formal: ${s.anosEsc || "não informado"} anos · Ano: ${s.ano || "não informado"}` },
           { text: `Examinador: ${s.examinador || "não informado"} · Data: ${s.data || appliedAt}` },
-          { text: `Trava de controle: ${result.trava ? `ativa — ${result.travaMotivo}` : "liberada"}`, bold: result.trava, tone: result.trava ? "wrong" : "neutral" },
+          { text: `Trava de controle: ${travaStatusText(result)}`, bold: result.trava || result.controlesPendentes.length > 0, tone: result.trava || result.controlesPendentes.length > 0 ? "wrong" : "neutral" },
           { text: "Bloco 0:" },
           ...bloco0Rich,
         ] : undefined,
@@ -230,7 +232,7 @@ export function buildIcedDocSpec(s: IcedState, result: IcedResult, issuer: Issue
       },
       {
         heading: "Leitura operacional",
-        body: [result.leitura, `Núcleo funcional (fluência ou ortografia): ${result.nucleo}.`, result.frase].join("\n"),
+        body: [result.leitura, ...result.avisos.map((aviso) => `Aviso: ${aviso}`), `Núcleo funcional (fluência ou ortografia): ${result.nucleo}.`, result.frase].join("\n"),
       },
       {
         heading: "Limites do instrumento",
@@ -251,10 +253,11 @@ export function icedResponseItems(s: IcedState, result: IcedResult): { question:
     { question: "Examinador", answer: s.examinador || "Não respondida" },
     ...CONTROL.map(([k, lab]) => ({ question: `Bloco 0 — ${lab}`, answer: TRI_LABEL[s.controle[k]] ?? "Não respondida" })),
     ...result.dominios.map((d) => ({ question: d.nome, answer: d.examinado ? `${d.pontos}/${d.peso} — ${d.detalhe}` : "Não examinado" })),
-    { question: "Escore ICED-8", answer: `${result.total}/${ICED_MAX}` },
+    { question: "Escore ICED-8", answer: `${result.total}/${ICED_MAX} (possíveis nos domínios examinados: ${result.pontosExaminaveis})` },
+    ...(result.avisos.length ? [{ question: "Avisos de leitura", answer: result.avisos.join(" ") }] : []),
     { question: "Leitura operacional", answer: result.faixa },
     { question: "Núcleo funcional", answer: result.nucleo },
-    { question: "Trava de controle", answer: result.trava ? `ativa — ${result.travaMotivo}` : "liberada" },
+    { question: "Trava de controle", answer: travaStatusText(result) },
   ];
   if (s.fenomeno) items.push({ question: "Fenômeno observado", answer: s.fenomeno });
   return items;
