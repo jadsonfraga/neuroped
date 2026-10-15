@@ -3,10 +3,10 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 306
-- **Com fonte declarada:** 306 (100.0%)
+- **Total de instrumentos:** 312
+- **Com fonte declarada:** 312 (100.0%)
 - **Sem fonte declarada:** 0
-- **Aguardando validação psicométrica publicada:** 131 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
+- **Aguardando validação psicométrica publicada:** 137 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
 
 > As duas últimas linhas medem coisas diferentes e não se somam: um
 > instrumento pode ter fonte e ainda assim aguardar validação.
@@ -223,8 +223,14 @@
 | `mutismo-seletivo-sintese-50` | Mutismo seletivo · Síntese 50 | Mutismo seletivo — pré-consulta qualitativa NeuroPed, v1.0, 2026-08-04. Dr. Jadson Fraga / NeuroPed SDG. | não | sim |
 | `na-adesao-tratamento-pais` | Adesão ao tratamento (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de adesão a tratamento medicamentoso e terapêutico na infância e barreiras práticas; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-apoio-rede-cuidador` | Apoio e rede do cuidador (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de apoio social percebido e acesso a serviços em famílias de crianças em acompanhamento; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
+| `na-cefaleia-gatilhos-rotina` | Cefaleia: gatilhos e rotina (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de fatores desencadeantes e de manejo da cefaleia pediátrica; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
+| `na-efeitos-antiepilepticos-pais` | Efeitos dos antiepilépticos (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de monitorização de efeitos adversos cognitivos, comportamentais e físicos de antiepilépticos; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-efeitos-estimulantes-pais` | Efeitos do tratamento (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de monitorização de efeitos adversos comuns de psicoestimulantes e outros psicofármacos em crianças; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-efeitos-psicofarmacos-adolescente` | Efeitos do tratamento (adolescente) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de monitorização de efeitos adversos de psicofármacos em adolescentes (sedação, peso, sono, sexualidade, movimento); itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
+| `na-funcao-pc-escola-professor` | Participação escolar na PC (professor) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de participação e acessibilidade escolar de estudantes com deficiência motora; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
+| `na-funcao-pc-pais` | Função diária na PC (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de desempenho em atividades diárias (autocuidado, comunicação, brincar) na paralisia cerebral; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
+| `na-mobilidade-funcional-pc` | Mobilidade funcional na PC (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de mobilidade funcional em diferentes ambientes na paralisia cerebral; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
+| `na-qualidade-vida-epilepsia` | Qualidade de vida na epilepsia (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de qualidade de vida relacionada à saúde em crianças com epilepsia; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-sobrecarga-cuidador` | Sobrecarga do cuidador (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de sobrecarga de cuidado em famílias de crianças com condições crônicas; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-transicao-saude-adolescente` | Transição para autonomia em saúde (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de prontidão para transição do cuidado pediátrico ao cuidado de adulto e autonomia em saúde; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `navi-ped-84` | NAVI-PED 84 | 2026-06-23_ESCALA_AUTORAL_NAVI-PED_84 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/165Y_M33XQ7wOclJ_oO47mkGHre9KUsdxo7LC6BgWyqo/edit | não | sim |
