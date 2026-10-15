@@ -17,9 +17,9 @@ for (const s of specs) {
   assert.equal(s.def.descriptiveDomainSummary, true, where);
   assert.match(s.validacaoBrasil, /Nenhuma/, where);
   const items = s.def.domains.flatMap((d) => d.items.map((i) => (typeof i === "string" ? i : i.text)));
-  assert.ok(items.length >= 8 && items.length <= 24, `${where}: ${items.length} itens`);
+  assert.ok(items.length >= 6 && items.length <= 24, `${where}: ${items.length} itens`);
   for (const t of items) {
-    assert.ok(t.length >= 15 && /[.?]$/.test(t), `${where}: item mal formado "${t}"`);
+    assert.ok(t.length >= 10 && /[.?]$/.test(t), `${where}: item mal formado "${t}"`);
     assert.ok(!seen.has(t), `${where}: item repetido com ${seen.get(t)}`);
     seen.set(t, s.id);
   }

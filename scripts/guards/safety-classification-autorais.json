@@ -4,5 +4,11 @@
   "na-efeitos-estimulantes-pais": "00|indiferente|indiferente",
   "na-efeitos-psicofarmacos-adolescente": "00|indiferente|alfabetizado",
   "na-adesao-tratamento-pais": "00|indiferente|indiferente",
-  "na-transicao-saude-adolescente": "00|indiferente|alfabetizado"
+  "na-transicao-saude-adolescente": "00|indiferente|alfabetizado",
+  "na-efeitos-antiepilepticos-pais": "00|indiferente|indiferente",
+  "na-qualidade-vida-epilepsia": "00|indiferente|indiferente",
+  "na-mobilidade-funcional-pc": "00|indiferente|indiferente",
+  "na-funcao-pc-pais": "00|indiferente|indiferente",
+  "na-funcao-pc-escola-professor": "00|indiferente|indiferente",
+  "na-cefaleia-gatilhos-rotina": "00|indiferente|indiferente"
 }
