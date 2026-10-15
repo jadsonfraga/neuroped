@@ -563,6 +563,21 @@ export function clinicalHardBlock(
 
 // ============ FILTROS OBRIGATÓRIOS ============
 
+/**
+ * Instrumentos ancorados numa condição (primeira queixa = a condição) só entram quando
+ * a condição, ou um domínio que a acompanha, foi selecionado. Ex.: a bateria IPN-PC/FUN
+ * também pontua dor e alimentação, mas "cefaleia aos 10 anos" não pode trazer
+ * instrumento de paralisia cerebral.
+ */
+export const CONDITION_ANCHORED_DOMAINS: Record<string, readonly string[]> = {
+  pc: ["pc", "motor", "funcionalidade"],
+};
+
+export function outsideConditionAnchor(scale: ScaleEntry, queixas: readonly string[]): boolean {
+  const anchor = CONDITION_ANCHORED_DOMAINS[scale.queixas[0] ?? ""];
+  return Boolean(anchor) && queixas.length > 0 && !queixas.some((q) => anchor!.includes(q));
+}
+
 function passesMandatoryFilters(
   scale: ScaleEntry,
   ctx: FilterContext,
@@ -574,6 +589,7 @@ function passesMandatoryFilters(
   ) {
     return false;
   }
+  if (outsideConditionAnchor(scale, ctx.queixas)) return false;
 
   // Respondente. Caso especial "Direto": o filtro casa pelo MODO de aplicação
   // (teste direto interativo com a criança), não pelo array de respondente —

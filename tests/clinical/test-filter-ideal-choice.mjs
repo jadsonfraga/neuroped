@@ -221,9 +221,14 @@ for (const ctx of cases) {
           PODIUM_QUESTION_CAP)
     );
   };
+  // R1 prevalece sobre R2: com ≥ 3 candidatas na idade exata, o pódio só usa
+  // idade exata, então cobertura só pode ser exigida de candidata na idade.
+  const coverageAgeOk = (m) =>
+    exactAgeCands.length < 3 ||
+    (m.scale.ageMin <= ctx.ageMonths && m.scale.ageMax >= ctx.ageMonths);
   for (const q of ctx.queixas) {
     const hasCand = matches.some(
-      (m) => m.scale.queixas.includes(q) && coverageFitsBudget(m),
+      (m) => m.scale.queixas.includes(q) && coverageFitsBudget(m) && coverageAgeOk(m),
     );
     const covered = slots.some((s) => s.scale.queixas.includes(q));
     if (hasCand && !covered) {

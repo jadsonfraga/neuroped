@@ -29,7 +29,7 @@ export interface PreConsultaRecord {
   createdAt: string;
 }
 export interface PreConsultaRecommendation {
-  label: "Ouro" | "Prata" | "Questionário escolar" | "Monitor autoral";
+  label: "Ouro" | "Prata" | "Bronze" | "Questionário escolar" | "Monitor autoral";
   scale?: ScaleEntry;
   reason: string;
 }
@@ -49,6 +49,8 @@ export const preConsultaQueixas = [
   { id: "depressao", label: "Depressão / humor" },
   { id: "trauma", label: "Trauma / TEPT" },
   { id: "tiques", label: "Tiques" },
+  { id: "toc", label: "TOC / obsessões e compulsões" },
+  { id: "cefaleia", label: "Cefaleia / dor de cabeça" },
   { id: "epilepsia", label: "Epilepsia" },
   { id: "aprendizagem", label: "Aprendizagem / escola" },
   { id: "alimentacao", label: "Seletividade alimentar" },

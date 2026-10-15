@@ -117,14 +117,14 @@ test("pré-consulta aplica idade/observador/rota completos antes de qualquer ran
   for (const idadeMeses of [12, 36, 60, 96, 156, 215]) for (const queixa of ["tea", "tdah", "sono", "comportamento", "linguagem"]) {
     const rows = recommendPreConsultaScales({ idadeMeses, queixa, respondente: "pais", contexto: "primeira-consulta" });
     const primary = rows.filter((r) => r.label !== "Questionário escolar" && r.scale);
-    assert.ok(primary.length <= 1);
+    assert.ok(primary.length <= 3, "pré-consulta: no máximo três posições para o respondente");
     for (const row of primary) {
       const s = row.scale!;
       assert.ok(idadeMeses >= s.ageMin && idadeMeses <= s.ageMax);
       assert.ok(s.respondente.includes("pais"));
       assert.equal(getApplicationMode(s), "questionario_pais");
       assert.equal(isSuicideInstrument(s) || isPsychosisInstrument(s), false);
-      assert.ok(s.queixas.includes(queixa));
+      assert.ok(s.queixas.includes(queixa) || /^Complementar — menor aderência/.test(row.reason), `${queixa}: ${s.id} fora da queixa sem rótulo de complementar`);
       assert.ok(previsitUpperMinutes(s)! <= 15);
     }
   }

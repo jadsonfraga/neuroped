@@ -13,6 +13,8 @@ on:
       - 'scripts/guards/safety-classification-recovered-20260912.json'
       - 'tests/unit/recovered-authorials.test.ts'
       - 'tests/unit/previsit-refinement.test.ts'
+      - 'tests/unit/previsit-three.test.ts'
+      - 'client/src/data/advancedFilterLogic.ts'
       - 'tests/e2e/recovered-authorials.mjs'
       - 'docs/PROVENIENCIA_CLINICA.md'
       - '.github/workflows/recovered-authorials-contract.yml'
@@ -40,6 +42,7 @@ jobs:
       - run: npm run lint
       - run: node --import tsx tests/unit/recovered-authorials.test.ts
       - run: node --import tsx tests/unit/previsit-refinement.test.ts
+      - run: node --import tsx tests/unit/previsit-three.test.ts
       - run: node --import tsx tests/unit/regula20.test.ts
       - run: node --import tsx tests/unit/regula20-report.test.ts
       - run: npm run validate:safety
