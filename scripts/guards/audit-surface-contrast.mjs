@@ -61,8 +61,8 @@ const CASES = [
   // Ficha de licença LIVRE: exercita o ramo emerald do badge de licença (que
   // já esteve ilegível no tema claro com text-emerald-200) e o card de
   // registro autoral interno, suprimido nas fichas external_only acima.
-  { id: "ficha-livre-light", route: "/#/generic-scale/pedmidas", width: 1440, height: 2400, theme: "light", surface: '[data-testid="scale-ficha-surface"]', auth: true },
-  { id: "ficha-livre-dark", route: "/#/generic-scale/pedmidas", width: 1440, height: 2400, theme: "dark", surface: '[data-testid="scale-ficha-surface"]', auth: true },
+  { id: "ficha-livre-light", route: "/#/generic-scale/rbs-r", width: 1440, height: 2400, theme: "light", surface: '[data-testid="scale-ficha-surface"]', auth: true },
+  { id: "ficha-livre-dark", route: "/#/generic-scale/rbs-r", width: 1440, height: 2400, theme: "dark", surface: '[data-testid="scale-ficha-surface"]', auth: true },
 ];
 
 const NORMAL_MIN = 4.5;
