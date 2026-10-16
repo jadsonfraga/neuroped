@@ -794,6 +794,66 @@ export function createSyntheticClinicalApi(scenario = {}) {
       return true;
     }
 
+    // LGPD + registro de IA (item 7). Espelha as regras do servidor só o bastante para o e2e.
+    if (pathname === "/api/live/ai-use") {
+      state.aiRecords = state.aiRecords ?? [];
+      const line = (r) => `Em ${r.usedAt}, Profissional Sintético E2E utilizou o sistema de IA "${r.tool}" como apoio. A IA não substitui a decisão médica. ${r.familyStatus === "informada" ? "Família informada sobre o uso de IA." : r.familyStatus === "recusou" ? "Família recusou o uso de IA." : "Ciência da família ainda não registrada."}`;
+      const present = (r) => ({ ...r, suggestedChartLine: line(r) });
+      if (request.method === "POST") {
+        const body = await readBody(request);
+        state.aiPosts = [...(state.aiPosts ?? []), body];
+        if (!body?.tool || String(body.tool).trim().length < 2) {
+          send(response, 400, { error: "Informe o nome da ferramenta (2 a 80 caracteres, sem texto clínico).", code: "INVALID_TOOL" });
+          return true;
+        }
+        const record = { id: `ia-sintetico-${state.aiRecords.length + 1}`, patientId: body.patientId ?? null, actorName: "Profissional Sintético E2E", tool: body.tool, purpose: body.purpose, dataSharing: body.dataSharing, riskLevel: body.riskLevel ?? null, humanReviewed: body.humanReviewed === true, usedAt: body.usedAt, familyStatus: "nao_informada" };
+        state.aiRecords.unshift(record);
+        state.auditEntries = [{ source: "clinic", id: `a-${state.aiRecords.length}`, at: new Date().toISOString(), action: "ai_use_recorded", targetType: "ai_use_record", metadata: { purpose: body.purpose } }, ...(state.auditEntries ?? [])];
+        send(response, 201, present(record));
+        return true;
+      }
+      if (request.method === "PATCH") {
+        const body = await readBody(request);
+        const record = state.aiRecords.find((r) => r.id === body?.id);
+        if (!record) { send(response, 404, { error: "Registro não encontrado nesta clínica." }); return true; }
+        if (record.familyStatus !== "nao_informada") { send(response, 409, { error: "A ciência da família já foi registrada e não pode ser alterada." }); return true; }
+        record.familyStatus = body.status;
+        state.aiPatches = [...(state.aiPatches ?? []), body];
+        state.auditEntries = [{ source: "clinic", id: `p-${state.aiPatches.length}`, at: new Date().toISOString(), action: "ai_use_family_status", targetType: "ai_use_record", metadata: { status: body.status } }, ...(state.auditEntries ?? [])];
+        send(response, 200, present(record));
+        return true;
+      }
+      send(response, 200, { data: state.aiRecords.map(present) });
+      return true;
+    }
+
+    if (pathname === "/api/live/governance/retention") {
+      state.retention = state.retention ?? { clinical_record: 7300, ai_use_registry: 7300, audit_trail: 1825, family_portal_links: 90 };
+      const meta = { clinical_record: ["Prontuário e documentos clínicos", 7300, "Lei 13.787/2018, art. 6º (mínimo de 20 anos do último registro)"], ai_use_registry: ["Registro de uso de IA", 0, "Pendente de decisão jurídica"], audit_trail: ["Trilha de auditoria", 0, "Pendente de decisão jurídica"], family_portal_links: ["Links do portal da família", 0, "Dado fora do prontuário"] };
+      const rules = () => Object.entries(meta).map(([category, [label, floor, basis]]) => ({ category, label, basis, legalFloorDays: floor, defaultDays: floor, retentionDays: state.retention[category], configured: false }));
+      if (request.method === "PUT") {
+        const body = await readBody(request);
+        state.retentionPuts = [...(state.retentionPuts ?? []), body];
+        const floor = meta[body?.category]?.[1] ?? 0;
+        if (body?.retentionDays < floor) { send(response, 422, { error: "prazo mínimo legal", code: "BELOW_LEGAL_FLOOR" }); return true; }
+        state.retention[body.category] = body.retentionDays;
+        send(response, 200, { rules: rules() });
+        return true;
+      }
+      send(response, 200, { rules: rules(), migrationApplied: true });
+      return true;
+    }
+
+    if (pathname === "/api/live/governance/audit") {
+      const entries = (state.auditEntries ?? []).filter((e) => {
+        const src = searchParams.get("source") ?? "all";
+        const act = searchParams.get("action") ?? "";
+        return (src === "all" || e.source === src) && (!act || e.action.includes(act));
+      });
+      send(response, 200, { data: entries, count: entries.length, limit: 50 });
+      return true;
+    }
+
     if (pathname === "/api/consents") {
       send(response, 200, { data: [] });
       return true;

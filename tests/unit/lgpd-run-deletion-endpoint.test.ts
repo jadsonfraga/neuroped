@@ -106,6 +106,17 @@ const BLUE = "clinic-blue-run";
 const RED_PATIENT = "patient-red-run";
 const BLUE_PATIENT = "patient-blue-run";
 const CIPHER = "cipher-sintetico";
+// Piso legal do prontuário (Lei 13.787/2018, art. 6º): a eliminação só é permitida 20 anos após o último
+// registro. Os registros fictícios deste teste são antigos para que o purge seja elegível.
+function backdateClinicalRecords(db: { prepare(sql: string): { run(...args: unknown[]): unknown; all(...args: unknown[]): unknown } }) {
+  const OLD = "2000-01-01T00:00:00.000Z";
+  // só neste fixture: remove gatilhos de imutabilidade para datar os registros
+  for (const t of db.prepare("SELECT name FROM sqlite_master WHERE type = 'trigger' AND (name LIKE '%immutable%' OR name LIKE '%append_only%')").all() as Array<{ name: string }>) db.prepare(`DROP TRIGGER IF EXISTS ${t.name}`).run();
+  for (const [table, col] of [["live_patients", "created_at"], ["live_clinical_events", "occurred_at"], ["live_assessments", "applied_at"], ["live_documents", "updated_at"], ["live_document_versions", "issued_at"], ["live_scale_responses", "submitted_at"]]) {
+    try { db.prepare(`UPDATE ${table} SET ${col} = ?`).run(OLD); } catch (e) { if (!/no such table/i.test(String(e))) throw e; }
+  }
+}
+
 const NOW = "2026-09-05T12:00:00.000Z";
 const FUTURE = "2099-01-01T00:00:00.000Z";
 
@@ -204,6 +215,8 @@ sqlite
   .run(RED, RED_PROFESSIONAL.id, NOW, NOW);
 criarPaciente(RED, RED_PATIENT, RED_OWNER.id);
 criarPaciente(BLUE, BLUE_PATIENT, BLUE_OWNER.id);
+
+backdateClinicalRecords(sqlite);
 
 const TABELAS = [
   "live_patients",

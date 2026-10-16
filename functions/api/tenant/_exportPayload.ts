@@ -875,6 +875,28 @@ export async function collectTenantExportPayload(
 
   const complete = Object.values(uncoveredCounts).every((count) => count === 0);
 
+  // LGPD (direito de acesso/portabilidade): o registro de uso de IA e as regras de retenção da clínica
+  // acompanham o export. Tabelas da migration 0036: ausentes antes dela → listas vazias, nunca erro.
+  const optionalRows = async (sql: string): Promise<unknown[]> => {
+    try {
+      const r = await db.prepare(sql).bind(clinicId).all();
+      return r.results ?? [];
+    } catch (error) {
+      if (isMissingExportTable(error, "ai_use_records") || isMissingExportTable(error, "clinic_retention_rules")) return [];
+      throw error;
+    }
+  };
+  let aiUseRecords: unknown[];
+  let retentionRules: unknown[];
+  try {
+    aiUseRecords = await optionalRows(
+      `SELECT id, patient_id, actor_user_id, tool, purpose, data_sharing, risk_level, human_reviewed, used_at, family_status, family_status_at, created_at FROM ai_use_records WHERE clinic_id = ? ORDER BY used_at`,
+    );
+    retentionRules = await optionalRows(`SELECT category, retention_days, updated_at FROM clinic_retention_rules WHERE clinic_id = ? ORDER BY category`);
+  } catch {
+    return coverageFailure();
+  }
+
   return {
     ok: true,
     counts: safeCounts,
@@ -1004,6 +1026,8 @@ export async function collectTenantExportPayload(
             updatedAt: clinicSettings.updated_at,
           }
         : null,
+      aiUseRecords,
+      retentionRules,
       retentionPolicy: retentionPolicy
         ? {
             retentionDays: retentionPolicy.retention_days,

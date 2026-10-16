@@ -21,6 +21,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useClinic } from "@/contexts/ClinicContext";
 import { authFetch } from "@/lib/authClient";
 import { invalidateIssuerCache } from "@/lib/issuer";
+import { PrivacySection } from "@/components/settings/PrivacySection";
 import { BrandingSection } from "@/components/settings/BrandingSection";
 import { RolePermissionsCard } from "@/components/settings/RolePermissionsCard";
 import { ROLE_LABELS } from "@shared/clinic-roles";
@@ -30,7 +31,7 @@ import TenantMetricsPanel from "@/components/TenantMetricsPanel";
 import type { TenantPermission } from "../../../shared/permissions";
 import type { ClinicFeatureState } from "../../../shared/clinicFeatures";
 
-type SectionId = "perfil" | "clinica" | "marca" | "equipe" | "plano" | "atividade" | "auditoria" | "recursos";
+type SectionId = "perfil" | "clinica" | "marca" | "privacidade" | "equipe" | "plano" | "atividade" | "auditoria" | "recursos";
 
 /**
  * Cada seção declara a permissão do catálogo (`shared/permissions.ts`) que a
@@ -43,6 +44,7 @@ const SECTIONS: Array<{ id: SectionId; label: string; icon: typeof Building2; re
   { id: "perfil", label: "Perfil", icon: Stethoscope },
   { id: "clinica", label: "Clínica", icon: Building2 },
   { id: "marca", label: "Marca", icon: Building2, requires: "organization.manage" },
+  { id: "privacidade", label: "Privacidade e IA", icon: ShieldCheck, requires: "organization.manage" },
   { id: "equipe", label: "Equipe", icon: UsersRound, requires: "team.manage" },
   { id: "plano", label: "Plano", icon: CreditCard, requires: "billing.manage" },
   { id: "atividade", label: "Atividade", icon: ShieldCheck, requires: "organization.metrics.read" },
@@ -923,6 +925,7 @@ function ConfiguracoesContent() {
           onSaved={(branding) => tenant.apply({ ...tenant.detail!, branding })}
         />
       )}
+      {section === "privacidade" && activeClinicId && hasPermission(permissions, "organization.manage") && <PrivacySection key={activeClinicId} clinicId={activeClinicId} />}
       {section === "equipe" && activeClinicId && hasPermission(permissions, "team.manage") && <RolePermissionsCard />}
       {section === "equipe" && activeClinicId && hasPermission(permissions, "team.manage") && <EquipeSection clinicId={activeClinicId} />}
       {section === "plano" && activeClinicId && hasPermission(permissions, "billing.manage") && <PlanoSection clinicId={activeClinicId} />}
