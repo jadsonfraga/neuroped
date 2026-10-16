@@ -56,8 +56,7 @@ mundo a partir de 8 anos e 3–4 itens por mundo até 5 anos dão resolução mu
 1. **Posição da resposta correta não é balanceada.** `TouchStage` embaralha as opções com a mesma semente da partida
    para todos os itens. No banco, em itens de 4 opções, a resposta certa está no índice 0 em 71, no 1 em 71, no 2 em 35
    e no 3 em 10 dos 187 itens; com a mesma permutação, o acerto fica concentrado em poucas posições durante toda a
-   partida (ex.: semente 1, 6 a 9 anos: a resposta certa cai na posição 2 em 6–9 dos 9–15 toques; semente 999999: nunca
-   na posição 2). Uma criança com preferência de posição (perseveração, lado dominante) ganha ou perde pontos por
+   partida (ex.: com a semente 1, aos 6 anos a resposta certa fica no índice 1 em 9 dos 14 toques; com a semente 999999 fica no índice 1 em apenas 1 de 14 e o índice 2 domina). Uma criança com preferência de posição (perseveração, lado dominante) ganha ou perde pontos por
    artefato do embaralhamento, e o relatório não permite separar isso de erro de conteúdo.
 2. O registro de toque guarda só o texto da opção escolhida, não a posição na tela nem o tipo de distrator: não dá para
    analisar erro de posição, perseveração nem erro por distrator.
