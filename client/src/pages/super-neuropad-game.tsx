@@ -9,6 +9,8 @@ import { issuerCredentials, useIssuer } from "@/lib/issuer";
 import { softTap } from "@/lib/softSounds";
 import { play1Up, playCoin, playFlagPole, playJump, playPowerUp } from "@/lib/sounds";
 import { downloadTextDocument, safeTextFilename } from "@/lib/shareText";
+import { TasksPanel } from "@/features/super-neuropad/TasksPanel";
+import type { TaskRecord } from "@/features/super-neuropad/tasks";
 import { createChiptune, type Chiptune } from "@/features/super-neuropad/music";
 import { buildGameDocSpec, issuerLines } from "@/features/super-neuropad/pdf";
 import {
@@ -564,6 +566,7 @@ export default function SuperNeuroPadGamePage() {
   const [skipped, setSkipped] = useState<SkippedPhase[]>([]);
   const [skipOpen, setSkipOpen] = useState(false);
   const [observations, setObservations] = useState("");
+  const [tasks, setTasks] = useState<TaskRecord[]>([]);
   /** Encaminhamento automático à família: e-mail/WhatsApp cadastrados na 1ª página do teste.
    *  Fica somente em memória da aba (nenhum dado sai sem o gesto de envio do cliente). */
   const [familyContact, setFamilyContact] = useState<FamilyContact | null>(null);
@@ -617,6 +620,7 @@ export default function SuperNeuroPadGamePage() {
     undoCount: undoCount.current,
     skipped,
     observations,
+    ...(tasks.length > 0 ? { tasks } : {}),
   } : null;
 
   const getMusic = useCallback(() => {
@@ -693,6 +697,7 @@ export default function SuperNeuroPadGamePage() {
     setSkipped([]);
     setSkipOpen(false);
     setObservations("");
+    setTasks([]);
     lastAnswerAt.current = Number.NEGATIVE_INFINITY;
     setScreen("intro");
     if (musicOn) getMusic().start();
@@ -715,6 +720,7 @@ export default function SuperNeuroPadGamePage() {
     setSkipped([]);
     setSkipOpen(false);
     setObservations("");
+    setTasks([]);
     setPaused(false);
     setFamilyDeliveryStatus("");
     setFamilyContact(null);
@@ -1407,6 +1413,8 @@ export default function SuperNeuroPadGamePage() {
           <p className="text-xs font-bold opacity-70" role="status">
             {resultKept ? "Resultado guardado (copiado, baixado ou salvo)." : "Nada é guardado sozinho: copie, baixe o PDF ou salve em paciente antes de sair ou começar outra partida."}
           </p>
+
+          <TasksPanel ageYears={session.ageYears} tasks={tasks} onChange={(next) => { setTasks(next); setResultKept(false); }} />
 
           <div className="snp-panel snp-panel--soft p-4 text-[var(--snp-ink-fixed)]" data-testid="super-neuropad-save">
             <div className="snp-pixel text-[11px]">Salvar no prontuário do paciente</div>

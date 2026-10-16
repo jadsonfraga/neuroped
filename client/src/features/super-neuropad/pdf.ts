@@ -11,6 +11,7 @@
  */
 import type { DocLine, DocSpec } from "@/lib/documentPdf";
 import type { DocumentIssuer } from "@/lib/issuer";
+import { taskReportLines } from "./tasks";
 import {
   cleanObservations,
   cutText,
@@ -192,7 +193,7 @@ export function buildGameDocSpec(session: GameSession, issuer: IssuerLines, appl
   ].join("\n");
 
   const structured = [
-    "Rótulos fixos: SESSAO, DOMINIO, ORIGEM, ITEM, PERFIL, OBSERVACOES. Valor em JSON de uma linha após o rótulo. Figuras aparecem como [nome]. Níveis ficam null em partida incompleta.",
+    "Rótulos fixos: SESSAO, DOMINIO, ORIGEM, ITEM, PERFIL, TAREFA, OBSERVACOES. Valor em JSON de uma linha após o rótulo. Figuras aparecem como [nome]. Níveis ficam null em partida incompleta.",
     "",
     ...buildStructuredLines(session),
   ].join("\n");
@@ -220,6 +221,7 @@ export function buildGameDocSpec(session: GameSession, issuer: IssuerLines, appl
       { heading: "Desempenho por domínio x referência interna do jogo", body: objectiveWithProfile },
       ...(reading ? [{ heading: "Leitura para a consulta", body: consultation }] : []),
       ...(responseProfileLines(session).length ? [{ heading: "Perfil de resposta (descritivo, sem norma)", body: responseProfileLines(session).map((line) => describeArt(line)).join("\n") }] : []),
+      ...(taskReportLines(session.tasks).length ? [{ heading: "Tarefas complementares cronometradas (descritivas, sem norma)", body: taskReportLines(session.tasks).map((line) => describeArt(line)).join("\n") }] : []),
       ...phaseSections,
       { heading: "Observações da aplicadora", body: observations ? describeArt(observations) : "Sem observações registradas." },
       ...(reading ? [{ heading: "Critérios de leitura", body: criteria }] : []),

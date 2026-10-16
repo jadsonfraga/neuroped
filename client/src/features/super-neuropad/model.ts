@@ -23,6 +23,7 @@
  *     explícito "Salvar no prontuário".
  */
 
+import { taskReportLines, taskStructuredLines, type TaskRecord } from "./tasks";
 import { formatClinicalDate, formatClinicalDateTime } from "../../lib/clinicalDate";
 import { EMOJI_NAMES, INTEGRATED_BANK, itemsPerPhase, MAX_AGE_YEARS, MIN_AGE_YEARS, PHASE_ORDER, YEARS, type PhaseId } from "./bank";
 import {
@@ -404,23 +405,8 @@ export function pdfLossless(text: string): boolean {
   return !hasNonLatin(describeArt(text));
 }
 
-// ─────────────────────────────── embaralhamento determinístico ───────────────────────────────
-export function shuffle<T>(values: readonly T[], seed: number): T[] {
-  const out = [...values];
-  let state = seed >>> 0;
-  const random = () => {
-    state += 0x6d2b79f5;
-    let t = state;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(random() * (i + 1));
-    [out[i], out[j]] = [out[j], out[i]];
-  }
-  return out;
-}
+export { shuffle } from "./stats";
+import { shuffle } from "./stats";
 
 // ─────────────────────────────── registro e resultado ───────────────────────────────
 export type AnswerStatus = "acerto" | "erro" | "sem_resposta" | "recusa";
@@ -493,6 +479,8 @@ export interface GameSession {
   skipped?: SkippedPhase[];
   /** Observações livres da aplicadora (comportamento, contexto, intercorrências). */
   observations?: string;
+  /** Tarefas complementares cronometradas (opcionais, v2026-10-16), fora da contagem principal e da classificação. */
+  tasks?: TaskRecord[];
 }
 
 export const OBSERVATIONS_MAX = 1200;
@@ -980,39 +968,8 @@ export function interpret(session: GameSession): GameReading | null {
 }
 
 // ─────────────────────────────── perfil de resposta (descritivo, v2026-10-16) ───────────────────────────────
-/** Estatística descritiva do tempo por item (segundos). Sem referência normativa: compara a criança consigo mesma. */
-export interface LatencyStats {
-  n: number;
-  median: number;
-  q1: number;
-  q3: number;
-  iqr: number;
-  sd: number;
-  /** Coeficiente de variação (desvio-padrão amostral ÷ média); null com menos de 5 tempos ou média 0. */
-  cv: number | null;
-}
-
-export const LATENCY_MIN_N = 5;
-
-function quantile(sorted: number[], q: number): number {
-  if (sorted.length === 0) return 0;
-  const position = (sorted.length - 1) * q;
-  const lower = Math.floor(position);
-  const upper = Math.ceil(position);
-  return sorted[lower] + (sorted[upper] - sorted[lower]) * (position - lower);
-}
-
-export function latencyStats(values: readonly number[]): LatencyStats {
-  const clean = values.filter((value) => Number.isFinite(value) && value >= 0).sort((a, b) => a - b);
-  const n = clean.length;
-  if (n === 0) return { n: 0, median: 0, q1: 0, q3: 0, iqr: 0, sd: 0, cv: null };
-  const mean = clean.reduce((sum, value) => sum + value, 0) / n;
-  const variance = n > 1 ? clean.reduce((sum, value) => sum + (value - mean) ** 2, 0) / (n - 1) : 0;
-  const sd = Math.sqrt(variance);
-  const q1 = quantile(clean, 0.25);
-  const q3 = quantile(clean, 0.75);
-  return { n, median: round1(quantile(clean, 0.5)), q1: round1(q1), q3: round1(q3), iqr: round1(q3 - q1), sd: round1(sd), cv: n >= LATENCY_MIN_N && mean > 0 ? Math.round((sd / mean) * 100) / 100 : null };
-}
+export { latencyStats, LATENCY_MIN_N, type LatencyStats } from "./stats";
+import { latencyStats, type LatencyStats } from "./stats";
 
 export interface ResponseProfile {
   /** Itens de toque respondidos com a posição registrada (partidas novas). */
@@ -1197,6 +1154,7 @@ export function buildStructuredLines(session: GameSession, date = sessionDate(se
     lines.push(`DOMINIO_2_3 ${json({ dominio: entry.label, itens: entry.total, registrados: entry.registered, cumpre: entry.hits, itens_relato_cuidador: entry.caregiverItems, nivel: entry.level })}`);
   }
   for (const flag of summary.redFlags) lines.push(`ALERTA ${json({ id: flag.itemId, texto: flag.text, fonte: flag.informant, conduta: redFlagLabel(summary) })}`);
+  for (const line of taskStructuredLines(session.tasks)) lines.push(line);
   const profile = responseProfile(session);
   if (profile.tapLatency.n > 0 || profile.judgedLatency.n > 0) {
     lines.push(`PERFIL ${json({
@@ -1229,6 +1187,7 @@ export function buildGameReport(session: GameSession, date = sessionDate(session
     ...toddlerReportLines(summary),
     ...(reading ? ["LEITURA PARA A CONSULTA (DESCRITIVA, AUTORAL, NÃO NORMATIVA)", ...reading.notes.map((note) => `- ${note}`), ""] : []),
     ...(responseProfileLines(session).length ? ["PERFIL DE RESPOSTA (DESCRITIVO, SEM NORMA)", ...responseProfileLines(session).map((line) => (line.startsWith("  ") ? line : `- ${line}`)), ""] : []),
+    ...(taskReportLines(session.tasks).length ? ["TAREFAS COMPLEMENTARES CRONOMETRADAS (DESCRITIVAS, SEM NORMA)", ...taskReportLines(session.tasks).map((line) => (line.startsWith("  ") ? line : `- ${line}`)), ""] : []),
     "OBSERVAÇÕES DA APLICADORA",
     observations || "Sem observações registradas.",
     "",
@@ -1288,6 +1247,7 @@ export function buildPatientRecordItems(session: GameSession): Array<{ question:
     ...(summary.redFlags.length ? [{ question: redFlagLabel(summary), answer: summary.redFlags.map((flag) => flag.text).join(" · ") }] : []),
     { question: "O que foi testado por instrumento", answer: summary.origins.map((origin) => `${origin.label}: ${origin.applied}/${origin.planned} itens registrados, ${origin.hits} acertos`).join(" · ") },
     ...summary.phases.filter((phase) => phase.skipReason).map((phase) => ({ question: `Mundo ${phase.phase.order} · ${phase.phase.name}`, answer: `Não aplicado — ${phase.skipReason}` })),
+    ...(taskReportLines(session.tasks).length ? [{ question: "Tarefas complementares cronometradas (descritivas, sem norma)", answer: taskReportLines(session.tasks).join(" · ").replace(/\s+/g, " ") }] : []),
     ...(observations ? [{ question: "Observações da aplicadora", answer: observations }] : []),
   ];
   for (const answer of session.answers) {
