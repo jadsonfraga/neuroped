@@ -24,7 +24,6 @@ import {
   CHARACTERS,
   GESTURE_SHORTCUT,
   KIND_LABELS,
-  LEVEL_LABELS,
   MAX_AGE_YEARS,
   MIN_AGE_YEARS,
   OBSERVATION_CHIPS,
@@ -48,7 +47,6 @@ import {
   buildGameBrief,
   buildGameReport,
   buildPatientRecordItems,
-  cutText,
   estimateBandSeconds,
   formatDuration,
   interpret,
@@ -73,7 +71,6 @@ import {
   type Character,
   type GameSession,
   type JudgedItem,
-  type Level,
   type Option,
   type PhaseId,
   type PhaseSummary,
@@ -114,9 +111,6 @@ const PHASE_TONE: Record<PhaseId, string> = {
 
 const OPTION_TINTS = ["bg-[var(--snp-berry-tint)]", "bg-[var(--snp-sky-tint)]", "bg-[var(--snp-sun-tint)]", "bg-[var(--snp-grass-tint)]"];
 
-const LEVEL_PANEL: Record<Level, string> = { esperado: "snp-panel--grass", observar: "snp-panel--sun", alerta: "snp-panel--berry" };
-const LEVEL_ICON: Record<Level, string> = { esperado: "🟢", observar: "🟡", alerta: "🔴" };
-const LEVEL_SHORT: Record<Level, string> = { esperado: "Na referência", observar: "Observar", alerta: "Alerta" };
 
 const STATUS_TONE: Record<AnswerStatus, string> = {
   acerto: "bg-emerald-600 text-white",
@@ -1262,16 +1256,15 @@ export default function SuperNeuroPadGamePage() {
             </p>
           </div>
 
-          {summary.level === null ? (
+          {!summary.complete ? (
             <div className="snp-panel p-5" data-testid="super-neuropad-incomplete">
               <p className="font-black">Partida incompleta: {session.answers.length} de {summary.total} itens registrados.</p>
               <p>Sem classificação ou interpretação (regra da partida incompleta). Cada mundo mostra o que foi registrado ou “não aplicado — motivo”; as respostas continuam disponíveis para copiar, baixar ou salvar.</p>
             </div>
-          ) : (<div className={`snp-panel ${LEVEL_PANEL[summary.level]} p-5`}>
+          ) : (<div className="snp-panel snp-panel--soft p-5">
             <div className="snp-pixel text-[11px] opacity-80">Resultado objetivo · {summary.band.label} · {summary.complete ? "partida completa" : `partida incompleta (${session.answers.length} de ${summary.total} itens)`}</div>
-            <div className="mt-1 text-3xl font-black">{LEVEL_ICON[summary.level]} {summary.hits} de {summary.total} acertos</div>
-            <div className="text-xs font-bold opacity-80">Referência interna para {summary.band.label}: {summary.expectedMin} ou mais (autoral, não normativa)</div>
-            <div className="text-base font-black">{LEVEL_LABELS[summary.level]}</div>
+            <div className="mt-1 text-3xl font-black">{summary.hits} de {summary.total} acertos</div>
+            <div className="text-xs font-bold opacity-80">Contagem de acertos, sem ponto de corte nem nível.</div>
             <div className="mt-1 text-xs font-semibold opacity-80">Tempo somado nas tarefas: {formatDuration(summary.durationSeconds)} · contagem autoral, não normativa; leitura é do médico.</div>
           </div>)}
 
@@ -1343,14 +1336,13 @@ export default function SuperNeuroPadGamePage() {
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-testid="super-neuropad-domains">
             {summary.phases.map((entry) => (
-              <div key={entry.phase.id} className={`snp-panel ${entry.level !== null ? LEVEL_PANEL[entry.level] : "snp-panel--soft"} p-4`}>
+              <div key={entry.phase.id} className={`snp-panel snp-panel--soft p-4`}>
                 <div className="text-2xl" aria-hidden="true">{entry.phase.emoji}</div>
                 <div className="snp-pixel text-[11px]">{entry.phase.name}</div>
                 <div className="text-[11px] font-semibold opacity-80">{entry.phase.domain}</div>
-                <div className="mt-2 text-2xl font-black">{entry.level !== null ? `${entry.hits}/${entry.total}` : entry.applied ? `${entry.answers.length} registros` : "—"}</div>
-                <div className="text-[11px] font-bold opacity-80">Referência interna: {entry.expectedMin} ou mais de {entry.total}</div>
+                <div className="mt-2 text-2xl font-black">{summary.complete ? `${entry.hits}/${entry.total}` : entry.applied ? `${entry.answers.length} registros` : "—"}</div>
                 <div className="mt-1"><PhaseMeter phase={entry} /></div>
-                <div className="mt-1 text-xs font-black">{entry.level !== null ? `${LEVEL_ICON[entry.level]} ${LEVEL_SHORT[entry.level]}` : entry.skipReason ? `Não aplicado — ${entry.skipReason}` : entry.applied ? "Registro parcial" : "Não aplicado"}</div>
+                <div className="mt-1 text-xs font-black">{summary.complete ? `${entry.hits} de ${entry.total} acertos` : entry.skipReason ? `Não aplicado — ${entry.skipReason}` : entry.applied ? "Registro parcial" : "Não aplicado"}</div>
                 <div className="mt-1 text-[11px] font-semibold opacity-80">{entry.applied ? `${entry.errors} erros · ${entry.noResponse} sem resposta · ${entry.refused} recusa(s) · ${formatDuration(entry.seconds)}` : "nenhum item registrado"}</div>
               </div>
             ))}
@@ -1438,7 +1430,7 @@ export default function SuperNeuroPadGamePage() {
 
           <div className="space-y-3">
             {summary.phases.map((entry) => (
-              <details key={entry.phase.id} className="snp-panel p-4" open={entry.level !== "esperado" || !entry.applied}>
+              <details key={entry.phase.id} className="snp-panel p-4" open={entry.hits < entry.total || !entry.applied}>
                 <summary className="snp-pixel cursor-pointer text-xs">{entry.phase.emoji} Mundo {entry.phase.order} · {entry.phase.name} · {phaseStatusText(entry, summary.complete)}</summary>
                 <ol className="mt-3 space-y-2">
                   {entry.answers.map((answer, index) => (
@@ -1457,7 +1449,7 @@ export default function SuperNeuroPadGamePage() {
           </div>
 
           {summary.complete && (<p className="text-xs font-semibold leading-relaxed opacity-80">
-            Faixas operacionais autorais: por mundo ({summary.phases[0].total} desafios), {cutText(summary.phases[0].total)}; no total ({summary.total}), {cutText(summary.total, "total")}. Recusa e não resposta contam como não acertadas e ficam registradas à parte. Item lento = 2 vezes a mediana da própria partida (mínimo 12 s). {SUPER_NEUROPAD_NATURE}
+            Sem pontos de corte nem níveis: o resultado é a contagem de acertos (por mundo, {summary.phases[0].total} desafios; no total, {summary.total}). Recusa e não resposta contam como não acertadas e ficam registradas à parte. Item lento = 2 vezes a mediana da própria partida (mínimo 12 s). {SUPER_NEUROPAD_NATURE}
           </p>)}
         </section>
       )}

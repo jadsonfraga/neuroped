@@ -27,7 +27,6 @@ import {
   sessionWallSeconds,
   summarize,
   type GameSession,
-  type Level,
 } from "./model";
 import type { IssuerLines } from "./pdf";
 
@@ -39,12 +38,6 @@ const FAMILY_DISCLAIMER =
   "O Super NeuroPad Game é uma triagem lúdica de pré-consulta. Ele NÃO dá diagnóstico, " +
   "não compara com percentis e não substitui avaliação profissional. O resultado completo, " +
   "com cada resposta registrada, fica com a equipe; a conclusão é do médico(a) na consulta.";
-
-const LEVEL_FOR_FAMILY: Record<Level, string> = {
-  esperado: "desempenho dentro da referência interna do jogo para a idade (não é norma)",
-  observar: "alguns pontos para observar com atenção na consulta",
-  alerta: "pontos que merecem prioridade na conversa com o médico(a)",
-};
 
 /** E-mail simples e validado no cliente; nada é enviado a servidor algum. */
 export function isValidFamilyEmail(value: string): boolean {
@@ -76,19 +69,6 @@ export function serializeFamilyContact(contact: FamilyContact): string {
 }
 
 /**
- * Leitura geral para a família. O total pode ficar na referência interna mesmo com um mundo
- * inteiro em alerta (ex.: 30/36 com 0/6 num mundo); nesse caso o texto não pode soar só tranquilizador.
- */
-export function familyReading(summary: ReturnType<typeof summarize>): string {
-  if (summary.level === null) return "";
-  const alertWorlds = summary.phases.filter((phase) => phase.level === "alerta").map((phase) => phase.phase.name);
-  if (summary.level === "esperado" && alertWorlds.length) {
-    return `no conjunto, dentro da referência interna do jogo, mas ${alertWorlds.join(", ")} ${alertWorlds.length > 1 ? "merecem" : "merece"} conversa com o médico(a)`;
-  }
-  return LEVEL_FOR_FAMILY[summary.level];
-}
-
-/**
  * Resumo em texto para WhatsApp/e-mail: sistemático (mesma ordem sempre) e
  * recorrente (mesmo formato em toda partida), sem jargão clínico.
  */
@@ -107,7 +87,6 @@ export function buildFamilySummary(session: GameSession, contact: FamilyContact,
     summary.complete
       ? `Aventura completa: ${summary.hits} de ${summary.total} desafios certos.`
       : `Aventura encerrada antes do fim: ${session.answers.length} de ${summary.total} registrados. Sem classificação geral.`,
-    summary.level !== null ? `Leitura do jogo: ${familyReading(summary)}.` : null,
     "",
     "Por mundo (acertos/desafios):",
     ...summary.phases.map((phase) => `• ${phase.phase.name}: ${phaseStatusText(phase, summary.complete)}`),
@@ -139,9 +118,6 @@ export function buildFamilyDocSpec(
       { text: `${phase.phase.name}: ${phaseStatusText(phase, summary.complete)}`, bold: true },
       { text: `   O que este mundo testa: ${phase.phase.domain}` },
     ];
-    if (phase.level !== null) {
-      lines.push({ text: `   Leitura: ${LEVEL_FOR_FAMILY[phase.level]}` });
-    }
     if (phase.skipReason) lines.push({ text: `   Motivo de não ter sido aplicado: ${phase.skipReason}`, tone: "neutral" });
     return lines;
   });
@@ -158,7 +134,7 @@ export function buildFamilyDocSpec(
         `Duração: ${wall !== null ? formatDuration(wall) : "não disponível"} (tempo somado nas tarefas: ${formatDuration(summary.durationSeconds)})`,
         `Idade: ${session.ageYears} anos · Herói: ${summary.character.name}`,
         summary.complete
-          ? `Aventura completa: ${summary.hits} de ${summary.total} desafios certos. Leitura do jogo: ${summary.level !== null ? familyReading(summary) : "sem classificação"}.`
+          ? `Aventura completa: ${summary.hits} de ${summary.total} desafios certos.`
           : `Aventura encerrada antes do fim: ${session.answers.length} de ${summary.total} desafios registrados. Neste caso o jogo não dá classificação geral.`,
         skipped.length > 0
           ? `Mundos não aplicados: ${skipped.map((phase) => `${phase.phase.name} (${phase.skipReason})`).join("; ")}.`

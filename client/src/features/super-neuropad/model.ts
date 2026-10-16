@@ -58,7 +58,7 @@ export type { ToddlerDomain };
 export { buildMatches, isJudged, itemExpected, KIND_LABELS, ORIGIN_LABELS, ORIGIN_ORDER, ORIGIN_ROUTES, MAX_AGE_YEARS, MIN_AGE_YEARS, PHASE_ORDER, YEARS, itemsPerPhase };
 export type { BuildItem, DoItem, Item, JudgedItem, Option, OriginId, PhaseId, ShapeId, SpeakItem, TouchItem };
 
-export const SUPER_NEUROPAD_VERSION = "2026-10-15.1";
+export const SUPER_NEUROPAD_VERSION = "2026-10-16.1";
 export const SUPER_NEUROPAD_TITLE = "Super NeuroPad Game";
 export const SUPER_NEUROPAD_ROUTE = "/super-neuropad-game";
 export const SUPER_NEUROPAD_NATURE =
@@ -556,50 +556,7 @@ export function undoLastAnswer(answers: readonly AnswerRecord[]): { answers: Ans
   return { answers: rest, phaseId: last.phaseId, itemIndex: rest.filter((answer) => answer.phaseId === last.phaseId).length };
 }
 
-export type Level = "esperado" | "observar" | "alerta";
-
-export const LEVEL_LABELS: Record<Level, string> = {
-  esperado: "Dentro da referência interna do jogo (não normativa)",
-  observar: "Observar na consulta",
-  alerta: "Sinal de alerta — priorizar na consulta",
-};
-
-/** Proporções AUTORAIS (não normativas) — as mesmas desde a primeira versão do jogo. */
-export const PHASE_RATIOS = { esperado: 0.75, observar: 0.5 } as const;
-export const OVERALL_RATIOS = { esperado: 0.8, observar: 0.6 } as const;
-
-function cut(total: number, ratio: number): number {
-  return Math.ceil(total * ratio - 1e-9);
-}
-
-/** Menor número de acertos para cada faixa, dado o número de itens. */
-export function levelCuts(total: number, scope: "fase" | "total" = "fase"): { esperado: number; observar: number } {
-  const ratios = scope === "fase" ? PHASE_RATIOS : OVERALL_RATIOS;
-  return { esperado: cut(total, ratios.esperado), observar: cut(total, ratios.observar) };
-}
-
-/** Texto das faixas para o número de itens (ex.: "4–5 acertos = esperado; 3 = observar; 0–2 = alerta"). */
-export function cutText(total: number, scope: "fase" | "total" = "fase"): string {
-  const cuts = levelCuts(total, scope);
-  const span = (from: number, to: number) => (from === to ? `${from}` : `${from}–${to}`);
-  return `${span(cuts.esperado, total)} acertos = esperado; ${span(cuts.observar, cuts.esperado - 1)} = observar; ${span(0, cuts.observar - 1)} = alerta`;
-}
-
-export function phaseLevel(hits: number, total: number): Level {
-  if (total <= 0) return "alerta";
-  const ratio = hits / total;
-  if (ratio >= PHASE_RATIOS.esperado) return "esperado";
-  if (ratio >= PHASE_RATIOS.observar) return "observar";
-  return "alerta";
-}
-
-export function overallLevel(hits: number, total: number): Level {
-  if (total <= 0) return "alerta";
-  const ratio = hits / total;
-  if (ratio >= OVERALL_RATIOS.esperado) return "esperado";
-  if (ratio >= OVERALL_RATIOS.observar) return "observar";
-  return "alerta";
-}
+// Sem pontos de corte nem níveis (decisão do Dr. Jadson, 15/10): o resultado é só a contagem de acertos.
 
 export interface PhaseSummary {
   phase: Phase;
@@ -608,7 +565,6 @@ export interface PhaseSummary {
   noResponse: number;
   refused: number;
   total: number;
-  level: Level | null;
   /** Falso quando nenhum item do mundo foi registrado (partida interrompida ou mundo pulado). */
   applied: boolean;
   /** Motivo quando a aplicadora pulou o mundo de propósito ("não aplicado"). */
@@ -616,8 +572,6 @@ export interface PhaseSummary {
   /** Tempo somado dos itens registrados no mundo, em segundos. */
   seconds: number;
   answers: AnswerRecord[];
-  /** Referência descritiva: acertos mínimos para "dentro do esperado" neste mundo. */
-  expectedMin: number;
 }
 
 export interface OriginSummary {
@@ -639,7 +593,6 @@ export interface DomainSummary {
   total: number;
   registered: number;
   caregiverItems: number;
-  level: Level | null;
 }
 
 /** Sinal de alerta (estilo M-CHAT): item marcado não cumprido. Descreve e encaminha; não diagnostica. */
@@ -659,10 +612,8 @@ export interface GameSummary {
   origins: OriginSummary[];
   hits: number;
   total: number;
-  level: Level | null;
   durationSeconds: number;
   complete: boolean;
-  expectedMin: number;
 }
 
 export function summarize(session: GameSession): GameSummary {
@@ -685,8 +636,7 @@ export function summarize(session: GameSession): GameSummary {
     const hits = count("acerto");
     return {
       phase, hits, errors: count("erro"), noResponse: count("sem_resposta"), refused: count("recusa"), total,
-      level: complete ? phaseLevel(hits, total) : null, applied: answers.length > 0, skipReason: skipped.get(phaseId) ?? null, seconds, answers,
-      expectedMin: levelCuts(total).esperado,
+      applied: answers.length > 0, skipReason: skipped.get(phaseId) ?? null, seconds, answers,
     };
   });
   const origins: OriginSummary[] = ORIGIN_ORDER.map((origin) => {
@@ -709,7 +659,7 @@ export function summarize(session: GameSession): GameSummary {
     const domainHits = answered.filter((answer) => answer.status === "acerto").length;
     return {
       domain, label: TODDLER_DOMAIN_LABELS[domain], hits: domainHits, total: planned.length, registered: answered.length,
-      caregiverItems: planned.filter(({ item }) => item.informant === "cuidador").length, level: complete && planned.length > 0 ? phaseLevel(domainHits, planned.length) : null,
+      caregiverItems: planned.filter(({ item }) => item.informant === "cuidador").length,
     };
   }).filter((entry) => entry.total > 0) : [];
   const redFlags: RedFlag[] = [];
@@ -723,8 +673,7 @@ export function summarize(session: GameSession): GameSummary {
   }
   return {
     domains, redFlags,
-    band, character, phases, origins, hits, total, level: complete ? overallLevel(hits, total) : null, durationSeconds: Math.round(durationSeconds), complete,
-    expectedMin: levelCuts(total, "total").esperado,
+    band, character, phases, origins, hits, total, durationSeconds: Math.round(durationSeconds), complete,
   };
 }
 
@@ -818,8 +767,6 @@ function median(values: number[]): number {
   return sorted.length % 2 === 0 ? (sorted[middle - 1] + sorted[middle]) / 2 : sorted[middle];
 }
 
-const LEVEL_RANK: Record<Level, number> = { alerta: 0, observar: 1, esperado: 2 };
-
 function shortPhase(phase: PhaseSummary): string {
   return `${phase.phase.name} ${phase.hits}/${phase.total}`;
 }
@@ -827,12 +774,11 @@ function shortPhase(phase: PhaseSummary): string {
 export function interpret(session: GameSession): GameReading | null {
   const summary = summarize(session);
   // Uma partida parcial conserva os registros, mas nunca produz classificação ou interpretação.
-  if (!summary.complete || summary.level === null) return null;
+  if (!summary.complete) return null;
   const applied = summary.phases.filter((phase) => phase.applied);
   const notApplied = summary.phases.filter((phase) => !phase.applied);
-  const priorities = applied
-    .filter((phase): phase is PhaseSummary & { level: Level } => phase.level !== null && phase.level !== "esperado")
-    .sort((a, b) => LEVEL_RANK[a.level] - LEVEL_RANK[b.level] || a.hits - b.hits || a.phase.order - b.phase.order);
+  // Sem níveis, não há mundos priorizados por corte: o roteiro específico por mundo deixa de ser gerado.
+  const priorities: PhaseSummary[] = [];
   const missed = session.answers.filter((answer) => answer.status !== "acerto");
   const errors = missed.filter((answer) => answer.status === "erro").length;
   const refused = missed.filter((answer) => answer.status === "recusa").length;
@@ -869,12 +815,6 @@ export function interpret(session: GameSession): GameReading | null {
   const slowdown = paceStart > 0 && paceEnd >= 4 && paceEnd >= paceStart * 2;
 
   const notes: string[] = [];
-  if (applied.length > 0 && priorities.length === 0) {
-    notes.push("Todos os mundos ficaram dentro da referência interna do jogo para a idade nesta triagem de déficits grosseiros. Isso não exclui dificuldades sutis; a consulta segue o roteiro habitual.");
-  }
-  if (priorities.length > 0) {
-    notes.push(`Prioridade para a consulta: ${priorities.map((phase) => `${shortPhase(phase)} (${phase.level})`).join("; ")}.`);
-  }
   if (pattern === "nao_resposta") {
     notes.push(`Predomínio de não resposta ou recusa (${noResponse} de ${missed.length} itens perdidos${refused > 0 ? `, ${refused} recusa(s)` : ""}). Antes de ler como déficit, considerar recusa, timidez, cansaço ou não compreensão do comando; vale reapresentar esses itens na consulta.`);
   } else if (pattern === "erro_ativo") {
@@ -929,7 +869,7 @@ export function interpret(session: GameSession): GameReading | null {
     notes.push(`Aprofundar com as abas de origem: ${deepen.join(" · ")}.`);
   }
 
-  const headline = `${LEVEL_LABELS[summary.level]} · ${summary.hits} de ${summary.total} acertos`;
+  const headline = `${summary.hits} de ${summary.total} acertos`;
 
   return {
     headline, complete: summary.complete, priorities, notApplied, missed, errors, noResponse, refused, pattern, medianSeconds, slow, touch, judged, repeated, gestures,
@@ -961,14 +901,14 @@ export function buildGameBrief(session: GameSession, date = sessionDate(session)
   const observations = cleanObservations(session.observations ?? "");
   const obsText = observations ? ` Observações da aplicadora: ${sentence(observations)}` : "";
   const flagText = summary.redFlags.length ? ` ${redFlagLabel(summary)}: ${summary.redFlags.map((flag) => flag.text).join("; ")}.` : "";
-  if (!reading || summary.level === null) {
+  if (!reading || !summary.complete) {
     return `Registro lúdico de pré-consulta (${SUPER_NEUROPAD_TITLE}, ${summary.band.label}) em ${day}: partida incompleta, ${session.answers.length} de ${summary.total} itens registrados. Sem classificação ou interpretação.`
       + ` Por mundo: ${summary.phases.map((phase) => `${phase.phase.name} ${phaseStatusText(phase, false)}`).join(", ")}.${skippedText(summary)} `
       + session.answers.map((answer) => `${answer.prompt}: ${answer.given} (${STATUS_LABELS[answer.status].toLowerCase()}; ${answer.seconds} s).`).join(" ")
       + flagText + obsText;
   }
   const parts: string[] = [
-    `Avaliação lúdica de pré-consulta (${SUPER_NEUROPAD_TITLE}, ${summary.band.label}) aplicada em ${day}: ${summary.hits} de ${summary.total} acertos, ${LEVEL_LABELS[summary.level].toLowerCase()}.`,
+    `Avaliação lúdica de pré-consulta (${SUPER_NEUROPAD_TITLE}, ${summary.band.label}) aplicada em ${day}: ${summary.hits} de ${summary.total} acertos.`,
     `Por mundo: ${summary.phases.map((phase) => `${phase.phase.name} ${phase.hits}/${phase.total}`).join(", ")}.`,
   ];
   if (summary.domains.length) parts.push(`Por domínio: ${summary.domains.map((entry) => `${entry.label} ${entry.hits}/${entry.total}`).join(", ")}.`);
@@ -997,7 +937,7 @@ export function toddlerReportLines(summary: GameSummary): string[] {
   const lines = [
     "RESULTADO POR DOMÍNIO (BATERIA 2–3 ANOS; CRITÉRIOS SÃO PISO AUTORAL, NÃO NORMA)",
     TODDLER_FEW_ITEMS_NOTE,
-    ...summary.domains.map((entry) => `- ${entry.label}: ${entry.level === null ? `${entry.registered} de ${entry.total} registrados, ${entry.hits} cumpre` : `${entry.hits}/${entry.total} cumpre · ${LEVEL_LABELS[entry.level]}`}${entry.caregiverItems ? ` · ${entry.caregiverItems} item(ns) por relato do cuidador` : ""}`),
+    ...summary.domains.map((entry) => `- ${entry.label}: ${!summary.complete ? `${entry.registered} de ${entry.total} registrados, ${entry.hits} cumpre` : `${entry.hits}/${entry.total} cumpre`}${entry.caregiverItems ? ` · ${entry.caregiverItems} item(ns) por relato do cuidador` : ""}`),
     "",
     "SINAIS DE ALERTA (ESTILO M-CHAT; NÃO É DIAGNÓSTICO)",
   ];
@@ -1024,7 +964,7 @@ export function buildStructuredLines(session: GameSession, date = sessionDate(se
     instrumento: SUPER_NEUROPAD_TITLE, versao: SUPER_NEUROPAD_VERSION, idade_anos: session.ageYears, faixa: summary.band.label,
     data_hora_local: formatClinicalDateTime(date), fuso: "America/Sao_Paulo (UTC-3)", completa: summary.complete,
     itens_previstos: summary.total, itens_registrados: session.answers.length, acertos: summary.hits,
-    esperado_minimo_total: summary.expectedMin, nivel_total: summary.level, duracao_tarefas_s: summary.durationSeconds,
+    duracao_tarefas_s: summary.durationSeconds,
     duracao_sessao_s: wall, tempo_estimado_s: estimateBandSeconds(summary.band.min).totalSeconds,
     pausas: session.pauseCount ?? 0, tempo_em_pausa_s: Math.round(session.pausedSeconds ?? 0), desfeitos: session.undoCount ?? 0,
     mundos_nao_aplicados: (session.skipped ?? []).map((entry) => ({ mundo: phaseById(entry.phaseId, summary.band.min).name, motivo: entry.reason })),
@@ -1033,7 +973,7 @@ export function buildStructuredLines(session: GameSession, date = sessionDate(se
     lines.push(`DOMINIO ${json({
       mundo: phase.phase.name, dominio: phase.phase.domain, ordem: phase.phase.order, itens: phase.total, registrados: phase.answers.length,
       acertos: phase.hits, erros: phase.errors, sem_resposta: phase.noResponse, recusas: phase.refused,
-      esperado_minimo: phase.expectedMin, nivel: phase.level, aplicado: phase.applied, nao_aplicado_motivo: phase.skipReason, tempo_s: phase.seconds,
+      aplicado: phase.applied, nao_aplicado_motivo: phase.skipReason, tempo_s: phase.seconds,
     })}`);
   }
   for (const origin of summary.origins) {
@@ -1047,7 +987,7 @@ export function buildStructuredLines(session: GameSession, date = sessionDate(se
     })}`);
   }
   for (const entry of summary.domains) {
-    lines.push(`DOMINIO_2_3 ${json({ dominio: entry.label, itens: entry.total, registrados: entry.registered, cumpre: entry.hits, itens_relato_cuidador: entry.caregiverItems, nivel: entry.level })}`);
+    lines.push(`DOMINIO_2_3 ${json({ dominio: entry.label, itens: entry.total, registrados: entry.registered, cumpre: entry.hits, itens_relato_cuidador: entry.caregiverItems })}`);
   }
   for (const flag of summary.redFlags) lines.push(`ALERTA ${json({ id: flag.itemId, texto: flag.text, fonte: flag.informant, conduta: redFlagLabel(summary) })}`);
   lines.push(`OBSERVACOES ${json({ texto: cleanObservations(session.observations ?? "") || null })}`);
@@ -1069,8 +1009,8 @@ export function buildGameReport(session: GameSession, date = sessionDate(session
     ...summary.origins.map((origin) => `- ${origin.label}: ${origin.planned} item(ns) nos mundos ${origin.phases.map((id) => phaseById(id, summary.band.min).name).join(", ")} · registrados ${origin.applied}, acertos ${origin.hits}`),
     "",
     "RESULTADO OBJETIVO — CONTAGEM DE ACERTOS (NÃO É ESCORE NORMATIVO, PERCENTIL NEM DIAGNÓSTICO)",
-    summary.level === null ? `Partida incompleta: ${session.answers.length} de ${summary.total} itens registrados. Sem classificação ou interpretação.` : `Total: ${summary.hits} de ${summary.total} acertos (referência interna para a idade: ${summary.expectedMin} ou mais) · ${LEVEL_LABELS[summary.level]}`,
-    ...summary.phases.map((phase) => `Mundo ${phase.phase.order} · ${phase.phase.name} (${phase.phase.domain}): ${phase.level === null ? phaseStatusText(phase, false) : `${phase.hits}/${phase.total} acertos (referência interna: ${phase.expectedMin} ou mais), ${phase.errors} erros, ${phase.noResponse} sem resposta, ${phase.refused} recusa(s) · ${LEVEL_LABELS[phase.level]} · ${formatDuration(phase.seconds)}`}`),
+    !summary.complete ? `Partida incompleta: ${session.answers.length} de ${summary.total} itens registrados. Sem classificação ou interpretação.` : `Total: ${summary.hits} de ${summary.total} acertos`,
+    ...summary.phases.map((phase) => `Mundo ${phase.phase.order} · ${phase.phase.name} (${phase.phase.domain}): ${!summary.complete ? phaseStatusText(phase, false) : `${phase.hits}/${phase.total} acertos, ${phase.errors} erros, ${phase.noResponse} sem resposta, ${phase.refused} recusa(s) · ${formatDuration(phase.seconds)}`}`),
     "",
     ...toddlerReportLines(summary),
     ...(reading ? ["LEITURA PARA A CONSULTA (DESCRITIVA, AUTORAL, NÃO NORMATIVA)", ...reading.notes.map((note) => `- ${note}`), ""] : []),

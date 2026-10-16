@@ -25,15 +25,11 @@ import {
   buildGameReport,
   buildPatientRecordItems,
   buildStructuredLines,
-  cutText,
   judgeShortcut,
-  levelCuts,
   sessionWallSeconds,
   describeArt,
   interpret,
   itemsFor,
-  overallLevel,
-  phaseLevel,
   recordBuild,
   recordJudged,
   recordTouch,
@@ -167,36 +163,9 @@ test("registros: toque e montagem conferidos pelo jogo; julgado pelo critério; 
   assert.match(recordTouch(context.item, context.phaseId, null, 1).prompt, /ferver/);
 });
 
-test("faixas operacionais: as mesmas proporções de sempre, com texto gerado pelo número de itens", () => {
-  assert.equal(phaseLevel(4, 4), "esperado");
-  assert.equal(phaseLevel(3, 4), "esperado");
-  assert.equal(phaseLevel(2, 4), "observar");
-  assert.equal(phaseLevel(1, 4), "alerta");
-  assert.equal(phaseLevel(4, 5), "esperado");
-  assert.equal(phaseLevel(3, 5), "observar");
-  assert.equal(phaseLevel(2, 5), "alerta");
-  assert.equal(overallLevel(16, 20), "esperado");
-  assert.equal(overallLevel(15, 20), "observar");
-  assert.equal(overallLevel(11, 20), "alerta");
-  assert.equal(overallLevel(20, 24), "esperado");
-  assert.equal(overallLevel(19, 24), "observar");
-  assert.equal(overallLevel(24, 30), "esperado");
-  assert.equal(overallLevel(18, 30), "observar");
-  assert.equal(overallLevel(17, 30), "alerta");
-  assert.equal(overallLevel(0, 0), "alerta");
-  assert.deepEqual(levelCuts(4), { esperado: 3, observar: 2 });
-  assert.deepEqual(levelCuts(5), { esperado: 4, observar: 3 });
-  assert.deepEqual(levelCuts(20, "total"), { esperado: 16, observar: 12 });
-  assert.equal(cutText(4), "3–4 acertos = esperado; 2 = observar; 0–1 = alerta");
-  assert.equal(cutText(5), "4–5 acertos = esperado; 3 = observar; 0–2 = alerta");
-  assert.equal(cutText(20, "total"), "16–20 acertos = esperado; 12–15 = observar; 0–11 = alerta");
-  assert.equal(cutText(30, "total"), "24–30 acertos = esperado; 18–23 = observar; 0–17 = alerta");
-  // As proporções continuam iguais às da versão anterior: nenhuma faixa ficou mais permissiva.
-  for (let total = 1; total <= 40; total++) {
-    for (let hits = 0; hits <= total; hits++) {
-      assert.equal(phaseLevel(hits, total), hits / total >= 0.75 ? "esperado" : hits / total >= 0.5 ? "observar" : "alerta");
-    }
-  }
+test("sem pontos de corte: nenhum export de nível, faixa ou corte no modelo", () => {
+  const model = readFileSync("client/src/features/super-neuropad/model.ts", "utf8");
+  assert.doesNotMatch(model, /phaseLevel|overallLevel|levelCuts|cutText|PHASE_RATIOS|OVERALL_RATIOS|LEVEL_LABELS/);
 });
 
 type Plan = (index: number, item: Item) => AnswerRecord["status"];
@@ -224,24 +193,19 @@ function play(years: number, plan: Plan = () => "acerto"): GameSession {
   return { version: "test", ageYears: years, bandId: String(years), characterId: "robo", startedAt: "2026-09-30T12:00:00.000Z", finishedAt: "2026-09-30T12:15:00.000Z", answers, pauseCount: 0 };
 }
 
-test("resumo conta acertos por mundo e no total, com esperado para a idade e completude", () => {
+test("resumo conta acertos por mundo e no total, e completude, sem nível nem corte", () => {
   const perfect = summarize(play(8));
   assert.equal(perfect.hits, 36);
   assert.equal(perfect.total, 36);
-  assert.equal(perfect.expectedMin, 29);
-  assert.equal(perfect.level, "esperado");
   assert.equal(perfect.complete, true);
   assert.deepEqual(perfect.phases.map((phase) => phase.hits), [6, 6, 6, 6, 6, 6]);
-  assert.ok(perfect.phases.every((phase) => phase.expectedMin === 5));
 
   const young = summarize(play(4));
   assert.equal(young.total, 24);
-  assert.equal(young.expectedMin, 20);
-  assert.ok(young.phases.every((phase) => phase.total === 4 && phase.expectedMin === 3));
+  assert.ok(young.phases.every((phase) => phase.total === 4));
 
   const mixed = summarize(play(6, (index) => (index % 5 === 0 ? "erro" : index % 5 === 1 ? "sem_resposta" : index % 5 === 2 ? "recusa" : "acerto")));
   assert.equal(mixed.hits, 12);
-  assert.equal(mixed.level, "alerta");
   assert.deepEqual(mixed.phases.map((phase) => [phase.hits, phase.errors, phase.noResponse, phase.refused]), Array(6).fill([2, 1, 1, 1]));
 
   const partial = play(2);
@@ -263,7 +227,7 @@ test("mundo pulado: aparece como não aplicado com motivo; partida fica incomple
   session.skipped = [{ phaseId: "corpo", reason: "Criança cansada ou sem colaboração" }];
   const summary = summarize(session);
   assert.equal(summary.complete, false);
-  assert.equal(summary.level, null);
+  assert.equal("level" in summary, false);
   assert.equal(interpret(session), null);
   const corpo = summary.phases.find((phase) => phase.phase.id === "corpo")!;
   assert.equal(corpo.applied, false);
@@ -277,7 +241,7 @@ test("mundo pulado: aparece como não aplicado com motivo; partida fica incomple
   assert.ok(rows.some((row) => row.question === "Mundo 6 · Torre do Corpo" && row.answer === "Não aplicado — Criança cansada ou sem colaboração"));
   const structured = buildStructuredLines(session).join("\n");
   assert.match(structured, /"nao_aplicado_motivo":"Criança cansada ou sem colaboração"/);
-  assert.match(structured, /"nivel":null/);
+  assert.doesNotMatch(structured, /"nivel"|esperado_minimo/);
 });
 
 test("cores da resposta: azul acertou, vermelho errou, cinza neutro para não respondeu/recusou/não aplicado; negrito; rótulo mantido; bloco estruturado sem estilo", () => {
@@ -345,7 +309,7 @@ test("relatório e PDF: metadados, o que foi testado por instrumento, domínio �
   const session: GameSession = { ...play(7, (index) => (index === 3 ? "erro" : index === 9 ? "sem_resposta" : index === 12 ? "recusa" : "acerto")), pauseCount: 2, pausedSeconds: 95, undoCount: 1, observations: "Tímida no início, soltou depois." };
   session.answers[5] = { ...session.answers[5], repeated: true };
   const report = buildGameReport(session, new Date("2026-09-30T17:05:00Z"));
-  assert.match(report, /27 de 30 acertos \(referência interna para a idade: 24 ou mais\)/);
+  assert.match(report, /27 de 30 acertos/);
   assert.match(report, /Data e hora \(local\): 30\/09\/2026/);
   assert.match(report, /O QUE FOI TESTADO POR INSTRUMENTO DE ORIGEM/);
   for (const label of ["Sonda 10", "Observa 10 (OBS-10)", "Reconhecimento visual", "Avaliação cognitiva infantil"]) assert.ok(report.includes(`- ${label}: `), label);
@@ -365,7 +329,7 @@ test("relatório e PDF: metadados, o que foi testado por instrumento, domínio �
   assert.match(spec.title, /Super NeuroPad Game/);
   assert.equal(spec.sections.length, 4 + 6 + 4, "identificação, instrumentos, domínios, leitura, 6 mundos, observações, critérios, estruturado, proveniência");
   assert.deepEqual(spec.sections.slice(0, 4).map((section) => section.heading), [
-    "Identificação da sessão", "O que foi testado por instrumento de origem", "Desempenho por domínio x referência interna do jogo", "Leitura para a consulta",
+    "Identificação da sessão", "O que foi testado por instrumento de origem", "Desempenho por mundo (contagem de acertos)", "Leitura para a consulta",
   ]);
   assert.deepEqual(spec.sections.slice(-4).map((section) => section.heading), ["Observações da aplicadora", "Critérios de leitura", STRUCTURED_HEADER, "Proveniência e natureza"]);
   const identification = spec.sections[0].body;
@@ -377,8 +341,8 @@ test("relatório e PDF: metadados, o que foi testado por instrumento, domínio �
   assert.match(identification, /Mundos não aplicados: nenhum/);
   assert.match(spec.sections[1].body, /Sonda 10 \(\/testes-diretos\): \d+ item\(ns\) previstos para 7 anos/);
   assert.match(spec.sections[1].body, /Reconhecimento visual \(\/testes-reconhecimento\)/);
-  assert.match(spec.sections[2].body, /TOTAL: 27 acertos em 30 itens \(referência interna para a idade: 24 ou mais\)/);
-  assert.match(spec.sections[2].body, /Mundo 1 - Vila da Conversa \(Interação e comunicação\): \d\/5 acertos \(referência interna: 4 ou mais\)/);
+  assert.match(spec.sections[2].body, /TOTAL: 27 acertos em 30 itens/);
+  assert.match(spec.sections[2].body, /Mundo 1 - Vila da Conversa \(Interação e comunicação\): \d\/5 acertos,/);
   assert.match(spec.sections[3].body, /Itens para checar na consulta \(3\)/);
   const bodies = spec.sections.map((section) => section.body).join("\n");
   for (const entry of session.answers) {
@@ -390,7 +354,8 @@ test("relatório e PDF: metadados, o que foi testado por instrumento, domínio �
   assert.match(bodies, /Resultado: Recusou - tempo: \d s - repetições do comando: 0/);
   assert.match(bodies, /repetições do comando: 1/);
   assert.match(spec.sections.at(-4)!.body, /Tímida no início/);
-  assert.match(spec.sections.at(-3)!.body, /Por mundo \(5 itens\): 4–5 acertos = esperado; 3 = observar; 0–2 = alerta\./);
+  assert.match(spec.sections.at(-3)!.body, /Sem pontos de corte nem níveis/);
+  assert.doesNotMatch(spec.sections.at(-3)!.body, /= esperado|= observar|= alerta/);
   assert.match(spec.sections.at(-3)!.body, /CDC/);
   const structured = spec.sections.at(-2)!.body.split("\n");
   assert.equal(structured.filter((line) => line.startsWith("SESSAO ")).length, 1);
@@ -407,7 +372,7 @@ test("relatório e PDF: metadados, o que foi testado por instrumento, domínio �
   assert.equal(sessionLine.completa, true);
   assert.equal(sessionLine.pausas, 2);
   assert.equal(sessionLine.duracao_sessao_s, 900);
-  assert.equal(sessionLine.nivel_total, "esperado");
+  assert.equal("nivel_total" in sessionLine, false, "sem nível no bloco estruturado");
   const itemLine = JSON.parse(structured.find((line) => line.startsWith("ITEM "))!.slice(5));
   assert.deepEqual(Object.keys(itemLine), ["id", "mundo", "origem", "referencia", "tipo", "pergunta", "esperado", "resposta", "resultado", "tempo_s", "repeticoes", "via"]);
   assert.match(bodies, /nada foi persistido no navegador nem enviado por rede/);
@@ -445,20 +410,19 @@ test("leitura para a consulta: prioridades, padrão com recusa agrupada, gesto, 
   const perfect = readComplete(play(8));
   assert.deepEqual(perfect.priorities, []);
   assert.equal(perfect.pattern, "nenhum");
-  assert.ok(perfect.notes.some((note) => /dentro da referência interna do jogo para a idade/.test(note) && /não exclui dificuldades sutis/.test(note)));
+  assert.equal(perfect.notes.some((note) => /referência interna|Prioridade/.test(note)), false);
   assert.equal(perfect.notes.some((note) => /Aprofundar/.test(note)), false);
 
   // Mundo 5 (memória) todo recusado, mundo 3 (palavras) com dois erros.
   const mixed = readComplete(play(6, (index) => (index >= 20 && index < 25 ? "recusa" : index === 10 || index === 11 ? "erro" : "acerto")));
-  assert.deepEqual(mixed.priorities.map((phase) => [phase.phase.id, phase.level]), [["memoria", "alerta"], ["palavras", "observar"]]);
+  assert.deepEqual(mixed.priorities, [], "sem níveis não há mundo priorizado por corte");
   assert.equal(mixed.missed.length, 7);
   assert.equal(mixed.errors, 2);
   assert.equal(mixed.noResponse, 5);
   assert.equal(mixed.refused, 5);
   assert.equal(mixed.pattern, "nao_resposta");
   assert.ok(mixed.notes.some((note) => /Predomínio de não resposta ou recusa \(5 de 7 itens perdidos, 5 recusa\(s\)\)/.test(note)));
-  assert.ok(mixed.notes.some((note) => /Prioridade para a consulta: Caverna da Memória 0\/5 \(alerta\); Ilha das Palavras 3\/5 \(observar\)/.test(note)));
-  assert.ok(mixed.notes.some((note) => note.startsWith("Aprofundar com as abas de origem: Sonda 10 (memória operacional")));
+  assert.equal(mixed.notes.some((note) => /Prioridade para a consulta/.test(note)), false);
 
   const gestures = play(2);
   gestures.answers = gestures.answers.map((entry) => {
@@ -519,7 +483,7 @@ test("leitura: toques impulsivos, não resposta por tipo e fadiga", () => {
 test("resumo para o prontuário é prosa curta com idade, contagem, mundos, itens perdidos, observações e ressalva autoral", () => {
   const session = { ...play(6, (index) => (index === 1 ? "erro" : index === 13 ? "sem_resposta" : "acerto")), observations: "Colaborou bem" };
   const brief = buildGameBrief(session, new Date("2026-09-30T12:00:00Z"));
-  assert.match(brief, /^Avaliação lúdica de pré-consulta \(Super NeuroPad Game, 6 anos\) aplicada em 30\/09\/2026: 28 de 30 acertos, dentro da referência interna do jogo \(não normativa\)\./);
+  assert.match(brief, /^Avaliação lúdica de pré-consulta \(Super NeuroPad Game, 6 anos\) aplicada em 30\/09\/2026: 28 de 30 acertos\./);
   assert.match(brief, /Por mundo: Vila da Conversa 4\/5, Floresta dos Olhos 5\/5, Ilha das Palavras 4\/5, Montanha dos Números 5\/5, Caverna da Memória 5\/5, Torre do Corpo 5\/5\./);
   assert.match(brief, /Itens perdidos: .*\(errou\); .*\(não respondeu\)\./);
   assert.match(brief, /Observações da aplicadora: Colaborou bem\. Contagem autoral/);
@@ -545,8 +509,6 @@ test("partidas interrompidas ou com itens duplicados não pontuam nem interpreta
     const partial = { ...full, answers: full.answers.slice(0, count) };
     const result = summarize(partial);
     assert.equal(result.complete, false);
-    assert.equal(result.level, null);
-    assert.ok(result.phases.every((phase) => phase.level === null));
     assert.equal(interpret(partial), null);
     const pdf = buildGameDocSpec(partial, ISSUER, "30/09/2026");
     for (const output of [buildGameReport(partial), buildGameBrief(partial), JSON.stringify(pdf)]) {
@@ -649,7 +611,7 @@ test("página: menores de 2 anos bloqueados, estimativa de tempo, ambiente sem m
   assert.match(page, /maxLength=\{OBSERVATIONS_MAX\}/);
   assert.match(page, /OBSERVATION_CHIPS\.map/);
   assert.match(page, /data-testid="super-neuropad-origins"/);
-  assert.match(page, /cutText\(summary\.phases\[0\]\.total\)/);
+  assert.doesNotMatch(page, /cutText|LEVEL_PANEL|LEVEL_ICON/);
   assert.match(page, /<DrawPad \/>/);
   assert.match(page, /BuildStage/);
 });

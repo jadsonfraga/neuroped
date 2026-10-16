@@ -13,13 +13,11 @@ import type { DocLine, DocSpec } from "@/lib/documentPdf";
 import type { DocumentIssuer } from "@/lib/issuer";
 import {
   cleanObservations,
-  cutText,
   describeArt,
   estimateBandSeconds,
   formatDuration,
   interpret,
   KIND_LABELS,
-  LEVEL_LABELS,
   ORIGIN_LABELS,
   phaseById,
   sessionLimitSeconds,
@@ -113,30 +111,25 @@ export function buildGameDocSpec(session: GameSession, issuer: IssuerLines, appl
   ].join("\n");
 
   const objective = [
-    summary.level === null ? incomplete : `TOTAL: ${summary.hits} acertos em ${summary.total} itens (referência interna para a idade: ${summary.expectedMin} ou mais) - ${LEVEL_LABELS[summary.level]}`,
+    !summary.complete ? incomplete : `TOTAL: ${summary.hits} acertos em ${summary.total} itens`,
     "",
     ...summary.phases.map((phase) =>
-      `Mundo ${phase.phase.order} - ${phase.phase.name} (${phase.phase.domain}): ${phase.level === null
+      `Mundo ${phase.phase.order} - ${phase.phase.name} (${phase.phase.domain}): ${!summary.complete
         ? phaseStatusText(phase, false)
-        : `${phase.hits}/${phase.total} acertos (referência interna: ${phase.expectedMin} ou mais), ${phase.errors} erros, ${phase.noResponse} sem resposta, ${phase.refused} recusa(s) - ${LEVEL_LABELS[phase.level]} - ${formatDuration(phase.seconds)}`}`,
+        : `${phase.hits}/${phase.total} acertos, ${phase.errors} erros, ${phase.noResponse} sem resposta, ${phase.refused} recusa(s) - ${formatDuration(phase.seconds)}`}`,
     ),
     "",
     ...toddlerReportLines(summary).map((line) => describeArt(line)),
-    "Referência interna para a idade = proporção autoral de acertos do jogo, não norma populacional nem ponto de corte validado.",
+    "Resultado = contagem de acertos do jogo, sem ponto de corte, nível ou classificação; não é norma populacional nem percentil.",
   ].join("\n");
 
-  const strengths = summary.phases.filter((phase) => phase.level === "esperado").map((phase) => phase.phase.domain);
-  const attention = summary.phases.filter((phase) => phase.level === "observar" || phase.level === "alerta").map((phase) => `${phase.phase.domain}${phase.level === "alerta" ? " (sinal de alerta)" : ""}`);
   const profile: DocLine[] = [
     { text: "Perfil visual por mundo/domínio (acertos sobre itens; # = acerto proporcional, - = não acertado):", bold: true },
     ...summary.phases.map((phase): DocLine => ({
-      text: `  ${profileBar(phase.hits, phase.total)} ${phase.hits}/${phase.total} - ${phase.phase.name} (${phase.phase.domain})${phase.level === null ? " - " + phaseStatusText(phase, false) : ""}`,
+      text: `  ${profileBar(phase.hits, phase.total)} ${phase.hits}/${phase.total} - ${phase.phase.name} (${phase.phase.domain})${!summary.complete ? " - " + phaseStatusText(phase, false) : ""}`,
     })),
     { text: "" },
-    ...(summary.level === null ? [{ text: "Partida incompleta: sem pontos fortes ou pontos de atenção (regra da partida incompleta).", tone: "neutral" as const }] : [
-      { text: `Pontos fortes nesta partida: ${strengths.length ? strengths.join(", ") : "nenhum domínio dentro da referência interna"}.`, bold: true, tone: "correct" as const },
-      { text: `Pontos para olhar na consulta: ${attention.length ? attention.join(", ") : "nenhum"}.`, bold: true, tone: attention.length ? "wrong" as const : "neutral" as const },
-    ]),
+    ...(!summary.complete ? [{ text: "Partida incompleta: sem leitura de conjunto (regra da partida incompleta).", tone: "neutral" as const }] : []),
     { text: "" },
     ...RESULT_LEGEND,
     { text: "Leitura descritiva e autoral, comparação interna à partida; não é norma, percentil nem diagnóstico.", tone: "neutral" },
@@ -182,9 +175,7 @@ export function buildGameDocSpec(session: GameSession, issuer: IssuerLines, appl
   const perPhase = summary.phases[0]?.total ?? 0;
   const criteria = [
     "Cada item tem uma única resposta certa. Itens de toque e de montar palavra são conferidos pelo próprio jogo; itens de fala e de ação são conferidos pela aplicadora contra o critério explícito exibido na tela.",
-    "Faixas operacionais autorais para leitura rápida da equipe (não normativas), as mesmas proporções desde a primeira versão do jogo:",
-    `  Por mundo (${perPhase} itens): ${cutText(perPhase)}.`,
-    `  Total (${summary.total} itens): ${cutText(summary.total, "total")}.`,
+    `Sem pontos de corte nem níveis: o resultado é a contagem de acertos (por mundo: ${perPhase} itens; total: ${summary.total} itens). A interpretação é da consulta.`,
     "\"Não respondeu\" e \"Recusou\" contam como não acertados e ficam registrados à parte de \"Errou\". Nas faixas de 2 e 3 anos, alguns itens de fala aceitam apontar/gesto como alternativa prevista (registrado como via gesto).",
     `Calibração: itens escolhidos por ano de idade a partir dos bancos de origem, para que uma criança com desenvolvimento típico acerte a maior parte, mas não necessariamente todos. Referência descritiva de marcos: ${SUPER_NEUROPAD_MILESTONE_SOURCES.join("; ")}. Não há validação normativa deste conjunto.`,
     "Ritmo: item lento é o que leva 2 vezes a mediana da própria partida (mínimo 12 s); é comparação interna, não tempo normativo.",
@@ -216,7 +207,7 @@ export function buildGameDocSpec(session: GameSession, issuer: IssuerLines, appl
     sections: [
       { heading: "Identificação da sessão", body: identification },
       { heading: "O que foi testado por instrumento de origem", body: origins },
-      { heading: "Desempenho por domínio x referência interna do jogo", body: objectiveWithProfile },
+      { heading: "Desempenho por mundo (contagem de acertos)", body: objectiveWithProfile },
       ...(reading ? [{ heading: "Leitura para a consulta", body: consultation }] : []),
       ...phaseSections,
       { heading: "Observações da aplicadora", body: observations ? describeArt(observations) : "Sem observações registradas." },

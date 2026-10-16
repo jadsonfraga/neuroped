@@ -238,7 +238,7 @@ try {
   assert.deepEqual(await toneColor("neutral"), ["rgb(75, 85, 99)", "900"]);
   // Desempenho por domínio x esperado e o que veio de cada instrumento de origem.
   const domains = page.getByTestId("super-neuropad-domains");
-  assert.equal(await domains.getByText(/Referência interna: \d+ ou mais de 5/).count(), WORLDS, "cada domínio mostra o esperado para a idade");
+  assert.equal(await domains.getByText(/Referência interna/).count(), 0, "sem corte nem referência por domínio");
   const origins = page.getByTestId("super-neuropad-origins");
   for (const label of ["Sonda 10", "Observa 10 (OBS-10)", "Reconhecimento visual", "Avaliação cognitiva infantil"]) {
     await origins.getByText(label, { exact: false }).first().waitFor();
