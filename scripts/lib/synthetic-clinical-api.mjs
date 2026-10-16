@@ -46,6 +46,8 @@ const SYNTHETIC_PERMISSIONS_BY_ROLE = {
     "clinical.write",
   ],
   professional: ["clinical.read", "clinical.write"],
+  // Secretaria/recepção: nenhuma permissão de tenant (agenda e cadastro vivem no módulo de operações).
+  assistant: [],
 };
 
 const CLINIC_PRIMARY = {
@@ -402,6 +404,7 @@ function operationsDashboard() {
  * @property {Set<string>|string[]} [failing] Prefixos de rota que devolvem 500 (erro recuperável).
  * @property {Set<string>|string[]} [hanging] Prefixos de rota que nunca respondem (estado de carregamento).
  * @property {boolean} [expiredSession] Faz `/api/auth/me` e as rotas clínicas responderem 401.
+ * @property {"owner"|"clinic_admin"|"professional"|"assistant"|"financial"} [primaryRole] Papel de membership na clínica primária.
  * @property {"admin"|"professional"|"reader"|"operator"} [userRole] Papel global sintético, independente da membership.
  */
 
@@ -422,9 +425,10 @@ export function createSyntheticClinicalApi(scenario = {}) {
 
   const failing = new Set(scenario.failing ?? []);
   const hanging = new Set(scenario.hanging ?? []);
+  const primaryClinic = scenario.primaryRole ? { ...CLINIC_PRIMARY, role: scenario.primaryRole } : CLINIC_PRIMARY;
   const clinics = scenario.multiTenant
-    ? [CLINIC_PRIMARY, CLINIC_SECONDARY]
-    : [CLINIC_PRIMARY];
+    ? [primaryClinic, CLINIC_SECONDARY]
+    : [primaryClinic];
 
   const clinicDetails = new Map(clinics.map((clinic) => [clinic.id, {
     ...clinic,
@@ -434,6 +438,7 @@ export function createSyntheticClinicalApi(scenario = {}) {
       displayName: clinic.name, addressLine1: "", addressLine2: "", phone: "",
       publicEmail: "", companyLine: "", motto: "",
     },
+    branding: { primaryColor: null, accentColor: null, headerText: "", footerText: "", logoDataUri: null, configured: false, updatedAt: null },
   }]));
 
   const user = {
@@ -584,6 +589,10 @@ export function createSyntheticClinicalApi(scenario = {}) {
         detail.legalName = body.legalName ?? detail.legalName;
         detail.timezone = body.timezone ?? detail.timezone;
         detail.settings = { ...detail.settings, ...body.settings };
+        if (body.branding) {
+          state.brandingPatches = [...(state.brandingPatches ?? []), body.branding];
+          detail.branding = { ...detail.branding, ...body.branding, configured: true, updatedAt: new Date().toISOString() };
+        }
       }
       send(response, 200, detail);
       return true;
