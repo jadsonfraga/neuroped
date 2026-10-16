@@ -1,0 +1,1387 @@
+{
+  "superNeuropad": {
+    "2": {
+      "tempo": [
+        676,
+        720
+      ],
+      "mundos": {
+        "vila": {
+          "n": 3,
+          "ids": [
+            "2.vila.1",
+            "2.vila.2",
+            "2.vila.3"
+          ],
+          "hash": "cbe19465a388bb1f"
+        },
+        "olhos": {
+          "n": 3,
+          "ids": [
+            "2.olhos.1",
+            "2.olhos.2",
+            "2.olhos.3"
+          ],
+          "hash": "bf1b94d0d06f3306"
+        },
+        "palavras": {
+          "n": 3,
+          "ids": [
+            "2.palavras.1",
+            "2.palavras.2",
+            "2.palavras.3"
+          ],
+          "hash": "90b3292bd7087e48"
+        },
+        "numeros": {
+          "n": 3,
+          "ids": [
+            "2.numeros.1",
+            "2.numeros.2",
+            "2.numeros.3"
+          ],
+          "hash": "1e20c7911b23760a"
+        },
+        "memoria": {
+          "n": 3,
+          "ids": [
+            "2.memoria.1",
+            "2.memoria.2",
+            "2.memoria.3"
+          ],
+          "hash": "6af15ab6204b3f98"
+        },
+        "corpo": {
+          "n": 3,
+          "ids": [
+            "2.corpo.1",
+            "2.corpo.2",
+            "2.corpo.3"
+          ],
+          "hash": "b1e3e72394594480"
+        }
+      }
+    },
+    "3": {
+      "tempo": [
+        855,
+        900
+      ],
+      "mundos": {
+        "vila": {
+          "n": 4,
+          "ids": [
+            "3.vila.1",
+            "3.vila.2",
+            "3.vila.3",
+            "3.vila.4"
+          ],
+          "hash": "af51f60765f124a8"
+        },
+        "olhos": {
+          "n": 4,
+          "ids": [
+            "3.olhos.1",
+            "3.olhos.2",
+            "3.olhos.3",
+            "3.olhos.4"
+          ],
+          "hash": "9a8e53c6f40acd17"
+        },
+        "palavras": {
+          "n": 4,
+          "ids": [
+            "3.palavras.1",
+            "3.palavras.2",
+            "3.palavras.3",
+            "3.palavras.4"
+          ],
+          "hash": "88312d83df839a50"
+        },
+        "numeros": {
+          "n": 4,
+          "ids": [
+            "3.numeros.1",
+            "3.numeros.2",
+            "3.numeros.3",
+            "3.numeros.4"
+          ],
+          "hash": "41e71fe560575150"
+        },
+        "memoria": {
+          "n": 4,
+          "ids": [
+            "3.memoria.1",
+            "3.memoria.2",
+            "3.memoria.3",
+            "3.memoria.4"
+          ],
+          "hash": "46155bc822ce9057"
+        },
+        "corpo": {
+          "n": 4,
+          "ids": [
+            "3.corpo.1",
+            "3.corpo.2",
+            "3.corpo.3",
+            "3.corpo.4"
+          ],
+          "hash": "1552080390900c93"
+        }
+      }
+    },
+    "4": {
+      "tempo": [
+        885,
+        1200
+      ],
+      "mundos": {
+        "vila": {
+          "n": 4,
+          "ids": [
+            "4.vila.1",
+            "4.vila.2",
+            "4.vila.3",
+            "4.vila.4"
+          ],
+          "hash": "a6ef438f811ecf14"
+        },
+        "olhos": {
+          "n": 4,
+          "ids": [
+            "4.olhos.1",
+            "4.olhos.2",
+            "4.olhos.3",
+            "4.olhos.4"
+          ],
+          "hash": "d5206bac1bb5e969"
+        },
+        "palavras": {
+          "n": 4,
+          "ids": [
+            "4.palavras.1",
+            "4.palavras.2",
+            "4.palavras.3",
+            "4.palavras.4"
+          ],
+          "hash": "9a11148d0f37a58f"
+        },
+        "numeros": {
+          "n": 4,
+          "ids": [
+            "4.numeros.1",
+            "4.numeros.2",
+            "4.numeros.3",
+            "4.numeros.4"
+          ],
+          "hash": "4e58dc8a9194cca4"
+        },
+        "memoria": {
+          "n": 4,
+          "ids": [
+            "4.memoria.1",
+            "4.memoria.2",
+            "4.memoria.3",
+            "4.memoria.4"
+          ],
+          "hash": "c873f3fb99ec307f"
+        },
+        "corpo": {
+          "n": 4,
+          "ids": [
+            "4.corpo.1",
+            "4.corpo.2",
+            "4.corpo.3",
+            "4.corpo.4"
+          ],
+          "hash": "ee161bfd3ab031be"
+        }
+      }
+    },
+    "5": {
+      "tempo": [
+        911,
+        1200
+      ],
+      "mundos": {
+        "vila": {
+          "n": 4,
+          "ids": [
+            "5.vila.1",
+            "5.vila.2",
+            "5.vila.3",
+            "5.vila.4"
+          ],
+          "hash": "681176c88e2a6603"
+        },
+        "olhos": {
+          "n": 4,
+          "ids": [
+            "5.olhos.1",
+            "5.olhos.2",
+            "5.olhos.3",
+            "5.olhos.4"
+          ],
+          "hash": "cd84b554095bb7a9"
+        },
+        "palavras": {
+          "n": 4,
+          "ids": [
+            "5.palavras.1",
+            "5.palavras.2",
+            "5.palavras.3",
+            "5.palavras.4"
+          ],
+          "hash": "195733e5ae4ca4a5"
+        },
+        "numeros": {
+          "n": 4,
+          "ids": [
+            "5.numeros.1",
+            "5.numeros.2",
+            "5.numeros.3",
+            "5.numeros.4"
+          ],
+          "hash": "6c0ae2d0390f727d"
+        },
+        "memoria": {
+          "n": 4,
+          "ids": [
+            "5.memoria.1",
+            "5.memoria.2",
+            "5.memoria.3",
+            "5.memoria.4"
+          ],
+          "hash": "eaf1ff096c1dfb89"
+        },
+        "corpo": {
+          "n": 4,
+          "ids": [
+            "5.corpo.1",
+            "5.corpo.2",
+            "5.corpo.3",
+            "5.corpo.4"
+          ],
+          "hash": "28ca04f56eb7132c"
+        }
+      }
+    },
+    "6": {
+      "tempo": [
+        832,
+        1200
+      ],
+      "mundos": {
+        "vila": {
+          "n": 5,
+          "ids": [
+            "6.vila.1",
+            "6.vila.2",
+            "6.vila.3",
+            "6.vila.4",
+            "6.vila.5"
+          ],
+          "hash": "e66e7ec3989f506f"
+        },
+        "olhos": {
+          "n": 5,
+          "ids": [
+            "6.olhos.1",
+            "6.olhos.2",
+            "6.olhos.3",
+            "6.olhos.4",
+            "6.olhos.5"
+          ],
+          "hash": "73d07370745fba5c"
+        },
+        "palavras": {
+          "n": 5,
+          "ids": [
+            "6.palavras.1",
+            "6.palavras.2",
+            "6.palavras.3",
+            "6.palavras.4",
+            "6.palavras.5"
+          ],
+          "hash": "29256d8bda9172a8"
+        },
+        "numeros": {
+          "n": 5,
+          "ids": [
+            "6.numeros.1",
+            "6.numeros.2",
+            "6.numeros.3",
+            "6.numeros.4",
+            "6.numeros.5"
+          ],
+          "hash": "ae57d0f271eb7cbc"
+        },
+        "memoria": {
+          "n": 5,
+          "ids": [
+            "6.memoria.1",
+            "6.memoria.2",
+            "6.memoria.3",
+            "6.memoria.4",
+            "6.memoria.5"
+          ],
+          "hash": "e73bfe6d3e33415e"
+        },
+        "corpo": {
+          "n": 5,
+          "ids": [
+            "6.corpo.1",
+            "6.corpo.2",
+            "6.corpo.3",
+            "6.corpo.4",
+            "6.corpo.5"
+          ],
+          "hash": "87d06e0d92553d3c"
+        }
+      }
+    },
+    "7": {
+      "tempo": [
+        823,
+        1200
+      ],
+      "mundos": {
+        "vila": {
+          "n": 5,
+          "ids": [
+            "7.vila.1",
+            "7.vila.2",
+            "7.vila.3",
+            "7.vila.4",
+            "7.vila.5"
+          ],
+          "hash": "b97d75896c0ada7e"
+        },
+        "olhos": {
+          "n": 5,
+          "ids": [
+            "7.olhos.1",
+            "7.olhos.2",
+            "7.olhos.3",
+            "7.olhos.4",
+            "7.olhos.5"
+          ],
+          "hash": "4a055b291e07305f"
+        },
+        "palavras": {
+          "n": 5,
+          "ids": [
+            "7.palavras.1",
+            "7.palavras.2",
+            "7.palavras.3",
+            "7.palavras.4",
+            "7.palavras.5"
+          ],
+          "hash": "15e7e6d2842cacad"
+        },
+        "numeros": {
+          "n": 5,
+          "ids": [
+            "7.numeros.1",
+            "7.numeros.2",
+            "7.numeros.3",
+            "7.numeros.4",
+            "7.numeros.5"
+          ],
+          "hash": "bc48aa4532183ff9"
+        },
+        "memoria": {
+          "n": 5,
+          "ids": [
+            "7.memoria.1",
+            "7.memoria.2",
+            "7.memoria.3",
+            "7.memoria.4",
+            "7.memoria.5"
+          ],
+          "hash": "59d72ebb5f2be5c3"
+        },
+        "corpo": {
+          "n": 5,
+          "ids": [
+            "7.corpo.1",
+            "7.corpo.2",
+            "7.corpo.3",
+            "7.corpo.4",
+            "7.corpo.5"
+          ],
+          "hash": "3da68062730842f9"
+        }
+      }
+    },
+    "8": {
+      "tempo": [
+        1065,
+        1200
+      ],
+      "mundos": {
+        "vila": {
+          "n": 6,
+          "ids": [
+            "8.vila.1",
+            "8.vila.2",
+            "8.vila.3",
+            "8.vila.4",
+            "8.vila.5",
+            "8.vila.6"
+          ],
+          "hash": "0b435e42a903b253"
+        },
+        "olhos": {
+          "n": 6,
+          "ids": [
+            "8.olhos.1",
+            "8.olhos.2",
+            "8.olhos.3",
+            "8.olhos.4",
+            "8.olhos.5",
+            "8.olhos.6"
+          ],
+          "hash": "0b9b9be4aaa20855"
+        },
+        "palavras": {
+          "n": 6,
+          "ids": [
+            "8.palavras.1",
+            "8.palavras.2",
+            "8.palavras.3",
+            "8.palavras.4",
+            "8.palavras.5",
+            "8.palavras.6"
+          ],
+          "hash": "9b90e0bd41195def"
+        },
+        "numeros": {
+          "n": 6,
+          "ids": [
+            "8.numeros.1",
+            "8.numeros.2",
+            "8.numeros.3",
+            "8.numeros.4",
+            "8.numeros.5",
+            "8.numeros.6"
+          ],
+          "hash": "3557879ad05b52d1"
+        },
+        "memoria": {
+          "n": 6,
+          "ids": [
+            "8.memoria.1",
+            "8.memoria.2",
+            "8.memoria.3",
+            "8.memoria.4",
+            "8.memoria.5",
+            "8.memoria.6"
+          ],
+          "hash": "4e7a823b88a05494"
+        },
+        "corpo": {
+          "n": 6,
+          "ids": [
+            "8.corpo.1",
+            "8.corpo.2",
+            "8.corpo.3",
+            "8.corpo.4",
+            "8.corpo.5",
+            "8.corpo.6"
+          ],
+          "hash": "99cd8af5a4b2205a"
+        }
+      }
+    },
+    "9": {
+      "tempo": [
+        1072,
+        1200
+      ],
+      "mundos": {
+        "vila": {
+          "n": 6,
+          "ids": [
+            "9.vila.1",
+            "9.vila.2",
+            "9.vila.3",
+            "9.vila.4",
+            "9.vila.5",
+            "9.vila.6"
+          ],
+          "hash": "36cd7a8a08b37bf2"
+        },
+        "olhos": {
+          "n": 6,
+          "ids": [
+            "9.olhos.1",
+            "9.olhos.2",
+            "9.olhos.3",
+            "9.olhos.4",
+            "9.olhos.5",
+            "9.olhos.6"
+          ],
+          "hash": "fc5f1a816284b36a"
+        },
+        "palavras": {
+          "n": 6,
+          "ids": [
+            "9.palavras.1",
+            "9.palavras.2",
+            "9.palavras.3",
+            "9.palavras.4",
+            "9.palavras.5",
+            "9.palavras.6"
+          ],
+          "hash": "df79488de70aba01"
+        },
+        "numeros": {
+          "n": 6,
+          "ids": [
+            "9.numeros.1",
+            "9.numeros.2",
+            "9.numeros.3",
+            "9.numeros.4",
+            "9.numeros.5",
+            "9.numeros.6"
+          ],
+          "hash": "193d25a3f3fb0701"
+        },
+        "memoria": {
+          "n": 6,
+          "ids": [
+            "9.memoria.1",
+            "9.memoria.2",
+            "9.memoria.3",
+            "9.memoria.4",
+            "9.memoria.5",
+            "9.memoria.6"
+          ],
+          "hash": "2e37436da30b871b"
+        },
+        "corpo": {
+          "n": 6,
+          "ids": [
+            "9.corpo.1",
+            "9.corpo.2",
+            "9.corpo.3",
+            "9.corpo.4",
+            "9.corpo.5",
+            "9.corpo.6"
+          ],
+          "hash": "c0a0937df6bc22db"
+        }
+      }
+    },
+    "10": {
+      "tempo": [
+        1093,
+        1200
+      ],
+      "mundos": {
+        "vila": {
+          "n": 6,
+          "ids": [
+            "10.vila.1",
+            "10.vila.2",
+            "10.vila.3",
+            "10.vila.4",
+            "10.vila.5",
+            "10.vila.6"
+          ],
+          "hash": "269ce7b48685dfff"
+        },
+        "olhos": {
+          "n": 6,
+          "ids": [
+            "10.olhos.1",
+            "10.olhos.2",
+            "10.olhos.3",
+            "10.olhos.4",
+            "10.olhos.5",
+            "10.olhos.6"
+          ],
+          "hash": "8dd10ba2806297b1"
+        },
+        "palavras": {
+          "n": 6,
+          "ids": [
+            "10.palavras.1",
+            "10.palavras.2",
+            "10.palavras.3",
+            "10.palavras.4",
+            "10.palavras.5",
+            "10.palavras.6"
+          ],
+          "hash": "0171cc5c0079e385"
+        },
+        "numeros": {
+          "n": 6,
+          "ids": [
+            "10.numeros.1",
+            "10.numeros.2",
+            "10.numeros.3",
+            "10.numeros.4",
+            "10.numeros.5",
+            "10.numeros.6"
+          ],
+          "hash": "fa0955c303a97ec4"
+        },
+        "memoria": {
+          "n": 6,
+          "ids": [
+            "10.memoria.1",
+            "10.memoria.2",
+            "10.memoria.3",
+            "10.memoria.4",
+            "10.memoria.5",
+            "10.memoria.6"
+          ],
+          "hash": "a03770c362fd234a"
+        },
+        "corpo": {
+          "n": 6,
+          "ids": [
+            "10.corpo.1",
+            "10.corpo.2",
+            "10.corpo.3",
+            "10.corpo.4",
+            "10.corpo.5",
+            "10.corpo.6"
+          ],
+          "hash": "25601df7391b045a"
+        }
+      }
+    },
+    "11": {
+      "tempo": [
+        1088,
+        1200
+      ],
+      "mundos": {
+        "vila": {
+          "n": 6,
+          "ids": [
+            "11.vila.1",
+            "11.vila.2",
+            "11.vila.3",
+            "11.vila.4",
+            "11.vila.5",
+            "11.vila.6"
+          ],
+          "hash": "4b9a6774e88ad0a5"
+        },
+        "olhos": {
+          "n": 6,
+          "ids": [
+            "11.olhos.1",
+            "11.olhos.2",
+            "11.olhos.3",
+            "11.olhos.4",
+            "11.olhos.5",
+            "11.olhos.6"
+          ],
+          "hash": "41dde3fc98ef0c83"
+        },
+        "palavras": {
+          "n": 6,
+          "ids": [
+            "11.palavras.1",
+            "11.palavras.2",
+            "11.palavras.3",
+            "11.palavras.4",
+            "11.palavras.5",
+            "11.palavras.6"
+          ],
+          "hash": "f6581cda76e15f3a"
+        },
+        "numeros": {
+          "n": 6,
+          "ids": [
+            "11.numeros.1",
+            "11.numeros.2",
+            "11.numeros.3",
+            "11.numeros.4",
+            "11.numeros.5",
+            "11.numeros.6"
+          ],
+          "hash": "b7a155772dc0b672"
+        },
+        "memoria": {
+          "n": 6,
+          "ids": [
+            "11.memoria.1",
+            "11.memoria.2",
+            "11.memoria.3",
+            "11.memoria.4",
+            "11.memoria.5",
+            "11.memoria.6"
+          ],
+          "hash": "371946ca9ad87aee"
+        },
+        "corpo": {
+          "n": 6,
+          "ids": [
+            "11.corpo.1",
+            "11.corpo.2",
+            "11.corpo.3",
+            "11.corpo.4",
+            "11.corpo.5",
+            "11.corpo.6"
+          ],
+          "hash": "727c927afb304ae3"
+        }
+      }
+    },
+    "12": {
+      "tempo": [
+        1114,
+        1200
+      ],
+      "mundos": {
+        "vila": {
+          "n": 6,
+          "ids": [
+            "12.vila.1",
+            "12.vila.2",
+            "12.vila.3",
+            "12.vila.4",
+            "12.vila.5",
+            "12.vila.6"
+          ],
+          "hash": "5b22f1728bc982de"
+        },
+        "olhos": {
+          "n": 6,
+          "ids": [
+            "12.olhos.1",
+            "12.olhos.2",
+            "12.olhos.3",
+            "12.olhos.4",
+            "12.olhos.5",
+            "12.olhos.6"
+          ],
+          "hash": "03b66de5d63c2148"
+        },
+        "palavras": {
+          "n": 6,
+          "ids": [
+            "12.palavras.1",
+            "12.palavras.2",
+            "12.palavras.3",
+            "12.palavras.4",
+            "12.palavras.5",
+            "12.palavras.6"
+          ],
+          "hash": "1e1b63c459d25059"
+        },
+        "numeros": {
+          "n": 6,
+          "ids": [
+            "12.numeros.1",
+            "12.numeros.2",
+            "12.numeros.3",
+            "12.numeros.4",
+            "12.numeros.5",
+            "12.numeros.6"
+          ],
+          "hash": "5c5ca439f5e06d22"
+        },
+        "memoria": {
+          "n": 6,
+          "ids": [
+            "12.memoria.1",
+            "12.memoria.2",
+            "12.memoria.3",
+            "12.memoria.4",
+            "12.memoria.5",
+            "12.memoria.6"
+          ],
+          "hash": "9e8f66afe2861e2e"
+        },
+        "corpo": {
+          "n": 6,
+          "ids": [
+            "12.corpo.1",
+            "12.corpo.2",
+            "12.corpo.3",
+            "12.corpo.4",
+            "12.corpo.5",
+            "12.corpo.6"
+          ],
+          "hash": "b2b67573384eaf02"
+        }
+      }
+    },
+    "13": {
+      "tempo": [
+        1113,
+        1200
+      ],
+      "mundos": {
+        "vila": {
+          "n": 6,
+          "ids": [
+            "13.vila.1",
+            "13.vila.2",
+            "13.vila.3",
+            "13.vila.4",
+            "13.vila.5",
+            "13.vila.6"
+          ],
+          "hash": "57bfcd53d41db618"
+        },
+        "olhos": {
+          "n": 6,
+          "ids": [
+            "13.olhos.1",
+            "13.olhos.2",
+            "13.olhos.3",
+            "13.olhos.4",
+            "13.olhos.5",
+            "13.olhos.6"
+          ],
+          "hash": "f23c6391a282536e"
+        },
+        "palavras": {
+          "n": 6,
+          "ids": [
+            "13.palavras.1",
+            "13.palavras.2",
+            "13.palavras.3",
+            "13.palavras.4",
+            "13.palavras.5",
+            "13.palavras.6"
+          ],
+          "hash": "e9e77b63fc0af28d"
+        },
+        "numeros": {
+          "n": 6,
+          "ids": [
+            "13.numeros.1",
+            "13.numeros.2",
+            "13.numeros.3",
+            "13.numeros.4",
+            "13.numeros.5",
+            "13.numeros.6"
+          ],
+          "hash": "0e7e9e2d8a2a1178"
+        },
+        "memoria": {
+          "n": 6,
+          "ids": [
+            "13.memoria.1",
+            "13.memoria.2",
+            "13.memoria.3",
+            "13.memoria.4",
+            "13.memoria.5",
+            "13.memoria.6"
+          ],
+          "hash": "3377a8d78740be9c"
+        },
+        "corpo": {
+          "n": 6,
+          "ids": [
+            "13.corpo.1",
+            "13.corpo.2",
+            "13.corpo.3",
+            "13.corpo.4",
+            "13.corpo.5",
+            "13.corpo.6"
+          ],
+          "hash": "ccbed6119f06db4e"
+        }
+      }
+    },
+    "14": {
+      "tempo": [
+        1130,
+        1200
+      ],
+      "mundos": {
+        "vila": {
+          "n": 6,
+          "ids": [
+            "14.vila.1",
+            "14.vila.2",
+            "14.vila.3",
+            "14.vila.4",
+            "14.vila.5",
+            "14.vila.6"
+          ],
+          "hash": "38fa63a7a249fb33"
+        },
+        "olhos": {
+          "n": 6,
+          "ids": [
+            "14.olhos.1",
+            "14.olhos.2",
+            "14.olhos.3",
+            "14.olhos.4",
+            "14.olhos.5",
+            "14.olhos.6"
+          ],
+          "hash": "f9bcfed56d4c05a3"
+        },
+        "palavras": {
+          "n": 6,
+          "ids": [
+            "14.palavras.1",
+            "14.palavras.2",
+            "14.palavras.3",
+            "14.palavras.4",
+            "14.palavras.5",
+            "14.palavras.6"
+          ],
+          "hash": "d060d01f7b026ee6"
+        },
+        "numeros": {
+          "n": 6,
+          "ids": [
+            "14.numeros.1",
+            "14.numeros.2",
+            "14.numeros.3",
+            "14.numeros.4",
+            "14.numeros.5",
+            "14.numeros.6"
+          ],
+          "hash": "75a14af277a594ae"
+        },
+        "memoria": {
+          "n": 6,
+          "ids": [
+            "14.memoria.1",
+            "14.memoria.2",
+            "14.memoria.3",
+            "14.memoria.4",
+            "14.memoria.5",
+            "14.memoria.6"
+          ],
+          "hash": "033e5124ef963720"
+        },
+        "corpo": {
+          "n": 6,
+          "ids": [
+            "14.corpo.1",
+            "14.corpo.2",
+            "14.corpo.3",
+            "14.corpo.4",
+            "14.corpo.5",
+            "14.corpo.6"
+          ],
+          "hash": "beea8857c11bb2f7"
+        }
+      }
+    },
+    "15": {
+      "tempo": [
+        1132,
+        1200
+      ],
+      "mundos": {
+        "vila": {
+          "n": 6,
+          "ids": [
+            "15.vila.1",
+            "15.vila.2",
+            "15.vila.3",
+            "15.vila.4",
+            "15.vila.5",
+            "15.vila.6"
+          ],
+          "hash": "df172bcfc57274e9"
+        },
+        "olhos": {
+          "n": 6,
+          "ids": [
+            "15.olhos.1",
+            "15.olhos.2",
+            "15.olhos.3",
+            "15.olhos.4",
+            "15.olhos.5",
+            "15.olhos.6"
+          ],
+          "hash": "894d539988e19562"
+        },
+        "palavras": {
+          "n": 6,
+          "ids": [
+            "15.palavras.1",
+            "15.palavras.2",
+            "15.palavras.3",
+            "15.palavras.4",
+            "15.palavras.5",
+            "15.palavras.6"
+          ],
+          "hash": "4ff96f2c5cd0da24"
+        },
+        "numeros": {
+          "n": 6,
+          "ids": [
+            "15.numeros.1",
+            "15.numeros.2",
+            "15.numeros.3",
+            "15.numeros.4",
+            "15.numeros.5",
+            "15.numeros.6"
+          ],
+          "hash": "637f79df18e9f6bd"
+        },
+        "memoria": {
+          "n": 6,
+          "ids": [
+            "15.memoria.1",
+            "15.memoria.2",
+            "15.memoria.3",
+            "15.memoria.4",
+            "15.memoria.5",
+            "15.memoria.6"
+          ],
+          "hash": "29aad37c6bb87a5d"
+        },
+        "corpo": {
+          "n": 6,
+          "ids": [
+            "15.corpo.1",
+            "15.corpo.2",
+            "15.corpo.3",
+            "15.corpo.4",
+            "15.corpo.5",
+            "15.corpo.6"
+          ],
+          "hash": "de250c4c08d4c8b3"
+        }
+      }
+    },
+    "16": {
+      "tempo": [
+        1143,
+        1200
+      ],
+      "mundos": {
+        "vila": {
+          "n": 6,
+          "ids": [
+            "16.vila.1",
+            "16.vila.2",
+            "16.vila.3",
+            "16.vila.4",
+            "16.vila.5",
+            "16.vila.6"
+          ],
+          "hash": "b1496427ebc6a776"
+        },
+        "olhos": {
+          "n": 6,
+          "ids": [
+            "16.olhos.1",
+            "16.olhos.2",
+            "16.olhos.3",
+            "16.olhos.4",
+            "16.olhos.5",
+            "16.olhos.6"
+          ],
+          "hash": "90326b2fcea9e540"
+        },
+        "palavras": {
+          "n": 6,
+          "ids": [
+            "16.palavras.1",
+            "16.palavras.2",
+            "16.palavras.3",
+            "16.palavras.4",
+            "16.palavras.5",
+            "16.palavras.6"
+          ],
+          "hash": "69974174ac6f7890"
+        },
+        "numeros": {
+          "n": 6,
+          "ids": [
+            "16.numeros.1",
+            "16.numeros.2",
+            "16.numeros.3",
+            "16.numeros.4",
+            "16.numeros.5",
+            "16.numeros.6"
+          ],
+          "hash": "52cfd224f34c2b11"
+        },
+        "memoria": {
+          "n": 6,
+          "ids": [
+            "16.memoria.1",
+            "16.memoria.2",
+            "16.memoria.3",
+            "16.memoria.4",
+            "16.memoria.5",
+            "16.memoria.6"
+          ],
+          "hash": "15e7116655c01ceb"
+        },
+        "corpo": {
+          "n": 6,
+          "ids": [
+            "16.corpo.1",
+            "16.corpo.2",
+            "16.corpo.3",
+            "16.corpo.4",
+            "16.corpo.5",
+            "16.corpo.6"
+          ],
+          "hash": "2c7d7b3cfbd5a1a5"
+        }
+      }
+    },
+    "17": {
+      "tempo": [
+        1143,
+        1200
+      ],
+      "mundos": {
+        "vila": {
+          "n": 6,
+          "ids": [
+            "17.vila.1",
+            "17.vila.2",
+            "17.vila.3",
+            "17.vila.4",
+            "17.vila.5",
+            "17.vila.6"
+          ],
+          "hash": "a5854900c5e6b41e"
+        },
+        "olhos": {
+          "n": 6,
+          "ids": [
+            "17.olhos.1",
+            "17.olhos.2",
+            "17.olhos.3",
+            "17.olhos.4",
+            "17.olhos.5",
+            "17.olhos.6"
+          ],
+          "hash": "f1802e93f36e968c"
+        },
+        "palavras": {
+          "n": 6,
+          "ids": [
+            "17.palavras.1",
+            "17.palavras.2",
+            "17.palavras.3",
+            "17.palavras.4",
+            "17.palavras.5",
+            "17.palavras.6"
+          ],
+          "hash": "51443bf3f83aeaf2"
+        },
+        "numeros": {
+          "n": 6,
+          "ids": [
+            "17.numeros.1",
+            "17.numeros.2",
+            "17.numeros.3",
+            "17.numeros.4",
+            "17.numeros.5",
+            "17.numeros.6"
+          ],
+          "hash": "53d04cd791c933d6"
+        },
+        "memoria": {
+          "n": 6,
+          "ids": [
+            "17.memoria.1",
+            "17.memoria.2",
+            "17.memoria.3",
+            "17.memoria.4",
+            "17.memoria.5",
+            "17.memoria.6"
+          ],
+          "hash": "eaeb6bc477306e93"
+        },
+        "corpo": {
+          "n": 6,
+          "ids": [
+            "17.corpo.1",
+            "17.corpo.2",
+            "17.corpo.3",
+            "17.corpo.4",
+            "17.corpo.5",
+            "17.corpo.6"
+          ],
+          "hash": "5145ae21aa02faf5"
+        }
+      }
+    }
+  },
+  "jogoLetrasNumeros": {
+    "jln": [
+      {
+        "faixa": "5-6",
+        "pools": {
+          "ditado": {
+            "n": 14,
+            "hash": "4348d7bf3e3ded0b"
+          },
+          "decodificacao": {
+            "n": 12,
+            "hash": "23c75d38c8910527"
+          },
+          "aritmetica": {
+            "n": 12,
+            "hash": "48754cefcc8f688e"
+          }
+        },
+        "fluenciaA": "e79ad4237c61e99b",
+        "fluenciaB": "e79ad4237c61e99b",
+        "compreensaoA": "a407161a7a167936",
+        "compreensaoB": "69420b80923d360b",
+        "estimativaA": 695,
+        "estimativaB": 695
+      },
+      {
+        "faixa": "7-8",
+        "pools": {
+          "ditado": {
+            "n": 12,
+            "hash": "3781a1f78eb82da2"
+          },
+          "decodificacao": {
+            "n": 12,
+            "hash": "45403640fb61f503"
+          },
+          "aritmetica": {
+            "n": 12,
+            "hash": "7d900b5296719797"
+          }
+        },
+        "fluenciaA": "6656f2e1063ef655",
+        "fluenciaB": "6656f2e1063ef655",
+        "compreensaoA": "3198dd168e063123",
+        "compreensaoB": "0d2f89506ec34db5",
+        "estimativaA": 818,
+        "estimativaB": 819
+      },
+      {
+        "faixa": "9-10",
+        "pools": {
+          "ditado": {
+            "n": 12,
+            "hash": "d7dc3bafebd44d86"
+          },
+          "decodificacao": {
+            "n": 12,
+            "hash": "c34be49f35baa9c4"
+          },
+          "aritmetica": {
+            "n": 12,
+            "hash": "eb52f26ca417c3f7"
+          }
+        },
+        "fluenciaA": "09ca8c8018b40413",
+        "fluenciaB": "09ca8c8018b40413",
+        "compreensaoA": "451fea04824a9994",
+        "compreensaoB": "237cb9cc1126d5d6",
+        "estimativaA": 849,
+        "estimativaB": 848
+      },
+      {
+        "faixa": "11-12",
+        "pools": {
+          "ditado": {
+            "n": 12,
+            "hash": "1fef643acd23d465"
+          },
+          "decodificacao": {
+            "n": 12,
+            "hash": "05898e26000481e3"
+          },
+          "aritmetica": {
+            "n": 12,
+            "hash": "33c1932923e97bd7"
+          }
+        },
+        "fluenciaA": "dd680d74491796a6",
+        "fluenciaB": "dd680d74491796a6",
+        "compreensaoA": "148cdb40ab408aa7",
+        "compreensaoB": "446be74375baa21a",
+        "estimativaA": 860,
+        "estimativaB": 859
+      },
+      {
+        "faixa": "13-14",
+        "pools": {
+          "ditado": {
+            "n": 12,
+            "hash": "38b1b13b6f2fb5ac"
+          },
+          "decodificacao": {
+            "n": 12,
+            "hash": "2588c8f72645ef93"
+          },
+          "aritmetica": {
+            "n": 12,
+            "hash": "572f884e844888ec"
+          }
+        },
+        "fluenciaA": "5aff02a32d90930a",
+        "fluenciaB": "5aff02a32d90930a",
+        "compreensaoA": "c0b0943c6a3b98d8",
+        "compreensaoB": "4ba13ef7238f6c54",
+        "estimativaA": 870,
+        "estimativaB": 865
+      },
+      {
+        "faixa": "15-18",
+        "pools": {
+          "ditado": {
+            "n": 18,
+            "hash": "5ee97e6494ff6616"
+          },
+          "decodificacao": {
+            "n": 18,
+            "hash": "b434f221d1f8b1b8"
+          },
+          "aritmetica": {
+            "n": 18,
+            "hash": "2902bd73bfc2d38b"
+          }
+        },
+        "fluenciaA": "c079caf210a58f1d",
+        "fluenciaB": "c079caf210a58f1d",
+        "compreensaoA": "e523d00e7a331799",
+        "compreensaoB": "b4ffc80da9b9b6af",
+        "estimativaA": 873,
+        "estimativaB": 865
+      }
+    ],
+    "itensPorMundo": {
+      "ditado": 8,
+      "decodificacao": 8,
+      "aritmetica": 8
+    },
+    "tetoSessaoSegundos": 900
+  },
+  "iced": {
+    "palavras": "f531df9b050afa74",
+    "pseudo": "0de2d20544899d7a",
+    "ditado": "d3786263412e5bd6",
+    "ditadoPseudo": [
+      "mepa",
+      "tulo",
+      "falito",
+      "bruneca",
+      "crenuto",
+      "bifa",
+      "dumeno",
+      "salteca",
+      "frobita",
+      "venhulo"
+    ],
+    "cf": "43f01cc4adb56ef9",
+    "ran": 40,
+    "textoFluencia": "f95cb3b679d169dc"
+  },
+  "rascunhoValidadeHoras": 72
+}
