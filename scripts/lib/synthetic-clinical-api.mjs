@@ -44,8 +44,9 @@ const SYNTHETIC_PERMISSIONS_BY_ROLE = {
     "finance.read",
     "clinical.read",
     "clinical.write",
+    "outcomes.read",
   ],
-  professional: ["clinical.read", "clinical.write"],
+  professional: ["clinical.read", "clinical.write", "outcomes.read"],
   // Secretaria/recepção: nenhuma permissão de tenant (agenda e cadastro vivem no módulo de operações).
   assistant: [],
 };
@@ -791,6 +792,38 @@ export function createSyntheticClinicalApi(scenario = {}) {
         return true;
       }
       send(response, 200, { data: [] });
+      return true;
+    }
+
+    // Painel de resultados (item 8): só agregados fictícios; o papel decide o acesso como no servidor.
+    if (pathname === "/api/live/outcomes" || pathname === "/api/live/outcomes/assumptions") {
+      const role = scenario.primaryRole ?? "owner";
+      state.outcomeAssumptions = state.outcomeAssumptions ?? {};
+      if (pathname.endsWith("/assumptions")) {
+        const body = await readBody(request);
+        if (role !== "owner" && role !== "clinic_admin") { send(response, 403, { error: "Só o gestor da clínica edita a premissa.", code: "TENANT_FORBIDDEN" }); return true; }
+        if (!Number.isInteger(body?.minutes) || body.minutes < 0 || body.minutes > 240) { send(response, 400, { error: "Informe minutos inteiros entre 0 e 240.", code: "VALIDATION_ERROR" }); return true; }
+        state.outcomeAssumptions[body.docType] = body.minutes;
+        state.outcomePuts = [...(state.outcomePuts ?? []), body];
+        send(response, 200, { data: { available: true, values: state.outcomeAssumptions } });
+        return true;
+      }
+      if (role === "assistant" || role === "financial") { send(response, 403, { error: "Painel de resultados indisponível para o seu papel nesta clínica.", code: "TENANT_FORBIDDEN" }); return true; }
+      const a = state.outcomeAssumptions;
+      const docs = { report: 4, clinical_note: 6, prescription: 3 };
+      const per = ["report", "clinical_note"].map((t) => ({ docType: t, documents: docs[t], assumedMinutes: a[t] ?? null, minutes: a[t] === undefined ? null : docs[t] * a[t] }));
+      const any = per.some((x) => x.minutes !== null);
+      send(response, 200, { data: {
+        windowDays: Number(searchParams.get("days") ?? 30), containsPatientIdentifiers: false,
+        patients: { encounters: 14, attended: 11, returning: 6, firstTime: 5, newPatients: 4, previous: { attended: 9, returning: 5 } },
+        documents: { total: 13, byType: docs, assessmentsApplied: 7, previousTotal: 10 },
+        timeSaved: { isEstimate: true, totalMinutes: any ? per.reduce((n, x) => n + (x.minutes ?? 0), 0) : null, perType: per, premise: "Estimativa: documentos emitidos no período × minutos que a clínica considera economizados por documento. Não é medição de tempo.", assumptionsAvailable: true, assumptions: a },
+        portal: { linksCreated: 5, consented: 4, opened: 4, revoked: 1, deniedAccesses: 2, adherencePct: 80, consentPct: 80 },
+        invitations: { intake: { created: 3, submitted: 2, responsePct: 66.7 }, scale: { created: 4, submitted: 3, responsePct: 75 } },
+        ai: { total: 3, byPurpose: {}, familyInformedPct: 66.7, humanReviewedPct: 100 },
+        features: [{ action: "live_patient_create", label: "Pacientes cadastrados", count: 4 }, { action: "family_portal_share_create", label: "Links do portal da família criados", count: 5 }],
+        notMeasured: ["Laudo em um clique, resumo pré-consulta, evolução de escalas e checagem de dose rodam no navegador e não deixam registro no servidor.", "Testes próprios do NeuroPad (Super NeuroPad Game, Dyslexia Risk): o painel nunca mostra resultado, corte, nível ou classificação.", "Consultas da agenda não entram: a agenda legada não é separada por clínica."],
+      } });
       return true;
     }
 
