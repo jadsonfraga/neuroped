@@ -5,7 +5,8 @@
  *
  * Triagem interna. NÃO diagnostica e NÃO tem validação normativa brasileira.
  */
-import { BANDS, bandForAge, fluencyWords, type ArithOp, type BandBank, type BandId, type Level } from "./bank";
+import { BANDS, bandForAge, fluencyWords, withTextForm, type ArithOp, type BandBank, type BandId, type FluencyForm, type Level } from "./bank";
+import { fluencyFlags, type FluencyFlag } from "./fluencyFlags";
 
 export const GAME_VERSION = "JLN-1";
 export const GAME_STORAGE_KEY = "neuroped-dyslexia-game-v1";
@@ -61,6 +62,8 @@ export interface GameState {
   xp: number;
   streak: number;
   bestStreak: number;
+  /** Forma dos textos (compreensão e fluência inicial). Ausente em rascunhos antigos = A. */
+  forma?: FluencyForm;
   endedReason: "" | "completo" | "tempo" | "encerrado";
 }
 
@@ -68,7 +71,7 @@ export function initialAdaptive(): AdaptiveState {
   return { level: START_LEVEL, streakOk: 0, streakErr: 0, path: [] };
 }
 
-export function newGame(input: { nome?: string; idade: number | null; examinador?: string; avatar?: string }, now = new Date()): GameState {
+export function newGame(input: { nome?: string; idade: number | null; examinador?: string; avatar?: string; forma?: FluencyForm }, now = new Date()): GameState {
   const worlds = Object.fromEntries(WORLDS.map((w) => [w.id, { status: "pendente", adaptive: initialAdaptive(), responses: [] }])) as unknown as Record<WorldId, WorldProgress>;
   return {
     version: 1,
@@ -83,6 +86,7 @@ export function newGame(input: { nome?: string; idade: number | null; examinador
     xp: 0,
     streak: 0,
     bestStreak: 0,
+    ...(input.forma ? { forma: input.forma } : {}),
     endedReason: "",
   };
 }
@@ -256,9 +260,10 @@ export function starsFor(progress: WorldProgress, target: number): 0 | 1 | 2 | 3
 }
 
 /** Estimativa conservadora (segundos) da sessão completa por faixa; sustenta o teto de 15 min. */
-export function estimateSessionSeconds(band: BandId): number {
-  const bank = BANDS.find((b) => b.band === band);
-  if (!bank) return Infinity;
+export function estimateSessionSeconds(band: BandId, form: FluencyForm = "A"): number {
+  const found = BANDS.find((b) => b.band === band);
+  if (!found) return Infinity;
+  const bank = withTextForm(found, form);
   const young = band === "5-6";
   const ditado = ITEMS_PER_WORLD.ditado * (young ? 25 : 30);
   const decod = ITEMS_PER_WORLD.decodificacao * (young ? 12 : 15);
@@ -281,6 +286,8 @@ export interface GameSummary {
   leitura: {
     decodificacao: Tally & { pct: number | null; palavras: Tally; pseudo: Tally; mediaSegundos: number | null; finalLevel: Level; status: WorldProgress["status"] };
     fluencia: FluencyResult | null;
+    /** Sinais descritivos da fluência, sem norma (ver fluencyFlags.ts). */
+    fluenciaFlags: FluencyFlag[];
     compreensao: Tally & { pct: number | null; literal: Tally; inferencial: Tally; status: WorldProgress["status"] };
   };
   aritmetica: Tally & { pct: number | null; porOperacao: Partial<Record<ArithOp, Tally>>; finalLevel: Level; status: WorldProgress["status"] };
@@ -344,6 +351,7 @@ export function summarizeGame(state: GameState): GameSummary {
         status: dec.status,
       },
       fluencia: state.fluency,
+      fluenciaFlags: fluencyFlags(band, state.fluency),
       compreensao: {
         ...compTally,
         pct: pct(compTally),
@@ -360,6 +368,7 @@ export function summarizeGame(state: GameState): GameSummary {
   if (dit.status === "concluido" && finalLevelOf(dit) === 1) s.push("Ditado: nível demonstrado 1 (abaixo da referência interna da faixa nesta aplicação; não normativa).");
   if (summary.ditado.fonologicos >= 3) s.push(`${summary.ditado.fonologicos} erros fonológicos no ditado (troca, omissão ou acréscimo de sons).`);
   if (dec.status === "concluido" && finalLevelOf(dec) === 1) s.push("Leitura de palavras: nível demonstrado 1 (abaixo da referência interna da faixa nesta aplicação; não normativa).");
+  for (const flag of summary.leitura.fluenciaFlags) if (flag.tipo === "atencao") s.push(`Fluência: ${flag.texto}.`);
   const ps = summary.leitura.decodificacao.pseudo;
   if (ps.total >= 2 && ps.corretos / ps.total < 0.5) s.push(`Pseudopalavras lidas: ${ps.corretos}/${ps.total} (decodificação fonológica merece investigação).`);
   // Proporcional ao número de perguntas: ≤ 1/3 de acerto (com 3 perguntas é o mesmo "≤ 1" de antes).

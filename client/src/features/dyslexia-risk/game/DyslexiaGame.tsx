@@ -6,7 +6,7 @@ import { useIssuer, issuerCredentials } from "@/lib/issuer";
 import { issuerLines } from "@/features/super-neuropad/pdf";
 import { formatClinicalDateTime } from "@/lib/clinicalDate";
 import { safeTextFilename } from "@/lib/shareText";
-import { MAX_GAME_AGE, MIN_GAME_AGE, bandForAge, fluencyProbe, fluencyWords, type ArithItem, type FluencyForm, type BandBank, type ComprehensionQuestion, type DecodeItem, type DitadoItem } from "./bank";
+import { BANK_PROVENANCE, MAX_GAME_AGE, MIN_GAME_AGE, bandForAge, fluencyProbe, fluencyWords, withTextForm, type ArithItem, type FluencyForm, type BandBank, type ComprehensionQuestion, type DecodeItem, type DitadoItem } from "./bank";
 import {
   FLUENCY_SECONDS, GAME_STORAGE_KEY, GAME_VERSION, LEVEL_LABEL, SESSION_CAP_SECONDS, WORLDS,
   classifyDitado, encouragementFor, newGame, nextItemFor, recordFluency, recordResponse, skipWorld, starsFor, summarizeGame, tick, worldTarget,
@@ -52,13 +52,14 @@ export default function DyslexiaGame() {
   const [nome, setNome] = useState("");
   const [examinador, setExaminador] = useState("");
   const [avatar, setAvatar] = useState<string>(AVATARS[0][0]);
+  const [forma, setForma] = useState<FluencyForm>("A");
 
   const rootRef = useRef<HTMLElement | null>(null);
   const firstScreen = useRef(true);
   const { toast } = useToast();
   const { issuer } = useIssuer();
   const speech = useSpeech();
-  const bank: BandBank | null = useMemo(() => bandForAge(game?.idade ?? null), [game?.idade]);
+  const bank: BandBank | null = useMemo(() => { const base = bandForAge(game?.idade ?? null); return base ? withTextForm(base, game?.forma) : null; }, [game?.idade, game?.forma]);
 
   useEffect(() => {
     if (game) writeDraft(GAME_STORAGE_KEY, game);
@@ -115,7 +116,7 @@ export default function DyslexiaGame() {
 
   function start() {
     if (age == null) return;
-    const g = newGame({ nome: nome.trim(), idade: age, examinador: examinador.trim(), avatar });
+    const g = newGame({ nome: nome.trim(), idade: age, examinador: examinador.trim(), avatar, forma });
     setGame(g);
     setSavedPatient(false);
     setCheer("");
@@ -214,8 +215,17 @@ export default function DyslexiaGame() {
           <label className="mt-2 grid text-sm font-bold">Nome da criança<input className="drx-input mt-1" value={nome} onChange={(e) => setNome(e.target.value)} /></label>
           <label className="mt-2 grid text-sm font-bold">Aplicador<input className="drx-input mt-1" value={examinador} onChange={(e) => setExaminador(e.target.value)} /></label>
         </details>
+        <fieldset>
+          <legend className="snp-pixel text-xs">Forma dos textos (aplicador)</legend>
+          <div className="mt-2 flex flex-wrap items-center gap-2" role="group" aria-label="Forma dos textos">
+            <button type="button" aria-pressed={forma === "A"} className={`snp-btn drx-tap px-4 ${forma === "A" ? "snp-btn--sky" : "snp-btn--paper"}`} onClick={() => setForma("A")}>A · padrão</button>
+            <button type="button" aria-pressed={forma === "B"} className={`snp-btn drx-tap px-4 ${forma === "B" ? "snp-btn--sky" : "snp-btn--paper"}`} onClick={() => setForma("B")}>B · reteste</button>
+          </div>
+          <p className="mt-1 text-xs font-bold">Use B ao repetir com a mesma criança (compreensão e fluência). As formas não têm equivalência psicométrica comprovada.</p>
+        </fieldset>
         <button type="button" className="snp-btn snp-btn--sun drx-tap w-full text-base" disabled={age == null} onClick={start}>Começar aventura</button>
         <p className="text-xs font-bold">{GAME_DISCLAIMER}</p>
+        <p className="text-xs font-bold" data-testid="drx-provenance">{BANK_PROVENANCE}</p>
       </section>
     );
   }
@@ -413,7 +423,7 @@ function WorldScreen({ world, game, bank, speech, paused, onAnswer, onFluency, o
       {world === "decodificacao" && item && <DecodeView key={(item as DecodeItem).id} item={item as DecodeItem} onAnswer={onAnswer} />}
       {world === "compreensao" && item && <ComprehensionView key={(item as ComprehensionQuestion).id} bank={bank} question={item as ComprehensionQuestion} speech={speech} onAnswer={onAnswer} />}
       {world === "aritmetica" && item && <ArithView key={(item as ArithItem).id} item={item as ArithItem} young={bank.band === "5-6" || bank.band === "7-8"} speech={speech} onAnswer={onAnswer} />}
-      {world === "fluencia" && <FluencyView bank={bank} onDone={onFluency} paused={paused} />}
+      {world === "fluencia" && <FluencyView bank={bank} onDone={onFluency} paused={paused} initialForm={game?.forma} />}
     </section>
   );
 }
@@ -514,8 +524,8 @@ function ArithView({ item, young, speech, onAnswer }: { item: ArithItem; young: 
   );
 }
 
-function FluencyView({ bank, onDone, paused }: { bank: BandBank; onDone: WorldScreenProps["onFluency"]; paused: boolean }) {
-  const [form, setForm] = useState<FluencyForm>("A");
+function FluencyView({ bank, onDone, paused, initialForm }: { bank: BandBank; onDone: WorldScreenProps["onFluency"]; paused: boolean; initialForm?: FluencyForm }) {
+  const [form, setForm] = useState<FluencyForm>(initialForm ?? "A");
   const probe = fluencyProbe(bank, form);
   const words = useMemo(() => fluencyWords(probe), [probe]);
   const [secs, setSecs] = useState(0);

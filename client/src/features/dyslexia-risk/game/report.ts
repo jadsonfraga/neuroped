@@ -1,9 +1,16 @@
 import type { DocLine, DocSpec } from "@/lib/documentPdf";
 import type { IssuerLines } from "@/features/super-neuropad/pdf";
 import { GAME_VERSION, LEVEL_LABEL, WORLDS, summarizeGame, type GameState, type GameSummary, type ItemResponse, type Tally } from "./engine";
-import { fluencyFormOf, type ArithOp } from "./bank";
+import { BANK_PROVENANCE, fluencyFormOf, type ArithOp } from "./bank";
 
 export const GAME_TITLE = "Jogo das Letras e Números · 5–18 anos";
+/** Nota sobre faixa etária larga: sem subnível validado, a leitura usa a idade exata registrada. */
+export function bandSpanNote(s: { band: { label: string; minAge: number; maxAge: number } | null; idade: number | null }): string | null {
+  if (!s.band) return null;
+  const span = s.band.maxAge - s.band.minAge + 1;
+  return span >= 4 ? `Faixa ampla (${s.band.label}, ${span} anos): não há subnível validado; ler pela idade exata (${s.idade ?? "—"} anos) e pela escolaridade.` : null;
+}
+
 export const GAME_DISCLAIMER =
   "Triagem lúdica interna. NÃO DIAGNÓSTICA. Sem validação normativa brasileira: níveis 1–3 são graduações internas por faixa etária, não percentis nem normas. Inspirado no formato de modelos internacionais (DIBELS/CBM, GraphoGame, Duolingo, Khan Academy Kids, Prodigy) sem usar seus itens. O diagnóstico permanece com o médico.";
 
@@ -51,8 +58,10 @@ export function fluencyText(s: GameSummary): string {
   const form = fluencyFormOf(s.band, flu.probeId);
   const forma = form ? `forma ${form}${form === "B" ? " (reteste)" : ""} · ` : "";
   const curta = flu.segundos < 30 ? " (leitura com menos de 30 s: taxa extrapolada, pouco confiável)" : "";
+  // Sinais descritivos sem norma (precisão, nenhuma leitura, referência configurada se houver; extrapolada já está em `curta`).
+  const extras = s.leitura.fluenciaFlags.filter((f) => f.id !== "extrapolada").map((f) => f.texto);
   // A taxa é medida, não interpretada: a triagem não tem referência normativa de fluência.
-  return `${forma}${flu.lidas} ${unidade} lidas · ${flu.erros} erros · ${flu.segundos} s · ${flu.wcpm ?? "—"} ${unidade} corretas por minuto${curta} · ${FLUENCY_NO_NORM}`;
+  return `${forma}${flu.lidas} ${unidade} lidas · ${flu.erros} erros · ${flu.segundos} s · ${flu.wcpm ?? "—"} ${unidade} corretas por minuto${curta} · ${FLUENCY_NO_NORM}${extras.length ? ` · ${extras.join(" · ")}` : ""}`;
 }
 
 export function domainLines(s: GameSummary): string[] {
@@ -75,6 +84,8 @@ export function buildGameRecord(state: GameState, appliedAt: string): string {
   return [
     `${GAME_TITLE} · registro`,
     `Criança: ${state.nome || "não informado"} · Idade: ${state.idade ?? "—"} anos · Faixa: ${s.band?.label ?? "—"}`,
+    `Forma dos textos de compreensão: ${state.forma ?? "A"}${state.forma === "B" ? " (reteste/variedade; sem equivalência psicométrica comprovada com a forma A)" : ""}`,
+    ...(bandSpanNote({ band: s.band, idade: state.idade }) ? [bandSpanNote({ band: s.band, idade: state.idade }) as string] : []),
     `Aplicador: ${state.examinador || "não informado"} · Emissão: ${appliedAt} · Tempo ativo: ${decimalBr(s.minutos)} min · ${state.endedReason === "tempo" ? "encerrada pelo limite de 15 min" : state.endedReason ? "sessão encerrada" : "sessão em andamento"}`,
     "",
     ...domainLines(s),
@@ -86,6 +97,7 @@ export function buildGameRecord(state: GameState, appliedAt: string): string {
     ...responses.map((r) => `- [${WORLDS.find((w) => w.id === r.world)?.nome}] ${itemLine(r).text}`),
     "",
     GAME_DISCLAIMER,
+    BANK_PROVENANCE,
   ].join("\n");
 }
 
@@ -113,7 +125,7 @@ export function buildGameDocSpec(state: GameState, issuer: IssuerLines, appliedA
         rich: lines.length ? lines : undefined,
       };
     }),
-    { heading: "Limites da triagem", body: GAME_DISCLAIMER },
+    { heading: "Limites da triagem", body: [GAME_DISCLAIMER, BANK_PROVENANCE, bandSpanNote({ band: s.band, idade: state.idade }) ?? ""].filter(Boolean).join("\n") },
   ];
   return {
     title: `${GAME_TITLE} · triagem`,
