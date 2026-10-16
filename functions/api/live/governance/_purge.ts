@@ -26,6 +26,7 @@
 import type { LgpdWorkerClaim } from "./_worker-core";
 import type { DeletionEligibility, LgpdScope } from "./_worker-executor";
 import { evaluateDeletionEligibility } from "./_worker-executor";
+import { CLINICAL_RECORD_MIN_RETENTION_DAYS } from "../../../../shared/lgpd-compliance";
 import { EXPORT_UNCOVERED_CLINIC_TABLES, isMissingExportTable, validExportRowCount } from "../../tenant/_exportPayload";
 
 /**
@@ -76,6 +77,25 @@ const GOVERNANCE_PATIENT_REFERENCES: ReadonlyArray<string> = [
  * `patient_id` como TEXT livre, sem FK nenhuma, e por isso é a única ambígua.
  */
 const UNREACHABLE_PATIENT_TABLES: ReadonlyArray<string> = ["appointments"];
+
+/**
+ * Piso legal de guarda do prontuário (Lei 13.787/2018, art. 6º: 20 anos do último registro).
+ * Vale para a eliminação do titular (escopo 'patient'): qualquer registro clínico mais novo que o
+ * corte bloqueia o purge. `ts` é a coluna de data do registro. Tabelas ausentes (migração
+ * pendente) são ignoradas — não há registro para proteger nelas.
+ */
+const RETENTION_FLOOR_TABLES: ReadonlyArray<{ table: string; ts: string }> = [
+  { table: "live_clinical_events", ts: "occurred_at" },
+  { table: "live_assessments", ts: "applied_at" },
+  { table: "live_documents", ts: "updated_at" },
+  { table: "live_document_versions", ts: "issued_at" },
+  { table: "live_scale_responses", ts: "submitted_at" },
+  { table: "live_patients", ts: "created_at" },
+];
+
+function retentionFloorTsColumn(table: string): string {
+  return table === "live_patients" ? "id" : "patient_id";
+}
 
 /** Tabelas deliberadamente preservadas (ver decisão 2 no topo do arquivo). */
 export const PURGE_PRESERVED_TABLES: ReadonlyArray<string> = [
@@ -240,6 +260,48 @@ export async function executeTenantScopedPurge(
     return null;
   }
 
+  // Piso legal do prontuário: eliminação individual só depois de 20 anos (ou do prazo maior que a
+  // clínica configurou) contados do ÚLTIMO registro. Reavaliado aqui, com dado fresco.
+  let floorDays = CLINICAL_RECORD_MIN_RETENTION_DAYS;
+  try {
+    const rule = await db
+      .prepare(`SELECT retention_days FROM clinic_retention_rules WHERE clinic_id = ? AND category = 'clinical_record' LIMIT 1`)
+      .bind(targets.clinicId)
+      .first<{ retention_days: number }>();
+    if (rule && Number.isInteger(rule.retention_days)) floorDays = Math.max(floorDays, rule.retention_days);
+  } catch (error) {
+    if (!isMissingExportTable(error, "clinic_retention_rules")) {
+      await params.fail("PURGE_RETENTION_READ_FAILED");
+      return null;
+    }
+  }
+  const floorCutoff = new Date(new Date(now).getTime() - floorDays * 86_400_000).toISOString();
+  const floorPredicates: string[] = [];
+  const floorBindings: Array<string | number | null> = [];
+  if (targets.scope === "patient") {
+    for (const { table, ts } of RETENTION_FLOOR_TABLES) {
+      const column = retentionFloorTsColumn(table);
+      let recent: { n: number } | null;
+      try {
+        recent = await db
+          .prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE clinic_id = ? AND ${column} = ? AND ${ts} > ?`)
+          .bind(targets.clinicId, targets.patientId, floorCutoff)
+          .first<{ n: number }>();
+        validExportRowCount(recent);
+      } catch (error) {
+        if (isMissingExportTable(error, table)) continue;
+        await params.fail(`PURGE_PREFLIGHT_FAILED:${table}`);
+        return null;
+      }
+      if (Number(recent?.n ?? 0) > 0) {
+        await params.fail("RETENTION_PENDING");
+        return null;
+      }
+      floorPredicates.push(`NOT EXISTS (SELECT 1 FROM ${table} WHERE clinic_id = ? AND ${column} = ? AND ${ts} > ?)`);
+      floorBindings.push(targets.clinicId, targets.patientId, floorCutoff);
+    }
+  }
+
   // A política que aprovou a operação deve continuar exatamente igual na
   // transação. IS é igualdade NULL-safe no SQLite: não confundir ausência de
   // lifecycle com uma linha ativa nem mascarar uma retenção recém-alterada.
@@ -259,6 +321,9 @@ export async function executeTenantScopedPurge(
     approvedPolicy.legal_hold,
     approvedPolicy.retention_until,
   ];
+
+  atomicPredicates.push(...floorPredicates);
+  atomicBindings.push(...floorBindings);
 
   // LTB-02 (ciclo 4, 2026-09-26 — docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md):
   // o export do tenant declarava `complete: true` sem levar documentos,
