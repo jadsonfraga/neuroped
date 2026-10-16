@@ -58,7 +58,7 @@ test("ditado de 5–6 anos passa a ter pseudopalavras; cada faixa tem 4 pergunta
   }
 });
 
-test("sinal de compreensão é proporcional (≤ 1/3 de acertos)", () => {
+test("compreensão: o resumo traz só a contagem (total, literal e inferencial), sem sinal automático", () => {
   const bank = BANDS[2];
   const play = (hits: number) => {
     let state = newGame({ idade: 9 });
@@ -66,7 +66,13 @@ test("sinal de compreensão é proporcional (≤ 1/3 de acertos)", () => {
       const ok = i < hits;
       state = recordResponse(state, { world: "compreensao", itemId: q.id, prompt: q.question, expected: q.answer, given: ok ? q.answer : q.options.find((o) => o !== q.answer)!, outcome: ok ? "correto" : "erro", kind: q.kind, ms: 1000 }, bank);
     });
-    return summarizeGame(state).sinais.some((s) => s.startsWith("Compreensão:"));
+    return summarizeGame(state);
   };
-  assert.deepEqual([0, 1, 2, 3, 4].map(play), [true, true, false, false, false]);
+  for (const hits of [0, 1, 2, 3, 4]) {
+    const summary = play(hits);
+    assert.equal(summary.leitura.compreensao.corretos, hits);
+    assert.equal(summary.leitura.compreensao.total, bank.compreensao.questions.length);
+    assert.equal("sinais" in summary, false);
+    assert.deepEqual(summary.condicoes, []);
+  }
 });

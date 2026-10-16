@@ -10,6 +10,7 @@ import { currentHashPath, isPublicRoute, PUBLIC_HOME } from "@/lib/publicRoutes"
 import { IS_PUBLIC_ZONE, MEDICAL_URL } from "@/lib/zone";
 import { useAuth } from "@/contexts/AuthContext";
 import { RequiredPasswordChangeGate } from "@/components/RequiredPasswordChangeGate";
+import { isKnownRoute } from "@/security/knownRoutes";
 import { OPEN_ACCESS } from "@/security/accessPolicy";
 
 // Estilos compartilhados entre o PIN, o bloqueio de configuração e o aviso da
@@ -85,7 +86,8 @@ export function PrivateGate({ children }: { children: React.ReactNode }) {
     !OPEN_ACCESS &&
     accessMode === "checking" &&
     !IS_PUBLIC_ZONE &&
-    !onPublicRoute;
+    !onPublicRoute &&
+    isKnownRoute(path);
   const showRequiredPasswordChange =
     accessMode === "remote" && isAuthenticated && user?.mustChangePassword === true;
 

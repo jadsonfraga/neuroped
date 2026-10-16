@@ -466,6 +466,21 @@ export default function PacienteDetalhePage() {
               <FileText className="w-3.5 h-3.5" /> Laudo
             </Button>
           </Link>
+          <Link href={`/resumo-pre-consulta?patientId=${encodeURIComponent(patientId)}`}>
+            <Button size="sm" variant="outline" className="gap-1.5 border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100" data-testid="button-open-resumo-pre-consulta">
+              <ClipboardList className="w-3.5 h-3.5" /> Resumo pré-consulta
+            </Button>
+          </Link>
+          <Link href={`/evolucao-escalas?patientId=${encodeURIComponent(patientId)}`}>
+            <Button size="sm" variant="outline" className="gap-1.5 border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100" data-testid="button-open-evolucao-escalas">
+              <Activity className="w-3.5 h-3.5" /> Evolução das escalas
+            </Button>
+          </Link>
+          <Link href={`/laudo-um-clique?patientId=${encodeURIComponent(patientId)}`}>
+            <Button size="sm" variant="outline" className="gap-1.5 border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100" data-testid="button-open-laudo-um-clique">
+              <FileText className="w-3.5 h-3.5" /> Laudo em um clique
+            </Button>
+          </Link>
           <Link href={`/receita-c1?patientId=${encodeURIComponent(patientId)}`}>
             <Button size="sm" variant="outline" className="gap-1.5 border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100" data-testid="button-open-receita-c1">
               <Pill className="w-3.5 h-3.5" /> Receita C1

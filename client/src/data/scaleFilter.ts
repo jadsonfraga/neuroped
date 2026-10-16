@@ -96,6 +96,10 @@ export interface ScaleEntry {
   assessmentUse?: AssessmentUse;       // finalidade clínica explícita (sobrepõe a derivação por prioridade)
   applicationMode?: ApplicationMode;   // modo concreto de aplicação (sobrepõe a derivação por respondente)
   implementationStatus?: ImplementationStatus; // status real no app (sobrepõe a derivação por appRoute/licença)
+  /** Grupo de redundância: duas escalas do mesmo grupo não entram juntas nas 3 vagas da pré-consulta. */
+  overlapGroup?: string;
+  /** Domínio clínico fino de uso principal (id de queixa); validado por `validate:domains`. */
+  primaryDomain?: string;
   signalTags?: string[];               // pistas clínicas/sintomas que refinam o ranking do filtro
   // Exemplo prático em linguagem de pais: o que observar no dia a dia ao
   // responder o questionário (sem jargão, sem sugerir diagnóstico). Populado

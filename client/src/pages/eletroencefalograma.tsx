@@ -89,7 +89,7 @@ export default function EletroencefalogramaPage() {
           </div>
           <p className="mt-6 flex items-center gap-2 text-sm font-semibold text-emerald-700">
             <CircleCheck className="h-4 w-4" aria-hidden="true" />
-            Página integrada ao Neuroped — sem redirecionamento para o endereço indisponível.
+            Todas as orientações estão aqui, no próprio NeuroPed.
           </p>
         </div>
       </section>

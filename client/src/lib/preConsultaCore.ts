@@ -3,6 +3,7 @@ import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
 import { regula20CatalogEntry, regula20Eligibility } from "@/data/regula20";
 import { recoveredMonitorCatalog } from "@/data/recoveredAuthorialMonitors";
+import { getPrevisitSelectorMode, recordPrevisitShadow, ageBandOf } from "./previsitSelectorMode";
 import { safePrevisitRecommendations } from "./preConsultaSafeRanking";
 import {
   PREVISIT_SECURE_KEYS,
@@ -108,7 +109,16 @@ export function recommendPreConsultaScales(form: Pick<PreConsultaRecord, "idadeM
     return [{ label: "Monitor autoral", scale: compatible ? scale : undefined,
       reason: compatible ? "Abrir o acervo autoral e confirmar finalidade funcional, contexto e observação direta antes de iniciar. Uma indicação não libera a aplicação sem esses dados. Não repetir instrumento já aplicado." : "Este instrumento não é adequado à idade ou ao respondente informado. Não substituir por formulário de outro observador." }];
   }
-  return safePrevisitRecommendations(catalog, form);
+  const mode = getPrevisitSelectorMode();
+  if (mode === "v1") return safePrevisitRecommendations(catalog, form);
+  const v2 = safePrevisitRecommendations(catalog, form, { fill: true });
+  if (mode === "shadow") {
+    const v1 = safePrevisitRecommendations(catalog, form);
+    const ids = (rows: PreConsultaRecommendation[]) => rows.map((r) => `${r.label}:${r.scale?.id ?? "-"}`);
+    recordPrevisitShadow({ ageBand: ageBandOf(form.idadeMeses), queixa: form.queixa, contexto: form.contexto, respondente: form.respondente, v1: ids(v1), v2: ids(v2) });
+    return v1;
+  }
+  return v2;
 }
 
 export async function loadPreConsultas(): Promise<PreConsultaRecord[]> {

@@ -3,33 +3,33 @@
  * construtor clínico compartilhado (`buildDocumentPdf`). O documento traz:
  * metadados da sessão (data/hora local, idade, duração, pausas, mundos não
  * aplicados), o que foi testado por instrumento de origem (Sonda 10, OBS-10,
- * Reconhecimento Visual, Avaliação Cognitiva Infantil), desempenho por domínio
- * contra a referência autoral da idade, cada item com origem, resposta
- * esperada, resposta da criança, resultado, tempo, repetição e via, as
+ * Reconhecimento Visual, Avaliação Cognitiva Infantil), contagem bruta por mundo
+ * (sem classificação nem referência), cada item com origem, critério de
+ * acerto, resposta da criança, resultado, tempo, repetição e via, as
  * observações da aplicadora e um bloco estruturado (rótulos fixos + JSON por
  * linha) para leitura por máquina. Emoji e símbolos viram texto.
  */
 import type { DocLine, DocSpec } from "@/lib/documentPdf";
 import type { DocumentIssuer } from "@/lib/issuer";
+import { DESCRIPTIVE_NOTICE } from "@/lib/descriptiveNotice";
 import {
   cleanObservations,
-  cutText,
+  provenanceText,
   describeArt,
   estimateBandSeconds,
   formatDuration,
-  interpret,
   KIND_LABELS,
-  LEVEL_LABELS,
   ORIGIN_LABELS,
   phaseById,
   sessionLimitSeconds,
   toddlerReportLines,
   phaseStatusText,
+  responseProfileLines,
   sessionWallSeconds,
   STATUS_LABELS,
+  statsLines,
   ANSWER_TONE,
   STRUCTURED_HEADER,
-  SUPER_NEUROPAD_MILESTONE_SOURCES,
   SUPER_NEUROPAD_NATURE,
   SUPER_NEUROPAD_SOURCES,
   SUPER_NEUROPAD_TITLE,
@@ -58,13 +58,6 @@ export const RESULT_LEGEND: DocLine[] = [
   { text: `  ${RESULT_MARKER.sem_resposta} / ${RESULT_MARKER.recusa} CINZA - não respondeu ou recusou (não acertado, registrado à parte do erro)`, bold: true, tone: "neutral" },
 ];
 
-/** Barra textual de 10 posições (WinAnsi-safe) para o perfil por domínio. */
-export function profileBar(hits: number, total: number): string {
-  if (total <= 0) return "[----------]";
-  const filled = Math.round((hits / total) * 10);
-  return `[${"#".repeat(filled)}${"-".repeat(10 - filled)}]`;
-}
-
 export interface IssuerLines {
   doctorName: string;
   specialty: string;
@@ -85,14 +78,12 @@ export function issuerLines(issuer: DocumentIssuer, credentials: string): Issuer
 
 export function buildGameDocSpec(session: GameSession, issuer: IssuerLines, appliedAt: string): DocSpec {
   const summary = summarize(session);
-  const reading = interpret(session);
   const wall = sessionWallSeconds(session);
   const estimate = estimateBandSeconds(summary.band.min);
   const observations = cleanObservations(session.observations ?? "");
   const skipped = summary.phases.filter((phase) => phase.skipReason);
-  const incomplete = `Partida incompleta: ${session.answers.length} de ${summary.total} itens registrados. Sem classificação ou interpretação (regra da partida incompleta); cada mundo mostra o que foi registrado ou "não aplicado".`;
   const identification = [
-    `Idade informada: ${session.ageYears} anos (faixa anual de ${summary.band.label}; itens calibrados para esta idade)`,
+    `Idade informada: ${session.ageYears} anos (faixa anual de ${summary.band.label})`,
     `Data e hora da aplicação (horário local, America/Sao_Paulo): ${appliedAt}`,
     `Personagem escolhido: ${summary.character.name} ${summary.character.role} (${summary.character.power})`,
     `Aplicação: aplicadora junto com a criança, no próprio aplicativo; sem câmera e sem instrumento externo`,
@@ -113,48 +104,28 @@ export function buildGameDocSpec(session: GameSession, issuer: IssuerLines, appl
   ].join("\n");
 
   const objective = [
-    summary.level === null ? incomplete : `TOTAL: ${summary.hits} acertos em ${summary.total} itens (referência interna para a idade: ${summary.expectedMin} ou mais) - ${LEVEL_LABELS[summary.level]}`,
+    `TOTAL: ${summary.hits} acertos em ${summary.total} itens previstos (${session.answers.length} registrados).`,
     "",
     ...summary.phases.map((phase) =>
-      `Mundo ${phase.phase.order} - ${phase.phase.name} (${phase.phase.domain}): ${phase.level === null
+      `Mundo ${phase.phase.order} - ${phase.phase.name} (${phase.phase.domain}): ${!phase.applied
         ? phaseStatusText(phase, false)
-        : `${phase.hits}/${phase.total} acertos (referência interna: ${phase.expectedMin} ou mais), ${phase.errors} erros, ${phase.noResponse} sem resposta, ${phase.refused} recusa(s) - ${LEVEL_LABELS[phase.level]} - ${formatDuration(phase.seconds)}`}`,
+        : `${phase.hits}/${phase.total} acertos, ${phase.errors} erros, ${phase.noResponse} sem resposta, ${phase.refused} recusa(s) - ${formatDuration(phase.seconds)}`}`,
     ),
     "",
     ...toddlerReportLines(summary).map((line) => describeArt(line)),
-    "Referência interna para a idade = proporção autoral de acertos do jogo, não norma populacional nem ponto de corte validado.",
+    "Aspectos da aplicação e da resposta (contagens e tempos):",
+    ...statsLines(session).map((line) => `- ${line}`),
+    "",
+    ...RESULT_LEGEND.map((line) => line.text),
+    DESCRIPTIVE_NOTICE,
   ].join("\n");
 
-  const strengths = summary.phases.filter((phase) => phase.level === "esperado").map((phase) => phase.phase.domain);
-  const attention = summary.phases.filter((phase) => phase.level === "observar" || phase.level === "alerta").map((phase) => `${phase.phase.domain}${phase.level === "alerta" ? " (sinal de alerta)" : ""}`);
-  const profile: DocLine[] = [
-    { text: "Perfil visual por mundo/domínio (acertos sobre itens; # = acerto proporcional, - = não acertado):", bold: true },
-    ...summary.phases.map((phase): DocLine => ({
-      text: `  ${profileBar(phase.hits, phase.total)} ${phase.hits}/${phase.total} - ${phase.phase.name} (${phase.phase.domain})${phase.level === null ? " - " + phaseStatusText(phase, false) : ""}`,
-    })),
-    { text: "" },
-    ...(summary.level === null ? [{ text: "Partida incompleta: sem pontos fortes ou pontos de atenção (regra da partida incompleta).", tone: "neutral" as const }] : [
-      { text: `Pontos fortes nesta partida: ${strengths.length ? strengths.join(", ") : "nenhum domínio dentro da referência interna"}.`, bold: true, tone: "correct" as const },
-      { text: `Pontos para olhar na consulta: ${attention.length ? attention.join(", ") : "nenhum"}.`, bold: true, tone: attention.length ? "wrong" as const : "neutral" as const },
-    ]),
-    { text: "" },
-    ...RESULT_LEGEND,
-    { text: "Leitura descritiva e autoral, comparação interna à partida; não é norma, percentil nem diagnóstico.", tone: "neutral" },
-  ];
-
-  const objectiveWithProfile = `${objective}\n\n${profile.map((line) => line.text).join("\n")}`;
-
-  const consultation = reading ? [
-    "Leitura descritiva e autoral do registro, para orientar a consulta. Comparações internas à partida; nenhuma norma, percentil, idade equivalente ou diagnóstico.",
-    "",
-    ...reading.notes.map((note) => `- ${describeArt(note)}`),
-    "",
-    reading.missed.length === 0
-      ? "Nenhum item perdido."
-      : `Itens para checar na consulta (${reading.missed.length}):\n` + reading.missed
-          .map((answer) => `  - ${describeArt(answer.prompt)} | esperado: ${describeArt(answer.expected)} | registrado: ${describeArt(answer.given)} | ${STATUS_LABELS[answer.status]} | ${answer.seconds} s${answer.repeated ? " | comando repetido 1x" : ""}`)
-          .join("\n"),
-  ].join("\n") : incomplete;
+  const missed = session.answers.filter((answer) => answer.status !== "acerto");
+  const consultation = missed.length === 0
+    ? "Nenhum item registrado como não acertado."
+    : `Itens registrados como não acertados (${missed.length}):\n` + missed
+        .map((answer) => `  - ${describeArt(answer.prompt)} | critério de acerto: ${describeArt(answer.expected)} | registrado: ${describeArt(answer.given)} | ${STATUS_LABELS[answer.status]} | ${answer.seconds} s${answer.repeated ? " | comando repetido 1x" : ""}`)
+        .join("\n");
 
   const phaseSections = summary.phases.map((phase) => {
     const notApplied = phase.skipReason ? `Não aplicado - motivo: ${phase.skipReason}.` : "Não aplicado.";
@@ -165,7 +136,7 @@ export function buildGameDocSpec(session: GameSession, issuer: IssuerLines, appl
       { text: `${index + 1}. ${describeArt(answer.prompt)}`, bold: true },
       { text: `   Origem: ${ORIGIN_LABELS[answer.origin]} - ${describeArt(answer.ref)}` },
       { text: `   Tipo: ${KIND_LABELS[answer.kind]}` },
-      { text: `   Resposta esperada: ${describeArt(answer.expected)}` },
+      { text: `   Critério de acerto: ${describeArt(answer.expected)}` },
       { text: `   Resposta da criança: ${describeArt(answer.given)} ${RESULT_MARKER[answer.status]}`, bold: true, tone: ANSWER_TONE[answer.status] },
       { text: `   Resultado: ${STATUS_LABELS[answer.status]} - tempo: ${answer.seconds} s - repetições do comando: ${answer.repeated ? 1 : 0}${answer.via === "gesto" ? " - via: gesto/apontar" : ""} - ${RESULT_MARKER[answer.status]}` },
     ] satisfies DocLine[]);
@@ -179,19 +150,16 @@ export function buildGameDocSpec(session: GameSession, issuer: IssuerLines, appl
     };
   });
 
-  const perPhase = summary.phases[0]?.total ?? 0;
   const criteria = [
-    "Cada item tem uma única resposta certa. Itens de toque e de montar palavra são conferidos pelo próprio jogo; itens de fala e de ação são conferidos pela aplicadora contra o critério explícito exibido na tela.",
-    "Faixas operacionais autorais para leitura rápida da equipe (não normativas), as mesmas proporções desde a primeira versão do jogo:",
-    `  Por mundo (${perPhase} itens): ${cutText(perPhase)}.`,
-    `  Total (${summary.total} itens): ${cutText(summary.total, "total")}.`,
+    "Cada item tem um critério de acerto explícito. Itens de toque e de montar palavra são conferidos pelo próprio jogo; itens de fala e de ação são conferidos pela aplicadora contra o critério exibido na tela.",
+    provenanceText(summary.band.min),
+    `Tempo estimado para a idade: ${formatDuration(estimate.totalSeconds)}; limite da sessão: ${Math.round(sessionLimitSeconds(summary.band.min) / 60)} min.`,
     "\"Não respondeu\" e \"Recusou\" contam como não acertados e ficam registrados à parte de \"Errou\". Nas faixas de 2 e 3 anos, alguns itens de fala aceitam apontar/gesto como alternativa prevista (registrado como via gesto).",
-    `Calibração: itens escolhidos por ano de idade a partir dos bancos de origem, para que uma criança com desenvolvimento típico acerte a maior parte, mas não necessariamente todos. Referência descritiva de marcos: ${SUPER_NEUROPAD_MILESTONE_SOURCES.join("; ")}. Não há validação normativa deste conjunto.`,
-    "Ritmo: item lento é o que leva 2 vezes a mediana da própria partida (mínimo 12 s); é comparação interna, não tempo normativo.",
+    DESCRIPTIVE_NOTICE,
   ].join("\n");
 
   const structured = [
-    "Rótulos fixos: SESSAO, DOMINIO, ORIGEM, ITEM, OBSERVACOES. Valor em JSON de uma linha após o rótulo. Figuras aparecem como [nome]. Níveis ficam null em partida incompleta.",
+    "Rótulos fixos: SESSAO, DOMINIO, ORIGEM, ITEM, PERFIL, OBSERVACOES. Valor em JSON de uma linha após o rótulo. Figuras aparecem como [nome].",
     "",
     ...buildStructuredLines(session),
   ].join("\n");
@@ -216,14 +184,15 @@ export function buildGameDocSpec(session: GameSession, issuer: IssuerLines, appl
     sections: [
       { heading: "Identificação da sessão", body: identification },
       { heading: "O que foi testado por instrumento de origem", body: origins },
-      { heading: "Desempenho por domínio x referência interna do jogo", body: objectiveWithProfile },
-      ...(reading ? [{ heading: "Leitura para a consulta", body: consultation }] : []),
+      { heading: "Registro de respostas (contagem bruta)", body: objective },
+      { heading: "Itens registrados como não acertados", body: consultation },
+      ...(responseProfileLines(session).length ? [{ heading: "Perfil de resposta (descritivo, sem norma)", body: responseProfileLines(session).map((line) => describeArt(line)).join("\n") }] : []),
       ...phaseSections,
       { heading: "Observações da aplicadora", body: observations ? describeArt(observations) : "Sem observações registradas." },
-      ...(reading ? [{ heading: "Critérios de leitura", body: criteria }] : []),
+      { heading: "Critérios de registro", body: criteria },
       { heading: STRUCTURED_HEADER, body: structured },
       { heading: "Proveniência e natureza", body: provenance },
     ],
-    footer: "Avaliação autoral de pré-consulta. Não substitui avaliação médica, psicométrica ou diagnóstica. Leitura e conclusão pertencem ao médico.",
+    footer: DESCRIPTIVE_NOTICE,
   };
 }

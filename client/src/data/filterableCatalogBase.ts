@@ -1,6 +1,8 @@
 import type { ScaleEntry } from "@/data/scaleFilter";
 import { applyUploadedInstrumentOverridesForApp } from "@/data/uploadedInstrumentFilterBridge";
 import { PENDING_AUTHORIAL_SOURCE_IDS } from "@/data/pendingAuthorialScaleIntake";
+import { CANONICAL_ALIAS_IDS, effectiveLicencaUso } from "@/data/scaleLicenseRegistry";
+import { getImplementationStatus } from "@/data/advancedFilterLogic";
 
 /**
  * Itens aplicaveis que existem como paginas/ferramentas do app, mas nao estavam
@@ -267,13 +269,29 @@ export const FILTER_EXCLUDED_IDS: ReadonlySet<string> = new Set([
   "podj-tea-prime-12-19a",
 ]);
 
+/**
+ * O filtro só oferece o que abre por inteiro e funciona no app (decisão do responsável, 15/10/2026):
+ * fichas externas (`external_only`), não implementadas e só-metadados ficam fora do filtro; os dados e
+ * as páginas continuam acessíveis na biblioteca. Um instrumento = um id (aliases canônicos saem do filtro).
+ */
+export function isFilterOffered(scale: ScaleEntry): boolean {
+  return getImplementationStatus(scale) === "complete";
+}
+
 export function mergeFilterableCatalog(primary: ScaleEntry[]): ScaleEntry[] {
   return uniqueById([
     ...primary.map(applyUploadedInstrumentOverridesForApp),
     ...supplementalFilterableInstruments,
-  ]).filter(
-    (scale) =>
-      !FILTER_EXCLUDED_IDS.has(scale.id) &&
-      !PENDING_AUTHORIAL_SOURCE_IDS.has(scale.id),
-  );
+  ])
+    .filter(
+      (scale) =>
+        !FILTER_EXCLUDED_IDS.has(scale.id) &&
+        !PENDING_AUTHORIAL_SOURCE_IDS.has(scale.id) &&
+        !CANONICAL_ALIAS_IDS.has(scale.id) &&
+        isFilterOffered(scale),
+    )
+    .map((scale) => {
+      const licencaUso = effectiveLicencaUso(scale);
+      return licencaUso === scale.licencaUso ? scale : { ...scale, licencaUso };
+    });
 }
