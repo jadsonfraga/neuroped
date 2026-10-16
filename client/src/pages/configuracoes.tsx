@@ -1,5 +1,6 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import {
+  BarChart3,
   Building2,
   Check,
   CreditCard,
@@ -21,12 +22,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useClinic } from "@/contexts/ClinicContext";
 import { authFetch } from "@/lib/authClient";
 import { invalidateIssuerCache } from "@/lib/issuer";
+import { OutcomesSection } from "@/components/settings/OutcomesSection";
+import { PrivacySection } from "@/components/settings/PrivacySection";
+import { BrandingSection } from "@/components/settings/BrandingSection";
+import { RolePermissionsCard } from "@/components/settings/RolePermissionsCard";
+import { ROLE_LABELS } from "@shared/clinic-roles";
+import type { ClinicBranding } from "@shared/clinic-branding";
 import { useToast } from "@/hooks/use-toast";
 import TenantMetricsPanel from "@/components/TenantMetricsPanel";
 import type { TenantPermission } from "../../../shared/permissions";
 import type { ClinicFeatureState } from "../../../shared/clinicFeatures";
 
-type SectionId = "perfil" | "clinica" | "equipe" | "plano" | "atividade" | "auditoria" | "recursos";
+type SectionId = "perfil" | "clinica" | "marca" | "privacidade" | "equipe" | "plano" | "resultados" | "atividade" | "auditoria" | "recursos";
 
 /**
  * Cada seção declara a permissão do catálogo (`shared/permissions.ts`) que a
@@ -38,8 +45,11 @@ type SectionId = "perfil" | "clinica" | "equipe" | "plano" | "atividade" | "audi
 const SECTIONS: Array<{ id: SectionId; label: string; icon: typeof Building2; requires?: TenantPermission }> = [
   { id: "perfil", label: "Perfil", icon: Stethoscope },
   { id: "clinica", label: "Clínica", icon: Building2 },
+  { id: "marca", label: "Marca", icon: Building2, requires: "organization.manage" },
+  { id: "privacidade", label: "Privacidade e IA", icon: ShieldCheck, requires: "organization.manage" },
   { id: "equipe", label: "Equipe", icon: UsersRound, requires: "team.manage" },
   { id: "plano", label: "Plano", icon: CreditCard, requires: "billing.manage" },
+  { id: "resultados", label: "Resultados", icon: BarChart3, requires: "outcomes.read" },
   { id: "atividade", label: "Atividade", icon: ShieldCheck, requires: "organization.metrics.read" },
   { id: "auditoria", label: "Auditoria", icon: ScrollText, requires: "audit.read" },
   { id: "recursos", label: "Recursos", icon: SlidersHorizontal },
@@ -69,13 +79,7 @@ function initialSectionFromLocation(): SectionId {
     : "perfil";
 }
 
-const ROLE_LABEL: Record<string, string> = {
-  owner: "Proprietário(a)",
-  clinic_admin: "Administrador(a)",
-  professional: "Profissional",
-  assistant: "Assistente",
-  financial: "Financeiro",
-};
+const ROLE_LABEL: Record<string, string> = ROLE_LABELS;
 
 interface TenantDetail {
   id: string;
@@ -87,6 +91,7 @@ interface TenantDetail {
   role: string;
   /** Permissões efetivas calculadas no servidor (vazio com clínica inativa). */
   permissions: TenantPermission[];
+  branding?: ClinicBranding;
   settings: {
     displayName: string;
     addressLine1: string;
@@ -555,7 +560,7 @@ function EquipeSection({ clinicId }: { clinicId: string }) {
             >
               <option value="professional">Profissional</option>
               <option value="clinic_admin">Administrador(a)</option>
-              <option value="assistant">Assistente</option>
+              <option value="assistant">Secretaria / recepção</option>
               <option value="financial">Financeiro</option>
               <option value="owner">Proprietário(a)</option>
             </select>
@@ -913,8 +918,21 @@ function ConfiguracoesContent() {
           onSaved={tenant.apply}
         />
       )}
+      {section === "marca" && activeClinicId && hasPermission(permissions, "organization.manage") && tenant.detail && (
+        <BrandingSection
+          key={activeClinicId}
+          clinicId={activeClinicId}
+          clinicName={tenant.detail.settings.displayName || tenant.detail.name}
+          initial={tenant.detail.branding}
+          canEdit={hasPermission(permissions, "organization.manage")}
+          onSaved={(branding) => tenant.apply({ ...tenant.detail!, branding })}
+        />
+      )}
+      {section === "privacidade" && activeClinicId && hasPermission(permissions, "organization.manage") && <PrivacySection key={activeClinicId} clinicId={activeClinicId} />}
+      {section === "equipe" && activeClinicId && hasPermission(permissions, "team.manage") && <RolePermissionsCard />}
       {section === "equipe" && activeClinicId && hasPermission(permissions, "team.manage") && <EquipeSection clinicId={activeClinicId} />}
       {section === "plano" && activeClinicId && hasPermission(permissions, "billing.manage") && <PlanoSection clinicId={activeClinicId} />}
+      {section === "resultados" && activeClinicId && hasPermission(permissions, "outcomes.read") && <OutcomesSection key={activeClinicId} clinicId={activeClinicId} canEditAssumptions={hasPermission(permissions, "organization.manage")} />}
       {section === "atividade" && activeClinicId && hasPermission(permissions, "organization.metrics.read") && <TenantMetricsPanel key={activeClinicId} />}
       {section === "auditoria" && activeClinicId && hasPermission(permissions, "audit.read") && <AuditoriaSection key={activeClinicId} clinicId={activeClinicId} />}
       {section === "recursos" && activeClinicId && <RecursosSection key={activeClinicId} clinicId={activeClinicId} permissions={permissions} />}

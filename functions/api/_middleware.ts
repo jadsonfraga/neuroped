@@ -78,6 +78,7 @@ const PUBLIC_API_PATHS = new Set([
   "/api/public-booking",
   "/api/public-intake",
   "/api/public-scale",
+  "/api/public-family-portal",
   // O webhook do provedor de cobrança se autentica sozinho por
   // `asaas-access-token` (comparação em tempo constante, ≥32 caracteres,
   // functions/api/billing/_provider.ts validateAsaasWebhook) e falha fechado
