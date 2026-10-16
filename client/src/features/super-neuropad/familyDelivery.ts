@@ -12,8 +12,8 @@
  *
  * Nenhum dado sai do dispositivo sem o gesto de envio do cliente (wa.me /
  * mailto / anexo local): o app não tem endpoint de envio e o cadastro fica
- * somente em memória. Sem norma, percentil ou diagnóstico — a leitura é do
- * médico, e o texto da família diz exatamente isso.
+ * somente em memória. O texto é só descritivo (contagens e o que foi
+ * aplicado); a interpretação é do médico, e o texto da família diz exatamente isso.
  */
 import type { DocLine, DocSpec } from "@/lib/documentPdf";
 import { formatClinicalDateTime } from "@/lib/clinicalDate";
@@ -22,13 +22,12 @@ import {
   SUPER_NEUROPAD_TITLE,
   SUPER_NEUROPAD_VERSION,
   formatDuration,
-  interpret,
   phaseStatusText,
   sessionWallSeconds,
   summarize,
   type GameSession,
-  type Level,
 } from "./model";
+import { DESCRIPTIVE_NOTICE } from "@/lib/descriptiveNotice";
 import type { IssuerLines } from "./pdf";
 
 const LGPD_NOTICE =
@@ -36,15 +35,7 @@ const LGPD_NOTICE =
   "Envie apenas para o e-mail/WhatsApp da família responsável e não o publique em redes sociais.";
 
 const FAMILY_DISCLAIMER =
-  "O Super NeuroPad Game é uma triagem lúdica de pré-consulta. Ele NÃO dá diagnóstico, " +
-  "não compara com percentis e não substitui avaliação profissional. O resultado completo, " +
-  "com cada resposta registrada, fica com a equipe; a conclusão é do médico(a) na consulta.";
-
-const LEVEL_FOR_FAMILY: Record<Level, string> = {
-  esperado: "desempenho dentro da referência interna do jogo para a idade (não é norma)",
-  observar: "alguns pontos para observar com atenção na consulta",
-  alerta: "pontos que merecem prioridade na conversa com o médico(a)",
-};
+  `Este relatório descreve como o jogo foi aplicado e como a criança respondeu, com cada resposta registrada. ${DESCRIPTIVE_NOTICE} A conversa sobre o registro é com o médico(a) na consulta.`;
 
 /** E-mail simples e validado no cliente; nada é enviado a servidor algum. */
 export function isValidFamilyEmail(value: string): boolean {
@@ -76,19 +67,6 @@ export function serializeFamilyContact(contact: FamilyContact): string {
 }
 
 /**
- * Leitura geral para a família. O total pode ficar na referência interna mesmo com um mundo
- * inteiro em alerta (ex.: 30/36 com 0/6 num mundo); nesse caso o texto não pode soar só tranquilizador.
- */
-export function familyReading(summary: ReturnType<typeof summarize>): string {
-  if (summary.level === null) return "";
-  const alertWorlds = summary.phases.filter((phase) => phase.level === "alerta").map((phase) => phase.phase.name);
-  if (summary.level === "esperado" && alertWorlds.length) {
-    return `no conjunto, dentro da referência interna do jogo, mas ${alertWorlds.join(", ")} ${alertWorlds.length > 1 ? "merecem" : "merece"} conversa com o médico(a)`;
-  }
-  return LEVEL_FOR_FAMILY[summary.level];
-}
-
-/**
  * Resumo em texto para WhatsApp/e-mail: sistemático (mesma ordem sempre) e
  * recorrente (mesmo formato em toda partida), sem jargão clínico.
  */
@@ -106,13 +84,12 @@ export function buildFamilySummary(session: GameSession, contact: FamilyContact,
     `Idade: ${session.ageYears} anos · Herói: ${summary.character.name}`,
     summary.complete
       ? `Aventura completa: ${summary.hits} de ${summary.total} desafios certos.`
-      : `Aventura encerrada antes do fim: ${session.answers.length} de ${summary.total} registrados. Sem classificação geral.`,
-    summary.level !== null ? `Leitura do jogo: ${familyReading(summary)}.` : null,
+      : `Aventura encerrada antes do fim: ${session.answers.length} de ${summary.total} registrados.`,
     "",
     "Por mundo (acertos/desafios):",
     ...summary.phases.map((phase) => `• ${phase.phase.name}: ${phaseStatusText(phase, summary.complete)}`),
     "",
-    FAMILY_DISCLAIMER.replace("O Super NeuroPad Game é uma triagem lúdica de pré-consulta. Ele ", "Triagem lúdica de pré-consulta: ").replace("O resultado completo, com cada resposta registrada, fica com a equipe; a conclusão é do médico(a) na consulta.", "O registro completo fica com a equipe; a conclusão é do médico(a)."),
+    FAMILY_DISCLAIMER,
     "",
     "Dúvidas sobre os mundos? Veja o que foi testado na aba do jogo.",
     `Versão: ${SUPER_NEUROPAD_VERSION}`,
@@ -131,7 +108,6 @@ export function buildFamilyDocSpec(
   deliveryAt = new Date(),
 ): DocSpec {
   const summary = summarize(session);
-  const reading = interpret(session);
   const wall = sessionWallSeconds(session);
   const skipped = summary.phases.filter((phase) => phase.skipReason);
   const worldsRich: DocLine[] = summary.phases.flatMap((phase) => {
@@ -139,13 +115,10 @@ export function buildFamilyDocSpec(
       { text: `${phase.phase.name}: ${phaseStatusText(phase, summary.complete)}`, bold: true },
       { text: `   O que este mundo testa: ${phase.phase.domain}` },
     ];
-    if (phase.level !== null) {
-      lines.push({ text: `   Leitura: ${LEVEL_FOR_FAMILY[phase.level]}` });
-    }
     if (phase.skipReason) lines.push({ text: `   Motivo de não ter sido aplicado: ${phase.skipReason}`, tone: "neutral" });
     return lines;
   });
-  const missed = reading ? reading.missed : [];
+  const missed = session.answers.filter((answer) => answer.status !== "acerto");
   const sections: DocSpec["sections"] = [
     {
       heading: "Como ler este relatório",
@@ -158,29 +131,29 @@ export function buildFamilyDocSpec(
         `Duração: ${wall !== null ? formatDuration(wall) : "não disponível"} (tempo somado nas tarefas: ${formatDuration(summary.durationSeconds)})`,
         `Idade: ${session.ageYears} anos · Herói: ${summary.character.name}`,
         summary.complete
-          ? `Aventura completa: ${summary.hits} de ${summary.total} desafios certos. Leitura do jogo: ${summary.level !== null ? familyReading(summary) : "sem classificação"}.`
-          : `Aventura encerrada antes do fim: ${session.answers.length} de ${summary.total} desafios registrados. Neste caso o jogo não dá classificação geral.`,
+          ? `Aventura completa: ${summary.hits} de ${summary.total} desafios certos.`
+          : `Aventura encerrada antes do fim: ${session.answers.length} de ${summary.total} desafios registrados.`,
         skipped.length > 0
           ? `Mundos não aplicados: ${skipped.map((phase) => `${phase.phase.name} (${phase.skipReason})`).join("; ")}.`
           : "Mundos não aplicados: nenhum.",
         `Pausas: ${session.pauseCount ?? 0} (${formatDuration(session.pausedSeconds ?? 0)} em pausa).`,
       ].join("\n"),
     },
-    { heading: "Desempenho por mundo", body: worldsRich.map((line) => line.text).join("\n"), rich: worldsRich },
+    { heading: "Respostas por mundo", body: worldsRich.map((line) => line.text).join("\n"), rich: worldsRich },
   ];
   if (missed.length > 0) {
     const missedRich: DocLine[] = missed.map((answer) => ({
-      text: `• ${answer.prompt}: ${STATUS_LABELS[answer.status].toLowerCase()} — pode ser retreinado em casa com brincadeiras, se o médico(a) indicar.`,
+      text: `• ${answer.prompt}: ${STATUS_LABELS[answer.status].toLowerCase()} (${answer.given}).`,
     }));
     sections.push({
-      heading: "Desafios para praticar em casa (se o médico indicar)",
+      heading: "Desafios não acertados",
       body: missedRich.map((line) => line.text).join("\n"),
       rich: missedRich,
     });
   }
   sections.push({
     heading: "Próximos passos",
-    body: "Leve este relatório na próxima consulta. Ele é um retrato lúdico do dia da aplicação: cansaço, timidez ou desatenção do momento podem mudar o resultado. Qualquer dúvida, fale com a equipe.",
+    body: "Leve este relatório na próxima consulta. Ele registra o dia da aplicação. Qualquer dúvida, fale com a equipe.",
   });
   return {
     title: `${SUPER_NEUROPAD_TITLE} — Relatório para a família`,
