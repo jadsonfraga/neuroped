@@ -27,6 +27,8 @@ export interface IcedState {
   fam: { pai: string; mae: string; irmao: string; nome: string };
   pers: { a: string; b: string; c: string; d: string; nota: string };
   fenomeno: string;
+  /** Observações do examinador (reação da criança, mediação, condições). Ausente em rascunhos antigos. */
+  observacoes?: string;
   done: Record<string, boolean>;
 }
 
@@ -77,6 +79,11 @@ function domainLines(result: IcedRecord): string[] {
   return ["Medidas registradas por domínio:"].concat(result.dominios.map((d) => `- ${d.nome}: ${d.medida}`));
 }
 
+export const ICED_OBSERVATIONS_MAX = 1200;
+export function icedObservations(s: Pick<IcedState, "observacoes">): string {
+  return (s.observacoes ?? "").replace(/\s+/g, " ").trim().slice(0, ICED_OBSERVATIONS_MAX);
+}
+
 /** Registro completo: transcrição literal para prontuário (todas as respostas e produções). */
 export function buildIcedFullRecord(s: IcedState, result: IcedRecord, appliedAt: string): string {
   const lines: string[] = [
@@ -110,6 +117,7 @@ export function buildIcedFullRecord(s: IcedState, result: IcedRecord, appliedAt:
     `Ponte — persistência: ${s.done.ponte ? `a=${TRI_LABEL[s.pers.a]} · b=${TRI_LABEL[s.pers.b]} · c=${TRI_LABEL[s.pers.c]} · d=${TRI_LABEL[s.pers.d]}${s.pers.nota ? ` · nota: ${s.pers.nota}` : ""}` : "fase não aplicada"}`,
     "",
     s.fenomeno ? `Fenômeno observado: ${s.fenomeno}` : "Fenômeno observado: nenhum registro.",
+    `Observações do examinador (reação da criança, mediação, condições): ${icedObservations(s) || "sem observações registradas"}`,
     "",
     ...domainLines(result),
     "",
@@ -167,6 +175,7 @@ export function buildIcedDocSpec(s: IcedState, result: IcedRecord, issuer: Issue
       { heading: "Medidas registradas por domínio", body: domainsRich.map((line) => line.text).join("\n"), rich: domainsRich },
       { heading: "Produções registradas", body: buildIcedFullRecord(s, result, appliedAt).split("\n").slice(0, 200).join("\n") },
       { heading: "Fenômeno observado", body: s.fenomeno || "Nenhum registro." },
+      { heading: "Observações do examinador", body: icedObservations(s) || "Sem observações registradas." },
       { heading: "Natureza do registro", body: [ICED_DISCLAIMER, "Fora do registro: compreensão isolada, TDAH, TDL, TEA, ansiedade, inteligência, matemática, motivação."].join("\n") },
     ],
     footer: `${ICED_DISCLAIMER} Documento gerado pelo NeuroPed (${ICED_VERSION}). Uso clínico interno; LGPD: dados pessoais somente com base legal.`,
@@ -186,6 +195,7 @@ export function icedResponseItems(s: IcedState, result: IcedRecord): { question:
     { question: "Natureza do registro", answer: DESCRIPTIVE_NOTICE },
   ];
   if (s.fenomeno) items.push({ question: "Fenômeno observado", answer: s.fenomeno });
+  if (icedObservations(s)) items.push({ question: "Observações do examinador", answer: icedObservations(s) });
   return items;
 }
 

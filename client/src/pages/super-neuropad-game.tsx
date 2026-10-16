@@ -554,6 +554,15 @@ export default function SuperNeuroPadGamePage() {
   const [underTwo, setUnderTwo] = useState(false);
   const [skipped, setSkipped] = useState<SkippedPhase[]>([]);
   const [skipOpen, setSkipOpen] = useState(false);
+  // A partida só existe em memória (privacidade): avisa antes de recarregar/fechar com partida em andamento
+  // ou com resultado ainda não copiado, baixado ou salvo.
+  const leaveGuard = screen === "intro" || screen === "play" || screen === "phase-done" || (screen === "results" && !resultKept);
+  useEffect(() => {
+    if (!leaveGuard) return;
+    const handler = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [leaveGuard]);
   const [observations, setObservations] = useState("");
   /** Encaminhamento automático à família: e-mail/WhatsApp cadastrados na 1ª página do teste.
    *  Fica somente em memória da aba (nenhum dado sai sem o gesto de envio do cliente). */

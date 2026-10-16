@@ -63,7 +63,26 @@ export interface GameState {
   bestStreak: number;
   /** Forma dos textos (compreensão e fluência inicial). Ausente em rascunhos antigos = A. */
   forma?: FluencyForm;
+  /** Observações livres do aplicador (reação da criança, mediação/ajuda, condições do ambiente). Só descrevem. */
+  observacoes?: string;
   endedReason: "" | "completo" | "tempo" | "encerrado";
+}
+
+export const OBSERVACOES_MAX = 1200;
+/** Atalhos de texto para o aplicador anotar fatos observados (reação, mediação, condições). Não classificam. */
+export const OBSERVATION_CHIPS = [
+  "Colaborou durante toda a aplicação", "Pediu para repetir a instrução", "Aplicador repetiu a instrução",
+  "Aplicador leu o item em voz alta", "Aplicador deu exemplo antes do item", "Criança cansou ao longo da aplicação",
+  "Criança levantou-se durante a aplicação", "Houve pausa fora do aplicativo", "Ambiente com ruído",
+  "Acompanhante presente na sala", "Uso de óculos ou aparelho auditivo", "Criança recusou algum item",
+] as const;
+
+export function cleanObservacoes(text: string): string {
+  return (text ?? "").replace(/\s+/g, " ").trim().slice(0, OBSERVACOES_MAX);
+}
+
+export function setObservacoes(state: GameState, text: string): GameState {
+  return { ...state, observacoes: cleanObservacoes(text) };
 }
 
 export function initialAdaptive(): AdaptiveState {
@@ -291,11 +310,29 @@ export interface GameSummary {
   aritmetica: Tally & { porOperacao: Partial<Record<ArithOp, Tally>>; status: WorldProgress["status"] };
   /** Condições da aplicação (ex.: encerrada pelo limite de tempo). */
   condicoes: string[];
+  /** Tempo medido: soma dos tempos de resposta por mundo e distribuição por item (segundos). */
+  tempos: {
+    porMundo: Array<{ world: WorldId; itens: number; segundos: number }>;
+    item: { min: number; mediana: number; max: number } | null;
+  };
   minutos: number;
 }
 
 function tally(list: ItemResponse[]): Tally {
   return { corretos: list.filter((r) => r.outcome === "correto").length, total: list.length };
+}
+
+function responseTimes(state: GameState): GameSummary["tempos"] {
+  const round1 = (n: number) => Math.round(n * 10) / 10;
+  const all: number[] = [];
+  const porMundo = WORLDS.filter((w) => w.id !== "fluencia").map((w) => {
+    const timed = state.worlds[w.id].responses.filter((r) => r.ms > 0).map((r) => r.ms / 1000);
+    all.push(...timed);
+    return { world: w.id, itens: state.worlds[w.id].responses.length, segundos: round1(timed.reduce((a, b) => a + b, 0)) };
+  });
+  const sorted = [...all].sort((a, b) => a - b);
+  const mid = sorted.length ? (sorted.length % 2 ? sorted[(sorted.length - 1) / 2] : (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2) : 0;
+  return { porMundo, item: sorted.length ? { min: round1(sorted[0]), mediana: round1(mid), max: round1(sorted[sorted.length - 1]) } : null };
 }
 
 export function summarizeGame(state: GameState): GameSummary {
@@ -344,6 +381,7 @@ export function summarizeGame(state: GameState): GameSummary {
     },
     aritmetica: { ...ariTally, porOperacao, status: ari.status },
     condicoes: state.endedReason === "tempo" ? ["Sessão encerrada pelo limite de 15 minutos; mundos não concluídos ficam como não aplicados."] : [],
+    tempos: responseTimes(state),
     minutos: Math.round((state.activeMs / 60000) * 10) / 10,
   };
   return summary;

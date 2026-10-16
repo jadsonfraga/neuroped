@@ -492,6 +492,8 @@ export const SKIP_REASONS = [
 export const OBSERVATION_CHIPS = [
   "Colaborou bem", "Tímida no início, soltou depois", "Agitada, levantou várias vezes", "Cansou no fim",
   "Precisou de pausa", "Fala difícil de entender", "Respondeu mais com gestos", "Acompanhante ajudou a acalmar",
+  "Aplicadora repetiu ou reformulou a instrução", "Aplicadora deu exemplo antes do item", "Ambiente com ruído ou interrupções",
+  "Acompanhante presente na sala", "Uso de óculos ou aparelho auditivo",
 ] as const;
 
 export function cleanObservations(text: string): string {
@@ -786,6 +788,7 @@ export function buildStructuredLines(session: GameSession, date = sessionDate(se
     itens_previstos: summary.total, itens_registrados: session.answers.length, acertos: summary.hits,
     duracao_tarefas_s: summary.durationSeconds,
     duracao_sessao_s: wall, tempo_estimado_s: estimateBandSeconds(summary.band.min).totalSeconds, limite_sessao_s: sessionLimitSeconds(summary.band.min),
+    folga_planejada_s: timeMarginSeconds(summary.band.min),
     pausas: session.pauseCount ?? 0, tempo_em_pausa_s: Math.round(session.pausedSeconds ?? 0), desfeitos: session.undoCount ?? 0,
     mundos_nao_aplicados: (session.skipped ?? []).map((entry) => ({ mundo: phaseById(entry.phaseId, summary.band.min).name, motivo: entry.reason })),
   })}`);

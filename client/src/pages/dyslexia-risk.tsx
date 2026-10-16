@@ -1,7 +1,7 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { DESCRIPTIVE_NOTICE } from "@/lib/descriptiveNotice";
 import { CONTROL, DITADO, DITADO_PSEUDO, CF, FLUENCY_TEXT, ICED_VERSION, PSEUDO, RAN, WORDS, describeIced, type IcedInput, type Tri } from "@/features/dyslexia-risk/model";
-import { buildIcedDocSpec, buildIcedFullRecord, buildIcedSummary, icedInputOf, icedResponseItems } from "@/features/dyslexia-risk/report";
+import { buildIcedDocSpec, buildIcedFullRecord, buildIcedSummary, icedInputOf, icedResponseItems, ICED_OBSERVATIONS_MAX } from "@/features/dyslexia-risk/report";
 import { useToast } from "@/hooks/use-toast";
 import { useIssuer } from "@/lib/issuer";
 import { issuerCredentials } from "@/lib/issuer";
@@ -55,7 +55,7 @@ function blank() {
     ran: { seg: 0, erros: 0 },
     fam: { pai: "" as Tri, mae: "" as Tri, irmao: "" as Tri, nome: "" },
     pers: { a: "" as Tri, b: "" as Tri, c: "" as Tri, d: "" as Tri, nota: "" },
-    fenomeno: "",
+    fenomeno: "", observacoes: "",
     done: {} as Record<string, boolean>,
   };
 }
@@ -371,6 +371,7 @@ export default function DyslexiaRiskPage() {
           <p className="text-[11px] font-semibold opacity-80" data-testid="iced-provenance">{DESCRIPTIVE_NOTICE}</p>
           <ul className="space-y-1 text-sm">{result.dominios.map((d) => <li key={d.id}><b>{d.nome}:</b> {d.medida}</li>)}</ul>
           <textarea className="w-full rounded-xl border-[3px] border-[var(--snp-ink-fixed)] p-2" placeholder="Fenômeno observado" value={s.fenomeno} onChange={(e) => setS({ ...s, fenomeno: e.target.value })} />
+          <textarea className="mt-2 w-full rounded-xl border-[3px] border-[var(--snp-ink-fixed)] p-2" data-testid="iced-observacoes" aria-label="Observações do examinador (reação da criança, mediação, condições)" placeholder="Observações do examinador: reação da criança, mediação/ajuda, condições do ambiente" maxLength={ICED_OBSERVATIONS_MAX} value={s.observacoes ?? ""} onChange={(e) => setS({ ...s, observacoes: e.target.value.slice(0, ICED_OBSERVATIONS_MAX) })} />
           <p className="text-sm leading-relaxed">{result.frase}</p>
           <div className="flex flex-wrap gap-2">
             <button type="button" className="snp-btn snp-btn--sky px-4 py-2" onClick={() => void copyText(result.frase, "Devolução")}>Copiar devolução</button>

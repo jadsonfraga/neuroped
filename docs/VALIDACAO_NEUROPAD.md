@@ -16,5 +16,16 @@ Pontos de corte, níveis, faixas de classificação, rótulos interpretativos, l
 - Cortes, normas e validação normativa: **resolvidas por remoção**.
 - Demais (folga de tempo, cobertura, procedência dos itens, faixa 15–18, concordância entre examinadores/equivalência entre formas A/B, medição de tempo): **itens operacionais**, sem dados inventados. A procedência dos itens é descrita apenas como contagem de origens; equivalência entre formas e concordância entre examinadores não foram estudadas e não são afirmadas.
 
+## Registro de como a aplicação transcorreu (v5)
+- **Tempo medido:** início da sessão, tempo ativo, tempo de resposta por item e por mundo (mínimo/mediana/máximo por item), pausas, registros desfeitos e se a sessão terminou por limite de tempo, ao lado da estimativa do app. A diferença entre limite e estimativa é registrada (`folga_planejada_s`); o app não altera teto nem itens por conta própria.
+- **Forma usada:** forma A/B dos textos (compreensão e fluência) no relatório, PDF e prontuário.
+- **Observações do aplicador/examinador:** campo livre com atalhos de fatos (reação da criança, mediação/ajuda, condições do ambiente) nos três registros (Super NeuroPad, Jogo das Letras e Números, ICED-8), em tela, relatório, PDF e prontuário.
+- **Idade exata** é sempre registrada junto da faixa (faixa de 15–18: "idade registrada: N anos").
+- **Procedência dos itens:** contagem de origens no relatório e inventário item a item em `docs/instrumentos/`.
+- **Saída da página:** o Super NeuroPad avisa antes de recarregar/fechar com partida em andamento ou resultado ainda não guardado.
+
+## Instrumentos para dados externos
+`docs/instrumentos/` traz protocolos e planilhas vazias (concordância entre aplicadoras, medição de tempo, formas A/B, piloto com crianças) e um script que calcula só números descritivos. Dependem de aplicações reais e de comitê de ética; **não há dados no repositório**.
+
 ## Garantias de teste
 `tests/unit/sem-classificacao.test.ts` varre todas as saídas (relatórios, PDFs, registros, família, páginas) contra vocabulário interpretativo proibido; `tests/unit/golden-descritivo.test.ts` congela banco, sequências e tempos sem qualquer classificação.

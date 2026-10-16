@@ -1,7 +1,8 @@
 import type { DocLine, DocSpec } from "@/lib/documentPdf";
 import type { IssuerLines } from "@/features/super-neuropad/pdf";
 import { DESCRIPTIVE_NOTICE } from "@/lib/descriptiveNotice";
-import { GAME_VERSION, WORLDS, summarizeGame, type GameState, type GameSummary, type ItemResponse, type Tally } from "./engine";
+import { formatClinicalDateTime } from "@/lib/clinicalDate";
+import { GAME_VERSION, WORLDS, cleanObservacoes, estimateSessionSeconds, summarizeGame, type GameState, type GameSummary, type ItemResponse, type Tally } from "./engine";
 import { BANK_PROVENANCE, fluencyFormOf, type ArithOp } from "./bank";
 
 export const GAME_TITLE = "Jogo das Letras e Números · 5–18 anos";
@@ -72,6 +73,23 @@ export function domainLines(s: GameSummary): string[] {
   ];
 }
 
+/** Linhas de tempo medido (tempos de resposta registrados pelo app). */
+export function timingLines(s: GameSummary, state: GameState): string[] {
+  const nomes = Object.fromEntries(WORLDS.map((w) => [w.id, w.nome]));
+  const porMundo = s.tempos.porMundo.filter((m) => m.itens > 0).map((m) => `${nomes[m.world]} ${decimalBr(m.segundos)} s em ${m.itens} item(ns)`).join(" · ");
+  const item = s.tempos.item ? `mínimo ${decimalBr(s.tempos.item.min)} s · mediana ${decimalBr(s.tempos.item.mediana)} s · máximo ${decimalBr(s.tempos.item.max)} s` : "sem tempos registrados";
+  return [
+    `Início da sessão: ${state.startedAt ? formatClinicalDateTime(new Date(state.startedAt)) : "—"} · tempo ativo ${decimalBr(s.minutos)} min · estimativa do app ${s.band ? decimalBr(Math.round(estimateSessionSeconds(s.band.band, state.forma ?? "A") / 6) / 10) : "—"} min`,
+    `Tempo de resposta por mundo: ${porMundo || "sem registros"}`,
+    `Tempo de resposta por item: ${item}`,
+  ];
+}
+
+export function observationLines(state: GameState): string[] {
+  const text = cleanObservacoes(state.observacoes ?? "");
+  return [`Observações do aplicador (reação da criança, mediação, condições): ${text || "sem observações registradas"}`];
+}
+
 export function buildGameRecord(state: GameState, appliedAt: string): string {
   const s = summarizeGame(state);
   const responses = WORLDS.flatMap((w) => state.worlds[w.id].responses);
@@ -83,6 +101,8 @@ export function buildGameRecord(state: GameState, appliedAt: string): string {
     `Aplicador: ${state.examinador || "não informado"} · Emissão: ${appliedAt} · Tempo ativo: ${decimalBr(s.minutos)} min · ${state.endedReason === "tempo" ? "encerrada pelo limite de 15 min" : state.endedReason ? "sessão encerrada" : "sessão em andamento"}`,
     "",
     ...domainLines(s),
+    ...timingLines(s, state),
+    ...observationLines(state),
     "",
     ...(s.condicoes.length ? ["Condições da aplicação:", ...s.condicoes.map((x) => `- ${x}`), ""] : []),
     "Itens:",
@@ -104,6 +124,8 @@ export function buildGameDocSpec(state: GameState, issuer: IssuerLines, appliedA
       ].join("\n"),
     },
     { heading: "Contagem bruta por domínio", body: domainLines(s).join("\n") },
+    { heading: "Tempos medidos", body: timingLines(s, state).join("\n") },
+    { heading: "Observações do aplicador", body: observationLines(state).join("\n") },
     ...(s.condicoes.length ? [{ heading: "Condições da aplicação", body: s.condicoes.join("\n") }] : []),
     ...WORLDS.filter((w) => w.id !== "fluencia").map((w) => {
       const lines = state.worlds[w.id].responses.map(itemLine);
@@ -141,6 +163,8 @@ export function gameResponseItems(state: GameState): { question: string; answer:
     { question: "Aritmética", answer: lines[4] },
     ...(s.condicoes.length ? [{ question: "Condições da aplicação", answer: s.condicoes.join(" ") }] : []),
     { question: "Tempo ativo (min)", answer: decimalBr(s.minutos) },
+    { question: "Tempos de resposta", answer: timingLines(s, state).slice(1).join(" · ") },
+    { question: "Observações do aplicador", answer: cleanObservacoes(state.observacoes ?? "") || "Sem observações registradas." },
     { question: "Natureza", answer: DESCRIPTIVE_NOTICE },
   ];
 }

@@ -15,7 +15,7 @@ import { buildFamilyDocSpec, buildFamilySummary } from "../../client/src/feature
 import { describeIced, type IcedInput } from "../../client/src/features/dyslexia-risk/model";
 import { buildIcedDocSpec, buildIcedFamilySummary, buildIcedFullRecord, buildIcedSummary, icedInputOf, icedResponseItems, type IcedState } from "../../client/src/features/dyslexia-risk/report";
 import { BANDS, bandForAge, fluencyWords, type BandBank } from "../../client/src/features/dyslexia-risk/game/bank";
-import { newGame, nextItemFor, recordFluency, recordResponse, WORLDS, summarizeGame } from "../../client/src/features/dyslexia-risk/game/engine";
+import { newGame, nextItemFor, recordFluency, recordResponse, setObservacoes, WORLDS, summarizeGame } from "../../client/src/features/dyslexia-risk/game/engine";
 import { GAME_DISCLAIMER, buildGameDocSpec as buildJlnDocSpec, buildGameRecord, gameResponseItems } from "../../client/src/features/dyslexia-risk/game/report";
 import { DESCRIPTIVE_NOTICE } from "../../client/src/lib/descriptiveNotice";
 
@@ -178,4 +178,25 @@ test("código: arquivos de corte/referência removidos e nenhum identificador ou
     assert.doesNotMatch(source, identifiers, `${file}: identificador de classificação`);
     assert.doesNotMatch(source, phrases, `${file}: texto de classificação`);
   }
+});
+
+test("observações do aplicador e tempos medidos entram nas saídas sem classificação (JLN, ICED e Super NeuroPad)", () => {
+  const g = setObservacoes(playJln(9, true), "Colaborou. Aplicador repetiu a instrução.  Ambiente com ruído.");
+  const record = buildGameRecord(g, "16/10/2026 10:00");
+  assert.match(record, /Observações do aplicador \(reação da criança, mediação, condições\): Colaborou\. Aplicador repetiu a instrução\. Ambiente com ruído\./);
+  assert.match(record, /Tempo de resposta por mundo:/);
+  assert.match(record, /Tempo de resposta por item: mínimo 1,5 s · mediana 1,5 s · máximo 1,5 s/);
+  assert.match(record, /Início da sessão:/);
+  assertClean(record, "JLN registro com observações");
+  assertClean(flat(buildJlnDocSpec(g, ISSUER, "x")), "JLN PDF com observações");
+  assert.ok(gameResponseItems(g).some((i) => i.question === "Observações do aplicador" && /Ambiente com ruído/.test(i.answer)));
+  assert.ok(gameResponseItems(g).some((i) => i.question === "Tempos de resposta"));
+  const state = icedState({ observacoes: "Pediu para repetir.  Sem óculos na aplicação." });
+  const result = describeIced(icedInputOf(state));
+  assert.match(buildIcedFullRecord(state, result, "16/10/2026"), /Observações do examinador \(reação da criança, mediação, condições\): Pediu para repetir\. Sem óculos na aplicação\./);
+  assert.ok(icedResponseItems(state, result).some((i) => i.question === "Observações do examinador"));
+  assertClean(flat(buildIcedDocSpec(state, result, ISSUER, "x")), "ICED PDF com observações");
+  const session = { ...play(6, () => "acerto"), observations: "Acompanhante presente na sala." };
+  assert.match(buildGameReport(session), /Acompanhante presente na sala\./);
+  assert.ok(buildStructuredLines(session)[0].includes("folga_planejada_s"));
 });

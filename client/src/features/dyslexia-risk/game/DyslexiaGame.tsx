@@ -10,11 +10,11 @@ import { safeTextFilename } from "@/lib/shareText";
 import { BANK_PROVENANCE, MAX_GAME_AGE, MIN_GAME_AGE, bandForAge, fluencyProbe, fluencyWords, withTextForm, type ArithItem, type FluencyForm, type BandBank, type ComprehensionQuestion, type DecodeItem, type DitadoItem } from "./bank";
 import {
   FLUENCY_SECONDS, GAME_STORAGE_KEY, GAME_VERSION, SESSION_CAP_SECONDS, WORLDS,
-  classifyDitado, encouragementFor, newGame, nextItemFor, recordFluency, recordResponse, skipWorld, starsFor, summarizeGame, tick, worldTarget,
+  OBSERVACOES_MAX, OBSERVATION_CHIPS, classifyDitado, encouragementFor, newGame, nextItemFor, recordFluency, recordResponse, setObservacoes, skipWorld, starsFor, summarizeGame, tick, worldTarget,
   type GameState, type ItemResponse, type WorldId,
 } from "./engine";
 import { clearDraft, readDraft, writeDraft } from "../localDraft";
-import { GAME_DISCLAIMER, OP_LABEL, decimalBr, fluencyText, buildGameDocSpec, buildGameRecord, gameResponseItems, outcomeLabel, tallyText } from "./report";
+import { GAME_DISCLAIMER, OP_LABEL, decimalBr, fluencyText, timingLines, buildGameDocSpec, buildGameRecord, gameResponseItems, outcomeLabel, tallyText } from "./report";
 
 const LazySaveToPatient = lazy(() =>
   import("@/components/SaveToPatient").then(({ SaveToPatient: Component }) => ({ default: Component })),
@@ -331,6 +331,20 @@ export default function DyslexiaGame() {
               <ul className="list-disc pl-5 text-sm font-bold">{summary.condicoes.map((s) => <li key={s}>{s}</li>)}</ul>
             </div>
           )}
+          <div data-testid="drx-game-timing">
+            <h3 className="snp-pixel text-xs">Tempos medidos</h3>
+            <ul className="list-disc pl-5 text-sm font-bold">{timingLines(summary, game).map((l) => <li key={l}>{l}</li>)}</ul>
+          </div>
+          <div data-testid="drx-game-observations">
+            <label htmlFor="drx-observacoes" className="snp-pixel text-xs">Observações do aplicador (reação da criança, mediação, condições; vão para o PDF, o registro e o prontuário)</label>
+            <div className="mt-1 flex flex-wrap gap-1" role="group" aria-label="Atalhos de observação">
+              {OBSERVATION_CHIPS.map((chip) => (
+                <button key={chip} type="button" className="snp-chip" onClick={() => setGame((g) => (g ? setObservacoes(g, g.observacoes?.includes(chip) ? g.observacoes : [g.observacoes?.trim(), chip].filter(Boolean).join(". ")) : g))}>+ {chip}</button>
+              ))}
+            </div>
+            <textarea id="drx-observacoes" className="mt-1 w-full rounded-xl border-[3px] border-[var(--snp-ink-fixed)] p-2 text-sm" rows={3} maxLength={OBSERVACOES_MAX} value={game.observacoes ?? ""} onChange={(e) => setGame((g) => (g ? { ...g, observacoes: e.target.value.slice(0, OBSERVACOES_MAX) } : g))} />
+            <p className="text-[11px] font-bold">{(game.observacoes ?? "").length}/{OBSERVACOES_MAX} · escreva só fatos observados.</p>
+          </div>
           {WORLDS.filter((w) => w.id !== "fluencia").map((w) => (
             <details key={w.id} className="rounded-xl border-[3px] border-[var(--snp-ink-fixed)] p-2" open={w.id === "ditado"}>
               <summary className="snp-pixel cursor-pointer text-xs">{w.emoji} {w.nome} · item a item</summary>
