@@ -199,6 +199,7 @@ const LaudoNeuropedPage = lazy(() => import("@/pages/laudo-neuroped"));
 const LaudoSuperPage = lazy(() => import("@/pages/laudo-super"));
 const LaudoUmCliquePage = lazy(() => import("@/pages/laudo-um-clique"));
 const EvolucaoEscalasPage = lazy(() => import("@/pages/evolucao-escalas"));
+const ResumoPreConsultaPage = lazy(() => import("@/pages/resumo-pre-consulta"));
 const ReceitaC1Page = lazy(() => import("@/pages/receita-c1"));
 const ReceitaC1ExpressPage = lazy(() => import("@/pages/receita-c1-express"));
 const VerificarPage = lazy(() => import("@/pages/verificar"));
@@ -505,6 +506,11 @@ function AppRouter() {
             <Route path="/evolucao-escalas">
               <RouteGuard roles={["admin", "professional"]}>
                 <EvolucaoEscalasPage />
+              </RouteGuard>
+            </Route>
+            <Route path="/resumo-pre-consulta">
+              <RouteGuard roles={["admin", "professional"]}>
+                <ResumoPreConsultaPage />
               </RouteGuard>
             </Route>
             <Route path="/laudo-super">
