@@ -33,6 +33,7 @@ export const tenantPermissions = [
   "finance.read",
   "clinical.read",
   "clinical.write",
+  "outcomes.read",
 ] as const;
 
 export type TenantPermission = (typeof tenantPermissions)[number];
@@ -61,6 +62,9 @@ const GRANTS: Readonly<
   "finance.read": ["owner", "clinic_admin", "financial"],
   "clinical.read": CLINICAL,
   "clinical.write": CLINICAL,
+  // Painel de resultados: agregados clínicos da própria clínica (sem identificadores).
+  // Secretaria e financeiro não veem métricas clínicas.
+  "outcomes.read": CLINICAL,
 });
 
 const PERMISSION_SET = new Set<string>(tenantPermissions);
