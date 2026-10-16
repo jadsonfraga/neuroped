@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="robots" content="noindex,nofollow,noarchive" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'"
+    />
+    <title>NeuroPed SDG · Portal da família</title>
+    <link rel="stylesheet" href="/intake.css" />
+    <link rel="stylesheet" href="/portal.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="brand" aria-label="NeuroPed SDG">
+        <div class="brand-mark" aria-hidden="true">N</div>
+        <div>
+          <p class="eyebrow">NeuroPed SDG</p>
+          <h1>Portal da família</h1>
+        </div>
+      </header>
+
+      <section id="loading" class="card status-card" aria-live="polite">
+        <div class="spinner" aria-hidden="true"></div>
+        <div>
+          <h2>Validando o link…</h2>
+          <p>Nenhum conteúdo de saúde é salvo neste dispositivo.</p>
+        </div>
+      </section>
+
+      <section id="error" class="card hidden" role="alert">
+        <p class="eyebrow danger">Link indisponível</p>
+        <h2 id="error-title">Não foi possível abrir o portal.</h2>
+        <p id="error-message" class="muted"></p>
+      </section>
+
+      <section id="consent-card" class="card hidden">
+        <p id="clinic-name" class="eyebrow"></p>
+        <h2>Antes de abrir</h2>
+        <div class="notice"><strong>Importante</strong><p id="support-notice"></p></div>
+        <p id="views-info" class="muted"></p>
+        <label class="consent-row">
+          <input id="consent" type="checkbox" />
+          <span id="consent-notice"></span>
+        </label>
+        <div id="consent-error" class="inline-error hidden" role="alert"></div>
+        <button id="open-button" class="primary-button" type="button">Abrir conteúdo</button>
+      </section>
+
+      <div id="content" class="hidden">
+        <section class="card">
+          <p id="content-clinic" class="eyebrow"></p>
+          <h2>Conteúdo preparado pelo seu médico</h2>
+          <div class="notice"><strong>Importante</strong><p id="content-notice"></p></div>
+          <p id="content-views" class="muted"></p>
+        </section>
+        <section id="sec-orientacoes" class="card hidden"><h2>Orientações</h2><div id="list-orientacoes"></div></section>
+        <section id="sec-questionarios" class="card hidden"><h2>Questionários para responder</h2><div id="list-questionarios"></div></section>
+        <section id="sec-avaliacoes" class="card hidden"><h2>Atividades já realizadas</h2><div id="list-avaliacoes"></div></section>
+        <section id="sec-lembretes" class="card hidden"><h2>Lembretes</h2><div id="list-lembretes"></div><button id="ics-button" class="primary-button hidden" type="button">Salvar datas no calendário (.ics)</button></section>
+        <section id="sec-documentos" class="card hidden"><h2>Documentos</h2><div id="list-documentos"></div></section>
+      </div>
+
+      <footer>
+        <span>NeuroPed SDG</span>
+        <span aria-hidden="true">·</span>
+        <span>conteúdo organizado pelo seu médico</span>
+      </footer>
+    </main>
+    <script type="module" src="/portal.js"></script>
+  </body>
+</html>

@@ -774,6 +774,17 @@ export function createSyntheticClinicalApi(scenario = {}) {
       return true;
     }
 
+    if (pathname === "/api/live/family-portal") {
+      if (request.method === "POST") {
+        const body = await readBody(request);
+        state.familyPortalCreates = [...(state.familyPortalCreates ?? []), body];
+        send(response, 201, { id: "portal-sintetico-1", token: `portal-sintetico-1.${"a".repeat(43)}`, expiresAt: new Date(Date.now() + 72 * 3600000).toISOString(), maxViews: body?.maxViews ?? 3 });
+        return true;
+      }
+      send(response, 200, { data: [] });
+      return true;
+    }
+
     if (pathname === "/api/consents") {
       send(response, 200, { data: [] });
       return true;
