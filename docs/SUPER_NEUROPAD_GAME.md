@@ -379,3 +379,14 @@ Aplicadas em código, com testes (`tests/unit/super-neuropad-diagnostico.test.ts
 Pendente de decisão clínica (não alterado): conteúdo novo (pseudopalavras no ditado de 5–6 anos,
 mais perguntas de compreensão, segunda forma de fluência, mais itens por domínio aos 2–3 anos),
 recalibração de cortes e validação com amostra de crianças.
+
+## Posição balanceada e perfil de resposta (v2026-10-16)
+
+- `optionOrder`: a posição da resposta certa é planejada; entre os toques com o mesmo número de opções, cada bloco de `n`
+  itens usa as `n` posições uma vez. Distratores embaralhados de forma determinística. `touchOrdinal` dá a ordem do item.
+- `AnswerRecord` ganha `pos`, `shown` e `correctPos` (opcionais; registros antigos continuam válidos e idênticos).
+- `responseProfile` / `responseProfileLines`: tempo dos itens conferidos pelo jogo (mediana, intervalo interquartil,
+  desvio-padrão, coeficiente de variação com 5+ itens) separado do tempo dos itens conferidos pela aplicadora, posição das
+  escolhas e dos erros, maior sequência na mesma posição. Só contagens e dispersão; sem norma nem corte. Aparece no
+  relatório, no PDF (seção "Perfil de resposta") e na linha estruturada `PERFIL`.
+- Rollback: reverter a PR; nenhum dado persistido muda.
