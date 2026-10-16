@@ -2,18 +2,18 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 import { featuredNavigation, navSections } from "../../client/src/data/navigation";
-import { scoreIced, type IcedInput } from "../../client/src/features/dyslexia-risk/model";
+import { describeIced, type IcedInput } from "../../client/src/features/dyslexia-risk/model";
 import { buildIcedFamilySummary, buildIcedFullRecord, buildIcedSummary, buildIcedDocSpec, icedInputOf, icedResponseItems, type IcedState } from "../../client/src/features/dyslexia-risk/report";
 
 const empty: IcedInput = {
   ano: "3",
   controle: { esc: "sim", alf: "sim", freq: "sim", aud: "sim", vis: "sim", di: "sim", pers: "sim" },
-  palavrasAcertos: 20, palavrasF: 0, palavrasNorma: false,
-  pseudoAcertos: 16, pseudoLex: 0, pseudoNorma: false,
-  pcpm: 110, fluenciaNorma: false,
-  ditadoF: 0, ditadoPseudoCertas: 5, ditadoNorma: false,
-  cfAcertos: 12, cfNorma: false,
-  ranSeg: 30, ranErros: 0, ranNorma: false,
+  palavrasAcertos: 20, palavrasF: 0,
+  pseudoAcertos: 16, pseudoLex: 0,
+  pcpm: 110,
+  ditadoF: 0, ditadoPseudoCertas: 5,
+  cfAcertos: 12,
+  ranSeg: 30, ranErros: 0,
   familiar: "nao",
   persistencia4: false,
 };
@@ -30,17 +30,25 @@ test("dyslexia risk entra no destaque fora do topo fixo e na triagem", () => {
   assert.equal(featured[0].hero, true, "atalho em vermelho (cartão-herói), como o Super NeuroPad Game");
 });
 
-test("trava do bloco 0 impede leitura de dislexia", () => {
-  const result = scoreIced({ ...empty, controle: { ...empty.controle, aud: "nao" }, pcpm: 20, ditadoF: 8 });
-  assert.equal(result.trava, true);
-  assert.equal(result.faixa, "descritiva");
-  assert.match(result.frase, /não constitui diagnóstico/);
+test("ICED-8 só descreve: medidas brutas por domínio, sem pontos, faixa, trava ou leitura", () => {
+  const result = describeIced({ ...empty, controle: { ...empty.controle, aud: "nao" }, pcpm: 20, ditadoF: 8, pseudoAcertos: 4, cfAcertos: 2, ranSeg: 70, fluLidas: 22, fluErros: 2, fluTempo: 60 });
+  for (const key of ["total", "faixa", "trava", "nucleo", "leitura", "avisos", "proporcaoPct", "pontosExaminaveis"]) assert.equal(key in result, false, key);
+  for (const dominio of result.dominios) for (const key of ["pontos", "peso", "limítrofe"]) assert.equal(key in dominio, false, `${dominio.id}.${key}`);
+  const byId = Object.fromEntries(result.dominios.map((d) => [d.id, d.medida]));
+  assert.match(byId.fluencia, /22 palavras lidas · 2 erros · 60 s · palavras corretas por minuto: 20/);
+  assert.match(byId.ortografia, /erros fonológicos 8 · pseudopalavras certas 5\/5/);
+  assert.match(byId.pseudo, /4\/16 certas/);
+  assert.match(byId.cf, /2\/12 certas/);
+  assert.match(byId.ran, /70 s · 0 erros \(40 estímulos\)/);
+  assert.equal(result.controles.find((c) => c.chave === "aud")!.resposta, "não");
+  assert.match(result.frase, /Registro descritivo; sem classificação\. Interpretação a cargo do profissional\./);
+  assert.doesNotMatch(result.frase, /ICED-8 = |Leitura operacional|Trava|Núcleo/);
 });
 
-test("9–15 sem núcleo reclassifica para intermediário", () => {
-  const result = scoreIced({ ...empty, pseudoAcertos: 4, cfAcertos: 2, ranSeg: 70, familiar: "sim", persistencia4: true, pcpm: 110, ditadoF: 0, ditadoPseudoCertas: 5 });
-  assert.equal(result.nucleo, "ausente");
-  assert.equal(result.faixa, "intermediaria");
+test("domínio não aplicado aparece como não examinado, sem zerar nem pontuar", () => {
+  const result = describeIced({ ...empty, pcpm: null, ranSeg: null, cfAcertos: null });
+  assert.deepEqual(result.naoExaminados.sort(), ["Consciência fonológica", "Fluência", "Nomeação rápida"].sort());
+  assert.ok(result.dominios.filter((d) => !d.examinado).every((d) => d.medida.startsWith("não examinad")));
 });
 
 test("cabeçalho usa o escudo e a estética do Super NeuroPad", () => {
@@ -71,12 +79,6 @@ test("anti-regressão: cronômetro da fluência trava em 60 s e campos numérico
   }
 });
 
-test("fluência do 2º ano pontua só na âncora", () => {
-  assert.equal(scoreIced({ ...empty, ano: "2", pcpm: 42 }).dominios[0].pontos, 3);
-  assert.equal(scoreIced({ ...empty, ano: "2", pcpm: 50 }).dominios[0].pontos, 0);
-  assert.equal(scoreIced({ ...empty, ano: "2", pcpm: 50 }).dominios[0].limítrofe, true);
-});
-
 function stateFor(over: Partial<IcedState> = {}): IcedState {
   const base: IcedState = {
     nome: "Ana Testes", data: "", nasc: "", idade: "8", ano: "3", escola: "pública", anosEsc: "2", examinador: "Dra. Teste",
@@ -87,17 +89,16 @@ function stateFor(over: Partial<IcedState> = {}): IcedState {
     ditado: Array.from({ length: 12 }, () => ({ grafia: "", f: false, o: false })),
     ditadoP: Array.from({ length: 5 }, () => ({ grafia: "", ok: true })),
     cf: Array.from({ length: 12 }, () => ({ ok: true, err: false })),
-    ran: { seg: 30, erros: 0, norma: false },
+    ran: { seg: 30, erros: 0 },
     fam: { pai: "nao", mae: "nao", irmao: "nao", nome: "" },
     pers: { a: "nao", b: "", c: "", d: "", nota: "" },
-    normas: { palavras: false, pseudo: false, flu: false, ditado: false, cf: false },
     fenomeno: "",
     done: { portao: true, escudo: true, palavras: true, pseudo: true, fluencia: true, ditado: true, sons: true, formas: true, familia: true, ponte: true },
   };
   return { ...base, ...over };
 }
 
-test("icedInputOf reflete os gates de fase done e persiste igual ao scoreIced da página", () => {
+test("icedInputOf reflete os gates de fase done e persiste igual ao describeIced da página", () => {
   const state = stateFor();
   const input = icedInputOf(state);
   assert.equal(input.palavrasAcertos, 20);
@@ -111,55 +112,53 @@ test("icedInputOf reflete os gates de fase done e persiste igual ao scoreIced da
 
 test("registro completo transcreve literalmente sem perder produções", () => {
   const state = stateFor({ palavras: Array.from({ length: 20 }, (_, i) => ({ ok: i < 18, err: i >= 18, prod: i === 18 ? "casas" : "" })) });
-  const result = scoreIced(icedInputOf(state));
+  const result = describeIced(icedInputOf(state));
   const record = buildIcedFullRecord(state, result, "01/01/2026 10:00");
   assert.match(record, /Ana Testes/);
   assert.match(record, /casas/);
   assert.match(record, /Erro fonol\u00f3gico|erro fonol\u00f3gico/i);
-  assert.match(record, /n\u00e3o constitui diagn\u00f3stico/i);
-  assert.match(record, /18\/20|- 18 acertos|18 de 20/);
+  assert.match(record, /Registro descritivo; sem classificação\./);
+  assert.match(record, /18\/20 certas/);
 });
 
 test("resumo para a família cabe no wa.me (limite 1800 codificado)", () => {
   for (const over of [{}, { fenomeno: "x".repeat(200) }, { done: {} }]) {
     const state = stateFor(over as Partial<IcedState>);
-    const result = scoreIced(icedInputOf(state));
+    const result = describeIced(icedInputOf(state));
     const text = buildIcedFamilySummary(state, result, "01/01/2026 10:00");
     const encoded = encodeURIComponent(text).length;
     assert.ok(encoded <= 1800, `resumo ICED-8 familiar codificado em ${encoded} estoura o wa.me`);
-    assert.match(text, /n\u00e3o \u00e9 diagn\u00f3stico/i);
+    assert.match(text, /Registro descritivo; sem classificação\./);
   }
 });
 
-test("DocSpec do PDF tem rodap\u00e9 LGPD e nunca classifica com trava ativa", () => {
+test("DocSpec do PDF tem rodapé LGPD, controles como respondidos e nenhuma classificação", () => {
   const locked = stateFor({ controle: { esc: "nao", alf: "sim", freq: "sim", aud: "sim", vis: "sim", di: "sim", pers: "sim" } });
-  const result = scoreIced(icedInputOf(locked));
+  const result = describeIced(icedInputOf(locked));
   const spec = buildIcedDocSpec(locked, result, { doctorName: "Dra. Teste", specialty: "", credentials: "", clinicName: "", motto: "" }, "01/01/2026 10:00");
-  assert.equal(result.faixa, "descritiva");
   assert.match(spec.footer ?? "", /LGPD/);
-  assert.match(spec.subtitle, /descritiva/);
-  const clean = stateFor();
-  const cleanResult = scoreIced(icedInputOf(clean));
-  const cleanSpec = buildIcedDocSpec(clean, cleanResult, { doctorName: "Dra. Teste", specialty: "", credentials: "", clinicName: "", motto: "" }, "01/01/2026 10:00");
-  assert.equal(cleanSpec.sections.length >= 5, true);
-  assert.equal(cleanSpec.sections.some((section) => section.heading === "Dom\u00ednios pontuados"), true);
+  assert.match(spec.subtitle, /Registro descritivo/);
+  assert.match(spec.sections[0].body, /≥ 2 anos de escolarização formal: não/);
+  assert.equal(spec.sections.length >= 5, true);
+  assert.equal(spec.sections.some((section) => section.heading === "Medidas registradas por domínio"), true);
 });
 
-test("icedResponseItems alimenta o SaveToPatient sem lacunas", () => {
+test("icedResponseItems alimenta o SaveToPatient sem lacunas e sem escore", () => {
   const state = stateFor();
-  const result = scoreIced(icedInputOf(state));
+  const result = describeIced(icedInputOf(state));
   const items = icedResponseItems(state, result);
   assert.equal(items.length > 15, true);
   assert.equal(items.every((item) => item.question && item.answer), true);
-  assert.match(items.find((item) => item.question === "Escore ICED-8")?.answer ?? "", /^\d+\/15 \(possíveis nos domínios examinados: \d+\)$/);
+  assert.equal(items.some((item) => /escore|leitura operacional|trava|núcleo/i.test(item.question)), false);
 });
 
-test("resumo curto mant\u00e9m trava e disclaimers", () => {
+test("resumo curto traz as medidas e o aviso descritivo", () => {
   const state = stateFor({ controle: { esc: "sim", alf: "sim", freq: "sim", aud: "nao", vis: "sim", di: "sim", pers: "sim" } });
-  const result = scoreIced(icedInputOf(state));
+  const result = describeIced(icedInputOf(state));
   const summary = buildIcedSummary(state, result, "01/01/2026 10:00");
-  assert.match(summary, /Trava de controle: ativa/);
-  assert.match(summary, /n\u00e3o diagnostica/i);
+  assert.match(summary, /Medidas registradas por domínio/);
+  assert.match(summary, /Registro descritivo; sem classificação\./);
+  assert.doesNotMatch(summary, /Trava|Escore|\/15/);
 });
 
 test("p\u00e1gina wired de ponta a ponta: exporta\u00e7\u00e3o, salvar e anti-regress\u00f5es", () => {
@@ -173,7 +172,7 @@ test("p\u00e1gina wired de ponta a ponta: exporta\u00e7\u00e3o, salvar e anti-re
   assert.match(page, /newApplication/);
   assert.match(page, /clearDraft\(KEY\)/, "nova aplicação apaga o rascunho local");
   assert.match(page, /aria-pressed/);
-  assert.match(page, /normas\.pseudo/);
+  assert.doesNotMatch(page, /normas\.|\.norma\b|result\.(trava|faixa|total|leitura)/);
   assert.doesNotMatch(page, /sessionStorage/);
   assert.match(page, /N\u00e3o foi poss\u00edvel gerar o PDF/);
 });

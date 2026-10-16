@@ -29,7 +29,7 @@ test("memória sequencial: opções distintas e a certa é a vista", () => {
 test("itens julgados novos dizem o que cumpre e o que não cumpre, ou dão o gabarito", () => {
   for (const { item } of extras()) {
     if (item.kind !== "fala" && item.kind !== "fazer") continue;
-    if (item.kind === "fazer") assert.match(item.expected, /Cumpre:.*Não cumpre:.*piso autoral, não norma/s, item.id);
+    if (item.kind === "fazer") assert.match(item.expected, /Cumpre:.*Não cumpre:/s, item.id);
   }
 });
 
@@ -40,10 +40,10 @@ test("equilíbrio de olhos fechados traz instrução de segurança e saída por 
   assert.match(item.prompt, /segurar/);
 });
 
-test("fluência traz regra do que conta e piso autoral", () => {
+test("fluência traz regra do que conta e pede o registro da quantidade, sem corte", () => {
   for (const y of YEARS.filter((v) => v >= 8)) {
     const item = INTEGRATED_BANK[y].palavras.at(-1)!;
     assert.match(item.prompt, /Não contam:/);
-    assert.ok(item.kind === "fala" && /piso autoral, não norma/.test(item.expected));
+    assert.ok(item.kind === "fala" && /anote a quantidade/.test(item.expected) && !/pelo menos|piso|norma/i.test(item.expected));
   }
 });

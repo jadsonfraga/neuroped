@@ -1,11 +1,12 @@
 /**
  * Jogo das Letras e Números (5–18 anos) — banco autoral de itens.
  *
- * Conteúdo original em português do Brasil, escrito para esta triagem. Nada
- * aqui foi copiado de instrumento comercial (DIBELS, GraphoGame, Prodigy etc.
- * serviram só como inspiração de formato). Os níveis 1–2–3 são graduações
- * internas por faixa (abaixo / esperado / acima), NÃO normas brasileiras.
+ * Conteúdo original em português do Brasil, escrito para este jogo. A "dificuldade
+ * do item" (1–2–3) só diz qual item foi apresentado pela regra adaptativa de
+ * administração; não classifica a criança nem se compara a referência alguma.
  */
+import { COMPREHENSION_B } from "./comprehensionB";
+
 export type BandId = "5-6" | "7-8" | "9-10" | "11-12" | "13-14" | "15-18";
 export type Level = 1 | 2 | 3;
 export type ArithOp =
@@ -28,6 +29,8 @@ export interface BandBank {
   decodificacao: DecodeItem[];
   aritmetica: ArithItem[];
   compreensao: ComprehensionSet;
+  /** Segundo texto de compreensão (forma B), autoral; ver comprehensionB.ts. */
+  compreensaoB: ComprehensionSet;
   fluencia: FluencyProbe;
   /** Forma paralela para reteste (mesmo tamanho e tipo de texto da forma A; evita efeito de memória). */
   fluenciaB: FluencyProbe;
@@ -37,7 +40,7 @@ const d = (id: string, level: Level, target: string, sentence: string, feature: 
 const r = (id: string, level: Level, text: string, kind: DecodeItem["kind"], feature: string): DecodeItem => ({ id, level, text, kind, feature });
 const a = (id: string, level: Level, op: ArithOp, prompt: string, answer: string, options: string[], visual?: string): ArithItem => ({ id, level, op, prompt, answer, options, visual });
 
-export const BANDS: BandBank[] = [
+const BASE_BANDS: Omit<BandBank, "compreensaoB">[] = [
   {
     band: "5-6", label: "5 a 6 anos", minAge: 5, maxAge: 6,
     ditado: [
@@ -370,6 +373,13 @@ export const BANDS: BandBank[] = [
       d("d1518-10", 3, "prescindível", "Esse detalhe é prescindível.", "sc e acento"),
       d("d1518-11", 3, "obsolescência", "A obsolescência dos aparelhos gera lixo.", "bs, sc e acento"),
       d("d1518-12", 3, "inscorvessível", "Uma palavra inventada: inscorvessível.", "pseudopalavra longa", true),
+      // Itens de ampliação (2026-10-16): mais 2 por dificuldade para a escada não esgotar numa faixa de 4 anos. Autorais, sem fonte.
+      d("d1518-13", 1, "consciência", "A consciência tranquila ajuda a dormir.", "sc e acento"),
+      d("d1518-14", 1, "exceção", "Toda regra tem uma exceção.", "xc e ç"),
+      d("d1518-15", 2, "ascensão", "A ascensão da equipe foi rápida.", "sc e ão"),
+      d("d1518-16", 2, "sacrifício", "Ela fez um sacrifício pelo grupo.", "c e acento"),
+      d("d1518-17", 3, "reivindicação", "A reivindicação foi atendida.", "v, ç e ditongo"),
+      d("d1518-18", 3, "conscientização", "A campanha de conscientização começou.", "sc e ç"),
     ],
     decodificacao: [
       r("r1518-1", 1, "imprevisibilidade", "palavra", "polissílaba longa"),
@@ -384,6 +394,13 @@ export const BANDS: BandBank[] = [
       r("r1518-10", 3, "eletroencefalograma", "palavra", "polissílaba técnica"),
       r("r1518-11", 3, "desplindamento", "pseudo", "pseudopalavra longa"),
       r("r1518-12", 3, "interflascimento", "pseudo", "pseudopalavra longa"),
+      // Ampliação (2026-10-16): só palavras reais; autorais, sem fonte.
+      r("r1518-13", 1, "ressurgimento", "palavra", "rr, ss e polissílaba"),
+      r("r1518-14", 1, "consequência", "palavra", "nsq e acento"),
+      r("r1518-15", 2, "intransigente", "palavra", "ntr e polissílaba"),
+      r("r1518-16", 2, "obsolescente", "palavra", "bs e sc"),
+      r("r1518-17", 3, "otorrinolaringologista", "palavra", "polissílaba técnica"),
+      r("r1518-18", 3, "ininteligibilidade", "palavra", "polissílaba longa"),
     ],
     aritmetica: [
       a("m1518-1", 1, "equacao", "Se 3x + 5 = 20, quanto vale x?", "5", ["3", "5", "8", "15"]),
@@ -398,6 +415,13 @@ export const BANDS: BandBank[] = [
       a("m1518-10", 3, "equacao", "Se x + y = 10 e x − y = 4, quanto vale x?", "7", ["3", "6", "7", "14"]),
       a("m1518-11", 3, "potencia", "Quanto é log₁₀ 1000?", "3", ["2", "3", "10", "100"]),
       a("m1518-12", 3, "problema", "Qual é a média de 6, 8 e 10?", "8", ["6", "8", "9", "24"]),
+      // Ampliação (2026-10-16): autorais, sem fonte; gabaritos conferidos por teste.
+      a("m1518-13", 1, "equacao", "Se 2x − 3 = 11, quanto vale x?", "7", ["4", "7", "8", "14"]),
+      a("m1518-14", 1, "porcentagem", "Quanto é 15% de 200?", "30", ["15", "30", "45", "185"]),
+      a("m1518-15", 2, "inteiros", "Quanto é (−6) ÷ (−3)?", "2", ["−18", "−2", "2", "18"]),
+      a("m1518-16", 2, "potencia", "Qual é o valor de 3² + 4²?", "25", ["7", "14", "25", "49"]),
+      a("m1518-17", 3, "equacao", "Se x² − 5x + 6 = 0, qual é a maior raiz?", "3", ["2", "3", "5", "6"]),
+      a("m1518-18", 3, "problema", "Qual é a mediana de 3, 9, 4, 7 e 12?", "7", ["4", "7", "7,5", "9"]),
     ],
     compreensao: {
       id: "c1518", title: "Notícias falsas", listening: false,
@@ -419,6 +443,9 @@ export const BANDS: BandBank[] = [
     },
   },
 ];
+
+/** Bancos completos: os bancos-base mais a forma B da compreensão. */
+export const BANDS: BandBank[] = BASE_BANDS.map((band) => ({ ...band, compreensaoB: COMPREHENSION_B[band.band] }));
 
 export const MIN_GAME_AGE = 5;
 export const MAX_GAME_AGE = 18;
@@ -444,3 +471,17 @@ export function fluencyFormOf(bank: BandBank | null, probeId: string | undefined
 export function fluencyWords(probe: FluencyProbe): string[] {
   return probe.text.split(/\s+/).filter(Boolean);
 }
+
+/** Banco da faixa com o texto de compreensão da forma pedida (B = segundo texto autoral, para reteste/variedade). */
+export function withTextForm(bank: BandBank, form: FluencyForm | undefined): BandBank {
+  return form === "B" ? { ...bank, compreensao: bank.compreensaoB } : bank;
+}
+
+/** Quantos anos de idade a faixa cobre (15–18 = 4). Faixas largas pedem leitura pela idade exata. */
+export function bandSpanYears(bank: BandBank): number {
+  return bank.maxAge - bank.minAge + 1;
+}
+
+/** Procedência do banco de itens do jogo (descritiva). */
+export const BANK_PROVENANCE =
+  "Procedência: os itens (ditado, leitura, fluência, compreensão e aritmética) foram escritos para este jogo; a dificuldade do item (1–3) indica só qual item a regra adaptativa apresentou.";

@@ -44,7 +44,7 @@ export type ToddlerDomain = "atencao" | "atencao_conjunta" | "linguagem_receptiv
 export const TODDLER_DOMAIN_ORDER: readonly ToddlerDomain[] = ["atencao", "atencao_conjunta", "linguagem_receptiva", "linguagem_expressiva", "interacao_social", "brincar_simbolico"];
 
 export const TODDLER_DOMAIN_LABELS: Record<ToddlerDomain, string> = {
-  atencao: "Atenção, impulsividade e nível de atividade",
+  atencao: "Atenção, impulsividade e atividade",
   atencao_conjunta: "Atenção conjunta",
   linguagem_receptiva: "Linguagem receptiva",
   linguagem_expressiva: "Linguagem expressiva",
@@ -52,17 +52,12 @@ export const TODDLER_DOMAIN_LABELS: Record<ToddlerDomain, string> = {
   brincar_simbolico: "Brincar simbólico (faz de conta)",
 };
 
-/** Texto fixo do sinal de alerta: descreve e encaminha, nunca diagnostica. */
-export const RED_FLAG_LABEL = "Sinal de alerta — encaminhar avaliação";
-
 interface ItemMeta {
   id: string;
   /** Domínio da bateria de 2–3 anos (só nessas faixas). */
   domain?: ToddlerDomain;
   /** "cuidador" = item de relato do cuidador (não observado diretamente). */
   informant?: "cuidador";
-  /** Quando o item NÃO é cumprido (erro ou sem resposta), gera sinal de alerta com este texto. */
-  redFlag?: string;
   prompt: string;
   origin: OriginId;
   /** Referência do item no banco de origem (ex.: "Cognitivos 7 anos · leitura 3"). */

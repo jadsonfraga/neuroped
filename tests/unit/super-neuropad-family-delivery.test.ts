@@ -4,7 +4,7 @@
 // linguagem acessível (mesmo construtor clínico) e prepara WhatsApp/e-mail
 // com o resumo. Nada sai do dispositivo sem o gesto de envio do cliente; o
 // resumo é sistemático (mesma ordem) e recorrente (mesmo formato em toda
-// partida); sem norma, percentil ou diagnóstico.
+// partida); só contagens, sem norma, percentil, nível ou classificação.
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -64,8 +64,8 @@ test("resumo para a família é sistemático e recorrente: mesma estrutura em to
   for (const text of [complete, partial]) {
     assert.ok(text.includes(SUPER_NEUROPAD_TITLE));
     assert.ok(text.includes("Por mundo"), "seção por mundo sempre presente");
-    assert.match(text, /NÃO dá diagn/);
-    assert.doesNotMatch(text.replace(/não gera escore normativo, percentil[^.]*\./i, ""), /percentil/i, "o aviso nega o percentil; não o usa");
+    assert.match(text, /Registro descritivo; sem classificação\. Interpretação a cargo do profissional\./);
+    assert.doesNotMatch(text, /percentil|referência interna|Leitura do jogo/i);
     assert.doesNotMatch(text, /TDAH|TEA|diagnóstico de/i);
     assert.doesNotMatch(text, /CRM|Prescrição/);
   }
@@ -98,17 +98,17 @@ test("PDF para a família usa o construtor clínico, tem rodapé LGPD e nunca cl
   assert.ok(full.title.includes("Relatório para a família"));
   assert.match(full.footer ?? "", /LGPD/);
   assert.ok(full.sections.some((section) => section.heading === "Como ler este relatório"));
-  const worldSection = full.sections.find((section) => section.heading === "Desempenho por mundo");
+  const worldSection = full.sections.find((section) => section.heading === "Respostas por mundo");
   assert.ok(worldSection?.rich?.length, "linhas com destaque por mundo");
   assert.equal(worldSection?.rich?.map((line) => line.text).join("\n"), worldSection?.body, "rich e body idênticos");
   const partialSession = play(8, (index) => (index === 1 ? "erro" : "acerto"));
   partialSession.answers = partialSession.answers.filter((entry) => entry.phaseId !== "corpo");
   partialSession.skipped = [{ phaseId: "corpo", reason: "Criança cansada ou sem colaboração" }];
   const partial = buildFamilyDocSpec(partialSession, ISSUER, "30/09/2026 15:30");
-  const worldBody = partial.sections.find((section) => section.heading === "Desempenho por mundo")?.body ?? "";
+  const worldBody = partial.sections.find((section) => section.heading === "Respostas por mundo")?.body ?? "";
   assert.match(worldBody, /não aplicado/);
   assert.match(worldBody, /Criança cansada/);
-  assert.ok(partial.sections.some((section) => section.body.includes("não dá classificação geral")));
+  assert.ok(partial.sections.some((section) => section.body.includes("Registro descritivo; sem classificação.")));
   for (const spec of [full, partial]) {
     for (const section of spec.sections) {
       assert.doesNotMatch(section.body, /percentil|diagnóstico de/i, `${section.heading}: sem jargão normativo`);

@@ -94,7 +94,7 @@ test("responseProfile: erros por posição, maior sequência na mesma posição 
   const text = responseProfileLines(sessionWith(answers)).join("\n");
   assert.match(text, /posição 3: 5/);
   assert.doesNotMatch(text, /idade equivalente|diagnóstic[oa] de|ponto de corte de|norma de/i);
-  assert.match(text, /sem norma, percentil ou ponto de corte/);
+  assert.match(text, /sem comparação com referência externa/);
 });
 
 test("perfil entra no relatório e nas linhas estruturadas apenas com respostas; registros antigos continuam válidos", () => {

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { INTEGRATED_BANK, PHASE_ORDER, YEARS } from "../../client/src/features/super-neuropad/bank";
 import { ANSWER_TONE, estimateBandSeconds, sessionLimitSeconds } from "../../client/src/features/super-neuropad/model";
-import { RESULT_MARKER, RESULT_LEGEND, profileBar } from "../../client/src/features/super-neuropad/pdf";
+import { RESULT_MARKER, RESULT_LEGEND } from "../../client/src/features/super-neuropad/pdf";
 
 const snapshot: Record<string, string[]> = JSON.parse(readFileSync(new URL("../fixtures/super-neuropad-item-ids.main.json", import.meta.url), "utf8"));
 
@@ -24,8 +24,6 @@ test("PDF: acerto azul, erro vermelho, sem resposta/recusa cinza, com marcador t
   assert.deepEqual(RESULT_LEGEND.filter((line) => line.tone).map((line) => line.tone), ["correct", "wrong", "neutral"]);
   assert.match(RESULT_LEGEND[1].text, /AZUL/);
   assert.match(RESULT_LEGEND[2].text, /VERMELHO/);
-  assert.equal(profileBar(3, 4), "[########--]");
-  assert.equal(profileBar(0, 0), "[----------]");
 });
 
 test("cores do PDF são azul e vermelho (print-safe)", () => {
