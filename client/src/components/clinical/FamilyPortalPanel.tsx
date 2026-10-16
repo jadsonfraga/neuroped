@@ -187,11 +187,11 @@ export function FamilyPortalPanel({ patientId }: { patientId: string }) {
         <fieldset className="space-y-2" data-testid="portal-lembretes">
           <legend className="text-xs font-bold">Lembretes ({reminders.length})</legend>
           <div className="grid gap-2 md:grid-cols-[auto_1.2fr_auto_1.5fr_auto]">
-            <select className={input} value={remKind} onChange={(e) => setRemKind(e.target.value as ReminderKind)} data-testid="portal-lem-tipo">
+            <select className={input} value={remKind} onChange={(e) => setRemKind(e.target.value as ReminderKind)} aria-label="Tipo de lembrete" data-testid="portal-lem-tipo">
               {REMINDER_KINDS.map((k) => <option key={k} value={k}>{reminderLabel[k]}</option>)}
             </select>
             <input className={input} placeholder="Título" value={remTitle} onChange={(e) => setRemTitle(e.target.value)} data-testid="portal-lem-titulo" />
-            <input className={input} type="datetime-local" value={remWhen} onChange={(e) => setRemWhen(e.target.value)} data-testid="portal-lem-quando" />
+            <input className={input} type="datetime-local" value={remWhen} onChange={(e) => setRemWhen(e.target.value)} aria-label="Data e hora do lembrete" data-testid="portal-lem-quando" />
             <input className={input} placeholder="Texto (opcional)" value={remText} onChange={(e) => setRemText(e.target.value)} data-testid="portal-lem-texto" />
             <Button type="button" variant="outline" data-testid="portal-lem-add" onClick={() => {
               if (!remTitle.trim()) return;
@@ -215,10 +215,10 @@ export function FamilyPortalPanel({ patientId }: { patientId: string }) {
         <fieldset className="space-y-2" data-testid="portal-avaliacoes">
           <legend className="text-xs font-bold">Avaliações próprias do NeuroPad ({ownTests.length}) — só descrição, sem nível, nota ou classificação</legend>
           <div className="grid gap-2 md:grid-cols-[auto_auto_2fr_auto]">
-            <select className={input} value={ownId} onChange={(e) => setOwnId(e.target.value as OwnTestId)} data-testid="portal-av-instrumento">
+            <select className={input} value={ownId} onChange={(e) => setOwnId(e.target.value as OwnTestId)} aria-label="Instrumento de avaliação" data-testid="portal-av-instrumento">
               {Object.entries(OWN_TEST_LABELS).map(([id, label]) => <option key={id} value={id}>{label}</option>)}
             </select>
-            <input className={input} type="date" value={ownDate} onChange={(e) => setOwnDate(e.target.value)} data-testid="portal-av-data" />
+            <input className={input} type="date" value={ownDate} onChange={(e) => setOwnDate(e.target.value)} aria-label="Data da avaliação" data-testid="portal-av-data" />
             <input className={input} value={ownText} onChange={(e) => setOwnText(e.target.value)} placeholder="Como a criança respondeu (descrição sua, opcional)" data-testid="portal-av-texto" />
             <Button type="button" variant="outline" data-testid="portal-av-add" onClick={() => { if (ownDate) { setOwnTests([...ownTests, { instrumento: ownId, data: ownDate, comoRespondeu: ownText.trim() }]); setOwnText(""); } }}>Adicionar</Button>
           </div>

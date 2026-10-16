@@ -8,7 +8,7 @@
 import {
   PDFDocument,
   StandardFonts,
-  rgb,
+  rgb as pdfRgb,
   type PDFImage,
   type PDFPage,
 } from "pdf-lib";
@@ -69,19 +69,19 @@ const LINE = 14;
 // branco quente e cinza técnico. Centralizar as cores também evita espalhar
 // valores visuais crus pelos templates clínicos.
 const C = {
-  navy: rgb(0.043, 0.122, 0.227),
-  bordo: rgb(0.478, 0.118, 0.173),
-  gold: rgb(0.788, 0.635, 0.29),
-  teal: rgb(0.059, 0.463, 0.431),
-  warm: rgb(0.973, 0.961, 0.937),
-  white: rgb(1, 1, 1),
-  ink: rgb(0.2, 0.255, 0.333),
-  muted: rgb(0.39, 0.43, 0.49),
-  soft: rgb(0.94, 0.945, 0.95),
+  navy: pdfRgb(0.043, 0.122, 0.227),
+  bordo: pdfRgb(0.478, 0.118, 0.173),
+  gold: pdfRgb(0.788, 0.635, 0.29),
+  teal: pdfRgb(0.059, 0.463, 0.431),
+  warm: pdfRgb(0.973, 0.961, 0.937),
+  white: pdfRgb(1, 1, 1),
+  ink: pdfRgb(0.2, 0.255, 0.333),
+  muted: pdfRgb(0.39, 0.43, 0.49),
+  soft: pdfRgb(0.94, 0.945, 0.95),
   // Tons de resposta (legíveis impressos e com contraste AA sobre o fundo quente):
   // azul (6,2:1) e vermelho (6,0:1), os mesmos tons dos tokens --snp-answer-*; neutro reutiliza `muted`.
-  answerCorrect: rgb(0.114, 0.306, 0.847),
-  answerWrong: rgb(0.725, 0.11, 0.11),
+  answerCorrect: pdfRgb(0.114, 0.306, 0.847),
+  answerWrong: pdfRgb(0.725, 0.11, 0.11),
 };
 
 // pdf-lib desenha com Helvetica/WinAnsi (Windows-1252) e lança em qualquer
@@ -164,7 +164,7 @@ export async function withClinicBrand(spec: DocSpec): Promise<DocSpec> {
 
 /** Cores efetivas: padrão NeuroPed sem marca; com marca, só a moldura muda. */
 export function brandColors(brand: PdfBrand | null) {
-  const rgbOf = (hex: string) => { const [r, g, b] = hexToUnit(hex); return rgb(r, g, b); };
+  const rgbOf = (hex: string) => { const [r, g, b] = hexToUnit(hex); return pdfRgb(r, g, b); };
   const primary = brand?.primaryColor ? rgbOf(brand.primaryColor) : null;
   const accent = brand?.accentColor ? rgbOf(brand.accentColor) : null;
   return {
