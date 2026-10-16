@@ -53,11 +53,7 @@ mundo a partir de 8 anos e 3–4 itens por mundo até 5 anos dão resolução mu
 ## 4. Achados
 
 **Bugs / riscos de validade**
-1. **Posição da resposta correta não é balanceada.** `TouchStage` embaralha as opções com a mesma semente da partida
-   para todos os itens. No banco, em itens de 4 opções, a resposta certa está no índice 0 em 71, no 1 em 71, no 2 em 35
-   e no 3 em 10 dos 187 itens; com a mesma permutação, o acerto fica concentrado em poucas posições durante toda a
-   partida (ex.: com a semente 1, aos 6 anos a resposta certa fica no índice 1 em 9 dos 14 toques; com a semente 999999 fica no índice 1 em apenas 1 de 14 e o índice 2 domina). Uma criança com preferência de posição (perseveração, lado dominante) ganha ou perde pontos por
-   artefato do embaralhamento, e o relatório não permite separar isso de erro de conteúdo.
+1. **Posição da resposta correta não é balanceada dentro de uma partida.** O banco tem a resposta certa no índice 0 em 71, no 1 em 71, no 2 em 35 e no 3 em 10 dos 187 itens de 4 opções. A página usa uma semente por item (`seed + itemIndex*17 + phaseIndex*101`), então na média das sementes cada posição fica com ~25% (simulação com 4.000 partidas: 25,1/24,8/24,9/25,2%), mas numa partida isolada a mesma posição chegou a concentrar 73% das respostas certas. Preferência de posição da criança (perseveração, lado) pode então render acertos ou erros por artefato. (Correção desta auditoria: a primeira hipótese, de uma permutação única para a partida inteira, não se confirmou; o risco é de desbalanceamento por partida, não de viés médio.)
 2. O registro de toque guarda só o texto da opção escolhida, não a posição na tela nem o tipo de distrator: não dá para
    analisar erro de posição, perseveração nem erro por distrator.
 3. O tempo do item mistura reação da criança e conferência da aplicadora (fala/fazer); não deve ser lido como latência.
