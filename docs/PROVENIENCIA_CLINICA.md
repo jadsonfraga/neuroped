@@ -3,8 +3,8 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 335
-- **Com fonte declarada:** 335 (100.0%)
+- **Total de instrumentos:** 341
+- **Com fonte declarada:** 341 (100.0%)
 - **Sem fonte declarada:** 0
 - **Aguardando validação psicométrica publicada:** 160 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
 
@@ -43,7 +43,9 @@
 | `cbcl` | CBCL | Achenbach TM & Rescorla LA, 2001 | não | não |
 | `cdi2` | CDI-2 | Kovacs M, 2011 - Multi-Health Systems | não | não |
 | `cefaleia-calendario` | Calendário de Cefaleia | Ferramenta de registro clínico NeuroPed (calendário de cefaleia) | não | não |
+| `ces-dc` | CES-DC | Weissman MM, Orvaschel H, Padian N, 1980 (domínio público) | não | não |
 | `cfcs` | CFCS | Hidecker MJC et al., 2011 (CFCS) | não | não |
+| `cgas` | CGAS | Shaffer D et al., Arch Gen Psychiatry, 1983 (Columbia University; adaptada da GAS de Endicott) | não | não |
 | `cgi-i` | CGI-I | Guy W, 1976 (ECDEU Assessment Manual, NIMH — domínio público) | não | não |
 | `cgi-s` | CGI-S | Guy W, 1976 (ECDEU Assessment Manual, NIMH — domínio público) | não | não |
 | `cheops` | CHEOPS | McGrath PJ et al., 1985 | não | não |
@@ -94,12 +96,14 @@
 | `fas-fluencia` | FAS Fluência Verbal | Benton AL, Hamsher K, 1976 (Controlled Oral Word Association — FAS) | não | não |
 | `fas-pr` | FAS-PR | Calvocoressi L et al., 1999 (Family Accommodation Scale) | não | não |
 | `flacc` | FLACC | Merkel SI et al., 1997 - University of Michigan | não | não |
+| `fms` | FMS | Graham HK et al., 2004 — The Functional Mobility Scale (FMS). J Pediatr Orthop 24(5):514-20 | não | não |
 | `fps-r` | FPS-R | Hicks CL, von Baeyer CL, Spafford PA, van Korlaar I, Goodenough B, 2001 (Faces Pain Scale-Revised) — Pain 93(2):173-183. PMID 11427329 · doi:10.1016/S0304-3959(01)00314-1 | não | não |
 | `gad7` | GAD-7 | Spitzer RL et al., 2006 - Arch Intern Med | não | não |
 | `gad7-cuidador` | GAD-7 do cuidador | Spitzer RL et al., 2006 (domínio público) | não | não |
 | `gad7ped` | GAD-7 Pediátrico | Spitzer RL et al., 2006 | não | não |
 | `gmfcs` | GMFCS | Palisano R et al., 2007 | não | não |
 | `hague-szs` | Hague Seizure Severity | Carpay HA et al., 1997 (Hague Seizure Severity Scale) | não | não |
+| `hamd` | HAM-D | Hamilton M. J Neurol Neurosurg Psychiatry. 1960 (HDRS/HAM-D). | não | não |
 | `hine` | HINE | Dubowitz L et al., 2008 | não | não |
 | `idafeni` | IDAFENI | 2026-06-26_ESCALA_AUTORAL_IDAFENI_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1vkSSue7AB35jDmnn3cXmwHoBLT3sZpOBo8_RrjmVs5c/edit | não | sim |
 | `integra-kids-360` | INTEGRA-KIDS 360 | 2026-07-04_ESCALA_AUTORAL_INTEGRA-KIDS-360_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1KutJviv17T4aRJ7vurU_-xdUPhA14sEhFrWbMqPpNk4/edit | não | sim |
@@ -279,6 +283,7 @@
 | `pdae` | PDAE | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não | não |
 | `pedmidas` | PedMIDAS | Hershey AD et al., 2001 — Neurology 57(11):2034-9 (© Cincinnati Children's, uso clínico livre) | não | não |
 | `pedsql` | PedsQL | Varni JW et al., 2001 | não | não |
+| `phq2` | PHQ-2 (breve) | Kroenke K, Spitzer RL, Williams JBW, 2003 (uso livre) | não | não |
 | `phq9-cuidador` | PHQ-9 do cuidador | Kroenke K, Spitzer RL, Williams JB, 2001 (domínio público) | não | não |
 | `phqa` | PHQ-A | Johnson JG et al., 2002 | não | não |
 | `podj-tea-prime-1-6a` | PODJ-TEA PRIME 1–6A | PODJ-TEA PRIME — Kit Fichas por Paciente, Dr. Jadson Fraga | não | não |
@@ -292,6 +297,7 @@
 | `prime-screen` | PRIME Screen | Miller TJ et al., 2004 (PRIME Screen for Psychosis Risk) | não | não |
 | `prisma-nf-60` | PRISMA-NF 60 | 2026-07-11_ESCALA_AUTORAL_PRISMA_NF_60_V1 — Dr. Jadson Fraga · Documento original: https://docs.google.com/document/d/1hf2yqGeJd2sBW8QFNrTAbNJP_Fqv9Hu8jk3INh2lyT0/edit | não | sim |
 | `psc17` | PSC-17 | Jellinek MS et al., 1988 (Pediatric Symptom Checklist); PSC-17 Gardner W et al., 1999 | não | não |
+| `psc35` | PSC-35 | Jellinek MS et al., 1988; psc.partners.org (domínio público) | não | não |
 | `psn-np` | PSN-NP | Instrumento autoral NeuroPed — Dr. Jadson Fraga, 2026. Construto: processamento sensorial. | não | sim |
 | `puts` | PUTS | Woods DW et al., 2005 (uso livre) | não | não |
 | `q-chat-10` | Q-CHAT-10 | Allison C, Auyeung B, Baron-Cohen S, 2012 (Q-CHAT-10) — J Am Acad Child Adolesc Psychiatry 51(2):202-212.e7. PMID 22265366 · doi:10.1016/j.jaac.2011.11.003 | não | não |

@@ -684,6 +684,8 @@ export const paralisiaCerebral: ScaleEntry[] = [
     prioridade: "triagem",
     tempo: "10 min",
     description: "Mede mobilidade em 3 distâncias: 5m (em casa), 50m (escola), 500m (comunidade).",
+    fonte: "Graham HK et al., 2004 — The Functional Mobility Scale (FMS). J Pediatr Orthop 24(5):514-20",
+    scoringCutoff: "Trio de notas 6–1 (mais C e N) para 5, 50 e 500 m; sem soma.",
     licencaUso: "livre",
     modoApp: "aplicar",
     duplicataStatus: "nova",
