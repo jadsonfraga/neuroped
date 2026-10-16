@@ -97,6 +97,7 @@ export const KNOWN_ROUTE_PATTERNS: readonly string[] = [
   "/laudo-neuroped",
   "/laudo-super",
   "/laudo-um-clique",
+  "/evolucao-escalas",
   "/login",
   "/marcacao",
   "/marcos-desenvolvimento",
