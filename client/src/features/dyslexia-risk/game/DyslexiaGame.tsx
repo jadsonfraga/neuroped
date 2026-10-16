@@ -11,7 +11,7 @@ import { BANK_PROVENANCE, MAX_GAME_AGE, MIN_GAME_AGE, bandForAge, fluencyProbe, 
 import {
   FLUENCY_SECONDS, GAME_STORAGE_KEY, GAME_VERSION, SESSION_CAP_SECONDS, WORLDS,
   OBSERVACOES_MAX, OBSERVATION_CHIPS, classifyDitado, encouragementFor, newGame, nextItemFor, recordFluency, recordResponse, setObservacoes, skipWorld, starsFor, summarizeGame, tick, worldTarget,
-  type GameState, type ItemResponse, type WorldId,
+  type FluencyInput, type GameState, type ItemResponse, type WorldId,
 } from "./engine";
 import { clearDraft, readDraft, writeDraft } from "../localDraft";
 import { GAME_DISCLAIMER, OP_LABEL, decimalBr, fluencyText, timingLines, buildGameDocSpec, buildGameRecord, gameResponseItems, outcomeLabel, tallyText } from "./report";
@@ -404,7 +404,7 @@ interface WorldScreenProps {
   speech: Speech;
   paused: boolean;
   onAnswer: (r: ItemResponse) => void;
-  onFluency: (r: { probeId: string; totalWords: number; lidas: number; erros: number; segundos: number }) => void;
+  onFluency: (r: FluencyInput) => void;
   onSkip: () => void;
   onMap: () => void;
 }
@@ -414,6 +414,12 @@ function WorldScreen({ world, game, bank, speech, paused, onAnswer, onFluency, o
   const progress = game.worlds[world];
   const target = worldTarget(world, bank);
   const item = nextItemFor(game, world, bank);
+  // Corrida em andamento vive só na tela: sair pelo mapa sem terminar perderia o registro.
+  const fluencyDirty = useRef(false);
+  const goMap = () => {
+    if (world === "fluencia" && fluencyDirty.current && !window.confirm("Sair sem terminar a corrida? O que foi marcado nesta leitura será perdido.")) return;
+    onMap();
+  };
   return (
     <section className="snp-panel snp-scanlines space-y-3 p-4" data-testid={`drx-world-${world}`}>
       <div className="flex flex-wrap items-center gap-2">
@@ -422,7 +428,7 @@ function WorldScreen({ world, game, bank, speech, paused, onAnswer, onFluency, o
         {world !== "fluencia" && <span className="snp-chip">{Math.min(progress.responses.length + 1, target)} de {target}</span>}
       </div>
       <div className="flex flex-wrap gap-2">
-        <button type="button" className="snp-btn snp-btn--paper drx-tap px-3 text-[11px]" onClick={onMap}>Mapa</button>
+        <button type="button" className="snp-btn snp-btn--paper drx-tap px-3 text-[11px]" onClick={goMap}>Mapa</button>
         <button type="button" className="snp-btn snp-btn--slate drx-tap px-3 text-[11px]" onClick={() => { if (window.confirm("Pular este mundo? Ele fica como não aplicado.")) onSkip(); }}>Aplicador: pular mundo</button>
       </div>
       <div className="snp-meter" aria-hidden="true">{Array.from({ length: target }, (_, i) => <i key={i} className={i < progress.responses.length ? "hit" : ""} />)}</div>
@@ -430,7 +436,7 @@ function WorldScreen({ world, game, bank, speech, paused, onAnswer, onFluency, o
       {world === "decodificacao" && item && <DecodeView key={(item as DecodeItem).id} item={item as DecodeItem} onAnswer={onAnswer} />}
       {world === "compreensao" && item && <ComprehensionView key={(item as ComprehensionQuestion).id} bank={bank} question={item as ComprehensionQuestion} speech={speech} onAnswer={onAnswer} />}
       {world === "aritmetica" && item && <ArithView key={(item as ArithItem).id} item={item as ArithItem} young={bank.band === "5-6" || bank.band === "7-8"} speech={speech} onAnswer={onAnswer} />}
-      {world === "fluencia" && <FluencyView bank={bank} onDone={onFluency} paused={paused} initialForm={game?.forma} />}
+      {world === "fluencia" && <FluencyView bank={bank} onDone={onFluency} paused={paused} initialForm={game?.forma} onDirtyChange={(d) => { fluencyDirty.current = d; }} />}
     </section>
   );
 }
@@ -531,52 +537,161 @@ function ArithView({ item, young, speech, onAnswer }: { item: ArithItem; young: 
   );
 }
 
-function FluencyView({ bank, onDone, paused, initialForm }: { bank: BandBank; onDone: WorldScreenProps["onFluency"]; paused: boolean; initialForm?: FluencyForm }) {
+type MarkMode = "erro" | "ultima";
+
+/** Token sem pontuação nas pontas, para a lista de palavras com erro do registro. */
+const bareWord = (w: string) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "") || w;
+
+/**
+ * Corrida da Leitura. O toque no texto tem dois modos: com o cronômetro correndo marca
+ * erro de leitura na palavra; parado, marca a última palavra lida (🏁). "Terminar" nunca
+ * fica bloqueado: sem última palavra marcada, pergunta quanto foi lido em vez de falhar calado.
+ */
+function FluencyView({ bank, onDone, paused, initialForm, onDirtyChange }: { bank: BandBank; onDone: WorldScreenProps["onFluency"]; paused: boolean; initialForm?: FluencyForm; onDirtyChange?: (dirty: boolean) => void }) {
   const [form, setForm] = useState<FluencyForm>(initialForm ?? "A");
   const probe = fluencyProbe(bank, form);
   const words = useMemo(() => fluencyWords(probe), [probe]);
+  const unidade = probe.kind === "silabas" ? "sílaba" : "palavra";
+  const unidades = probe.kind === "silabas" ? "sílabas" : "palavras";
   const [secs, setSecs] = useState(0);
   const [running, setRunning] = useState(false);
+  const [mode, setMode] = useState<MarkMode>("erro");
   const [lidas, setLidas] = useState(0);
-  const [erros, setErros] = useState(0);
+  const [marcados, setMarcados] = useState<ReadonlySet<number>>(() => new Set());
+  const [avulsos, setAvulsos] = useState(0);
+  const [asking, setAsking] = useState(false);
+  const [picking, setPicking] = useState(false);
+  const askRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLParagraphElement>(null);
   useEffect(() => {
     if (!running) return;
     const id = window.setInterval(() => setSecs((n) => n + 1), 1000);
     return () => window.clearInterval(id);
   }, [running]);
   useEffect(() => {
-    if (running && (secs >= FLUENCY_SECONDS || paused)) setRunning(false);
+    if (running && (secs >= FLUENCY_SECONDS || paused)) { setRunning(false); setMode("ultima"); }
   }, [running, secs, paused]);
+  const dirty = secs > 0 || running || lidas > 0 || marcados.size > 0 || avulsos > 0;
+  useEffect(() => { onDirtyChange?.(dirty); }, [dirty, onDirtyChange]);
+  useEffect(() => { if (asking) askRef.current?.focus(); }, [asking]);
+
   const started = secs > 0 || running;
+  // Erros tocados depois da última palavra lida não foram lidos: ficam de fora da contagem.
+  const errosNoTrecho = lidas > 0 ? [...marcados].filter((i) => i < lidas).length : marcados.size;
+  const foraDoTrecho = marcados.size - errosNoTrecho;
+  const erros = errosNoTrecho + avulsos;
+
+  function changeForm(next: FluencyForm) {
+    setForm(next); setLidas(0); setMarcados(new Set()); setAvulsos(0); setAsking(false); setPicking(false);
+  }
+  function start() { setRunning(true); setMode("erro"); setAsking(false); setPicking(false); }
+  function stop() { setRunning(false); setMode("ultima"); }
+  function setLast(n: number) {
+    setLidas(Math.max(0, Math.min(words.length, n)));
+    setAsking(false); setPicking(false);
+  }
+  function tapWord(i: number) {
+    if (mode === "ultima") { setLast(i + 1); return; }
+    setMarcados((cur) => {
+      const next = new Set(cur);
+      if (next.has(i)) next.delete(i); else next.add(i);
+      return next;
+    });
+  }
+  function finish(n: number) {
+    const noTrecho = [...marcados].filter((i) => i < n).sort((a, b) => a - b);
+    onDone({
+      probeId: probe.id,
+      totalWords: words.length,
+      lidas: n,
+      erros: Math.min(noTrecho.length + avulsos, n),
+      segundos: Math.min(secs, FLUENCY_SECONDS),
+      formaAplicada: form,
+      palavrasComErro: noTrecho.map((i) => bareWord(words[i])),
+    });
+  }
+  function terminar() {
+    if (running) stop();
+    if (lidas === 0) { setAsking(true); setMode("ultima"); return; }
+    finish(lidas);
+  }
+  function pickInText() {
+    setAsking(false); setMode("ultima"); setPicking(true);
+    textRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }
+
+  const instrucao = asking
+    ? `Nenhuma última ${unidade} marcada.`
+    : picking
+      ? `Toque na última ${unidade} lida (🏁) e depois em Terminar corrida.`
+      : mode === "erro"
+        ? `Toque na ${unidade} lida com erro para marcar; toque de novo para desmarcar.`
+        : `Toque na última ${unidade} lida (🏁).`;
+
   return (
     <div className="space-y-3">
       <p className="font-bold">{probe.kind === "silabas" ? "Leia as sílabas em voz alta, uma por uma." : "Leia o texto em voz alta, do começo, no seu ritmo."}</p>
       {!started && (
         <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Forma do texto">
           <span className="text-xs font-bold">Forma:</span>
-          <button type="button" className={`snp-btn ${form === "A" ? "snp-btn--sky" : "snp-btn--paper"} drx-tap px-4`} aria-pressed={form === "A"} onClick={() => { setForm("A"); setLidas(0); }}>A · 1ª aplicação</button>
-          <button type="button" className={`snp-btn ${form === "B" ? "snp-btn--sky" : "snp-btn--paper"} drx-tap px-4`} aria-pressed={form === "B"} onClick={() => { setForm("B"); setLidas(0); }}>B · reteste</button>
+          <button type="button" className={`snp-btn ${form === "A" ? "snp-btn--sky" : "snp-btn--paper"} drx-tap px-4`} aria-pressed={form === "A"} onClick={() => changeForm("A")}>A · 1ª aplicação</button>
+          <button type="button" className={`snp-btn ${form === "B" ? "snp-btn--sky" : "snp-btn--paper"} drx-tap px-4`} aria-pressed={form === "B"} onClick={() => changeForm("B")}>B · reteste</button>
         </div>
       )}
-      <p className="text-xs font-bold">Aplicador: inicie o cronômetro, marque os erros e, ao final, toque na última {probe.kind === "silabas" ? "sílaba" : "palavra"} lida.</p>
+      <p className="text-xs font-bold">Aplicador: inicie o cronômetro e toque nas {unidades} lidas com erro; ao parar, toque na última {unidade} lida. Cronômetro externo: marque direto e termine.</p>
       <div className="flex flex-wrap items-center gap-2">
-        <button type="button" className="snp-btn snp-btn--sun drx-tap px-4" disabled={running || secs >= FLUENCY_SECONDS} onClick={() => setRunning(true)}>{secs ? "▶ Retomar" : "▶ Iniciar 60 s"}</button>
-        <button type="button" className="snp-btn snp-btn--paper drx-tap px-4" disabled={!running} onClick={() => setRunning(false)}>⏸ Parar</button>
+        <button type="button" className="snp-btn snp-btn--sun drx-tap px-4" disabled={running || secs >= FLUENCY_SECONDS} onClick={start}>{secs ? "▶ Retomar" : "▶ Iniciar 60 s"}</button>
+        <button type="button" className="snp-btn snp-btn--paper drx-tap px-4" disabled={!running} onClick={stop}>⏸ Parar</button>
         <span className="snp-chip" role="timer" aria-live="off">⏱ {secs} s / {FLUENCY_SECONDS}</span>
       </div>
-      <p className={`drx-reading leading-9 ${probe.kind === "silabas" ? "drx-syllables" : ""}`} lang="pt-BR">
-        {words.map((w, i) => (
-          <button type="button" key={i} aria-label={`Última lida: ${w} (${i + 1})`} aria-pressed={lidas === i + 1} className={`drx-word ${i < lidas ? "read" : ""}`} onClick={() => setLidas(i + 1)}>{w}</button>
-        ))}
+      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="O toque no texto marca">
+        <span className="text-xs font-bold">Toque no texto marca:</span>
+        <button type="button" className={`snp-btn ${mode === "erro" ? "snp-btn--berry" : "snp-btn--paper"} drx-tap px-3 text-xs`} aria-pressed={mode === "erro"} onClick={() => { setMode("erro"); setPicking(false); }}>✗ Erro</button>
+        <button type="button" className={`snp-btn ${mode === "ultima" ? "snp-btn--sky" : "snp-btn--paper"} drx-tap px-3 text-xs`} aria-pressed={mode === "ultima"} onClick={() => setMode("ultima")}>🏁 Última lida</button>
+      </div>
+      <p className="text-xs font-bold" aria-live="polite" data-testid="drx-fluencia-instrucao">{instrucao}</p>
+      <p ref={textRef} className={`drx-reading leading-9 ${probe.kind === "silabas" ? "drx-syllables" : ""} ${picking ? "drx-reading--pick" : ""}`} lang="pt-BR">
+        {words.map((w, i) => {
+          const last = lidas === i + 1;
+          return (
+            <button
+              type="button"
+              key={i}
+              aria-label={mode === "erro" ? `Erro em: ${w} (${i + 1})` : `Última lida: ${w} (${i + 1})`}
+              aria-pressed={mode === "erro" ? marcados.has(i) : last}
+              className={`drx-word ${i < lidas ? "read" : ""} ${marcados.has(i) ? "erro" : ""} ${last ? "last" : ""}`}
+              onClick={() => tapWord(i)}
+            >
+              {w}{last && <span aria-hidden="true"> 🏁</span>}
+            </button>
+          );
+        })}
       </p>
       <div className="flex flex-wrap items-center gap-2">
         <span className="font-bold">Erros:</span>
-        <button type="button" className="snp-btn snp-btn--paper drx-tap px-4" aria-label="Menos um erro" onClick={() => setErros((e) => Math.max(0, e - 1))}>−</button>
-        <span className="snp-chip text-base" aria-live="polite">{erros}</span>
-        <button type="button" className="snp-btn snp-btn--berry drx-tap px-4" aria-label="Mais um erro" onClick={() => setErros((e) => e + 1)}>+</button>
-        <span className="text-sm font-bold">Lidas: {lidas}</span>
+        <button type="button" className="snp-btn snp-btn--paper drx-tap px-4" aria-label="Menos um erro" disabled={avulsos === 0} onClick={() => setAvulsos((e) => Math.max(0, e - 1))}>−</button>
+        <span className="snp-chip text-base" aria-live="polite" data-testid="drx-fluencia-erros">{erros}</span>
+        <button type="button" className="snp-btn snp-btn--berry drx-tap px-4" aria-label="Mais um erro" onClick={() => setAvulsos((e) => e + 1)}>+</button>
+        {marcados.size > 0 && <span className="text-xs font-bold">{errosNoTrecho} tocado{errosNoTrecho === 1 ? "" : "s"} no texto</span>}
       </div>
-      <button type="button" className="snp-btn snp-btn--grass drx-tap w-full" disabled={!started || running || lidas === 0} onClick={() => onDone({ probeId: probe.id, totalWords: words.length, lidas, erros: Math.min(erros, lidas), segundos: Math.max(1, Math.min(secs, FLUENCY_SECONDS)) })}>Terminar corrida ✓</button>
+      {foraDoTrecho > 0 && <p className="text-xs font-bold">{foraDoTrecho} erro{foraDoTrecho === 1 ? "" : "s"} tocado{foraDoTrecho === 1 ? "" : "s"} depois da última {unidade} lida não entra{foraDoTrecho === 1 ? "" : "m"} na contagem.</p>}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="font-bold">Lidas:</span>
+        <button type="button" className="snp-btn snp-btn--paper drx-tap px-4" aria-label={`Menos uma ${unidade} lida`} disabled={lidas === 0} onClick={() => setLast(lidas - 1)}>−</button>
+        <span className="snp-chip text-base" aria-live="polite" data-testid="drx-fluencia-lidas">{lidas} / {words.length}</span>
+        <button type="button" className="snp-btn snp-btn--paper drx-tap px-4" aria-label={`Mais uma ${unidade} lida`} disabled={lidas >= words.length} onClick={() => setLast(lidas + 1)}>+</button>
+        <button type="button" className="snp-btn snp-btn--sky drx-tap px-3 text-xs" disabled={lidas === words.length} onClick={() => setLast(words.length)}>Texto todo</button>
+      </div>
+      {asking && (
+        <div ref={askRef} tabIndex={-1} role="alertdialog" aria-label={`Quantas ${unidades} foram lidas?`} className="snp-panel space-y-2 p-3" data-testid="drx-fluencia-pergunta">
+          <p className="font-bold">Quantas {unidades} foram lidas?</p>
+          <button type="button" className="snp-btn snp-btn--grass drx-tap w-full" onClick={() => finish(words.length)}>✓ Leu o texto completo ({words.length} {unidades})</button>
+          <button type="button" className="snp-btn snp-btn--sky drx-tap w-full" onClick={pickInText}>👆 Selecionar última {unidade} no texto</button>
+          <button type="button" className="snp-btn snp-btn--paper drx-tap w-full text-xs" onClick={() => finish(0)}>Não leu nenhuma {unidade}</button>
+        </div>
+      )}
+      <button type="button" className="snp-btn snp-btn--grass drx-tap w-full" onClick={terminar}>Terminar corrida ✓</button>
+      {!started && <p className="text-xs">Sem o cronômetro do aplicativo, o tempo registrado será de {FLUENCY_SECONDS} s (cronômetro externo).</p>}
     </div>
   );
 }
