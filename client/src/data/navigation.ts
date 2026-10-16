@@ -216,6 +216,7 @@ export const navSections: NavSection[] = [
       { href: "/agenda", label: "Agenda & Gestão", icon: Calendar, tone: "priority" },
       { href: "/laudo-neuroped", label: "Laudos", icon: FileText, tone: "priority" },
       { href: "/laudo-um-clique", label: "Laudo em um clique", icon: FileText },
+      { href: "/checagem-dose", label: "Checagem de dose (apoio)", icon: ShieldCheck },
       { href: "/receita-c1", label: "Receita C1", icon: Pill, tone: "priority" },
       { href: "/memoria-clinica", label: "Memória clínica", icon: BrainCog },
       { href: "/laudo-super", label: "Laudos SuperNeuroPed", icon: ShieldCheck },
