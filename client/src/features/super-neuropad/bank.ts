@@ -10,12 +10,9 @@
  *     desenhados pelo próprio componente de lá; mesma graduação do Modo Fácil (2/3/4 opções);
  *   • Avaliação cognitiva infantil — `cognitive-age/bank` (um perfil por idade).
  *
- * Calibração (ver docs/SUPER_NEUROPAD_GAME.md, "Calibração por faixa"): os itens objetivos
- * vêm do perfil da PRÓPRIA idade (o banco objetivo já fica um degrau abaixo da exigência
- * escolar); tarefas julgadas seguem os marcos que os roteiros de origem já citam (CDC/AAP,
- * via OBS-10). Itens que pediam mais do que a idade costuma alcançar foram trocados
- * (ex.: numerais aos 3 anos, span de dígitos de 6 aos 10 anos). Nada aqui é norma,
- * percentil ou ponto de corte validado.
+ * Cada item traz o critério de acerto da própria tarefa e a origem. O banco não define
+ * classificação de qualquer tipo nem comparação com referência: quem interpreta
+ * o registro é o profissional.
  *
  * Nada depende de objeto fora do aplicativo: desenho e escrita são feitos com o dedo
  * na tela; o ambiente (chão livre, porta, mesa, junta do piso) é o da sala.
@@ -331,7 +328,7 @@ function olhos(years: number): Draft<Item>[] {
     case 9: return [vrMatch(9, "coco", s + 1), ...COGNITIVE_BANK[9].visual.map((entry) => cog(9, "visual", entry.prompt))];
     default: {
       // 10 a 17 anos: uma amostra breve do Reconhecimento Visual (4 opções da mesma categoria, figura de
-      // repertório comum; o roteiro visual lembra que desconhecer uma figura não define déficit) + os quatro
+      // repertório comum; o roteiro visual lembra que o app não interpreta o desconhecimento de uma figura) + os quatro
       // itens visuais da Avaliação Cognitiva da idade.
       const own = COGNITIVE_BANK[years].visual.map((entry, index, list) => cog(years, "visual", entry.prompt, list.slice(0, index).filter((other) => other.prompt === entry.prompt).length));
       return [vrShow(years, TEEN_VR[years], s + 1), ...own];
@@ -654,11 +651,8 @@ function corpo(years: number): Draft<Item>[] {
 
 // ─────────────────────────────── ampliação dos 8 a 17 anos (sexto desafio de cada mundo) ───────────────────────────────
 // Itens autorais do jogo (v2026-10-12): cobrem o que os bancos de origem não alcançam nas idades maiores. A
-// referência diz que são ampliação autoral; os limiares são pisos conservadores para déficit GROSSEIRO, não norma.
+// referência diz que são ampliação autoral (criada para o jogo).
 const EXT = (band: string, what: string) => `${band} · ${what} (ampliação autoral do jogo)`;
-
-/** Mínimo de animais em 60 s: piso autoral conservador, bem abaixo do que a idade costuma alcançar. */
-const FLUENCY_FLOOR: Record<number, number> = { 8: 8, 9: 9, 10: 10, 11: 10, 12: 11, 13: 11, 14: 12, 15: 12, 16: 13, 17: 13 };
 
 function vilaExtra(years: number): Draft<Item> {
   if (years <= 9) return fala("sonda10", EXT(SONDA("8–11 anos", "flexibilidade social"), "negociar"), "Pergunte: “Você e um colega querem brincar de coisas diferentes. O que vocês podem fazer?”",
@@ -693,10 +687,9 @@ function olhosExtra(years: number): Draft<Item> {
 }
 
 function palavrasExtra(years: number): Draft<Item> {
-  const floor = FLUENCY_FLOOR[years];
   return fala("sonda10", EXT(SONDA(years >= 12 ? "12–17 anos" : "8–11 anos", "linguagem expressiva"), "fluência verbal semântica"),
     "Diga: “Fale o máximo de ANIMAIS que você conseguir, até eu avisar.” Marque 60 segundos no relógio e conte os acertos. Contam: animais diferentes de qualquer tipo (peixes, aves e insetos também). Não contam: repetições, diminutivo do mesmo animal (gato/gatinho), nome próprio de bicho (Rex) e categorias soltas (“bicho”, “animal”).",
-    `Diz pelo menos ${floor} animais diferentes em 60 segundos (piso autoral, não norma)`, { stimulus: "🗣️ 🐶 🐱", seconds: 60 });
+    `Diz animais diferentes durante os 60 segundos (anote a quantidade nas observações)`, { stimulus: "🗣️ 🐶 🐱", seconds: 60 });
 }
 
 function numerosExtra(years: number): Draft<Item> {
@@ -718,20 +711,20 @@ function memoriaExtra(years: number): Draft<Item> {
   if (years <= 13) return fala("sonda10", EXT(SONDA(years >= 12 ? "12–17 anos" : "8–11 anos", "memória operacional"), "controle mental"), "Diga: “Fale os meses do ano ao contrário, começando em dezembro.”",
     "Diz os 12 meses em ordem inversa com no máximo 1 erro espontaneamente corrigido", { seconds: 30 });
   if (years <= 15) return fala("sonda10", EXT(SONDA("12–17 anos", "memória operacional"), "controle mental (ordenar números)"), "Diga: “Vou falar uns números. Repita colocando em ordem, do menor para o maior: 8 – 3 – 6 – 1 – 9 – 4.” Fale um número por segundo e diga a sequência uma única vez.",
-    "Cumpre: diz 1 – 3 – 4 – 6 – 8 – 9 sem pular nem trocar nenhum. Não cumpre: omissão, troca ou pedido de repetição (piso autoral, não norma)", { stimulus: "🗣️ ↩", seconds: 25 });
+    "Cumpre: diz 1 – 3 – 4 – 6 – 8 – 9 sem pular nem trocar nenhum. Não cumpre: omissão, troca ou pedido de repetição", { stimulus: "🗣️ ↩", seconds: 25 });
   return fala("sonda10", EXT(SONDA("12–17 anos", "flexibilidade cognitiva"), "alternar número e letra"), "Diga: “Alterne número e letra, em ordem: 1 – A – 2 – B – 3 – C… vá até o 6 – F.” Dê o começo e deixe a criança continuar.",
     "Completa 4 – D – 5 – E – 6 – F sem perder a alternância (no máximo 1 erro corrigido)", { seconds: 30 });
 }
 
 function corpoExtra(years: number): Draft<Item> {
   if (years <= 9) return fazer("obs10", EXT(OBS("6–11 anos", "movimentar com segurança (núcleo motor)"), "equilíbrio sem a visão"), "Segurança: piso plano e livre, sem móveis por perto; fique ao lado, com a mão pronta para segurar. Peça: “Fique num pé só, com os olhos fechados.” Conte até 5 em voz alta. Se a criança tiver medo ou cambalear logo no início, segure, pare e marque como não cumprido (registre na observação).",
-    "Cumpre: mantém 5 segundos sem apoiar o outro pé, sem pular de lugar e sem abrir os olhos. Não cumpre: apoia o pé, abre os olhos, precisa ser segurada ou recusa (piso autoral, não norma)", { stimulus: "🦩", seconds: 25 });
+    "Cumpre: mantém 5 segundos sem apoiar o outro pé, sem pular de lugar e sem abrir os olhos. Não cumpre: apoia o pé, abre os olhos, precisa ser segurada ou recusa", { stimulus: "🦩", seconds: 25 });
   if (years <= 11) return fazer("obs10", EXT(OBS("9–11 anos", "movimentar com segurança (núcleo motor)"), "saltos em um pé"), "Piso plano e não escorregadio, criança calçada ou descalça (não de meia). Fique perto. Demonstre e peça: “Pule num pé só, 5 vezes seguidas. Agora no outro pé.”",
-    "Cumpre: 5 pulos seguidos em cada pé sem apoiar o outro pé. Não cumpre: apoia o pé, para no meio ou só consegue de um lado (piso autoral, não norma)", { stimulus: "🦩", seconds: 30 });
+    "Cumpre: 5 pulos seguidos em cada pé sem apoiar o outro pé. Não cumpre: apoia o pé, para no meio ou só consegue de um lado", { stimulus: "🦩", seconds: 30 });
   if (years <= 13) return fazer("obs10", EXT(OBS("12–17 anos", "movimentar com segurança (núcleo motor)"), "coordenação de quatro membros"), "Demonstre 2 polichinelos e peça: “Faça polichinelo, 10 vezes seguidas, no ritmo.” Conte em voz alta.",
-    "Cumpre: coordena braços e pernas em pelo menos 8 dos 10 saltos, sem parar. Não cumpre: para, perde a sincronia na maioria dos saltos ou só mexe braços ou pernas (piso autoral, não norma)", { stimulus: "🙌", seconds: 30 });
+    "Cumpre: coordena braços e pernas em pelo menos 8 dos 10 saltos, sem parar. Não cumpre: para, perde a sincronia na maioria dos saltos ou só mexe braços ou pernas", { stimulus: "🙌", seconds: 30 });
   return fazer("obs10", EXT(OBS("12–17 anos", "movimentar com segurança (núcleo motor)"), "dupla tarefa motora e cognitiva"), "Use uma linha reta no chão (a junta do piso, cerca de 3 m) e fique ao lado. Demonstre 2 passos. Peça: “Ande sobre a linha, calcanhar encostando na ponta do outro pé, 8 passos, enquanto fala os meses do ano em ordem.”",
-    "Cumpre: 8 passos com no máximo 1 saída da linha e os meses em ordem sem parar de andar. Não cumpre: sai da linha 2 vezes ou mais, para de andar para pensar ou erra a ordem dos meses (piso autoral, não norma)", { stimulus: "👣 🗣️", seconds: 30 });
+    "Cumpre: 8 passos com no máximo 1 saída da linha e os meses em ordem sem parar de andar. Não cumpre: sai da linha 2 vezes ou mais, para de andar para pensar ou erra a ordem dos meses", { stimulus: "👣 🗣️", seconds: 30 });
 }
 
 const EXTRAS: Record<PhaseId, (years: number) => Draft<Item>> = {
@@ -740,19 +733,13 @@ const EXTRAS: Record<PhaseId, (years: number) => Draft<Item>> = {
 
 
 // ─────────────────────────────── baterias dedicadas de 2 e 3 anos ───────────────────────────────
-// Versão 2026-10-13. Formato inspirado em avaliação cognitiva gamificada (mundos curtos, figuras grandes,
-// toque simples), com conteúdo 100% autoral. Base de referência descritiva (não copiada): marcos do CDC 2022
-// ("Learn the Signs. Act Early", 24 e 36 meses), áreas do Denver II e conceitos de sinais de alerta do
-// M-CHAT-R/F (apontar, resposta ao nome, imitação, interesse por crianças, perda de habilidades).
-// Cada mundo vira UM domínio. Itens de relato do cuidador são marcados como tal. Os critérios são pisos
-// autorais, não norma; o não cumprimento de itens marcados gera "Sinal de alerta — encaminhar avaliação",
-// sem diagnóstico.
-const TOD = (months: string, domain: string, what: string) => `Bateria ${months} · ${domain} · ${what} (autoral; base: marcos CDC 2022, Denver II, conceitos M-CHAT-R/F)`;
-const PISO = " (piso autoral, não norma)";
+// Versão 2026-10-13. Mundos curtos, figuras grandes, toque simples; conteúdo criado para o jogo.
+// Itens criados para o jogo (2 e 3 anos). Cada mundo vira UM domínio. Itens de relato do cuidador são marcados como tal.
+const TOD = (months: string, domain: string, what: string) => `Bateria ${months} · ${domain} · ${what} (criado para o jogo)`;
 
-type Tag = { informant?: "cuidador"; redFlag?: string };
+type Tag = { informant?: "cuidador" };
 const ORIGIN_PREFIX: Partial<Record<OriginId, string>> = { sonda10: "Sonda 10", obs10: "OBS-10" };
-/** Marca domínio/relato/alerta e deixa a referência coerente com a aba de origem. */
+/** Marca domínio/relato e deixa a referência coerente com a aba de origem. */
 function tg<T extends AnyDraft>(draft: T, domain: ToddlerDomain, tag: Tag = {}): T {
   const prefix = ORIGIN_PREFIX[draft.origin];
   const ref = prefix ? (draft.ref.startsWith(`${prefix} · `) ? draft.ref : `${prefix} · ${draft.ref}`) : `${draft.ref} · bateria 2–3 anos (autoral)`;
@@ -761,7 +748,6 @@ function tg<T extends AnyDraft>(draft: T, domain: ToddlerDomain, tag: Tag = {}):
 const relato = (origin: OriginId, ref: string, question: string, expected: string, seconds = 15): Draft<SpeakItem> =>
   fala(origin, ref, `Relato do cuidador — pergunte: ${question}`, `${expected} (relato do cuidador)`, { seconds });
 
-const REGRESSION = "Perda de fala ou de habilidade que já tinha (relato)";
 
 function toddlerBattery(years: 2 | 3): Record<PhaseId, Draft<Item>[]> {
   const m = years === 2 ? "24–35 meses" : "36–47 meses";
@@ -772,23 +758,23 @@ function toddlerBattery(years: 2 | 3): Record<PhaseId, Draft<Item>[]> {
   const A = (what: string) => TOD(m, "atenção/impulsividade/atividade", what);
   const P = (what: string) => TOD(m, "brincar simbólico", what);
   const regression = tg(relato("obs10", S("perda de habilidades"), "“Ele(a) parou de falar palavras ou de fazer coisas que já fazia (dar tchau, apontar, brincar)?”",
-    "Cuidador relata que NÃO houve perda de palavras nem de habilidades"), "interacao_social", { informant: "cuidador", redFlag: REGRESSION });
-  const name = tg({ ...nameCall(m), ref: J("resposta ao nome") } as Draft<DoItem>, "atencao_conjunta", { redFlag: "Não respondeu ao nome em 2 chamadas" });
-  const followPoint = tg({ ...jointAttention(m, years === 2 ? "🦋" : "🐦"), ref: J("segue o apontar") }, "atencao_conjunta", { redFlag: "Não seguiu o apontar" });
+    "Cuidador relata que NÃO houve perda de palavras nem de habilidades"), "interacao_social", { informant: "cuidador" });
+  const name = tg({ ...nameCall(m), ref: J("resposta ao nome") } as Draft<DoItem>, "atencao_conjunta");
+  const followPoint = tg({ ...jointAttention(m, years === 2 ? "🦋" : "🐦"), ref: J("segue o apontar") }, "atencao_conjunta");
   const showPoint = tg(relato("sonda10", J("aponta e mostra para compartilhar"), "“Ele(a) aponta com o dedo ou traz objetos só para MOSTRAR algo a você (um avião, um brinquedo), olhando para você?”",
-    "Cuidador relata que aponta ou traz objetos para mostrar, olhando para o adulto"), "atencao_conjunta", { informant: "cuidador", redFlag: "Não aponta nem traz objetos para mostrar (relato)" });
+    "Cuidador relata que aponta ou traz objetos para mostrar, olhando para o adulto"), "atencao_conjunta", { informant: "cuidador" });
   const peers = tg(relato("obs10", S("interesse por outras crianças"), years === 2
     ? "“Ele(a) se interessa por outras crianças — olha, chega perto, quer ficar junto?”"
     : "“Ele(a) brinca COM outras crianças (entra na brincadeira), e não só ao lado delas?”",
-  years === 2 ? "Cuidador relata interesse por outras crianças" : "Cuidador relata que entra na brincadeira de outras crianças"), "interacao_social", { informant: "cuidador", redFlag: "Pouco ou nenhum interesse por outras crianças (relato)" });
+  years === 2 ? "Cuidador relata interesse por outras crianças" : "Cuidador relata que entra na brincadeira de outras crianças"), "interacao_social", { informant: "cuidador" });
 
   if (years === 2) return {
     vila: [
       regression,
       tg(fazer("sonda10", S("sorriso social"), "Olhe nos olhos da criança, sorria e faça um “achou!” (esconda o rosto com as mãos e apareça).", "Sorri de volta olhando para você", { stimulus: "😄", seconds: 15 }),
-        "interacao_social", { redFlag: "Não retribuiu o sorriso social" }),
+        "interacao_social", {}),
       tg(fazer("sonda10", S("imitação"), "Diga “Faz igual!” e bata palmas; depois mãos na cabeça.", "Imita pelo menos 1 dos 2 gestos", { stimulus: "👏 🙌", seconds: 15 }),
-        "interacao_social", { redFlag: "Não imitou gesto simples" }),
+        "interacao_social", {}),
     ],
     olhos: [name, followPoint, showPoint],
     palavras: [
@@ -800,12 +786,12 @@ function toddlerBattery(years: 2 | 3): Record<PhaseId, Draft<Item>[]> {
       tg(cog(2, "leitura", "O que é isto?") as Draft<SpeakItem>, "linguagem_expressiva"),
       tg(fala("sonda10", E("nomeia figura"), "Mostre a figura e pergunte: “O que é isso?”", "Diz o nome ou um som que o representa (“carro”, “bibi”, “vrum”)", { stimulus: "🚗", seconds: 12 }), "linguagem_expressiva"),
       tg(relato("obs10", E("vocabulário e frases de 2 palavras"), "“Ele(a) já junta 2 palavras, como “mais água” ou “mamãe vem”?”",
-        "Cuidador relata frases de 2 palavras"), "linguagem_expressiva", { informant: "cuidador", redFlag: "Ainda não junta 2 palavras aos 2 anos (relato)" }),
+        "Cuidador relata frases de 2 palavras"), "linguagem_expressiva", { informant: "cuidador" }),
     ],
     memoria: [
-      tg(fazer("sonda10", A("atenção sustentada"), "Mostre a borboleta e narre baixinho: “Olha a borboleta voando… voando…” Conte 10 segundos.", `Mantém o olhar na figura por 10 segundos${PISO}`, { stimulus: "🦋", seconds: 15 }), "atencao"),
-      tg(fazer("sonda10", A("espera o sinal (inibição)"), "Mostre a bola e diga: “Espera… espera… AGORA!” (2 segundos de espera). Duas tentativas.", `Espera o AGORA antes de tocar em pelo menos 1 das 2 tentativas${PISO}`, { stimulus: "⚽", seconds: 15 }), "atencao"),
-      tg(fazer("sonda10", A("nível de atividade (observação)"), "Observe durante o jogo inteiro (aos 2 anos é esperado se mexer bastante): ela volta para a tela quando chamada?", `Volta à tarefa quando chamada na maior parte dos mundos${PISO}`, { seconds: 8 }), "atencao"),
+      tg(fazer("sonda10", A("atenção sustentada"), "Mostre a borboleta e narre baixinho: “Olha a borboleta voando… voando…” Conte 10 segundos.", `Mantém o olhar na figura por 10 segundos`, { stimulus: "🦋", seconds: 15 }), "atencao"),
+      tg(fazer("sonda10", A("espera o sinal (inibição)"), "Mostre a bola e diga: “Espera… espera… AGORA!” (2 segundos de espera). Duas tentativas.", `Espera o AGORA antes de tocar em pelo menos 1 das 2 tentativas`, { stimulus: "⚽", seconds: 15 }), "atencao"),
+      tg(fazer("sonda10", A("atividade (observação)"), "Observe durante o jogo inteiro (registre sem julgar): ela volta para a tela quando chamada?", `Volta à tarefa quando chamada na maior parte dos mundos`, { seconds: 8 }), "atencao"),
     ],
     corpo: [
       tg(fazer("sonda10", P("dar comida ao bebê"), "Mostre o bebê e a colher: “O bebê está com fome. Dá comida pra ele?”", "Faz de conta de dar comida ao bebê da tela (leva a colher de mentira até ele) ou diz “papá”", { stimulus: "👶 🥄", gesture: "Aceita só o gesto de dar comida, sem falar", seconds: 15 }), "brincar_simbolico"),
@@ -816,10 +802,10 @@ function toddlerBattery(years: 2 | 3): Record<PhaseId, Draft<Item>[]> {
   return {
     vila: [
       regression,
-      tg(fazer("sonda10", S("revezar a vez"), "Diga: “Agora é a minha vez” (toque na estrela) “… agora é a sua!”. Façam 3 rodadas.", `Espera a vez e toca na vez dela em pelo menos 2 de 3 rodadas${PISO}`, { stimulus: "⭐", seconds: 18 }),
+      tg(fazer("sonda10", S("revezar a vez"), "Diga: “Agora é a minha vez” (toque na estrela) “… agora é a sua!”. Façam 3 rodadas.", `Espera a vez e toca na vez dela em pelo menos 2 de 3 rodadas`, { stimulus: "⭐", seconds: 18 }),
         "interacao_social"),
       tg(fazer("sonda10", S("imitação de sequência"), "Diga “Faz igual!” e faça: mãos para cima, palmas, mãos na barriga.", "Imita pelo menos 2 dos 3 gestos", { stimulus: "🙌 👏", seconds: 15 }),
-        "interacao_social", { redFlag: "Não imitou gestos simples" }),
+        "interacao_social", {}),
       peers,
     ],
     olhos: [
@@ -839,20 +825,20 @@ function toddlerBattery(years: 2 | 3): Record<PhaseId, Draft<Item>[]> {
       tg(fala("obs10", E("frase de 3 palavras"), "Mostre a figura: “O que o bebê está fazendo?”", "Responde com frase de 3 palavras ou mais (“o bebê tá comendo”)", { stimulus: "👶 🍽️", seconds: 15 }), "linguagem_expressiva"),
       tg(fala("sonda10", E("nome e pronome"), "Pergunte: “Como você se chama?” Depois, apontando o sapato dela: “De quem é esse sapato?”", "Diz o primeiro nome e usa “meu”, “eu” ou o próprio nome para o sapato", { stimulus: "👟", seconds: 15 }), "linguagem_expressiva"),
       tg(relato("obs10", E("conversa"), "“Ele(a) conversa com você com pelo menos 2 trocas (você fala, ele responde, você fala, ele responde)?”",
-        "Cuidador relata conversa com pelo menos 2 trocas"), "linguagem_expressiva", { informant: "cuidador", redFlag: "Não conversa com trocas aos 3 anos (relato)" }),
+        "Cuidador relata conversa com pelo menos 2 trocas"), "linguagem_expressiva", { informant: "cuidador" }),
     ],
     memoria: [
-      tg(fazer("sonda10", A("atenção sustentada"), "Mostre a borboleta e narre baixinho: “Olha a borboleta voando… pousou na flor…” Conte 20 segundos.", `Mantém o olhar na figura por 20 segundos${PISO}`, { stimulus: "🦋 🌸", seconds: 22 }), "atencao"),
-      tg(fazer("sonda10", A("espera o sinal (inibição)"), "Mostre a bola e diga: “Espera… espera… AGORA!” (3 segundos de espera). Três tentativas.", `Espera o AGORA antes de tocar em pelo menos 2 das 3 tentativas${PISO}`, { stimulus: "⚽", seconds: 20 }), "atencao"),
-      tg(fazer("sonda10", A("estátua (controle motor)"), "Diga: “Vamos brincar de estátua! Fica paradinho como estátua!” Conte 5 segundos.", `Fica parado por 5 segundos${PISO}`, { stimulus: "🧍", seconds: 12 }), "atencao"),
-      tg(fazer("sonda10", A("nível de atividade (observação)"), "Observe durante o jogo inteiro: ela fica sentada ou perto da tela por alguns minutos e volta quando chamada?", `Fica na tarefa a maior parte do tempo e volta quando chamada${PISO}`, { seconds: 8 }), "atencao"),
+      tg(fazer("sonda10", A("atenção sustentada"), "Mostre a borboleta e narre baixinho: “Olha a borboleta voando… pousou na flor…” Conte 20 segundos.", `Mantém o olhar na figura por 20 segundos`, { stimulus: "🦋 🌸", seconds: 22 }), "atencao"),
+      tg(fazer("sonda10", A("espera o sinal (inibição)"), "Mostre a bola e diga: “Espera… espera… AGORA!” (3 segundos de espera). Três tentativas.", `Espera o AGORA antes de tocar em pelo menos 2 das 3 tentativas`, { stimulus: "⚽", seconds: 20 }), "atencao"),
+      tg(fazer("sonda10", A("estátua (controle motor)"), "Diga: “Vamos brincar de estátua! Fica paradinho como estátua!” Conte 5 segundos.", `Fica parado por 5 segundos`, { stimulus: "🧍", seconds: 12 }), "atencao"),
+      tg(fazer("sonda10", A("atividade (observação)"), "Observe durante o jogo inteiro: ela fica sentada ou perto da tela por alguns minutos e volta quando chamada?", `Fica na tarefa a maior parte do tempo e volta quando chamada`, { seconds: 8 }), "atencao"),
     ],
     corpo: [
       tg(fazer("sonda10", P("cuidar do bebê"), "Mostre a figura: “O bebê está dodói. O que a gente pode fazer?”", "Propõe ou faz de conta um cuidado (remédio, colo, beijinho, médico)", { stimulus: "🤒", gesture: "Aceita fazer de conta o cuidado sem falar", seconds: 15 }), "brincar_simbolico"),
       tg(fazer("sonda10", P("sequência de faz de conta"), "Diga: “Vamos dar banho no bebê e depois pôr ele pra dormir?” Brinque junto com as mãos.", "Faz de conta 2 ações em sequência (banho e dormir)", { stimulus: "👶 🛁 🛏️", seconds: 20 }), "brincar_simbolico"),
       tg(fazer("sonda10", P("objeto como outro"), "Feche a mão como se fosse um carrinho: “Brrrum! Olha meu carrinho!” e diga: “Agora o seu!”", "Usa a mão ou um objeto como se fosse outra coisa (carrinho, avião, telefone)", { seconds: 15 }), "brincar_simbolico"),
       tg(relato("obs10", P("faz de conta com papéis"), "“Ele(a) brinca de faz de conta sozinho(a), como de casinha, de médico ou dando comida ao boneco?”",
-        "Cuidador relata faz de conta espontâneo"), "brincar_simbolico", { informant: "cuidador", redFlag: "Sem brincadeira de faz de conta aos 3 anos (relato)" }),
+        "Cuidador relata faz de conta espontâneo"), "brincar_simbolico", { informant: "cuidador" }),
     ],
   };
 }

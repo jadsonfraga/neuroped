@@ -1,106 +1,74 @@
-// Correções do diagnóstico de 14/10/2026 (Dyslexia Risk): rótulos sem norma, fluência sem
-// referência, controles de exclusão não confirmados, ano sem âncora, escore examinável e
-// rascunho local com validade. Inclui congelamento (golden) dos cortes do ICED-8.
+// Dyslexia Risk: o app só descreve a aplicação e as respostas (diretriz do Dr. Jadson, 16/10/2026).
+// Sem pontos, cortes, faixas, trava, âncoras, referências ou rótulos interpretativos. Mantém o rascunho
+// local com validade de 72 h.
 import assert from "node:assert/strict";
 import test from "node:test";
-import { scoreIced, travaStatusText, type IcedInput } from "../../client/src/features/dyslexia-risk/model";
+import { describeIced, type IcedInput } from "../../client/src/features/dyslexia-risk/model";
+import * as engine from "../../client/src/features/dyslexia-risk/game/engine";
+import * as gameReport from "../../client/src/features/dyslexia-risk/game/report";
 import { buildIcedFamilySummary, buildIcedSummary, icedResponseItems, type IcedState } from "../../client/src/features/dyslexia-risk/report";
-import { LEVEL_LABEL } from "../../client/src/features/dyslexia-risk/game/engine";
-import { FLUENCY_NO_NORM } from "../../client/src/features/dyslexia-risk/game/report";
 import { DRAFT_TTL_MS, clearDraft, readDraft, writeDraft } from "../../client/src/features/dyslexia-risk/localDraft";
 
 const FULL = { esc: "sim", alf: "sim", freq: "sim", aud: "sim", vis: "sim", di: "sim", pers: "sim" } as const;
 const base: IcedInput = {
   ano: "3", controle: { ...FULL },
-  palavrasAcertos: 20, palavrasF: 0, palavrasNorma: false,
-  pseudoAcertos: 16, pseudoLex: 0, pseudoNorma: false,
-  pcpm: 110, fluenciaNorma: false,
-  ditadoF: 0, ditadoPseudoCertas: 5, ditadoNorma: false,
-  cfAcertos: 12, cfNorma: false,
-  ranSeg: 30, ranErros: 0, ranNorma: false,
+  palavrasAcertos: 20, palavrasF: 0,
+  pseudoAcertos: 16, pseudoLex: 0,
+  pcpm: 110,
+  ditadoF: 0, ditadoPseudoCertas: 5,
+  cfAcertos: 12,
+  ranSeg: 30, ranErros: 0,
   familiar: "nao", persistencia4: false,
 };
 
-test("golden ICED-8: cortes e faixas congelados (controles confirmados)", () => {
-  const cases: Array<[Partial<IcedInput>, number, string, string]> = [
-    [{}, 0, "limitada", "ausente"],
-    [{ pcpm: 70 }, 3, "limitada", "presente"],
-    [{ pcpm: 71 }, 0, "limitada", "ausente"],
-    [{ ano: "2", pcpm: 42 }, 3, "limitada", "presente"],
-    [{ ano: "2", pcpm: 43 }, 0, "limitada", "ausente"],
-    [{ ditadoF: 4 }, 3, "limitada", "presente"],
-    [{ ditadoPseudoCertas: 2 }, 3, "limitada", "presente"],
-    [{ pcpm: 60, ditadoF: 5 }, 6, "intermediaria", "presente"],
-    [{ pcpm: 60, ditadoF: 5, pseudoAcertos: 10 }, 8, "intermediaria", "presente"],
-    [{ pcpm: 60, ditadoF: 5, pseudoAcertos: 10, cfAcertos: 6 }, 10, "elevada", "presente"],
-    [{ pseudoAcertos: 10, cfAcertos: 6, ranSeg: 46, familiar: "sim", persistencia4: true, palavrasAcertos: 15 }, 9, "intermediaria", "ausente"],
-    [{ palavrasAcertos: 16, palavrasF: 3 }, 0, "limitada", "ausente"],
-  ];
-  for (const [patch, total, faixa, nucleo] of cases) {
-    const result = scoreIced({ ...base, ...patch });
-    assert.deepEqual([result.total, result.faixa, result.nucleo], [total, faixa, nucleo], JSON.stringify(patch));
+test("a mesma medida gera o mesmo texto bruto, sem depender de ano escolar nem de corte", () => {
+  for (const patch of [{}, { pcpm: 70 }, { pcpm: 71 }, { ano: "2" as const, pcpm: 42 }, { ano: "outro" as const, pcpm: 42 }, { ditadoF: 4 }, { ranSeg: 46 }]) {
+    const result = describeIced({ ...base, ...patch });
+    const flu = result.dominios.find((d) => d.id === "fluencia")!;
+    assert.match(flu.medida, new RegExp(`palavras corretas por minuto: ${patch.pcpm ?? 110}`));
+    assert.equal(result.dominios.length, 8);
+    assert.deepEqual(Object.keys(result).sort(), ["controles", "controlesSemResposta", "dominios", "frase", "naoExaminados"]);
   }
+  assert.notEqual(describeIced({ ...base, ranSeg: 46 }).frase, describeIced({ ...base, ranSeg: 30 }).frase);
 });
 
-test("controle de exclusão vazio ou 'não verificado' deixa o escore descritivo (ausente ≠ normal)", () => {
+test("controles do Bloco 0: só registra a resposta e informa o que falta; nada trava nem muda a descrição", () => {
   const strong = { ...base, pcpm: 60, ditadoF: 5, pseudoAcertos: 10, cfAcertos: 6 };
-  assert.equal(scoreIced(strong).faixa, "elevada");
-  for (const value of ["", "nv"] as const) {
-    for (const key of ["esc", "alf", "aud", "vis", "di"]) {
-      const result = scoreIced({ ...strong, controle: { ...FULL, [key]: value } });
-      assert.equal(result.trava, false);
-      assert.equal(result.faixa, "descritiva", `${key}=${value || "vazio"}`);
-      assert.equal(result.controlesPendentes.length, 1);
-      assert.match(travaStatusText(result), /^pendente/);
-      assert.equal(result.total, 10, "o escore continua calculado, só não é interpretado");
-    }
+  const reference = describeIced(strong).dominios;
+  for (const value of ["", "nv", "nao"] as const) {
+    const result = describeIced({ ...strong, controle: { ...FULL, aud: value } });
+    assert.deepEqual(result.dominios, reference, "domínios iguais, qualquer que seja o Bloco 0");
+    assert.equal(result.controles.find((c) => c.chave === "aud")!.resposta, value === "nao" ? "não" : value === "nv" ? "não verificado" : "não informado");
+    assert.deepEqual(result.controlesSemResposta, value === "nao" ? [] : ["Audição previamente adequada, ou corrigida"]);
   }
-  // freq e pers não fazem parte da trava: vazios não bloqueiam
-  assert.equal(scoreIced({ ...strong, controle: { ...FULL, freq: "", pers: "nv" } }).faixa, "elevada");
-  // trava "não" prevalece sobre pendência
-  const locked = scoreIced({ ...strong, controle: { ...FULL, aud: "nao", vis: "" } });
-  assert.equal(locked.trava, true);
-  assert.deepEqual(locked.controlesPendentes, []);
-  assert.match(travaStatusText(locked), /^ativa/);
 });
 
-test("ano sem âncora de fluência e domínios não examinados geram aviso e escore examinável", () => {
-  const outro = scoreIced({ ...base, ano: "outro" });
-  assert.ok(outro.avisos.some((aviso) => /sem âncora de fluência/.test(aviso)));
-  assert.equal(outro.pontosExaminaveis, 12, "fluência não examinada: 15 − 3");
-  const comNorma = scoreIced({ ...base, ano: "outro", fluenciaNorma: true });
-  assert.ok(!comNorma.avisos.some((aviso) => /sem âncora/.test(aviso)), "norma formal do ano resolve a âncora");
-  assert.equal(scoreIced(base).pontosExaminaveis, 15);
-  assert.deepEqual(scoreIced(base).avisos, []);
-  const parcial = scoreIced({ ...base, cfAcertos: null, ranSeg: null });
-  assert.equal(parcial.pontosExaminaveis, 12);
-  assert.match(parcial.leitura, /não equivale a resultado normal/);
-  assert.match(parcial.frase, /pontos possíveis nos domínios examinados: 12/);
+test("domínios não aplicados ficam como não examinados e a frase só lista medidas", () => {
+  const parcial = describeIced({ ...base, cfAcertos: null, ranSeg: null, pcpm: null });
+  assert.deepEqual(parcial.naoExaminados.sort(), ["Consciência fonológica", "Fluência", "Nomeação rápida"].sort());
+  assert.match(parcial.frase, /Registro descritivo; sem classificação\. Interpretação a cargo do profissional\./);
+  assert.doesNotMatch(parcial.frase, /pontos|escore|faixa|limiar|não equivale|resultado normal/i);
 });
 
-test("relatórios mostram trava pendente, avisos e escore examinável; família não ouve 'outra prioridade' quando só falta confirmar", () => {
+test("relatórios, resumo, família e itens do prontuário não trazem escore, trava nem aviso interpretativo", () => {
   const state = {
     nome: "Criança Sintética", nasc: "", idade: "8", escola: "", anosEsc: "2", ano: "outro", examinador: "", data: "",
     controle: { esc: "sim", alf: "sim", freq: "sim", aud: "", vis: "sim", di: "sim", pers: "sim" },
   } as unknown as Partial<IcedState>;
-  const result = scoreIced({ ...base, ano: "outro", controle: { ...FULL, aud: "" } });
+  const result = describeIced({ ...base, ano: "outro", controle: { ...FULL, aud: "" } });
   const items = icedResponseItems(state as IcedState, result);
-  assert.match(items.find((item) => item.question === "Trava de controle")?.answer ?? "", /^pendente/);
-  assert.ok(items.some((item) => item.question === "Avisos de leitura"));
+  assert.ok(items.every((item) => !/escore|trava|leitura operacional|núcleo|avisos de leitura/i.test(item.question)));
   const summary = buildIcedSummary(state as IcedState, result, "15/10/2026 10:00");
-  assert.match(summary, /Trava de controle: pendente/);
-  assert.match(summary, /Aviso: Ano escolar sem âncora/);
+  assert.match(summary, /Bloco 0 sem resposta "sim"\/"não": Audição/);
+  assert.doesNotMatch(summary, /Trava|Aviso:|\/15|âncora/);
   const family = buildIcedFamilySummary(state as IcedState, result, "15/10/2026 10:00");
-  assert.match(family, /ainda faltam confirmar/);
-  assert.doesNotMatch(family, /indicou outra prioridade/);
+  assert.match(family, /Atividades aplicadas:/);
+  assert.doesNotMatch(family, /atenção|prioridade|sinalizaram|sem sinalização/i);
 });
 
-test("jogo: rótulos de nível nunca soam como norma; fluência traz 'sem referência normativa'", () => {
-  for (const label of Object.values(LEVEL_LABEL)) {
-    assert.match(label, /referência interna da faixa \(não normativa\)/);
-    assert.doesNotMatch(label, /esperado para a faixa|abaixo da faixa$|acima da faixa$/);
-  }
-  assert.equal(FLUENCY_NO_NORM, "sem referência normativa nesta triagem");
+test("jogo: o motor não exporta rótulos de nível nem referência de fluência", () => {
+  for (const removed of ["LEVEL_LABEL", "finalLevelOf"]) assert.equal(removed in engine, false, removed);
+  assert.equal("FLUENCY_NO_NORM" in gameReport, false);
 });
 
 test("rascunho local: expira em 72 h, aceita o formato antigo uma vez e nunca derruba com armazenamento bloqueado", () => {

@@ -5,7 +5,7 @@
 // montagem conferidos pelo jogo; fala/ação conferidas pela aplicadora, com
 // "Recusou" separado de "Errou"; desenho com o dedo; observações; resultado por
 // domínio e por instrumento; PDF detalhado gerado localmente; mundo pulado vira
-// "não aplicado"; 3 anos com bateria dedicada, relato do cuidador e sinais de alerta.
+// "não aplicado"; 3 anos com bateria dedicada, relato do cuidador.
 // Sem câmera, sem persistência, sem rede clínica. Acessibilidade via axe em cada tela.
 import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -236,9 +236,10 @@ try {
   assert.deepEqual(await toneColor("correct"), ["rgb(29, 78, 216)", "900"], "acerto em azul e negrito");
   if (await root.locator('details li [data-answer-tone="wrong"]').count()) assert.deepEqual(await toneColor("wrong"), ["rgb(185, 28, 28)", "900"], "erro em vermelho e negrito");
   assert.deepEqual(await toneColor("neutral"), ["rgb(75, 85, 99)", "900"]);
-  // Desempenho por domínio x esperado e o que veio de cada instrumento de origem.
+  // Contagem bruta por mundo (sem referência nem rótulo) e o que veio de cada instrumento de origem.
   const domains = page.getByTestId("super-neuropad-domains");
-  assert.equal(await domains.getByText(/Referência interna: \d+ ou mais de 5/).count(), WORLDS, "cada domínio mostra o esperado para a idade");
+  assert.equal(await domains.getByText(/\d+ erros · \d+ sem resposta · \d+ recusa\(s\)/).count(), WORLDS, "cada mundo mostra contagens brutas");
+  assert.doesNotMatch((await domains.textContent()) ?? "", /Referência|esperado|Alerta|Observar|Na referência/i);
   const origins = page.getByTestId("super-neuropad-origins");
   for (const label of ["Sonda 10", "Observa 10 (OBS-10)", "Reconhecimento visual", "Avaliação cognitiva infantil"]) {
     await origins.getByText(label, { exact: false }).first().waitFor();
@@ -248,10 +249,10 @@ try {
   await observationsBox.getByRole("button").first().click();
   await page.locator("#snp-observations").fill("Colaborou bem. Pediu água no mundo 3.");
   const reading = page.getByTestId("super-neuropad-reading");
-  await reading.getByText("Leitura para a consulta").waitFor();
-  assert.ok((await reading.locator("ul li").count()) >= 2, "leitura traz frases descritivas para a consulta");
-  await reading.getByText(/Mediana \d+(\.\d)? s por item/).waitFor();
-  // A fase "esperado" nasce recolhida; as opções embaralhadas podem fazê-la
+  await reading.getByText("Aspectos da aplicação e da resposta").waitFor();
+  assert.ok((await reading.locator("ul li").count()) >= 3, "bloco descritivo traz contagens e tempos");
+  await reading.getByText(/Tempo por item: mínimo [\d.]+ s, mediana [\d.]+ s, máximo [\d.]+ s/).waitFor();
+  // Uma fase com todos os itens acertados nasce recolhida; as opções embaralhadas podem fazê-la
   // alternar entre aberta/fechada. O texto também pode aparecer na lista de
   // erros. Prove o registro exato (fase 1, item 2), abrindo pela UI, não por
   // .first(), alteração do DOM, espera fixa ou presença de texto oculto.
@@ -269,21 +270,11 @@ try {
   await repeatedRecord.waitFor({ state: "visible" });
   assert.equal(await repeatedPhase.evaluate((details) => details.open), true, "summary abre o registro para a aplicadora");
   const unsavedRecords = await root.locator("details li").allTextContents();
-  await root.getByText(/Itens para checar na consulta · \d+/).waitFor();
+  await root.getByText(/Itens registrados como não acertados · \d+/).waitFor();
   await button("Copiar resumo para o prontuário").waitFor();
-  const plan = page.getByTestId("super-neuropad-plan");
-  await plan.getByText("Roteiro sugerido para a consulta").waitFor();
-  assert.ok((await plan.getByRole("link").count()) >= 1, "links diretos para as abas de origem");
-  const firstLink = await plan.getByRole("link").first().getAttribute("href");
-  assert.match(firstLink ?? "", /^#?\/(testes-diretos|testes-reconhecimento|testes-cognitivos|avaliacao-pre-consulta-faixa-etaria)$/, `rota interna válida: ${firstLink}`);
-  const drilldown = plan.getByRole("link").first();
-  assert.equal(await drilldown.getAttribute("target"), "_blank");
-  const [deeper] = await Promise.all([context.waitForEvent("page"), drilldown.click()]);
-  await deeper.waitForLoadState("domcontentloaded");
-  await deeper.close();
   await waitScreen("results");
-  assert.equal(await root.locator("details li").count(), TOTAL, "aprofundar preserva os trinta registros");
-  assert.deepEqual(await root.locator("details li").allTextContents(), unsavedRecords, "aprofundar não altera conteúdo, ordem ou repetição dos registros");
+  assert.equal(await root.locator("details li").count(), TOTAL, "os trinta registros permanecem");
+  assert.deepEqual(await root.locator("details li").allTextContents(), unsavedRecords, "conteúdo, ordem e repetição dos registros não mudam");
   // Navegação interna não dispara beforeunload. Recusá-la precisa manter
   // a mesma partida em memória, inclusive via alteração do hash/voltar.
   acceptDialogs = false;
@@ -309,7 +300,7 @@ try {
   assert.deepEqual(await root.locator("details li").allTextContents(), unsavedRecords, "cancelar login mantém conteúdo, ordem e comando repetido");
   console.log(`[super-neuropad-game] ✓ ${localMode ? "local" : "remote"}: mundo recolhido aberto pela UI; ${TOTAL} registros idênticos após aprofundar e cancelar filtro/login`);
   acceptDialogs = true;
-  await root.getByText(/pausa\(s\) · ↩ 1 desfeito\(s\)/).waitFor(); // proveniência: 1 pausa e 1 desfazer nesta jornada
+  await root.getByText(/Pausas: \d+ \(\d+ s em pausa\)\. Registros desfeitos e refeitos: 1\./).waitFor(); // 1 pausa e 1 desfazer nesta jornada
   await page.getByTestId("super-neuropad-when").getByText(/ · 7 anos \(faixa anual\) · sessão de/).waitFor();
   await page.getByTestId("super-neuropad-save").getByText("Salvar no prontuário do paciente").waitFor();
   await screen("06-results");
@@ -329,11 +320,12 @@ try {
   if (text) {
     const flat = text.replace(/\s+/g, " ");
     const upper = flat.toLocaleUpperCase("pt-BR");
-    for (const heading of ["Identificação da sessão", "O que foi testado por instrumento de origem", "Desempenho por domínio x referência interna do jogo", "Observações da aplicadora", "DADOS ESTRUTURADOS"]) {
+    for (const heading of ["Identificação da sessão", "O que foi testado por instrumento de origem", "Registro de respostas (contagem bruta)", "Observações da aplicadora", "DADOS ESTRUTURADOS"]) {
       assert.ok(upper.includes(heading.toLocaleUpperCase("pt-BR")), `PDF: seção ${heading}`);
     }
     for (const label of ["Sonda 10", "OBS-10", "Reconhecimento visual", "Avaliação cognitiva infantil"]) assert.ok(flat.includes(label), `PDF: origem ${label}`);
-    assert.match(flat, /Resposta esperada/);
+    assert.match(flat, /Critério de acerto/);
+    assert.doesNotMatch(flat, /referência interna|percentil|sinal de alerta|nível/i);
     assert.match(flat, /Resposta da criança/);
     assert.match(flat, /Recusou/);
     assert.match(flat, /Pediu água no mundo 3/);
@@ -379,10 +371,10 @@ try {
   await waitScreen("results");
   assert.match(dialogs.at(-1), /ainda não foi copiado, baixado nem salvo/);
   acceptDialogs = true;
-  await page.getByTestId("super-neuropad-incomplete").getByText(new RegExp(`1 de ${TOTAL} itens registrados`)).waitFor();
-  assert.equal(await page.getByTestId("super-neuropad-reading").count(), 0);
+  await page.getByTestId("super-neuropad-incomplete").getByText(new RegExp(`partida incompleta \\(1 de ${TOTAL} itens\\)`)).waitFor();
+  assert.equal(await page.getByTestId("super-neuropad-reading").count(), 1, "partida incompleta mostra só as contagens");
   assert.equal(await root.locator("details li").count(), 1);
-  assert.doesNotMatch(await root.innerText(), new RegExp(`sinal de alerta|dentro do esperado|dentro da referência interna|ritmo estável|ritmo regular|\\d+ de ${TOTAL} acertos`, "i"));
+  assert.doesNotMatch(await root.innerText(), new RegExp(`sinal de alerta|dentro do esperado|referência interna|ritmo estável|ritmo regular|Leitura para a consulta|Roteiro sugerido`, "i"));
   const skippedDomain = page.getByTestId("super-neuropad-domains");
   await skippedDomain.getByText(/Não aplicado — /).first().waitFor();
   assert.ok(((await skippedDomain.textContent()) ?? "").includes(reason), "motivo do mundo pulado aparece no domínio");
@@ -407,7 +399,8 @@ try {
   await page.getByText("Desafio 2 de 4").waitFor();
   await button("Encerrar").click();
   await waitScreen("results");
-  await page.getByTestId("super-neuropad-red-flags").waitFor({ state: "attached" });
+  await page.getByTestId("super-neuropad-toddler-domains").waitFor();
+  assert.equal(await page.getByTestId("super-neuropad-red-flags").count(), 0, "sem sinais de alerta");
 
   const storage = await page.evaluate(() => Object.keys(localStorage).filter((key) => /neuropad|super/i.test(key)));
   assert.deepEqual(storage, [], "nada do jogo persistido no navegador");
