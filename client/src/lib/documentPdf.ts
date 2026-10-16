@@ -8,13 +8,15 @@
 import {
   PDFDocument,
   StandardFonts,
-  rgb,
+  rgb as pdfRgb,
   type PDFImage,
   type PDFPage,
 } from "pdf-lib";
 import QRCode from "qrcode";
 import { buildAppHashUrl } from "@/lib/appUrl";
 import { wrapPdfText } from "@/lib/pdfTextWrap";
+import { decodeLogoDataUri, hexToUnit, type ClinicBranding } from "@shared/clinic-branding";
+import { loadIssuer } from "@/lib/issuer";
 
 /** Linha com destaque opcional: negrito e/ou tom de resposta (azul = certo, vermelho = errado, cinza = neutro). */
 export interface DocLine {
@@ -50,7 +52,14 @@ export interface DocSpec {
   clinicName?: string;
   /** Lema/assinatura editorial da clínica (opcional). */
   motto?: string;
+  /**
+   * Marca da clínica (cores, logo, cabeçalho e rodapé). Quando ausente,
+   * `buildDocumentPdf` usa a marca da clínica ativa; `null` força o padrão NeuroPed.
+   */
+  brand?: PdfBrand | null;
 }
+
+export type PdfBrand = Pick<ClinicBranding, "primaryColor" | "accentColor" | "headerText" | "footerText" | "logoDataUri">;
 
 const A4 = { w: 595.28, h: 841.89 };
 const M = 46;
@@ -60,19 +69,19 @@ const LINE = 14;
 // branco quente e cinza técnico. Centralizar as cores também evita espalhar
 // valores visuais crus pelos templates clínicos.
 const C = {
-  navy: rgb(0.043, 0.122, 0.227),
-  bordo: rgb(0.478, 0.118, 0.173),
-  gold: rgb(0.788, 0.635, 0.29),
-  teal: rgb(0.059, 0.463, 0.431),
-  warm: rgb(0.973, 0.961, 0.937),
-  white: rgb(1, 1, 1),
-  ink: rgb(0.2, 0.255, 0.333),
-  muted: rgb(0.39, 0.43, 0.49),
-  soft: rgb(0.94, 0.945, 0.95),
+  navy: pdfRgb(0.043, 0.122, 0.227),
+  bordo: pdfRgb(0.478, 0.118, 0.173),
+  gold: pdfRgb(0.788, 0.635, 0.29),
+  teal: pdfRgb(0.059, 0.463, 0.431),
+  warm: pdfRgb(0.973, 0.961, 0.937),
+  white: pdfRgb(1, 1, 1),
+  ink: pdfRgb(0.2, 0.255, 0.333),
+  muted: pdfRgb(0.39, 0.43, 0.49),
+  soft: pdfRgb(0.94, 0.945, 0.95),
   // Tons de resposta (legíveis impressos e com contraste AA sobre o fundo quente):
   // azul (6,2:1) e vermelho (6,0:1), os mesmos tons dos tokens --snp-answer-*; neutro reutiliza `muted`.
-  answerCorrect: rgb(0.114, 0.306, 0.847),
-  answerWrong: rgb(0.725, 0.11, 0.11),
+  answerCorrect: pdfRgb(0.114, 0.306, 0.847),
+  answerWrong: pdfRgb(0.725, 0.11, 0.11),
 };
 
 // pdf-lib desenha com Helvetica/WinAnsi (Windows-1252) e lança em qualquer
@@ -110,12 +119,12 @@ async function embedValidationQr(pdf: PDFDocument, url: string) {
   return pdf.embedPng(base64);
 }
 
-async function embedBrandLogo(pdf: PDFDocument, logoDataUri?: string): Promise<PDFImage | null> {
+async function embedBrandLogo(pdf: PDFDocument, logoDataUri?: string | null): Promise<PDFImage | null> {
   if (!logoDataUri) return null;
   try {
-    const response = await fetch(logoDataUri);
-    if (!response.ok) return null;
-    return await pdf.embedJpg(await response.arrayBuffer());
+    const logo = decodeLogoDataUri(logoDataUri);
+    if (!logo) return null;
+    return logo.mime === "image/png" ? await pdf.embedPng(logo.bytes) : await pdf.embedJpg(logo.bytes);
   } catch {
     // O documento continua gerável se a logo do tenant estiver indisponível;
     // a identificação segue textual, pelas linhas de credenciais.
@@ -140,7 +149,40 @@ function drawLogo(page: PDFPage, logo: PDFImage | null, x: number, y: number, bo
   });
 }
 
-export async function buildDocumentPdf(rawSpec: DocSpec): Promise<Uint8Array> {
+
+export async function withClinicBrand(spec: DocSpec): Promise<DocSpec> {
+  if (spec.brand !== undefined) return spec;
+  try {
+    const issuer = await loadIssuer();
+    const b = issuer.branding;
+    if (!b || !b.configured) return { ...spec, brand: null };
+    return { ...spec, brand: { primaryColor: b.primaryColor, accentColor: b.accentColor, headerText: b.headerText, footerText: b.footerText, logoDataUri: b.logoDataUri } };
+  } catch {
+    return { ...spec, brand: null };
+  }
+}
+
+/** Cores efetivas: padrão NeuroPed sem marca; com marca, só a moldura muda. */
+export function brandColors(brand: PdfBrand | null) {
+  const rgbOf = (hex: string) => { const [r, g, b] = hexToUnit(hex); return pdfRgb(r, g, b); };
+  const primary = brand?.primaryColor ? rgbOf(brand.primaryColor) : null;
+  const accent = brand?.accentColor ? rgbOf(brand.accentColor) : null;
+  return {
+    band: primary ?? C.navy,
+    strip: accent ?? (primary ? primary : C.bordo),
+    accentBand: accent ?? (primary ? C.white : C.gold),
+    accentLight: accent ?? primary ?? C.gold,
+    label: primary ?? C.bordo,
+  };
+}
+export async function buildDocumentPdf(rawSpecIn: DocSpec): Promise<Uint8Array> {
+  // Marca da clínica ativa: aplicada a TODOS os documentos por este ponto único,
+  // sem editar cada gerador. Só afeta a moldura (faixa, cores, logo, cabeçalho
+  // e rodapé), nunca as seções de conteúdo. O emissor em cache é escopado por
+  // sessão + clínica ativa, então a marca de uma clínica não vaza para outra.
+  const rawSpec = await withClinicBrand(rawSpecIn);
+  const brand = rawSpec.brand ?? null;
+  const B = brandColors(brand);
   const spec: DocSpec = {
     ...rawSpec,
     title: pdfSafe(rawSpec.title),
@@ -151,7 +193,7 @@ export async function buildDocumentPdf(rawSpec: DocSpec): Promise<Uint8Array> {
       body: pdfSafe(section.body),
       ...(section.rich ? { rich: section.rich.map((line) => ({ ...line, text: pdfSafe(line.text) })) } : {}),
     })),
-    footer: rawSpec.footer ? pdfSafe(rawSpec.footer) : undefined,
+    footer: [rawSpec.footer, brand?.footerText].filter((t): t is string => Boolean(t && t.trim())).map(pdfSafe).join("\n") || undefined,
   };
 
   const pdf = await PDFDocument.create();
@@ -161,7 +203,8 @@ export async function buildDocumentPdf(rawSpec: DocSpec): Promise<Uint8Array> {
   const maxW = A4.w - M * 2;
   const validationUrl = spec.validationUrl ?? defaultValidationUrl();
   const qrImage = await embedValidationQr(pdf, validationUrl);
-  const logo = await embedBrandLogo(pdf, rawSpec.logoDataUri);
+  const logo = await embedBrandLogo(pdf, brand?.logoDataUri ?? rawSpec.logoDataUri);
+  const headerLabel = brand?.headerText ? pdfSafe(brand.headerText) : "";
   const clinicLabel = rawSpec.clinicName ? pdfSafe(rawSpec.clinicName) : "";
   const mottoLabel = rawSpec.motto ? pdfSafe(rawSpec.motto) : "";
 
@@ -172,9 +215,9 @@ export async function buildDocumentPdf(rawSpec: DocSpec): Promise<Uint8Array> {
     page.drawRectangle({ x: 0, y: 0, width: A4.w, height: A4.h, color: C.warm });
     const bandH = continuation ? 72 : 112;
     const bandY = A4.h - bandH;
-    page.drawRectangle({ x: 0, y: bandY, width: A4.w, height: bandH, color: C.navy });
-    page.drawRectangle({ x: 0, y: bandY, width: 7, height: bandH, color: C.bordo });
-    page.drawRectangle({ x: 0, y: bandY - 3, width: A4.w, height: 3, color: C.gold });
+    page.drawRectangle({ x: 0, y: bandY, width: A4.w, height: bandH, color: B.band });
+    page.drawRectangle({ x: 0, y: bandY, width: 7, height: bandH, color: B.strip });
+    page.drawRectangle({ x: 0, y: bandY - 3, width: A4.w, height: 3, color: B.accentBand });
 
     const logoBox = continuation ? 38 : 56;
     const logoY = continuation ? A4.h - 55 : A4.h - 84;
@@ -194,7 +237,7 @@ export async function buildDocumentPdf(rawSpec: DocSpec): Promise<Uint8Array> {
       const subtitleLines = wrap(spec.subtitle, font, 9.5, titleW).slice(0, 2);
       let sy = Math.min(ty - 2, A4.h - 83);
       for (const line of subtitleLines) {
-        page.drawText(line, { x: titleX, y: sy, size: 9.5, font, color: C.gold });
+        page.drawText(line, { x: titleX, y: sy, size: 9.5, font, color: B.accentBand });
         sy -= 12;
       }
     }
@@ -206,9 +249,15 @@ export async function buildDocumentPdf(rawSpec: DocSpec): Promise<Uint8Array> {
         y: metaY,
         size: 7.2,
         font: bold,
-        color: C.bordo,
+        color: B.label,
       });
       let cy = metaY - 15;
+      if (headerLabel) {
+        for (const line of wrap(headerLabel, bold, 8.6, maxW).slice(0, 2)) {
+          page.drawText(line, { x: M, y: cy, size: 8.6, font: bold, color: B.band });
+          cy -= 12;
+        }
+      }
       for (const credential of spec.credentials.slice(0, 4)) {
         for (const line of wrap(credential, font, 8.3, maxW)) {
           page.drawText(line, { x: M, y: cy, size: 8.3, font, color: C.muted });
@@ -249,21 +298,21 @@ export async function buildDocumentPdf(rawSpec: DocSpec): Promise<Uint8Array> {
       y: y - 5,
       width: 4,
       height: 20,
-      color: C.gold,
+      color: B.accentLight,
     });
     page.drawText(section.heading.toUpperCase(), {
       x: M + 12,
       y,
       size: 10.2,
       font: bold,
-      color: C.bordo,
+      color: B.label,
     });
     y -= 17;
     page.drawLine({
       start: { x: M + 12, y: y + 4 },
       end: { x: A4.w - M, y: y + 4 },
       thickness: 0.55,
-      color: C.gold,
+      color: B.accentLight,
       opacity: 0.7,
     });
     y -= 7;
@@ -320,7 +369,7 @@ export async function buildDocumentPdf(rawSpec: DocSpec): Promise<Uint8Array> {
     width: maxW,
     height: validationH,
     borderWidth: 0.9,
-    borderColor: C.gold,
+    borderColor: B.accentLight,
     color: C.white,
   });
   page.drawRectangle({
@@ -335,7 +384,7 @@ export async function buildDocumentPdf(rawSpec: DocSpec): Promise<Uint8Array> {
     y: validationY + 68,
     size: 8.8,
     font: bold,
-    color: C.navy,
+    color: B.band,
   });
   page.drawText("O PDF pode ser assinado localmente com certificado A1 PFX/P12.", {
     x: M + 16,
@@ -374,7 +423,7 @@ export async function buildDocumentPdf(rawSpec: DocSpec): Promise<Uint8Array> {
       start: { x: M, y: 31 },
       end: { x: A4.w - M, y: 31 },
       thickness: 0.5,
-      color: C.gold,
+      color: B.accentLight,
       opacity: 0.65,
     });
     currentPage.drawText([clinicLabel, mottoLabel].filter(Boolean).join("  |  ") || "Documento clinico", {
@@ -382,7 +431,7 @@ export async function buildDocumentPdf(rawSpec: DocSpec): Promise<Uint8Array> {
       y: 18,
       size: 6.4,
       font: bold,
-      color: C.navy,
+      color: B.band,
     });
     const pageLabel = `${index + 1}/${pages.length}`;
     currentPage.drawText(pageLabel, {

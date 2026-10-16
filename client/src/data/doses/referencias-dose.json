@@ -1,0 +1,455 @@
+{
+  "schemaVersion": 1,
+  "geradoEm": "2026-10-16",
+  "aviso": "Faixas de referência extraídas de bulas oficiais e conferidas por trecho literal. Nenhuma entrada foi validada pelo médico. Apoio à leitura; não é prescrição, nem recomendação de conduta.",
+  "entradas": [
+    {
+      "id": "levetiracetam-focal-1m-a-6m",
+      "medicamento": "levetiracetam",
+      "aliases": [
+        "levetiracetam",
+        "keppra"
+      ],
+      "indicacao": "Crises de início focal (partial-onset seizures), monoterapia e terapia adjunta",
+      "populacao": {
+        "idadeMinMeses": 1,
+        "idadeMaxMeses": 6
+      },
+      "limites": [
+        {
+          "tipo": "dose_inicial",
+          "unidade": "mg/kg/dia",
+          "trecho": "Pediatric Patients 1 Month to < 6 Months Initiate treatment with a daily dose of 14 mg/kg in 2 divided doses (7 mg/kg twice daily). Increase the daily dose every 2 weeks by increments of 14 mg/kg to the recommended daily dose of 42 mg/kg (21 mg/kg twice daily).",
+          "valor": 14
+        },
+        {
+          "tipo": "dose_alvo_recomendada",
+          "unidade": "mg/kg/dia",
+          "trecho": "Pediatric Patients 1 Month to < 6 Months Initiate treatment with a daily dose of 14 mg/kg in 2 divided doses (7 mg/kg twice daily). Increase the daily dose every 2 weeks by increments of 14 mg/kg to the recommended daily dose of 42 mg/kg (21 mg/kg twice daily).",
+          "valor": 42
+        }
+      ],
+      "fonte": {
+        "tipo": "FDA drug label (SPL)",
+        "orgao": "U.S. Food and Drug Administration / DailyMed",
+        "titulo": "Keppra (levetiracetam) prescribing information",
+        "fabricante": "UCB, Inc.",
+        "secao": "2 Dosage and Administration",
+        "setId": "3ca9df05-a506-4ec8-a4fe-320f1219ab21",
+        "versaoSpl": "36",
+        "dataEfetiva": "2026-01-28",
+        "dataConsulta": "2026-10-16",
+        "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=3ca9df05-a506-4ec8-a4fe-320f1219ab21",
+        "obtidoVia": "openFDA drug label API (api.fda.gov/drug/label.json)"
+      },
+      "observacoes": "Bula norte-americana; confirmar na bula ANVISA/formulário nacional antes de validar. A bula pede solução oral para peso ≤ 20 kg.",
+      "status": "aguardando_validacao_medico",
+      "validacao": {
+        "por": null,
+        "em": null,
+        "observacao": null
+      }
+    },
+    {
+      "id": "levetiracetam-focal-6m-a-4a",
+      "medicamento": "levetiracetam",
+      "aliases": [
+        "levetiracetam",
+        "keppra"
+      ],
+      "indicacao": "Crises de início focal (partial-onset seizures), monoterapia e terapia adjunta",
+      "populacao": {
+        "idadeMinMeses": 6,
+        "idadeMaxMeses": 48
+      },
+      "limites": [
+        {
+          "tipo": "dose_inicial",
+          "unidade": "mg/kg/dia",
+          "trecho": "6 Months to < 4 Years: Initiate treatment with a daily dose of 20 mg/kg in 2 divided doses (10 mg/kg twice daily). Increase the daily dose in 2 weeks by an increment of 20 mg/kg to the recommended daily dose of 50 mg/kg (25 mg/kg twice daily).",
+          "valor": 20
+        },
+        {
+          "tipo": "dose_alvo_recomendada",
+          "unidade": "mg/kg/dia",
+          "trecho": "6 Months to < 4 Years: Initiate treatment with a daily dose of 20 mg/kg in 2 divided doses (10 mg/kg twice daily). Increase the daily dose in 2 weeks by an increment of 20 mg/kg to the recommended daily dose of 50 mg/kg (25 mg/kg twice daily).",
+          "valor": 50
+        }
+      ],
+      "fonte": {
+        "tipo": "FDA drug label (SPL)",
+        "orgao": "U.S. Food and Drug Administration / DailyMed",
+        "titulo": "Keppra (levetiracetam) prescribing information",
+        "fabricante": "UCB, Inc.",
+        "secao": "2 Dosage and Administration",
+        "setId": "3ca9df05-a506-4ec8-a4fe-320f1219ab21",
+        "versaoSpl": "36",
+        "dataEfetiva": "2026-01-28",
+        "dataConsulta": "2026-10-16",
+        "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=3ca9df05-a506-4ec8-a4fe-320f1219ab21",
+        "obtidoVia": "openFDA drug label API (api.fda.gov/drug/label.json)"
+      },
+      "observacoes": "Bula norte-americana; confirmar na bula ANVISA antes de validar.",
+      "status": "aguardando_validacao_medico",
+      "validacao": {
+        "por": null,
+        "em": null,
+        "observacao": null
+      }
+    },
+    {
+      "id": "levetiracetam-focal-4a-a-16a",
+      "medicamento": "levetiracetam",
+      "aliases": [
+        "levetiracetam",
+        "keppra"
+      ],
+      "indicacao": "Crises de início focal (partial-onset seizures), monoterapia e terapia adjunta",
+      "populacao": {
+        "idadeMinMeses": 48,
+        "idadeMaxMeses": 192
+      },
+      "limites": [
+        {
+          "tipo": "dose_inicial",
+          "unidade": "mg/kg/dia",
+          "trecho": "4 Years to < 16 Years Initiate treatment with a daily dose of 20 mg/kg in 2 divided doses (10 mg/kg twice daily). Increase the daily dose every 2 weeks by increments of 20 mg/kg to the recommended daily dose of 60 mg/kg (30 mg/kg twice daily).",
+          "valor": 20
+        },
+        {
+          "tipo": "dose_alvo_recomendada",
+          "unidade": "mg/kg/dia",
+          "trecho": "4 Years to < 16 Years Initiate treatment with a daily dose of 20 mg/kg in 2 divided doses (10 mg/kg twice daily). Increase the daily dose every 2 weeks by increments of 20 mg/kg to the recommended daily dose of 60 mg/kg (30 mg/kg twice daily).",
+          "valor": 60
+        },
+        {
+          "tipo": "limite_maximo",
+          "unidade": "mg/dia",
+          "trecho": "For KEPPRA tablet dosing in pediatric patients weighing more than 40 kg, initiate treatment with a daily dose of 1000 mg/day given as twice daily dosing (500 mg twice daily). Increase the daily dose every 2 weeks by increments of 1000 mg/day to a maximum recommended daily dose of 3000 mg (1500 mg twice daily).",
+          "valor": 3000
+        }
+      ],
+      "fonte": {
+        "tipo": "FDA drug label (SPL)",
+        "orgao": "U.S. Food and Drug Administration / DailyMed",
+        "titulo": "Keppra (levetiracetam) prescribing information",
+        "fabricante": "UCB, Inc.",
+        "secao": "2 Dosage and Administration",
+        "setId": "3ca9df05-a506-4ec8-a4fe-320f1219ab21",
+        "versaoSpl": "36",
+        "dataEfetiva": "2026-01-28",
+        "dataConsulta": "2026-10-16",
+        "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=3ca9df05-a506-4ec8-a4fe-320f1219ab21",
+        "obtidoVia": "openFDA drug label API (api.fda.gov/drug/label.json)"
+      },
+      "observacoes": "O teto de 3000 mg/dia vem do trecho de comprimidos para > 40 kg. Tetos específicos por forma farmacêutica (ex.: 1500 mg/dia em comprimidos de 20 a 40 kg) não estão modelados nesta versão.",
+      "status": "aguardando_validacao_medico",
+      "validacao": {
+        "por": null,
+        "em": null,
+        "observacao": null
+      }
+    },
+    {
+      "id": "atomoxetina-tdah-6a-menos70kg",
+      "medicamento": "atomoxetina",
+      "aliases": [
+        "atomoxetina",
+        "atomoxetine",
+        "strattera"
+      ],
+      "indicacao": "TDAH (aplicação aguda em pacientes pediátricos ≥ 6 anos)",
+      "populacao": {
+        "idadeMinMeses": 72,
+        "pesoMaxKg": 70
+      },
+      "limites": [
+        {
+          "tipo": "dose_inicial",
+          "unidade": "mg/kg/dia",
+          "trecho": "Pediatric patients who weigh less than 70 kg 0.5 mg/kg/day Minimum of 3 days 1.2 mg/kg/day a,b 1.4 mg/kg/day or 100 mg/day, whichever is less",
+          "valor": 0.5
+        },
+        {
+          "tipo": "dose_alvo_recomendada",
+          "unidade": "mg/kg/dia",
+          "trecho": "Pediatric patients who weigh less than 70 kg 0.5 mg/kg/day Minimum of 3 days 1.2 mg/kg/day a,b 1.4 mg/kg/day or 100 mg/day, whichever is less",
+          "valor": 1.2
+        },
+        {
+          "tipo": "limite_maximo",
+          "unidade": "mg/kg/dia",
+          "trecho": "Pediatric patients who weigh less than 70 kg 0.5 mg/kg/day Minimum of 3 days 1.2 mg/kg/day a,b 1.4 mg/kg/day or 100 mg/day, whichever is less",
+          "valor": 1.4,
+          "condicao": "o menor entre 1,4 mg/kg/dia e 100 mg/dia"
+        },
+        {
+          "tipo": "limite_maximo",
+          "unidade": "mg/dia",
+          "trecho": "Pediatric patients who weigh less than 70 kg 0.5 mg/kg/day Minimum of 3 days 1.2 mg/kg/day a,b 1.4 mg/kg/day or 100 mg/day, whichever is less",
+          "valor": 100,
+          "condicao": "o menor entre 1,4 mg/kg/dia e 100 mg/dia"
+        }
+      ],
+      "fonte": {
+        "tipo": "FDA drug label (SPL)",
+        "orgao": "U.S. Food and Drug Administration / DailyMed",
+        "titulo": "Strattera (atomoxetine hydrochloride) prescribing information",
+        "fabricante": "Eli Lilly and Company",
+        "secao": "2 Dosage and Administration",
+        "setId": "309de576-c318-404a-bc15-660c2b1876fb",
+        "versaoSpl": "69",
+        "dataEfetiva": "2026-06-30",
+        "dataConsulta": "2026-10-16",
+        "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=309de576-c318-404a-bc15-660c2b1876fb",
+        "obtidoVia": "openFDA drug label API (api.fda.gov/drug/label.json)"
+      },
+      "observacoes": "A bula prevê ajustes para insuficiência hepática e para inibidores fortes de CYP2D6 ou metabolizadores lentos (seções 2.4 e 2.5); esta checagem NÃO considera esses ajustes.",
+      "status": "aguardando_validacao_medico",
+      "validacao": {
+        "por": null,
+        "em": null,
+        "observacao": null
+      }
+    },
+    {
+      "id": "atomoxetina-tdah-6a-70kg-ou-mais",
+      "medicamento": "atomoxetina",
+      "aliases": [
+        "atomoxetina",
+        "atomoxetine",
+        "strattera"
+      ],
+      "indicacao": "TDAH (aplicação aguda em pacientes pediátricos ≥ 6 anos)",
+      "populacao": {
+        "idadeMinMeses": 72,
+        "pesoMinKg": 70
+      },
+      "limites": [
+        {
+          "tipo": "dose_inicial",
+          "unidade": "mg/dia",
+          "trecho": "Pediatric patients who weigh 70 kg or more and adult patients 40 mg/day Minimum of 3 days 80 mg/day a 100 mg/day a,c",
+          "valor": 40
+        },
+        {
+          "tipo": "dose_alvo_recomendada",
+          "unidade": "mg/dia",
+          "trecho": "Pediatric patients who weigh 70 kg or more and adult patients 40 mg/day Minimum of 3 days 80 mg/day a 100 mg/day a,c",
+          "valor": 80
+        },
+        {
+          "tipo": "limite_maximo",
+          "unidade": "mg/dia",
+          "trecho": "Pediatric patients who weigh 70 kg or more and adult patients 40 mg/day Minimum of 3 days 80 mg/day a 100 mg/day a,c",
+          "valor": 100
+        }
+      ],
+      "fonte": {
+        "tipo": "FDA drug label (SPL)",
+        "orgao": "U.S. Food and Drug Administration / DailyMed",
+        "titulo": "Strattera (atomoxetine hydrochloride) prescribing information",
+        "fabricante": "Eli Lilly and Company",
+        "secao": "2 Dosage and Administration",
+        "setId": "309de576-c318-404a-bc15-660c2b1876fb",
+        "versaoSpl": "69",
+        "dataEfetiva": "2026-06-30",
+        "dataConsulta": "2026-10-16",
+        "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=309de576-c318-404a-bc15-660c2b1876fb",
+        "obtidoVia": "openFDA drug label API (api.fda.gov/drug/label.json)"
+      },
+      "observacoes": "A bula prevê ajustes para insuficiência hepática e para CYP2D6 (seções 2.4 e 2.5); esta checagem NÃO os considera.",
+      "status": "aguardando_validacao_medico",
+      "validacao": {
+        "por": null,
+        "em": null,
+        "observacao": null
+      }
+    },
+    {
+      "id": "carbamazepina-epilepsia-menor-6a",
+      "medicamento": "carbamazepina",
+      "aliases": [
+        "carbamazepina",
+        "carbamazepine",
+        "tegretol"
+      ],
+      "indicacao": "Epilepsia (crises parciais, tônico-clônicas generalizadas e mistas)",
+      "populacao": {
+        "idadeMinMeses": 0,
+        "idadeMaxMeses": 72
+      },
+      "limites": [
+        {
+          "tipo": "dose_inicial",
+          "unidade": "mg/kg/dia",
+          "trecho": "Children under 6 years of age-Initial: 10 to 20 mg/kg/day twice a day or three times a day as tablets, or four times a day as suspension.",
+          "min": 10,
+          "max": 20
+        },
+        {
+          "tipo": "limite_seguranca_documentado",
+          "unidade": "mg/kg/dia",
+          "trecho": "No recommendation regarding the safety of carbamazepine for use at doses above 35 mg/kg/24 hours can be made.",
+          "valor": 35
+        }
+      ],
+      "fonte": {
+        "tipo": "FDA drug label (SPL)",
+        "orgao": "U.S. Food and Drug Administration / DailyMed",
+        "titulo": "Tegretol (carbamazepine) prescribing information",
+        "fabricante": "Novartis Pharmaceuticals Corporation",
+        "secao": "2 Dosage and Administration",
+        "setId": "8d409411-aa9f-4f3a-a52c-fbcb0c3ec053",
+        "versaoSpl": "39",
+        "dataEfetiva": "2026-08-20",
+        "dataConsulta": "2026-10-16",
+        "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=8d409411-aa9f-4f3a-a52c-fbcb0c3ec053",
+        "obtidoVia": "openFDA drug label API (api.fda.gov/drug/label.json)"
+      },
+      "observacoes": "A bula afirma que a resposta ótima ocorre ordinariamente abaixo de 35 mg/kg/dia e que não há recomendação de segurança acima disso; não é um 'máximo' absoluto de prescrição.",
+      "status": "aguardando_validacao_medico",
+      "validacao": {
+        "por": null,
+        "em": null,
+        "observacao": null
+      }
+    },
+    {
+      "id": "carbamazepina-epilepsia-6a-a-12a",
+      "medicamento": "carbamazepina",
+      "aliases": [
+        "carbamazepina",
+        "carbamazepine",
+        "tegretol"
+      ],
+      "indicacao": "Epilepsia (crises parciais, tônico-clônicas generalizadas e mistas)",
+      "populacao": {
+        "idadeMinMeses": 72,
+        "idadeMaxMeses": 144
+      },
+      "limites": [
+        {
+          "tipo": "limite_seguranca_documentado",
+          "unidade": "mg/dia",
+          "trecho": "Dosage generally should not exceed 1000 mg daily.",
+          "valor": 1000
+        }
+      ],
+      "fonte": {
+        "tipo": "FDA drug label (SPL)",
+        "orgao": "U.S. Food and Drug Administration / DailyMed",
+        "titulo": "Tegretol (carbamazepine) prescribing information",
+        "fabricante": "Novartis Pharmaceuticals Corporation",
+        "secao": "2 Dosage and Administration",
+        "setId": "8d409411-aa9f-4f3a-a52c-fbcb0c3ec053",
+        "versaoSpl": "39",
+        "dataEfetiva": "2026-08-20",
+        "dataConsulta": "2026-10-16",
+        "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=8d409411-aa9f-4f3a-a52c-fbcb0c3ec053",
+        "obtidoVia": "openFDA drug label API (api.fda.gov/drug/label.json)"
+      },
+      "observacoes": "Para 6 a 12 anos a bula descreve dose inicial de 200 mg/dia em mg absolutos (não por kg).",
+      "status": "aguardando_validacao_medico",
+      "validacao": {
+        "por": null,
+        "em": null,
+        "observacao": null
+      }
+    },
+    {
+      "id": "carbamazepina-epilepsia-12a-a-15a",
+      "medicamento": "carbamazepina",
+      "aliases": [
+        "carbamazepina",
+        "carbamazepine",
+        "tegretol"
+      ],
+      "indicacao": "Epilepsia (crises parciais, tônico-clônicas generalizadas e mistas)",
+      "populacao": {
+        "idadeMinMeses": 144,
+        "idadeMaxMeses": 180
+      },
+      "limites": [
+        {
+          "tipo": "limite_seguranca_documentado",
+          "unidade": "mg/dia",
+          "trecho": "Dosage generally should not exceed 1000 mg daily in children 12 to 15 years of age, and 1200 mg daily in patients above 15 years of age.",
+          "valor": 1000
+        }
+      ],
+      "fonte": {
+        "tipo": "FDA drug label (SPL)",
+        "orgao": "U.S. Food and Drug Administration / DailyMed",
+        "titulo": "Tegretol (carbamazepine) prescribing information",
+        "fabricante": "Novartis Pharmaceuticals Corporation",
+        "secao": "2 Dosage and Administration",
+        "setId": "8d409411-aa9f-4f3a-a52c-fbcb0c3ec053",
+        "versaoSpl": "39",
+        "dataEfetiva": "2026-08-20",
+        "dataConsulta": "2026-10-16",
+        "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=8d409411-aa9f-4f3a-a52c-fbcb0c3ec053",
+        "obtidoVia": "openFDA drug label API (api.fda.gov/drug/label.json)"
+      },
+      "observacoes": "A bula não define o limite exato de 15 anos ('12 to 15' e 'above 15'); por isso não há entrada a partir de 15 anos.",
+      "status": "aguardando_validacao_medico",
+      "validacao": {
+        "por": null,
+        "em": null,
+        "observacao": null
+      }
+    },
+    {
+      "id": "valproato-crises-parciais-complexas-10a-ou-mais",
+      "medicamento": "valproato",
+      "aliases": [
+        "valproato",
+        "valproate",
+        "divalproato",
+        "divalproex",
+        "acido valproico",
+        "ácido valproico",
+        "depakote"
+      ],
+      "indicacao": "Crises parciais complexas, monoterapia (crianças ≥ 10 anos e adultos)",
+      "populacao": {
+        "idadeMinMeses": 120
+      },
+      "limites": [
+        {
+          "tipo": "dose_inicial",
+          "unidade": "mg/kg/dia",
+          "trecho": "Patients should initiate therapy at 10 to 15 mg/kg/day.",
+          "min": 10,
+          "max": 15
+        },
+        {
+          "tipo": "limite_seguranca_documentado",
+          "unidade": "mg/kg/dia",
+          "trecho": "No recommendation regarding the safety of valproate for use at doses above 60 mg/kg/day can be made.",
+          "valor": 60
+        }
+      ],
+      "fonte": {
+        "tipo": "FDA drug label (SPL)",
+        "orgao": "U.S. Food and Drug Administration / DailyMed",
+        "titulo": "Depakote Sprinkles (divalproex sodium) prescribing information",
+        "fabricante": "AbbVie Inc.",
+        "secao": "2 Dosage and Administration",
+        "setId": "4619aff4-0f80-444f-858d-42e4137aa809",
+        "versaoSpl": "1631",
+        "dataEfetiva": "2026-03-31",
+        "dataConsulta": "2026-10-16",
+        "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=4619aff4-0f80-444f-858d-42e4137aa809",
+        "obtidoVia": "openFDA drug label API (api.fda.gov/drug/label.json)"
+      },
+      "observacoes": "A bula afirma que a resposta ótima ocorre ordinariamente abaixo de 60 mg/kg/dia e que não há recomendação de segurança acima disso. A bula contém alertas graves (hepatotoxicidade, teratogenicidade, pancreatite) que esta checagem NÃO avalia.",
+      "status": "aguardando_validacao_medico",
+      "validacao": {
+        "por": null,
+        "em": null,
+        "observacao": null
+      }
+    }
+  ]
+}

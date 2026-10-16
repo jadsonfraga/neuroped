@@ -20,7 +20,7 @@ const ROLE_LABEL: Record<string, string> = {
   owner: "proprietário(a)",
   clinic_admin: "administrador(a)",
   professional: "profissional",
-  assistant: "assistente/recepção",
+  assistant: "secretaria/recepção",
   financial: "financeiro",
 };
 
