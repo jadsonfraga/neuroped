@@ -4,8 +4,8 @@
 > Não edite à mão — rode `npm run verify` para regenerar.
 
 - **Total de instrumentos:** 292
-- **Com fonte declarada:** 291 (99.7%)
-- **Sem fonte declarada:** 1
+- **Com fonte declarada:** 292 (100.0%)
+- **Sem fonte declarada:** 0
 - **Aguardando validação psicométrica publicada:** 111 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
 
 > As duas últimas linhas medem coisas diferentes e não se somam: um
@@ -96,7 +96,7 @@
 | `fas-fluencia` | FAS Fluência Verbal | Benton AL, Hamsher K, 1976 (Controlled Oral Word Association — FAS) | não | não |
 | `fas-pr` | FAS-PR | Calvocoressi L et al., 1999 (Family Accommodation Scale) | não | não |
 | `flacc` | FLACC | Merkel SI et al., 1997 - University of Michigan | não | não |
-| `fms` | FMS | — | sim | não |
+| `fms` | FMS | Graham HK et al., 2004 — The Functional Mobility Scale (FMS). J Pediatr Orthop 24(5):514-20 | não | não |
 | `fps-r` | FPS-R | Hicks CL, von Baeyer CL, Spafford PA, van Korlaar I, Goodenough B, 2001 (Faces Pain Scale-Revised) — Pain 93(2):173-183. PMID 11427329 · doi:10.1016/S0304-3959(01)00314-1 | não | não |
 | `gad7` | GAD-7 | Spitzer RL et al., 2006 - Arch Intern Med | não | não |
 | `gad7-cuidador` | GAD-7 do cuidador | Spitzer RL et al., 2006 (domínio público) | não | não |
