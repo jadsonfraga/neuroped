@@ -331,7 +331,7 @@ test("relatório e PDF: metadados, o que foi testado por instrumento, contagem b
 
   const spec = buildGameDocSpec(session, ISSUER, "30/09/2026 14:05");
   assert.match(spec.title, /Super NeuroPad Game/);
-  assert.equal(spec.sections.length, 4 + 6 + 4, "identificação, instrumentos, domínios, leitura, 6 mundos, observações, critérios, estruturado, proveniência");
+  assert.equal(spec.sections.length, 4 + 1 + 6 + 4, "identificação, instrumentos, domínios, leitura, perfil de resposta, 6 mundos, observações, critérios, estruturado, proveniência");
   assert.deepEqual(spec.sections.slice(0, 4).map((section) => section.heading), [
     "Identificação da sessão", "O que foi testado por instrumento de origem", "Registro de respostas (contagem bruta)", "Itens registrados como não acertados",
   ]);
@@ -474,7 +474,7 @@ test("partidas interrompidas ou com itens duplicados: só contagem e situação,
       assert.match(output, /incomplet[ao]/i);
       assert.match(output, /sem classificação/i);
     }
-    assert.equal(pdf.sections.length, 4 + 6 + 4);
+    assert.equal(pdf.sections.length, 4 + (partial.answers.length > 0 ? 1 : 0) + 6 + 4, "o perfil de resposta descritivo só entra com respostas registradas");
     for (const entry of partial.answers) assert.ok(buildGameReport(partial).includes(entry.prompt));
   }
   const duplicate = { ...full, answers: full.answers.map((entry, index) => (index === 29 ? full.answers[0] : entry)) };
@@ -578,8 +578,8 @@ test("toque duplo em tablet não registra o mesmo desafio duas vezes: todos os c
   assert.match(page, /if \(!acceptManualTap\(lastAnswerAt\.current, event\.timeStamp\)\) return;\s*\n\s*lastAnswerAt\.current = event\.timeStamp;\s*\n\s*pushAnswer\(record\);/);
   assert.doesNotMatch(page, /=> pushAnswer\(/, "nenhum botão chama pushAnswer direto");
   const submissionSites = [
-    /onAnswer=\{\(chosen, event\) => submitAnswer\(recordTouch\(item, phaseId, chosen, elapsedSeconds\(\), repeated\), event\)\}/,
-    /onMiss=\{\(status, event\) => submitAnswer\(recordTouch\(item, phaseId, null, elapsedSeconds\(\), repeated, status === "recusa"\), event\)\}/,
+    /onAnswer=\{\(chosen, event\) => submitAnswer\(recordTouch\(item, phaseId, chosen, elapsedSeconds\(\), repeated, false, touchOrder\), event\)\}/,
+    /onMiss=\{\(status, event\) => submitAnswer\(recordTouch\(item, phaseId, null, elapsedSeconds\(\), repeated, status === "recusa", touchOrder\), event\)\}/,
     /onDone=\{\(placed, event\) => submitAnswer\(recordBuild\(item, phaseId, placed, elapsedSeconds\(\), repeated\), event\)\}/,
     /onMiss=\{\(status, event\) => submitAnswer\(recordBuild\(item, phaseId, null, elapsedSeconds\(\), repeated, status === "recusa"\), event\)\}/,
     /onJudge=\{\(status, event, gesture\) => submitAnswer\(recordJudged\(item, phaseId, status, elapsedSeconds\(\), repeated, gesture \? "gesto" : undefined\), event\)\}/,

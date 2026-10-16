@@ -1,0 +1,14 @@
+# NeuroPed — https://neuroped.pages.dev
+# O app é uma SPA com rotas por hash (#/...). Crawlers só enxergam a raiz e as
+# páginas estáticas abaixo. Áreas autenticadas/clínicas e a API ficam fora.
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /intake.html
+Disallow: /escala.html
+Disallow: /integracoes/
+Disallow: /obs10-global/
+Disallow: /nesplora/
+Disallow: /offline.html
+
+Sitemap: https://neuroped.pages.dev/sitemap.xml

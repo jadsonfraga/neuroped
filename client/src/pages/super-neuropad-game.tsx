@@ -63,6 +63,8 @@ import {
   recordTouch,
   sessionWallSeconds,
   shuffle,
+  optionOrder,
+  touchOrdinal,
   summarize,
   undoLastAnswer,
   type AnswerRecord,
@@ -323,10 +325,10 @@ function SetupSteps({ hasAge, hasHero, kitDone, kitTotal }: { hasAge: boolean; h
   );
 }
 
-function TouchStage({ item, seed, paused, onAnswer }: { item: TouchItem; seed: number; paused: boolean; onAnswer: (chosen: Option | null, event: React.MouseEvent) => void }) {
+function TouchStage({ item, order, paused, onAnswer }: { item: TouchItem; order: Option[]; paused: boolean; onAnswer: (chosen: Option | null, event: React.MouseEvent) => void }) {
   const [revealed, setRevealed] = useState(!item.preview);
   const [left, setLeft] = useState(PREVIEW_SECONDS);
-  const options = useMemo(() => shuffle(item.options, seed), [item, seed]);
+  const options = order;
   useEffect(() => {
     if (paused || revealed || !item.preview) return;
     // Exposição padronizada: esconde sozinho ao fim da contagem; a aplicadora pode esconder antes.
@@ -587,6 +589,10 @@ export default function SuperNeuroPadGamePage() {
   const phase = phaseById(phaseId, ageYears ?? undefined);
   const items = band ? itemsFor(band.id, phaseId) : [];
   const item = items[itemIndex];
+  const touchOrder = useMemo(
+    () => (band && item && item.kind === "toque" ? optionOrder(item, seed + itemIndex * 17 + phaseIndex * 101, touchOrdinal(band.id, phaseId, item.id)) : []),
+    [band, item, seed, itemIndex, phaseIndex, phaseId],
+  );
   const done = PHASE_ORDER.map((id) => band ? answers.filter((answer) => answer.phaseId === id).length >= itemsFor(band.id, id).length : false);
   const totalItems = band ? bandItemCount(band.id) : 0;
   const estimate = band ? estimateBandSeconds(band.min) : null;
@@ -1214,10 +1220,10 @@ export default function SuperNeuroPadGamePage() {
             <div hidden={paused} className="rounded-2xl bg-[var(--snp-stage)] p-3 text-[var(--snp-stage-text)] sm:p-4">
               {item.kind === "toque" ? (
                 <div className="space-y-4">
-                  <TouchStage key={item.id} item={item} paused={paused} seed={seed + itemIndex * 17 + phaseIndex * 101} onAnswer={(chosen, event) => submitAnswer(recordTouch(item, phaseId, chosen, elapsedSeconds(), repeated), event)} />
+                  <TouchStage key={item.id} item={item} paused={paused} order={touchOrder} onAnswer={(chosen, event) => submitAnswer(recordTouch(item, phaseId, chosen, elapsedSeconds(), repeated, false, touchOrder), event)} />
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <RepeatToggle repeated={repeated} onToggle={() => setRepeated((current) => !current)} />
-                    <MissBar onMiss={(status, event) => submitAnswer(recordTouch(item, phaseId, null, elapsedSeconds(), repeated, status === "recusa"), event)} />
+                    <MissBar onMiss={(status, event) => submitAnswer(recordTouch(item, phaseId, null, elapsedSeconds(), repeated, status === "recusa", touchOrder), event)} />
                   </div>
                 </div>
               ) : item.kind === "montar" ? (

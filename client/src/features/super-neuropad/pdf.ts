@@ -24,6 +24,7 @@ import {
   sessionLimitSeconds,
   toddlerReportLines,
   phaseStatusText,
+  responseProfileLines,
   sessionWallSeconds,
   STATUS_LABELS,
   statsLines,
@@ -158,7 +159,7 @@ export function buildGameDocSpec(session: GameSession, issuer: IssuerLines, appl
   ].join("\n");
 
   const structured = [
-    "Rótulos fixos: SESSAO, DOMINIO, ORIGEM, ITEM, OBSERVACOES. Valor em JSON de uma linha após o rótulo. Figuras aparecem como [nome].",
+    "Rótulos fixos: SESSAO, DOMINIO, ORIGEM, ITEM, PERFIL, OBSERVACOES. Valor em JSON de uma linha após o rótulo. Figuras aparecem como [nome].",
     "",
     ...buildStructuredLines(session),
   ].join("\n");
@@ -185,6 +186,7 @@ export function buildGameDocSpec(session: GameSession, issuer: IssuerLines, appl
       { heading: "O que foi testado por instrumento de origem", body: origins },
       { heading: "Registro de respostas (contagem bruta)", body: objective },
       { heading: "Itens registrados como não acertados", body: consultation },
+      ...(responseProfileLines(session).length ? [{ heading: "Perfil de resposta (descritivo, sem norma)", body: responseProfileLines(session).map((line) => describeArt(line)).join("\n") }] : []),
       ...phaseSections,
       { heading: "Observações da aplicadora", body: observations ? describeArt(observations) : "Sem observações registradas." },
       { heading: "Critérios de registro", body: criteria },

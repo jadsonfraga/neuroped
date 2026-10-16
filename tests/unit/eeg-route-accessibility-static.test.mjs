@@ -15,7 +15,8 @@ test("EEG stays in an accessible internal handoff instead of auto-redirecting", 
   assert.match(source, /<h1 /);
   assert.doesNotMatch(source, /href="#\/agendar"/);
   assert.equal(source.match(/href="#\/marcacao"/g)?.length, 2);
-  assert.match(source, /sem redirecionamento/);
+  assert.match(source, /nenhum redirecionamento externo/);
+  assert.match(source, /no próprio NeuroPed/);
   assert.ok(app.includes('if (location === "/eletroencefalograma")'));
   assert.match(
     app,

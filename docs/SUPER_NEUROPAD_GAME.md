@@ -388,3 +388,14 @@ recalibração de cortes e validação com amostra de crianças.
 - Folga de tempo até o teto abaixo de 60 s (2, 3, 16 e 17 anos) gera aviso na preparação e no relatório; itens e tetos não mudaram.
 - Procedência dos itens (autoral do jogo × banco de origem) aparece na preparação, no relatório e no PDF.
 - O que depende de norma, fonte ou validação está em `docs/VALIDACAO_NEUROPAD.md`.
+
+## Posição balanceada e perfil de resposta (v2026-10-16)
+
+- `optionOrder`: a posição da resposta certa é planejada; entre os toques com o mesmo número de opções, cada bloco de `n`
+  itens usa as `n` posições uma vez. Distratores embaralhados de forma determinística. `touchOrdinal` dá a ordem do item.
+- `AnswerRecord` ganha `pos`, `shown` e `correctPos` (opcionais; registros antigos continuam válidos e idênticos).
+- `responseProfile` / `responseProfileLines`: tempo dos itens conferidos pelo jogo (mediana, intervalo interquartil,
+  desvio-padrão, coeficiente de variação com 5+ itens) separado do tempo dos itens conferidos pela aplicadora, posição das
+  escolhas e dos erros, maior sequência na mesma posição. Só contagens e dispersão; sem norma nem corte. Aparece no
+  relatório, no PDF (seção "Perfil de resposta") e na linha estruturada `PERFIL`.
+- Rollback: reverter a PR; nenhum dado persistido muda.
