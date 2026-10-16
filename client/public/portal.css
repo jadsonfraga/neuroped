@@ -1,0 +1,5 @@
+.portal-item { border-top: 1px solid rgba(120,120,120,.25); padding: 12px 0; }
+.portal-item:first-child { border-top: 0; }
+.portal-item h3 { margin: 0 0 6px; font-size: 1rem; }
+.portal-text { margin: 0 0 6px; line-height: 1.5; }
+a.primary-button { display: inline-block; text-decoration: none; text-align: center; }

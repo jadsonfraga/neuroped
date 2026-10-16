@@ -1,4 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { EMPTY_BRANDING, type ClinicBranding } from "@shared/clinic-branding";
 import { authFetch, getAccessToken, getAuthSessionEpoch } from "@/lib/authClient";
 
 /**
@@ -22,6 +23,8 @@ export interface DocumentIssuer {
   publicEmail: string;
   companyLine: string;
   motto: string;
+  /** Marca da clínica ativa (cores, logo, cabeçalho/rodapé). Vazia = padrão NeuroPed. */
+  branding: ClinicBranding;
   /** true quando o perfil profissional foi salvo em Configurações → Perfil. */
   profileConfigured: boolean;
 }
@@ -66,6 +69,7 @@ const EMPTY_ISSUER: DocumentIssuer = {
   publicEmail: "",
   companyLine: "",
   motto: "",
+  branding: EMPTY_BRANDING,
   profileConfigured: false,
 };
 
@@ -90,6 +94,7 @@ interface TenantResponse {
     companyLine: string;
     motto: string;
   };
+  branding?: ClinicBranding;
 }
 
 let cachedIssuer: { scope: string; issuer: DocumentIssuer } | null = null;
@@ -165,6 +170,7 @@ export async function loadIssuer(): Promise<DocumentIssuer> {
             publicEmail: tenant.settings?.publicEmail ?? "",
             companyLine: tenant.settings?.companyLine ?? "",
             motto: tenant.settings?.motto ?? "",
+            branding: tenant.branding ?? EMPTY_BRANDING,
           };
         }
       } catch {

@@ -17,6 +17,7 @@ import {
   parseClinicSettingsInput,
   prepareClinicSettingsUpsert,
 } from "../../tenant/_settings";
+import { getClinicBranding, isMissingBrandingTable, prepareBrandingUpsert, validateBrandingInput } from "../../tenant/_branding";
 
 /**
  * GET/PATCH /api/tenants/:id — detalhe e configuração da clínica.
@@ -45,6 +46,7 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
 
   await ensureSelfServiceSchema(db);
   const settings = await getClinicSettings(db, clinicId);
+  const branding = await getClinicBranding(db, clinicId);
   return tenantJson({
     id: clinic.id,
     slug: clinic.slug,
@@ -56,6 +58,7 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
     canManage: membershipCanManage(membership),
     permissions: membershipPermissions(membership),
     settings,
+    branding,
   });
 };
 
@@ -89,6 +92,14 @@ export const onRequestPatch: PagesFunction<TenantEnv> = async (context) => {
     return tenantError("Timezone IANA inválido.", "VALIDATION_ERROR", 400);
   }
 
+  let brandingStatement: D1PreparedStatement | null = null;
+  if (body.branding !== undefined) {
+    const brandingInput = validateBrandingInput(body.branding);
+    if (!brandingInput.ok) return tenantError(brandingInput.message, "VALIDATION_ERROR", 400);
+    const logoProvided = isPlainObject(body.branding) && "logoDataUri" in body.branding;
+    brandingStatement = prepareBrandingUpsert(db, clinicId, user.id, brandingInput.value, logoProvided);
+  }
+
   const now = new Date().toISOString();
   const manageRoles = rolesWithPermission("organization.manage");
   const statements = [
@@ -111,6 +122,7 @@ export const onRequestPatch: PagesFunction<TenantEnv> = async (context) => {
   if (isPlainObject(body.settings)) {
     statements.push(prepareClinicSettingsUpsert(db, clinicId, user.id, parseClinicSettingsInput(body.settings)));
   }
+  if (brandingStatement) statements.push(brandingStatement);
   statements.push(
     prepareSaasAudit(db, {
       clinicId,
@@ -118,7 +130,7 @@ export const onRequestPatch: PagesFunction<TenantEnv> = async (context) => {
       action: "clinic_update",
       targetType: "clinic",
       targetId: clinicId,
-      metadata: { fields: ["name", "legalName", "timezone", "settings"].filter((field) => field in body) },
+      metadata: { fields: ["name", "legalName", "timezone", "settings", "branding"].filter((field) => field in body) },
     }, true),
   );
 
@@ -129,6 +141,9 @@ export const onRequestPatch: PagesFunction<TenantEnv> = async (context) => {
       return tenantError("Gestão não autorizada para esta clínica.", "TENANT_FORBIDDEN", 403);
     }
   } catch (error) {
+    if (isMissingBrandingTable(error)) {
+      return tenantError("Marca da clínica indisponível: a migração 0035 ainda não foi aplicada.", "BRANDING_MIGRATION_PENDING", 503);
+    }
     console.error("[tenants/:id.PATCH] DB error", error);
     return tenantError("Não foi possível atualizar a clínica.", "DB_ERROR", 500);
   }
@@ -138,6 +153,7 @@ export const onRequestPatch: PagesFunction<TenantEnv> = async (context) => {
     .bind(clinicId)
     .first<{ id: string; slug: string; name: string; legal_name: string | null; timezone: string; status: string }>();
   const settings = await getClinicSettings(db, clinicId);
+  const branding = await getClinicBranding(db, clinicId);
   return tenantJson({
     id: clinic?.id ?? clinicId,
     slug: clinic?.slug ?? "",
@@ -148,5 +164,6 @@ export const onRequestPatch: PagesFunction<TenantEnv> = async (context) => {
     role: membership.role,
     canManage: true,
     settings,
+    branding,
   });
 };

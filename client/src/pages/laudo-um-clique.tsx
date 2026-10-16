@@ -274,6 +274,7 @@ export default function LaudoUmCliquePage() {
               <p className="text-xs text-muted-foreground">Identificadores trocados por marcadores: {Object.entries(pacote.contagem).map(([k, v]) => `${k} ${v}`).join(" · ") || "nenhum"}. O mapa fica só nesta tela.</p>
               <Textarea readOnly rows={8} value={pacote.prompt} data-testid="luc-prompt-texto" aria-label="Prompt pseudonimizado" />
               <Button size="sm" variant="outline" onClick={() => copiar("prompt", pacote.prompt)} data-testid="luc-copiar-prompt">{copiado === "prompt" ? "Copiado" : "Copiar prompt"}</Button>
+              <p className="text-xs text-muted-foreground" data-testid="luc-aviso-registro-ia">Se usar uma IA externa com este prompt, registre o uso no prontuário (Resolução CFM 2.454/2026, art. 4º, V) e informe a família (arts. 5º e 11): painel "Registro de uso de IA" no cockpit do paciente. A decisão e a redação final são do médico.</p>
               <Label className="text-xs" htmlFor="luc-devolvido">Cole aqui o texto devolvido pela IA para reidentificar localmente</Label>
               <Textarea id="luc-devolvido" rows={4} value={devolvido} onChange={(ev) => setDevolvido(ev.target.value)} data-testid="luc-devolvido" />
               {reid && <pre className="whitespace-pre-wrap rounded-lg bg-muted/40 p-3 text-sm" data-testid="luc-reidentificado">{reid}</pre>}

@@ -28,6 +28,6 @@ test("PDF: acerto azul, erro vermelho, sem resposta/recusa cinza, com marcador t
 
 test("cores do PDF são azul e vermelho (print-safe)", () => {
   const src = readFileSync(new URL("../../client/src/lib/documentPdf.ts", import.meta.url), "utf8");
-  assert.match(src, /answerCorrect: rgb\(0\.114, 0\.306, 0\.847\)/);
-  assert.match(src, /answerWrong: rgb\(0\.725, 0\.11, 0\.11\)/);
+  assert.match(src, /answerCorrect: (?:pdfRgb|rgb)\(0\.114, 0\.306, 0\.847\)/);
+  assert.match(src, /answerWrong: (?:pdfRgb|rgb)\(0\.725, 0\.11, 0\.11\)/);
 });

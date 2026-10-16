@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Activity, AlertTriangle, Pill, Stethoscope } from "lucide-react";
 import type { ClinicalEvent } from "@shared/clinical-core";
 import { TherapyGoalsPanel } from "@/components/clinical/TherapyGoalsPanel";
+import { FamilyPortalPanel } from "@/components/clinical/FamilyPortalPanel";
+import { AiUseRegistryPanel } from "@/components/clinical/AiUseRegistryPanel";
 import { RemoteIntakePanel } from "@/components/clinical/RemoteIntakePanel";
 import { RemoteScalePanel } from "@/components/clinical/RemoteScalePanel";
 
@@ -221,6 +223,8 @@ export function PatientCockpit({ patientId, scaleCount }: PatientCockpitProps) {
 
       <RemoteIntakePanel patientId={patientId} />
       <RemoteScalePanel patientId={patientId} />
+      <FamilyPortalPanel patientId={patientId} />
+      <AiUseRegistryPanel patientId={patientId} />
 
       <div className="grid gap-4 xl:grid-cols-[1.35fr_1fr]">
         <Card className="border-card-border">
