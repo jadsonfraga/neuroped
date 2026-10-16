@@ -146,10 +146,16 @@ async function play(age) {
   const results = page.getByTestId("drx-game-results");
   await results.waitFor();
   const text = (await results.textContent()) ?? "";
-  assert.match(text, /NÃO DIAGNÓSTICA/);
-  assert.match(text, /sem validação normativa brasileira/);
+  assert.match(text, /Registro descritivo; sem classificação\. Interpretação a cargo do profissional\./);
+  assert.doesNotMatch(text, /nível|NÃO DIAGNÓSTICA|referência interna|Sinais para investigar/i);
   assert.match(text, /Erros fonológicos: \d/);
   assert.match(text, /corretas por minuto/);
+  assert.match(text, /Tempos medidos/);
+  await results.getByRole("button", { name: /Ambiente com ruído/ }).click();
+  await results.getByRole("button", { name: /repetiu a instrução/ }).first().click();
+  const obs = await results.locator("#drx-observacoes").inputValue();
+  assert.match(obs, /Ambiente com ruído/);
+  assert.match(obs, /repetiu a instrução/);
   assert.match(text, age >= 15 ? /forma B \(reteste\)/ : /forma A · /);
   assert.ok(await results.locator(".snp-answer--correct").count() > 0, "acertos em azul");
   if (!allCorrect) assert.ok(await results.locator(".snp-answer--wrong").count() > 0, "erros em vermelho");
@@ -167,7 +173,7 @@ async function play(age) {
   const pdf = pdfText(pdfPath);
   if (pdf != null) {
     assert.match(pdf, /Jogo das Letras e N[uú]meros/);
-    assert.match(pdf, /N[ÃA]O DIAGN[ÓO]STICA/);
+    assert.match(pdf, /Registro descritivo; sem classifica/);
     assert.match(pdf, /Acertou|Errou/);
   }
 

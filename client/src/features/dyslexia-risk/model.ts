@@ -1,9 +1,14 @@
 /**
- * ICED-8 — Dyslexia Risk. Instrumento operacional interno.
- * Não validado. Não diagnostica. Ausente ≠ normal. Norma ≤ −1 DP prevalece.
+ * ICED-8 — Dyslexia Risk. Registro descritivo da aplicação.
+ * O app registra COMO a avaliação foi feita e COMO a criança respondeu (contagens brutas, tempos,
+ * produções). Não soma pontos nem classifica e não compara com referência: a interpretação é do profissional.
  */
+import { DESCRIPTIVE_NOTICE } from "../../lib/descriptiveNotice";
+
 export const ICED_VERSION = "ICED-8";
-export const ICED_MAX = 15;
+
+/** Quantidade de pseudopalavras que existia antes da ampliação do ditado (5); rascunhos antigos têm esse total. */
+export const DITADO_PSEUDO_LEGACY_TOTAL = 5;
 
 export const WORDS = [
   ["casa", "A"], ["menino", "A"], ["escola", "A"], ["janela", "A"], ["bonito", "A"],
@@ -29,7 +34,8 @@ export const DITADO = [
   ["responsabilidade", "Isso é responsabilidade."],
 ] as const;
 
-export const DITADO_PSEUDO = ["mepa", "tulo", "falito", "bruneca", "crenuto"] as const;
+/** As 5 primeiras são as da versão anterior (rascunhos antigos seguem avaliados sobre elas); as 5 seguintes ampliam o ditado. Pseudopalavras autorais, sem fonte. */
+export const DITADO_PSEUDO = ["mepa", "tulo", "falito", "bruneca", "crenuto", "bifa", "dumeno", "salteca", "frobita", "venhulo"] as const;
 
 export const CF = [
   { bloco: "A. Segmentação", exemplo: "FATO → /f/ /a/ /t/ /o/", cmd: "gato", esp: "/g/ /a/ /t/ /o/" },
@@ -63,14 +69,13 @@ export const CONTROL = [
 export type Tri = "sim" | "nao" | "nv" | "";
 export type DomainId = "fluencia" | "ortografia" | "pseudo" | "palavras" | "cf" | "ran" | "familiar" | "persistencia";
 
-export interface DomainScore {
+/** Medida bruta de um domínio, como registrada. Sem pontuação nem rótulo. */
+export interface DomainRecord {
   id: DomainId;
   nome: string;
-  peso: number;
-  pontos: number;
   examinado: boolean;
-  detalhe: string;
-  limítrofe: boolean;
+  /** Texto descritivo com as contagens e tempos registrados; "não examinado" quando a fase não foi aplicada. */
+  medida: string;
 }
 
 export interface IcedInput {
@@ -78,199 +83,81 @@ export interface IcedInput {
   controle: Record<string, Tri>;
   palavrasAcertos: number | null;
   palavrasF: number | null;
-  palavrasNorma: boolean;
   pseudoAcertos: number | null;
   pseudoLex: number | null;
-  pseudoNorma: boolean;
   pcpm: number | null;
-  fluenciaNorma: boolean;
+  /** Palavras lidas, erros e tempo (s) da fluência, quando registrados. */
+  fluLidas?: number | null;
+  fluErros?: number | null;
+  fluTempo?: number | null;
   ditadoF: number | null;
   ditadoPseudoCertas: number | null;
-  ditadoNorma: boolean;
+  /** Pseudopalavras aplicadas no ditado. Ausente = 5 (versão anterior). */
+  ditadoPseudoTotal?: number;
   cfAcertos: number | null;
-  cfNorma: boolean;
   ranSeg: number | null;
   ranErros: number | null;
-  ranNorma: boolean;
   familiar: "sim" | "nao" | "nv" | "";
   persistencia4: boolean | null;
 }
 
-export interface IcedResult {
-  trava: boolean;
-  travaMotivo: string;
-  /** Controles de exclusão sem resposta "sim"/"não" (vazio ou "não verificado"). Ausente ≠ normal: deixa o escore descritivo. */
-  controlesPendentes: string[];
-  /** Soma dos pesos dos domínios examinados (o máximo alcançável nesta aplicação). */
-  pontosExaminaveis: number;
-  /** Avisos de leitura: ano sem âncora de fluência, domínios não examinados etc. */
-  avisos: string[];
-  dominios: DomainScore[];
-  total: number;
+export interface IcedRecord {
+  /** Itens do Bloco 0 com a resposta registrada ("sim", "não", "não verificado" ou "não informado"). */
+  controles: { chave: string; rotulo: string; resposta: string }[];
+  /** Itens do Bloco 0 sem resposta "sim"/"não" (só informa o que falta registrar). */
+  controlesSemResposta: string[];
+  dominios: DomainRecord[];
   naoExaminados: string[];
-  faixa: "limitada" | "intermediaria" | "elevada" | "descritiva";
-  nucleo: "presente" | "ausente";
-  leitura: string;
+  /** Texto de devolução puramente descritivo (o que foi aplicado e as medidas brutas). */
   frase: string;
 }
 
-export function fluencyAnchor(ano: IcedInput["ano"], pcpm: number | null) {
-  if (ano === "outro" || !ano) return { pontua: false, examinado: false, detalhe: "Sem âncora de 8 anos. Só norma do ano, ou não pontuar." };
-  if (pcpm == null) return { pontua: false, examinado: false, detalhe: "PCPM não registrado." };
-  if (ano === "2") {
-    if (pcpm <= 42) return { pontua: true, examinado: true, detalhe: `PCPM ${pcpm} ≤ 42 (2º ano).` };
-    if (pcpm <= 55) return { pontua: false, examinado: true, detalhe: `PCPM ${pcpm} na faixa 43–55. Descreve, não pontua.` };
-    return { pontua: false, examinado: true, detalhe: `PCPM ${pcpm} acima da âncora do 2º ano.` };
-  }
-  if (pcpm <= 70) return { pontua: true, examinado: true, detalhe: `PCPM ${pcpm} ≤ 70 (3º ano).` };
-  if (pcpm <= 80) return { pontua: false, examinado: true, detalhe: `PCPM ${pcpm} na faixa 71–80. Descreve, não pontua.` };
-  return { pontua: false, examinado: true, detalhe: `PCPM ${pcpm} acima da âncora do 3º ano.` };
-}
+const TRI_TEXT: Record<string, string> = { sim: "sim", nao: "não", nv: "não verificado", "": "não informado" };
 
-/** Controles que, respondidos "não", travam a leitura (e, sem resposta, a deixam descritiva). */
-export const TRAVA_CONTROLS = ["esc", "alf", "aud", "vis", "di"] as const;
+/** Chaves do Bloco 0 (condições de aplicação). */
+export const BLOCO0_KEYS = ["esc", "alf", "aud", "vis", "di"] as const;
 
-/** Texto único da situação da trava, usado em tela, PDF, prontuário e devolução. */
-export function travaStatusText(result: Pick<IcedResult, "trava" | "travaMotivo" | "controlesPendentes">): string {
-  if (result.trava) return `ativa — ${result.travaMotivo}`;
-  if (result.controlesPendentes.length) return `pendente — controles não confirmados: ${result.controlesPendentes.join("; ")}`;
-  return "liberada";
-}
+const dash = (value: number | null | undefined) => (value == null ? "—" : String(value));
 
-export function scoreIced(input: IcedInput): IcedResult {
-  const travaInstr = input.controle.alf === "nao" || input.controle.esc === "nao";
-  const travaSensor = input.controle.aud === "nao" || input.controle.vis === "nao";
-  const travaDi = input.controle.di === "nao";
-  const trava = travaInstr || travaSensor || travaDi;
-  const travaMotivo = [
-    travaInstr ? "instrução ou escolarização insuficiente" : "",
-    travaSensor ? "alteração sensorial não corrigida" : "",
-    travaDi ? "deficiência intelectual como explicação suficiente" : "",
-  ].filter(Boolean).join("; ");
-  const controlLabel = new Map<string, string>(CONTROL.map(([key, label]) => [key, label]));
-  const controlesPendentes = trava ? [] : TRAVA_CONTROLS
-    .filter((key) => input.controle[key] !== "sim" && input.controle[key] !== "nao")
-    .map((key) => controlLabel.get(key) ?? key);
+export function describeIced(input: IcedInput): IcedRecord {
+  const controles = CONTROL.map(([chave, rotulo]) => ({ chave, rotulo, resposta: TRI_TEXT[input.controle[chave] ?? ""] ?? String(input.controle[chave]) }));
+  const controlesSemResposta = CONTROL
+    .filter(([chave]) => (BLOCO0_KEYS as readonly string[]).includes(chave) && input.controle[chave] !== "sim" && input.controle[chave] !== "nao")
+    .map(([, rotulo]) => rotulo);
 
-  const dominios: DomainScore[] = [];
-
-  const flu = input.fluenciaNorma
-    ? { pontua: true, examinado: true, detalhe: "Norma formal ≤ −1 DP prevalece." }
-    : fluencyAnchor(input.ano, input.pcpm);
-  dominios.push({ id: "fluencia", nome: "Fluência", peso: 3, pontos: flu.examinado && flu.pontua ? 3 : 0, examinado: flu.examinado, detalhe: flu.detalhe, limítrofe: flu.examinado && !flu.pontua && /Descreve/.test(flu.detalhe) });
-
-  const ortExam = input.ditadoNorma || input.ditadoF != null || input.ditadoPseudoCertas != null;
-  const ortPontua = input.ditadoNorma || (input.ditadoF != null && input.ditadoF >= 4) || (input.ditadoPseudoCertas != null && input.ditadoPseudoCertas <= 2);
+  const dominios: DomainRecord[] = [];
+  const fluExam = input.pcpm != null;
   dominios.push({
-    id: "ortografia", nome: "Ortografia / ditado", peso: 3,
-    pontos: ortExam && ortPontua ? 3 : 0, examinado: ortExam,
-    detalhe: input.ditadoNorma ? "Norma formal ≤ −1 DP prevalece." : `Erros fonológicos ${input.ditadoF ?? "—"} · pseudopalavras ${input.ditadoPseudoCertas ?? "—"}/5. Erro só de regra não pontua.`,
-    limítrofe: false,
+    id: "fluencia", nome: "Fluência", examinado: fluExam,
+    medida: fluExam
+      ? `${input.fluLidas != null ? `${input.fluLidas} palavras lidas · ` : ""}${input.fluErros != null ? `${input.fluErros} erros · ` : ""}${input.fluTempo != null ? `${input.fluTempo} s · ` : ""}palavras corretas por minuto: ${input.pcpm} · ano escolar informado: ${input.ano || "não informado"}`
+      : "não examinado",
   });
-
-  const psExam = input.pseudoNorma || input.pseudoAcertos != null;
-  const psPontua = input.pseudoNorma || (input.pseudoAcertos != null && input.pseudoAcertos <= 10) || (input.pseudoLex != null && input.pseudoLex >= 4);
+  const ortExam = input.ditadoF != null || input.ditadoPseudoCertas != null;
   dominios.push({
-    id: "pseudo", nome: "Pseudopalavras", peso: 2,
-    pontos: psExam && psPontua ? 2 : 0, examinado: psExam,
-    detalhe: input.pseudoNorma ? "Norma formal ≤ −1 DP prevalece." : `${input.pseudoAcertos ?? "—"}/16 · lexicalizações ${input.pseudoLex ?? "—"}.`,
-    limítrofe: false,
+    id: "ortografia", nome: "Ortografia / ditado", examinado: ortExam,
+    medida: ortExam ? `erros fonológicos ${dash(input.ditadoF)} · pseudopalavras certas ${dash(input.ditadoPseudoCertas)}/${input.ditadoPseudoTotal ?? DITADO_PSEUDO_LEGACY_TOTAL}` : "não examinado",
   });
+  const psExam = input.pseudoAcertos != null;
+  dominios.push({ id: "pseudo", nome: "Pseudopalavras", examinado: psExam, medida: psExam ? `${input.pseudoAcertos}/16 certas · lexicalizações ${dash(input.pseudoLex)}` : "não examinado" });
+  const pwExam = input.palavrasAcertos != null;
+  dominios.push({ id: "palavras", nome: "Precisão de palavras", examinado: pwExam, medida: pwExam ? `${input.palavrasAcertos}/20 certas · erros fonológicos ${dash(input.palavrasF)}` : "não examinado" });
+  const cfExam = input.cfAcertos != null;
+  dominios.push({ id: "cf", nome: "Consciência fonológica", examinado: cfExam, medida: cfExam ? `${input.cfAcertos}/12 certas` : "não examinado" });
+  const ranExam = input.ranSeg != null;
+  dominios.push({ id: "ran", nome: "Nomeação rápida", examinado: ranExam, medida: ranExam ? `${input.ranSeg} s · ${dash(input.ranErros)} erros (40 estímulos)` : "não examinado" });
+  const famExam = input.familiar === "sim" || input.familiar === "nao";
+  dominios.push({ id: "familiar", nome: "Familiar de 1º grau", examinado: famExam, medida: famExam ? `registro em pai, mãe ou irmão: ${input.familiar === "sim" ? "sim" : "não"}` : "não verificado / não examinado" });
+  const persExam = input.persistencia4 != null;
+  dominios.push({ id: "persistencia", nome: "Persistência", examinado: persExam, medida: persExam ? `quatro respostas "sim" no bloco de intervenção: ${input.persistencia4 ? "sim" : "não"}` : "não examinada" });
 
-  const pwExam = input.palavrasNorma || input.palavrasAcertos != null;
-  const pwBorder = !input.palavrasNorma && input.palavrasAcertos === 16 && input.palavrasF != null && input.palavrasF >= 3 && input.palavrasF <= 4;
-  const pwPontua = input.palavrasNorma || (!pwBorder && ((input.palavrasAcertos != null && input.palavrasAcertos <= 15) || (input.palavrasF != null && input.palavrasF >= 5)));
-  dominios.push({
-    id: "palavras", nome: "Precisão de palavras", peso: 1,
-    pontos: pwExam && pwPontua ? 1 : 0, examinado: pwExam,
-    detalhe: input.palavrasNorma ? "Norma formal ≤ −1 DP prevalece." : `${input.palavrasAcertos ?? "—"}/20 · erros fonológicos ${input.palavrasF ?? "—"}${pwBorder ? ". Limítrofe: não pontua." : "."}`,
-    limítrofe: pwBorder,
-  });
-
-  const cfExam = input.cfNorma || input.cfAcertos != null;
-  const cfPontua = input.cfNorma || (input.cfAcertos != null && input.cfAcertos <= 6);
-  dominios.push({
-    id: "cf", nome: "Consciência fonológica", peso: 2,
-    pontos: cfExam && cfPontua ? 2 : 0, examinado: cfExam,
-    detalhe: input.cfNorma ? "Norma formal ≤ −1 DP prevalece." : `${input.cfAcertos ?? "—"}/12. 7–9 descreve, não pontua.`,
-    limítrofe: input.cfAcertos != null && input.cfAcertos >= 7 && input.cfAcertos <= 9,
-  });
-
-  const ranExam = input.ranNorma || input.ranSeg != null;
-  const ranPontua = input.ranNorma || (input.ranSeg != null && input.ranSeg > 45) || (input.ranErros != null && input.ranErros >= 4);
-  dominios.push({
-    id: "ran", nome: "Nomeação rápida", peso: 1,
-    pontos: ranExam && ranPontua ? 1 : 0, examinado: ranExam,
-    detalhe: input.ranNorma ? "RAN normatizado ≤ −1 DP prevalece." : `${input.ranSeg ?? "—"} s · erros ${input.ranErros ?? "—"}.`,
-    limítrofe: false,
-  });
-
-  dominios.push({
-    id: "familiar", nome: "Familiar de 1º grau", peso: 1,
-    pontos: input.familiar === "sim" ? 1 : 0,
-    examinado: input.familiar === "sim" || input.familiar === "nao",
-    detalhe: input.familiar === "nv" || input.familiar === "" ? "Não sei / não examinado. Não zera." : input.familiar === "sim" ? "Sim documentado em pai, mãe ou irmão." : "Sem sim documentado.",
-    limítrofe: false,
-  });
-
-  dominios.push({
-    id: "persistencia", nome: "Persistência", peso: 2,
-    pontos: input.persistencia4 ? 2 : 0,
-    examinado: input.persistencia4 != null,
-    detalhe: input.persistencia4 == null ? "Não examinada." : input.persistencia4 ? "Quatro sim. Intervenção adequada e dificuldade mantida." : "Intervenção ausente ou insuficiente. Zero não significa ausência de transtorno.",
-    limítrofe: false,
-  });
-
-  const total = dominios.reduce((s, d) => s + (d.examinado ? d.pontos : 0), 0);
   const naoExaminados = dominios.filter((d) => !d.examinado).map((d) => d.nome);
-  const pontosExaminaveis = dominios.reduce((s, d) => s + (d.examinado ? d.peso : 0), 0);
-  const avisos: string[] = [];
-  if (!input.fluenciaNorma && (input.ano === "outro" || !input.ano)) {
-    avisos.push("Ano escolar sem âncora de fluência: a fluência não pontua (3 pontos fora do alcance), então o limiar de 9/15 não é equivalente ao do 2º e 3º ano. Use norma formal do ano, se houver.");
-  }
-  if (naoExaminados.length) {
-    avisos.push(`Escore sobre ${pontosExaminaveis} pontos possíveis (domínios examinados), não sobre 15. Não examinados: ${naoExaminados.join(", ")}. Ausente não é normal.`);
-  }
-  const nucleo = dominios.some((d) => (d.id === "fluencia" || d.id === "ortografia") && d.pontos > 0) ? "presente" : "ausente";
-
-  let faixa: IcedResult["faixa"] = "limitada";
-  let leitura = "Evidência atual limitada.";
-  if (trava) {
-    faixa = "descritiva";
-    leitura = "Escore descritivo. Não interpretado como evidência de dislexia.";
-  } else if (controlesPendentes.length) {
-    faixa = "descritiva";
-    leitura = "Escore descritivo: controles de exclusão não confirmados (escolarização, alfabetização, audição, visão ou deficiência intelectual). Confirmar antes de interpretar.";
-  } else if (total >= 9 && nucleo === "presente") {
-    faixa = "elevada";
-    leitura = "Evidência elevada de dificuldade persistente de leitura/escrita.";
-  } else if (total >= 9 && nucleo === "ausente") {
-    faixa = "intermediaria";
-    leitura = "9–15 sem núcleo (fluência ou ortografia). Reclassificado como intermediário.";
-  } else if (total >= 5) {
-    faixa = "intermediaria";
-    leitura = "Evidência intermediária. Investigar, intervir e rever.";
-  }
-  if (faixa === "limitada" && naoExaminados.length) {
-    leitura = "Evidência limitada nos domínios examinados; há domínios não examinados, o que não equivale a resultado normal.";
-  }
-
   const frase = [
-    `ICED-8 = ${total}/15 (pontos possíveis nos domínios examinados: ${pontosExaminaveis}).`,
-    `Fluência ${dominios[0].examinado ? dominios[0].pontos : "não examinada"}.`,
-    `Ortografia ${dominios[1].examinado ? dominios[1].pontos : "não examinada"}.`,
-    `Pseudopalavras ${dominios[2].examinado ? dominios[2].pontos : "não examinado"}.`,
-    `Precisão ${dominios[3].examinado ? dominios[3].pontos : "não examinada"}.`,
-    `Consciência fonológica ${dominios[4].examinado ? dominios[4].pontos : "não examinada"}.`,
-    `RAN ${dominios[5].examinado ? dominios[5].pontos : "não examinado"}.`,
-    `Familiar ${dominios[6].examinado ? dominios[6].pontos : "não examinado"}.`,
-    `Intervenção ${dominios[7].examinado ? dominios[7].pontos : "não examinada"}.`,
-    `Ano escolar usado na fluência: ${input.ano || "não informado"}.`,
-    `Trava de controle: ${trava ? "ativa" : controlesPendentes.length ? "pendente (controles não confirmados)" : "liberada"}.`,
-    `Leitura operacional: ${faixa}.`,
-    `Núcleo funcional (fluência ou ortografia): ${nucleo}.`,
-    "Resultado não constitui diagnóstico. Integrar escolarização, linguagem, desenvolvimento e diferencial.",
+    "ICED-8 — registro descritivo da aplicação.",
+    ...dominios.map((d) => `${d.nome}: ${d.medida}.`),
+    `Ano escolar informado: ${input.ano || "não informado"}.`,
+    controlesSemResposta.length ? `Bloco 0 sem resposta "sim"/"não": ${controlesSemResposta.join("; ")}.` : "Bloco 0 respondido.",
+    DESCRIPTIVE_NOTICE,
   ].join(" ");
-
-  return { trava, travaMotivo, controlesPendentes, pontosExaminaveis, avisos, dominios, total, naoExaminados, faixa, nucleo, leitura, frase };
+  return { controles, controlesSemResposta, dominios, naoExaminados, frase };
 }
