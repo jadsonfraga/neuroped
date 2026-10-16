@@ -44,7 +44,28 @@ export interface ItemResponse {
   ms: number;
 }
 
-export interface FluencyResult { probeId: string; totalWords: number; lidas: number; erros: number; segundos: number; wcpm: number | null }
+export interface FluencyResult {
+  probeId: string;
+  totalWords: number;
+  lidas: number;
+  erros: number;
+  segundos: number;
+  wcpm: number | null;
+  /** Campos abaixo ausentes em rascunhos antigos. Todos descrevem; nenhum compara com referência. */
+  formaAplicada?: FluencyForm;
+  /** Cronômetro do app não usado: tempo considerado = 60 s (cronômetro externo). */
+  cronometroManual?: boolean;
+  /** Palavras tocadas como erro de leitura, na ordem do texto. */
+  palavrasComErro?: string[];
+  palavrasCorretas?: number;
+  /** Palavras lidas por minuto (corretas e com erro). */
+  ppm?: number | null;
+  /** Fica só nos dados: o registro e o PDF não mostram percentuais (diretriz de 16/10/2026). */
+  precisaoPercentual?: number;
+}
+
+/** O que a tela entrega ao terminar a corrida; `segundos` = tempo decorrido no cronômetro do app (0 = não usado). */
+export type FluencyInput = Pick<FluencyResult, "probeId" | "totalWords" | "lidas" | "erros" | "segundos" | "formaAplicada" | "palavrasComErro">;
 
 export interface WorldProgress { status: "pendente" | "concluido" | "pulado"; adaptive: AdaptiveState; responses: ItemResponse[] }
 
@@ -237,9 +258,36 @@ function poolOf(world: AdaptiveWorld, bank: BandBank): readonly { id: string; le
   return world === "ditado" ? bank.ditado : world === "decodificacao" ? bank.decodificacao : bank.aritmetica;
 }
 
-export function recordFluency(state: GameState, result: Omit<FluencyResult, "wcpm">): GameState {
+/**
+ * Fecha o registro da corrida: limita lidas ao texto e erros às lidas; sem cronômetro
+ * do app (0 s) considera 60 s e marca `cronometroManual`. Métricas só descrevem.
+ */
+export function buildFluencyResult(input: FluencyInput): FluencyResult {
+  const total = Math.max(0, Math.floor(input.totalWords));
+  const lidas = Math.min(total, Math.max(0, Math.floor(input.lidas)));
+  const erros = Math.min(lidas, Math.max(0, Math.floor(input.erros)));
+  const decorridos = Math.min(FLUENCY_SECONDS, Math.max(0, Math.floor(input.segundos)));
+  const cronometroManual = decorridos === 0;
+  const segundos = cronometroManual ? FLUENCY_SECONDS : decorridos;
+  return {
+    probeId: input.probeId,
+    totalWords: total,
+    lidas,
+    erros,
+    segundos,
+    wcpm: wcpmOf(lidas, erros, segundos),
+    ...(input.formaAplicada ? { formaAplicada: input.formaAplicada } : {}),
+    cronometroManual,
+    palavrasComErro: (input.palavrasComErro ?? []).slice(0, erros),
+    palavrasCorretas: lidas - erros,
+    ppm: Math.round((lidas / segundos) * 60),
+    precisaoPercentual: lidas > 0 ? Math.round(((lidas - erros) / lidas) * 100) : 0,
+  };
+}
+
+export function recordFluency(state: GameState, input: FluencyInput): GameState {
   if (state.worlds.fluencia.status !== "pendente") return state;
-  const fluency: FluencyResult = { ...result, wcpm: wcpmOf(result.lidas, result.erros, result.segundos) };
+  const fluency = buildFluencyResult(input);
   return withCompletion({
     ...state,
     fluency,
@@ -387,7 +435,7 @@ export function summarizeGame(state: GameState): GameSummary {
   return summary;
 }
 
-export interface FluencyLike { totalWords: number; lidas: number; erros: number; segundos: number; wcpm: number | null }
+export interface FluencyLike { totalWords: number; lidas: number; erros: number; segundos: number; wcpm: number | null; cronometroManual?: boolean }
 
 /** Fatos do registro da fluência (sem referência, sem comparação). */
 export function fluencyNotes(band: BandBank | null, flu: FluencyLike | null): string[] {
@@ -395,6 +443,7 @@ export function fluencyNotes(band: BandBank | null, flu: FluencyLike | null): st
   const unidade = band?.fluencia.kind === "silabas" ? "sílaba" : "palavra";
   const notes: string[] = [];
   if (flu.lidas <= 0) notes.push(`Nenhuma ${unidade} lida registrada em ${flu.segundos} s.`);
-  if (flu.segundos > 0 && flu.segundos < 30) notes.push("Leitura com menos de 30 s: a taxa por minuto foi extrapolada do tempo registrado.");
+  if (flu.cronometroManual) notes.push("Cronômetro do aplicativo não usado: tempo considerado de 60 s (cronômetro externo).");
+  else if (flu.segundos > 0 && flu.segundos < 30) notes.push("Leitura com menos de 30 s: a taxa por minuto foi extrapolada do tempo registrado.");
   return notes;
 }

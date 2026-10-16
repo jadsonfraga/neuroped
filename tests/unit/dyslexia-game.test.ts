@@ -6,7 +6,7 @@ import test from "node:test";
 import { readFileSync } from "node:fs";
 import { BANDS, MAX_GAME_AGE, MIN_GAME_AGE, bandForAge, fluencyWords, type BandBank, type Level } from "../../client/src/features/dyslexia-risk/game/bank";
 import {
-  ITEMS_PER_WORLD, SESSION_CAP_SECONDS, WORLDS, classifyDitado, estimateSessionSeconds, newGame, nextItemFor, pickItem,
+  FLUENCY_SECONDS, ITEMS_PER_WORLD, SESSION_CAP_SECONDS, WORLDS, buildFluencyResult, classifyDitado, estimateSessionSeconds, newGame, nextItemFor, pickItem,
   recordFluency, recordResponse, skipWorld, worldTarget, starsFor, stepAdaptive, summarizeGame, tick, wcpmOf, initialAdaptive,
   type GameState, type ItemResponse,
 } from "../../client/src/features/dyslexia-risk/game/engine";
@@ -144,6 +144,51 @@ test("fluência: palavras corretas por minuto (60 s ou proporcional quando termi
   assert.equal(wcpmOf(90, 0, 45), 120);
   assert.equal(wcpmOf(10, 20, 60), 0);
   assert.equal(wcpmOf(10, 0, 0), null);
+});
+
+test("corrida da leitura: lidas, erros, corretas, palavras por minuto e precisão nos dados da fase", () => {
+  const r = buildFluencyResult({ probeId: "p", totalWords: 80, lidas: 50, erros: 3, segundos: 45, formaAplicada: "B", palavrasComErro: ["casa", "bola", "pato"] });
+  assert.deepEqual(
+    { lidas: r.lidas, erros: r.erros, segundos: r.segundos, corretas: r.palavrasCorretas, ppm: r.ppm, wcpm: r.wcpm, precisao: r.precisaoPercentual, forma: r.formaAplicada, manual: r.cronometroManual },
+    { lidas: 50, erros: 3, segundos: 45, corretas: 47, ppm: 67, wcpm: 63, precisao: 94, forma: "B", manual: false },
+  );
+  assert.deepEqual(r.palavrasComErro, ["casa", "bola", "pato"]);
+
+  // Sem o cronômetro do app (cronômetro externo): 60 s, sinalizado, sem divisão por zero.
+  const manual = buildFluencyResult({ probeId: "p", totalWords: 80, lidas: 80, erros: 0, segundos: 0 });
+  assert.equal(manual.segundos, FLUENCY_SECONDS);
+  assert.equal(manual.cronometroManual, true);
+  assert.equal(manual.ppm, 80);
+  assert.equal(manual.precisaoPercentual, 100);
+
+  // Limites: lidas ≤ texto, erros ≤ lidas, tempo ≤ 60 s; nada lido = 0 por minuto e precisão 0.
+  const clamped = buildFluencyResult({ probeId: "p", totalWords: 30, lidas: 99, erros: 50, segundos: 75, palavrasComErro: Array(50).fill("x") });
+  assert.deepEqual([clamped.lidas, clamped.erros, clamped.segundos, clamped.palavrasCorretas, clamped.palavrasComErro?.length], [30, 30, 60, 0, 30]);
+  const nada = buildFluencyResult({ probeId: "p", totalWords: 30, lidas: 0, erros: 4, segundos: 12 });
+  assert.deepEqual([nada.erros, nada.ppm, nada.precisaoPercentual, nada.wcpm], [0, 0, 0, 0]);
+});
+
+test("corrida da leitura: terminar conclui a fase no mapa (3 estrelas, +30 XP) com texto todo, última palavra ou nada lido", () => {
+  const bank = bandForAge(9) as BandBank;
+  const total = fluencyWords(bank.fluencia).length;
+  for (const lidas of [total, 12, 0]) {
+    const g = recordFluency(newGame({ idade: 9 }), { probeId: bank.fluencia.id, totalWords: total, lidas, erros: lidas ? 1 : 0, segundos: 0, formaAplicada: "A", palavrasComErro: lidas ? ["menino"] : [] });
+    assert.equal(g.worlds.fluencia.status, "concluido", `lidas=${lidas}`);
+    assert.equal(starsFor(g.worlds.fluencia, worldTarget("fluencia", bank)), 3);
+    assert.equal(g.xp, 30);
+    assert.equal(g.fluency?.lidas, lidas);
+    assert.equal(g.fluency?.cronometroManual, true);
+  }
+  const record = buildGameRecord(recordFluency(newGame({ idade: 9 }), { probeId: bank.fluencia.id, totalWords: total, lidas: 40, erros: 2, segundos: 0, formaAplicada: "A", palavrasComErro: ["casa", "bola"] }), "16/10/2026 10:00");
+  assert.match(record, /40 palavras lidas · 2 erros · 38 corretas · 60 s · 40 palavras por minuto · 38 palavras corretas por minuto · com erro: casa, bola/);
+  assert.match(record, /Cronômetro do aplicativo não usado: tempo considerado de 60 s/);
+  assert.doesNotMatch(record, /\d+\s?%|precis/i, "precisão fica nos dados, fora do registro (sem percentuais)");
+});
+
+test("corrida da leitura: rascunho antigo (sem os campos novos) ainda gera o registro", () => {
+  const bank = bandForAge(9) as BandBank;
+  const g = { ...newGame({ idade: 9 }), fluency: { probeId: bank.fluencia.id, totalWords: 80, lidas: 45, erros: 0, segundos: 45, wcpm: 60 } };
+  assert.match(buildGameRecord(g, "16/10/2026 10:00"), /45 palavras lidas · 0 erros · 45 corretas · 45 s · 60 palavras por minuto · 60 palavras corretas por minuto/);
 });
 
 test("teto de sessão: estimativa ≤ 15 min em todas as faixas e o relógio encerra no limite", () => {

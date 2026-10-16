@@ -116,14 +116,33 @@ async function play(age) {
   await page.getByTestId("drx-world-fluencia").waitFor();
   // 15 anos: forma B (reteste) — texto paralelo, mesma contagem.
   if (age >= 15) await btn("B · reteste").click();
+  const flu = page.getByTestId("drx-world-fluencia");
   await btn("▶ Iniciar 60 s").click();
-  await page.waitForTimeout(2100);
-  await btn("⏸ Parar").click();
-  await page.getByTestId("drx-world-fluencia").getByRole("button", { name: /^Última lida: .* \(12\)$/ }).click();
-  await btn("Mais um erro").click();
+  if (age >= 15) {
+    // Cronômetro correndo: tocar na palavra marca/desmarca erro e o contador acompanha.
+    await flu.getByRole("button", { name: /^Erro em: .* \(2\)$/ }).click();
+    await flu.getByRole("button", { name: /^Erro em: .* \(5\)$/ }).click();
+    await flu.getByRole("button", { name: /^Erro em: .* \(5\)$/ }).click();
+    assert.equal(await page.getByTestId("drx-fluencia-erros").textContent(), "1");
+    await page.waitForTimeout(1100);
+    // Terminar com o cronômetro correndo e sem última palavra: pergunta em vez de falhar calado.
+    await btn("Terminar corrida ✓").click();
+    await page.getByTestId("drx-fluencia-pergunta").waitFor();
+    await axe(page, `${age}-fluencia-pergunta`);
+    await shot("06-fluencia-pergunta");
+    await btn("👆 Selecionar última palavra no texto").click();
+    await flu.getByRole("button", { name: /^Última lida: .* \(15\)$/ }).click();
+    assert.match((await page.getByTestId("drx-fluencia-lidas").textContent()) ?? "", /^15 \//);
+  } else {
+    await page.waitForTimeout(2100);
+    await btn("⏸ Parar").click();
+    await flu.getByRole("button", { name: /^Última lida: .* \(12\)$/ }).click();
+    await btn("Mais um erro").click();
+  }
   await shot("06-fluencia");
   await btn("Terminar corrida ✓").click();
   await page.locator('[data-testid="drx-game"][data-screen="mapa"]').waitFor();
+  assert.match((await page.getByRole("button", { name: /Corrida da Leitura/ }).textContent()) ?? "", /Concluído/, "fase 3 concluída no mapa");
 
   // 4. Compreensão
   await nextWorld().click();
@@ -157,6 +176,7 @@ async function play(age) {
   assert.match(obs, /Ambiente com ruído/);
   assert.match(obs, /repetiu a instrução/);
   assert.match(text, age >= 15 ? /forma B \(reteste\)/ : /forma A · /);
+  assert.match(text, age >= 15 ? /15 palavras lidas · 1 erros · 14 corretas · \d+ s · \d+ palavras por minuto · \d+ palavras corretas por minuto · com erro: / : /12 sílabas lidas · 1 erros · 11 corretas/);
   assert.ok(await results.locator(".snp-answer--correct").count() > 0, "acertos em azul");
   if (!allCorrect) assert.ok(await results.locator(".snp-answer--wrong").count() > 0, "erros em vermelho");
   assert.match(text, /Acertou/);

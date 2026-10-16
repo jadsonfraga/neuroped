@@ -40,3 +40,11 @@
 @media screen and (max-width: 1023px) {
   .snp .drx-map-row { padding-right: 3.75rem; }
 }
+/* Corrida da Leitura: erro tocado (vermelho suave + sublinhado, não só cor) e última lida (🏁). */
+.snp .drx-word.erro { background: var(--snp-berry-tint); border-radius: 6px; text-decoration: underline wavy var(--snp-berry-deep); text-underline-offset: 4px; }
+.snp .drx-word.last { outline: 3px solid var(--snp-sky); outline-offset: 1px; border-radius: 6px; }
+.snp .drx-reading--pick { outline: 3px dashed var(--snp-sky); outline-offset: 6px; border-radius: 10px; }
+@media (prefers-reduced-motion: no-preference) {
+  .snp .drx-reading--pick { animation: drx-pick 1.4s ease-in-out infinite; }
+}
+@keyframes drx-pick { 0%, 100% { outline-color: var(--snp-sky); } 50% { outline-color: var(--snp-sun); } }

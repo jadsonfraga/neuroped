@@ -56,7 +56,10 @@ export function fluencyText(s: GameSummary): string {
   const form = fluencyFormOf(s.band, flu.probeId);
   const forma = form ? `forma ${form}${form === "B" ? " (reteste)" : ""} · ` : "";
   const notas = s.leitura.fluenciaNotas;
-  return `${forma}${flu.lidas} ${unidade} lidas · ${flu.erros} erros · ${flu.segundos} s · ${flu.wcpm ?? "—"} ${unidade} corretas por minuto${notas.length ? ` · ${notas.join(" ")}` : ""}`;
+  const corretas = flu.palavrasCorretas ?? Math.max(0, flu.lidas - flu.erros);
+  const ppm = flu.ppm ?? (flu.segundos > 0 ? Math.round((flu.lidas / flu.segundos) * 60) : null);
+  const comErro = flu.palavrasComErro?.length ? ` · com erro: ${flu.palavrasComErro.join(", ")}` : "";
+  return `${forma}${flu.lidas} ${unidade} lidas · ${flu.erros} erros · ${corretas} corretas · ${flu.segundos} s · ${ppm ?? "—"} ${unidade} por minuto · ${flu.wcpm ?? "—"} ${unidade} corretas por minuto${comErro}${notas.length ? ` · ${notas.join(" ")}` : ""}`;
 }
 
 export function domainLines(s: GameSummary): string[] {
