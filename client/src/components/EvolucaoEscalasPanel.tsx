@@ -40,9 +40,9 @@ export function EvolucaoEscalasPanel({ series, pendentes }: { series: SerieEvolu
                     <YAxis domain={[s.instrumento.minimo ?? "auto", s.instrumento.maximo ?? "auto"]} tick={{ fontSize: 11 }} />
                     <Tooltip />
                     {s.cortes.map((c) => (
-                      <ReferenceLine key={c.nome} y={c.deEscore} stroke="#a16207" strokeDasharray="4 4" label={{ value: c.nome, fontSize: 10, position: "insideTopRight" }} />
+                      <ReferenceLine key={c.nome} y={c.deEscore} stroke="hsl(var(--muted-foreground))" strokeDasharray="4 4" label={{ value: c.nome, fontSize: 10, position: "insideTopRight" }} />
                     ))}
-                    <Line type="monotone" dataKey="escore" stroke="#0f766e" strokeWidth={2} dot={{ r: 4 }} isAnimationActive={false} />
+                    <Line type="monotone" dataKey="escore" stroke="hsl(var(--chart-2))" strokeWidth={2} dot={{ r: 4 }} isAnimationActive={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
