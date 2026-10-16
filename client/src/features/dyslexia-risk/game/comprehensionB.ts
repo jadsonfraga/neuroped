@@ -1,7 +1,7 @@
 /**
  * Forma B da compreensão (reteste e variedade): um segundo texto ORIGINAL por faixa, com 4 perguntas
  * (2 literais e 2 inferenciais, mesma estrutura da forma A) e extensão próxima da forma A.
- * Conteúdo autoral do NeuroPed, escrito para esta triagem; sem fonte externa, sem equivalência
+ * Conteúdo autoral do NeuroPed, escrito para este jogo; sem fonte externa, sem equivalência
  * psicométrica comprovada entre as formas A e B (não há estudo de formas paralelas). Pendente de revisão
  * clínica/pedagógica do Dr. Jadson — ver docs/VALIDACAO_NEUROPAD.md.
  */

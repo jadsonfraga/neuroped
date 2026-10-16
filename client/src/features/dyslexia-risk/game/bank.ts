@@ -1,10 +1,9 @@
 /**
  * Jogo das Letras e Números (5–18 anos) — banco autoral de itens.
  *
- * Conteúdo original em português do Brasil, escrito para esta triagem. Nada
- * aqui foi copiado de instrumento comercial (DIBELS, GraphoGame, Prodigy etc.
- * serviram só como inspiração de formato). Os níveis 1–2–3 são graduações
- * internas por faixa (abaixo / esperado / acima), NÃO normas brasileiras.
+ * Conteúdo original em português do Brasil, escrito para este jogo. A "dificuldade
+ * do item" (1–2–3) só diz qual item foi apresentado pela regra adaptativa de
+ * administração; não classifica a criança nem se compara a referência alguma.
  */
 import { COMPREHENSION_B } from "./comprehensionB";
 
@@ -374,7 +373,7 @@ const BASE_BANDS: Omit<BandBank, "compreensaoB">[] = [
       d("d1518-10", 3, "prescindível", "Esse detalhe é prescindível.", "sc e acento"),
       d("d1518-11", 3, "obsolescência", "A obsolescência dos aparelhos gera lixo.", "bs, sc e acento"),
       d("d1518-12", 3, "inscorvessível", "Uma palavra inventada: inscorvessível.", "pseudopalavra longa", true),
-      // Itens de ampliação (2026-10-16): mais 2 por nível para a escada não esgotar numa faixa de 4 anos. Autorais, sem fonte.
+      // Itens de ampliação (2026-10-16): mais 2 por dificuldade para a escada não esgotar numa faixa de 4 anos. Autorais, sem fonte.
       d("d1518-13", 1, "consciência", "A consciência tranquila ajuda a dormir.", "sc e acento"),
       d("d1518-14", 1, "exceção", "Toda regra tem uma exceção.", "xc e ç"),
       d("d1518-15", 2, "ascensão", "A ascensão da equipe foi rápida.", "sc e ão"),
@@ -483,6 +482,6 @@ export function bandSpanYears(bank: BandBank): number {
   return bank.maxAge - bank.minAge + 1;
 }
 
-/** Procedência do banco de itens do jogo: tudo é autoral, nenhum item tem norma. */
+/** Procedência do banco de itens do jogo (descritiva). */
 export const BANK_PROVENANCE =
-  "Procedência: todos os itens (ditado, leitura, fluência, compreensão e aritmética) são autorais do NeuroPed, escritos para esta triagem, sem fonte normativa nem validação em crianças brasileiras; os níveis 1–3 são graduações internas por faixa.";
+  "Procedência: os itens (ditado, leitura, fluência, compreensão e aritmética) foram escritos para este jogo; a dificuldade do item (1–3) indica só qual item a regra adaptativa apresentou.";

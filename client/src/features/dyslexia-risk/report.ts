@@ -1,5 +1,5 @@
-import { ICED_PROVENANCE } from "./icedConfig";
-import { CF, CONTROL, DITADO, DITADO_PSEUDO, ICED_MAX, ICED_VERSION, PSEUDO, WORDS, scoreIced, travaStatusText, type DomainScore, type IcedInput, type IcedResult } from "./model";
+import { DESCRIPTIVE_NOTICE } from "@/lib/descriptiveNotice";
+import { CF, DITADO, DITADO_PSEUDO, ICED_VERSION, PSEUDO, WORDS, describeIced, type IcedInput, type IcedRecord } from "./model";
 import type { DocLine, DocSpec } from "@/lib/documentPdf";
 import type { IssuerLines } from "@/features/super-neuropad/pdf";
 
@@ -23,17 +23,15 @@ export interface IcedState {
   ditado: { grafia: string; f: boolean; o: boolean }[];
   ditadoP: { grafia: string; ok: boolean }[];
   cf: { ok: boolean; err: boolean }[];
-  ran: { seg: number; erros: number; norma: boolean };
+  ran: { seg: number; erros: number };
   fam: { pai: string; mae: string; irmao: string; nome: string };
   pers: { a: string; b: string; c: string; d: string; nota: string };
-  normas: { palavras: boolean; pseudo: boolean; flu: boolean; ditado: boolean; cf: boolean };
   fenomeno: string;
   done: Record<string, boolean>;
 }
 
-export const ICED_DISCLAIMER = "ICED-8: instrumento operacional interno, não validado, não diagnostica. Ausência de evidência não é normalidade; norma formal ≤ −1 DP prevalece sobre âncoras.";
-export const ICED_FAMILY_DISCLAIMER = "Este resumo é um retrato operacional do dia da aplicação. Não é diagnóstico. A conclusão é do médico(a) na consulta, com o registro completo da equipe.";
-export const ICED_OUT_OF_SCORE = "Fora da soma: compreensão isolada, TDAH, TDL, TEA, ansiedade, inteligência, matemática, motivação.";
+export const ICED_DISCLAIMER = DESCRIPTIVE_NOTICE;
+export const ICED_FAMILY_DISCLAIMER = `Este resumo descreve como a aplicação foi feita e como a criança respondeu. ${DESCRIPTIVE_NOTICE} A conversa sobre o registro é com o médico(a) na consulta.`;
 
 const TRI_LABEL: Record<string, string> = { sim: "sim", nao: "não", nv: "não verificado", "": "não informado" };
 
@@ -54,59 +52,58 @@ export function icedInputOf(s: IcedState): IcedInput {
     controle: s.controle as IcedInput["controle"],
     palavrasAcertos: s.done.palavras ? s.palavras.filter((x) => x.ok).length : null,
     palavrasF: s.done.palavras ? s.palavras.filter((x) => x.err).length : null,
-    palavrasNorma: s.normas.palavras,
     pseudoAcertos: s.done.pseudo ? s.pseudo.filter((x) => x.ok).length : null,
     pseudoLex: s.done.pseudo ? s.pseudo.filter((x) => x.lex).length : null,
-    pseudoNorma: s.normas.pseudo,
     pcpm: s.done.fluencia ? pcpmOf(s.flu.lidas, s.flu.erros, s.flu.tempo) : null,
-    fluenciaNorma: s.normas.flu,
+    fluLidas: s.done.fluencia ? s.flu.lidas : null,
+    fluErros: s.done.fluencia ? s.flu.erros : null,
+    fluTempo: s.done.fluencia ? s.flu.tempo : null,
     ditadoF: s.done.ditado ? s.ditado.filter((x) => x.f).length : null,
     ditadoPseudoCertas: s.done.ditado ? s.ditadoP.filter((x) => x.ok).length : null,
     ditadoPseudoTotal: s.ditadoP.length,
-    ditadoNorma: s.normas.ditado,
     cfAcertos: s.done.sons ? s.cf.filter((x) => x.ok).length : null,
-    cfNorma: s.normas.cf,
     ranSeg: s.done.formas ? s.ran.seg : null,
     ranErros: s.done.formas ? s.ran.erros : null,
-    ranNorma: s.ran.norma,
     familiar: s.done.familia ? (famSim ? "sim" : famNao ? "nao" : "nv") : "",
     persistencia4: s.done.ponte && persSeen ? four : null,
   };
 }
 
+function controlLines(result: IcedRecord): string[] {
+  return result.controles.map((c) => `- ${c.rotulo}: ${c.resposta}`);
+}
+
+function domainLines(result: IcedRecord): string[] {
+  return ["Medidas registradas por domínio:"].concat(result.dominios.map((d) => `- ${d.nome}: ${d.medida}`));
+}
+
 /** Registro completo: transcrição literal para prontuário (todas as respostas e produções). */
-export function buildIcedFullRecord(s: IcedState, result: IcedResult, appliedAt: string): string {
+export function buildIcedFullRecord(s: IcedState, result: IcedRecord, appliedAt: string): string {
   const lines: string[] = [
     `ICED-8 — Dyslexia Risk · registro completo`,
     `Examinador: ${s.examinador || "não informado"} · Emissão: ${appliedAt}`,
     `Criança: ${s.nome || "não informado"} · Nascimento: ${s.nasc || "não informado"} · Idade: ${s.idade || "não informado"}`,
     `Escola: ${s.escola || "não informado"} · Escolarização formal: ${s.anosEsc || "não informado"} anos · Ano: ${TRI_LABEL[s.ano] ?? s.ano}`,
-    `Trava de controle: ${travaStatusText(result)}`,
     "",
-    "Bloco 0 (controle):",
-    ...CONTROL.map(([k, lab]) => `- ${lab}: ${TRI_LABEL[s.controle[k]] ?? s.controle[k]}`),
+    "Bloco 0 (condições de aplicação, como respondidas):",
+    ...controlLines(result),
     "",
     "Vila das Palavras (20):",
     ...WORDS.map(([alvo], i) => `- ${alvo}: ${s.done.palavras ? (s.palavras[i].ok ? "certo" : s.palavras[i].err ? "erro fonológico" : "sem registro") : "fase não aplicada"}${s.palavras[i].prod ? ` · produção: ${s.palavras[i].prod}` : ""}`),
-    `Norma ≤ −1 DP prevalece: ${s.normas.palavras ? "sim" : "não"}`,
     "",
     "Floresta Inventada — pseudopalavras (16):",
     ...PSEUDO.map((alvo, i) => `- ${alvo}: ${s.done.pseudo ? (s.pseudo[i].ok ? "certo" : s.pseudo[i].err ? `erro${s.pseudo[i].lex ? " com lexicalização" : ""}` : "sem registro") : "fase não aplicada"}`),
-    `Norma ≤ −1 DP prevalece: ${s.normas.pseudo ? "sim" : "não"}`,
     "",
-    `Corrida do Parque — fluência: ${s.done.fluencia ? `${s.flu.lidas} lidas · ${s.flu.erros} erros · ${s.flu.tempo} s · PCPM ${pcpmOf(s.flu.lidas, s.flu.erros, s.flu.tempo) ?? "—"}` : "fase não aplicada"}`,
-    `Norma formal prevalece: ${s.normas.flu ? "sim" : "não"}`,
+    `Corrida do Parque — fluência: ${s.done.fluencia ? `${s.flu.lidas} lidas · ${s.flu.erros} erros · ${s.flu.tempo} s · palavras corretas por minuto ${pcpmOf(s.flu.lidas, s.flu.erros, s.flu.tempo) ?? "—"}` : "fase não aplicada"}`,
     "",
-    "Caverna do Ditado (12 + 5):",
-    ...DITADO.map(([alvo, frase], i) => `- ${alvo}: grafia "${s.ditado[i].grafia || "—"}" · ${s.ditado[i].f ? "erro fonológico" : s.ditado[i].o ? "erro de regra (não pontua)" : "sem marcação"} · frase: ${frase}`),
+    `Caverna do Ditado (12 + ${s.ditadoP.length}):`,
+    ...DITADO.map(([alvo, frase], i) => `- ${alvo}: grafia "${s.ditado[i].grafia || "—"}" · ${s.ditado[i].f ? "erro fonológico" : s.ditado[i].o ? "erro de regra" : "sem marcação"} · frase: ${frase}`),
     ...DITADO_PSEUDO.slice(0, s.ditadoP.length).map((alvo, i) => `- ${alvo}: grafia "${s.ditadoP[i].grafia || "—"}" · ${s.ditadoP[i].ok ? "certa" : "errada"}`),
-    `Norma ≤ −1 DP prevalece: ${s.normas.ditado ? "sim" : "não"}`,
     "",
     "Templo dos Sons — CF (12):",
-    ...CF.map((item, i) => `- ${item.cmd} → esperado ${item.esp}: ${s.done.sons ? (s.cf[i].ok ? "certo" : s.cf[i].err ? "erro" : "sem registro") : "fase não aplicada"}`),
-    `Norma ≤ −1 DP prevalece: ${s.normas.cf ? "sim" : "não"}`,
+    ...CF.map((item, i) => `- ${item.cmd} → resposta prevista ${item.esp}: ${s.done.sons ? (s.cf[i].ok ? "certo" : s.cf[i].err ? "erro" : "sem registro") : "fase não aplicada"}`),
     "",
-    `Arena das Formas — RAN (40): ${s.done.formas ? `${s.ran.seg} s · ${s.ran.erros} erros` : "fase não aplicada"} · RAN normatizado prevalece: ${s.ran.norma ? "sim" : "não"}`,
+    `Arena das Formas — nomeação rápida (40): ${s.done.formas ? `${s.ran.seg} s · ${s.ran.erros} erros` : "fase não aplicada"}`,
     "",
     `Árvore — familiar de 1º grau: ${s.done.familia ? `pai ${TRI_LABEL[s.fam.pai]} · mãe ${TRI_LABEL[s.fam.mae]} · irmão ${TRI_LABEL[s.fam.irmao]}` : "fase não aplicada"}`,
     "",
@@ -116,69 +113,33 @@ export function buildIcedFullRecord(s: IcedState, result: IcedResult, appliedAt:
     "",
     ...domainLines(result),
     "",
-    `Escore ICED-8: ${result.total}/${ICED_MAX} (possíveis nos domínios examinados: ${result.pontosExaminaveis}) · Leitura operacional: ${result.faixa} · Núcleo funcional: ${result.nucleo}.`,
-    ...result.avisos.map((aviso) => `Aviso: ${aviso}`),
     result.frase,
     "",
     ICED_DISCLAIMER,
-    ICED_PROVENANCE,
-    ICED_OUT_OF_SCORE,
   ];
   return lines.join("\n");
 }
 
-function domainLines(result: IcedResult): string[] {
-  return ["Domínios:"].concat(
-    result.dominios.map((d) => `- ${d.nome}: ${d.examinado ? `${d.pontos}/${d.peso}` : "não examinado"} — ${d.detalhe}${d.limítrofe ? " (limítrofe)" : ""}`),
-  );
-}
-
 /** Resumo curto para o prontuário / WhatsApp quando o registro completo não é necessário. */
-export function buildIcedSummary(s: IcedState, result: IcedResult, appliedAt: string): string {
+export function buildIcedSummary(s: IcedState, result: IcedRecord, appliedAt: string): string {
   return [
     `ICED-8 — Dyslexia Risk · resumo`,
     `Criança: ${s.nome || "não informado"} · ${appliedAt}`,
-    `Escore: ${result.total}/${ICED_MAX} (possíveis nos domínios examinados: ${result.pontosExaminaveis}) · ${result.faixa} · núcleo ${result.nucleo}.`,
-    `Trava de controle: ${travaStatusText(result)}.`,
-    ...result.avisos.map((aviso) => `Aviso: ${aviso}`),
     ...domainLines(result),
+    result.controlesSemResposta.length ? `Bloco 0 sem resposta "sim"/"não": ${result.controlesSemResposta.join("; ")}.` : "Bloco 0 respondido.",
     "",
     ICED_DISCLAIMER,
   ].join("\n");
 }
 
-/** Resumo para a família: linguagem acessível, sem jargão normativo, ≤ 1800 chars codificados (wa.me). */
-export function buildIcedFamilySummary(s: IcedState, result: IcedResult, appliedAt: string): string {
-  const FAIXA_FAMILIA: Record<IcedResult["faixa"], string> = {
-    limitada: "poucas áreas sinalizaram atenção nesta aplicação",
-    intermediaria: "algumas áreas sinalizaram atenção e merecem acompanhamento",
-    elevada: "várias áreas sinalizaram atenção de forma persistente",
-    descritiva: "não foi possível interpretar a soma porque o Bloco 0 indicou outra prioridade (escolarização, audição, visão ou desenvolvimento)",
-  };
-  const dominioNome: Record<DomainScore["id"], string> = {
-    fluencia: "leitura fluida",
-    ortografia: "escrita",
-    pseudo: "ler palavras inventadas",
-    palavras: "ler palavras de verdade",
-    cf: "brincar com sons",
-    ran: "nomear rápido",
-    familiar: "história familiar",
-    persistencia: "resposta à estimulação",
-  };
-  const pontos: string[] = [];
-  const atencao: string[] = [];
-  for (const d of result.dominios) {
-    if (!d.examinado) continue;
-    if (d.pontos > 0) atencao.push(dominioNome[d.id]);
-    else pontos.push(dominioNome[d.id]);
-  }
+/** Resumo para a família: só o que foi aplicado e registrado, ≤ 1800 chars codificados (wa.me). */
+export function buildIcedFamilySummary(s: IcedState, result: IcedRecord, appliedAt: string): string {
+  const aplicados = result.dominios.filter((d) => d.examinado).map((d) => d.nome);
   const lines = [
     `ICED-8 — resumo para a família`,
     `Criança: ${s.nome || "não informado"} · ${appliedAt}`,
     "",
-    `Nesta aplicação, ${result.faixa === "descritiva" && !result.trava ? "não foi possível interpretar a soma porque ainda faltam confirmar escolarização, audição, visão ou desenvolvimento" : FAIXA_FAMILIA[result.faixa]}.`,
-    atencao.length > 0 ? `Áreas que pedem atenção: ${atencao.join(", ")}.` : "",
-    pontos.length > 0 ? `Áreas registradas sem sinalização hoje: ${pontos.join(", ")}.` : "",
+    aplicados.length > 0 ? `Atividades aplicadas: ${aplicados.join(", ")}.` : "Nenhuma atividade foi registrada.",
     result.naoExaminados.length > 0 ? `Não aplicado: ${result.naoExaminados.join(", ")}.` : "",
     "",
     ICED_FAMILY_DISCLAIMER,
@@ -188,82 +149,44 @@ export function buildIcedFamilySummary(s: IcedState, result: IcedResult, applied
 }
 
 /** PDF clínico completo (DocSpec) — mesma tubulação de buildDocumentPdf das demais páginas. */
-export function buildIcedDocSpec(s: IcedState, result: IcedResult, issuer: IssuerLines, appliedAt: string): DocSpec {
-  const domainsRich: DocLine[] = result.dominios.map((d) => ({
-    text: `${d.nome}: ${d.examinado ? `${d.pontos}/${d.peso}` : "não examinado"} — ${d.detalhe}${d.limítrofe ? " (limítrofe)" : ""}`,
-    bold: d.examinado && d.pontos > 0,
-    tone: d.examinado && d.pontos > 0 ? "wrong" : "neutral",
-  }));
-  const bloco0Rich: DocLine[] = CONTROL.map(([k, lab]) => ({
-    text: `${lab}: ${TRI_LABEL[s.controle[k]] ?? s.controle[k]}${s.controle[k] === "nao" ? " — trava" : ""}`,
-    tone: s.controle[k] === "nao" ? "wrong" : "neutral",
-  }));
+export function buildIcedDocSpec(s: IcedState, result: IcedRecord, issuer: IssuerLines, appliedAt: string): DocSpec {
+  const domainsRich: DocLine[] = result.dominios.map((d) => ({ text: `${d.nome}: ${d.medida}`, tone: "neutral" }));
+  const identificacao = [
+    `Criança: ${s.nome || "não informado"} · Nascimento: ${s.nasc || "não informado"} · Idade: ${s.idade || "não informado"}`,
+    `Escola: ${s.escola || "não informado"} · Escolarização formal: ${s.anosEsc || "não informado"} anos · Ano: ${s.ano || "não informado"}`,
+    `Examinador: ${s.examinador || "não informado"} · Data: ${s.data || appliedAt}`,
+    "Bloco 0 (condições de aplicação, como respondidas):",
+    ...controlLines(result),
+  ].join("\n");
   return {
     title: "ICED-8 — Dyslexia Risk · registro clínico",
-    subtitle: `Escore ${result.total}/${ICED_MAX} · ${result.faixa} · núcleo ${result.nucleo} · ${appliedAt}`,
+    subtitle: `Registro descritivo · ${appliedAt}`,
     credentials: [issuer.doctorName, issuer.specialty, issuer.credentials, issuer.clinicName].filter(Boolean),
     sections: [
-      {
-        heading: "Identificação e controle",
-        body: [
-          `Criança: ${s.nome || "não informado"} · Nascimento: ${s.nasc || "não informado"} · Idade: ${s.idade || "não informado"}`,
-          `Escola: ${s.escola || "não informado"} · Escolarização formal: ${s.anosEsc || "não informado"} anos · Ano: ${s.ano || "não informado"}`,
-          `Examinador: ${s.examinador || "não informado"} · Data: ${s.data || appliedAt}`,
-          `Trava de controle: ${travaStatusText(result)}`,
-        ].join("\n"),
-        rich: bloco0Rich.length > 0 ? [
-          { text: `Criança: ${s.nome || "não informado"} · Nascimento: ${s.nasc || "não informado"} · Idade: ${s.idade || "não informado"}` },
-          { text: `Escola: ${s.escola || "não informado"} · Escolarização formal: ${s.anosEsc || "não informado"} anos · Ano: ${s.ano || "não informado"}` },
-          { text: `Examinador: ${s.examinador || "não informado"} · Data: ${s.data || appliedAt}` },
-          { text: `Trava de controle: ${travaStatusText(result)}`, bold: result.trava || result.controlesPendentes.length > 0, tone: result.trava || result.controlesPendentes.length > 0 ? "wrong" : "neutral" },
-          { text: "Bloco 0:" },
-          ...bloco0Rich,
-        ] : undefined,
-      },
-      {
-        heading: "Domínios pontuados",
-        body: domainsRich.map((line) => line.text).join("\n"),
-        rich: domainsRich,
-      },
-      {
-        heading: "Produções registradas",
-        body: buildIcedFullRecord(s, result, appliedAt).split("\n").slice(0, 200).join("\n"),
-      },
-      {
-        heading: "Fenômeno observado",
-        body: s.fenomeno || "Nenhum registro.",
-      },
-      {
-        heading: "Leitura operacional",
-        body: [result.leitura, ...result.avisos.map((aviso) => `Aviso: ${aviso}`), `Núcleo funcional (fluência ou ortografia): ${result.nucleo}.`, result.frase].join("\n"),
-      },
-      {
-        heading: "Limites do instrumento",
-        body: [ICED_DISCLAIMER, ICED_PROVENANCE, ICED_OUT_OF_SCORE, "Diagnóstico permanece com o médico."].join("\n"),
-      },
+      { heading: "Identificação e condições de aplicação", body: identificacao },
+      { heading: "Medidas registradas por domínio", body: domainsRich.map((line) => line.text).join("\n"), rich: domainsRich },
+      { heading: "Produções registradas", body: buildIcedFullRecord(s, result, appliedAt).split("\n").slice(0, 200).join("\n") },
+      { heading: "Fenômeno observado", body: s.fenomeno || "Nenhum registro." },
+      { heading: "Natureza do registro", body: [ICED_DISCLAIMER, "Fora do registro: compreensão isolada, TDAH, TDL, TEA, ansiedade, inteligência, matemática, motivação."].join("\n") },
     ],
     footer: `${ICED_DISCLAIMER} Documento gerado pelo NeuroPed (${ICED_VERSION}). Uso clínico interno; LGPD: dados pessoais somente com base legal.`,
     motto: issuer.motto,
   };
 }
 
-/** Exporta o resultado como itens de escala para o SaveToPatient (contrato ScaleResponseItem). */
-export function icedResponseItems(s: IcedState, result: IcedResult): { question: string; answer: string }[] {
+/** Exporta o registro como itens de escala para o SaveToPatient (contrato ScaleResponseItem). */
+export function icedResponseItems(s: IcedState, result: IcedRecord): { question: string; answer: string }[] {
   const items: { question: string; answer: string }[] = [
     { question: "Criança", answer: s.nome || "Não respondida" },
     { question: "Nascimento", answer: s.nasc || "Não respondida" },
     { question: "Ano escolar", answer: s.ano || "Não respondida" },
     { question: "Examinador", answer: s.examinador || "Não respondida" },
-    ...CONTROL.map(([k, lab]) => ({ question: `Bloco 0 — ${lab}`, answer: TRI_LABEL[s.controle[k]] ?? "Não respondida" })),
-    ...result.dominios.map((d) => ({ question: d.nome, answer: d.examinado ? `${d.pontos}/${d.peso} — ${d.detalhe}` : "Não examinado" })),
-    { question: "Escore ICED-8", answer: `${result.total}/${ICED_MAX} (possíveis nos domínios examinados: ${result.pontosExaminaveis})` },
-    ...(result.avisos.length ? [{ question: "Avisos de leitura", answer: result.avisos.join(" ") }] : []),
-    { question: "Leitura operacional", answer: result.faixa },
-    { question: "Núcleo funcional", answer: result.nucleo },
-    { question: "Trava de controle", answer: travaStatusText(result) },
+    ...result.controles.map((c) => ({ question: `Bloco 0 — ${c.rotulo}`, answer: c.resposta })),
+    ...result.dominios.map((d) => ({ question: d.nome, answer: d.medida })),
+    { question: "Natureza do registro", answer: DESCRIPTIVE_NOTICE },
   ];
   if (s.fenomeno) items.push({ question: "Fenômeno observado", answer: s.fenomeno });
   return items;
 }
 
-export { scoreIced };
+export { describeIced };

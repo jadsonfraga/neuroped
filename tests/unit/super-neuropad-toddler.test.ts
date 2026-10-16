@@ -1,13 +1,11 @@
 // Baterias dedicadas de 2 e 3 anos do Super NeuroPad Game: roteamento por idade, contagem e
-// duração, cobertura dos seis domínios, relato do cuidador rotulado, sinais de alerta estilo
-// M-CHAT sem diagnóstico e resultado por domínio no relatório.
+// duração, cobertura dos seis domínios, relato do cuidador rotulado, contagem por domínio no
+// relatório, sem sinais de alerta nem qualquer classificação.
 import assert from "node:assert/strict";
 import test from "node:test";
 import { buildGameDocSpec } from "../../client/src/features/super-neuropad/pdf";
 import {
   PHASE_ORDER,
-  RED_FLAG_INCOMPLETE_LABEL,
-  RED_FLAG_LABEL,
   TODDLER_DOMAIN_ORDER,
   bandForYears,
   buildGameBrief,
@@ -53,7 +51,7 @@ test("roteamento: 2 e 3 anos recebem a bateria dedicada; 4 anos ou mais continua
     assert.equal(phaseById("corpo", years).name, "Casinha do Faz de Conta");
   }
   for (const years of [4, 5, 8, 17]) {
-    assert.ok(all(years).every((item) => !item.domain && !item.redFlag && !item.informant), `${years} anos sem mudança`);
+    assert.ok(all(years).every((item) => !item.domain && !item.informant), `${years} anos sem mudança`);
     assert.equal(phaseById("corpo", years).name, "Torre do Corpo");
     assert.equal(summarize(play(years)).domains.length, 0);
   }
@@ -77,7 +75,7 @@ test("os seis domínios estão cobertos, cada mundo tem um domínio principal, e
     const items = all(years);
     for (const domain of TODDLER_DOMAIN_ORDER) assert.ok(items.filter((item) => item.domain === domain).length >= 2, `${years}: ${domain}`);
     const text = items.map((item) => `${item.ref} ${item.prompt}`).join("\n");
-    for (const key of [/resposta ao nome/, /segue o apontar/, /aponta e mostra/, /partes do corpo/, /espera o sinal/, /nível de atividade/, /atenção sustentada/, /imitação/, /interesse por outras crianças/, /perda de habilidades/]) assert.match(text, key, `${years}: ${key}`);
+    for (const key of [/resposta ao nome/, /segue o apontar/, /aponta e mostra/, /partes do corpo/, /espera o sinal/, /atividade \(observação\)/, /atenção sustentada/, /imitação/, /interesse por outras crianças/, /perda de habilidades/]) assert.match(text, key, `${years}: ${key}`);
   }
   assert.match(all(2).map((item) => item.ref).join(), /ordem de 1 etapa/);
   assert.match(all(2).map((item) => item.prompt).join(), /2 palavras/);
@@ -88,7 +86,7 @@ test("os seis domínios estão cobertos, cada mundo tem um domínio principal, e
   assert.match(all(3).map((item) => item.ref).join(), /revezar a vez/);
 });
 
-test("relato do cuidador é rotulado no enunciado e no critério; limiares são piso autoral, não norma", () => {
+test("relato do cuidador é rotulado no enunciado e no critério; critério explícito sem corte por idade", () => {
   for (const years of [2, 3]) {
     const caregiver = all(years).filter((item) => item.informant === "cuidador");
     assert.ok(caregiver.length >= 3);
@@ -96,70 +94,39 @@ test("relato do cuidador é rotulado no enunciado e no critério; limiares são 
       assert.match(item.prompt, /^Relato do cuidador — pergunte:/);
       assert.ok(isJudged(item) && /\(relato do cuidador\)$/.test(item.expected));
     }
-    for (const item of all(years)) if (isJudged(item) && /\d+ segundos|\d+ das \d+|\d+ de \d+ rodadas/.test(item.expected)) assert.match(item.expected, /piso autoral, não norma|partes do corpo|gestos|chamadas/, item.id);
+    for (const item of all(years)) if (isJudged(item)) assert.doesNotMatch(item.expected, /piso|norma\b|esperado para a idade/i, item.id);
   }
 });
 
-test("sinais de alerta: não responder ao nome, não apontar e perda de habilidades geram alerta; recusa não gera; acerto não gera", () => {
-  const isFlag = (pattern: RegExp) => (item: Item): AnswerStatus => (item.redFlag && pattern.test(item.ref) ? "erro" : "acerto");
-  for (const years of [2, 3]) {
-    assert.deepEqual(summarize(play(years)).redFlags, []);
-    const flagged = summarize(play(years, isFlag(/resposta ao nome|aponta e mostra|perda de habilidades/)));
-    assert.equal(flagged.redFlags.length, 3);
-    assert.ok(flagged.redFlags.some((flag) => /nome/.test(flag.text) && flag.informant === "observado"));
-    assert.ok(flagged.redFlags.some((flag) => /Perda/.test(flag.text) && flag.informant === "cuidador"));
-    const silent = summarize(play(years, (item) => (/resposta ao nome/.test(item.ref) ? "sem_resposta" : "acerto")));
-    assert.equal(silent.redFlags.length, 1);
-    const refused = summarize(play(years, (item) => (/resposta ao nome/.test(item.ref) ? "recusa" : "acerto")));
-    assert.equal(refused.redFlags.length, 0, "recusa é registrada à parte e não vira alerta");
-  }
-});
-
-test("relatório, resumo, prontuário, bloco estruturado e PDF mostram domínios e alertas, sem linguagem diagnóstica", () => {
+test("relatório, resumo, prontuário, bloco estruturado e PDF mostram a contagem por domínio, sem alerta nem classificação", () => {
   const session = play(2, (item) => (/resposta ao nome|apontar/.test(item.ref) ? "erro" : "acerto"));
   const summary = summarize(session);
   assert.equal(summary.domains.length, 6);
   assert.equal(summary.domains.find((entry) => entry.domain === "atencao_conjunta")!.hits, 1);
+  assert.ok(summary.domains.every((entry) => !("level" in entry)));
+  assert.ok(!("redFlags" in summary));
   const report = buildGameReport(session);
   const brief = buildGameBrief(session);
   const pdf = JSON.stringify(buildGameDocSpec(session, ISSUER, "13/10/2026 09:00"));
   const rows = JSON.stringify(buildPatientRecordItems(session));
   const structured = buildStructuredLines(session).join("\n");
-  assert.match(report, /RESULTADO POR DOMÍNIO/);
+  assert.match(report, /CONTAGEM POR DOMÍNIO \(BATERIA 2–3 ANOS\)/);
   assert.match(report, /Atenção conjunta: 1\/3 cumpre/);
-  for (const output of [report, brief, pdf, rows]) assert.ok(output.includes(RED_FLAG_LABEL) || output.includes("Sinal de alerta - encaminhar"), "alerta presente");
-  assert.match(structured, /^ALERTA /m);
+  for (const output of [report, brief, pdf, rows, structured]) assert.doesNotMatch(output, /sinal de alerta|encaminhar avalia|^ALERTA /im);
   assert.match(structured, /^DOMINIO_2_3 /m);
+  assert.doesNotMatch(structured, /"nivel"/);
   assert.match(pdf, /Floresta do Olhar/);
   const diagnostic = /\b(autismo|autista|TEA|TDAH|diagnóstico de|tem transtorno|é hiperativ|confirma)/i;
-  for (const output of [report, brief, rows]) assert.doesNotMatch(output.replace(/não é diagnóstico|NÃO É DIAGNÓSTICO|nem diagnóstico|NEM DIAGNÓSTICO|não diagnostica/gi, ""), diagnostic);
+  for (const output of [report, brief, rows]) assert.doesNotMatch(output, diagnostic);
   for (const item of [...all(2), ...all(3)]) {
-    const text = `${item.prompt} ${isJudged(item) ? item.expected : ""} ${item.redFlag ?? ""}`;
+    const text = `${item.prompt} ${isJudged(item) ? item.expected : ""}`;
     assert.doesNotMatch(text, diagnostic, item.id);
   }
 });
 
-test("relato do cuidador sem resposta não vira alerta (não afirma o que não foi relatado); observado sem resposta continua alerta", () => {
+test("itens de relato do cuidador seguem rotulados e a bateria não carrega campo de alerta", () => {
   for (const years of [2, 3]) {
-    const caregiverSilent = summarize(play(years, (item) => (item.informant === "cuidador" ? "sem_resposta" : "acerto")));
-    assert.deepEqual(caregiverSilent.redFlags, [], `${years} anos: cuidador que não respondeu não gera "perda de fala (relato)"`);
-    const caregiverYes = summarize(play(years, (item) => (item.informant === "cuidador" && item.redFlag ? "erro" : "acerto")));
-    assert.ok(caregiverYes.redFlags.length > 0 && caregiverYes.redFlags.every((flag) => flag.informant === "cuidador"), `${years} anos: relato do achado gera alerta`);
-    const observedSilent = summarize(play(years, (item) => (item.redFlag && item.informant !== "cuidador" ? "sem_resposta" : "acerto")));
-    assert.ok(observedSilent.redFlags.length > 0 && observedSilent.redFlags.every((flag) => flag.informant === "observado"), `${years} anos: sem reação observada é o próprio achado`);
+    for (const item of all(years)) assert.equal("redFlag" in item, false, item.id);
+    assert.ok(all(years).some((item) => item.informant === "cuidador"));
   }
-});
-
-test("partida incompleta: alerta registrado continua visível, mas sem conduta (sem classificar nem interpretar)", () => {
-  const full = play(2, (item) => (/perda de habilidades/.test(item.ref) ? "erro" : "acerto"));
-  const partial: GameSession = { ...full, answers: full.answers.slice(0, 3) };
-  const summary = summarize(partial);
-  assert.equal(summary.complete, false);
-  assert.equal(summary.redFlags.length, 1, "o relato de perda não some");
-  const outputs = [buildGameBrief(partial), buildGameReport(partial), JSON.stringify(buildPatientRecordItems(partial)), buildStructuredLines(partial).join("\n"), JSON.stringify(buildGameDocSpec(partial, ISSUER, "13/10/2026 09:00"))];
-  for (const output of outputs) {
-    assert.ok(output.includes(RED_FLAG_INCOMPLETE_LABEL), "achado presente como item a conferir");
-    assert.ok(!output.includes(RED_FLAG_LABEL) && !/encaminhar avalia/.test(output), "sem conduta em partida incompleta");
-  }
-  assert.ok(buildGameBrief(full).includes(RED_FLAG_LABEL), "partida completa mantém a conduta");
 });

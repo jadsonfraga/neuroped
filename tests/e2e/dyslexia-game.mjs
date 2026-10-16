@@ -146,8 +146,8 @@ async function play(age) {
   const results = page.getByTestId("drx-game-results");
   await results.waitFor();
   const text = (await results.textContent()) ?? "";
-  assert.match(text, /NÃO DIAGNÓSTICA/);
-  assert.match(text, /sem validação normativa brasileira/);
+  assert.match(text, /Registro descritivo; sem classificação\. Interpretação a cargo do profissional\./);
+  assert.doesNotMatch(text, /nível|NÃO DIAGNÓSTICA|referência interna|Sinais para investigar/i);
   assert.match(text, /Erros fonológicos: \d/);
   assert.match(text, /corretas por minuto/);
   assert.match(text, age >= 15 ? /forma B \(reteste\)/ : /forma A · /);
@@ -167,7 +167,7 @@ async function play(age) {
   const pdf = pdfText(pdfPath);
   if (pdf != null) {
     assert.match(pdf, /Jogo das Letras e N[uú]meros/);
-    assert.match(pdf, /N[ÃA]O DIAGN[ÓO]STICA/);
+    assert.match(pdf, /Registro descritivo; sem classifica/);
     assert.match(pdf, /Acertou|Errou/);
   }
 

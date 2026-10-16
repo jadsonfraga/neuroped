@@ -3,10 +3,9 @@
  * classificação de erros do ditado, XP, limite de sessão e resumo por domínio.
  * Sem React e sem DOM, para ser testado isoladamente.
  *
- * Triagem interna. NÃO diagnostica e NÃO tem validação normativa brasileira.
+ * Registro descritivo: o motor conta e cronometra; não classifica nem compara com referência.
  */
 import { BANDS, bandForAge, fluencyWords, withTextForm, type ArithOp, type BandBank, type BandId, type FluencyForm, type Level } from "./bank";
-import { fluencyFlags, type FluencyFlag } from "./fluencyFlags";
 
 export const GAME_VERSION = "JLN-1";
 export const GAME_STORAGE_KEY = "neuroped-dyslexia-game-v1";
@@ -91,7 +90,7 @@ export function newGame(input: { nome?: string; idade: number | null; examinador
   };
 }
 
-/** Escada adaptativa: 2 acertos seguidos sobem um nível; 2 erros seguidos descem. Limites 1–3. */
+/** Escada adaptativa: 2 acertos seguidos sobem uma dificuldade; 2 erros seguidos descem. Limites 1–3. */
 export function stepAdaptive(state: AdaptiveState, correct: boolean): AdaptiveState {
   const path = [...state.path, state.level];
   if (correct) {
@@ -104,7 +103,7 @@ export function stepAdaptive(state: AdaptiveState, correct: boolean): AdaptiveSt
   return { level: state.level, streakOk: 0, streakErr: streakErr >= STEP_AFTER ? 0 : streakErr, path };
 }
 
-/** Próximo item não usado no nível pedido; se esgotado, o nível mais próximo (empate: o mais fácil). */
+/** Próximo item não usado na dificuldade pedida; se esgotada, a mais próxima (empate: o mais fácil). */
 export function pickItem<T extends { id: string; level: Level }>(pool: readonly T[], level: Level, used: ReadonlySet<string>): T | null {
   const order: Level[] = level === 1 ? [1, 2, 3] : level === 2 ? [2, 1, 3] : [3, 2, 1];
   for (const lv of order) {
@@ -194,7 +193,7 @@ export function encouragementFor(count: number): string {
 
 /**
  * Registra uma resposta. XP e sequência premiam o ESFORÇO (responder), não o
- * acerto — a criança não recebe sinal de certo/errado durante a triagem.
+ * acerto — a criança não recebe sinal de certo/errado durante o jogo.
  */
 export function recordResponse(state: GameState, response: ItemResponse, bank: BandBank): GameState {
   const progress = state.worlds[response.world];
@@ -278,33 +277,21 @@ export function estimateSessionSeconds(band: BandId, form: FluencyForm = "A"): n
 }
 
 export interface Tally { corretos: number; total: number }
-const pct = (t: Tally) => (t.total ? Math.round((t.corretos / t.total) * 100) : null);
 
 export interface GameSummary {
   band: BandBank | null;
-  ditado: Tally & { pct: number | null; ortograficos: number; fonologicos: number; naoRespondidos: number; pseudo: Tally; finalLevel: Level; status: WorldProgress["status"] };
+  ditado: Tally & { ortograficos: number; fonologicos: number; naoRespondidos: number; pseudo: Tally; status: WorldProgress["status"] };
   leitura: {
-    decodificacao: Tally & { pct: number | null; palavras: Tally; pseudo: Tally; mediaSegundos: number | null; finalLevel: Level; status: WorldProgress["status"] };
+    decodificacao: Tally & { palavras: Tally; pseudo: Tally; mediaSegundos: number | null; status: WorldProgress["status"] };
     fluencia: FluencyResult | null;
-    /** Sinais descritivos da fluência, sem norma (ver fluencyFlags.ts). */
-    fluenciaFlags: FluencyFlag[];
-    compreensao: Tally & { pct: number | null; literal: Tally; inferencial: Tally; status: WorldProgress["status"] };
+    /** Fatos do registro da fluência (tempo curto, nenhuma leitura). Descrevem; não interpretam. */
+    fluenciaNotas: string[];
+    compreensao: Tally & { literal: Tally; inferencial: Tally; status: WorldProgress["status"] };
   };
-  aritmetica: Tally & { pct: number | null; porOperacao: Partial<Record<ArithOp, Tally>>; finalLevel: Level; status: WorldProgress["status"] };
-  sinais: string[];
+  aritmetica: Tally & { porOperacao: Partial<Record<ArithOp, Tally>>; status: WorldProgress["status"] };
+  /** Condições da aplicação (ex.: encerrada pelo limite de tempo). */
+  condicoes: string[];
   minutos: number;
-}
-
-/**
- * Nível demonstrado: o mais alto em que a criança somou ≥ 2 acertos; sem isso, 1.
- * Evita superestimar (a escada pode subir no último item) e é estável quando o
- * banco do nível 3 se esgota.
- */
-export function finalLevelOf(progress: WorldProgress): Level {
-  for (const lv of [3, 2] as Level[]) {
-    if (progress.responses.filter((r) => r.level === lv && r.outcome === "correto").length >= 2) return lv;
-  }
-  return 1;
 }
 
 function tally(list: ItemResponse[]): Tally {
@@ -332,55 +319,44 @@ export function summarizeGame(state: GameState): GameSummary {
     band,
     ditado: {
       ...ditTally,
-      pct: pct(ditTally),
       ortograficos: dit.responses.filter((r) => r.errorType === "ortografico").length,
       fonologicos: dit.responses.filter((r) => r.errorType === "fonologico").length,
       naoRespondidos: dit.responses.filter((r) => r.outcome === "nao_respondeu").length,
       pseudo: tally(dit.responses.filter((r) => r.kind === "pseudo")),
-      finalLevel: finalLevelOf(dit),
       status: dit.status,
     },
     leitura: {
       decodificacao: {
         ...decTally,
-        pct: pct(decTally),
         palavras: tally(dec.responses.filter((r) => r.kind !== "pseudo")),
         pseudo: tally(dec.responses.filter((r) => r.kind === "pseudo")),
         mediaSegundos: timed.length ? Math.round((timed.reduce((s, r) => s + r.ms, 0) / timed.length / 1000) * 10) / 10 : null,
-        finalLevel: finalLevelOf(dec),
         status: dec.status,
       },
       fluencia: state.fluency,
-      fluenciaFlags: fluencyFlags(band, state.fluency),
+      fluenciaNotas: fluencyNotes(band, state.fluency),
       compreensao: {
         ...compTally,
-        pct: pct(compTally),
         literal: tally(comp.responses.filter((r) => r.kind === "literal")),
         inferencial: tally(comp.responses.filter((r) => r.kind === "inferencial")),
         status: comp.status,
       },
     },
-    aritmetica: { ...ariTally, pct: pct(ariTally), porOperacao, finalLevel: finalLevelOf(ari), status: ari.status },
-    sinais: [],
+    aritmetica: { ...ariTally, porOperacao, status: ari.status },
+    condicoes: state.endedReason === "tempo" ? ["Sessão encerrada pelo limite de 15 minutos; mundos não concluídos ficam como não aplicados."] : [],
     minutos: Math.round((state.activeMs / 60000) * 10) / 10,
   };
-  const s = summary.sinais;
-  if (dit.status === "concluido" && finalLevelOf(dit) === 1) s.push("Ditado: nível demonstrado 1 (abaixo da referência interna da faixa nesta aplicação; não normativa).");
-  if (summary.ditado.fonologicos >= 3) s.push(`${summary.ditado.fonologicos} erros fonológicos no ditado (troca, omissão ou acréscimo de sons).`);
-  if (dec.status === "concluido" && finalLevelOf(dec) === 1) s.push("Leitura de palavras: nível demonstrado 1 (abaixo da referência interna da faixa nesta aplicação; não normativa).");
-  for (const flag of summary.leitura.fluenciaFlags) if (flag.tipo === "atencao") s.push(`Fluência: ${flag.texto}.`);
-  const ps = summary.leitura.decodificacao.pseudo;
-  if (ps.total >= 2 && ps.corretos / ps.total < 0.5) s.push(`Pseudopalavras lidas: ${ps.corretos}/${ps.total} (decodificação fonológica merece investigação).`);
-  // Proporcional ao número de perguntas: ≤ 1/3 de acerto (com 3 perguntas é o mesmo "≤ 1" de antes).
-  if (comp.status === "concluido" && compTally.total > 0 && compTally.corretos / compTally.total <= 1 / 3) s.push(`Compreensão: ${compTally.corretos}/${compTally.total}.`);
-  if (ari.status === "concluido" && finalLevelOf(ari) === 1) s.push("Aritmética: nível demonstrado 1 (abaixo da referência interna da faixa nesta aplicação; não normativa).");
-  if (state.endedReason === "tempo") s.push("Sessão encerrada pelo limite de 15 minutos; mundos não concluídos ficam como não aplicados.");
   return summary;
 }
 
-/** Graduação INTERNA do jogo por faixa (não normativa): o texto nunca sugere norma populacional. */
-export const LEVEL_LABEL: Record<Level, string> = {
-  1: "nível demonstrado 1 · abaixo da referência interna da faixa (não normativa)",
-  2: "nível demonstrado 2 · na referência interna da faixa (não normativa)",
-  3: "nível demonstrado 3 · acima da referência interna da faixa (não normativa)",
-};
+export interface FluencyLike { totalWords: number; lidas: number; erros: number; segundos: number; wcpm: number | null }
+
+/** Fatos do registro da fluência (sem referência, sem comparação). */
+export function fluencyNotes(band: BandBank | null, flu: FluencyLike | null): string[] {
+  if (!flu) return [];
+  const unidade = band?.fluencia.kind === "silabas" ? "sílaba" : "palavra";
+  const notes: string[] = [];
+  if (flu.lidas <= 0) notes.push(`Nenhuma ${unidade} lida registrada em ${flu.segundos} s.`);
+  if (flu.segundos > 0 && flu.segundos < 30) notes.push("Leitura com menos de 30 s: a taxa por minuto foi extrapolada do tempo registrado.");
+  return notes;
+}

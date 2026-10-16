@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from "react";
-import { ICED_PROVENANCE } from "@/features/dyslexia-risk/icedConfig";
-import { CONTROL, DITADO, DITADO_PSEUDO, CF, FLUENCY_TEXT, ICED_VERSION, PSEUDO, RAN, WORDS, scoreIced, type IcedInput, type Tri } from "@/features/dyslexia-risk/model";
+import { DESCRIPTIVE_NOTICE } from "@/lib/descriptiveNotice";
+import { CONTROL, DITADO, DITADO_PSEUDO, CF, FLUENCY_TEXT, ICED_VERSION, PSEUDO, RAN, WORDS, describeIced, type IcedInput, type Tri } from "@/features/dyslexia-risk/model";
 import { buildIcedDocSpec, buildIcedFullRecord, buildIcedSummary, icedInputOf, icedResponseItems } from "@/features/dyslexia-risk/report";
 import { useToast } from "@/hooks/use-toast";
 import { useIssuer } from "@/lib/issuer";
@@ -33,13 +33,13 @@ const WORLDS: { id: Phase; nome: string; emoji: string; fala: string }[] = [
   { id: "escudo", nome: "Escudo", emoji: "🛡️", fala: "Bloco 0 antes de pontuar." },
   { id: "palavras", nome: "Vila das Palavras", emoji: "📖", fala: "Cartão A. Sem figura, sem pista." },
   { id: "pseudo", nome: "Floresta Inventada", emoji: "🌲", fala: "Não são palavras de verdade." },
-  { id: "fluencia", nome: "Corrida do Parque", emoji: "🏃", fala: "60 segundos. O ano manda na âncora." },
+  { id: "fluencia", nome: "Corrida do Parque", emoji: "🏃", fala: "60 segundos. " },
   { id: "ditado", nome: "Caverna do Ditado", emoji: "✏️", fala: "12 + 5. Erro de regra não pontua." },
   { id: "sons", nome: "Templo dos Sons", emoji: "👂", fala: "12 itens. Exemplo não pontua." },
   { id: "formas", nome: "Arena das Formas", emoji: "🔺", fala: "Nomeia a forma, não a cor." },
   { id: "familia", nome: "Árvore", emoji: "🌳", fala: "Só pai, mãe ou irmão." },
   { id: "ponte", nome: "Ponte", emoji: "🌉", fala: "Quatro sim ou zero." },
-  { id: "tesouro", nome: "Tesouro", emoji: "💎", fala: "Escore interno. Não diagnostica." },
+  { id: "tesouro", nome: "Tesouro", emoji: "💎", fala: "Registro da aplicação." },
 ];
 
 function blank() {
@@ -52,10 +52,9 @@ function blank() {
     ditado: DITADO.map(() => ({ grafia: "", f: false, o: false })),
     ditadoP: DITADO_PSEUDO.map(() => ({ grafia: "", ok: false })),
     cf: CF.map(() => ({ ok: false, err: false })),
-    ran: { seg: 0, erros: 0, norma: false },
+    ran: { seg: 0, erros: 0 },
     fam: { pai: "" as Tri, mae: "" as Tri, irmao: "" as Tri, nome: "" },
     pers: { a: "" as Tri, b: "" as Tri, c: "" as Tri, d: "" as Tri, nota: "" },
-    normas: { palavras: false, pseudo: false, flu: false, ditado: false, cf: false },
     fenomeno: "",
     done: {} as Record<string, boolean>,
   };
@@ -98,7 +97,7 @@ export default function DyslexiaRiskPage() {
   }, [running, secs]);
 
   const input: IcedInput = useMemo(() => icedInputOf(s), [s]);
-  const result = scoreIced(input);
+  const result = describeIced(input);
   const words = FLUENCY_TEXT.split(/\s+/);
 
   function stamp(id: string, next: Phase) {
@@ -154,8 +153,8 @@ export default function DyslexiaRiskPage() {
           <div className="min-w-0 text-[var(--snp-stage-text)]">
             <div className="mb-1 flex flex-wrap gap-1.5">
               {mode === "jogo" ? <span className="snp-chip">Jogo · 5 a 18 anos</span> : <span className="snp-chip">ICED-8 · 8 anos</span>}
-              <span className="snp-chip">{mode === "jogo" ? "triagem lúdica" : "operacional interno"}</span>
-              <span className="snp-chip">não diagnostica</span>
+              <span className="snp-chip">{mode === "jogo" ? "registro lúdico" : "registro operacional"}</span>
+              <span className="snp-chip">sem classificação</span>
               <span className="snp-chip">Soli Deo Gloria</span>
             </div>
             <h1 className="snp-pixel snp-title text-xl text-[var(--snp-paper-fixed)] sm:text-3xl">dyslexia risk</h1>
@@ -239,8 +238,7 @@ export default function DyslexiaRiskPage() {
               {(["sim", "nao", "nv"] as Tri[]).map((v) => <button type="button" key={v} aria-pressed={s.controle[k] === v} className={`snp-chip ${s.controle[k] === v ? "bg-[var(--snp-sun)]" : ""}`} onClick={() => setS({ ...s, controle: { ...s.controle, [k]: v } })}>{v === "nv" ? "não verificado" : v}</button>)}
             </div>
           ))}
-          {result.trava && <p className="rounded-xl border-[3px] border-[var(--snp-berry)] bg-[var(--snp-berry-tint)] p-2 text-sm font-bold">Trava: {result.travaMotivo}. Não interpretar como evidência de dislexia.</p>}
-          {!result.trava && result.controlesPendentes.length > 0 && <p className="rounded-xl border-[3px] border-[var(--snp-sun)] bg-[var(--snp-sun-tint)] p-2 text-sm font-bold" role="status">Controles não confirmados: {result.controlesPendentes.join("; ")}. Até responder “sim” ou “não”, o escore fica descritivo.</p>}
+          {result.controlesSemResposta.length > 0 && <p className="rounded-xl border-[3px] border-[var(--snp-sun)] bg-[var(--snp-sun-tint)] p-2 text-sm font-bold" role="status">Sem resposta “sim” ou “não”: {result.controlesSemResposta.join("; ")}.</p>}
           <button type="button" className="snp-btn snp-btn--sun px-4 py-2" onClick={() => stamp("escudo", "palavras")}>Vila das Palavras</button>
         </section>
       )}
@@ -256,7 +254,6 @@ export default function DyslexiaRiskPage() {
               <button type="button" className="snp-btn snp-btn--berry px-4 py-2" onClick={() => { const palavras = s.palavras.slice(); palavras[cursor] = { ...palavras[cursor], ok: false, err: true }; setS({ ...s, palavras }); setCursor(cursor + 1); }}>Erro fonológico</button>
             </div>
           </> : <button type="button" className="snp-btn snp-btn--sun px-4 py-2" onClick={() => stamp("palavras", "pseudo")}>Floresta inventada</button>}
-          <label className="mt-3 flex items-center justify-center gap-2 text-xs font-bold"><input type="checkbox" checked={s.normas.palavras} onChange={(e) => setS({ ...s, normas: { ...s.normas, palavras: e.target.checked } })} /> Norma ≤ −1 DP prevalece</label>
         </section>
       )}
 
@@ -272,21 +269,20 @@ export default function DyslexiaRiskPage() {
               <button type="button" className="snp-btn snp-btn--sun px-4 py-2" onClick={() => { const pseudo = s.pseudo.slice(); pseudo[cursor] = { ...pseudo[cursor], lex: !pseudo[cursor].lex, ok: false, err: true }; setS({ ...s, pseudo }); }}>Lexicalizou</button>
             </div>
           </> : <button type="button" className="snp-btn snp-btn--sun px-4 py-2" onClick={() => stamp("pseudo", "fluencia")}>Corrida do parque</button>}
-          <label className="mt-3 flex items-center justify-center gap-2 text-xs font-bold"><input type="checkbox" checked={s.normas.pseudo} onChange={(e) => setS({ ...s, normas: { ...s.normas, pseudo: e.target.checked } })} /> Norma ≤ −1 DP prevalece</label>
         </section>
       )}
 
       {phase === "fluencia" && (
         <section className="snp-panel p-4">
           <h2 className="snp-pixel text-base">O passeio · 136</h2>
-          <p className="text-sm font-semibold">{child ? "Leia em voz alta, do começo, no seu ritmo." : "Toque a última palavra lida. PCPM = lidas − erros em 60 s."}</p>
+          <p className="text-sm font-semibold">{child ? "Leia em voz alta, do começo, no seu ritmo." : "Toque a última palavra lida. Palavras corretas por minuto = lidas − erros em 60 s."}</p>
           <p className="mt-2 leading-7">{words.map((w, i) => <button type="button" key={i} className={`drx-word ${i < s.flu.lidas ? "read" : ""}`} onClick={() => setS({ ...s, flu: { ...s.flu, lidas: i + 1 } })}>{w} </button>)}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <button type="button" className="snp-btn snp-btn--sun px-3 py-2" onClick={() => { setSecs(0); setRunning(true); }}>{running ? `${secs} s` : "Iniciar 60 s"}</button>
             <button type="button" className="snp-btn snp-btn--paper px-3 py-2" onClick={() => { setRunning(false); setS({ ...s, flu: { ...s.flu, tempo: secs || 60 } }); }}>Parar</button>
           </div>
           <label className="mt-2 grid text-sm font-bold">Erros<input type="number" min={0} className="rounded-xl border-[3px] border-[var(--snp-ink-fixed)] px-2 py-1" value={s.flu.erros} onChange={(e) => setS({ ...s, flu: { ...s.flu, erros: Math.max(0, Number(e.target.value) || 0) } })} /></label>
-          <p className="text-sm font-black">PCPM {pcpmOf(s.flu.lidas, s.flu.erros, s.flu.tempo || 60) ?? "—"} · ano {s.ano || "não escolhido"}</p>
+          <p className="text-sm font-black">Palavras corretas/min {pcpmOf(s.flu.lidas, s.flu.erros, s.flu.tempo || 60) ?? "—"} · ano {s.ano || "não escolhido"}</p>
           <button type="button" className="snp-btn snp-btn--sun mt-2 px-4 py-2" onClick={() => stamp("fluencia", "ditado")}>Caverna do ditado</button>
         </section>
       )}
@@ -335,7 +331,6 @@ export default function DyslexiaRiskPage() {
           <div className="drx-shapes my-3">{RAN.map((sh, i) => <i key={i} data-s={sh} />)}</div>
           <label className="grid text-sm font-bold">Tempo (s)<input type="number" min={0} className="rounded-xl border-[3px] border-[var(--snp-ink-fixed)] px-2 py-1" value={s.ran.seg} onChange={(e) => setS({ ...s, ran: { ...s.ran, seg: Math.max(0, Number(e.target.value) || 0) } })} /></label>
           <label className="grid text-sm font-bold">Erros<input type="number" min={0} className="rounded-xl border-[3px] border-[var(--snp-ink-fixed)] px-2 py-1" value={s.ran.erros} onChange={(e) => setS({ ...s, ran: { ...s.ran, erros: Math.max(0, Number(e.target.value) || 0) } })} /></label>
-          <label className="flex items-center gap-2 text-xs font-bold"><input type="checkbox" checked={s.ran.norma} onChange={(e) => setS({ ...s, ran: { ...s.ran, norma: e.target.checked } })} /> RAN normatizado ≤ −1 DP prevalece</label>
           <button type="button" className="snp-btn snp-btn--sun mt-2 px-4 py-2" onClick={() => stamp("formas", "familia")}>Árvore</button>
         </section>
       )}
@@ -371,14 +366,10 @@ export default function DyslexiaRiskPage() {
 
       {phase === "tesouro" && (
         <section className="snp-panel space-y-2 p-4">
-          <h2 className="snp-pixel text-base">{result.total}/15 · {result.faixa}</h2>
-          <p className="text-xs font-bold opacity-80">Pontos possíveis nos domínios examinados: {result.pontosExaminaveis} de 15.</p>
-          {result.trava && <p className="rounded-xl border-[3px] border-[var(--snp-berry)] bg-[var(--snp-berry-tint)] p-2 text-sm font-bold">Trava ativa. Não interpretado como evidência de dislexia.</p>}
-          {!result.trava && result.controlesPendentes.length > 0 && <p className="rounded-xl border-[3px] border-[var(--snp-sun)] bg-[var(--snp-sun-tint)] p-2 text-sm font-bold">Controles não confirmados: {result.controlesPendentes.join("; ")}. Escore descritivo até confirmar.</p>}
-          <p className="text-sm font-bold">{result.leitura} Núcleo: {result.nucleo}.</p>
-          {result.avisos.length > 0 && <ul className="space-y-1 text-xs font-semibold" aria-label="Avisos de leitura">{result.avisos.map((aviso) => <li key={aviso}>⚠️ {aviso}</li>)}</ul>}
-          <p className="text-[11px] font-semibold opacity-80" data-testid="iced-provenance">{ICED_PROVENANCE}</p>
-          <ul className="space-y-1 text-sm">{result.dominios.map((d) => <li key={d.id}><b>{d.nome}:</b> {d.examinado ? d.pontos : "não examinado"} / {d.peso} — {d.detalhe}</li>)}</ul>
+          <h2 className="snp-pixel text-base">Registro da aplicação</h2>
+          {result.controlesSemResposta.length > 0 && <p className="rounded-xl border-[3px] border-[var(--snp-sun)] bg-[var(--snp-sun-tint)] p-2 text-sm font-bold">Bloco 0 sem resposta “sim” ou “não”: {result.controlesSemResposta.join("; ")}.</p>}
+          <p className="text-[11px] font-semibold opacity-80" data-testid="iced-provenance">{DESCRIPTIVE_NOTICE}</p>
+          <ul className="space-y-1 text-sm">{result.dominios.map((d) => <li key={d.id}><b>{d.nome}:</b> {d.medida}</li>)}</ul>
           <textarea className="w-full rounded-xl border-[3px] border-[var(--snp-ink-fixed)] p-2" placeholder="Fenômeno observado" value={s.fenomeno} onChange={(e) => setS({ ...s, fenomeno: e.target.value })} />
           <p className="text-sm leading-relaxed">{result.frase}</p>
           <div className="flex flex-wrap gap-2">
@@ -399,7 +390,7 @@ export default function DyslexiaRiskPage() {
           </Suspense>
           <button type="button" className="snp-btn snp-btn--paper px-4 py-2" onClick={newApplication}>Nova aplicação</button>
           {savedPatient && <p className="text-xs font-bold opacity-70" role="status">Salvo no prontuário. "Nova aplicação" libera a tela sem aviso.</p>}
-          <p className="text-xs font-bold opacity-70">Fora da soma: compreensão isolada, TDAH, TDL, TEA, ansiedade, inteligência, matemática, motivação. Diagnóstico permanece com o médico.</p>
+          <p className="text-xs font-bold opacity-70">Fora do registro: compreensão isolada, TDAH, TDL, TEA, ansiedade, inteligência, matemática, motivação. {DESCRIPTIVE_NOTICE}</p>
         </section>
       )}
       </>}
