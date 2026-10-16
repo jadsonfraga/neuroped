@@ -1,3 +1,4 @@
+import { ICED_PROVENANCE } from "./icedConfig";
 import { CF, CONTROL, DITADO, DITADO_PSEUDO, ICED_MAX, ICED_VERSION, PSEUDO, WORDS, scoreIced, travaStatusText, type DomainScore, type IcedInput, type IcedResult } from "./model";
 import type { DocLine, DocSpec } from "@/lib/documentPdf";
 import type { IssuerLines } from "@/features/super-neuropad/pdf";
@@ -61,6 +62,7 @@ export function icedInputOf(s: IcedState): IcedInput {
     fluenciaNorma: s.normas.flu,
     ditadoF: s.done.ditado ? s.ditado.filter((x) => x.f).length : null,
     ditadoPseudoCertas: s.done.ditado ? s.ditadoP.filter((x) => x.ok).length : null,
+    ditadoPseudoTotal: s.ditadoP.length,
     ditadoNorma: s.normas.ditado,
     cfAcertos: s.done.sons ? s.cf.filter((x) => x.ok).length : null,
     cfNorma: s.normas.cf,
@@ -97,7 +99,7 @@ export function buildIcedFullRecord(s: IcedState, result: IcedResult, appliedAt:
     "",
     "Caverna do Ditado (12 + 5):",
     ...DITADO.map(([alvo, frase], i) => `- ${alvo}: grafia "${s.ditado[i].grafia || "—"}" · ${s.ditado[i].f ? "erro fonológico" : s.ditado[i].o ? "erro de regra (não pontua)" : "sem marcação"} · frase: ${frase}`),
-    ...DITADO_PSEUDO.map((alvo, i) => `- ${alvo}: grafia "${s.ditadoP[i].grafia || "—"}" · ${s.ditadoP[i].ok ? "certa" : "errada"}`),
+    ...DITADO_PSEUDO.slice(0, s.ditadoP.length).map((alvo, i) => `- ${alvo}: grafia "${s.ditadoP[i].grafia || "—"}" · ${s.ditadoP[i].ok ? "certa" : "errada"}`),
     `Norma ≤ −1 DP prevalece: ${s.normas.ditado ? "sim" : "não"}`,
     "",
     "Templo dos Sons — CF (12):",
@@ -119,6 +121,7 @@ export function buildIcedFullRecord(s: IcedState, result: IcedResult, appliedAt:
     result.frase,
     "",
     ICED_DISCLAIMER,
+    ICED_PROVENANCE,
     ICED_OUT_OF_SCORE,
   ];
   return lines.join("\n");
@@ -236,7 +239,7 @@ export function buildIcedDocSpec(s: IcedState, result: IcedResult, issuer: Issue
       },
       {
         heading: "Limites do instrumento",
-        body: [ICED_DISCLAIMER, ICED_OUT_OF_SCORE, "Diagnóstico permanece com o médico."].join("\n"),
+        body: [ICED_DISCLAIMER, ICED_PROVENANCE, ICED_OUT_OF_SCORE, "Diagnóstico permanece com o médico."].join("\n"),
       },
     ],
     footer: `${ICED_DISCLAIMER} Documento gerado pelo NeuroPed (${ICED_VERSION}). Uso clínico interno; LGPD: dados pessoais somente com base legal.`,

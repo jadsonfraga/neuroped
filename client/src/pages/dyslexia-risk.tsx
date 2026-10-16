@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from "react";
+import { ICED_PROVENANCE } from "@/features/dyslexia-risk/icedConfig";
 import { CONTROL, DITADO, DITADO_PSEUDO, CF, FLUENCY_TEXT, ICED_VERSION, PSEUDO, RAN, WORDS, scoreIced, type IcedInput, type Tri } from "@/features/dyslexia-risk/model";
 import { buildIcedDocSpec, buildIcedFullRecord, buildIcedSummary, icedInputOf, icedResponseItems } from "@/features/dyslexia-risk/report";
 import { useToast } from "@/hooks/use-toast";
@@ -302,7 +303,7 @@ export default function DyslexiaRiskPage() {
               <button type="button" aria-pressed={s.ditado[i].o} className={`snp-chip ${s.ditado[i].o ? "bg-[var(--snp-sun)]" : ""}`} onClick={() => { const ditado = s.ditado.slice(); ditado[i] = { ...ditado[i], o: !ditado[i].o }; setS({ ...s, ditado }); }}>O</button>
             </div>
           ))}
-          {DITADO_PSEUDO.map((alvo, i) => (
+          {DITADO_PSEUDO.slice(0, s.ditadoP.length).map((alvo, i) => (
             <div key={alvo} className="flex flex-wrap items-center gap-2 text-sm">
               <span className="w-24 font-bold">{alvo}</span>
               <input className="min-w-28 flex-1 rounded-xl border-[3px] border-[var(--snp-ink-fixed)] px-2 py-1" value={s.ditadoP[i].grafia} onChange={(e) => { const ditadoP = s.ditadoP.slice(); ditadoP[i] = { ...ditadoP[i], grafia: e.target.value }; setS({ ...s, ditadoP }); }} />
@@ -376,6 +377,7 @@ export default function DyslexiaRiskPage() {
           {!result.trava && result.controlesPendentes.length > 0 && <p className="rounded-xl border-[3px] border-[var(--snp-sun)] bg-[var(--snp-sun-tint)] p-2 text-sm font-bold">Controles não confirmados: {result.controlesPendentes.join("; ")}. Escore descritivo até confirmar.</p>}
           <p className="text-sm font-bold">{result.leitura} Núcleo: {result.nucleo}.</p>
           {result.avisos.length > 0 && <ul className="space-y-1 text-xs font-semibold" aria-label="Avisos de leitura">{result.avisos.map((aviso) => <li key={aviso}>⚠️ {aviso}</li>)}</ul>}
+          <p className="text-[11px] font-semibold opacity-80" data-testid="iced-provenance">{ICED_PROVENANCE}</p>
           <ul className="space-y-1 text-sm">{result.dominios.map((d) => <li key={d.id}><b>{d.nome}:</b> {d.examinado ? d.pontos : "não examinado"} / {d.peso} — {d.detalhe}</li>)}</ul>
           <textarea className="w-full rounded-xl border-[3px] border-[var(--snp-ink-fixed)] p-2" placeholder="Fenômeno observado" value={s.fenomeno} onChange={(e) => setS({ ...s, fenomeno: e.target.value })} />
           <p className="text-sm leading-relaxed">{result.frase}</p>

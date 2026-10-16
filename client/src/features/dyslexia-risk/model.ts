@@ -2,6 +2,7 @@
  * ICED-8 — Dyslexia Risk. Instrumento operacional interno.
  * Não validado. Não diagnostica. Ausente ≠ normal. Norma ≤ −1 DP prevalece.
  */
+import { DITADO_PSEUDO_LEGACY_TOTAL, DITADO_REFERENCE, FLUENCY_ANCHORS, SCORE_ELEVATED_FRACTION, SCORE_REFERENCE, ranReferenceFor } from "./icedConfig";
 export const ICED_VERSION = "ICED-8";
 export const ICED_MAX = 15;
 
@@ -29,7 +30,8 @@ export const DITADO = [
   ["responsabilidade", "Isso é responsabilidade."],
 ] as const;
 
-export const DITADO_PSEUDO = ["mepa", "tulo", "falito", "bruneca", "crenuto"] as const;
+/** As 5 primeiras são as da versão anterior (rascunhos antigos seguem avaliados sobre elas); as 5 seguintes ampliam o ditado. Pseudopalavras autorais, sem fonte. */
+export const DITADO_PSEUDO = ["mepa", "tulo", "falito", "bruneca", "crenuto", "bifa", "dumeno", "salteca", "frobita", "venhulo"] as const;
 
 export const CF = [
   { bloco: "A. Segmentação", exemplo: "FATO → /f/ /a/ /t/ /o/", cmd: "gato", esp: "/g/ /a/ /t/ /o/" },
@@ -86,6 +88,8 @@ export interface IcedInput {
   fluenciaNorma: boolean;
   ditadoF: number | null;
   ditadoPseudoCertas: number | null;
+  /** Pseudopalavras aplicadas no ditado. Ausente = 5 (versão anterior); o corte é proporcional (2/5). */
+  ditadoPseudoTotal?: number;
   ditadoNorma: boolean;
   cfAcertos: number | null;
   cfNorma: boolean;
@@ -103,6 +107,8 @@ export interface IcedResult {
   controlesPendentes: string[];
   /** Soma dos pesos dos domínios examinados (o máximo alcançável nesta aplicação). */
   pontosExaminaveis: number;
+  /** total / pontosExaminaveis em %, só descritivo (não altera a faixa). */
+  proporcaoPct: number | null;
   /** Avisos de leitura: ano sem âncora de fluência, domínios não examinados etc. */
   avisos: string[];
   dominios: DomainScore[];
@@ -117,14 +123,10 @@ export interface IcedResult {
 export function fluencyAnchor(ano: IcedInput["ano"], pcpm: number | null) {
   if (ano === "outro" || !ano) return { pontua: false, examinado: false, detalhe: "Sem âncora de 8 anos. Só norma do ano, ou não pontuar." };
   if (pcpm == null) return { pontua: false, examinado: false, detalhe: "PCPM não registrado." };
-  if (ano === "2") {
-    if (pcpm <= 42) return { pontua: true, examinado: true, detalhe: `PCPM ${pcpm} ≤ 42 (2º ano).` };
-    if (pcpm <= 55) return { pontua: false, examinado: true, detalhe: `PCPM ${pcpm} na faixa 43–55. Descreve, não pontua.` };
-    return { pontua: false, examinado: true, detalhe: `PCPM ${pcpm} acima da âncora do 2º ano.` };
-  }
-  if (pcpm <= 70) return { pontua: true, examinado: true, detalhe: `PCPM ${pcpm} ≤ 70 (3º ano).` };
-  if (pcpm <= 80) return { pontua: false, examinado: true, detalhe: `PCPM ${pcpm} na faixa 71–80. Descreve, não pontua.` };
-  return { pontua: false, examinado: true, detalhe: `PCPM ${pcpm} acima da âncora do 3º ano.` };
+  const row = FLUENCY_ANCHORS[ano === "2" ? "2" : "3"];
+  if (pcpm <= row.pontuaAte) return { pontua: true, examinado: true, detalhe: `PCPM ${pcpm} ≤ ${row.pontuaAte} (${row.rotulo}).` };
+  if (pcpm <= row.descreveAte) return { pontua: false, examinado: true, detalhe: `PCPM ${pcpm} na faixa ${row.pontuaAte + 1}–${row.descreveAte}. Descreve, não pontua.` };
+  return { pontua: false, examinado: true, detalhe: `PCPM ${pcpm} acima da âncora do ${row.rotulo}.` };
 }
 
 /** Controles que, respondidos "não", travam a leitura (e, sem resposta, a deixam descritiva). */
@@ -160,11 +162,11 @@ export function scoreIced(input: IcedInput): IcedResult {
   dominios.push({ id: "fluencia", nome: "Fluência", peso: 3, pontos: flu.examinado && flu.pontua ? 3 : 0, examinado: flu.examinado, detalhe: flu.detalhe, limítrofe: flu.examinado && !flu.pontua && /Descreve/.test(flu.detalhe) });
 
   const ortExam = input.ditadoNorma || input.ditadoF != null || input.ditadoPseudoCertas != null;
-  const ortPontua = input.ditadoNorma || (input.ditadoF != null && input.ditadoF >= 4) || (input.ditadoPseudoCertas != null && input.ditadoPseudoCertas <= 2);
+  const ortPontua = input.ditadoNorma || (input.ditadoF != null && input.ditadoF >= DITADO_REFERENCE.errosFonologicosMinimo) || (input.ditadoPseudoCertas != null && input.ditadoPseudoCertas * DITADO_REFERENCE.pseudoFracaoMaxima.den <= DITADO_REFERENCE.pseudoFracaoMaxima.num * (input.ditadoPseudoTotal ?? DITADO_PSEUDO_LEGACY_TOTAL));
   dominios.push({
     id: "ortografia", nome: "Ortografia / ditado", peso: 3,
     pontos: ortExam && ortPontua ? 3 : 0, examinado: ortExam,
-    detalhe: input.ditadoNorma ? "Norma formal ≤ −1 DP prevalece." : `Erros fonológicos ${input.ditadoF ?? "—"} · pseudopalavras ${input.ditadoPseudoCertas ?? "—"}/5. Erro só de regra não pontua.`,
+    detalhe: input.ditadoNorma ? "Norma formal ≤ −1 DP prevalece." : `Erros fonológicos ${input.ditadoF ?? "—"} · pseudopalavras ${input.ditadoPseudoCertas ?? "—"}/${input.ditadoPseudoTotal ?? DITADO_PSEUDO_LEGACY_TOTAL}. Erro só de regra não pontua.`,
     limítrofe: false,
   });
 
@@ -197,7 +199,8 @@ export function scoreIced(input: IcedInput): IcedResult {
   });
 
   const ranExam = input.ranNorma || input.ranSeg != null;
-  const ranPontua = input.ranNorma || (input.ranSeg != null && input.ranSeg > 45) || (input.ranErros != null && input.ranErros >= 4);
+  const ranRef = ranReferenceFor(input.ano);
+  const ranPontua = input.ranNorma || (input.ranSeg != null && input.ranSeg > ranRef.segundosAcima) || (input.ranErros != null && input.ranErros >= ranRef.errosMinimo);
   dominios.push({
     id: "ran", nome: "Nomeação rápida", peso: 1,
     pontos: ranExam && ranPontua ? 1 : 0, examinado: ranExam,
@@ -231,6 +234,11 @@ export function scoreIced(input: IcedInput): IcedResult {
   if (naoExaminados.length) {
     avisos.push(`Escore sobre ${pontosExaminaveis} pontos possíveis (domínios examinados), não sobre 15. Não examinados: ${naoExaminados.join(", ")}. Ausente não é normal.`);
   }
+  const proporcaoPct = pontosExaminaveis > 0 ? Math.round((total / pontosExaminaveis) * 100) : null;
+  if (pontosExaminaveis > 0 && pontosExaminaveis < SCORE_REFERENCE.maximo) {
+    const limiarPct = Math.round((SCORE_ELEVATED_FRACTION.num / SCORE_ELEVATED_FRACTION.den) * 100);
+    avisos.push(`Leitura proporcional (descritiva, NÃO altera a faixa): ${total} de ${pontosExaminaveis} pontos possíveis = ${proporcaoPct}%; o limiar de ${SCORE_REFERENCE.elevada}/${SCORE_REFERENCE.maximo} equivale a ${limiarPct}% do escore completo. Não há regra validada para converter o limiar quando domínios ficam fora do alcance: decisão clínica do médico.`);
+  }
   const nucleo = dominios.some((d) => (d.id === "fluencia" || d.id === "ortografia") && d.pontos > 0) ? "presente" : "ausente";
 
   let faixa: IcedResult["faixa"] = "limitada";
@@ -241,13 +249,13 @@ export function scoreIced(input: IcedInput): IcedResult {
   } else if (controlesPendentes.length) {
     faixa = "descritiva";
     leitura = "Escore descritivo: controles de exclusão não confirmados (escolarização, alfabetização, audição, visão ou deficiência intelectual). Confirmar antes de interpretar.";
-  } else if (total >= 9 && nucleo === "presente") {
+  } else if (total >= SCORE_REFERENCE.elevada && nucleo === "presente") {
     faixa = "elevada";
     leitura = "Evidência elevada de dificuldade persistente de leitura/escrita.";
-  } else if (total >= 9 && nucleo === "ausente") {
+  } else if (total >= SCORE_REFERENCE.elevada && nucleo === "ausente") {
     faixa = "intermediaria";
     leitura = "9–15 sem núcleo (fluência ou ortografia). Reclassificado como intermediário.";
-  } else if (total >= 5) {
+  } else if (total >= SCORE_REFERENCE.intermediaria) {
     faixa = "intermediaria";
     leitura = "Evidência intermediária. Investigar, intervir e rever.";
   }
@@ -272,5 +280,5 @@ export function scoreIced(input: IcedInput): IcedResult {
     "Resultado não constitui diagnóstico. Integrar escolarização, linguagem, desenvolvimento e diferencial.",
   ].join(" ");
 
-  return { trava, travaMotivo, controlesPendentes, pontosExaminaveis, avisos, dominios, total, naoExaminados, faixa, nucleo, leitura, frase };
+  return { trava, travaMotivo, controlesPendentes, pontosExaminaveis, proporcaoPct, avisos, dominios, total, naoExaminados, faixa, nucleo, leitura, frase };
 }
