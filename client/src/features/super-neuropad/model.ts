@@ -463,6 +463,11 @@ export interface AnswerRecord {
   repeated?: boolean;
   /** Acerto pela alternativa não verbal prevista no item (apontar/gesto). */
   via?: AnswerVia;
+  /** Itens de toque (v2026-10-16): posição da opção escolhida na tela (0 = primeira) e número de opções mostradas. Ausente em registros antigos. */
+  pos?: number;
+  shown?: number;
+  /** Posição da resposta certa na tela (planejada para ficar balanceada na partida). */
+  correctPos?: number;
 }
 
 export interface SkippedPhase {
@@ -519,11 +524,48 @@ function base(item: Item, phaseId: PhaseId, seconds: number, repeated: boolean) 
   return { phaseId, itemId: item.id, kind: item.kind, origin: item.origin, ref: item.ref, seconds: round1(seconds), ...(repeated ? { repeated: true } : {}) };
 }
 
-/** Registro a partir de um toque da criança: o jogo confere sozinho. `refusal` marca recusa explícita. */
-export function recordTouch(item: TouchItem, phaseId: PhaseId, chosen: Option | null, seconds: number, repeated = false, refusal = false): AnswerRecord {
+/**
+ * Ordem das opções na tela. A posição da resposta certa é PLANEJADA: entre os itens de toque com o mesmo número de
+ * opções da partida, cada bloco de `n` itens usa as `n` posições uma vez (ordem do bloco sorteada pela semente), então
+ * nenhuma posição fica favorecida e uma preferência de posição da criança aparece no perfil de resposta em vez de
+ * virar acerto ou erro por acaso. Os distratores são embaralhados de forma determinística. `ordinal` = quantos itens de
+ * toque com o mesmo número de opções vieram antes na partida (ver `touchOrdinal`).
+ */
+export function optionOrder(item: TouchItem, seed: number, ordinal: number): Option[] {
+  const n = item.options.length;
+  const correctIndex = item.options.findIndex((option) => option.label === item.answer);
+  if (n < 2 || correctIndex < 0) return shuffle(item.options, seed);
+  const block = Math.floor(ordinal / n);
+  const cycle = shuffle(Array.from({ length: n }, (_, index) => index), seed + block * 7919 + n * 31);
+  const target = cycle[ordinal % n];
+  const others = shuffle(item.options.filter((_, index) => index !== correctIndex), seed + ordinal * 104729 + 13);
+  const out: Option[] = [];
+  for (let slot = 0, next = 0; slot < n; slot++) out.push(slot === target ? item.options[correctIndex] : others[next++]);
+  return out;
+}
+
+/** Quantos itens de toque com o mesmo número de opções precedem o item na partida (ordem fixa dos mundos). */
+export function touchOrdinal(bandId: BandId, phaseId: PhaseId, itemId: string): number {
+  let count = 0;
+  const target = itemsFor(bandId, phaseId).find((entry) => entry.id === itemId);
+  if (!target || target.kind !== "toque") return 0;
+  for (const id of PHASE_ORDER) {
+    for (const entry of itemsFor(bandId, id)) {
+      if (id === phaseId && entry.id === itemId) return count;
+      if (entry.kind === "toque" && entry.options.length === target.options.length) count++;
+    }
+  }
+  return count;
+}
+
+/** Registro a partir de um toque da criança: o jogo confere sozinho. `refusal` marca recusa explícita. `shown` = ordem exibida (para registrar a posição). */
+export function recordTouch(item: TouchItem, phaseId: PhaseId, chosen: Option | null, seconds: number, repeated = false, refusal = false, shown?: readonly Option[]): AnswerRecord {
   const status: AnswerStatus = chosen === null ? (refusal ? "recusa" : "sem_resposta") : chosen.label === item.answer ? "acerto" : "erro";
   const prompt = item.context && !item.prompt.includes(item.context) ? `${item.prompt} (contexto lido: ${item.context})` : item.prompt;
-  return { ...base(item, phaseId, seconds, repeated), prompt, expected: item.answer, given: chosen ? chosen.label : "—", status };
+  const position = shown && chosen ? shown.findIndex((option) => option.label === chosen.label) : -1;
+  const correctPos = shown ? shown.findIndex((option) => option.label === item.answer) : -1;
+  const where = shown ? { shown: shown.length, ...(position >= 0 ? { pos: position } : {}), ...(correctPos >= 0 ? { correctPos } : {}) } : {};
+  return { ...base(item, phaseId, seconds, repeated), prompt, expected: item.answer, given: chosen ? chosen.label : "—", status, ...where };
 }
 
 /** Registro a partir da montagem da palavra: o jogo confere sozinho. */
@@ -937,6 +979,111 @@ export function interpret(session: GameSession): GameReading | null {
   };
 }
 
+// ─────────────────────────────── perfil de resposta (descritivo, v2026-10-16) ───────────────────────────────
+/** Estatística descritiva do tempo por item (segundos). Sem referência normativa: compara a criança consigo mesma. */
+export interface LatencyStats {
+  n: number;
+  median: number;
+  q1: number;
+  q3: number;
+  iqr: number;
+  sd: number;
+  /** Coeficiente de variação (desvio-padrão amostral ÷ média); null com menos de 5 tempos ou média 0. */
+  cv: number | null;
+}
+
+export const LATENCY_MIN_N = 5;
+
+function quantile(sorted: number[], q: number): number {
+  if (sorted.length === 0) return 0;
+  const position = (sorted.length - 1) * q;
+  const lower = Math.floor(position);
+  const upper = Math.ceil(position);
+  return sorted[lower] + (sorted[upper] - sorted[lower]) * (position - lower);
+}
+
+export function latencyStats(values: readonly number[]): LatencyStats {
+  const clean = values.filter((value) => Number.isFinite(value) && value >= 0).sort((a, b) => a - b);
+  const n = clean.length;
+  if (n === 0) return { n: 0, median: 0, q1: 0, q3: 0, iqr: 0, sd: 0, cv: null };
+  const mean = clean.reduce((sum, value) => sum + value, 0) / n;
+  const variance = n > 1 ? clean.reduce((sum, value) => sum + (value - mean) ** 2, 0) / (n - 1) : 0;
+  const sd = Math.sqrt(variance);
+  const q1 = quantile(clean, 0.25);
+  const q3 = quantile(clean, 0.75);
+  return { n, median: round1(quantile(clean, 0.5)), q1: round1(q1), q3: round1(q3), iqr: round1(q3 - q1), sd: round1(sd), cv: n >= LATENCY_MIN_N && mean > 0 ? Math.round((sd / mean) * 100) / 100 : null };
+}
+
+export interface ResponseProfile {
+  /** Itens de toque respondidos com a posição registrada (partidas novas). */
+  positioned: number;
+  /** Escolhas por posição na tela (0 = primeira), só itens de toque respondidos. */
+  choicesByPosition: Record<number, number>;
+  /** Erros por posição na tela. */
+  errorsByPosition: Record<number, number>;
+  /** Maior sequência de toques respondidos na mesma posição (itens com 3 ou mais opções). */
+  longestSamePosition: { length: number; position: number } | null;
+  /** Tempo nos itens conferidos pelo jogo (toque e montar), mais próximo da latência da criança. */
+  tapLatency: LatencyStats;
+  /** Tempo nos itens conferidos pela aplicadora (inclui a conferência): só ritmo. */
+  judgedLatency: LatencyStats;
+  byPhase: { phaseId: PhaseId; name: string; tap: LatencyStats }[];
+}
+
+export function responseProfile(session: GameSession): ResponseProfile {
+  const touches = session.answers.filter((answer) => answer.kind === "toque" && answer.pos !== undefined && answer.status !== "sem_resposta" && answer.status !== "recusa");
+  const choicesByPosition: Record<number, number> = {};
+  const errorsByPosition: Record<number, number> = {};
+  let longest: { length: number; position: number } | null = null;
+  let run = 0;
+  let last = -1;
+  for (const answer of touches) {
+    const position = answer.pos as number;
+    choicesByPosition[position] = (choicesByPosition[position] ?? 0) + 1;
+    if (answer.status === "erro") errorsByPosition[position] = (errorsByPosition[position] ?? 0) + 1;
+    if ((answer.shown ?? 0) >= 3 && position === last) run += 1; else run = (answer.shown ?? 0) >= 3 ? 1 : 0;
+    last = (answer.shown ?? 0) >= 3 ? position : -1;
+    if (run >= 2 && (!longest || run > longest.length)) longest = { length: run, position };
+  }
+  const gameChecked = (answer: AnswerRecord) => (answer.kind === "toque" || answer.kind === "montar") && answer.status !== "sem_resposta" && answer.status !== "recusa";
+  const judged = (answer: AnswerRecord) => (answer.kind === "fala" || answer.kind === "fazer") && answer.status !== "sem_resposta" && answer.status !== "recusa";
+  const band = bandForYears(session.ageYears) ?? AGE_BANDS[0];
+  return {
+    positioned: touches.length,
+    choicesByPosition,
+    errorsByPosition,
+    longestSamePosition: longest,
+    tapLatency: latencyStats(session.answers.filter(gameChecked).map((answer) => answer.seconds)),
+    judgedLatency: latencyStats(session.answers.filter(judged).map((answer) => answer.seconds)),
+    byPhase: PHASE_ORDER.map((phaseId) => ({ phaseId, name: phaseById(phaseId, band.min).name, tap: latencyStats(session.answers.filter((answer) => answer.phaseId === phaseId && gameChecked(answer)).map((answer) => answer.seconds)) })),
+  };
+}
+
+function latencyText(stats: LatencyStats): string {
+  if (stats.n === 0) return "sem itens";
+  return `n=${stats.n}, mediana ${stats.median} s, intervalo interquartil ${stats.q1}–${stats.q3} s (amplitude ${stats.iqr} s), desvio-padrão ${stats.sd} s${stats.cv !== null ? `, coeficiente de variação ${stats.cv}` : " (coeficiente de variação só com 5 ou mais itens)"}`;
+}
+
+const positionText = (counts: Record<number, number>) => Object.keys(counts).map(Number).sort((a, b) => a - b).map((key) => `posição ${key + 1}: ${counts[key]}`).join(" · ") || "nenhuma";
+
+/** Linhas do perfil de resposta para relatório e PDF. Só contagens e dispersão; nenhuma norma, corte ou interpretação. */
+export function responseProfileLines(session: GameSession): string[] {
+  const profile = responseProfile(session);
+  if (profile.tapLatency.n === 0 && profile.judgedLatency.n === 0) return [];
+  const lines = [
+    `Tempo por item conferido pelo jogo (toque e montar): ${latencyText(profile.tapLatency)}.`,
+    `Tempo por item conferido pela aplicadora (inclui o tempo de julgar; vale só como ritmo): ${latencyText(profile.judgedLatency)}.`,
+    ...profile.byPhase.filter((entry) => entry.tap.n >= 2).map((entry) => `  ${entry.name}: ${latencyText(entry.tap)}.`),
+  ];
+  if (profile.positioned > 0) {
+    lines.push(`Posição das escolhas na tela (itens de toque respondidos: ${profile.positioned}): ${positionText(profile.choicesByPosition)}.`);
+    lines.push(`Erros por posição na tela: ${positionText(profile.errorsByPosition)}. A posição da resposta certa foi balanceada pelo jogo; erros concentrados numa posição podem refletir preferência de posição, não só conteúdo.`);
+    if (profile.longestSamePosition) lines.push(`Maior sequência de toques na mesma posição: ${profile.longestSamePosition.length} seguidos (posição ${profile.longestSamePosition.position + 1}). Observação descritiva; conferir com o comportamento visto pela aplicadora.`);
+  }
+  lines.push("Perfil descritivo da própria partida: sem norma, percentil ou ponto de corte; o tempo aqui inclui leitura do comando e deslocamento do toque, não é tempo de reação preciso.");
+  return lines;
+}
+
 /**
  * Data da própria partida (fim, ou início se incompleta), não o relógio do
  * momento em que o texto é copiado. Sem instante válido, usa agora.
@@ -1050,6 +1197,13 @@ export function buildStructuredLines(session: GameSession, date = sessionDate(se
     lines.push(`DOMINIO_2_3 ${json({ dominio: entry.label, itens: entry.total, registrados: entry.registered, cumpre: entry.hits, itens_relato_cuidador: entry.caregiverItems, nivel: entry.level })}`);
   }
   for (const flag of summary.redFlags) lines.push(`ALERTA ${json({ id: flag.itemId, texto: flag.text, fonte: flag.informant, conduta: redFlagLabel(summary) })}`);
+  const profile = responseProfile(session);
+  if (profile.tapLatency.n > 0 || profile.judgedLatency.n > 0) {
+    lines.push(`PERFIL ${json({
+      tempo_jogo: profile.tapLatency, tempo_aplicadora: profile.judgedLatency, posicao_escolhas: profile.choicesByPosition, posicao_erros: profile.errorsByPosition,
+      maior_sequencia_mesma_posicao: profile.longestSamePosition, toques_com_posicao: profile.positioned,
+    })}`);
+  }
   lines.push(`OBSERVACOES ${json({ texto: cleanObservations(session.observations ?? "") || null })}`);
   return lines;
 }
@@ -1074,6 +1228,7 @@ export function buildGameReport(session: GameSession, date = sessionDate(session
     "",
     ...toddlerReportLines(summary),
     ...(reading ? ["LEITURA PARA A CONSULTA (DESCRITIVA, AUTORAL, NÃO NORMATIVA)", ...reading.notes.map((note) => `- ${note}`), ""] : []),
+    ...(responseProfileLines(session).length ? ["PERFIL DE RESPOSTA (DESCRITIVO, SEM NORMA)", ...responseProfileLines(session).map((line) => (line.startsWith("  ") ? line : `- ${line}`)), ""] : []),
     "OBSERVAÇÕES DA APLICADORA",
     observations || "Sem observações registradas.",
     "",
