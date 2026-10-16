@@ -380,6 +380,15 @@ Pendente de decisão clínica (não alterado): conteúdo novo (pseudopalavras no
 mais perguntas de compreensão, segunda forma de fluência, mais itens por domínio aos 2–3 anos),
 recalibração de cortes e validação com amostra de crianças.
 
+## Pendências do diagnóstico (16/10/2026)
+
+- Cortes por faixa etária agora vêm de `client/src/features/super-neuropad/cutProfiles.ts`; hoje há um único perfil
+  interno (os mesmos 75/50 % e 80/60 %), sem fonte, e a tela, o PDF e o prontuário dizem isso.
+- Aos 2–3 anos, domínio com menos de 3 itens fica descritivo (acertos/itens), sem nível.
+- Folga de tempo até o teto abaixo de 60 s (2, 3, 16 e 17 anos) gera aviso na preparação e no relatório; itens e tetos não mudaram.
+- Procedência dos itens (autoral do jogo × banco de origem) aparece na preparação, no relatório e no PDF.
+- O que depende de norma, fonte ou validação está em `docs/VALIDACAO_NEUROPAD.md`.
+
 ## Posição balanceada e perfil de resposta (v2026-10-16)
 
 - `optionOrder`: a posição da resposta certa é planejada; entre os toques com o mesmo número de opções, cada bloco de `n`

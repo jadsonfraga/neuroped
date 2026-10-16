@@ -249,8 +249,7 @@ test("abas de origem continuam com os seus bancos intactos (o jogo só lê)", ()
   for (let age = 1; age <= 19; age++) for (const items of Object.values(COGNITIVE_BANK[age])) assert.equal(items.length, 4);
 });
 
-test("ampliação dos 8 a 17 anos: um desafio autoral a mais por mundo, declarado como tal, com piso de fluência e dificuldade que não diminuem com a idade", () => {
-  let fluencyFloor = 0;
+test("ampliação dos 8 a 17 anos: um desafio autoral a mais por mundo, declarado como tal, com fluência registrada por quantidade (sem corte por idade)", () => {
   for (const years of YEARS) {
     const extras = allItems(years).filter((item) => /ampliação autoral do jogo/.test(item.ref));
     assert.equal(extras.length, years >= 8 ? PHASE_ORDER.length : 0, `${years} anos: ampliação só a partir de 8 anos, um item por mundo`);
@@ -258,10 +257,8 @@ test("ampliação dos 8 a 17 anos: um desafio autoral a mais por mundo, declarad
     for (const phaseId of PHASE_ORDER) assert.equal(itemsFor(String(years), phaseId).filter((item) => /ampliação autoral do jogo/.test(item.ref)).length, 1, `${years}/${phaseId}`);
     const fluency = extras.find((item) => item.kind === "fala" && /fluência verbal/.test(item.ref));
     assert.ok(fluency && fluency.kind === "fala", `${years} anos: fluência verbal`);
-    const floor = Number(fluency.expected.match(/pelo menos (\d+) animais/)?.[1]);
-    assert.ok(floor >= fluencyFloor, `${years} anos: piso de fluência não diminui (${floor} < ${fluencyFloor})`);
-    assert.match(fluency.expected, /piso autoral, não norma/);
-    fluencyFloor = floor;
+    assert.match(fluency.expected, /anote a quantidade nas observações/);
+    assert.doesNotMatch(fluency.expected, /pelo menos|piso|norma/i);
     // controle mental e busca/sequência visual existem em toda idade ampliada
     assert.ok(extras.some((item) => /controle mental|alternar número e letra/.test(item.ref)), `${years} anos: controle mental`);
     assert.ok(extras.some((item) => item.kind === "toque" && /busca e contagem|memória visual sequencial/.test(item.ref)), `${years} anos: atenção/memória visual`);

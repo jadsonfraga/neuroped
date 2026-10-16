@@ -1,13 +1,13 @@
 // Jogo das Letras e Números (aba dyslexia risk, 5–18 anos): banco por faixa,
 // escada adaptativa, classificação do ditado, pontuação, teto de 15 min e
-// relatório. Triagem interna; nenhum teste aqui afirma norma brasileira.
+// relatório. Registro descritivo; nenhum teste aqui afirma norma, nível ou classificação.
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 import { BANDS, MAX_GAME_AGE, MIN_GAME_AGE, bandForAge, fluencyWords, type BandBank, type Level } from "../../client/src/features/dyslexia-risk/game/bank";
 import {
   ITEMS_PER_WORLD, SESSION_CAP_SECONDS, WORLDS, classifyDitado, estimateSessionSeconds, newGame, nextItemFor, pickItem,
-  recordFluency, recordResponse, skipWorld, worldTarget, finalLevelOf, starsFor, stepAdaptive, summarizeGame, tick, wcpmOf, initialAdaptive,
+  recordFluency, recordResponse, skipWorld, worldTarget, starsFor, stepAdaptive, summarizeGame, tick, wcpmOf, initialAdaptive,
   type GameState, type ItemResponse,
 } from "../../client/src/features/dyslexia-risk/game/engine";
 import { GAME_DISCLAIMER, buildGameDocSpec, buildGameRecord, gameResponseItems } from "../../client/src/features/dyslexia-risk/game/report";
@@ -159,7 +159,7 @@ test("teto de sessão: estimativa ≤ 15 min em todas as faixas e o relógio enc
   assert.equal(g.endedReason, "tempo");
   assert.equal(g.activeMs, 900_000);
   assert.equal(tick(g, 10_000).activeMs, 900_000, "nada corre depois do teto");
-  assert.match(summarizeGame(g).sinais.join(" "), /15 minutos/);
+  assert.match(summarizeGame(g).condicoes.join(" "), /15 minutos/);
 });
 
 function playAll(age: number, answer: (world: string, item: any) => Pick<ItemResponse, "given" | "outcome" | "errorType">): GameState {
@@ -179,14 +179,7 @@ function playAll(age: number, answer: (world: string, item: any) => Pick<ItemRes
   return g;
 }
 
-test("nível demonstrado: o mais alto com ≥ 2 acertos (não o próximo da escada)", () => {
-  const r = (level: Level, outcome: ItemResponse["outcome"]): ItemResponse => ({ world: "ditado", itemId: `${level}${outcome}${Math.random()}`, level, prompt: "", expected: "", given: "", outcome, ms: 0 });
-  const mixed = { status: "concluido" as const, adaptive: { ...initialAdaptive(), level: 3 as Level }, responses: [r(2, "erro"), r(2, "erro"), r(1, "erro"), r(1, "erro"), r(1, "correto"), r(1, "correto"), r(2, "correto"), r(2, "correto")] };
-  assert.equal(finalLevelOf(mixed), 2, "escada em 3 após o último acerto não vira nível 3 demonstrado");
-  assert.equal(finalLevelOf({ ...mixed, responses: [] }), 1);
-});
-
-test("sessão completa: todos acertos sobem para o nível 3; todos erros descem ao 1 e geram sinais", () => {
+test("sessão completa: só contagem bruta; a escada sobe/desce a dificuldade do item sem rotular a criança", () => {
   for (const age of [5, 8, 12, 15, 18]) {
     const best = playAll(age, (world, item) => ({ given: world === "aritmetica" || world === "compreensao" ? item.answer : "x", outcome: "correto" }));
     assert.equal(best.endedReason, "completo", `${age}: sessão não terminou`);
@@ -194,19 +187,18 @@ test("sessão completa: todos acertos sobem para o nível 3; todos erros descem 
     assert.equal(s.ditado.total, ITEMS_PER_WORLD.ditado);
     assert.equal(s.leitura.decodificacao.total, ITEMS_PER_WORLD.decodificacao);
     assert.equal(s.aritmetica.total, ITEMS_PER_WORLD.aritmetica);
-    assert.equal(s.ditado.finalLevel, 3);
-    assert.equal(s.aritmetica.pct, 100);
+    assert.equal(s.aritmetica.corretos, ITEMS_PER_WORLD.aritmetica);
+    assert.ok(!("pct" in s.aritmetica) && !("finalLevel" in s.ditado) && !("sinais" in s));
     assert.equal(s.leitura.fluencia?.wcpm, 38);
-    assert.deepEqual(s.sinais, []);
+    assert.deepEqual(s.condicoes, []);
     assert.equal(best.xp > 0 && best.bestStreak >= 20, true);
     for (const w of WORLDS) assert.equal(starsFor(best.worlds[w.id], worldTarget(w.id, bandForAge(age) as BandBank)), 3);
 
     const worst = playAll(age, () => ({ given: "zz", outcome: "erro", errorType: "fonologico" }));
     const sw = summarizeGame(worst);
-    assert.equal(sw.ditado.finalLevel, 1);
-    assert.equal(sw.aritmetica.finalLevel, 1);
+    assert.equal(sw.aritmetica.corretos, 0);
     assert.equal(sw.ditado.fonologicos, ITEMS_PER_WORLD.ditado);
-    assert.ok(sw.sinais.length >= 4, `${age}: sinais esperados`);
+    assert.ok(worst.worlds.ditado.responses.every((r) => r.level >= 1 && r.level <= 3));
     const used = worst.worlds.ditado.responses.map((r) => r.itemId);
     assert.equal(new Set(used).size, used.length, "item repetido na sessão");
   }
@@ -229,8 +221,8 @@ test("relatório e PDF: disclaimers, cores azul/vermelho por item e contrato do 
   const issuer = { doctorName: "Dra. Teste", specialty: "", credentials: "", clinicName: "", motto: "" };
   const spec = buildGameDocSpec(g, issuer, "07/10/2026 21:00");
   assert.match(spec.footer ?? "", /LGPD/);
-  assert.match(spec.footer ?? "", /NÃO DIAGNÓSTICA/);
-  assert.match(GAME_DISCLAIMER, /sem validação normativa brasileira/i);
+  assert.match(spec.footer ?? "", /Registro descritivo; sem classificação\./);
+  assert.equal(GAME_DISCLAIMER, "Registro descritivo; sem classificação. Interpretação a cargo do profissional.");
   const ditado = spec.sections.find((s) => s.heading.startsWith("Caverna do Ditado"));
   assert.ok(ditado?.rich?.every((l) => l.tone === "wrong"), "erros em vermelho");
   const ari = spec.sections.find((s) => s.heading.startsWith("Ponte dos Números"));
@@ -238,7 +230,8 @@ test("relatório e PDF: disclaimers, cores azul/vermelho por item e contrato do 
   assert.ok(ari?.rich?.every((l) => /^Acertou/.test(l.text)), "cor sempre acompanhada de rótulo");
   const record = buildGameRecord(g, "07/10/2026 21:00");
   assert.match(record, /erros ortográficos 8/);
-  assert.match(record, /NÃO DIAGNÓSTICA/);
+  assert.match(record, /Registro descritivo; sem classificação\./);
+  assert.doesNotMatch(record, /Sinais para investigar|nível demonstrado|referência interna/);
   const items = gameResponseItems(g);
   assert.ok(items.every((i) => i.question && i.answer));
 });
@@ -247,7 +240,7 @@ test("página: ICED-8 preservado na mesma chave, jogo em chave própria, dock n�
   const page = readFileSync("client/src/pages/dyslexia-risk.tsx", "utf8");
   assert.match(page, /const KEY = "neuroped-dyslexia-risk-v1"/, "chave do ICED-8 não muda (sessões salvas)");
   assert.match(page, /LazyDyslexiaGame/);
-  assert.match(page, /não diagnostica/);
+  assert.match(page, /sem classificação/);
   const engine = readFileSync("client/src/features/dyslexia-risk/game/engine.ts", "utf8");
   assert.match(engine, /GAME_STORAGE_KEY = "neuroped-dyslexia-game-v1"/);
   const css = readFileSync("client/src/styles/dyslexia-risk.css", "utf8");
@@ -258,5 +251,5 @@ test("página: ICED-8 preservado na mesma chave, jogo em chave própria, dock n�
   assert.match(ui, /snp-answer--correct/);
   assert.match(ui, /snp-answer--wrong/);
   assert.match(ui, /Pausar/);
-  assert.match(ui, /NÃO DIAGNÓSTICA/);
+  assert.match(ui, /DESCRIPTIVE_NOTICE/);
 });
