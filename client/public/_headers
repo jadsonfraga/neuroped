@@ -4,12 +4,16 @@
 # (imutáveis) podem ser cacheados agressivamente.
 
 /*
+  # O Cloudflare Pages anexa "Access-Control-Allow-Origin: *" aos assets
+  # estáticos por padrão. Removido: a API (/api/*) aplica CORS por allowlist em
+  # functions/api/_middleware.ts e o app não precisa ser lido cross-origin.
+  ! Access-Control-Allow-Origin
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(self), geolocation=(), payment=()
-  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://neuroped.pages.dev https://sncr-api.apps.anvisa.gov.br; media-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self'
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://neuroped.pages.dev https://sncr-api.apps.anvisa.gov.br; media-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self'
 
 /sw.js
   Cache-Control: no-cache, no-store, must-revalidate
