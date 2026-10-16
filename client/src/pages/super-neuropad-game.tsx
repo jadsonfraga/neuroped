@@ -49,6 +49,11 @@ import {
   buildGameReport,
   buildPatientRecordItems,
   cutText,
+  cutProvenanceText,
+  provenanceText,
+  timeMarginSeconds,
+  timeMarginTight,
+  TIME_MARGIN_NOTE,
   estimateBandSeconds,
   formatDuration,
   interpret,
@@ -1011,6 +1016,12 @@ export default function SuperNeuroPadGamePage() {
                 {band.min <= 3 && <span className="snp-chip bg-[var(--snp-sun-tint)]">Bateria dedicada de 2–3 anos: um domínio por mundo, itens de relato do cuidador, respostas por gesto aceitas, pausa rápida à vontade</span>}
               </div>
             )}
+            {band && estimate && (
+              <div className="mt-2 space-y-1 text-xs font-semibold opacity-80" data-testid="super-neuropad-provenance">
+                <p>{provenanceText(band.min)}</p>
+                {timeMarginTight(band.min) && <p role="note" data-testid="super-neuropad-time-margin">{TIME_MARGIN_NOTE} (folga estimada: {timeMarginSeconds(band.min)} s)</p>}
+              </div>
+            )}
           </div>
 
           <div className="snp-panel p-5">
@@ -1457,7 +1468,7 @@ export default function SuperNeuroPadGamePage() {
           </div>
 
           {summary.complete && (<p className="text-xs font-semibold leading-relaxed opacity-80">
-            Faixas operacionais autorais: por mundo ({summary.phases[0].total} desafios), {cutText(summary.phases[0].total)}; no total ({summary.total}), {cutText(summary.total, "total")}. Recusa e não resposta contam como não acertadas e ficam registradas à parte. Item lento = 2 vezes a mediana da própria partida (mínimo 12 s). {SUPER_NEUROPAD_NATURE}
+            Faixas operacionais autorais: por mundo ({summary.phases[0].total} desafios), {cutText(summary.phases[0].total, "fase", summary.band.min)}; no total ({summary.total}), {cutText(summary.total, "total", summary.band.min)}. {cutProvenanceText(summary.band.min)} Recusa e não resposta contam como não acertadas e ficam registradas à parte. Item lento = 2 vezes a mediana da própria partida (mínimo 12 s). {SUPER_NEUROPAD_NATURE}
           </p>)}
         </section>
       )}

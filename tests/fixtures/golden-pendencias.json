@@ -84,11 +84,11 @@
    "17/semResposta": "observar|27/36|4:observar,5:esperado,4:observar,5:esperado,4:observar,5:esperado"
   },
   "domains": {
-   "2/todos": "atencao:3/3:esperado,atencao_conjunta:3/3:esperado,linguagem_receptiva:3/3:esperado,linguagem_expressiva:3/3:esperado,interacao_social:4/4:esperado,brincar_simbolico:2/2:esperado",
-   "2/alternado": "atencao:2/3:observar,atencao_conjunta:1/3:alerta,linguagem_receptiva:2/3:observar,linguagem_expressiva:1/3:alerta,interacao_social:2/4:observar,brincar_simbolico:1/2:observar",
-   "2/memoriaErro": "atencao:0/3:alerta,atencao_conjunta:3/3:esperado,linguagem_receptiva:3/3:esperado,linguagem_expressiva:3/3:esperado,interacao_social:4/4:esperado,brincar_simbolico:2/2:esperado",
-   "2/umErroPorMundo": "atencao:2/3:observar,atencao_conjunta:2/3:observar,linguagem_receptiva:2/3:observar,linguagem_expressiva:2/3:observar,interacao_social:3/4:esperado,brincar_simbolico:1/2:observar",
-   "2/semResposta": "atencao:2/3:observar,atencao_conjunta:2/3:observar,linguagem_receptiva:2/3:observar,linguagem_expressiva:3/3:esperado,interacao_social:3/4:esperado,brincar_simbolico:1/2:observar",
+   "2/todos": "atencao:3/3:esperado,atencao_conjunta:3/3:esperado,linguagem_receptiva:3/3:esperado,linguagem_expressiva:3/3:esperado,interacao_social:4/4:esperado,brincar_simbolico:2/2:null",
+   "2/alternado": "atencao:2/3:observar,atencao_conjunta:1/3:alerta,linguagem_receptiva:2/3:observar,linguagem_expressiva:1/3:alerta,interacao_social:2/4:observar,brincar_simbolico:1/2:null",
+   "2/memoriaErro": "atencao:0/3:alerta,atencao_conjunta:3/3:esperado,linguagem_receptiva:3/3:esperado,linguagem_expressiva:3/3:esperado,interacao_social:4/4:esperado,brincar_simbolico:2/2:null",
+   "2/umErroPorMundo": "atencao:2/3:observar,atencao_conjunta:2/3:observar,linguagem_receptiva:2/3:observar,linguagem_expressiva:2/3:observar,interacao_social:3/4:esperado,brincar_simbolico:1/2:null",
+   "2/semResposta": "atencao:2/3:observar,atencao_conjunta:2/3:observar,linguagem_receptiva:2/3:observar,linguagem_expressiva:3/3:esperado,interacao_social:3/4:esperado,brincar_simbolico:1/2:null",
    "3/todos": "atencao:4/4:esperado,atencao_conjunta:4/4:esperado,linguagem_receptiva:4/4:esperado,linguagem_expressiva:4/4:esperado,interacao_social:4/4:esperado,brincar_simbolico:4/4:esperado",
    "3/alternado": "atencao:2/4:observar,atencao_conjunta:2/4:observar,linguagem_receptiva:2/4:observar,linguagem_expressiva:2/4:observar,interacao_social:2/4:observar,brincar_simbolico:2/4:observar",
    "3/memoriaErro": "atencao:0/4:alerta,atencao_conjunta:4/4:esperado,linguagem_receptiva:4/4:esperado,linguagem_expressiva:4/4:esperado,interacao_social:4/4:esperado,brincar_simbolico:4/4:esperado",

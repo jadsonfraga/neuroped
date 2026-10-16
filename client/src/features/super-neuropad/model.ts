@@ -23,6 +23,7 @@
  *     explícito "Salvar no prontuário".
  */
 
+import { CUT_PROFILES, MIN_DOMAIN_ITEMS_FOR_LEVEL, cutProfileFor, cutProvenanceText } from "./cutProfiles";
 import { formatClinicalDate, formatClinicalDateTime } from "../../lib/clinicalDate";
 import { EMOJI_NAMES, INTEGRATED_BANK, itemsPerPhase, MAX_AGE_YEARS, MIN_AGE_YEARS, PHASE_ORDER, YEARS, type PhaseId } from "./bank";
 import {
@@ -320,6 +321,40 @@ export function itemSeconds(item: Item): number {
   return base + reading + (item.preview ? PREVIEW_SECONDS : 0);
 }
 
+/** Folga mínima (s) entre o tempo estimado e o teto da sessão; abaixo disso a tela e o PDF avisam. */
+export const TIME_MARGIN_WARN_SECONDS = 60;
+
+/** Folga (s) entre o teto de sessão da idade e a estimativa. Informativa: não muda itens nem tetos. */
+export function timeMarginSeconds(years: number): number {
+  return sessionLimitSeconds(years) - estimateBandSeconds(years).totalSeconds;
+}
+
+export function timeMarginTight(years: number): boolean {
+  return timeMarginSeconds(years) < TIME_MARGIN_WARN_SECONDS;
+}
+
+export const TIME_MARGIN_NOTE =
+  "Folga curta até o teto da sessão: se a criança demorar, use Pausa, \"Pular este mundo\" com motivo ou divida a aplicação em dois momentos. O jogo não encurta itens sozinho.";
+
+export type ItemProvenance = "autoral" | "banco_de_origem";
+
+/** Procedência do item: o campo `ref` do banco marca "autoral" nos itens criados para o jogo (sem fonte externa). */
+export function itemProvenance(item: Pick<Item, "ref">): ItemProvenance {
+  return /autoral/i.test(item.ref) ? "autoral" : "banco_de_origem";
+}
+
+/** Quantos itens da idade são autorais do jogo (sem fonte externa verificável) e quantos vêm dos bancos de origem. */
+export function provenanceCounts(years: number): { autoral: number; origem: number; total: number } {
+  const items = PHASE_ORDER.flatMap((phaseId) => itemsFor(String(years), phaseId));
+  const autoral = items.filter((item) => itemProvenance(item) === "autoral").length;
+  return { autoral, origem: items.length - autoral, total: items.length };
+}
+
+export function provenanceText(years: number): string {
+  const c = provenanceCounts(years);
+  return `Procedência dos itens: ${c.origem} de ${c.total} vêm dos bancos de origem do NeuroPed; ${c.autoral} são autorais do jogo, sem fonte externa verificável nem validação (critérios conservadores para déficit grosseiro).`;
+}
+
 export interface BandEstimate {
   years: number;
   items: number;
@@ -565,39 +600,43 @@ export const LEVEL_LABELS: Record<Level, string> = {
 };
 
 /** Proporções AUTORAIS (não normativas) — as mesmas desde a primeira versão do jogo. */
-export const PHASE_RATIOS = { esperado: 0.75, observar: 0.5 } as const;
-export const OVERALL_RATIOS = { esperado: 0.8, observar: 0.6 } as const;
+export const PHASE_RATIOS = CUT_PROFILES[0].fase;
+export const OVERALL_RATIOS = CUT_PROFILES[0].total;
+export { CUT_PROFILES, MIN_DOMAIN_ITEMS_FOR_LEVEL, cutProfileFor, cutProvenanceText };
 
 function cut(total: number, ratio: number): number {
   return Math.ceil(total * ratio - 1e-9);
 }
 
 /** Menor número de acertos para cada faixa, dado o número de itens. */
-export function levelCuts(total: number, scope: "fase" | "total" = "fase"): { esperado: number; observar: number } {
-  const ratios = scope === "fase" ? PHASE_RATIOS : OVERALL_RATIOS;
+export function levelCuts(total: number, scope: "fase" | "total" = "fase", years?: number): { esperado: number; observar: number } {
+  const profile = cutProfileFor(years);
+  const ratios = scope === "fase" ? profile.fase : profile.total;
   return { esperado: cut(total, ratios.esperado), observar: cut(total, ratios.observar) };
 }
 
 /** Texto das faixas para o número de itens (ex.: "4–5 acertos = esperado; 3 = observar; 0–2 = alerta"). */
-export function cutText(total: number, scope: "fase" | "total" = "fase"): string {
-  const cuts = levelCuts(total, scope);
+export function cutText(total: number, scope: "fase" | "total" = "fase", years?: number): string {
+  const cuts = levelCuts(total, scope, years);
   const span = (from: number, to: number) => (from === to ? `${from}` : `${from}–${to}`);
   return `${span(cuts.esperado, total)} acertos = esperado; ${span(cuts.observar, cuts.esperado - 1)} = observar; ${span(0, cuts.observar - 1)} = alerta`;
 }
 
-export function phaseLevel(hits: number, total: number): Level {
+export function phaseLevel(hits: number, total: number, years?: number): Level {
   if (total <= 0) return "alerta";
   const ratio = hits / total;
-  if (ratio >= PHASE_RATIOS.esperado) return "esperado";
-  if (ratio >= PHASE_RATIOS.observar) return "observar";
+  const ratios = cutProfileFor(years).fase;
+  if (ratio >= ratios.esperado) return "esperado";
+  if (ratio >= ratios.observar) return "observar";
   return "alerta";
 }
 
-export function overallLevel(hits: number, total: number): Level {
+export function overallLevel(hits: number, total: number, years?: number): Level {
   if (total <= 0) return "alerta";
   const ratio = hits / total;
-  if (ratio >= OVERALL_RATIOS.esperado) return "esperado";
-  if (ratio >= OVERALL_RATIOS.observar) return "observar";
+  const ratios = cutProfileFor(years).total;
+  if (ratio >= ratios.esperado) return "esperado";
+  if (ratio >= ratios.observar) return "observar";
   return "alerta";
 }
 
@@ -685,8 +724,8 @@ export function summarize(session: GameSession): GameSummary {
     const hits = count("acerto");
     return {
       phase, hits, errors: count("erro"), noResponse: count("sem_resposta"), refused: count("recusa"), total,
-      level: complete ? phaseLevel(hits, total) : null, applied: answers.length > 0, skipReason: skipped.get(phaseId) ?? null, seconds, answers,
-      expectedMin: levelCuts(total).esperado,
+      level: complete ? phaseLevel(hits, total, band.min) : null, applied: answers.length > 0, skipReason: skipped.get(phaseId) ?? null, seconds, answers,
+      expectedMin: levelCuts(total, "fase", band.min).esperado,
     };
   });
   const origins: OriginSummary[] = ORIGIN_ORDER.map((origin) => {
@@ -709,7 +748,7 @@ export function summarize(session: GameSession): GameSummary {
     const domainHits = answered.filter((answer) => answer.status === "acerto").length;
     return {
       domain, label: TODDLER_DOMAIN_LABELS[domain], hits: domainHits, total: planned.length, registered: answered.length,
-      caregiverItems: planned.filter(({ item }) => item.informant === "cuidador").length, level: complete && planned.length > 0 ? phaseLevel(domainHits, planned.length) : null,
+      caregiverItems: planned.filter(({ item }) => item.informant === "cuidador").length, level: complete && planned.length >= MIN_DOMAIN_ITEMS_FOR_LEVEL ? phaseLevel(domainHits, planned.length, band.min) : null,
     };
   }).filter((entry) => entry.total > 0) : [];
   const redFlags: RedFlag[] = [];
@@ -723,8 +762,8 @@ export function summarize(session: GameSession): GameSummary {
   }
   return {
     domains, redFlags,
-    band, character, phases, origins, hits, total, level: complete ? overallLevel(hits, total) : null, durationSeconds: Math.round(durationSeconds), complete,
-    expectedMin: levelCuts(total, "total").esperado,
+    band, character, phases, origins, hits, total, level: complete ? overallLevel(hits, total, band.min) : null, durationSeconds: Math.round(durationSeconds), complete,
+    expectedMin: levelCuts(total, "total", band.min).esperado,
   };
 }
 
@@ -1071,6 +1110,9 @@ export function buildGameReport(session: GameSession, date = sessionDate(session
     "RESULTADO OBJETIVO — CONTAGEM DE ACERTOS (NÃO É ESCORE NORMATIVO, PERCENTIL NEM DIAGNÓSTICO)",
     summary.level === null ? `Partida incompleta: ${session.answers.length} de ${summary.total} itens registrados. Sem classificação ou interpretação.` : `Total: ${summary.hits} de ${summary.total} acertos (referência interna para a idade: ${summary.expectedMin} ou mais) · ${LEVEL_LABELS[summary.level]}`,
     ...summary.phases.map((phase) => `Mundo ${phase.phase.order} · ${phase.phase.name} (${phase.phase.domain}): ${phase.level === null ? phaseStatusText(phase, false) : `${phase.hits}/${phase.total} acertos (referência interna: ${phase.expectedMin} ou mais), ${phase.errors} erros, ${phase.noResponse} sem resposta, ${phase.refused} recusa(s) · ${LEVEL_LABELS[phase.level]} · ${formatDuration(phase.seconds)}`}`),
+    cutProvenanceText(summary.band.min),
+    provenanceText(summary.band.min),
+    ...(timeMarginTight(summary.band.min) ? [TIME_MARGIN_NOTE] : []),
     "",
     ...toddlerReportLines(summary),
     ...(reading ? ["LEITURA PARA A CONSULTA (DESCRITIVA, AUTORAL, NÃO NORMATIVA)", ...reading.notes.map((note) => `- ${note}`), ""] : []),

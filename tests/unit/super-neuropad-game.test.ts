@@ -649,7 +649,7 @@ test("página: menores de 2 anos bloqueados, estimativa de tempo, ambiente sem m
   assert.match(page, /maxLength=\{OBSERVATIONS_MAX\}/);
   assert.match(page, /OBSERVATION_CHIPS\.map/);
   assert.match(page, /data-testid="super-neuropad-origins"/);
-  assert.match(page, /cutText\(summary\.phases\[0\]\.total\)/);
+  assert.match(page, /cutText\(summary\.phases\[0\]\.total/);
   assert.match(page, /<DrawPad \/>/);
   assert.match(page, /BuildStage/);
 });
