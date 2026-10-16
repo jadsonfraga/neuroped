@@ -52,6 +52,8 @@ export const D1_MIGRATION_WORKFLOWS = Object.freeze([
   ".github/workflows/saas-legal-acceptance-d1.yml",
   ".github/workflows/saas-remote-intake-d1.yml",
   ".github/workflows/staff-links-multi-d1.yml",
+  // Itens 5–8 do roadmap (0034–0037): portal da família, marca, registro de IA, painel.
+  ".github/workflows/roadmap-items-d1.yml",
 ]);
 
 // Workflows que publicam o Cloudflare Pages de produção (--branch main).
