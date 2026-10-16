@@ -1,0 +1,158 @@
+name: Roadmap items D1 (0034–0037)
+
+# Aplica as migrations aditivas dos itens 5–8 do roadmap (portal da família,
+# marca da clínica, registro de uso de IA/retenção LGPD e premissas do painel
+# de resultados). Todas só criam tabelas, índices e gatilhos novos com
+# IF NOT EXISTS; nenhuma altera ou lê dado existente. Mesmo padrão dos demais
+# workflows de migration: valida no PR, aplica só no main, com preflight por
+# migration (aplicada / ausente / parcial) e verificação de forma sem ler dados.
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "db/migrations/0034_family_portal.sql"
+      - "db/migrations/0035_clinic_branding.sql"
+      - "db/migrations/0036_lgpd_ai_registry.sql"
+      - "db/migrations/0037_clinic_metrics_assumptions.sql"
+      - ".github/workflows/roadmap-items-d1.yml"
+  push:
+    branches: [main]
+    paths:
+      - "db/migrations/0034_family_portal.sql"
+      - "db/migrations/0035_clinic_branding.sql"
+      - "db/migrations/0036_lgpd_ai_registry.sql"
+      - "db/migrations/0037_clinic_metrics_assumptions.sql"
+      - ".github/workflows/roadmap-items-d1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  # Inclui a ref: execução de pull_request (só valida) não pode ocupar o
+  # único slot pendente e cancelar a migração pendente do main.
+  group: d1-roadmap-items-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate-roadmap-items:
+    name: Validate roadmap items schema and features
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+      - name: Bootstrap do schema com todas as migrações
+        run: node tests/unit/schema-bootstrap-contract.test.mjs
+      - name: Portal da família (0034)
+        run: npm run test:portal-familia
+      - name: Multiclínica e marca (0035)
+        run: npm run test:multiclinica
+      - name: Registro de uso de IA e retenção (0036)
+        run: npm run test:lgpd-ia
+      - name: Painel de resultados (0037)
+        run: npm run test:painel
+      - name: TypeScript
+        run: npm run check
+
+  migrate-roadmap-items:
+    name: Apply roadmap items (0034–0037) to D1
+    needs: validate-roadmap-items
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60 # inclui até 45 min de espera na fila D1
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      - name: Validate Cloudflare credentials
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          [ -n "$CF_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
+          [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
+      # Fila das escritas D1 sem pending slot: ver scripts/ci/wait-d1-writers.mjs.
+      - name: Aguardar fila de escritas D1 (migration)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          MODE: migration
+        run: node scripts/ci/wait-d1-writers.mjs
+
+      - name: Pré-requisitos — tabelas referenciadas existem
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT COUNT(*) AS tabelas FROM sqlite_master WHERE type = 'table' AND name IN ('clinics', 'users', 'live_patients');" \
+            > /tmp/roadmap-prereq.txt 2>&1
+          cat /tmp/roadmap-prereq.txt
+          if ! grep -qE '(tabelas[^0-9]*3[^0-9]|"tabelas":\s*3)' /tmp/roadmap-prereq.txt; then
+            echo "::error::clinics, users e live_patients precisam existir antes das 0034–0037."
+            exit 1
+          fi
+
+      - name: Aplicar 0034–0037 (preflight por migration)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          # migration | tabelas esperadas (todas criadas por ela) | quantidade
+          apply() {
+            local file="$1" names="$2" expected="$3"
+            npx wrangler@4 d1 execute neuroped-db --remote \
+              --command "SELECT COUNT(*) AS tabelas FROM sqlite_master WHERE type = 'table' AND name IN (${names});" \
+              > /tmp/roadmap-preflight.txt 2>&1
+            cat /tmp/roadmap-preflight.txt
+            if grep -qE "(tabelas[^0-9]*${expected}[^0-9]|\"tabelas\":\s*${expected})" /tmp/roadmap-preflight.txt; then
+              echo "${file}: já aplicada."
+            elif grep -qE '(tabelas[^0-9]*0[^0-9]|"tabelas":\s*0)' /tmp/roadmap-preflight.txt; then
+              echo "${file}: aplicando."
+              npx wrangler@4 d1 execute neuroped-db --remote --yes --file="./db/migrations/${file}"
+            else
+              echo "::error::${file} parcialmente aplicada ou preflight ilegível; intervenção manual necessária."
+              exit 1
+            fi
+          }
+          apply 0034_family_portal.sql "'family_portal_shares', 'family_portal_audit_log'" 2
+          apply 0035_clinic_branding.sql "'clinic_branding'" 1
+          apply 0036_lgpd_ai_registry.sql "'ai_use_records', 'clinic_retention_rules'" 2
+          apply 0037_clinic_metrics_assumptions.sql "'clinic_metrics_assumptions'" 1
+
+      - name: Verificar forma sem ler dados de clínicas
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT (SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name IN ('family_portal_shares', 'family_portal_audit_log', 'clinic_branding', 'ai_use_records', 'clinic_retention_rules', 'clinic_metrics_assumptions')) AS tabelas, (SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name IN ('trg_ai_use_records_tenant_patient', 'trg_ai_use_records_core_immutable', 'trg_ai_use_records_family_once', 'trg_ai_use_records_no_delete')) AS gatilhos;" \
+            > /tmp/roadmap-verify.txt 2>&1
+          cat /tmp/roadmap-verify.txt
+          if ! grep -qE '(tabelas[^0-9]*6[^0-9]|"tabelas":\s*6)' /tmp/roadmap-verify.txt; then
+            echo "::error::esperadas 6 tabelas novas após 0034–0037."
+            exit 1
+          fi
+          if ! grep -qE '(gatilhos[^0-9]*4[^0-9]|"gatilhos":\s*4)' /tmp/roadmap-verify.txt; then
+            echo "::error::esperados 4 gatilhos do registro de IA após a 0036."
+            exit 1
+          fi
+          echo "0034–0037 verificadas: 6 tabelas e 4 gatilhos presentes."
