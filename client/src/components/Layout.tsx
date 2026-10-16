@@ -256,6 +256,7 @@ const priorityNavHrefs = new Set([
   "/pacientes",
   "/laudo-neuroped",
   "/laudo-super",
+  "/laudo-um-clique",
   "/receita-c1",
 ]);
 
