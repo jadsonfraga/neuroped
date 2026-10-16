@@ -1,3 +1,4 @@
+import { DESCRIPTIVE_NOTICE } from "@/lib/descriptiveNotice";
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pause } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -6,14 +7,14 @@ import { useIssuer, issuerCredentials } from "@/lib/issuer";
 import { issuerLines } from "@/features/super-neuropad/pdf";
 import { formatClinicalDateTime } from "@/lib/clinicalDate";
 import { safeTextFilename } from "@/lib/shareText";
-import { MAX_GAME_AGE, MIN_GAME_AGE, bandForAge, fluencyProbe, fluencyWords, type ArithItem, type FluencyForm, type BandBank, type ComprehensionQuestion, type DecodeItem, type DitadoItem } from "./bank";
+import { BANK_PROVENANCE, MAX_GAME_AGE, MIN_GAME_AGE, bandForAge, fluencyProbe, fluencyWords, withTextForm, type ArithItem, type FluencyForm, type BandBank, type ComprehensionQuestion, type DecodeItem, type DitadoItem } from "./bank";
 import {
-  FLUENCY_SECONDS, GAME_STORAGE_KEY, GAME_VERSION, LEVEL_LABEL, SESSION_CAP_SECONDS, WORLDS,
-  classifyDitado, encouragementFor, newGame, nextItemFor, recordFluency, recordResponse, skipWorld, starsFor, summarizeGame, tick, worldTarget,
+  FLUENCY_SECONDS, GAME_STORAGE_KEY, GAME_VERSION, SESSION_CAP_SECONDS, WORLDS,
+  OBSERVACOES_MAX, OBSERVATION_CHIPS, classifyDitado, encouragementFor, newGame, nextItemFor, recordFluency, recordResponse, setObservacoes, skipWorld, starsFor, summarizeGame, tick, worldTarget,
   type GameState, type ItemResponse, type WorldId,
 } from "./engine";
 import { clearDraft, readDraft, writeDraft } from "../localDraft";
-import { GAME_DISCLAIMER, OP_LABEL, decimalBr, fluencyText, buildGameDocSpec, buildGameRecord, gameResponseItems, outcomeLabel, tallyText } from "./report";
+import { GAME_DISCLAIMER, OP_LABEL, decimalBr, fluencyText, timingLines, buildGameDocSpec, buildGameRecord, gameResponseItems, outcomeLabel, tallyText } from "./report";
 
 const LazySaveToPatient = lazy(() =>
   import("@/components/SaveToPatient").then(({ SaveToPatient: Component }) => ({ default: Component })),
@@ -52,13 +53,14 @@ export default function DyslexiaGame() {
   const [nome, setNome] = useState("");
   const [examinador, setExaminador] = useState("");
   const [avatar, setAvatar] = useState<string>(AVATARS[0][0]);
+  const [forma, setForma] = useState<FluencyForm>("A");
 
   const rootRef = useRef<HTMLElement | null>(null);
   const firstScreen = useRef(true);
   const { toast } = useToast();
   const { issuer } = useIssuer();
   const speech = useSpeech();
-  const bank: BandBank | null = useMemo(() => bandForAge(game?.idade ?? null), [game?.idade]);
+  const bank: BandBank | null = useMemo(() => { const base = bandForAge(game?.idade ?? null); return base ? withTextForm(base, game?.forma) : null; }, [game?.idade, game?.forma]);
 
   useEffect(() => {
     if (game) writeDraft(GAME_STORAGE_KEY, game);
@@ -115,7 +117,7 @@ export default function DyslexiaGame() {
 
   function start() {
     if (age == null) return;
-    const g = newGame({ nome: nome.trim(), idade: age, examinador: examinador.trim(), avatar });
+    const g = newGame({ nome: nome.trim(), idade: age, examinador: examinador.trim(), avatar, forma });
     setGame(g);
     setSavedPatient(false);
     setCheer("");
@@ -147,7 +149,7 @@ export default function DyslexiaGame() {
       anchor.click();
       anchor.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-      toast({ title: "PDF gerado", description: "Triagem do Jogo das Letras e Números baixada." });
+      toast({ title: "PDF gerado", description: "Registro do Jogo das Letras e Números baixado." });
     } catch {
       toast({ title: "PDF", description: "Não foi possível gerar o PDF agora; use \u201cCopiar registro\u201d.", variant: "destructive" });
     }
@@ -165,13 +167,12 @@ export default function DyslexiaGame() {
 
   const remaining = game ? Math.max(0, SESSION_CAP_SECONDS - Math.floor(game.activeMs / 1000)) : SESSION_CAP_SECONDS;
   const xpCells = game ? Math.min(10, Math.floor((game.xp % 100) / 10)) : 0;
-  const level = game ? Math.floor(game.xp / 100) + 1 : 1;
 
   const hud = game && (screen === "mapa" || screen === "jogo") && (
     <div className="snp-panel flex flex-nowrap items-center gap-2 px-3 py-2 sm:flex-wrap" data-testid="drx-game-hud">
       <span className="text-2xl" role="img" aria-label="Avatar">{game.avatar}</span>
       <div className="min-w-0 flex-1">
-        <p className="snp-pixel truncate text-[11px]">Nível {level} · {game.xp} XP</p>
+        <p className="snp-pixel truncate text-[11px]">{game.xp} XP</p>
         <div className="snp-xp mt-1" aria-hidden="true">{Array.from({ length: 10 }, (_, i) => <i key={i} className={i < xpCells ? "on" : ""} />)}</div>
       </div>
       <span className="snp-chip shrink-0" aria-label={`Sequência de ${game.streak} respostas`}>🔥 {game.streak}</span>
@@ -214,8 +215,17 @@ export default function DyslexiaGame() {
           <label className="mt-2 grid text-sm font-bold">Nome da criança<input className="drx-input mt-1" value={nome} onChange={(e) => setNome(e.target.value)} /></label>
           <label className="mt-2 grid text-sm font-bold">Aplicador<input className="drx-input mt-1" value={examinador} onChange={(e) => setExaminador(e.target.value)} /></label>
         </details>
+        <fieldset>
+          <legend className="snp-pixel text-xs">Forma dos textos (aplicador)</legend>
+          <div className="mt-2 flex flex-wrap items-center gap-2" role="group" aria-label="Forma dos textos">
+            <button type="button" aria-pressed={forma === "A"} className={`snp-btn drx-tap px-4 ${forma === "A" ? "snp-btn--sky" : "snp-btn--paper"}`} onClick={() => setForma("A")}>A · padrão</button>
+            <button type="button" aria-pressed={forma === "B"} className={`snp-btn drx-tap px-4 ${forma === "B" ? "snp-btn--sky" : "snp-btn--paper"}`} onClick={() => setForma("B")}>B · reteste</button>
+          </div>
+          <p className="mt-1 text-xs font-bold">Use B ao repetir com a mesma criança (compreensão e fluência). As formas não têm equivalência psicométrica comprovada.</p>
+        </fieldset>
         <button type="button" className="snp-btn snp-btn--sun drx-tap w-full text-base" disabled={age == null} onClick={start}>Começar aventura</button>
         <p className="text-xs font-bold">{GAME_DISCLAIMER}</p>
+        <p className="text-xs font-bold" data-testid="drx-provenance">{BANK_PROVENANCE}</p>
       </section>
     );
   }
@@ -299,33 +309,41 @@ export default function DyslexiaGame() {
       {screen === "painel" && (
         <section className="snp-panel space-y-3 p-4" data-testid="drx-game-results" aria-label="Resultado para o aplicador">
           <h2 className="snp-pixel text-base">Resultado · {game.nome || "criança"} · {game.idade} anos ({bank.label})</h2>
-          <p className="rounded-xl border-[3px] border-[var(--snp-ink-fixed)] bg-[var(--snp-sun-tint)] p-2 text-xs font-black">NÃO DIAGNÓSTICA · triagem sem validação normativa brasileira. Níveis são graduações internas da faixa.</p>
+          <p className="rounded-xl border-[3px] border-[var(--snp-ink-fixed)] bg-[var(--snp-sun-tint)] p-2 text-xs font-black">{DESCRIPTIVE_NOTICE}</p>
           <div className="grid gap-2 sm:grid-cols-3">
-            <DomainCard title="✏️ Ditado" pct={summary.ditado.pct} lines={[
+            <DomainCard title="✏️ Ditado" lines={[
               `Acertos ${tallyText(summary.ditado)}`,
               `Erros ortográficos: ${summary.ditado.ortograficos}`,
               `Erros fonológicos: ${summary.ditado.fonologicos}`,
-              `Sem resposta: ${summary.ditado.naoRespondidos}`,
-              LEVEL_LABEL[summary.ditado.finalLevel],
-            ]} />
-            <DomainCard title="📖 Leitura" pct={summary.leitura.decodificacao.pct} lines={[
+              `Sem resposta: ${summary.ditado.naoRespondidos}`]} />
+            <DomainCard title="📖 Leitura" lines={[
               `Palavras reais ${tallyText(summary.leitura.decodificacao.palavras)} · pseudopalavras ${tallyText(summary.leitura.decodificacao.pseudo)}`,
               `Tempo médio por palavra: ${decimalBr(summary.leitura.decodificacao.mediaSegundos)} s`,
               `Fluência: ${fluencyText(summary)}`,
-              `Compreensão ${tallyText(summary.leitura.compreensao)} · inferencial ${tallyText(summary.leitura.compreensao.inferencial)}`,
-              LEVEL_LABEL[summary.leitura.decodificacao.finalLevel],
-            ]} />
-            <DomainCard title="🔢 Aritmética" pct={summary.aritmetica.pct} lines={[
+              `Compreensão ${tallyText(summary.leitura.compreensao)} · inferencial ${tallyText(summary.leitura.compreensao.inferencial)}`]} />
+            <DomainCard title="🔢 Aritmética" lines={[
               `Acertos ${tallyText(summary.aritmetica)}`,
-              ...Object.entries(summary.aritmetica.porOperacao).map(([op, t]) => `${OP_LABEL[op as keyof typeof OP_LABEL]}: ${tallyText(t)}`),
-              LEVEL_LABEL[summary.aritmetica.finalLevel],
-            ]} />
+              ...Object.entries(summary.aritmetica.porOperacao).map(([op, t]) => `${OP_LABEL[op as keyof typeof OP_LABEL]}: ${tallyText(t)}`)]} />
           </div>
-          <div>
-            <h3 className="snp-pixel text-xs">Sinais para investigar (não diagnóstico)</h3>
-            {summary.sinais.length ? (
-              <ul className="list-disc pl-5 text-sm font-bold">{summary.sinais.map((s) => <li key={s}>{s}</li>)}</ul>
-            ) : <p className="text-sm">Nenhum sinal automático nesta aplicação. Ausência de sinal não é normalidade.</p>}
+          {summary.condicoes.length > 0 && (
+            <div>
+              <h3 className="snp-pixel text-xs">Condições da aplicação</h3>
+              <ul className="list-disc pl-5 text-sm font-bold">{summary.condicoes.map((s) => <li key={s}>{s}</li>)}</ul>
+            </div>
+          )}
+          <div data-testid="drx-game-timing">
+            <h3 className="snp-pixel text-xs">Tempos medidos</h3>
+            <ul className="list-disc pl-5 text-sm font-bold">{timingLines(summary, game).map((l) => <li key={l}>{l}</li>)}</ul>
+          </div>
+          <div data-testid="drx-game-observations">
+            <label htmlFor="drx-observacoes" className="snp-pixel text-xs">Observações do aplicador (reação da criança, mediação, condições; vão para o PDF, o registro e o prontuário)</label>
+            <div className="mt-1 flex flex-wrap gap-1" role="group" aria-label="Atalhos de observação">
+              {OBSERVATION_CHIPS.map((chip) => (
+                <button key={chip} type="button" className="snp-chip" onClick={() => setGame((g) => (g ? setObservacoes(g, g.observacoes?.includes(chip) ? g.observacoes : [g.observacoes?.trim(), chip].filter(Boolean).join(". ")) : g))}>+ {chip}</button>
+              ))}
+            </div>
+            <textarea id="drx-observacoes" className="mt-1 w-full rounded-xl border-[3px] border-[var(--snp-ink-fixed)] p-2 text-sm" rows={3} maxLength={OBSERVACOES_MAX} value={game.observacoes ?? ""} onChange={(e) => setGame((g) => (g ? { ...g, observacoes: e.target.value.slice(0, OBSERVACOES_MAX) } : g))} />
+            <p className="text-[11px] font-bold">{(game.observacoes ?? "").length}/{OBSERVACOES_MAX} · escreva só fatos observados.</p>
           </div>
           {WORLDS.filter((w) => w.id !== "fluencia").map((w) => (
             <details key={w.id} className="rounded-xl border-[3px] border-[var(--snp-ink-fixed)] p-2" open={w.id === "ditado"}>
@@ -337,7 +355,7 @@ export default function DyslexiaGame() {
                       <b className={r.outcome === "correto" ? "snp-answer--correct" : r.outcome === "erro" ? "snp-answer--wrong" : ""}>{r.outcome === "correto" ? "✓" : r.outcome === "erro" ? "✗" : "–"} {outcomeLabel(r)}</b>
                       <span>{r.prompt}</span>
                       {r.world !== "decodificacao" && <span>resposta “{r.given || "—"}”</span>}
-                      <span className="opacity-80">esperado “{r.expected}” · nível {r.level}{r.op ? ` · ${OP_LABEL[r.op]}` : ""}</span>
+                      <span className="opacity-80">resposta prevista “{r.expected}” · dificuldade do item {r.level} (1–3){r.ms > 0 ? ` · ${decimalBr(Math.round(r.ms / 100) / 10)} s` : ""}{r.op ? ` · ${OP_LABEL[r.op]}` : ""}</span>
                     </li>
                   ))}
                 </ol>
@@ -368,11 +386,10 @@ export default function DyslexiaGame() {
   );
 }
 
-function DomainCard({ title, pct, lines }: { title: string; pct: number | null; lines: string[] }) {
+function DomainCard({ title, lines }: { title: string; lines: string[] }) {
   return (
     <div className="rounded-xl border-[3px] border-[var(--snp-ink-fixed)] bg-[var(--snp-paper-fixed)] p-3 text-[var(--snp-ink-fixed)]">
       <h3 className="snp-pixel text-xs">{title}</h3>
-      <p className="text-2xl font-black">{pct == null ? "—" : `${pct}%`}<span className="sr-only"> de acerto</span></p>
       <ul className="text-xs font-semibold">{lines.map((l) => <li key={l}>{l}</li>)}</ul>
     </div>
   );
@@ -413,7 +430,7 @@ function WorldScreen({ world, game, bank, speech, paused, onAnswer, onFluency, o
       {world === "decodificacao" && item && <DecodeView key={(item as DecodeItem).id} item={item as DecodeItem} onAnswer={onAnswer} />}
       {world === "compreensao" && item && <ComprehensionView key={(item as ComprehensionQuestion).id} bank={bank} question={item as ComprehensionQuestion} speech={speech} onAnswer={onAnswer} />}
       {world === "aritmetica" && item && <ArithView key={(item as ArithItem).id} item={item as ArithItem} young={bank.band === "5-6" || bank.band === "7-8"} speech={speech} onAnswer={onAnswer} />}
-      {world === "fluencia" && <FluencyView bank={bank} onDone={onFluency} paused={paused} />}
+      {world === "fluencia" && <FluencyView bank={bank} onDone={onFluency} paused={paused} initialForm={game?.forma} />}
     </section>
   );
 }
@@ -514,8 +531,8 @@ function ArithView({ item, young, speech, onAnswer }: { item: ArithItem; young: 
   );
 }
 
-function FluencyView({ bank, onDone, paused }: { bank: BandBank; onDone: WorldScreenProps["onFluency"]; paused: boolean }) {
-  const [form, setForm] = useState<FluencyForm>("A");
+function FluencyView({ bank, onDone, paused, initialForm }: { bank: BandBank; onDone: WorldScreenProps["onFluency"]; paused: boolean; initialForm?: FluencyForm }) {
+  const [form, setForm] = useState<FluencyForm>(initialForm ?? "A");
   const probe = fluencyProbe(bank, form);
   const words = useMemo(() => fluencyWords(probe), [probe]);
   const [secs, setSecs] = useState(0);
