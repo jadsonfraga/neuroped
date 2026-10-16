@@ -52,7 +52,7 @@ function buildPrintHtml(texto: string, cabecalho: string, assinatura: string): s
   const esc = escapeHtml;
   return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Laudo</title>
 <style>@page{size:A4;margin:16mm}body{font-family:Carlito,Arial,sans-serif;font-size:11pt;line-height:1.6;color:#222}
-h1{font-size:14pt;margin:0 0 4mm}pre{white-space:pre-wrap;font-family:inherit}.sig{margin-top:14mm;border-top:1px solid #333;padding-top:3mm;font-size:10pt}</style></head>
+h1{font-size:14pt;margin:0 0 4mm}pre{white-space:pre-wrap;font-family:inherit}.sig{margin-top:14mm;border-top:1px solid currentColor;padding-top:3mm;font-size:10pt}</style></head>
 <body><h1>${esc(cabecalho)}</h1><pre>${esc(texto)}</pre><div class="sig">${esc(assinatura)}</div></body></html>`;
 }
 
