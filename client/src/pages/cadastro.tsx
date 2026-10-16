@@ -11,7 +11,7 @@ function readableSignupError(error: unknown): string {
   const code = (error as { code?: string })?.code ?? "";
   const message = error instanceof Error ? error.message : String(error);
   if (code === "SIGNUP_DISABLED") {
-    return "O cadastro self-service ainda não está habilitado nesta instalação. Peça um convite à sua clínica ou fale com o suporte.";
+    return "O cadastro direto pelo site ainda não está habilitado. Peça um convite à sua clínica ou fale com o suporte.";
   }
   if (code === "LEGAL_ACCEPTANCE_REQUIRED" || code === "LEGAL_VERSION_OUTDATED") return message;
   if (code === "EMAIL_IN_USE") return "Este e-mail não está disponível para cadastro. Se a conta já é sua, entre pelo login.";

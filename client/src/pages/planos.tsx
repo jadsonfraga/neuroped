@@ -53,7 +53,7 @@ const INCLUDED = [
     icon: CalendarDays,
     title: "Agenda própria e agendamento online",
     body:
-      "Agenda da clínica com serviços e horários de atendimento. A família solicita o horário pela página pública /agendar e pode remarcar ou cancelar com o código da reserva; a equipe também remarca e cancela pela agenda. Feriados e férias são bloqueados por dia inteiro, com rótulo.",
+      "Agenda da clínica com serviços e horários de atendimento. A família solicita o horário pela página de agendamento online e pode remarcar ou cancelar com o código da reserva; a equipe também remarca e cancela pela agenda. Feriados e férias são bloqueados por dia inteiro, com rótulo.",
   },
   {
     icon: Mail,
@@ -71,7 +71,7 @@ const INCLUDED = [
     icon: Layers,
     title: "Clínica isolada por padrão",
     body:
-      "Cada clínica é um tenant próprio. Pacientes, documentos e escalas de uma clínica não são alcançáveis por outra — o isolamento é decidido no servidor, a partir do vínculo do usuário, e não do que o navegador envia.",
+      "Cada clínica tem seu próprio ambiente separado. Pacientes, documentos e escalas de uma clínica não são alcançáveis por outra — o isolamento é decidido no servidor, a partir do vínculo do usuário, e não do que o navegador envia.",
   },
   {
     icon: Users,
@@ -167,10 +167,9 @@ export default function PlanosPage() {
           </div>
 
           <p className="mt-4 rounded-2xl border border-border bg-muted/40 p-3 text-xs leading-relaxed text-muted-foreground">
-            O cadastro self-service pode estar fechado nesta instalação. Se for
-            o caso, a tela de cadastro diz isso na hora e o acesso continua
-            possível por convite da clínica — nenhuma etapa exige intervenção
-            manual no banco.
+            O cadastro direto pelo site pode estar temporariamente fechado. Se
+            for o caso, a tela de cadastro avisa na hora e o acesso continua
+            possível por convite da clínica.
           </p>
         </CardContent>
       </Card>

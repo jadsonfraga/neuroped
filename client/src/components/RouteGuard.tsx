@@ -10,6 +10,7 @@ import {
   hasConfiguredMasterPin,
   isMasterPinUnlocked,
 } from "@/lib/masterPin";
+import { isKnownRoute } from "@/security/knownRoutes";
 import { isLiveBrowserLocalClinicalRouteDenied } from "@/lib/clinicalBrowserPersistencePolicy";
 
 import { ClinicRouteBoundary } from "@/components/ClinicRouteBoundary";
@@ -39,7 +40,10 @@ function operationalRolesForPath(path: string, roles?: RouteRole[]): RouteRole[]
 export function RouteGuard({ children, roles }: { children: ReactNode; roles?: RouteRole[] }) {
   const [location] = useLocation();
   const { accessMode, isAuthenticated, isLoading, user } = useAuth();
-  const decision = decideRouteAccess({
+  // Endereço inexistente: a página 404 não expõe conteúdo algum, então não há
+  // o que proteger nem motivo para esperar a verificação de sessão.
+  const unknownRoute = !isKnownRoute(location);
+  const computedDecision = decideRouteAccess({
     path: location,
     accessMode,
     isAuthenticated,
@@ -51,6 +55,7 @@ export function RouteGuard({ children, roles }: { children: ReactNode; roles?: R
     localPinUnlocked:
       accessMode === "local" && isMasterPinUnlocked(),
   });
+  const decision = unknownRoute ? "allow" : computedDecision;
 
   if (decision === "checking") {
     return (
@@ -96,6 +101,7 @@ export function RouteGuard({ children, roles }: { children: ReactNode; roles?: R
   }
 
   if (
+    !unknownRoute &&
     accessMode !== "checking" &&
     isLiveBrowserLocalClinicalRouteDenied(location, accessMode, isAuthenticated)
   ) {
