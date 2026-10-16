@@ -9,7 +9,6 @@ import { getUserById } from "../../functions/api/auth/_shared";
 const SECRET = "synthetic-multiclinic-session-secret-32chars-min";
 export const ALFA = "clinica-alfa-sintetica";
 export const BETA = "clinica-beta-sintetica";
-const PNG_1PX = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 
 export async function fixture() {
   const raw = new DatabaseSync(":memory:");
