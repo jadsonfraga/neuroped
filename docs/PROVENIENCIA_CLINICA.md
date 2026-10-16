@@ -283,7 +283,7 @@
 | `pdae` | PDAE | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não | não |
 | `pedmidas` | PedMIDAS | Hershey AD et al., 2001 — Neurology 57(11):2034-9 (© Cincinnati Children's, uso clínico livre) | não | não |
 | `pedsql` | PedsQL | Varni JW et al., 2001 | não | não |
-| `phq2` | PHQ-2 | Kroenke K, Spitzer RL, Williams JBW, 2003 (uso livre) | não | não |
+| `phq2` | PHQ-2 (breve) | Kroenke K, Spitzer RL, Williams JBW, 2003 (uso livre) | não | não |
 | `phq9-cuidador` | PHQ-9 do cuidador | Kroenke K, Spitzer RL, Williams JB, 2001 (domínio público) | não | não |
 | `phqa` | PHQ-A | Johnson JG et al., 2002 | não | não |
 | `podj-tea-prime-1-6a` | PODJ-TEA PRIME 1–6A | PODJ-TEA PRIME — Kit Fichas por Paciente, Dr. Jadson Fraga | não | não |

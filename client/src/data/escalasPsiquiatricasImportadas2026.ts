@@ -115,7 +115,7 @@ export const escalasPsiquiatricasImportadas2026: ScaleEntry[] = [
   },
   {
     id: "phq2",
-    name: "PHQ-2",
+    name: "PHQ-2 (breve)",
     fullName: "Patient Health Questionnaire-2 — Triagem ultrabreve de depressão",
     ageMin: 132,
     ageMax: 216,
