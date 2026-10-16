@@ -115,7 +115,7 @@ export const escalasPsiquiatricasImportadas2026: ScaleEntry[] = [
   },
   {
     id: "phq2",
-    name: "PHQ-2",
+    name: "PHQ-2 (breve)",
     fullName: "Patient Health Questionnaire-2 — Triagem ultrabreve de depressão",
     ageMin: 132,
     ageMax: 216,
@@ -299,6 +299,8 @@ export const escalasPsiquiatricasImportadas2026: ScaleEntry[] = [
       "Soma dos 17 primeiros itens (referência clássica): 0–7 sem depressão; 8–13 leve; 14–18 moderada; 19–22 grave; ≥23 muito grave.",
     licencaUso: "livre",
     assessmentUse: "monitorizacao",
+    // Item 3 (ideias de morte/suicídio) é sentinela na aplicação.
+    suicideRiskInstrument: true,
     applicationMode: "entrevista_clinica",
     verbalRequirement: "indiferente",
     literacyRequirement: "indiferente",
