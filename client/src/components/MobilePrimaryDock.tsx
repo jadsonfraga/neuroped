@@ -79,6 +79,7 @@ const dockItems: DockItem[] = [
       path.startsWith("/prontuario") ||
       path.startsWith("/laudo-neuroped") ||
       path.startsWith("/laudo-super") ||
+      path.startsWith("/laudo-um-clique") ||
       path.startsWith("/receita-c1"),
   },
   {
