@@ -75,7 +75,7 @@ export function BrandingSection({ clinicId, clinicName, initial, canEdit, onSave
   }
 
   const band = (check.ok && check.value.primaryColor) || DEFAULT_PDF_BAND_HEX;
-  const accentShown = (check.ok && check.value.accentColor) || (primary ? "#ffffff" : DEFAULT_PDF_ACCENT_HEX);
+  const accentShown = (check.ok && check.value.accentColor) || (primary ? "white" : DEFAULT_PDF_ACCENT_HEX);
 
   return (
     <section className="space-y-4 rounded-2xl border bg-card p-5" data-testid="branding-section">
@@ -94,7 +94,7 @@ export function BrandingSection({ clinicId, clinicName, initial, canEdit, onSave
             <p className="text-xs" style={{ color: accentShown }}>{clinicName}</p>
           </div>
         </div>
-        <div className="space-y-1 bg-[#f8f5ef] p-3 text-xs text-slate-700">
+        <div className="space-y-1 bg-muted/40 p-3 text-xs text-slate-700">
           {header && <p className="font-semibold" data-testid="branding-preview-header" style={{ color: band }}>{header}</p>}
           <p>Conteúdo do documento (não alterado pela marca).</p>
           {footer && <p className="text-[11px] text-slate-500" data-testid="branding-preview-footer">{footer}</p>}
@@ -107,14 +107,14 @@ export function BrandingSection({ clinicId, clinicName, initial, canEdit, onSave
             <Label htmlFor="brand-primary">Cor primária (faixa do cabeçalho)</Label>
             <div className="flex gap-2">
               <input aria-label="Seletor da cor primária" type="color" disabled={!canEdit} value={primary || DEFAULT_PDF_BAND_HEX} onChange={(e) => setPrimary(e.target.value)} className="h-9 w-12 rounded border" />
-              <Input id="brand-primary" disabled={!canEdit} placeholder="#0b1f3a" maxLength={7} value={primary} onChange={(e) => setPrimary(e.target.value)} data-testid="brand-primary" />
+              <Input id="brand-primary" disabled={!canEdit} placeholder="Código hexadecimal, com #" maxLength={7} value={primary} onChange={(e) => setPrimary(e.target.value)} data-testid="brand-primary" />
             </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="brand-accent">Cor de destaque (filetes)</Label>
             <div className="flex gap-2">
               <input aria-label="Seletor da cor de destaque" type="color" disabled={!canEdit} value={accent || DEFAULT_PDF_ACCENT_HEX} onChange={(e) => setAccent(e.target.value)} className="h-9 w-12 rounded border" />
-              <Input id="brand-accent" disabled={!canEdit} placeholder="#c9a24a" maxLength={7} value={accent} onChange={(e) => setAccent(e.target.value)} data-testid="brand-accent" />
+              <Input id="brand-accent" disabled={!canEdit} placeholder="Código hexadecimal, com #" maxLength={7} value={accent} onChange={(e) => setAccent(e.target.value)} data-testid="brand-accent" />
             </div>
           </div>
         </div>
