@@ -28,9 +28,15 @@ export const LEGACY_INSTRUMENT_REDIRECTS: Record<string, string> = {
   "/pedicat": "/generic-scale/pedicat",
   "/portage": "/generic-scale/portage",
   "/vineland-completo": "/generic-scale/vineland",
-  // A "versão interativa" nominal do CBCL nunca existiu como aplicação própria;
-  // a aplicação real e completa do CBCL vive em /cbcl.
-  "/cbcl-interativo": "/cbcl",
+  // Páginas que reproduziam instrumentos proprietários (ASEBA, MHS, PAR, WPS) foram
+  // removidas em 17/10/2026. O instrumento original segue como ficha de referência em
+  // /generic-scale/<id>; a rota nominal antiga abre a alternativa autoral NeuroPed.
+  "/cbcl": "/generic-scale/na-perfil-emocional-comportamental-pais",
+  "/cbcl-interativo": "/generic-scale/na-perfil-emocional-comportamental-pais",
+  "/conners": "/generic-scale/na-atencao-atividade-pais",
+  "/cdi2": "/generic-scale/na-humor-crianca-autorrelato",
+  "/brief2": "/generic-scale/na-funcoes-executivas-ampliado-pais",
+  "/cars": "/generic-scale/na-observacao-clinica-tea",
 };
 
 /**

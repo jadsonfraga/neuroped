@@ -13,17 +13,17 @@
 
 // Primeira linha por queixa isolada (rotas existentes no app, em ordem de prioridade).
 export const firstLineByQueixa: Record<string, string[]> = {
-  tea: ["/mchat", "/ips", "/cars", "/tea", "/generic-scale/vineland", "/testes-diretos"],
-  tdah: ["/snap", "/vanderbilt", "/conners", "/brief2", "/sdq", "/testes-diretos"],
-  ansiedade: ["/scared", "/sdq", "/cbcl", "/testes-diretos"],
-  depressao: ["/cdi2", "/phqa", "/cssrs", "/sdq"],
+  tea: ["/mchat", "/ips", "/generic-scale/na-comportamentos-repetitivos-pais", "/tea", "/generic-scale/vineland", "/testes-diretos"],
+  tdah: ["/snap", "/vanderbilt", "/generic-scale/na-atencao-atividade-pais", "/generic-scale/na-funcoes-executivas-ampliado-pais", "/sdq", "/testes-diretos"],
+  ansiedade: ["/scared", "/sdq", "/generic-scale/na-perfil-emocional-comportamental-pais", "/testes-diretos"],
+  depressao: ["/generic-scale/na-humor-crianca-autorrelato", "/phqa", "/cssrs", "/sdq"],
   suicidio: ["/cssrs", "/phqa"],
   aprendizagem: ["/tde2", "/testes-diretos"],
   linguagem: ["/asq3", "/denver", "/testes-diretos"],
   atraso: ["/denver", "/asq3", "/generic-scale/vineland", "/pant"],
-  comportamento: ["/sdq", "/cbcl", "/conners", "/vanderbilt", "/eaah"],
+  comportamento: ["/sdq", "/generic-scale/na-perfil-emocional-comportamental-pais", "/generic-scale/na-atencao-atividade-pais", "/vanderbilt", "/eaah"],
   sono: ["/cshq"],
-  tiques: ["/ygtss", "/conners"],
+  tiques: ["/ygtss", "/generic-scale/na-atencao-atividade-pais"],
   cognicao: ["/testes-diretos", "/pant"],
   funcionalidade: ["/generic-scale/vineland", "/gmfcs"],
 };
@@ -31,16 +31,16 @@ export const firstLineByQueixa: Record<string, string[]> = {
 // Baterias para QUEIXAS CRUZADAS (comorbidade). Chave = queixas ordenadas
 // alfabeticamente e unidas por "+". Combina broadband (SDQ/CBCL) com alvos.
 export const firstLineByCrossed: Record<string, string[]> = {
-  "tdah+tea": ["/mchat", "/snap", "/conners", "/generic-scale/vineland", "/sdq"],
-  "ansiedade+tdah": ["/snap", "/scared", "/sdq", "/cbcl"],
+  "tdah+tea": ["/mchat", "/snap", "/generic-scale/na-atencao-atividade-pais", "/generic-scale/vineland", "/sdq"],
+  "ansiedade+tdah": ["/snap", "/scared", "/sdq", "/generic-scale/na-perfil-emocional-comportamental-pais"],
   "aprendizagem+tdah": ["/snap", "/testes-diretos", "/tde2"],
-  "ansiedade+depressao": ["/scared", "/cdi2", "/phqa", "/cssrs"],
-  "depressao+suicidio": ["/cssrs", "/phqa", "/cdi2"],
+  "ansiedade+depressao": ["/scared", "/generic-scale/na-humor-crianca-autorrelato", "/phqa", "/cssrs"],
+  "depressao+suicidio": ["/cssrs", "/phqa", "/generic-scale/na-humor-crianca-autorrelato"],
   "linguagem+tea": ["/mchat", "/asq3", "/testes-diretos"],
   "atraso+tea": ["/mchat", "/denver", "/asq3", "/generic-scale/vineland"],
-  "comportamento+tdah": ["/snap", "/conners", "/sdq", "/eaah"],
+  "comportamento+tdah": ["/snap", "/generic-scale/na-atencao-atividade-pais", "/sdq", "/eaah"],
   "aprendizagem+tea": ["/testes-diretos", "/generic-scale/vineland"],
-  "ansiedade+tea": ["/scared", "/sdq", "/cars"],
+  "ansiedade+tea": ["/scared", "/sdq", "/generic-scale/na-comportamentos-repetitivos-pais"],
 };
 
 export function crossedKey(queixas: string[]): string {

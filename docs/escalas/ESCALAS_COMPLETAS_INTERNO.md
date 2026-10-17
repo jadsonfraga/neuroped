@@ -8421,113 +8421,6 @@ DIFERENÇA CASA vs ESCOLA:
 19. Quando acontece algo novo, seu filho olha para seu rosto para ver como você se sente?
 20. Seu filho gosta de atividades de movimento? (Ex: ser balançado, ser erguido no joelho)
 
-### CARS — Childhood Autism Rating Scale
-
-#### Categoria: Relação com as pessoas
-**Opções de pontuação:**
-- **?** — "Nenhuma dificuldade ou anormalidade — comportamento adequado para a idade"
-- **?** — "Levemente anormal — alguma timidez, agitação ou irritação leve"
-- **?** — "Moderadamente anormal — evita adultos, precisa de estímulo excessivo para responder"
-- **?** — "Gravemente anormal — extremamente retraído, quase nunca responde ou inicia contato"
-
-#### Categoria: Imitação
-**Opções de pontuação:**
-- **?** — "Apropriada — imita sons, palavras e movimentos adequadamente"
-- **?** — "Levemente anormal — imita comportamentos simples, com algum atraso"
-- **?** — "Moderadamente anormal — imita só às vezes e com ajuda do adulto"
-- **?** — "Gravemente anormal — raramente ou nunca imita sons, palavras ou movimentos"
-
-#### Categoria: Resposta emocional
-**Opções de pontuação:**
-- **?** — "Adequada para a idade e situação"
-- **?** — "Levemente anormal — respostas emocionais por vezes inadequadas ao tipo ou intensidade"
-- **?** — "Moderadamente anormal — sinais de resposta inadequada; reação exagerada ou sem relação com a situação"
-- **?** — "Gravemente anormal — respostas raramente adequadas; humor muito rígido; reações extremas sem motivo aparente"
-
-#### Categoria: Uso do corpo
-**Opções de pontuação:**
-- **?** — "Adequado para a idade — boa coordenação e uso funcional"
-- **?** — "Levemente anormal — algumas peculiaridades menores (desajeitamento, movimentos repetitivos leves)"
-- **?** — "Moderadamente anormal — comportamentos claramente estranhos ou incomuns para a idade (movimentos estereotipados, postura incomum)"
-- **?** — "Gravemente anormal — movimentos contínuos, bizarros e intensos, que não cessam mesmo com redirecionamento"
-
-#### Categoria: Uso de objetos
-**Opções de pontuação:**
-- **?** — "Interesse e uso apropriado de brinquedos e objetos"
-- **?** — "Levemente anormal — interesse reduzido ou uso levemente incomum de objetos"
-- **?** — "Moderadamente anormal — pouco interesse em brinquedos; uso repetitivo ou incomum de objetos"
-- **?** — "Gravemente anormal — preocupação intensa com partes de objetos; movimentos repetitivos com objetos"
-
-#### Categoria: Adaptação a mudanças
-**Opções de pontuação:**
-- **?** — "Resposta adequada — aceita mudanças de rotina sem grandes dificuldades"
-- **?** — "Levemente anormal — tenta continuar atividade anterior ou resiste inicialmente à mudança"
-- **?** — "Moderadamente anormal — resiste ativamente a mudanças; tenta continuar antiga atividade de forma persistente"
-- **?** — "Gravemente anormal — reação severa a mudanças; raiva ou recusa intensa; muito difícil redirecionamento"
-
-#### Categoria: Resposta visual
-**Opções de pontuação:**
-- **?** — "Adequada para a idade"
-- **?** — "Levemente anormal — precisa ser lembrado de olhar; mais interesse em espelhos ou luzes; olhar fixo no vazio"
-- **?** — "Moderadamente anormal — olhar distante frequentemente; pode olhar objetos de ângulos incomuns; leva objetos próximos aos olhos"
-- **?** — "Gravemente anormal — evita consistentemente olhar para pessoas ou objetos; apresenta formas extremas de peculiaridade visual"
-
-#### Categoria: Resposta auditiva
-**Opções de pontuação:**
-- **?** — "Adequada para a idade"
-- **?** — "Levemente anormal — alguma falta de resposta ou leve hipersensibilidade a sons"
-- **?** — "Moderadamente anormal — resposta variável a sons; frequentemente ignora sons na primeira vez; pode assustar-se com sons do cotidiano"
-- **?** — "Gravemente anormal — hiper ou hipo-reatividade extrema aos sons, independente do tipo"
-
-#### Categoria: Resposta ao paladar, olfato e tato
-**Opções de pontuação:**
-- **?** — "Normal — explora objetos de forma adequada para a idade"
-- **?** — "Levemente anormal — alguma exploração oral de objetos; reação leve a dor ou texturas"
-- **?** — "Moderadamente anormal — preocupação moderada em cheirar, tocar ou provar objetos ou pessoas; reação moderada a dor ou texturas"
-- **?** — "Gravemente anormal — preocupação intensa em cheirar, tocar, provar; reação extrema a dor, texturas ou temperaturas"
-
-#### Categoria: Medo ou nervosismo
-**Opções de pontuação:**
-- **?** — "Normal — reações de medo adequadas para a idade e situação"
-- **?** — "Levemente anormal — medo leve a mais ou a menos que o esperado para a idade e situação"
-- **?** — "Moderadamente anormal — medo acima ou abaixo do normal, mesmo em situações benignas"
-- **?** — "Gravemente anormal — medo extremo de itens inofensivos ou ausência de medo em situações perigosas"
-
-#### Categoria: Comunicação verbal
-**Opções de pontuação:**
-- **?** — "Normal para a idade"
-- **?** — "Levemente anormal — atraso leve na fala; linguagem significativa, com alguma ecolalia ou inversão pronominal"
-- **?** — "Moderadamente anormal — fala pode estar ausente; quando presente, mistura com linguagem peculiar (ecolalia, jargão)"
-- **?** — "Gravemente anormal — fala ausente ou ininteligível; grunhidos, gritos, sons estranhos; uso bizarro de palavras reconhecíveis"
-
-#### Categoria: Comunicação não-verbal
-**Opções de pontuação:**
-- **?** — "Normal para a idade — usa gestos e expressões faciais adequados"
-- **?** — "Levemente anormal — uso imaturo de comunicação não-verbal (aponta ou pega vagamente o que quer)"
-- **?** — "Moderadamente anormal — geralmente incapaz de expressar desejos/necessidades de forma não-verbal; dificuldade em compreender comunicação não-verbal de outros"
-- **?** — "Gravemente anormal — usa apenas gestos bizarros sem significado aparente; sem apreciação de gestos ou expressões faciais de outros"
-
-#### Categoria: Nível de atividade
-**Opções de pontuação:**
-- **?** — "Normal para a idade e situação"
-- **?** — "Levemente anormal — hiperatividade leve ou alguma letargia; leve inquietação"
-- **?** — "Moderadamente anormal — bastante ativo ou lento; difícil de controlar; nível de atividade varia da hiperatividade à letargia"
-- **?** — "Gravemente anormal — nível de atividade extremo (constantemente ativo ou muito letárgico); pode alternar entre os dois"
-
-#### Categoria: Nível e consistência da resposta intelectual
-**Opções de pontuação:**
-- **?** — "Inteligência normal — sem habilidades ou dificuldades incomuns"
-- **?** — "Levemente anormal — habilidades menos atrasadas que o típico; poucas habilidades especiais peculiares"
-- **?** — "Moderadamente anormal — menos inteligente que o típico, mas funcional em algumas áreas; habilidades especiais ilhadas"
-- **?** — "Gravemente anormal — menos inteligente que o típico com grande variação de habilidades; habilidades especiais chamativas em áreas restritas"
-
-#### Categoria: Impressão geral
-**Opções de pontuação:**
-- **?** — "Sem autismo — a criança não apresenta características de autismo"
-- **?** — "Autismo leve — poucos ou leves sintomas de autismo"
-- **?** — "Autismo moderado — vários sintomas de autismo"
-- **?** — "Autismo grave — muitos ou graves sintomas de autismo"
-
 ### SNAP-IV — Rating Scale for ADHD
 **Labels:** Nem um pouco | Só um pouco | Bastante | Demais
 
@@ -8619,38 +8512,6 @@ DIFERENÇA CASA vs ESCOLA:
 | undefined | — | — | — | — | — |
 | undefined | — | — | — | — | — |
 
-### CDI-2 — Children's Depression Inventory
-**Labels:** 0 — Ausente | 1 — Às vezes | 2 — Sempre
-
-1. Fico triste de vez em quando / Fico triste muitas vezes / Estou triste o tempo todo
-2. Nada vai dar certo para mim / Não tenho certeza se as coisas vão dar certo / As coisas vão dar certo para mim
-3. Faço a maioria das coisas bem / Faço muitas coisas errado / Faço tudo errado
-4. Tenho prazer em muitas coisas / Tenho prazer em algumas coisas / Nada me dá prazer
-5. Sou mau de vez em quando / Sou mau muitas vezes / Sou mau o tempo todo
-6. De vez em quando penso que coisas ruins vão me acontecer / Tenho medo que coisas ruins me aconteçam / Tenho certeza que coisas terríveis vão me acontecer
-7. Eu me gosto / Não me gosto / Me odeio
-8. Coisas ruins geralmente não são minha culpa / Muitas coisas ruins são minha culpa / Tudo de ruim é minha culpa
-9. Não penso em me machucar / Penso em me machucar mas não faria / Quero me machucar
-10. Tenho vontade de chorar de vez em quando / Tenho vontade de chorar muitos dias / Tenho vontade de chorar todo dia
-11. As coisas me incomodam de vez em quando / As coisas me incomodam muitas vezes / As coisas me incomodam o tempo todo
-12. Gosto de estar com as pessoas / Muitas vezes não gosto de estar com as pessoas / Não quero estar com ninguém
-13. Consigo me decidir / É difícil me decidir / Não consigo me decidir
-14. Tenho boa aparência / Há coisas ruins na minha aparência / Sou feio(a)
-15. Tenho que me esforçar para fazer a lição / Muitas vezes tenho que me esforçar muito / Não consigo fazer a lição
-16. Tenho dificuldade para dormir de vez em quando / Tenho dificuldade para dormir muitas noites / Tenho dificuldade para dormir toda noite
-17. Fico cansado(a) de vez em quando / Fico cansado(a) muitos dias / Estou cansado(a) o tempo todo
-18. Meu apetite está bom / Meu apetite não é tão bom / Não tenho fome nunca
-19. Não me preocupo com dores / Me preocupo com dores muitas vezes / Me preocupo com dores o tempo todo
-20. Não me sinto sozinho(a) / Me sinto sozinho(a) muitas vezes / Me sinto sozinho(a) o tempo todo
-21. A escola é divertida / A escola não é tão divertida / A escola nunca é divertida
-22. Tenho muitos amigos / Tenho alguns amigos mas queria mais / Não tenho amigos
-23. Meu desempenho escolar está bom / Meu desempenho escolar não é tão bom / Estou mal em matérias que costumava ir bem
-24. Sou tão bom quanto os outros / Posso ser tão bom quanto os outros se quiser / Não consigo ser tão bom quanto os outros
-25. Ninguém me ama de verdade / Não tenho certeza se alguém me ama / Sei que alguém me ama
-26. Geralmente faço o que me mandam / Muitas vezes não faço o que me mandam / Nunca faço o que me mandam
-27. Dou-me bem com as pessoas / Brigo muitas vezes / Brigo o tempo todo
-28. Sei o que quero fazer quando crescer / Não tenho certeza do que quero fazer / Não sei o que vou fazer
-
 ### PHQ-A — Patient Health Questionnaire for Adolescents
 **Labels:** Nenhuma vez | Vários dias | Mais da metade dos dias | Quase todos os dias
 
@@ -8685,55 +8546,6 @@ DIFERENÇA CASA vs ESCOLA:
 4. {"letter":"F","question":"Você já ESQUECEU coisas que fez enquanto usava álcool ou drogas?","keyword":"Forget"}
 5. {"letter":"F","question":"Sua FAMÍLIA ou amigos já disseram que você deveria parar de beber ou usar drogas?","keyword":"Friends/Family"}
 6. {"letter":"T","question":"Você já se meteu em PROBLEMAS enquanto usava álcool ou drogas?","keyword":"Trouble"}
-
-### CBCL — Child Behavior Checklist
-**Labels:** Falso | Às vezes verdadeiro | Frequentemente verdadeiro
-
-#### Domínio: Problemas Internalizantes
-1. Queixa-se de solidão
-2. Chora muito
-3. Tem medo de certos animais, situações ou lugares
-4. Tem medo de ir à escola
-5. Tem medo de pensar ou fazer algo mau
-6. Acha que tem que ser perfeito(a)
-7. Sente que ninguém gosta dele(a)
-8. Sente-se sem valor ou inferior
-9. É nervoso(a), tenso(a) ou agitado(a)
-10. É muito medroso(a) ou ansioso(a)
-11. Sente-se tonto(a) ou com dores de cabeça
-12. Sente-se muito cansado(a) sem razão
-13. Tem dores (estômago, cabeça) sem causa médica
-14. Tem náuseas, sente-se mal
-15. É muito preocupado(a)
-
-#### Domínio: Problemas Externalizantes
-1. É desobediente em casa
-2. É desobediente na escola
-3. Não se sente culpado(a) depois de se comportar mal
-4. Mente ou engana os outros
-5. Rouba em casa
-6. Destrói suas próprias coisas
-7. Destrói coisas dos outros
-8. Mete-se em muitas brigas
-9. Agride fisicamente os outros
-10. Grita muito
-11. É teimoso(a), irritável
-12. Tem variações repentinas de humor
-13. Fala demais
-14. É provocador(a), irrita os outros
-15. Exige muita atenção
-
-#### Domínio: Problemas Sociais e Atenção
-1. É desajeitado(a), descoordenado(a)
-2. Prefere estar com crianças mais novas
-3. Não se dá bem com outras crianças
-4. As outras crianças não gostam dele(a)
-5. É provocado(a) pelas outras crianças
-6. Não consegue se concentrar ou prestar atenção
-7. Não consegue ficar sentado(a), é inquieto(a)
-8. É confuso(a), parece estar 'no mundo da lua'
-9. Fica sonhando acordado(a)
-10. É impulsivo(a), age sem pensar
 
 ### Vanderbilt Assessment Scale — TDAH
 
@@ -8842,38 +8654,6 @@ DIFERENÇA CASA vs ESCOLA:
 39. Fico nervoso(a) quando estou com outras crianças ou adultos e tenho que fazer alguma coisa com eles me olhando
 40. Fico nervoso(a) quando vou a festas, bailes ou qualquer lugar onde vai haver pessoas que não conheço
 41. Sou tímido(a)
-
-### Conners Rating Scales — TDAH
-**Labels:** Nunca | Às vezes | Frequentemente | Sempre
-
-1. Mexe com coisas e objetos que não deve
-2. É desafiador(a), mal-criado(a), respondão(a)
-3. É destrutivo(a) com os próprios brinquedos e/ou dos outros
-4. Briga frequentemente
-5. Não é uma criança/adolescente muito querido(a) pelos colegas
-6. Apresenta dificuldade de aprendizagem
-7. Parece distraído(a), desligado(a), como se sonhasse acordado(a)
-8. Irritadiço(a), facilmente frustrado(a)
-9. Humor muda drástica e rapidamente
-10. Tem dificuldade para terminar tarefas que começa
-11. Queixa-se de dores de cabeça
-12. Queixa-se de dores de barriga/estômago
-13. Queixa-se de dores diversas (pernas, braços, etc.)
-14. Tem vômitos ou náuseas frequentes
-15. É triste ou chorão(a) sem motivo aparente
-16. Fica inquieto(a) e se contorcendo na cadeira
-17. É excessivamente ativo(a), incapaz de ficar parado(a)
-18. Tem dificuldade de permanecer sentado(a)
-19. Necessita de supervisão constante
-20. É medroso(a), apreensivo(a), com muitas preocupações
-21. É tímido(a) demais
-22. É sensível demais às críticas
-23. Apresenta dificuldade para adormecer
-24. Tem pesadelos frequentes
-25. Agita-se, não para quieto(a) um minuto
-26. Age sem pensar nas consequências
-27. Não consegue esperar sua vez
-28. Fala excessivamente
 
 ---
 

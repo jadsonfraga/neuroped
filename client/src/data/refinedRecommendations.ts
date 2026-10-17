@@ -82,14 +82,15 @@ export const refinedRecommendations: RefinedRecommendation[] = [
       appRoute: "/generic-scale/cpt3"
     },
     prata: {
-      scaleId: "brief2",
-      scaleName: "BRIEF-2",
-      fullName: "Behavior Rating Inventory of Executive Function 2",
+      scaleId: "na-funcoes-executivas-ampliado-pais",
+      scaleName: "Funções executivas — versão ampliada (autoral)",
+      fullName: "Funções executivas no dia a dia — relato dos pais (autoral NeuroPed)",
       respondente: "pais",
-      tempo: "10-15 min",
-      mainQuestion: "Quais funções executivas estão afetadas (memória trabalho, planejamento, flexibilidade)?",
-      parentExample: "Você responde perguntas como: 'Seu filho consegue lembrar instruções de 3 passos?' 'Consegue fazer planos simples?' 'É flexível quando planos mudam?' Pais comparam com crianças da mesma idade.",
-      whyUseful: "Diferencia desatenção pura (TDAH) de dificuldade executiva; essencial para intervenção específica"
+      tempo: "6-8 min",
+      mainQuestion: "Quais funções executivas atrapalham o dia a dia (começar, planejar, lembrar, controlar impulsos, flexibilidade)?",
+      parentExample: "Você marca com que frequência acontecem situações como: 'Esquece o que ia fazer no meio do caminho', 'Adia o início das tarefas', 'Fica muito incomodado quando o plano muda'. Há forma paralela para o professor.",
+      whyUseful: "Ajuda a separar desatenção de dificuldade executiva e a planejar a intervenção; autoral, sem validação nem ponto de corte",
+      appRoute: "/generic-scale/na-funcoes-executivas-ampliado-pais"
     },
     bronze: {
       scaleId: "cshq",
@@ -133,14 +134,15 @@ export const refinedRecommendations: RefinedRecommendation[] = [
       appRoute: "/generic-scale/ecbi"
     },
     prata: {
-      scaleId: "cbcl",
-      scaleName: "CBCL",
-      fullName: "Child Behavior Checklist 1.5-5",
+      scaleId: "na-saude-mental-pre-escolar-pais",
+      scaleName: "Saúde emocional do pré-escolar (autoral)",
+      fullName: "Emoções, comportamento e relacionamentos de 3 a 6 anos — relato dos pais (autoral NeuroPed)",
       respondente: "pais",
-      tempo: "15-20 min",
-      mainQuestion: "Que problemas comportamentais mais preocupam? Hiperatividade, agressão, desobediência?",
-      parentExample: "100 itens cobrindo todos problemas comportamentais. Ex: 'Não consegue ficar sentado', 'Agressivo', 'Grita muito', 'Teimoso'. Agrupa em internalizante/externalizante.",
-      whyUseful: "Visão ampla de comportamento; não apenas TDAH mas também ansiedade/depressão coexistentes"
+      tempo: "4-6 min",
+      mainQuestion: "Além da oposição, há medo, tristeza, dificuldade de separação ou pouco brincar com outras crianças?",
+      parentExample: "Você marca a frequência de situações como birras intensas, medo em situações novas, dificuldade de se separar, bater ou morder e brincar pouco com outras crianças.",
+      whyUseful: "Ajuda a ver sofrimento emocional por trás do comportamento opositor; autoral, sem validação nem ponto de corte",
+      appRoute: "/generic-scale/na-saude-mental-pre-escolar-pais"
     },
     bronze: {
       scaleId: "psq",
@@ -236,14 +238,15 @@ export const refinedRecommendations: RefinedRecommendation[] = [
       appRoute: "/generic-scale/ecbi"
     },
     prata: {
-      scaleId: "cbcl",
-      scaleName: "CBCL 1.5-5",
-      fullName: "Child Behavior Checklist 1.5-5",
+      scaleId: "na-saude-mental-pre-escolar-pais",
+      scaleName: "Saúde emocional do pré-escolar (autoral)",
+      fullName: "Emoções, comportamento e relacionamentos de 3 a 6 anos — relato dos pais (autoral NeuroPed)",
       respondente: "pais",
-      tempo: "15-20 min",
-      mainQuestion: "Quais são TODOS os comportamentos problemáticos (não apenas oposição)?",
-      parentExample: "100 itens tipo: 'Bate em outras crianças', 'Muito agressivo', 'Grita muito', 'Temperamental', mas também 'Ansioso', 'Clingue', 'Inseguro'. Vê comorbidade.",
-      whyUseful: "Detecta ansiedade/depressão comórbida que pode estar causando opositiidade (criança agressiva porque ansiosa)"
+      tempo: "4-6 min",
+      mainQuestion: "Além da oposição, há medo, tristeza, dificuldade de separação ou pouco brincar com outras crianças?",
+      parentExample: "Você marca a frequência de situações como birras intensas, medo em situações novas, dificuldade de se separar, bater ou morder e brincar pouco com outras crianças.",
+      whyUseful: "Ajuda a ver sofrimento emocional por trás do comportamento opositor; autoral, sem validação nem ponto de corte",
+      appRoute: "/generic-scale/na-saude-mental-pre-escolar-pais"
     },
     bronze: {
       scaleId: "psi",

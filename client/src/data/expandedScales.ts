@@ -1,70 +1,8 @@
 // ============================================================
 // Dados expandidos — 13 novas escalas de Neuropediatria
-// CDI-2, CBCL, C-SSRS, CRAFFT, PHQ-A, ASQ-3, CSHQ, BRIEF-2,
+// C-SSRS, CRAFFT, PHQ-A, ASQ-3, CSHQ,
 // YGTSS, Vanderbilt, ABC, PedsQL, GMFCS
 // ============================================================
-
-// --- CDI-2 (Children's Depression Inventory) ---
-export const cdi2Questions = [
-  "Fico triste de vez em quando / Fico triste muitas vezes / Estou triste o tempo todo",
-  "Nada vai dar certo para mim / Não tenho certeza se as coisas vão dar certo / As coisas vão dar certo para mim",
-  "Faço a maioria das coisas bem / Faço muitas coisas errado / Faço tudo errado",
-  "Tenho prazer em muitas coisas / Tenho prazer em algumas coisas / Nada me dá prazer",
-  "Sou mau de vez em quando / Sou mau muitas vezes / Sou mau o tempo todo",
-  "De vez em quando penso que coisas ruins vão me acontecer / Tenho medo que coisas ruins me aconteçam / Tenho certeza que coisas terríveis vão me acontecer",
-  "Eu me gosto / Não me gosto / Me odeio",
-  "Coisas ruins geralmente não são minha culpa / Muitas coisas ruins são minha culpa / Tudo de ruim é minha culpa",
-  "Não penso em me machucar / Penso em me machucar mas não faria / Quero me machucar",
-  "Tenho vontade de chorar de vez em quando / Tenho vontade de chorar muitos dias / Tenho vontade de chorar todo dia",
-  "As coisas me incomodam de vez em quando / As coisas me incomodam muitas vezes / As coisas me incomodam o tempo todo",
-  "Gosto de estar com as pessoas / Muitas vezes não gosto de estar com as pessoas / Não quero estar com ninguém",
-  "Consigo me decidir / É difícil me decidir / Não consigo me decidir",
-  "Tenho boa aparência / Há coisas ruins na minha aparência / Sou feio(a)",
-  "Tenho que me esforçar para fazer a lição / Muitas vezes tenho que me esforçar muito / Não consigo fazer a lição",
-  "Tenho dificuldade para dormir de vez em quando / Tenho dificuldade para dormir muitas noites / Tenho dificuldade para dormir toda noite",
-  "Fico cansado(a) de vez em quando / Fico cansado(a) muitos dias / Estou cansado(a) o tempo todo",
-  "Meu apetite está bom / Meu apetite não é tão bom / Não tenho fome nunca",
-  "Não me preocupo com dores / Me preocupo com dores muitas vezes / Me preocupo com dores o tempo todo",
-  "Não me sinto sozinho(a) / Me sinto sozinho(a) muitas vezes / Me sinto sozinho(a) o tempo todo",
-  "A escola é divertida / A escola não é tão divertida / A escola nunca é divertida",
-  "Tenho muitos amigos / Tenho alguns amigos mas queria mais / Não tenho amigos",
-  "Meu desempenho escolar está bom / Meu desempenho escolar não é tão bom / Estou mal em matérias que costumava ir bem",
-  "Sou tão bom quanto os outros / Posso ser tão bom quanto os outros se quiser / Não consigo ser tão bom quanto os outros",
-  "Ninguém me ama de verdade / Não tenho certeza se alguém me ama / Sei que alguém me ama",
-  "Geralmente faço o que me mandam / Muitas vezes não faço o que me mandam / Nunca faço o que me mandam",
-  "Dou-me bem com as pessoas / Brigo muitas vezes / Brigo o tempo todo",
-  "Sei o que quero fazer quando crescer / Não tenho certeza do que quero fazer / Não sei o que vou fazer",
-];
-export const cdi2Labels = ["0 — Ausente", "1 — Às vezes", "2 — Sempre"];
-export function classifyCdi2(total: number) {
-  if (total <= 13)
-    return {
-      classification: "Mínima",
-      color: "emerald",
-      description:
-        "Sintomas depressivos mínimos. Manter acompanhamento de rotina.",
-    };
-  if (total <= 19)
-    return {
-      classification: "Leve",
-      color: "amber",
-      description:
-        "Sintomas depressivos leves. Sugere-se acompanhamento e reavaliação.",
-    };
-  if (total <= 25)
-    return {
-      classification: "Moderada",
-      color: "orange",
-      description:
-        "Sintomas depressivos moderados. Indicada avaliação especializada.",
-    };
-  return {
-    classification: "Grave",
-    color: "red",
-    description:
-      "Sintomas depressivos graves. Encaminhamento urgente para psiquiatria infantil.",
-  };
-}
 
 // --- PHQ-A (Patient Health Questionnaire for Adolescents) ---
 export const phqaQuestions = [
@@ -359,7 +297,6 @@ export function classifyCrafft(score: number) {
 }
 
 // --- CBCL (Child Behavior Checklist — versão abreviada para triagem) ---
-export { cbclDomains, cbclLabels, classifyCbcl } from "./cbcl";
 
 // --- Vanderbilt (NICHQ Vanderbilt — TDAH) ---
 export const vanderbiltDomains = [
@@ -447,83 +384,6 @@ export function classifyVanderbilt(
       conduct >= 4
         ? "Triagem positiva para problemas de conduta"
         : "Triagem negativa para problemas de conduta",
-  });
-  return results;
-}
-
-// --- BRIEF-2 (Behavior Rating Inventory of Executive Function — screening) ---
-export const brief2Domains = [
-  {
-    name: "Inibição",
-    color: "text-red-600 dark:text-red-400",
-    items: [
-      "Age sem pensar",
-      "Não consegue parar de fazer algo quando mandado",
-      "Tem dificuldade em 'frear' seu comportamento",
-      "É impulsivo(a)",
-      "Não pensa nas consequências antes de agir",
-    ],
-  },
-  {
-    name: "Flexibilidade",
-    color: "text-orange-600 dark:text-orange-400",
-    items: [
-      "Fica perturbado(a) com mudanças de planos",
-      "Tem dificuldade em se adaptar a situações novas",
-      "Fica preso(a) em um tema ou atividade",
-      "Resiste a mudanças na rotina",
-      "Tem dificuldade em mudar de uma atividade para outra",
-    ],
-  },
-  {
-    name: "Controle Emocional",
-    color: "text-pink-600 dark:text-pink-400",
-    items: [
-      "Tem acessos de raiva explosivos",
-      "Reage de forma exagerada a pequenos problemas",
-      "Chora facilmente",
-      "O humor muda frequentemente",
-      "Fica perturbado(a) demais com coisas pequenas",
-    ],
-  },
-  {
-    name: "Memória de Trabalho",
-    color: "text-blue-600 dark:text-blue-400",
-    items: [
-      "Esquece o que estava fazendo",
-      "Tem dificuldade em lembrar instruções",
-      "Precisa de ajuda dos adultos para continuar tarefas",
-      "Perde o fio da meada do que está fazendo",
-      "Tem dificuldade em manter informações na cabeça enquanto faz algo",
-    ],
-  },
-  {
-    name: "Planejamento/Organização",
-    color: "text-purple-600 dark:text-purple-400",
-    items: [
-      "Não planeja com antecedência",
-      "Tem dificuldade em organizar materiais",
-      "Não sabe por onde começar uma tarefa",
-      "Subestima o tempo necessário para tarefas",
-      "Deixa tudo para última hora",
-    ],
-  },
-];
-export const brief2Labels = ["Nunca", "Às vezes", "Frequentemente"];
-export function classifyBrief2(domainScores: Record<string, number>) {
-  const results = Object.entries(domainScores).map(([domain, score]) => {
-    // Each domain max = 10 (5 items × 2)
-    const tScore = Math.round(50 + (score - 3) * 5); // Approximate T-score conversion
-    let classification = "Normal";
-    let color = "emerald";
-    if (tScore >= 65) {
-      classification = "Clinicamente significativo";
-      color = "red";
-    } else if (tScore >= 60) {
-      classification = "Potencialmente clínico";
-      color = "amber";
-    }
-    return { domain, score, tScore, classification, color };
   });
   return results;
 }

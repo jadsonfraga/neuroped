@@ -155,8 +155,8 @@ function podiumTotal(p: ReturnType<typeof selectPodium>): number {
       `${id}: esperado ${expected} para sinal real da UI`,
     );
   };
-  for (const id of ["snap", "conners", "vanderbilt", "brief2"]) check(id, true);
-  for (const id of ["mchat", "cars", "denver", "scared"]) check(id, false);
+  for (const id of ["snap", "na-atencao-atividade-pais", "vanderbilt", "na-atencao-atividade-professor"]) check(id, true);
+  for (const id of ["mchat", "na-observacao-clinica-tea", "denver", "scared"]) check(id, false);
   console.log("✓ matcher canônico discrimina sinais reais da UI no catálogo real");
 }
 

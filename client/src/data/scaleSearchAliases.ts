@@ -17,6 +17,16 @@
  */
 
 export const scaleSearchAliases: Readonly<Record<string, readonly string[]>> = {
+  // Proprietários retirados do app (17/10/2026: ASEBA, MHS, PAR, WPS). Exceção documentada à regra
+  // "apelido = nome do próprio instrumento": quem digita o nome do original chega à alternativa autoral
+  // que cobre o mesmo construto. Não é equivalência — a explicação do acerto mostra o termo digitado, a
+  // alternativa traz o aviso de autoral sem validação e a ficha do original segue em /generic-scale/<id>.
+  "na-perfil-emocional-comportamental-pais": ["cbcl", "achenbach", "aseba", "child behavior checklist"],
+  "na-perfil-emocional-comportamental-professor": ["trf", "teacher report form"],
+  "na-atencao-atividade-pais": ["conners", "conners 3", "conners3", "conner", "connors"],
+  "na-humor-crianca-autorrelato": ["cdi", "cdi 2", "cdi2", "cdi-2", "kovacs", "depressao infantil inventario"],
+  "na-funcoes-executivas-ampliado-pais": ["brief", "brief 2", "brief2", "brief-2", "inventario funcoes executivas"],
+  "na-observacao-clinica-tea": ["cars", "cars 2", "cars2", "childhood autism rating"],
   // Desenvolvimento
   denver: ["denver ii", "denver 2", "ddst", "denver developmental"],
   asq3: ["asq 3", "ages and stages", "ages stages", "idades e estagios"],
@@ -32,7 +42,6 @@ export const scaleSearchAliases: Readonly<Record<string, readonly string[]>> = {
 
   // TEA
   mchat: ["mchat", "m chat", "m-chat", "mchat r f", "m chat r/f", "mchatrf", "chat modificado", "checklist autismo toddlers", "triagem autismo bebe"],
-  cars: ["cars", "cars 2", "cars2", "childhood autism rating"],
   atec: ["atec", "autism treatment evaluation"],
   "aq10-adolescente": ["autism quotient", "quociente autismo", "aq adolescente"],
   "q-chat-10": ["qchat", "q chat", "qchat10", "q-chat"],
@@ -52,9 +61,7 @@ export const scaleSearchAliases: Readonly<Record<string, readonly string[]>> = {
 
   // TDAH / funções executivas
   snap: ["snap", "snap iv", "snap-iv", "snap4", "snapiv", "swanson", "mta snap", "snap 4"],
-  conners: ["conners", "conners 3", "conners3", "conner", "connors"],
   vanderbilt: ["vanderbilt", "nichq", "nichq vanderbilt", "vanderbild"],
-  brief2: ["brief", "brief 2", "brief2", "brief-2", "executive function", "inventario funcoes executivas"],
   "afi12-sdg": ["afi", "afi 12", "atencao freio impacto"],
   "ipn-tdah-fe-familia-48": ["ipn tdah", "ipn tdah familia", "ipn fe"],
   "ipn-tdah-fe-escola-32": ["ipn tdah escola"],
@@ -63,7 +70,6 @@ export const scaleSearchAliases: Readonly<Record<string, readonly string[]>> = {
   "ipn-tdah-fe-executivo-10": ["ipn tdah executivo", "perfil executivo"],
 
   // Comportamento / banda larga
-  cbcl: ["cbcl", "achenbach", "aseba", "child behavior checklist", "inventario comportamentos crianca"],
   sdq: ["sdq", "goodman", "capacidades e dificuldades", "forcas e dificuldades", "strengths difficulties"],
   abc: ["abc", "aberrant behavior", "comportamento aberrante"],
   psc17: ["psc", "psc 17", "psc17", "psc-17", "pediatric symptom checklist", "sintomas pediatricos"],
@@ -80,7 +86,6 @@ export const scaleSearchAliases: Readonly<Record<string, readonly string[]>> = {
   scas: ["scas", "spence", "spence ansiedade"],
   gad7: ["gad", "gad 7", "gad7", "gad-7", "ansiedade generalizada"],
   gad7ped: ["gad 7 pediatrico", "gad7 pediatrico", "gad pediatrico"],
-  cdi2: ["cdi", "cdi 2", "cdi2", "cdi-2", "kovacs", "depressao infantil inventario"],
   phqa: ["phq", "phq a", "phqa", "phq-a", "phq 9", "phq9", "phq-9", "patient health questionnaire"],
   smfq: ["smfq", "mfq", "mood and feelings", "humor e sentimentos"],
   who5: ["who", "who 5", "who5", "who-5", "oms 5", "bem estar oms", "indice bem estar"],

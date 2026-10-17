@@ -35,6 +35,7 @@ import {
   verifyMasterPin,
 } from "@/lib/masterPin";
 import { formatScaleAgeRange } from "@/lib/scaleAgeRange";
+import { AUTHORIAL_ALTERNATIVES } from "@/data/authorialScalesSubstitutos";
 
 const APPLICATION_MODE_LABEL: Record<string, string> = {
   questionario_pais: "Questionário — pais/cuidador",
@@ -428,6 +429,9 @@ export default function GenericScalePage() {
   const scale = allScalesComFichas.find((s) => s.id === scaleId);
   const [copied, setCopied] = useState(false);
   const implStatus = scale ? getImplementationStatus(scale) : null;
+  const authorialAlternatives = (AUTHORIAL_ALTERNATIVES[scaleId ?? ""] ?? [])
+    .map((id) => allScalesComFichas.find((s) => s.id === id))
+    .filter((s): s is NonNullable<typeof s> => Boolean(s));
 
   // Escalas interativas "runner" (acervo novo: dor/FPS-R, Q-CHAT, Viking, MACS…)
   // — renderizadas pelo InteractiveScaleRunner. Conjunto à parte do acervo de
@@ -525,6 +529,31 @@ export default function GenericScalePage() {
               <strong>ficha técnica/referência clínica</strong> — não é a
               aplicação completa do instrumento (sem itens nem cálculo de escore
               embutidos).
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Instrumento licenciado sem aplicação no app: aponta a alternativa
+            autoral NeuroPed que cobre o mesmo construto, com itens próprios. */}
+        {implStatus === "external_only" && authorialAlternatives.length > 0 && (
+          <Card className="border-card-border mb-6" data-testid="authorial-alternatives">
+            <CardContent className="pt-6 text-sm">
+              <p className="font-semibold text-foreground">
+                Para aplicar no app, use a alternativa autoral NeuroPed:
+              </p>
+              <ul className="mt-2 space-y-1">
+                {authorialAlternatives.map((alt) => (
+                  <li key={alt.id}>
+                    <Link href={routeFor(alt)} className="font-semibold text-blue-700 underline underline-offset-2 dark:text-blue-300">
+                      {alt.name}
+                    </Link>
+                    <span className="text-muted-foreground"> · {alt.respondente.join(" · ")} · {formatScaleAgeRange(alt.ageMin, alt.ageMax)}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Itens originais, sem validação psicométrica e sem ponto de corte: não equivale nem substitui o instrumento original nesta ficha.
+              </p>
             </CardContent>
           </Card>
         )}
