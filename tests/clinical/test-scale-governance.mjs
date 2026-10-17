@@ -1,5 +1,6 @@
 // Onda 0 — governança do banco de escalas: o filtro só oferece o que abre por inteiro,
-// um instrumento = um id, e os 17 licenciados com aplicação completa seguem no app.
+// um instrumento = um id, os licenciados mantidos pelo responsável seguem no app e os de
+// ASEBA, MHS, PAR e WPS ficam só como ficha de referência, com alternativa autoral.
 import assert from "node:assert/strict";
 import { allScales } from "../../client/src/data/scaleFilter.ts";
 import { noCostWorldScales } from "../../client/src/data/noCostWorldScales.ts";
@@ -19,9 +20,15 @@ for (const [canon, aliases] of Object.entries(CANONICAL_ALIASES)) {
   for (const a of aliases) assert.ok(!ids.has(a), `alias ${a} duplicado no filtro`);
 }
 // Decisão do responsável: os licenciados com aplicação completa continuam disponíveis.
-for (const id of ["cbcl", "conners", "brief2", "cdi2", "asq3", "denver", "pedsql", "cshq", "abc", "cars", "mchat", "sdq", "scared", "vanderbilt", "crafft"]) {
+for (const id of ["asq3", "denver", "pedsql", "cshq", "abc", "mchat", "sdq", "scared", "vanderbilt", "crafft"]) {
   assert.ok(ids.has(id), `${id} deveria seguir no app`);
   assert.ok(OWNER_RETAINED_LICENSED_IDS.includes(id));
+}
+// ASEBA, MHS, PAR e WPS (17/10/2026): só ficha de referência; a aplicação é a alternativa autoral.
+for (const id of ["cbcl", "conners", "brief2", "cdi2", "cars"]) {
+  assert.ok(!ids.has(id), `${id} não pode ser oferecido como aplicação no app`);
+  assert.ok(!OWNER_RETAINED_LICENSED_IDS.includes(id), `${id} saiu da lista mantida pelo responsável`);
+  assert.equal(getExplicitLicenseRecord(id)?.softwareAllowed, false, `${id}: uso em software não licenciado`);
 }
 // Licença contraditória resolvida: a entrada canônica nunca é mais permissiva que o registro.
 const by = new Map(offered.map((s) => [s.id, s]));

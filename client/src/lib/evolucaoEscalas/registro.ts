@@ -8,8 +8,7 @@
 // corte são DERIVADOS do próprio classificador, sem tabela paralela que possa
 // divergir. Instrumento fora do registro fica "pendente" (sem gráfico/alerta).
 // ============================================================================
-import { classifyCars } from "../../data/cars";
-import { classifyCdi2, classifyCrafft, classifyCshq, classifyPhqa } from "../../data/expandedScales";
+import { classifyCrafft, classifyCshq, classifyPhqa } from "../../data/expandedScales";
 import { classifyMchat } from "../../data/mchat";
 
 export interface InstrumentoEvolucao {
@@ -38,17 +37,6 @@ export const INSTRUMENTOS_EVOLUCAO: InstrumentoEvolucao[] = [
     faixa: (n) => classifyMchat(n).risk, varredura: [0, 20],
     nota: "Rastreio de TEA: não é instrumento de seguimento de resposta a tratamento.",
     fonte: "client/src/data/mchat.ts (classifyMchat)",
-  },
-  {
-    id: "cars", nome: "CARS (registro descritivo interno)", reconhece: (t) => /\bcars\b(?!-?2)/i.test(t), minimo: 15, maximo: 60, maiorEhPior: true,
-    faixa: (n) => classifyCars(n).classification, varredura: [15, 60],
-    nota: "Registro descritivo interno; não equivale à aplicação oficial do CARS-2.",
-    fonte: "client/src/data/cars.ts (classifyCars)",
-  },
-  {
-    id: "cdi2", nome: "CDI-2", reconhece: (t) => /\bcdi-?2?\b/i.test(t), minimo: 0, maiorEhPior: true,
-    faixa: (n) => classifyCdi2(n).classification, varredura: [0, 80],
-    fonte: "client/src/data/expandedScales.ts (classifyCdi2)",
   },
   {
     id: "phqa", nome: "PHQ-A", reconhece: (t) => /phq-?a/i.test(t), minimo: 0, maximo: 27, maiorEhPior: true,

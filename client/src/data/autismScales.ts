@@ -1,6 +1,10 @@
 // ============================================================
-// Checklists Clínicos Adaptados para Avaliação do TEA
-// Inspirados em: ADOS-2, ADI-R, CARS-2, GARS-3, SRS-2
+// Roteiros clínicos AUTORAIS NeuroPed para avaliação do TEA
+// Itens originais, organizados pelos domínios clínicos do DSM-5-TR. Não são os
+// instrumentos padronizados (ADOS-2, ADI-R, CARS-2, GARS-3, SRS-2), que exigem o
+// material licenciado do editor; `referenceInstrument` só nomeia o instrumento
+// cujo campo de avaliação o roteiro acompanha, e os dados psicométricos citados
+// são DO INSTRUMENTO DE REFERÊNCIA, não do roteiro (sem validação própria).
 // ============================================================
 
 export interface ChecklistItem {
@@ -39,7 +43,12 @@ export interface PsychometricInfo {
 
 export interface AutismScale {
   id: string;
+  /** Nome do roteiro autoral exibido no app. */
   shortName: string;
+  /** Instrumento padronizado de referência (não aplicado pelo app). */
+  referenceInstrument: string;
+  /** Rótulo curto da aba (cabe em 5 colunas no celular). */
+  tabLabel: string;
   fullName: string;
   fullNamePt: string;
   focus: string;
@@ -58,9 +67,11 @@ export interface AutismScale {
 // ============================================================
 const ados2: AutismScale = {
   id: "ados2",
-  shortName: "ADOS-2",
-  fullName: "Autism Diagnostic Observation Schedule – Second Edition",
-  fullNamePt: "Escala de Observação para o Diagnóstico do Autismo – 2ª Edição",
+  shortName: "Roteiro de observação direta",
+  referenceInstrument: "ADOS-2",
+  tabLabel: "Observação",
+  fullName: "Roteiro autoral de observação direta na consulta",
+  fullNamePt: "Roteiro autoral NeuroPed de observação direta (não é o ADOS-2)",
   focus: "Observação direta da interação social, comunicação, brincadeira e comportamentos restritos/repetitivos.",
   type: "checklist",
   color: "blue",
@@ -149,9 +160,11 @@ const ados2: AutismScale = {
 // ============================================================
 const adir: AutismScale = {
   id: "adir",
-  shortName: "ADI-R",
-  fullName: "Autism Diagnostic Interview – Revised",
-  fullNamePt: "Entrevista Diagnóstica para o Autismo – Revisada",
+  shortName: "Roteiro de história do desenvolvimento",
+  referenceInstrument: "ADI-R",
+  tabLabel: "História",
+  fullName: "Roteiro autoral de entrevista sobre o desenvolvimento",
+  fullNamePt: "Roteiro autoral NeuroPed de entrevista com a família (não é o ADI-R)",
   focus: "História do desenvolvimento e padrão comportamental ao longo do tempo.",
   type: "checklist",
   color: "emerald",
@@ -236,17 +249,19 @@ const adir: AutismScale = {
 // 3. CARS-2 Adaptado (Dimensional)
 // ============================================================
 const severityOptions: SeverityOption[] = [
-  { value: 0, label: "Dentro do esperado" },
-  { value: 1, label: "Levemente alterada" },
-  { value: 2, label: "Moderadamente alterada" },
-  { value: 3, label: "Intensamente alterada" },
+  { value: 0, label: "Sem alteração observada" },
+  { value: 1, label: "Alteração leve" },
+  { value: 2, label: "Alteração moderada" },
+  { value: 3, label: "Alteração intensa" },
 ];
 
 const cars2: AutismScale = {
   id: "cars2",
-  shortName: "CARS-2",
-  fullName: "Childhood Autism Rating Scale – Second Edition",
-  fullNamePt: "Escala de Avaliação do Autismo na Infância – 2ª Edição",
+  shortName: "Graduação clínica por área",
+  referenceInstrument: "CARS-2",
+  tabLabel: "Graduação",
+  fullName: "Roteiro autoral de graduação clínica por área",
+  fullNamePt: "Roteiro autoral NeuroPed de graduação clínica (não é o CARS-2)",
   focus: "Julgamento clínico dimensional da intensidade dos sinais.",
   type: "dimensional",
   color: "amber",
@@ -254,29 +269,25 @@ const cars2: AutismScale = {
   psychometrics: {
     sensitivity: "~89% (até 100% no ponto de corte 30)",
     specificity: "~79% (até 86% no ponto de corte ótimo)",
-    note: "Melhor escala clínica dimensional de apoio. Ponto de corte 30,25 apresentou Se 98,9% e Sp 86,1% para módulos 1 e 2 do ADOS-2.",
+    note: "Dados do CARS-2 (instrumento de referência). Este roteiro autoral não tem ponto de corte nem validação própria.",
   },
   bestFor: 'Sair do "tem ou não tem" e medir o quanto compromete.',
   dimensionalDomains: [
     {
       id: "cars2-areas",
-      title: "Áreas para Julgamento Clínico",
+      title: "Áreas para julgamento clínico (roteiro autoral)",
       items: [
-        { id: "cars2-1", text: "Relação com pessoas", severityOptions },
-        { id: "cars2-2", text: "Imitação", severityOptions },
-        { id: "cars2-3", text: "Resposta emocional", severityOptions },
-        { id: "cars2-4", text: "Uso do corpo", severityOptions },
-        { id: "cars2-5", text: "Uso de objetos", severityOptions },
-        { id: "cars2-6", text: "Adaptação a mudanças", severityOptions },
-        { id: "cars2-7", text: "Resposta visual", severityOptions },
-        { id: "cars2-8", text: "Resposta auditiva", severityOptions },
-        { id: "cars2-9", text: "Respostas de paladar, olfato e tato", severityOptions },
-        { id: "cars2-10", text: "Medo ou ansiedade", severityOptions },
-        { id: "cars2-11", text: "Comunicação verbal", severityOptions },
-        { id: "cars2-12", text: "Comunicação não verbal", severityOptions },
-        { id: "cars2-13", text: "Nível de atividade", severityOptions },
-        { id: "cars2-14", text: "Nível e consistência intelectual / perfil cognitivo", severityOptions },
-        { id: "cars2-15", text: "Impressão clínica global de compatibilidade com TEA", severityOptions },
+        { id: "np-grad-1", text: "Reciprocidade social e iniciativa de interação", severityOptions },
+        { id: "np-grad-2", text: "Comunicação não verbal (olhar, gestos, expressão facial)", severityOptions },
+        { id: "np-grad-3", text: "Linguagem e uso social da fala", severityOptions },
+        { id: "np-grad-4", text: "Brincar, faz de conta e imaginação", severityOptions },
+        { id: "np-grad-5", text: "Amizades e interesse por outras crianças", severityOptions },
+        { id: "np-grad-6", text: "Movimentos e falas repetitivos", severityOptions },
+        { id: "np-grad-7", text: "Rigidez com rotinas e sofrimento com mudanças", severityOptions },
+        { id: "np-grad-8", text: "Interesses intensos ou restritos", severityOptions },
+        { id: "np-grad-9", text: "Respostas sensoriais (sons, texturas, luzes, dor)", severityOptions },
+        { id: "np-grad-10", text: "Regulação emocional e nível de atividade", severityOptions },
+        { id: "np-grad-11", text: "Impacto no dia a dia (casa, escola, autonomia)", severityOptions },
       ],
     },
   ],
@@ -302,9 +313,11 @@ const cars2: AutismScale = {
 // ============================================================
 const gars3: AutismScale = {
   id: "gars3",
-  shortName: "GARS-3",
-  fullName: "Gilliam Autism Rating Scale – Third Edition",
-  fullNamePt: "Escala de Avaliação do Autismo de Gilliam – 3ª Edição",
+  shortName: "Checklist por subdomínios",
+  referenceInstrument: "GARS-3",
+  tabLabel: "Subdomínios",
+  fullName: "Checklist autoral por subdomínios",
+  fullNamePt: "Checklist autoral NeuroPed por subdomínios (não é o GARS-3)",
   focus: "Leitura por subdomínios comportamentais, com visão global probabilística.",
   type: "checklist",
   color: "violet",
@@ -386,9 +399,11 @@ const gars3: AutismScale = {
 // ============================================================
 const srs2: AutismScale = {
   id: "srs2",
-  shortName: "SRS-2",
-  fullName: "Social Responsiveness Scale – Second Edition",
-  fullNamePt: "Escala de Responsividade Social – 2ª Edição",
+  shortName: "Checklist de responsividade social",
+  referenceInstrument: "SRS-2",
+  tabLabel: "Social",
+  fullName: "Checklist autoral de responsividade social",
+  fullNamePt: "Checklist autoral NeuroPed de responsividade social (não é o SRS-2)",
   focus: "Prejuízo em comunicação social e comportamentos restritos/repetitivos, sobretudo em crianças maiores e adolescentes.",
   type: "checklist",
   color: "rose",

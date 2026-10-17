@@ -139,21 +139,6 @@ export const allScales: ScaleEntry[] = [
 
 ## 🎨 EXEMPLOS COM EMOJIS ROXOS 🟣 (Documentados)
 
-### CBCL - Item 1: "Queixa-se de solidão"
-```
-🟣 O que significa: Seu filho diz que se sente sozinho/isolado
-
-✅ PRESENTE (preocupante):
-- "Ninguém gosta de mim" (sem amigos reais)
-- Almoça sozinho na escola por escolha
-- Recusa participar de atividades sociais
-
-❌ AUSENTE (esperado):
-- Tem amigos da idade
-- Participa voluntariamente de atividades
-- Ocasionalmente quer "tempo sozinho" (normal)
-```
-
 ### C-SSRS - Níveis de Risco Estratificados
 ```
 NÍVEL 1: Ideação Passiva

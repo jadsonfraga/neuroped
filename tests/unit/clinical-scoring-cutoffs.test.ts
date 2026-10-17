@@ -5,7 +5,6 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { classifyMchat } from "../../client/src/data/scales";
 import {
-  classifyCdi2,
   classifyCssrs,
   classifyPhqa,
   classifyVanderbilt,
@@ -14,7 +13,7 @@ import {
   hasPositivePhqaSelfHarm,
   pruneCssrsAnswers,
 } from "../../client/src/data/expandedScales";
-import { classifyConners, classifyScared, classifySdq } from "../../client/src/data/newScales";
+import { classifyScared, classifySdq } from "../../client/src/data/newScales";
 
 describe("clinical scoring cutoffs", () => {
   it("M-CHAT-R/F classifies low, moderate and high risk", () => {
@@ -54,12 +53,7 @@ describe("clinical scoring cutoffs", () => {
     assert.equal(high.subscaleResults.find((item) => item.name.includes("Generalizada"))?.positive, true);
   });
 
-  it("CDI-2 and PHQ-A preserve depressive severity bands", () => {
-    assert.equal(classifyCdi2(13).color, "emerald");
-    assert.equal(classifyCdi2(14).color, "amber");
-    assert.equal(classifyCdi2(20).color, "orange");
-    assert.equal(classifyCdi2(26).color, "red");
-
+  it("PHQ-A preserves depressive severity bands", () => {
     assert.equal(classifyPhqa(4).color, "emerald");
     assert.equal(classifyPhqa(5).color, "amber");
     assert.equal(classifyPhqa(10).color, "orange");
@@ -90,11 +84,5 @@ describe("clinical scoring cutoffs", () => {
     assert.deepEqual(pruneCssrsAnswers({ ...previouslyPositive, 2: false }), { 1: true, 2: false, 6: false });
     assert.match(getCssrsSkipLogicSummary({ 1: false, 2: false, 6: false }), /Q2 = Não; Q3-Q5 foram omitidas/);
     assert.match(getCssrsSkipLogicSummary({ 1: false, 2: true, 6: false }), /Q2 = Sim; Q3-Q5 e Q6/);
-  });
-
-  it("Conners flags normal, attention and clinically significant ranges", () => {
-    assert.match(classifyConners(41, {}).classification, /Normalidade/i);
-    assert.match(classifyConners(42, {}).classification, /Aten/i);
-    assert.match(classifyConners(59, {}).classification, /Significativo/i);
   });
 });

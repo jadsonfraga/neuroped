@@ -9,7 +9,8 @@ import { openScaleLicenseRecords } from "./openScalesIndex";
  *  - `catalog_field_unverified` apenas repete o campo legado `licencaUso`; NÃO é verificação;
  *  - `owner_decision` registra instrumento licenciado MANTIDO no app por decisão do responsável
  *    clínico (15/10/2026). A decisão não equivale a licença: `softwareAllowed` fica "unverified"
- *    e nenhum pedido de licença é feito por este projeto;
+ *    e nenhum pedido de licença é feito por este projeto. Em 17/10/2026 o responsável RETIROU os de
+ *    ASEBA, MHS, PAR e WPS (`softwareAllowed: false`): ficam como ficha, com alternativa autoral;
  *  - escala nova (`wave` ≥ 1) só entra com fonte verificada, URL e data.
  */
 export type LicenseStatus =
@@ -45,7 +46,7 @@ const V = "2026-10-15";
 
 /** Instrumentos licenciados que abrem no app e foram MANTIDOS por decisão do responsável (15/10/2026). */
 export const OWNER_RETAINED_LICENSED_IDS: readonly string[] = [
-  "cbcl", "conners", "brief2", "cdi2", "asq3", "denver", "pedsql", "cshq", "abc", "cars",
+  "asq3", "denver", "pedsql", "cshq", "abc",
   "mchat", "world-mchat-rf", "crafft", "world-crafft-21", "sdq", "world-sdq",
   "scared", "world-scared-child-parent", "vanderbilt", "world-vanderbilt-parent-teacher",
 ] as const;
@@ -54,18 +55,25 @@ const retained = (id: string, status: LicenseStatus, note: string, extra: Partia
   id, status, basis: "owner_decision", softwareAllowed: "unverified", note, ...extra,
 });
 
+/** Proprietário retirado do app: só ficha de referência; aplicar exige o material licenciado do editor. */
+const removed = (id: string, instrument: string, alternative: string): ScaleLicenseRecord => ({
+  id, status: "proprietary", basis: "owner_decision", softwareAllowed: false,
+  note: `${instrument}. Retirado do app por decisão do responsável (17/10/2026): ficha de referência, sem itens nem escore. Alternativa autoral no app: ${alternative}.`,
+});
+
 export const SCALE_LICENSE_RECORDS: readonly ScaleLicenseRecord[] = [
   // ---- Licenciados mantidos por decisão do responsável (sem licença verificada) ----
-  retained("cbcl", "proprietary", "ASEBA (proprietário). Mantido por decisão do responsável; sem licença verificada."),
-  retained("conners", "proprietary", "Conners 3 (MHS, proprietário). Mantido por decisão do responsável; sem licença verificada."),
-  retained("brief2", "proprietary", "BRIEF-2 (PAR, proprietário). Mantido por decisão do responsável; sem licença verificada."),
-  retained("cdi2", "proprietary", "CDI-2 (MHS, proprietário). Mantido por decisão do responsável; sem licença verificada."),
+  // ---- Retirados do app por decisão do responsável (17/10/2026): ficha de referência, sem itens nem escore ----
+  removed("cbcl", "CBCL (ASEBA, proprietário)", "Perfil emocional e comportamental (pais/professor)"),
+  removed("conners", "Conners 3 (MHS, proprietário)", "Atenção, atividade e autocontrole (pais/professor)"),
+  removed("brief2", "BRIEF-2 (PAR, proprietário)", "Funções executivas — versão ampliada (pais) e na escola (professor)"),
+  removed("cdi2", "CDI-2 (MHS, proprietário)", "Como eu me sinto (criança) e Humor depressivo (adolescente)"),
+  removed("cars", "CARS-2 (WPS, proprietário)", "Observação clínica de sinais do espectro autista"),
   retained("asq3", "proprietary", "ASQ-3 (Brookes): reprodução eletrônica vedada pelo editor. Mantido por decisão do responsável.", { sourceUrl: "https://agesandstages.com", verifiedOn: V }),
   retained("denver", "proprietary", "Denver II (proprietário). Mantido por decisão do responsável; sem licença verificada."),
   retained("pedsql", "proprietary", "PedsQL (Mapi Research Trust). Mantido por decisão do responsável; sem licença verificada."),
   retained("cshq", "restricted", "CSHQ (autora; uso sob permissão). Mantido por decisão do responsável; sem licença verificada."),
   retained("abc", "proprietary", "Aberrant Behavior Checklist (comercial). Mantido por decisão do responsável; sem licença verificada."),
-  retained("cars", "proprietary", "CARS (WPS). Mantido por decisão do responsável; sem licença verificada."),
   retained("mchat", "free_clinical_use", "M-CHAT-R/F: gratuito para uso clínico; embutir em software distribuído a terceiros exige licença (Robins). Mantido por decisão do responsável.", { canonicalId: "mchat", sourceUrl: "https://mchatscreen.com", verifiedOn: V, attribution: "© 2009 Robins, Fein & Barton" }),
   retained("world-mchat-rf", "free_clinical_use", "Alias de `mchat`.", { canonicalId: "mchat", sourceUrl: "https://mchatscreen.com", verifiedOn: V }),
   retained("sdq", "restricted", "SDQ: copyright; versão eletrônica só com licença da Youth in Mind. Mantido por decisão do responsável.", { canonicalId: "sdq", sourceUrl: "https://www.sdqinfo.org", verifiedOn: V, attribution: "© Robert Goodman" }),

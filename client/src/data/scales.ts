@@ -1,6 +1,5 @@
 // M-CHAT-R/F — Modified Checklist for Autism in Toddlers (16-30 meses)
 export { mchatQuestions, mchatCriticalItems, mchatReversedItems, classifyMchat } from "./mchat";
-export { carsCategories, classifyCars } from "./cars";
 
 export const snapQuestions = [
   // Desatenção (1-9)

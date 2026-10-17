@@ -61,7 +61,7 @@ function startStaticServer() {
 }
 
 // Escalas com radiogroups + button-submit + ClinicalReport + SaveToPatient.
-// Cobre tanto o contrato GenericScale quanto a CARS dedicada.
+// Cobre o contrato GenericScale nas rotas dedicadas.
 const ALL_ROUTES = [
   { path: "/#/gad7", name: "GAD-7" },
   { path: "/#/vanderbilt", name: "Vanderbilt" },
@@ -70,9 +70,8 @@ const ALL_ROUTES = [
   { path: "/#/abc", name: "ABC" },
   // ASQ-3 fica de fora: fluxo divergente (pré-seleção de idade/versão antes dos
   // itens), não segue o contrato radiogroup→submit direto. Smoke próprio se preciso.
-  { path: "/#/brief2", name: "BRIEF-2" },
-  { path: "/#/cbcl", name: "CBCL" },
-  { path: "/#/cars", name: "CARS" },
+  // BRIEF-2, CBCL e CARS saíram (17/10/2026): os substitutos autorais abrem em /generic-scale/<id>
+  // e são cobertos pelo e2e do runner (tests/e2e/open-scales-runner.mjs).
   { path: "/#/cshq", name: "CSHQ" },
   { path: "/#/eaf", name: "EAF" },
   { path: "/#/eai", name: "EAI" },

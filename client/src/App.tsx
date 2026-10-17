@@ -69,21 +69,16 @@ const SplashScreen = lazy(() =>
   })),
 );
 const MchatPage = lazy(() => import("@/pages/mchat"));
-const CarsPage = lazy(() => import("@/pages/cars"));
 const SnapPage = lazy(() => import("@/pages/snap"));
 const DenverPage = lazy(() => import("@/pages/denver"));
 const SdqPage = lazy(() => import("@/pages/sdq"));
 const ScaredPage = lazy(() => import("@/pages/scared"));
-const ConnersPage = lazy(() => import("@/pages/conners"));
 const PantPage = lazy(() => import("@/pages/pant"));
 const FluxogramaPage = lazy(() => import("@/pages/fluxograma"));
-const Cdi2Page = lazy(() => import("@/pages/cdi2"));
 const PhqaPage = lazy(() => import("@/pages/phqa"));
 const CssrsPage = lazy(() => import("@/pages/cssrs"));
 const CrafftPage = lazy(() => import("@/pages/crafft"));
-const CbclPage = lazy(() => import("@/pages/cbcl"));
 const VanderbiltPage = lazy(() => import("@/pages/vanderbilt"));
-const Brief2Page = lazy(() => import("@/pages/brief2"));
 const AbcPage = lazy(() => import("@/pages/abc"));
 const Asq3Page = lazy(() => import("@/pages/asq3"));
 const PedsqlPage = lazy(() => import("@/pages/pedsql"));
@@ -326,21 +321,16 @@ function AppRouter() {
 
             <Route path="/" component={HomePage} />
             <Route path="/mchat" component={MchatPage} />
-            <Route path="/cars" component={CarsPage} />
             <Route path="/snap" component={SnapPage} />
             <Route path="/denver" component={DenverPage} />
             <Route path="/sdq" component={SdqPage} />
             <Route path="/scared" component={ScaredPage} />
-            <Route path="/conners" component={ConnersPage} />
             <Route path="/pant" component={PantPage} />
             <Route path="/fluxograma" component={FluxogramaPage} />
-            <Route path="/cdi2" component={Cdi2Page} />
             <Route path="/phqa" component={PhqaPage} />
             <Route path="/cssrs" component={CssrsPage} />
             <Route path="/crafft" component={CrafftPage} />
-            <Route path="/cbcl" component={CbclPage} />
             <Route path="/vanderbilt" component={VanderbiltPage} />
-            <Route path="/brief2" component={Brief2Page} />
             <Route path="/abc" component={AbcPage} />
             <Route path="/asq3" component={Asq3Page} />
             <Route path="/pedsql" component={PedsqlPage} />

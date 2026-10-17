@@ -1155,7 +1155,8 @@ export const BROADBAND_SCREENER_IDS = [
   "asq3", // 1-66m - desenvolvimento
   "pant", // 0-216m - índice PANT (autoral, banda larga do desenvolvimento)
   "efdi", // 0-216m - funcionalidade/desenvolvimento (autoral)
-  "cbcl", // 18-216m - banda larga emocional/comportamental
+  "na-saude-mental-pre-escolar-pais", // 36-72m - banda larga emocional/comportamental (autoral)
+  "na-perfil-emocional-comportamental-pais", // 72-216m - banda larga emocional/comportamental (autoral; substitui o CBCL)
   "sdq", // 24-204m - banda larga
   "psc17", // 48-192m - banda larga
   "ndi-360", // 36-215m - banda larga neurodesenvolvimental (autoral)

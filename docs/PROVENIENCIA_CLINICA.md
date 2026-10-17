@@ -3,10 +3,10 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 341
-- **Com fonte declarada:** 341 (100.0%)
+- **Total de instrumentos:** 344
+- **Com fonte declarada:** 344 (100.0%)
 - **Sem fonte declarada:** 0
-- **Aguardando validação psicométrica publicada:** 160 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
+- **Aguardando validação psicométrica publicada:** 168 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
 
 > As duas últimas linhas medem coisas diferentes e não se somam: um
 > instrumento pode ter fonte e ainda assim aguardar validação.
@@ -34,14 +34,10 @@
 | `bisq` | BISQ | Sadeh A, 2004 (Brief Infant Sleep Questionnaire) | não | não |
 | `bisq-r` | BISQ-R | Mindell JA, Gould RA, Tikotzy L, Leichman ES, Walters RM, 2019 (BISQ-R, escore normativo) — Sleep Med 63:106-114. PMID 31610383 · doi:10.1016/j.sleep.2019.05.010 | não | não |
 | `bowel-bladder-checklist` | BBD Checklist | NIH-funded research | não | não |
-| `brief2` | BRIEF-2 | Gioia GA et al., 2015 | não | não |
 | `bristol-stool` | Bristol Stool Scale | Lewis SJ, Heaton KW, 1997 (Bristol Stool Form Scale) | não | não |
 | `camuflagem-tea-neuroped` | Escala de Estratégias de Camuflagem no TEA | 2026-06-23 ESCALA-CAMUFLAGEM-TEA NEUROPED.docx — ESCALA DE ESTRATÉGIAS DE CAMUFLAGEM NO TEA — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://drive.google.com/file/d/1-Z-YAmPhTgySz8EVoKo_QYfU0hhNtV17/view | não | sim |
-| `cars` | CARS-2 | Schopler E et al., 2010 | não | não |
 | `catclams` | CAT/CLAMS | Accardo PJ et al., 1992 | não | não |
 | `cats` | CATS | Sachser C et al., 2017 (Child and Adolescent Trauma Screen) | não | não |
-| `cbcl` | CBCL | Achenbach TM & Rescorla LA, 2001 | não | não |
-| `cdi2` | CDI-2 | Kovacs M, 2011 - Multi-Health Systems | não | não |
 | `cefaleia-calendario` | Calendário de Cefaleia | Ferramenta de registro clínico NeuroPed (calendário de cefaleia) | não | não |
 | `ces-dc` | CES-DC | Weissman MM, Orvaschel H, Padian N, 1980 (domínio público) | não | não |
 | `cfcs` | CFCS | Hidecker MJC et al., 2011 (CFCS) | não | não |
@@ -50,7 +46,6 @@
 | `cgi-s` | CGI-S | Guy W, 1976 (ECDEU Assessment Manual, NIMH — domínio público) | não | não |
 | `cheops` | CHEOPS | McGrath PJ et al., 1985 | não | não |
 | `comfort-b` | COMFORT-B | van Dijk M et al., 2005 (COMFORT-Behavioral Scale) | não | não |
-| `conners` | Conners 3 | Conners CK, 2008 - Multi-Health Systems | não | não |
 | `cpss-v` | CPSS-V | Foa EB et al., 2018 (CPSS-5) | não | não |
 | `crafft` | CRAFFT | Knight JR et al., 2002 (CRAFFT) | não | não |
 | `cries` | CRIES | Krechel SW & Bildner J, 1995 | não | não |
@@ -228,6 +223,8 @@
 | `na-adesao-tratamento-pais` | Adesão ao tratamento (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de adesão a tratamento medicamentoso e terapêutico na infância e barreiras práticas; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-ansiedade-seguimento-pais` | Seguimento de ansiedade (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de monitorização de ansiedade infantil (medos, preocupações, evitação, sintomas corporais); itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-apoio-rede-cuidador` | Apoio e rede do cuidador (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de apoio social percebido e acesso a serviços em famílias de crianças em acompanhamento; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
+| `na-atencao-atividade-pais` | Atenção, atividade e autocontrole (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de desatenção, hiperatividade, impulsividade e organização no cotidiano, com impacto funcional por contexto; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
+| `na-atencao-atividade-professor` | Atenção, atividade e autocontrole (professor) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de desatenção, hiperatividade, impulsividade e organização em sala, com impacto funcional por contexto; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-cefaleia-gatilhos-rotina` | Cefaleia: gatilhos e rotina (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de fatores desencadeantes e de manejo da cefaleia pediátrica; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-comportamento-adaptativo-pais` | Comportamento adaptativo (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de comportamento adaptativo e autonomia em crianças com suspeita de deficiência intelectual ou atraso global; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-comportamentos-repetitivos-pais` | Comportamentos repetitivos (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de comportamentos restritos e repetitivos em crianças com e sem autismo; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
@@ -239,13 +236,19 @@
 | `na-experiencias-perceptivas-adolescente` | Experiências perceptivas incomuns (adolescente) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de experiências psicóticas atenuadas (rastreio de risco) em adolescentes; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-funcao-pc-escola-professor` | Participação escolar na PC (professor) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de participação e acessibilidade escolar de estudantes com deficiência motora; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-funcao-pc-pais` | Função diária na PC (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de desempenho em atividades diárias (autocuidado, comunicação, brincar) na paralisia cerebral; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
+| `na-funcoes-executivas-ampliado-pais` | Funções executivas — versão ampliada (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de funções executivas no cotidiano (iniciação, planejamento, memória de trabalho, inibição, flexibilidade, regulação emocional e automonitoramento); itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-funcoes-executivas-casa-pais` | Funções executivas no dia a dia (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de funções executivas em tarefas cotidianas (planejar, lembrar, iniciar, controlar impulsos, mudar de estratégia); itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
+| `na-funcoes-executivas-escola-professor` | Funções executivas na escola (professor) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de funções executivas em sala de aula (iniciação, planejamento, memória de trabalho, inibição, flexibilidade, regulação emocional e automonitoramento); itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
+| `na-humor-crianca-autorrelato` | Como eu me sinto (criança) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de sintomas depressivos relatados pela própria criança (humor, prazer, energia, autoimagem, escola, amigos, sono e apetite); itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-humor-depressivo-adolescente` | Humor depressivo (adolescente) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de sintomas depressivos na infância e adolescência (humor, anedonia, energia, concentração, sono, apetite); itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-interacao-social-precoce-pais` | Interação social precoce (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de sinais precoces de atenção compartilhada, reciprocidade social e comunicação; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-labilidade-humor-pais` | Labilidade e oscilação do humor (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de desregulação emocional e oscilação de humor na infância e adolescência; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-leitura-dislexia-professor` | Leitura e consciência fonológica (professor) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de dificuldades de leitura de base fonológica (decodificação, fluência, nomeação) em escolares; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-matematica-professor` | Matemática e raciocínio numérico (professor) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de dificuldades de senso numérico, cálculo e raciocínio matemático em escolares; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-mobilidade-funcional-pc` | Mobilidade funcional na PC (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de mobilidade funcional em diferentes ambientes na paralisia cerebral; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
+| `na-observacao-clinica-tea` | Observação clínica de sinais do espectro autista (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de sinais observáveis de transtorno do espectro autista na consulta (comunicação e interação social; padrões restritos e repetitivos; respostas sensoriais); itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
+| `na-perfil-emocional-comportamental-pais` | Perfil emocional e comportamental (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de problemas emocionais e de comportamento na infância e adolescência (internalizantes, externalizantes, atenção e relações); itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
+| `na-perfil-emocional-comportamental-professor` | Perfil emocional e comportamental (professor) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de problemas emocionais e de comportamento observáveis na escola (internalizantes, externalizantes, atenção e relações); itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-qualidade-vida-epilepsia` | Qualidade de vida na epilepsia (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de qualidade de vida relacionada à saúde em crianças com epilepsia; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-regulacao-emocional-pais` | Regulação emocional (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de regulação emocional e estratégias de autorregulação; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-saude-mental-pre-escolar-pais` | Saúde emocional do pré-escolar (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de saúde mental de crianças em idade pré-escolar (emoções, comportamento, vínculo, brincar); itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
@@ -337,7 +340,7 @@
 | `swyc-ppsc` | SWYC PPSC (pré-escolar) | Perrin EC, Sheldrick RC et al. The SWYC: User's Manual v1.01 (2016); formulário PPSC em português v1.07 (01/04/2017), theSWYC.org. © Tufts Medical Center. | não | sim |
 | `tdl-aprendizagem` | Escala Dr. Jadson — TDL e Aprendizagem Escolar | NeuroPed EDJ — Escala Dr. Jadson: TDL e Dificuldades de Aprendizagem Escolar (versão infantil até 8 anos) — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://drive.google.com/file/d/10GV_krIChucIRIS-er_w0c_WFEtEAZZA/view | não | sim |
 | `tdn-bebe` | TDN-Bebê | Instrumento autoral NeuroPed — Dr. Jadson Fraga, 2026. Construto: desenvolvimento do lactente. | não | sim |
-| `tea-checklists` | Checklists TEA | Compilação clínica NeuroPed dos instrumentos ADOS-2, ADI-R, CARS-2, GARS-3 e SRS-2 | não | não |
+| `tea-checklists` | Checklists TEA | Roteiros autorais NeuroPed (Dr. Jadson Fraga), com itens próprios organizados pelos domínios clínicos do DSM-5-TR. ADOS-2, ADI-R, CARS-2, GARS-3 e SRS-2 aparecem só como instrumentos de referência, aplicados fora do app | não | não |
 | `tea-comportamentos` | Comport. Atípicos TEA | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não | não |
 | `ticar-18-sdg` | TICAR-18 SDG | github:jadsonfraga/neuroped@b7adca686b8dba657b4b1317583f485cede7a0c8:client/src/data/interactiveScaleItemsAuthorial20260910.ts | não | sim |
 | `toc-drj-psicologia` | Escala Clínica de Gravidade do TOC – Adolescentes | ESCALA TOC PSICOLOGIA.docx — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://drive.google.com/file/d/1UiBCEPBHfEVUR3k3FyiHO1EqN-jbFV0N/view | não | sim |

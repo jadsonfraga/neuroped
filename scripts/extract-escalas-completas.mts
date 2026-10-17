@@ -30,22 +30,17 @@ import {
   mchatQuestions,
   mchatCriticalItems,
   mchatReversedItems,
-  carsCategories,
   snapQuestions,
   snapLabels,
   denverMilestones,
 } from "../client/src/data/scales.ts";
 
 import {
-  cdi2Questions,
-  cdi2Labels,
   phqaQuestions,
   phqaLabels,
   cssrsQuestions,
   crafftPartA,
   crafftPartB,
-  cbclDomains,
-  cbclLabels,
   vanderbiltDomains,
 } from "../client/src/data/expandedScales.ts";
 
@@ -56,9 +51,6 @@ import {
   scaredQuestions,
   scaredLabels,
   scaredSubscales,
-  connersQuestions,
-  connersLabels,
-  connersSubscales,
 } from "../client/src/data/newScales.ts";
 
 // ── Bateria Dr. Jadson ────────────────────────────────────────────────────────
@@ -133,10 +125,6 @@ const jsonPayload = {
       itensCriticos: mchatCriticalItems,
       itensInvertidos: mchatReversedItems,
     },
-    cars: {
-      nome: "CARS — Childhood Autism Rating Scale",
-      categorias: carsCategories,
-    },
     snapIV: {
       nome: "SNAP-IV — Rating Scale for ADHD",
       questoes: snapQuestions,
@@ -145,11 +133,6 @@ const jsonPayload = {
     denver: {
       nome: "Escala de Denver II — Marcos do Desenvolvimento",
       marcos: denverMilestones,
-    },
-    cdi2: {
-      nome: "CDI-2 — Children's Depression Inventory",
-      questoes: cdi2Questions,
-      labels: cdi2Labels,
     },
     phqA: {
       nome: "PHQ-A — Patient Health Questionnaire for Adolescents",
@@ -164,11 +147,6 @@ const jsonPayload = {
       nome: "CRAFFT — Car/Relax/Alone/Forget/Friends/Trouble (triagem de substâncias)",
       parteA: crafftPartA,
       parteB: crafftPartB,
-    },
-    cbcl: {
-      nome: "CBCL — Child Behavior Checklist",
-      dominios: cbclDomains,
-      labels: cbclLabels,
     },
     vanderbilt: {
       nome: "Vanderbilt Assessment Scale — TDAH",
@@ -185,12 +163,6 @@ const jsonPayload = {
       questoes: scaredQuestions,
       labels: scaredLabels,
       subscalas: scaredSubscales,
-    },
-    conners: {
-      nome: "Conners — Rating Scales for ADHD",
-      questoes: connersQuestions,
-      labels: connersLabels,
-      subscalas: connersSubscales,
     },
   },
 
@@ -356,21 +328,6 @@ mchatQuestions.forEach((q, i) => {
 });
 md.push("");
 
-// CARS
-md.push("### CARS — Childhood Autism Rating Scale");
-md.push("");
-for (const cat of carsCategories) {
-  md.push(`#### Categoria: ${(cat as any).name ?? (cat as any).category ?? JSON.stringify(cat).slice(0, 60)}`);
-  if ((cat as any).description) md.push((cat as any).description);
-  if ((cat as any).options && Array.isArray((cat as any).options)) {
-    md.push("**Opções de pontuação:**");
-    for (const opt of (cat as any).options) {
-      md.push(`- **${opt.score ?? opt.value ?? "?"}** — ${opt.description ?? opt.label ?? JSON.stringify(opt)}`);
-    }
-  }
-  md.push("");
-}
-
 // SNAP-IV
 md.push("### SNAP-IV — Rating Scale for ADHD");
 md.push(`**Labels:** ${snapLabels.join(" | ")}`);
@@ -397,19 +354,6 @@ for (const [area, items] of Object.entries(denverAreas)) {
   }
   md.push("");
 }
-
-// CDI-2
-md.push("### CDI-2 — Children's Depression Inventory");
-md.push(`**Labels:** ${cdi2Labels.join(" | ")}`);
-md.push("");
-cdi2Questions.forEach((q: any, i: number) => {
-  if (typeof q === "string") {
-    md.push(`${i + 1}. ${q}`);
-  } else {
-    md.push(`${i + 1}. ${JSON.stringify(q)}`);
-  }
-});
-md.push("");
 
 // PHQ-A
 md.push("### PHQ-A — Patient Health Questionnaire for Adolescents");
@@ -440,20 +384,6 @@ md.push("**Parte B:**");
 });
 md.push("");
 
-// CBCL
-md.push("### CBCL — Child Behavior Checklist");
-md.push(`**Labels:** ${cbclLabels.join(" | ")}`);
-md.push("");
-for (const dom of cbclDomains as any[]) {
-  md.push(`#### Domínio: ${dom.name ?? "—"}`);
-  if (dom.items && Array.isArray(dom.items)) {
-    dom.items.forEach((it: any, i: number) => {
-      md.push(`${i + 1}. ${typeof it === "string" ? it : JSON.stringify(it)}`);
-    });
-  }
-  md.push("");
-}
-
 // Vanderbilt
 md.push("### Vanderbilt Assessment Scale — TDAH");
 md.push("");
@@ -481,15 +411,6 @@ md.push("### SCARED — Screen for Child Anxiety Related Disorders");
 md.push(`**Labels:** ${scaredLabels.join(" | ")}`);
 md.push("");
 scaredQuestions.forEach((q: any, i: number) => {
-  md.push(`${i + 1}. ${typeof q === "string" ? q : JSON.stringify(q)}`);
-});
-md.push("");
-
-// Conners
-md.push("### Conners Rating Scales — TDAH");
-md.push(`**Labels:** ${connersLabels.join(" | ")}`);
-md.push("");
-connersQuestions.forEach((q: any, i: number) => {
   md.push(`${i + 1}. ${typeof q === "string" ? q : JSON.stringify(q)}`);
 });
 md.push("");
@@ -620,5 +541,5 @@ console.log(`   📄 ESCALAS_COMPLETAS_INTERNO.md  — ${mdKB} KB`);
 console.log(`   📊 Catálogo: ${allScales.length} escalas`);
 console.log(`   📊 PANT: ${pantScales.length} escalas passivas`);
 console.log(`   📊 Interativas: ${Object.keys(allInteractive).length} escalas com itens completos`);
-console.log(`   📊 Clássicos: M-CHAT-R/F, CARS, SNAP-IV, Denver, CDI-2, PHQ-A, C-SSRS, CRAFFT, CBCL, Vanderbilt, SDQ, SCARED, Conners`);
+console.log(`   📊 Clássicos: M-CHAT-R/F, SNAP-IV, Denver, PHQ-A, C-SSRS, CRAFFT, Vanderbilt, SDQ, SCARED`);
 console.log(`   📊 Bateria Jadson: EMDI, EAF, PDAE, ECARSI, EDI`);

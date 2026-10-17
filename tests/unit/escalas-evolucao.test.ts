@@ -6,11 +6,13 @@ import { calcularEvolucao, faixasDe, INSTRUMENTOS_EVOLUCAO, instrumentoDe, AVISO
 const r = (scaleName: string, totalScore: number | null, createdAt: string, extra: Record<string, unknown> = {}) => ({ id: `${scaleName}-${createdAt}`, scaleName, totalScore, createdAt, ...extra });
 
 describe("registro de instrumentos validados", () => {
-  it("reconhece instrumentos e não confunde CARS-2", () => {
+  it("reconhece instrumentos e deixa fora os proprietários sem aplicação no app", () => {
     assert.equal(instrumentoDe("M-CHAT-R/F (rastreio)")?.id, "mchat");
     assert.equal(instrumentoDe("PHQ-A")?.id, "phqa");
-    assert.equal(instrumentoDe("CARS")?.id, "cars");
+    // CARS e CDI-2 viraram fichas de referência (17/10/2026): sem faixa inventada, registros antigos ficam pendentes.
+    assert.equal(instrumentoDe("CARS"), null);
     assert.equal(instrumentoDe("CARS-2"), null);
+    assert.equal(instrumentoDe("CDI-2"), null);
     assert.equal(instrumentoDe("SNAP-IV"), null);
   });
 
@@ -19,8 +21,6 @@ describe("registro de instrumentos validados", () => {
     assert.deepEqual(phqa.map((f) => f.deEscore), [0, 5, 10, 15, 20]);
     const mchat = faixasDe(instrumentoDe("M-CHAT")!);
     assert.deepEqual(mchat.map((f) => f.deEscore), [0, 3, 8]);
-    const cdi = faixasDe(instrumentoDe("CDI-2")!);
-    assert.deepEqual(cdi.map((f) => f.deEscore), [0, 14, 20, 26]);
     const cshq = faixasDe(instrumentoDe("CSHQ")!);
     assert.equal(cshq[1].deEscore, 42);
   });
@@ -54,9 +54,6 @@ describe("calcularEvolucao", () => {
     const base = [r("PHQ-A", 5, "2026-03-01"), r("PHQ-A", 9, "2026-05-01")]; // +4 de 27 = 14,8%
     assert.ok(!calcularEvolucao(base).series[0].alertas.some((a) => a.codigo === "variacao-expressiva"));
     assert.ok(calcularEvolucao(base, { limiarAmplitude: 0.1 }).series[0].alertas.some((a) => a.codigo === "variacao-expressiva"));
-    const cdi = calcularEvolucao([r("CDI-2", 5, "2026-03-01"), r("CDI-2", 30, "2026-05-01")]).series[0].alertas;
-    assert.ok(!cdi.some((a) => a.codigo === "variacao-expressiva"), "CDI-2 sem amplitude documentada não gera variação percentual");
-    assert.ok(cdi.some((a) => a.codigo === "piora-de-faixa"));
   });
 
   it("versões diferentes não são comparadas", () => {

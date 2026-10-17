@@ -188,12 +188,9 @@ assert.equal(await store.get(storageKey), null, "clear remove o rascunho");
 const requiredPages = [
   "pant",
   "mchat",
-  "cars",
   "snap",
   "sdq",
   "scared",
-  "conners",
-  "cdi2",
   "phqa",
   "cssrs",
   "crafft",

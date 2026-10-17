@@ -42,10 +42,10 @@ export const opbParentCopy: Record<string, OPBCopy> = {
     parentExample: "Perguntas sobre sorriso social, busca de colo, estranhamento, interesse por outras crianças e expressão de emoções.",
     whyUseful: "Mapeia marcos sociais e emocionais que sustentam a interação.",
   },
-  cars: {
-    mainQuestion: "Qual a gravidade dos sintomas do espectro autista?",
-    parentExample: "A partir da observação e da sua entrevista, avaliam-se 15 áreas: relação social, imitação, resposta emocional, uso do corpo e da fala.",
-    whyUseful: "Quantifica a intensidade do espectro e apoia a definição do nível de suporte.",
+  "na-observacao-clinica-tea": {
+    mainQuestion: "Que sinais do espectro autista aparecem durante a consulta?",
+    parentExample: "O profissional registra o que observa: resposta ao nome, olhar e gestos, fala, brincar, movimentos repetitivos e reações a sons e texturas.",
+    whyUseful: "Organiza a observação clínica e o registro no prontuário; não gradua o nível de suporte nem substitui a avaliação padronizada.",
   },
   ecsm: {
     mainQuestion: "Como estão a cognição social e a comunicação?",
@@ -69,25 +69,25 @@ export const opbParentCopy: Record<string, OPBCopy> = {
     parentExample: "Professor e pais respondem sobre atenção, agitação, desafio, ansiedade e desempenho escolar.",
     whyUseful: "Cobre os múltiplos ambientes e rastreia comorbidades comuns ao TDAH.",
   },
-  brief2: {
-    mainQuestion: "As funções executivas (organização, controle) estão prejudicadas?",
-    parentExample: 'Itens como: "Esquece o que ia fazer", "Tem dificuldade de começar tarefas", "Perde materiais", "Explode com facilidade".',
-    whyUseful: "Mede no cotidiano a inibição, a memória de trabalho e a flexibilidade afetadas no TDAH.",
+  "na-funcoes-executivas-ampliado-pais": {
+    mainQuestion: "As funções executivas (começar, organizar, lembrar, controlar) atrapalham o dia a dia?",
+    parentExample: 'Itens como: "Esquece o que ia fazer no meio do caminho", "Adia o início das tarefas", "Pequenas frustrações viram choro ou raiva".',
+    whyUseful: "Mostra em quais das sete áreas executivas está a dificuldade, com forma paralela para o professor.",
   },
-  conners: {
-    mainQuestion: "Qual o perfil de atenção e de comportamento?",
-    parentExample: "Avaliação ampla de desatenção, hiperatividade, oposição, agressividade e relações.",
-    whyUseful: "Detalha o comportamento e as comorbidades disruptivas associadas.",
+  "na-atencao-atividade-pais": {
+    mainQuestion: "Como estão a atenção, a agitação e o autocontrole, e onde isso atrapalha?",
+    parentExample: "Você responde sobre desatenção, agitação, impulsividade, organização e o impacto em casa, na escola e nas amizades.",
+    whyUseful: "Separa sintomas de impacto por contexto e tem forma paralela para comparar com a escola.",
   },
   sdq: {
     mainQuestion: "Quais as dificuldades emocionais/comportamentais e quais as forças da criança?",
     parentExample: 'Itens como: "Distrai-se com facilidade", "Preocupa-se muito", "Ajuda os outros", "Tem boas amizades".',
     whyUseful: "Triagem breve e ampla (pais/professor/criança) que também valoriza os pontos fortes.",
   },
-  cbcl: {
-    mainQuestion: "Qual o perfil geral de comportamento e emoções?",
-    parentExample: "Você responde uma lista ampla: agitação, agressividade, tristeza, medos, queixas físicas e isolamento.",
-    whyUseful: "Padrão de perfil internalizante/externalizante para situar onde está o problema.",
+  "na-perfil-emocional-comportamental-pais": {
+    mainQuestion: "Qual o perfil geral de emoções, comportamento e relações?",
+    parentExample: "Você responde sobre tristeza, medos, queixas no corpo, atenção, raiva, regras e amizades nas últimas 4 semanas.",
+    whyUseful: "Situa onde está o problema e, com a forma do professor, mostra se aparece em casa, na escola ou nos dois.",
   },
 
   // ================================= ATRASO =================================
@@ -197,10 +197,10 @@ export const opbParentCopy: Record<string, OPBCopy> = {
     parentExample: "O adolescente responde sobre tristeza, perda de interesse, sono, apetite, cansaço e ideias de morte.",
     whyUseful: "Rastreio de 1ª linha de depressão na adolescência, com item de risco.",
   },
-  cdi2: {
-    mainQuestion: "A criança apresenta sintomas depressivos?",
-    parentExample: "A própria criança escolhe as frases que melhor descrevem humor, autoestima, escola e relações.",
-    whyUseful: "Autorrelato validado de depressão na idade escolar.",
+  "na-humor-crianca-autorrelato": {
+    mainQuestion: "Como a própria criança diz que tem se sentido?",
+    parentExample: "A criança responde frases curtas (não, um pouco, muito) sobre tristeza, vontade de brincar, como se vê, escola, sono e apetite.",
+    whyUseful: "Dá voz à criança e acompanha mudanças; o risco de se machucar é rastreado à parte.",
   },
   cssrs: {
     mainQuestion: "Há ideação ou comportamento suicida e qual a gravidade?",

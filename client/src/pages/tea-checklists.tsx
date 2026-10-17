@@ -442,7 +442,12 @@ export default function TeaChecklistsPage() {
         {/* Psychometric info */}
         <Card className="border-card-border">
           <CardContent className="p-4 space-y-3">
-            <h3 className="text-sm font-semibold text-foreground">Dados Psicométricos</h3>
+            <h3 className="text-sm font-semibold text-foreground">
+              Dados psicométricos do instrumento de referência ({scale.referenceInstrument})
+            </h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Valores publicados para o {scale.referenceInstrument}, aplicado com o material licenciado do editor. Não se aplicam a este roteiro autoral, que não tem validação nem ponto de corte.
+            </p>
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-lg bg-muted/50 p-3">
                 <p className="text-xs text-muted-foreground">Sensibilidade</p>
@@ -481,7 +486,7 @@ export default function TeaChecklistsPage() {
         </div>
         <div>
           <h1 className="text-lg font-bold">Checklists TEA</h1>
-          <p className="text-xs text-muted-foreground">Avaliação clínica adaptada — 5 instrumentos</p>
+          <p className="text-xs text-muted-foreground">5 roteiros autorais NeuroPed, sem validação nem ponto de corte. Não substituem os instrumentos padronizados citados como referência.</p>
         </div>
       </div>
 
@@ -497,7 +502,7 @@ export default function TeaChecklistsPage() {
                 className={`text-xs py-2 px-1 ${colors.tab}`}
                 data-testid={`tab-${scale.id}`}
               >
-                {scale.shortName}
+                {scale.tabLabel}
               </TabsTrigger>
             );
           })}
@@ -519,7 +524,7 @@ export default function TeaChecklistsPage() {
           </h3>
           <div className="space-y-3">
             {quickRefSummary.map((ref) => {
-              const scale = autismScales.find((s) => s.shortName === ref.shortName);
+              const scale = autismScales.find((s) => s.referenceInstrument === ref.shortName);
               const colors = scale ? colorMap[scale.color] || colorMap.blue : colorMap.blue;
               return (
                 <div key={ref.shortName} className="flex items-start gap-3">
@@ -545,8 +550,11 @@ export default function TeaChecklistsPage() {
         <CardContent className="p-4 space-y-4">
           <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
             <ChevronRight className="w-4 h-4" />
-            Comparação Psicométrica
+            Comparação psicométrica dos instrumentos de referência
           </h3>
+          <p className="text-xs text-muted-foreground">
+            Dados publicados dos instrumentos padronizados (aplicação fora do app, com material licenciado). Os roteiros autorais acima não têm validação própria.
+          </p>
           <div className="overflow-x-auto -mx-4 px-4">
             <table className="w-full text-xs" data-testid="table-psychometrics">
               <thead>
@@ -562,7 +570,7 @@ export default function TeaChecklistsPage() {
                   const colors = colorMap[scale.color] || colorMap.blue;
                   return (
                     <tr key={scale.id} className="border-b last:border-0">
-                      <td className={`py-2 pr-2 font-semibold ${colors.text}`}>{scale.shortName}</td>
+                      <td className={`py-2 pr-2 font-semibold ${colors.text}`}>{scale.referenceInstrument}</td>
                       <td className="py-2 px-2 text-muted-foreground">{scale.psychometrics.sensitivity}</td>
                       <td className="py-2 px-2 text-muted-foreground">{scale.psychometrics.specificity}</td>
                       <td className="py-2 pl-2 text-muted-foreground">{scale.bestFor}</td>
@@ -584,7 +592,7 @@ export default function TeaChecklistsPage() {
           </h3>
           <div className="space-y-4">
             {bestOfEach.map((entry) => {
-              const scale = autismScales.find((s) => s.shortName === entry.scale);
+              const scale = autismScales.find((s) => s.referenceInstrument === entry.scale);
               const colors = scale ? colorMap[scale.color] || colorMap.blue : colorMap.blue;
               return (
                 <div key={entry.scale} className={`rounded-xl ${colors.bgLight} ${colors.border} border p-3 space-y-2`}>
