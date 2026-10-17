@@ -18,6 +18,8 @@ const read = (relative: string) =>
 assert.equal(CANONICAL_PRICE_CENTS, 9900);
 assert.equal(asaasBaseUrl({ ASAAS_ENVIRONMENT: "sandbox" }), "https://api-sandbox.asaas.com/v3");
 assert.equal(asaasBaseUrl({ ASAAS_ENVIRONMENT: "production" }), "https://api.asaas.com/v3");
+assert.throws(() => asaasBaseUrl({}), /ASAAS_ENVIRONMENT_NOT_CONFIGURED/);
+assert.throws(() => asaasBaseUrl({ ASAAS_ENVIRONMENT: "   " }), /ASAAS_ENVIRONMENT_NOT_CONFIGURED/);
 assert.throws(() => asaasBaseUrl({ ASAAS_ENVIRONMENT: "invalid" }), /ASAAS_ENVIRONMENT_INVALID/);
 assert.equal(webhookEventKey({ id: "evt_1" }), "asaas:evt_1");
 assert.throws(() => webhookEventKey({}), /ASAAS_EVENT_ID_REQUIRED/);

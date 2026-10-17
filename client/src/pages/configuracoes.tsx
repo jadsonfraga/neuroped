@@ -625,9 +625,11 @@ function PlanoSection({ clinicId }: { clinicId: string }) {
     } catch (checkoutFailure) {
       const message = checkoutFailure instanceof Error ? checkoutFailure.message : "Falha ao iniciar o checkout.";
       setCheckoutError(
-        /provider|503|indispon/i.test(message)
-          ? "O gateway de pagamento ainda não está configurado nesta instalação. Fale com o suporte para ativar a assinatura."
-          : message,
+        /não configurad|BLOCKED_EXTERNAL/i.test(message)
+          ? "A cobrança ainda não está configurada nesta instalação. Nenhuma assinatura foi criada."
+          : /provider|503|indispon/i.test(message)
+            ? "O gateway de pagamento ainda não está configurado nesta instalação. Fale com o suporte para ativar a assinatura."
+            : message,
       );
     } finally {
       setCheckoutBusy(false);

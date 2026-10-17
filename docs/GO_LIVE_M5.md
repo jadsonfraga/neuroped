@@ -49,10 +49,13 @@ e-mail chega.
 O token do webhook é comparado em tempo constante em
 `functions/api/billing/_provider.ts`. Um token curto não é aceito.
 
-**Confirmação:** `pendencias` não contém `COBRANCA_NAO_CONFIGURADA`. Depois,
-um checkout ponta a ponta em sandbox com o webhook chegando e o entitlement
-virando `active` — é isso que transforma "billing testado" em "billing
-comprovado".
+**Confirmação:** `pendencias` não contém `COBRANCA_NAO_CONFIGURADA`. Antes de
+abrir checkout, rode o contrato operacional
+(`docs/ASAAS_OPERATIONAL_CONTRACT.md`). Exit 2 é `BLOCKED_EXTERNAL`: nenhuma
+cobrança foi criada. Exit 0 do `--probe` só mostra que a chave lê a conta.
+O que transforma "billing testado" em "billing comprovado" continua sendo um
+checkout ponta a ponta em sandbox com webhook e entitlement `active` a partir
+de `charge_paid` persistido.
 
 ## Passo 3 — Abrir o cadastro self-service
 
