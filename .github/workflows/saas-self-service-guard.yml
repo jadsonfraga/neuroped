@@ -35,6 +35,9 @@ on:
       - "tests/unit/email-verification.test.ts"
       - "scripts/ops/resend-operational-contract.ts"
       - "docs/RESEND_OPERATIONAL_CONTRACT.md"
+      - "tests/unit/cliente-zero-published-smoke.test.ts"
+      - "scripts/ops/cliente-zero-published-smoke.ts"
+      - "docs/SMOKE_CLIENTE_ZERO.md"
       - "functions/api/auth/_mailTransport.ts"
       - "ROADMAP.md"
       - "DECISIONS.md"
@@ -74,6 +77,9 @@ on:
       - "tests/unit/email-verification.test.ts"
       - "scripts/ops/resend-operational-contract.ts"
       - "docs/RESEND_OPERATIONAL_CONTRACT.md"
+      - "tests/unit/cliente-zero-published-smoke.test.ts"
+      - "scripts/ops/cliente-zero-published-smoke.ts"
+      - "docs/SMOKE_CLIENTE_ZERO.md"
       - "functions/api/auth/_mailTransport.ts"
       - "ROADMAP.md"
       - "DECISIONS.md"
@@ -143,6 +149,9 @@ jobs:
 
       - name: Contrato operacional Resend fail-closed
         run: node --import tsx tests/unit/resend-operational-contract.test.ts
+
+      - name: Smoke cliente-zero publicado (sondas sem efeito, onboarding do servidor)
+        run: node --import tsx tests/unit/cliente-zero-published-smoke.test.ts
 
       - name: TypeScript
         run: npm run check
