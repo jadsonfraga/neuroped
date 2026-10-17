@@ -129,6 +129,17 @@ evidência externa como `MOCKED_EXTERNAL` em seu próprio output.
   agregados existentes devem continuar derivados exclusivamente de fatos
   persistidos; nenhuma receita é inferida de checkout iniciado.
 
+## Adendo 2026-10-17 — contrato operacional Asaas
+
+O item 10 (Billing) continua `BLOCKED_EXTERNAL` para cobrança, pagamento,
+fatura, MRR e cliente pagante. O que mudou no código: o checkout deixou de
+assumir sandbox quando `ASAAS_ENVIRONMENT` falta e deixou de abrir link sem
+token de webhook. A classificação executável é
+`node --import tsx scripts/asaas-operational-contract.mts` (runbook
+`docs/ASAAS_OPERATIONAL_CONTRACT.md`). Sem credencial o comando sai 2 e não
+chama o provedor. Probe de leitura, quando houver credencial, não grava
+`charge_paid` e não altera a coluna Assinatura de `METRICS.md`.
+
 ## Evidência negativa
 
 Esta PR (`value/autonomous-saas` → main) foi publicada e recebeu commits e

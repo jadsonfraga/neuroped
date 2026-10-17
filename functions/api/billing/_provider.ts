@@ -40,21 +40,169 @@ export interface AsaasWebhookEvent {
   };
 }
 
+export const ASAAS_USER_AGENT = "NeuroPed/saas";
+
+const ASAAS_CONTRACT_CODES = new Set([
+  "ASAAS_API_KEY_NOT_CONFIGURED",
+  "ASAAS_WEBHOOK_TOKEN_NOT_CONFIGURED",
+  "ASAAS_WEBHOOK_TOKEN_INVALID",
+  "ASAAS_ENVIRONMENT_NOT_CONFIGURED",
+  "ASAAS_ENVIRONMENT_INVALID",
+  "ASAAS_API_KEY_ENVIRONMENT_MISMATCH",
+  "APP_BASE_URL_NOT_CONFIGURED",
+  "APP_BASE_URL_INSECURE",
+]);
+
+export type AsaasEnvironment = "sandbox" | "production";
+
+export interface AsaasOperationalReport {
+  pronto: boolean;
+  code: string;
+  blockedExternal: boolean;
+  ambiente: AsaasEnvironment | null;
+  host: string | null;
+  /** Este relatório nunca observa pagamento. O literal não muda. */
+  cobrancaExterna: "BLOCKED_EXTERNAL";
+  cobrancaComprovada: false;
+  receitaCentavos: 0;
+}
+
 function requireSecret(value: string | undefined, name: string, minLength = 16): string {
   const clean = value?.trim() ?? "";
   if (clean.length < minLength) throw new Error(`${name}_NOT_CONFIGURED`);
   return clean;
 }
 
-export function asaasBaseUrl(env: BillingProviderEnv): string {
-  const mode = (env.ASAAS_ENVIRONMENT ?? "sandbox").trim().toLowerCase();
-  if (mode === "production") return "https://api.asaas.com/v3";
-  if (mode === "sandbox") return "https://api-sandbox.asaas.com/v3";
+/**
+ * Token do webhook Asaas: 32–255 caracteres, sem espaço, e nunca a própria
+ * API key. Ausência e formato inválido falham fechado — não há default.
+ */
+function requireWebhookToken(value: string | undefined): string {
+  const clean = value?.trim() ?? "";
+  if (clean.length < 32) throw new Error("ASAAS_WEBHOOK_TOKEN_NOT_CONFIGURED");
+  if (clean.length > 255 || /\s/.test(clean) || clean.startsWith("$aact_")) {
+    throw new Error("ASAAS_WEBHOOK_TOKEN_INVALID");
+  }
+  return clean;
+}
+
+export function readAsaasEnvironment(env: BillingProviderEnv): AsaasEnvironment {
+  const mode = (env.ASAAS_ENVIRONMENT ?? "").trim().toLowerCase();
+  if (!mode) throw new Error("ASAAS_ENVIRONMENT_NOT_CONFIGURED");
+  if (mode === "sandbox" || mode === "production") return mode;
   throw new Error("ASAAS_ENVIRONMENT_INVALID");
 }
 
+export function asaasBaseUrl(env: BillingProviderEnv): string {
+  return readAsaasEnvironment(env) === "production"
+    ? "https://api.asaas.com/v3"
+    : "https://api-sandbox.asaas.com/v3";
+}
+
+/**
+ * Produção só aceita chave `$aact_prod_`. Sandbox recusa chave de produção.
+ * Chave sem prefixo documentado continua aceita só em sandbox: a suíte local
+ * usa chave sintética e chaves antigas do painel não trazem o prefixo. Em
+ * produção isso é falha fechada — não há como provar que a chave é de produção.
+ */
+function assertKeyMatchesEnvironment(environment: AsaasEnvironment, apiKey: string): void {
+  const productionKey = apiKey.startsWith("$aact_prod_");
+  const sandboxKey = apiKey.startsWith("$aact_hmlg_");
+  if (environment === "production") {
+    if (!productionKey) throw new Error("ASAAS_API_KEY_ENVIRONMENT_MISMATCH");
+    return;
+  }
+  if (productionKey && !sandboxKey) throw new Error("ASAAS_API_KEY_ENVIRONMENT_MISMATCH");
+}
+
+export function assertAsaasOutboundContract(env: BillingProviderEnv): {
+  environment: AsaasEnvironment;
+  baseUrl: string;
+  apiKey: string;
+} {
+  const environment = readAsaasEnvironment(env);
+  const apiKey = requireSecret(env.ASAAS_API_KEY, "ASAAS_API_KEY");
+  requireWebhookToken(env.ASAAS_WEBHOOK_TOKEN);
+  assertKeyMatchesEnvironment(environment, apiKey);
+  return { environment, baseUrl: asaasBaseUrl(env), apiKey };
+}
+
+export function asaasContractFailureCode(error: unknown): string | null {
+  const code = error instanceof Error ? error.message : "";
+  return ASAAS_CONTRACT_CODES.has(code) ? code : null;
+}
+
+/** Relatório operacional sem segredo, sem cobrança e sem receita. */
+export function describeAsaasOperationalContract(env: BillingProviderEnv): AsaasOperationalReport {
+  const blocked = (code: string, ambiente: AsaasEnvironment | null, host: string | null): AsaasOperationalReport => ({
+    pronto: false,
+    code,
+    blockedExternal: true,
+    ambiente,
+    host,
+    cobrancaExterna: "BLOCKED_EXTERNAL",
+    cobrancaComprovada: false,
+    receitaCentavos: 0,
+  });
+  let ambiente: AsaasEnvironment;
+  try {
+    ambiente = readAsaasEnvironment(env);
+  } catch (error) {
+    const code = asaasContractFailureCode(error);
+    return blocked(code ?? "ASAAS_ENVIRONMENT_INVALID", null, null);
+  }
+  try {
+    const target = assertAsaasOutboundContract(env);
+    assertCheckoutReturnUrl(env, target.environment);
+    return {
+      pronto: true,
+      code: "ASAAS_CONTRACT_READY",
+      blockedExternal: false,
+      ambiente: target.environment,
+      host: new URL(target.baseUrl).host,
+      cobrancaExterna: "BLOCKED_EXTERNAL",
+      cobrancaComprovada: false,
+      receitaCentavos: 0,
+    };
+  } catch (error) {
+    const code = asaasContractFailureCode(error);
+    const host = ambiente === "production" ? "api.asaas.com" : ambiente === "sandbox" ? "api-sandbox.asaas.com" : null;
+    return blocked(code ?? "ASAAS_CONTRACT_INVALID", ambiente, code ? host : null);
+  }
+}
+
+/**
+ * Leitura da conta no provedor. Não cria checkout, cobrança nem cliente.
+ * Sucesso da leitura não é pagamento.
+ */
+export async function probeAsaasReadOnly(
+  env: BillingProviderEnv,
+  fetchImpl: typeof fetch = fetch,
+): Promise<{ ok: boolean; httpStatus: number | null; code: string }> {
+  const target = assertAsaasOutboundContract(env);
+  assertCheckoutReturnUrl(env, target.environment);
+  try {
+    const response = await fetchImpl(`${target.baseUrl}/customers?limit=1`, {
+      method: "GET",
+      headers: {
+        accept: "application/json",
+        access_token: target.apiKey,
+        "user-agent": ASAAS_USER_AGENT,
+      },
+    });
+    await response.arrayBuffer();
+    if (response.ok) return { ok: true, httpStatus: response.status, code: "ASAAS_READ_PROBE_OK" };
+    if (response.status === 401 || response.status === 403) {
+      return { ok: false, httpStatus: response.status, code: "ASAAS_CREDENTIAL_REJECTED" };
+    }
+    return { ok: false, httpStatus: response.status, code: "ASAAS_READ_PROBE_FAILED" };
+  } catch {
+    return { ok: false, httpStatus: null, code: "BLOCKED_EXTERNAL_ASAAS_UNREACHABLE" };
+  }
+}
+
 export function validateAsaasWebhook(request: Request, env: BillingProviderEnv): boolean {
-  const expected = requireSecret(env.ASAAS_WEBHOOK_TOKEN, "ASAAS_WEBHOOK_TOKEN", 32);
+  const expected = requireWebhookToken(env.ASAAS_WEBHOOK_TOKEN);
   const received = request.headers.get("asaas-access-token")?.trim() ?? "";
   if (received.length !== expected.length) return false;
   let diff = 0;
@@ -76,6 +224,14 @@ export function checkoutReturnBaseUrl(env: BillingProviderEnv): URL {
   return new URL(requireSecret(raw, "APP_BASE_URL", 8));
 }
 
+function assertCheckoutReturnUrl(env: BillingProviderEnv, environment: AsaasEnvironment): URL {
+  const url = checkoutReturnBaseUrl(env);
+  if (environment === "production" && url.protocol !== "https:") {
+    throw new Error("APP_BASE_URL_INSECURE");
+  }
+  return url;
+}
+
 export function checkoutExternalReference(customerId: string): string {
   return `neuroped:${customerId}:${crypto.randomUUID()}`;
 }
@@ -95,9 +251,8 @@ export async function createAsaasRecurringCheckout(
 ): Promise<AsaasCheckout> {
   if (!Number.isInteger(params.seats) || params.seats < 1) throw new Error("INVALID_SEAT_COUNT");
 
-  const apiKey = requireSecret(env.ASAAS_API_KEY, "ASAAS_API_KEY");
-  const baseUrl = asaasBaseUrl(env);
-  const appBaseUrl = checkoutReturnBaseUrl(env);
+  const target = assertAsaasOutboundContract(env);
+  const appBaseUrl = assertCheckoutReturnUrl(env, target.environment);
   const now = new Date();
   const requestedDue = params.trialEndsAt ? new Date(params.trialEndsAt) : now;
   const nextDueDate =
@@ -137,12 +292,13 @@ export async function createAsaasRecurringCheckout(
     };
   }
 
-  const response = await fetch(`${baseUrl}/checkouts`, {
+  const response = await fetch(`${target.baseUrl}/checkouts`, {
     method: "POST",
     headers: {
       accept: "application/json",
       "content-type": "application/json",
-      access_token: apiKey,
+      access_token: target.apiKey,
+      "user-agent": ASAAS_USER_AGENT,
     },
     body: JSON.stringify(payload),
   });
@@ -211,13 +367,14 @@ async function asaasLifecycleRequest(
   body?: Record<string, unknown>,
   allowNotFound = false,
 ): Promise<void> {
-  const apiKey = requireSecret(env.ASAAS_API_KEY, "ASAAS_API_KEY");
-  const response = await fetch(`${asaasBaseUrl(env)}${path}`, {
+  const target = assertAsaasOutboundContract(env);
+  const response = await fetch(`${target.baseUrl}${path}`, {
     method,
     headers: {
       accept: "application/json",
       "content-type": "application/json",
-      access_token: apiKey,
+      access_token: target.apiKey,
+      "user-agent": ASAAS_USER_AGENT,
     },
     body: body ? JSON.stringify(body) : undefined,
   });
