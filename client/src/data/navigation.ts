@@ -4,6 +4,7 @@ import {
   Activity,
   Baby,
   Gamepad2,
+  Star,
   BookOpen,
   Brain,
   BrainCog,
@@ -67,6 +68,14 @@ const superNeuroPadNavigation: NavItem = {
   icon: Gamepad2,
   tone: "priority",
   description: "Pré-consulta integrada · 6 mundos · 2 a 17 anos · até 20 min · PDF",
+};
+
+const arenaNavigation: NavItem = {
+  href: "/neuropad-arena",
+  label: "Arena · NeuroPad",
+  icon: Star,
+  tone: "priority",
+  description: "Cinco brincadeiras curtas · 5 a 11 anos · leitura da rodada no aparelho",
 };
 
 const dyslexiaRiskNavigation: NavItem = {
@@ -142,6 +151,7 @@ export const featuredNavigation: NavItem[] = [
     tone: "priority",
     description: "Prescrição clínica",
   },
+  arenaNavigation,
   {
     href: "/por-faixa-etaria",
     label: "Por faixa etária",
@@ -204,7 +214,7 @@ export const featuredNavigation: NavItem[] = [
 ];
 
 export const navSections: NavSection[] = [
-  { title: "PRÉ-CONSULTA GUIADA", items: [superNeuroPadNavigation, obs10Navigation] },
+  { title: "PRÉ-CONSULTA GUIADA", items: [superNeuroPadNavigation, arenaNavigation, obs10Navigation] },
   {
     title: "",
     items: [{ href: "/", label: "Início", icon: Home }],

@@ -108,6 +108,7 @@ export const KNOWN_ROUTE_PATTERNS: readonly string[] = [
   "/memoria-clinica",
   "/missao-saude",
   "/neuroacompanhamento",
+  "/neuropad-arena",
   "/neuropsicologia",
   "/onboarding",
   "/orientacao-parental",
