@@ -697,6 +697,9 @@ async function main() {
           const style = getComputedStyle(element);
           if (style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0) return null;
           if (element.closest("[hidden], [inert], [aria-hidden='true']")) return null;
+          // Controle recortado no padrão sr-only (radio nativo oculto atrás de um <label> grande):
+          // recorte zerado não recebe ponteiro, então não é alvo de toque; o <label> visível segue medido.
+          if (/^rect\(0px,? 0px,? 0px,? 0px\)$/.test(style.clip) || style.clipPath === "inset(50%)") return null;
           const box = element.getBoundingClientRect();
           return box.width > 0 && box.height > 0 ? box : null;
         };
