@@ -114,14 +114,15 @@ head("A) Lactente 0–6m — bloqueios duros");
 }
 
 // ---------- B) 16–30 meses + TEA ----------
-head("B) 16–30m + TEA — M-CHAT presente; comerciais não 'completos'");
+head("B) 16–30m + TEA — sinais precoces (autoral) presente; licenciados não 'completos'");
 {
   const r = run({ queixas: ["tea"], ageMonths: 23 });
   ok(r.length > 0, "16–30m+TEA deve retornar candidatos");
   ok(
-    r.some((m) => m.scale.id === "mchat"),
-    "M-CHAT-R/F deve aparecer (triagem TEA 16–30m)",
+    r.some((m) => m.scale.id === "na-sinais-precoces-tea-pais"),
+    "Sinais precoces do espectro autista (autoral) deve aparecer (triagem TEA 16–30m; substitui o M-CHAT-R/F)",
   );
+  ok(!r.some((m) => m.scale.id === "mchat"), "M-CHAT-R/F (licenciado, retirado) não pode ser oferecido");
   const commercial = r.filter((m) =>
     ["ados2", "cars", "adir", "srs2"].includes(m.scale.id),
   );

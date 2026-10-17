@@ -11,36 +11,46 @@
  * aqui basta listar as ROTAS recomendadas por queixa.
  */
 
+/**
+ * Os formulários SWYC Marcos (um por janela de idade) contam como uma única rota
+ * curada: o catálogo já mostra só o formulário da idade da criança.
+ */
+const SWYC_MARCOS = "/generic-scale/swyc-marcos";
+export function curatedRouteKey(route: string): string {
+  return /^\/generic-scale\/swyc-marcos-\d+m$/.test(route) ? SWYC_MARCOS : route;
+}
+
 // Primeira linha por queixa isolada (rotas existentes no app, em ordem de prioridade).
 export const firstLineByQueixa: Record<string, string[]> = {
-  tea: ["/mchat", "/ips", "/generic-scale/na-comportamentos-repetitivos-pais", "/tea", "/generic-scale/vineland", "/testes-diretos"],
-  tdah: ["/snap", "/vanderbilt", "/generic-scale/na-atencao-atividade-pais", "/generic-scale/na-funcoes-executivas-ampliado-pais", "/sdq", "/testes-diretos"],
-  ansiedade: ["/scared", "/sdq", "/generic-scale/na-perfil-emocional-comportamental-pais", "/testes-diretos"],
-  depressao: ["/generic-scale/na-humor-crianca-autorrelato", "/phqa", "/cssrs", "/sdq"],
+  tea: ["/generic-scale/na-sinais-precoces-tea-pais", "/ips", "/generic-scale/na-comportamentos-repetitivos-pais", "/tea", "/generic-scale/na-comportamento-adaptativo-pais", "/testes-diretos"],
+  tdah: ["/snap", "/generic-scale/na-atencao-atividade-pais", "/generic-scale/na-atencao-atividade-professor", "/generic-scale/na-funcoes-executivas-ampliado-pais", "/generic-scale/swyc-ppsc", "/testes-diretos"],
+  ansiedade: ["/generic-scale/na-ansiedade-autorrelato", "/generic-scale/na-ansiedade-seguimento-pais", "/generic-scale/na-perfil-emocional-comportamental-pais", "/testes-diretos"],
+  depressao: ["/generic-scale/na-humor-crianca-autorrelato", "/phqa", "/cssrs", "/generic-scale/na-perfil-emocional-comportamental-pais"],
   suicidio: ["/cssrs", "/phqa"],
   aprendizagem: ["/tde2", "/testes-diretos"],
-  linguagem: ["/asq3", "/denver", "/testes-diretos"],
-  atraso: ["/denver", "/asq3", "/generic-scale/vineland", "/pant"],
-  comportamento: ["/sdq", "/generic-scale/na-perfil-emocional-comportamental-pais", "/generic-scale/na-atencao-atividade-pais", "/vanderbilt", "/eaah"],
-  sono: ["/cshq"],
+  linguagem: [SWYC_MARCOS, "/testes-diretos"],
+  atraso: [SWYC_MARCOS, "/generic-scale/na-comportamento-adaptativo-pais", "/pant"],
+  comportamento: ["/generic-scale/na-perfil-emocional-comportamental-pais", "/generic-scale/swyc-ppsc", "/generic-scale/na-atencao-atividade-pais", "/generic-scale/na-perfil-emocional-comportamental-professor", "/eaah"],
+  sono: ["/generic-scale/na-sono-crianca-pais"],
   tiques: ["/ygtss", "/generic-scale/na-atencao-atividade-pais"],
   cognicao: ["/testes-diretos", "/pant"],
-  funcionalidade: ["/generic-scale/vineland", "/gmfcs"],
+  funcionalidade: ["/generic-scale/na-comportamento-adaptativo-pais", "/gmfcs", "/generic-scale/na-qualidade-vida-pais"],
 };
 
 // Baterias para QUEIXAS CRUZADAS (comorbidade). Chave = queixas ordenadas
-// alfabeticamente e unidas por "+". Combina broadband (SDQ/CBCL) com alvos.
+// alfabeticamente e unidas por "+". Combina o rastreio amplo (perfil emocional e
+// comportamental, SWYC) com alvos.
 export const firstLineByCrossed: Record<string, string[]> = {
-  "tdah+tea": ["/mchat", "/snap", "/generic-scale/na-atencao-atividade-pais", "/generic-scale/vineland", "/sdq"],
-  "ansiedade+tdah": ["/snap", "/scared", "/sdq", "/generic-scale/na-perfil-emocional-comportamental-pais"],
+  "tdah+tea": ["/generic-scale/na-sinais-precoces-tea-pais", "/snap", "/generic-scale/na-atencao-atividade-pais", "/generic-scale/na-comportamento-adaptativo-pais", "/generic-scale/na-perfil-emocional-comportamental-pais"],
+  "ansiedade+tdah": ["/snap", "/generic-scale/na-ansiedade-autorrelato", "/generic-scale/na-ansiedade-seguimento-pais", "/generic-scale/na-perfil-emocional-comportamental-pais"],
   "aprendizagem+tdah": ["/snap", "/testes-diretos", "/tde2"],
-  "ansiedade+depressao": ["/scared", "/generic-scale/na-humor-crianca-autorrelato", "/phqa", "/cssrs"],
+  "ansiedade+depressao": ["/generic-scale/na-ansiedade-autorrelato", "/generic-scale/na-humor-crianca-autorrelato", "/phqa", "/cssrs"],
   "depressao+suicidio": ["/cssrs", "/phqa", "/generic-scale/na-humor-crianca-autorrelato"],
-  "linguagem+tea": ["/mchat", "/asq3", "/testes-diretos"],
-  "atraso+tea": ["/mchat", "/denver", "/asq3", "/generic-scale/vineland"],
-  "comportamento+tdah": ["/snap", "/generic-scale/na-atencao-atividade-pais", "/sdq", "/eaah"],
-  "aprendizagem+tea": ["/testes-diretos", "/generic-scale/vineland"],
-  "ansiedade+tea": ["/scared", "/sdq", "/generic-scale/na-comportamentos-repetitivos-pais"],
+  "linguagem+tea": ["/generic-scale/na-sinais-precoces-tea-pais", SWYC_MARCOS, "/testes-diretos"],
+  "atraso+tea": ["/generic-scale/na-sinais-precoces-tea-pais", SWYC_MARCOS, "/generic-scale/na-comportamento-adaptativo-pais"],
+  "comportamento+tdah": ["/snap", "/generic-scale/na-atencao-atividade-pais", "/generic-scale/na-perfil-emocional-comportamental-pais", "/eaah"],
+  "aprendizagem+tea": ["/testes-diretos", "/generic-scale/na-comportamento-adaptativo-pais"],
+  "ansiedade+tea": ["/generic-scale/na-ansiedade-autorrelato", "/generic-scale/na-ansiedade-seguimento-pais", "/generic-scale/na-comportamentos-repetitivos-pais"],
 };
 
 export function crossedKey(queixas: string[]): string {
@@ -54,12 +64,13 @@ export function crossedKey(queixas: string[]): string {
  */
 export function curatedBoost(route: string | undefined, selectedQueixas: string[]): number {
   if (!route || selectedQueixas.length === 0) return 0;
+  const key = curatedRouteKey(route);
   let boost = 0;
 
   if (selectedQueixas.length >= 2) {
     const combo = firstLineByCrossed[crossedKey(selectedQueixas)];
     if (combo) {
-      const i = combo.indexOf(route);
+      const i = combo.indexOf(key);
       if (i >= 0) boost = Math.max(boost, 30 - i * 3);
     }
   }
@@ -67,7 +78,7 @@ export function curatedBoost(route: string | undefined, selectedQueixas: string[
   for (const q of selectedQueixas) {
     const list = firstLineByQueixa[q];
     if (!list) continue;
-    const i = list.indexOf(route);
+    const i = list.indexOf(key);
     if (i >= 0) boost = Math.max(boost, 20 - i * 2);
   }
   return boost;

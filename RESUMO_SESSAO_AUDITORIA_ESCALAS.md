@@ -154,21 +154,6 @@ NÍVEL 3-6: Escaladas de risco
 Ação: ENCAMINHAMENTO URGENTE / EMERGÊNCIA
 ```
 
-### SCARED - Item "Preocupa-se com coisas?"
-```
-Escala: 0=Nunca | 1=Às vezes | 2=Muitas vezes
-
-🟣 0 = NUNCA (normal):
-- Relaxa antes de teste
-- Dorme bem a noite anterior
-- Nervosismo passa rápido
-
-🟣 2 = MUITAS VEZES (severo):
-- Preocupação DIÁRIA que interfere
-- Perde sono
-- Quer desistir de atividades
-```
-
 ---
 
 ## 📁 ARQUIVOS CRIADOS/MODIFICADOS

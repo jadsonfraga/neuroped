@@ -28,30 +28,36 @@ const catalog = [...core, ...noCostWorldScales.filter((s) => !(s.id.startsWith("
 const ids = new Set(catalog.map((s) => s.id));
 const rank = (q) => searchScaleCatalog(catalog, q).map((h) => h.scale.id);
 
+// Licenciados retirados (17/10/2026): o nome do original leva à alternativa no app.
+const SINAIS = "na-sinais-precoces-tea-pais", ATP = "na-atencao-atividade-professor", ATPA = "na-atencao-atividade-pais";
+const PERFIL = "na-perfil-emocional-comportamental-pais", ANS = "na-ansiedade-autorrelato", SONO = "na-sono-crianca-pais";
+const QV = "na-qualidade-vida-pais", SUBST = "na-uso-substancias-adolescente";
+const SWYC = ["2m", "4m", "6m", "9m", "12m", "15m", "18m", "24m", "30m", "36m", "48m", "60m"].map((m) => `swyc-marcos-${m}`);
+
 // [consulta, ids aceitáveis no top-3]
 const cases = [
-  ["mchat", ["mchat"]], ["m-chat", ["mchat"]], ["m chat", ["mchat"]], ["MCHAT R/F", ["mchat"]], ["chat modificado", ["mchat"]],
+  ["mchat", [SINAIS]], ["m-chat", [SINAIS]], ["m chat", [SINAIS]], ["MCHAT R/F", [SINAIS]], ["chat modificado", [SINAIS]],
   ["snap", ["snap"]], ["snap iv", ["snap"]], ["snap 4", ["snap"]], ["snapiv", ["snap"]], ["swanson", ["snap"]],
-  ["vanderbilt", ["vanderbilt"]], ["vanderbild", ["vanderbilt"]], ["nichq", ["vanderbilt"]],
+  ["vanderbilt", [ATP, ATPA]], ["vanderbild", [ATP, ATPA]], ["nichq", [ATP, ATPA]],
   ["conners", ["na-atencao-atividade-pais", "na-atencao-atividade-professor"]], ["connors", ["na-atencao-atividade-pais"]], ["coners", ["na-atencao-atividade-pais"]],
   ["brief", ["na-funcoes-executivas-ampliado-pais", "na-funcoes-executivas-escola-professor"]], ["brief 2", ["na-funcoes-executivas-ampliado-pais", "na-funcoes-executivas-escola-professor"]], ["funções executivas", ["na-funcoes-executivas-ampliado-pais", "na-funcoes-executivas-escola-professor", "na-funcoes-executivas-casa-pais", "ipn-tdah-fe-executivo-10", "j26-220"]],
-  ["cbcl", ["na-perfil-emocional-comportamental-pais", "na-perfil-emocional-comportamental-professor"]], ["achenbach", ["na-perfil-emocional-comportamental-pais", "na-perfil-emocional-comportamental-professor"]], ["sdq", ["sdq"]], ["goodman", ["sdq"]], ["psc", ["psc17"]], ["psc-17", ["psc17"]], ["psc17", ["psc17"]],
-  ["scared", ["scared"]], ["scarred", ["scared"]], ["scas", ["scas"]], ["spence", ["scas"]],
+  ["cbcl", ["na-perfil-emocional-comportamental-pais", "na-perfil-emocional-comportamental-professor"]], ["achenbach", ["na-perfil-emocional-comportamental-pais", "na-perfil-emocional-comportamental-professor"]], ["sdq", [PERFIL]], ["goodman", [PERFIL]], ["psc", ["psc17"]], ["psc-17", ["psc17"]], ["psc17", ["psc17"]],
+  ["scared", [ANS]], ["scarred", [ANS]], ["scas", ["scas"]], ["spence", ["scas"]],
   ["gad7", ["gad7", "gad7ped"]], ["gad-7", ["gad7", "gad7ped"]], ["gad 7", ["gad7", "gad7ped"]],
   ["cdi", ["na-humor-crianca-autorrelato"]], ["cdi-2", ["na-humor-crianca-autorrelato"]], ["kovacs", ["na-humor-crianca-autorrelato"]],
   ["phq", ["phqa"]], ["phq-a", ["phqa"]], ["phqa", ["phqa"]], ["phq9", ["phqa"]],
   ["cssrs", ["cssrs"]], ["c-ssrs", ["cssrs"]], ["columbia", ["cssrs"]],
   ["ygtss", ["ygtss"]], ["yale tic", ["ygtss"]], ["tourette", ["ygtss", "tsi", "ticar-18-sdg"]],
   ["cybocs", ["cybocs", "cybocs-sr"]], ["cy-bocs", ["cybocs", "cybocs-sr"]], ["yale brown", ["cybocs", "cybocs-sr"]],
-  ["cshq", ["cshq"]], ["hábitos de sono", ["cshq"]], ["epworth", ["ess-adol"]],
-  ["pedsql", ["pedsql"]], ["qualidade de vida", ["pedsql"]],
-  ["asq", ["asq3", "asq-suicide"]], ["asq-3", ["asq3"]], ["ages and stages", ["asq3"]],
-  ["denver", ["denver"]], ["denver ii", ["denver"]], ["denver 2", ["denver"]],
+  ["cshq", [SONO]], ["hábitos de sono", [SONO]], ["epworth", ["ess-adol"]],
+  ["pedsql", [QV]], ["qualidade de vida", [QV, "na-qualidade-vida-autorrelato", "na-qualidade-vida-epilepsia"]],
+  ["asq", ["asq-suicide", ...SWYC]], ["asq-3", SWYC], ["ages and stages", SWYC],
+  ["denver", SWYC], ["denver ii", SWYC], ["denver 2", SWYC],
   ["cars", ["na-observacao-clinica-tea"]], ["cars 2", ["na-observacao-clinica-tea"]], ["cars-2", ["na-observacao-clinica-tea"]],
   ["cat clams", ["catclams"]], ["capute", ["catclams"]],
   ["gmfcs", ["gmfcs"]], ["macs", ["macs"]], ["ashworth", ["ashworth"]], ["espasticidade", ["ashworth"]],
   ["wong baker", ["wongbaker"]], ["flacc", ["flacc", "rflacc"]], ["apgar", ["apgar"]], ["ballard", ["ballard"]],
-  ["crafft", ["crafft"]], ["who5", ["who5"]], ["who-5", ["who5"]], ["hine", ["hine"]], ["hammersmith", ["hine"]],
+  ["crafft", [SUBST]], ["who5", ["who5"]], ["who-5", ["who5"]], ["hine", ["hine"]], ["hammersmith", ["hine"]],
   ["ymrs", ["ymrs"]], ["mania", ["ymrs"]], ["prime", ["prime-screen"]],
   ["ace", ["ace"]], ["cats", ["cats"]], ["cpss", ["cpss-v"]],
   ["scoff", ["scoff"]], ["arfid", ["etare"]], ["etare", ["etare"]],
@@ -60,21 +66,21 @@ const cases = [
   ["ipn tea", ["ipn-tea-familia-100", "ipn-tea-escola-100", "ipn-tea-adolescente-60", "ipn-tea-observacao-60", "ipn-tea-18-30m"]],
   ["ipn tdah familia", ["ipn-tdah-fe-familia-48"]], ["ipn epi", ["ipn-epi-seg-familia-50"]],
   ["mutismo seletivo", ["mutismo-seletivo-familia-30", "ems", "mutismo-seletivo-escola-30"]],
-  ["autismo", ["mchat", "na-observacao-clinica-tea", "atec", "q-chat-10"]], ["autimso", ["mchat", "na-observacao-clinica-tea", "atec", "q-chat-10", "tea-checklists"]],
-  ["tdah", ["snap", "na-atencao-atividade-pais", "vanderbilt", "ipn-tdah-fe-familia-48"]], ["adhd", ["snap", "na-atencao-atividade-pais", "vanderbilt", "ipn-tdah-fe-familia-48", "world-vanderbilt-parent-teacher"]],
-  ["ansiedade", ["scared", "scas", "gad7", "gad7ped", "eai"]], ["ansiedad", ["scared", "scas", "gad7", "gad7ped", "eai"]],
+  ["autismo", [SINAIS, "na-observacao-clinica-tea", "atec", "q-chat-10"]], ["autimso", [SINAIS, "na-observacao-clinica-tea", "atec", "q-chat-10", "tea-checklists"]],
+  ["tdah", ["snap", ATPA, ATP, "ipn-tdah-fe-familia-48"]], ["adhd", ["snap", ATPA, ATP, "ipn-tdah-fe-familia-48"]],
+  ["ansiedade", [ANS, "scas", "gad7", "gad7ped", "eai"]], ["ansiedad", [ANS, "scas", "gad7", "gad7ped", "eai"]],
   ["depressão", ["na-humor-crianca-autorrelato", "phqa", "smfq", "edi"]], ["depressao", ["na-humor-crianca-autorrelato", "phqa", "smfq", "edi"]],
-  ["não para quieto", ["snap", "na-atencao-atividade-pais", "vanderbilt", "afi12-sdg"]],
+  ["não para quieto", ["snap", ATPA, ATP, "afi12-sdg"]],
   ["não fala", ["j26-091", "j26-003", "ipn-lfc-familia-50", "catclams", "ipn-lfc-fala-motora-20"]],
   ["xixi na cama", ["dvss", "bowel-bladder-checklist"]],
   ["dor de cabeça", ["cefaleia-calendario", "ecnfaj-1"]], ["cefaleia", ["cefaleia-calendario", "ecnfaj-1"]],
   ["crises", ["epilepsia-diario", "lsss", "ssq", "hague-szs"]], ["convulsão", ["epilepsia-diario", "lsss", "ssq", "hague-szs"]],
   ["seletividade alimentar", ["sarf12-sdg", "etare", "scoff"]],
   ["suicídio", ["cssrs", "asq-suicide", "ecar-si"]], ["risco suicida", ["cssrs", "asq-suicide", "ecar-si"]],
-  ["sono", ["cshq", "bisq", "bears", "sdrd12-sdg"]], ["dorme mal", ["cshq", "bisq", "bears", "sdrd12-sdg", "vigia-sd-20-sdg"]],
+  ["sono", [SONO, "bisq", "bears", "sdrd12-sdg"]], ["dorme mal", [SONO, "bisq", "bears", "sdrd12-sdg", "vigia-sd-20-sdg"]],
   ["tiques", ["ygtss", "tsi", "ticar-18-sdg"]], ["toc", ["cybocs", "oci-cv", "docs", "toc-drj-psicologia"]],
-  ["professor tdah", ["snap", "vanderbilt", "na-atencao-atividade-professor", "ipn-tdah-fe-escola-32", "j26-225"]],
-  ["escala gratuita ansiedade", ["scared", "gad7", "scas", "gad7ped"]],
+  ["professor tdah", ["snap", ATP, "ipn-tdah-fe-escola-32", "j26-225"]],
+  ["escala gratuita ansiedade", ["gad7", "scas", "gad7ped", ANS]],
   ["efeitos colaterais", ["uku", "vigia-med-24", "balanco-med-24-sdg", "bars"]],
   ["satisfação medicação", ["esm-edj", "j26-184"]],
   ["fluência verbal", ["fas-fluencia", "j26-086"]], ["fas", ["fas-fluencia", "fas-pr"]],
@@ -118,7 +124,7 @@ for (const query of ["mchat", "vanderbild", "não para quieto", "cars 2"]) {
   }
 }
 const fuzzy = searchScaleCatalog(catalog, "vanderbild")[0];
-assert.equal(fuzzy.scale.id, "vanderbilt");
+assert.equal(fuzzy.scale.id, ATP, "nome do original retirado leva à alternativa");
 assert.ok(/vanderbild/.test(describeSearchHit(fuzzy)), "explica o que foi digitado");
 assert.deepEqual(highlightSegments("M-CHAT-R/F", ["mchat"]).map((s) => s.hit), [true, false], "realce atravessa a pontuação da sigla");
 assert.equal(highlightSegments("Denver II", ["xyz"]).length, 1, "sem termo, sem realce");
@@ -127,7 +133,7 @@ assert.ok(highlightTermsOf(searchScaleCatalog(catalog, "cars 2")[0]).length > 0)
 // "Você quis dizer" para termo próximo de instrumento e de queixa.
 const complaints = queixas.map((q) => ({ id: q.id, label: q.label }));
 const sugg = suggestSearchCorrections(catalog, "vandrbilt", complaints);
-assert.ok(sugg.some((s) => s.id === "vanderbilt"), `sugestão de instrumento: ${JSON.stringify(sugg)}`);
+assert.ok(sugg.some((s) => s.id === ATP || s.id === "snap"), `sugestão de instrumento: ${JSON.stringify(sugg)}`);
 const suggQ = suggestSearchCorrections(catalog, "epilepsa", complaints);
 assert.ok(suggQ.some((s) => s.kind === "queixa" && s.id === "epilepsia"), `sugestão de queixa: ${JSON.stringify(suggQ)}`);
 assert.deepEqual(suggestSearchCorrections(catalog, "zzqqxxww", complaints), [], "sem vizinho, sem sugestão");

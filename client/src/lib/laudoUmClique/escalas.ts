@@ -1,12 +1,10 @@
 // ============================================================================
 // laudoUmClique/escalas.ts — normaliza resultados salvos em escalas pontuadas
 // ----------------------------------------------------------------------------
-// Nunca inventa escore. Usa o que está salvo (totalScore/classification). Só
-// deriva classificação quando existe um classificador oficial no app para a
-// escala (hoje: M-CHAT-R/F, pontos de corte já testados em
-// tests/unit/clinical-scoring-cutoffs.test.ts). Sem escore → "sem-escore".
+// Nunca inventa escore. Usa o que está salvo (totalScore/classification) e não
+// deriva classificação: o único classificador usado aqui (M-CHAT-R/F) saiu do
+// app em 17/10/2026 com o instrumento licenciado. Sem escore → "sem-escore".
 // ============================================================================
-import { classifyMchat } from "../../data/mchat";
 import type { EscalaPontuada } from "./tipos";
 
 function isRecord(v: unknown): v is Record<string, unknown> {
@@ -42,12 +40,8 @@ export function escalasDeResultados(resultados: unknown[]): EscalaPontuada[] {
     const nome = nomeDe(r);
     const escore = escoreDe(r);
     let classificacao = texto(r.classification);
-    let origem: EscalaPontuada["origem"] = escore === null ? "sem-escore" : "salvo";
+    const origem: EscalaPontuada["origem"] = escore === null ? "sem-escore" : "salvo";
     if (CLASSIFICACAO_GENERICA.test(classificacao)) classificacao = "";
-    if (!classificacao && escore !== null && /m-?chat/i.test(`${nome} ${texto(r.instrumentId)}`)) {
-      classificacao = classifyMchat(escore).risk;
-      origem = "derivado";
-    }
     return {
       id: texto(r.id) || `escala-${i + 1}`,
       nome,

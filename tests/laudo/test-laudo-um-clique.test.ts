@@ -79,13 +79,14 @@ describe("pseudonimização", () => {
 });
 
 describe("escalas pontuadas", () => {
-  it("usa escore salvo, deriva M-CHAT pelo corte oficial e nunca inventa escore", () => {
+  it("usa escore salvo, não deriva classificação e nunca inventa escore", () => {
     const e = caso();
     const snap = e.escalas.find((s) => s.nome === "SNAP-IV")!;
     const mchat = e.escalas.find((s) => /M-CHAT/.test(s.nome))!;
     const cbcl = e.escalas.find((s) => s.nome === "CBCL")!;
     assert.equal(snap.escore, 38); assert.equal(snap.origem, "salvo");
-    assert.equal(mchat.origem, "derivado"); assert.match(mchat.classificacao, /Moderado/i);
+    // M-CHAT-R/F saiu do app em 17/10/2026: o registro antigo mantém o escore salvo, sem faixa derivada.
+    assert.equal(mchat.escore, 3); assert.equal(mchat.origem, "salvo"); assert.equal(mchat.classificacao, "");
     assert.equal(cbcl.escore, null); assert.equal(cbcl.origem, "sem-escore"); assert.equal(cbcl.incluir, false);
   });
 

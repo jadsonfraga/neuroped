@@ -1,57 +1,20 @@
 // Pontos de corte clínicos das escalas de rastreio.
 // Migrado de client/src/data/clinicalScoring.test.ts, que importava `vitest`
 // (dependência inexistente no projeto) e por isso nunca era executado.
+// M-CHAT-R/F, SDQ, Vanderbilt e SCARED saíram do app em 17/10/2026 (licenciados):
+// os classificadores foram removidos com os itens.
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { classifyMchat } from "../../client/src/data/scales";
 import {
   classifyCssrs,
   classifyPhqa,
-  classifyVanderbilt,
   getCssrsSkipLogicSummary,
   getVisibleCssrsQuestionIds,
   hasPositivePhqaSelfHarm,
   pruneCssrsAnswers,
 } from "../../client/src/data/expandedScales";
-import { classifyScared, classifySdq } from "../../client/src/data/newScales";
 
 describe("clinical scoring cutoffs", () => {
-  it("M-CHAT-R/F classifies low, moderate and high risk", () => {
-    assert.match(classifyMchat(2).risk, /Baixo/i);
-    assert.match(classifyMchat(3).risk, /Moderado/i);
-    assert.match(classifyMchat(8).risk, /Alto/i);
-  });
-
-  it("SDQ classifies total difficulty bands", () => {
-    assert.equal(
-      classifySdq({ emotional: 3, conduct: 2, hyperactivity: 4, peer: 3, prosocial: 8 }).classification,
-      "Normal",
-    );
-    assert.match(
-      classifySdq({ emotional: 4, conduct: 3, hyperactivity: 6, peer: 3, prosocial: 6 }).classification,
-      /Lim/i,
-    );
-    assert.equal(
-      classifySdq({ emotional: 6, conduct: 5, hyperactivity: 8, peer: 5, prosocial: 4 }).classification,
-      "Anormal",
-    );
-  });
-
-  it("Vanderbilt flags domains at established item-count thresholds", () => {
-    const results = classifyVanderbilt(6, 6, 4);
-    assert.equal(results.find((item) => item.domain.includes("Desaten"))?.positive, true);
-    assert.equal(results.find((item) => item.domain.includes("Hiperatividade"))?.positive, true);
-    assert.equal(results.find((item) => item.domain.includes("Conduta"))?.positive, true);
-    assert.equal(classifyVanderbilt(5, 5, 3).every((item) => item.positive === false), true);
-  });
-
-  it("SCARED classifies anxiety bands and subscale positivity", () => {
-    assert.match(classifyScared(24, {}).classification, /Sem indicativo/i);
-    assert.match(classifyScared(25, { gad: 9 }).classification, /Poss/i);
-    const high = classifyScared(30, { gad: 9 });
-    assert.match(high.classification, /Prov/i);
-    assert.equal(high.subscaleResults.find((item) => item.name.includes("Generalizada"))?.positive, true);
-  });
 
   it("PHQ-A preserves depressive severity bands", () => {
     assert.equal(classifyPhqa(4).color, "emerald");

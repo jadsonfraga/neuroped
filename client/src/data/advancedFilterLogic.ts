@@ -1149,15 +1149,15 @@ export function filterScalesWithClinicalRescue(
 // Regra de ouro TOTAL (2026-07-12): a lista contém apenas rastreadores amplos
 // APLICÁVEIS no app — Portage/BASC-3/ASQ:SE-2 (licenciados, sem aplicação)
 // saíram do banco; PANT e EFDI (autorais, 0-216m, aplicação completa) garantem
-// fallback triplo também em lactentes.
+// fallback triplo também em lactentes. Denver II, ASQ-3 e SDQ (licenciados) saíram
+// em 17/10/2026; entram os formulários SWYC (livres), um por janela de idade.
 export const BROADBAND_SCREENER_IDS = [
-  "denver", // 0-72m - desenvolvimento
-  "asq3", // 1-66m - desenvolvimento
+  ...["2m", "4m", "6m", "9m", "12m", "15m", "18m", "24m", "30m", "36m", "48m", "60m"].map((m) => `swyc-marcos-${m}`), // 1-65m - marcos do desenvolvimento (SWYC, livre)
   "pant", // 0-216m - índice PANT (autoral, banda larga do desenvolvimento)
   "efdi", // 0-216m - funcionalidade/desenvolvimento (autoral)
+  "swyc-ppsc", // 18-65m - banda larga emocional/comportamental do pré-escolar (SWYC, livre)
   "na-saude-mental-pre-escolar-pais", // 36-72m - banda larga emocional/comportamental (autoral)
-  "na-perfil-emocional-comportamental-pais", // 72-216m - banda larga emocional/comportamental (autoral; substitui o CBCL)
-  "sdq", // 24-204m - banda larga
+  "na-perfil-emocional-comportamental-pais", // 72-216m - banda larga emocional/comportamental (autoral; substitui CBCL e SDQ)
   "psc17", // 48-192m - banda larga
   "ndi-360", // 36-215m - banda larga neurodesenvolvimental (autoral)
   "who5", // 108-216m - bem-estar/humor em adolescentes

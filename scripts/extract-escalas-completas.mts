@@ -26,32 +26,14 @@ import { interactiveScaleItems } from "../client/src/data/interactiveScaleItems.
 import { interactiveScales } from "../client/src/data/interactiveScales.ts";
 
 // ── Questionários clássicos internacionais ────────────────────────────────────
-import {
-  mchatQuestions,
-  mchatCriticalItems,
-  mchatReversedItems,
-  snapQuestions,
-  snapLabels,
-  denverMilestones,
-} from "../client/src/data/scales.ts";
+// M-CHAT-R/F, Denver II, CRAFFT, Vanderbilt, SDQ e SCARED saíram em 17/10/2026 (licenciados).
+import { snapQuestions, snapLabels } from "../client/src/data/scales.ts";
 
 import {
   phqaQuestions,
   phqaLabels,
   cssrsQuestions,
-  crafftPartA,
-  crafftPartB,
-  vanderbiltDomains,
 } from "../client/src/data/expandedScales.ts";
-
-import {
-  sdqQuestions,
-  sdqLabels,
-  sdqSubscales,
-  scaredQuestions,
-  scaredLabels,
-  scaredSubscales,
-} from "../client/src/data/newScales.ts";
 
 // ── Bateria Dr. Jadson ────────────────────────────────────────────────────────
 import {
@@ -119,20 +101,10 @@ const jsonPayload = {
 
   // ── D. Questionários clássicos internacionais ───────────────────────────
   questionariosClassicos: {
-    mchatRF: {
-      nome: "M-CHAT-R/F — Modified Checklist for Autism in Toddlers (16-30 meses)",
-      questoes: mchatQuestions,
-      itensCriticos: mchatCriticalItems,
-      itensInvertidos: mchatReversedItems,
-    },
     snapIV: {
       nome: "SNAP-IV — Rating Scale for ADHD",
       questoes: snapQuestions,
       labels: snapLabels,
-    },
-    denver: {
-      nome: "Escala de Denver II — Marcos do Desenvolvimento",
-      marcos: denverMilestones,
     },
     phqA: {
       nome: "PHQ-A — Patient Health Questionnaire for Adolescents",
@@ -142,27 +114,6 @@ const jsonPayload = {
     cssrs: {
       nome: "C-SSRS — Columbia Suicide Severity Rating Scale",
       questoes: cssrsQuestions,
-    },
-    crafft: {
-      nome: "CRAFFT — Car/Relax/Alone/Forget/Friends/Trouble (triagem de substâncias)",
-      parteA: crafftPartA,
-      parteB: crafftPartB,
-    },
-    vanderbilt: {
-      nome: "Vanderbilt Assessment Scale — TDAH",
-      dominios: vanderbiltDomains,
-    },
-    sdq: {
-      nome: "SDQ — Strengths and Difficulties Questionnaire",
-      questoes: sdqQuestions,
-      labels: sdqLabels,
-      subscalas: sdqSubscales,
-    },
-    scared: {
-      nome: "SCARED — Screen for Child Anxiety Related Disorders",
-      questoes: scaredQuestions,
-      labels: scaredLabels,
-      subscalas: scaredSubscales,
     },
   },
 
@@ -314,20 +265,6 @@ md.push("");
 md.push("## 3. Questionários Clássicos Internacionais");
 md.push("");
 
-// M-CHAT-R/F
-md.push("### M-CHAT-R/F — Modified Checklist for Autism in Toddlers");
-md.push("**Faixa etária:** 16–30 meses | **Respondente:** pais");
-md.push("");
-md.push("**Itens críticos (índice 0-based):** " + mchatCriticalItems.join(", "));
-md.push("**Itens invertidos (índice 0-based):** " + mchatReversedItems.join(", "));
-md.push("");
-mchatQuestions.forEach((q, i) => {
-  const crit = mchatCriticalItems.includes(i) ? " ⭐ *crítico*" : "";
-  const inv = mchatReversedItems.includes(i) ? " ↩ *invertido*" : "";
-  md.push(`${i + 1}. ${q}${crit}${inv}`);
-});
-md.push("");
-
 // SNAP-IV
 md.push("### SNAP-IV — Rating Scale for ADHD");
 md.push(`**Labels:** ${snapLabels.join(" | ")}`);
@@ -336,24 +273,6 @@ snapQuestions.forEach((q, i) => {
   md.push(`${i + 1}. ${q}`);
 });
 md.push("");
-
-// Denver
-md.push("### Denver II — Marcos do Desenvolvimento");
-md.push("");
-const denverAreas: Record<string, typeof denverMilestones> = {};
-for (const m of denverMilestones) {
-  if (!denverAreas[m.area]) denverAreas[m.area] = [];
-  denverAreas[m.area].push(m);
-}
-for (const [area, items] of Object.entries(denverAreas)) {
-  md.push(`#### Área: ${area}`);
-  md.push("| Marco | Início (m) | 25% (m) | 50% (m) | 75% (m) | 90% (m) |");
-  md.push("| --- | :---: | :---: | :---: | :---: | :---: |");
-  for (const m of items) {
-    md.push(`| ${m.task} | ${m.ageStart ?? "—"} | ${m.age25 ?? "—"} | ${m.age50 ?? "—"} | ${m.age75 ?? "—"} | ${m.age90 ?? "—"} |`);
-  }
-  md.push("");
-}
 
 // PHQ-A
 md.push("### PHQ-A — Patient Health Questionnaire for Adolescents");
@@ -368,49 +287,6 @@ md.push("");
 md.push("### C-SSRS — Columbia Suicide Severity Rating Scale");
 md.push("");
 cssrsQuestions.forEach((q: any, i: number) => {
-  md.push(`${i + 1}. ${typeof q === "string" ? q : JSON.stringify(q)}`);
-});
-md.push("");
-
-// CRAFFT
-md.push("### CRAFFT — Triagem de Uso de Substâncias");
-md.push("**Parte A:**");
-(crafftPartA as any[]).forEach((q: any, i: number) => {
-  md.push(`${i + 1}. ${typeof q === "string" ? q : JSON.stringify(q)}`);
-});
-md.push("**Parte B:**");
-(crafftPartB as any[]).forEach((q: any, i: number) => {
-  md.push(`${i + 1}. ${typeof q === "string" ? q : JSON.stringify(q)}`);
-});
-md.push("");
-
-// Vanderbilt
-md.push("### Vanderbilt Assessment Scale — TDAH");
-md.push("");
-for (const dom of vanderbiltDomains as any[]) {
-  md.push(`#### Domínio: ${dom.name ?? "—"}`);
-  if (dom.items && Array.isArray(dom.items)) {
-    dom.items.forEach((it: any, i: number) => {
-      md.push(`${i + 1}. ${typeof it === "string" ? it : JSON.stringify(it)}`);
-    });
-  }
-  md.push("");
-}
-
-// SDQ
-md.push("### SDQ — Strengths and Difficulties Questionnaire");
-md.push(`**Labels:** ${sdqLabels.join(" | ")}`);
-md.push("");
-sdqQuestions.forEach((q: any, i: number) => {
-  md.push(`${i + 1}. ${typeof q === "string" ? q : JSON.stringify(q)}`);
-});
-md.push("");
-
-// SCARED
-md.push("### SCARED — Screen for Child Anxiety Related Disorders");
-md.push(`**Labels:** ${scaredLabels.join(" | ")}`);
-md.push("");
-scaredQuestions.forEach((q: any, i: number) => {
   md.push(`${i + 1}. ${typeof q === "string" ? q : JSON.stringify(q)}`);
 });
 md.push("");
@@ -541,5 +417,5 @@ console.log(`   📄 ESCALAS_COMPLETAS_INTERNO.md  — ${mdKB} KB`);
 console.log(`   📊 Catálogo: ${allScales.length} escalas`);
 console.log(`   📊 PANT: ${pantScales.length} escalas passivas`);
 console.log(`   📊 Interativas: ${Object.keys(allInteractive).length} escalas com itens completos`);
-console.log(`   📊 Clássicos: M-CHAT-R/F, SNAP-IV, Denver, PHQ-A, C-SSRS, CRAFFT, Vanderbilt, SDQ, SCARED`);
+console.log(`   📊 Clássicos: SNAP-IV, PHQ-A, C-SSRS`);
 console.log(`   📊 Bateria Jadson: EMDI, EAF, PDAE, ECARSI, EDI`);

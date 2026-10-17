@@ -37,6 +37,18 @@ export const LEGACY_INSTRUMENT_REDIRECTS: Record<string, string> = {
   "/cdi2": "/generic-scale/na-humor-crianca-autorrelato",
   "/brief2": "/generic-scale/na-funcoes-executivas-ampliado-pais",
   "/cars": "/generic-scale/na-observacao-clinica-tea",
+  // Segunda leva (17/10/2026): demais licenciados. ASQ-3 e Denver II abrem a própria ficha,
+  // que lista o formulário SWYC Marcos de cada idade (livre, Tufts).
+  "/asq3": "/generic-scale/asq3",
+  "/denver": "/generic-scale/denver",
+  "/pedsql": "/generic-scale/na-qualidade-vida-pais",
+  "/cshq": "/generic-scale/na-sono-crianca-pais",
+  "/abc": "/generic-scale/na-comportamento-tea-di-pais",
+  "/mchat": "/generic-scale/na-sinais-precoces-tea-pais",
+  "/crafft": "/generic-scale/na-uso-substancias-adolescente",
+  "/sdq": "/generic-scale/na-perfil-emocional-comportamental-pais",
+  "/scared": "/generic-scale/na-ansiedade-autorrelato",
+  "/vanderbilt": "/generic-scale/na-atencao-atividade-pais",
 };
 
 /**

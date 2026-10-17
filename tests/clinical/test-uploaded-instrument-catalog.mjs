@@ -48,7 +48,9 @@ for (const id of importedIds) {
   assert(allModeIds.has(id), `referência ausente no modo Todas: ${id}`);
 }
 assert.equal(allModeCatalog.filter((scale) => scale.id === "scq").length, 1, "SCQ/ASQ duplicado no modo Todas");
-assert(recommendableIds.has("abc"), "ABC de Comportamento Aberrante foi removido indevidamente");
+// ABC de Comportamento Aberrante (licenciado) saiu da aplicação em 17/10/2026: segue só como ficha de referência.
+assert(!recommendableIds.has("abc"), "ABC de Comportamento Aberrante (retirado) não pode ser recomendado");
+assert.equal(scales.find((scale) => scale.id === "abc")?.implementationStatus, "external_only", "ficha de referência do ABC de Comportamento Aberrante ausente");
 assert(allModeIds.has("ica-abc-autismo"), "ICA/ABC-Autismo não foi separado do ABC de Comportamento Aberrante");
 assert.notEqual("abc", "ica-abc-autismo");
 

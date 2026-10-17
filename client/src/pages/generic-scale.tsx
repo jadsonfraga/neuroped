@@ -533,13 +533,13 @@ export default function GenericScalePage() {
           </Card>
         )}
 
-        {/* Instrumento licenciado sem aplicação no app: aponta a alternativa
-            autoral NeuroPed que cobre o mesmo construto, com itens próprios. */}
+        {/* Instrumento licenciado sem aplicação no app: aponta a alternativa que
+            abre no app — autoral NeuroPed (itens próprios) ou livre verificada (SWYC). */}
         {implStatus === "external_only" && authorialAlternatives.length > 0 && (
           <Card className="border-card-border mb-6" data-testid="authorial-alternatives">
             <CardContent className="pt-6 text-sm">
               <p className="font-semibold text-foreground">
-                Para aplicar no app, use a alternativa autoral NeuroPed:
+                Para aplicar no app, use uma destas alternativas:
               </p>
               <ul className="mt-2 space-y-1">
                 {authorialAlternatives.map((alt) => (
@@ -547,12 +547,12 @@ export default function GenericScalePage() {
                     <Link href={routeFor(alt)} className="font-semibold text-blue-700 underline underline-offset-2 dark:text-blue-300">
                       {alt.name}
                     </Link>
-                    <span className="text-muted-foreground"> · {alt.respondente.join(" · ")} · {formatScaleAgeRange(alt.ageMin, alt.ageMax)}</span>
+                    <span className="text-muted-foreground"> · {alt.licencaUso === "autoral" ? "autoral NeuroPed" : "uso livre"} · {alt.respondente.join(" · ")} · {formatScaleAgeRange(alt.ageMin, alt.ageMax)}</span>
                   </li>
                 ))}
               </ul>
               <p className="mt-2 text-xs text-muted-foreground">
-                Itens originais, sem validação psicométrica e sem ponto de corte: não equivale nem substitui o instrumento original nesta ficha.
+                Nenhuma alternativa equivale ao instrumento original desta ficha. As autorais NeuroPed têm itens originais, sem validação psicométrica e sem ponto de corte.
               </p>
             </CardContent>
           </Card>

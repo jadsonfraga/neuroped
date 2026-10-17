@@ -1,6 +1,6 @@
 import { QUEIXA_COOCORRENCIA, type ScaleEntry, type Respondente, type ApplicationMode } from "@/data/scaleFilter";
 import { BROADBAND_SCREENER_IDS, clinicalHardBlock, filterScalesWithClinicalRescue, outsideConditionAnchor, getApplicationMode, getAssessmentUse, getImplementationStatus, isLicenseRestricted, isPsychosisInstrument, isSuicideInstrument, type FilterContext, type RefinedScaleMatch } from "@/data/advancedFilterLogic";
-import { firstLineByQueixa } from "@/data/preConsultaCurated";
+import { curatedRouteKey, firstLineByQueixa } from "@/data/preConsultaCurated";
 import type { PreConsultaRecord, PreConsultaRecommendation } from "./preConsultaCore";
 
 type Input = Pick<PreConsultaRecord, "idadeMeses" | "queixa" | "respondente" | "contexto">;
@@ -73,7 +73,7 @@ export function safePrevisitRecommendations(catalog: ScaleEntry[], input: Input,
     if (useMonitoring) return matches;
     const order = firstLineByQueixa[input.queixa] ?? firstLineByQueixa[domain] ?? [];
     const position = (scale: ScaleEntry) => {
-      const index = order.indexOf(scale.appRoute ?? "");
+      const index = order.indexOf(curatedRouteKey(scale.appRoute ?? ""));
       return index < 0 ? Number.MAX_SAFE_INTEGER : index;
     };
     return [...matches].sort((a, b) => position(a.scale) - position(b.scale) || b.relevanceScore - a.relevanceScore || a.scale.id.localeCompare(b.scale.id));

@@ -4,8 +4,8 @@
 // Fronteira de segurança clínica (decisão deliberada, não default técnico):
 // só entram aqui instrumentos de AUTORRELATO ou RELATO POR PAIS/CUIDADOR,
 // sem item de risco de autolesão/suicídio explícito, que já são rotina de
-// aplicação "para casa" na prática pediátrica (M-CHAT, questionários breves
-// de triagem). NUNCA incluir aqui:
+// aplicação "para casa" na prática pediátrica (questionários breves de
+// triagem). NUNCA incluir aqui:
 //   - escalas clínico-administradas/observacionais (ex.: Viking Speech,
 //     Mini-MACS, BFMF — respondent "Clínico"/"Clínico (com pais/cuidador)");
 //   - instrumentos de rastreio ativo de risco de suicídio/autolesão (C-SSRS
@@ -17,10 +17,8 @@
 // Reutiliza literalmente o texto das escalas já publicadas no acervo do app
 // (client/src/data) — nunca inventa item, opção ou pontuação.
 import { getInteractiveScale } from "../client/src/data/interactiveScales";
-import { mchatQuestions } from "../client/src/data/mchat";
 
 export const REMOTE_SCALE_IDS = [
-  "mchat",
   "q-chat-10",
   "psc17",
   "ari",
@@ -59,32 +57,31 @@ export interface RemoteScaleDescriptor {
   items: RemoteScaleItem[];
 }
 
-const MCHAT_OPTIONS: RemoteScaleOption[] = [{ label: "Sim" }, { label: "Não" }];
+/**
+ * Escalas que SAÍRAM do envio remoto (licenciadas, retiradas do app em 17/10/2026). Convite novo não é
+ * aceito e link pendente recebe aviso de retirada; respostas já enviadas continuam legíveis por número do
+ * item, sem o texto do instrumento, que não fica mais no app. O CHECK do D1 (migração 0021) segue aceitando
+ * o id por causa desse histórico.
+ */
+export const RETIRED_REMOTE_SCALES: Readonly<Record<string, { name: string; itemCount: number; options: readonly string[] }>> = {
+  mchat: { name: "Registro M-CHAT-R (retirado do app)", itemCount: 20, options: ["Sim", "Não"] },
+};
 
-// O envio remoto coleta APENAS os 20 itens de triagem do M-CHAT-R. A entrevista
-// estruturada de seguimento (Follow-Up) do M-CHAT-R/F não é aplicada aqui: ela
-// exige um entrevistador treinado percorrendo o branching item a item, e um
-// escore obtido sem ela não é o escore do instrumento R/F. Por isso este
-// descritor NUNCA pode se apresentar como "R/F" nem como "with Follow-Up" —
-// seria representar um instrumento que o app não executa.
-// Regressão que trava o retorno da alegação: scripts/guards/check-remote-scale-clinical-truth.mjs
-function buildMchatDescriptor(): RemoteScaleDescriptor {
-  return {
-    id: "mchat",
-    name: "Registro M-CHAT-R",
-    fullName:
-      "Modified Checklist for Autism in Toddlers, Revised — registro dos 20 itens de triagem, sem a entrevista de seguimento",
-    instructions:
-      "Responda pensando no comportamento HABITUAL do seu filho(a). Se o comportamento for raro (você viu uma ou duas vezes), responda como se a criança não o fizesse. Este é um registro de triagem: quem interpreta o resultado é o profissional, que conduzirá a entrevista de seguimento se ela for necessária.",
-    ageLabel: "16–30 meses",
-    respondent: "Pais/cuidador",
-    items: mchatQuestions.map((text) => ({ text, options: MCHAT_OPTIONS })),
-  };
+export function isRetiredRemoteScaleId(value: unknown): boolean {
+  return typeof value === "string" && Object.prototype.hasOwnProperty.call(RETIRED_REMOTE_SCALES, value);
 }
 
-function buildFromInteractiveScale(
-  id: Exclude<RemoteScaleId, "mchat">,
-): RemoteScaleDescriptor | null {
+/** Respostas já enviadas de escala retirada: "Item N" → opção escolhida. */
+export function decodeRetiredRemoteAnswers(scaleId: string, answers: readonly number[]): Array<{ label: string; value: string }> {
+  const retired = isRetiredRemoteScaleId(scaleId) ? RETIRED_REMOTE_SCALES[scaleId] : undefined;
+  if (!retired) return [];
+  return Array.from({ length: retired.itemCount }, (_, index) => ({
+    label: `Item ${index + 1}`,
+    value: retired.options[answers[index]] ?? "—",
+  }));
+}
+
+function buildFromInteractiveScale(id: RemoteScaleId): RemoteScaleDescriptor | null {
   const scale = getInteractiveScale(id);
   if (!scale) return null;
   return {
@@ -109,9 +106,7 @@ export function getRemoteScaleDescriptor(
   id: string,
 ): RemoteScaleDescriptor | null {
   if (!isRemoteScaleId(id)) return null;
-  return id === "mchat"
-    ? buildMchatDescriptor()
-    : buildFromInteractiveScale(id);
+  return buildFromInteractiveScale(id);
 }
 
 /** Só o essencial para listas/seletor no lado profissional (sem os itens). */
