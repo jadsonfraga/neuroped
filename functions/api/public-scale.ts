@@ -1,4 +1,4 @@
-import { getRemoteScaleDescriptor, REMOTE_SCALE_CONSENT_NOTICE, REMOTE_SCALE_CONSENT_VERSION, REMOTE_SCALE_SAFETY_NOTICE, type RemoteScaleId, type RemoteScaleRespondentKind } from "../../shared/remoteScaleCatalog";
+import { getRemoteScaleDescriptor, isRetiredRemoteScaleId, REMOTE_SCALE_CONSENT_NOTICE, REMOTE_SCALE_CONSENT_VERSION, REMOTE_SCALE_SAFETY_NOTICE, type RemoteScaleId, type RemoteScaleRespondentKind } from "../../shared/remoteScaleCatalog";
 import {
   cleanScaleText,
   parseRemoteScaleToken,
@@ -16,7 +16,7 @@ interface PublicScaleInvitationRow {
   clinic_id: string;
   patient_id: string;
   respondent_kind: RemoteScaleRespondentKind;
-  scale_id: RemoteScaleId;
+  scale_id: RemoteScaleId | string; // convites antigos podem apontar para escala retirada (RETIRED_REMOTE_SCALES)
   token_hash: string;
   status: "pending" | "submitted" | "revoked";
   expires_at: string;
@@ -103,6 +103,9 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
 
   const descriptor = getRemoteScaleDescriptor(resolved.row.scale_id);
   if (!descriptor) {
+    if (isRetiredRemoteScaleId(resolved.row.scale_id)) {
+      return tenantError("Este questionário foi retirado do aplicativo. Peça à equipe que enviou o link um novo questionário.", "SCALE_RETIRED", 410);
+    }
     return tenantError("Escala indisponível.", "SCALE_NOT_FOUND", 404);
   }
 
@@ -146,6 +149,9 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
 
   const descriptor = getRemoteScaleDescriptor(resolved.row.scale_id);
   if (!descriptor) {
+    if (isRetiredRemoteScaleId(resolved.row.scale_id)) {
+      return tenantError("Este questionário foi retirado do aplicativo. Peça à equipe que enviou o link um novo questionário.", "SCALE_RETIRED", 410);
+    }
     return tenantError("Escala indisponível.", "SCALE_NOT_FOUND", 404);
   }
 

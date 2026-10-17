@@ -225,13 +225,13 @@ assert.equal(
 
 // ── 5) Convite remoto com a flag no padrão: criado; GET público responde ──
 const created = await createScaleInvitation(
-  staffContext(OWNER_RED, { clinicId: RED, patientId: PATIENT_RED, respondentKind: "family", scaleId: "mchat" }),
+  staffContext(OWNER_RED, { clinicId: RED, patientId: PATIENT_RED, respondentKind: "family", scaleId: "q-chat-10" }),
 );
 assert.equal(created.status, 201);
 const redToken = (await json(created)).token as string;
 assert.equal((await publicGetScale(publicContext(redToken))).status, 200);
 const createdBlue = await createScaleInvitation(
-  staffContext(OWNER_BLUE, { clinicId: BLUE, patientId: PATIENT_BLUE, respondentKind: "family", scaleId: "mchat" }),
+  staffContext(OWNER_BLUE, { clinicId: BLUE, patientId: PATIENT_BLUE, respondentKind: "family", scaleId: "q-chat-10" }),
 );
 assert.equal(createdBlue.status, 201);
 const blueToken = (await json(createdBlue)).token as string;
@@ -257,7 +257,7 @@ assert.equal(await isClinicFeatureEnabled(env.DB, BLUE, "remote_scales"), true, 
 // Criação recusada na RED, permitida na BLUE; link já emitido da RED para de servir.
 {
   const denied = await createScaleInvitation(
-    staffContext(OWNER_RED, { clinicId: RED, patientId: PATIENT_RED, respondentKind: "family", scaleId: "mchat" }),
+    staffContext(OWNER_RED, { clinicId: RED, patientId: PATIENT_RED, respondentKind: "family", scaleId: "q-chat-10" }),
   );
   assert.equal(denied.status, 403);
   assert.equal((await json(denied)).code, "FEATURE_DISABLED");
@@ -271,7 +271,7 @@ assert.equal(await isClinicFeatureEnabled(env.DB, BLUE, "remote_scales"), true, 
   // Token inválido continua 404: a flag nunca vira oráculo de existência.
   assert.equal((await publicGetScale(publicContext("fake-id.".padEnd(48, "a")))).status, 404);
   assert.equal(
-    (await createScaleInvitation(staffContext(OWNER_BLUE, { clinicId: BLUE, patientId: PATIENT_BLUE, respondentKind: "family", scaleId: "mchat" }))).status,
+    (await createScaleInvitation(staffContext(OWNER_BLUE, { clinicId: BLUE, patientId: PATIENT_BLUE, respondentKind: "family", scaleId: "q-chat-10" }))).status,
     201,
   );
 }

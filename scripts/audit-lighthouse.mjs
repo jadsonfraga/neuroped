@@ -33,7 +33,7 @@ const REQUIRED_PASS_AUDITS = Array.isArray(baseline.lighthouseRequiredPassAudits
 const ROUTES = [
   "/",                      // shell + home
   "/#/filtro",              // filtro inteligente (maior carga de lógica)
-  "/#/mchat",               // escala interativa curta
+  "/#/snap",                // escala interativa curta (SNAP-IV; o M-CHAT saiu em 17/10/2026)
   "/#/cars",                // escala interativa com observação clínica
   "/#/vineland",            // escala longa (muitos itens em tela)
   "/#/cbcl",                // escala longa com múltiplos domínios

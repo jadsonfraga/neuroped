@@ -8,8 +8,9 @@
 // corte são DERIVADOS do próprio classificador, sem tabela paralela que possa
 // divergir. Instrumento fora do registro fica "pendente" (sem gráfico/alerta).
 // ============================================================================
-import { classifyCrafft, classifyCshq, classifyPhqa } from "../../data/expandedScales";
-import { classifyMchat } from "../../data/mchat";
+// M-CHAT-R/F, CSHQ e CRAFFT saíram em 17/10/2026 (licenciados, sem classificador no app):
+// registros antigos desses instrumentos aparecem como pendentes, sem faixa inventada.
+import { classifyPhqa } from "../../data/expandedScales";
 
 export interface InstrumentoEvolucao {
   id: string;
@@ -33,26 +34,10 @@ export interface InstrumentoEvolucao {
 
 export const INSTRUMENTOS_EVOLUCAO: InstrumentoEvolucao[] = [
   {
-    id: "mchat", nome: "M-CHAT-R/F", reconhece: (t) => /m-?chat/i.test(t), minimo: 0, maximo: 20, maiorEhPior: true,
-    faixa: (n) => classifyMchat(n).risk, varredura: [0, 20],
-    nota: "Rastreio de TEA: não é instrumento de seguimento de resposta a tratamento.",
-    fonte: "client/src/data/mchat.ts (classifyMchat)",
-  },
-  {
     id: "phqa", nome: "PHQ-A", reconhece: (t) => /phq-?a/i.test(t), minimo: 0, maximo: 27, maiorEhPior: true,
     faixa: (n) => classifyPhqa(n).classification, varredura: [0, 27],
     nota: "A resposta ao item de ideação suicida exige conduta própria, independente do escore total.",
     fonte: "client/src/data/expandedScales.ts (classifyPhqa)",
-  },
-  {
-    id: "cshq", nome: "CSHQ", reconhece: (t) => /cshq/i.test(t), minimo: 33, maximo: 99, maiorEhPior: true,
-    faixa: (n) => classifyCshq(n).classification, varredura: [33, 99],
-    fonte: "client/src/data/expandedScales.ts (classifyCshq)",
-  },
-  {
-    id: "crafft", nome: "CRAFFT", reconhece: (t) => /crafft/i.test(t), minimo: 0, maximo: 6, maiorEhPior: true,
-    faixa: (n) => classifyCrafft(n).classification, varredura: [0, 6],
-    fonte: "client/src/data/expandedScales.ts (classifyCrafft)",
   },
 ];
 

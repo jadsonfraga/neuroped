@@ -7,7 +7,7 @@ import { filterScalesWithClinicalRescue } from "../../client/src/data/advancedFi
 import { signalFlowcharts } from "../../client/src/data/signalFlowcharts.ts";
 
 const au = openScaleSpecs.filter((s) => s.authorial);
-assert.equal(au.length, 43);
+assert.equal(au.length, 49);
 for (const s of au) {
   const age = Math.round((s.ageMin + s.ageMax) / 2);
   const ctx = { ageMonths: age, ageBand: { min: age, max: age }, queixas: [s.primaryDomain], respondente: s.respondente[0], assessmentUse: s.assessmentUse === "seguimento" ? "monitorizacao" : s.assessmentUse, isLiterate: s.literacyRequirement === "alfabetizado" ? true : null, isVerbal: null, selectedSignals: [] };

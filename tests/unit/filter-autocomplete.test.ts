@@ -19,12 +19,13 @@ assert.ok(none[0].detail?.includes("6–18 anos"));
 assert.ok(none[0].highlight.length > 0, "realce do termo digitado");
 assert.deepEqual(buildAutocomplete("s", catalog, catalog, complaints), [], "menos de 2 caracteres não sugere");
 
-// Perfil 5a6m + TEA + pais: M-CHAT (16–30 m) não é seguro → aparece só como "fora do perfil", no fim.
+// Perfil 5a6m + TEA + pais: "mchat" leva à alternativa de sinais precoces (16–36 m; o M-CHAT-R/F saiu do app
+// em 17/10/2026), que não é segura nessa idade → aparece só como "fora do perfil", no fim.
 const ctx = { queixas: ["tea"], ageMonths: 66, ageBand: null, respondente: "pais" as const, isVerbal: null, isLiterate: null, assessmentUse: null, selectedSignals: [] };
 const safe = safeFor(ctx);
 const mchat = buildAutocomplete("mchat", safe, catalog, complaints);
 assert.ok(mchat.length > 0);
-const outside = mchat.find((i) => i.scale?.id === "mchat");
+const outside = mchat.find((i) => i.scale?.id === "na-sinais-precoces-tea-pais");
 assert.ok(outside && outside.kind === "fora_do_perfil", JSON.stringify(mchat.map((i) => [i.kind, i.label])));
 assert.ok(mchat.every((i, idx) => i.kind !== "fora_do_perfil" || mchat.slice(0, idx).every((p) => p.kind !== "fora_do_perfil" ? true : true)), "fora do perfil nunca antes de um seguro");
 const firstOutside = mchat.findIndex((i) => i.kind === "fora_do_perfil");

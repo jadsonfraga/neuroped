@@ -54,6 +54,14 @@ const PATIENT_TWO = SYNTHETIC_PATIENTS.second.id;
 
 /** Espera curta e determinística usada depois de interações locais. */
 const settle = (page, ms = 350) => page.waitForTimeout(ms);
+/** Escala dedicada (SNAP-IV): marca a primeira opção de cada item e conclui. */
+async function answerAllAndSubmit(page) {
+  const primeiras = page.locator('label[for$="-o0"]');
+  const total = await primeiras.count();
+  for (let index = 0; index < total; index += 1) await primeiras.nth(index).click();
+  await page.getByTestId("button-submit").click();
+  await page.getByTestId("button-reset").waitFor({ state: "visible", timeout: 15_000 });
+}
 
 async function openHelp(page) {
   await page.getByTestId("button-floating-help").click();
@@ -145,7 +153,7 @@ const CASES = [
     id: "home-busca-ativa", group: "Cockpit", route: "/", viewport: "desktop", theme: "light",
     expect: ['[data-testid="input-search"]'],
     async prepare(page) {
-      await page.fill('[data-testid="input-search"]', "mchat");
+      await page.fill('[data-testid="input-search"]', "snap");
       await settle(page, 900);
     },
   },
@@ -274,66 +282,53 @@ const CASES = [
   },
 
   // ── 5. Escalas e execução de instrumento ────────────────────────────────
+  // SNAP-IV (uso livre): o M-CHAT-R/F saiu do app em 17/10/2026 (licenciado).
   {
-    id: "mchat-inicial-desktop", group: "Escalas", route: "/mchat", viewport: "desktop", theme: "light",
+    id: "escala-inicial-desktop", group: "Escalas", route: "/snap", viewport: "desktop", theme: "light",
     expect: ['[data-testid="card-question-0"]'], forbid: [LOGIN_FORM],
   },
   {
-    id: "mchat-inicial-mobile", group: "Escalas", route: "/mchat", viewport: "mobile", theme: "light",
+    id: "escala-inicial-mobile", group: "Escalas", route: "/snap", viewport: "mobile", theme: "light",
     expect: ['[data-testid="card-question-0"]'], forbid: [LOGIN_FORM],
   },
   {
-    id: "mchat-inicial-tablet-dark", group: "Escalas", route: "/mchat", viewport: "tablet", theme: "dark",
+    id: "escala-inicial-tablet-dark", group: "Escalas", route: "/snap", viewport: "tablet", theme: "dark",
     expect: ['[data-testid="card-question-0"]'], forbid: [LOGIN_FORM],
   },
   {
-    id: "mchat-parcialmente-respondido", group: "Escalas", route: "/mchat", viewport: "desktop", theme: "light",
+    id: "escala-parcialmente-respondida", group: "Escalas", route: "/snap", viewport: "desktop", theme: "light",
     expect: ['[data-testid="card-question-0"]'],
     async prepare(page) {
+      const primeiras = page.locator('label[for$="-o0"]');
       for (let index = 0; index < 5; index += 1) {
-        await page.getByTestId(`button-no-${index}`).click();
+        await primeiras.nth(index).click();
         await settle(page, 90);
       }
       await settle(page, 400);
     },
   },
   {
-    id: "mchat-resultado", group: "Escalas", route: "/mchat", viewport: "desktop", theme: "light",
+    id: "escala-resultado", group: "Escalas", route: "/snap", viewport: "desktop", theme: "light",
     expect: ['[data-testid="button-reset"]'],
     async prepare(page) {
-      const total = await page.locator('[data-testid^="card-question-"]').count();
-      for (let index = 0; index < total; index += 1) {
-        await page.getByTestId(`button-no-${index}`).click();
-      }
-      await page.getByTestId("button-submit").click();
-      await page.getByTestId("button-reset").waitFor({ state: "visible", timeout: 15_000 });
+      await answerAllAndSubmit(page);
       await settle(page, 600);
     },
   },
   {
-    id: "mchat-resultado-mobile-dark", group: "Escalas", route: "/mchat", viewport: "mobile", theme: "dark",
+    id: "escala-resultado-mobile-dark", group: "Escalas", route: "/snap", viewport: "mobile", theme: "dark",
     expect: ['[data-testid="button-reset"]'],
     async prepare(page) {
-      const total = await page.locator('[data-testid^="card-question-"]').count();
-      for (let index = 0; index < total; index += 1) {
-        await page.getByTestId(`button-no-${index}`).click();
-      }
-      await page.getByTestId("button-submit").click();
-      await page.getByTestId("button-reset").waitFor({ state: "visible", timeout: 15_000 });
+      await answerAllAndSubmit(page);
       await settle(page, 600);
     },
   },
   {
     id: "escala-vinculo-com-paciente", group: "Autosave e salvamento",
-    route: "/mchat", viewport: "desktop", theme: "light",
+    route: "/snap", viewport: "desktop", theme: "light",
     expect: ['[data-testid="button-reset"]'],
     async prepare(page) {
-      const total = await page.locator('[data-testid^="card-question-"]').count();
-      for (let index = 0; index < total; index += 1) {
-        await page.getByTestId(`button-no-${index}`).click();
-      }
-      await page.getByTestId("button-submit").click();
-      await page.getByTestId("button-reset").waitFor({ state: "visible", timeout: 15_000 });
+      await answerAllAndSubmit(page);
       await page.mouse.wheel(0, 4000);
       await settle(page, 700);
     },
@@ -702,6 +697,9 @@ async function main() {
           const style = getComputedStyle(element);
           if (style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0) return null;
           if (element.closest("[hidden], [inert], [aria-hidden='true']")) return null;
+          // Controle recortado no padrão sr-only (radio nativo oculto atrás de um <label> grande):
+          // recorte zerado não recebe ponteiro, então não é alvo de toque; o <label> visível segue medido.
+          if (/^rect\(0px,? 0px,? 0px,? 0px\)$/.test(style.clip) || style.clipPath === "inset(50%)") return null;
           const box = element.getBoundingClientRect();
           return box.width > 0 && box.height > 0 ? box : null;
         };

@@ -54,14 +54,14 @@ try {
   assert.ok(await alertas.locator('[data-codigo="piora-de-faixa"]').count() >= 2);
   assert.match(await alertas.innerText(), /não validado psicometricamente/);
 
-  // M-CHAT com uma só aplicação: sem gráfico, sem alerta inventado.
-  await page.getByTestId("evolucao-sem-grafico-mchat").waitFor();
-  assert.equal(await page.getByTestId("evolucao-alertas-mchat").count(), 0);
-
-  // SNAP-IV não tem regra validada: pendente, sem gráfico nem alerta.
+  // SNAP-IV não tem regra validada e o M-CHAT-R/F saiu do app (17/10/2026, licenciado):
+  // os dois ficam pendentes, sem gráfico nem alerta inventado.
   const pend = page.getByTestId("evolucao-pendente");
-  assert.equal(await pend.count(), 1);
-  assert.match(await pend.innerText(), /SNAP-IV/);
+  assert.equal(await pend.count(), 2);
+  const pendentesTexto = (await pend.allInnerTexts()).join(" ");
+  assert.match(pendentesTexto, /SNAP-IV/);
+  assert.match(pendentesTexto, /M-CHAT/);
+  assert.equal(await page.getByTestId("evolucao-serie-mchat").count(), 0);
   assert.match(await page.getByTestId("evolucao-pendentes").innerText(), /sem gráfico nem alerta/);
   assert.equal(await page.getByTestId("evolucao-serie-snap").count(), 0);
 

@@ -191,10 +191,10 @@ assert.ok(
   "dentro do selo Ouro, compatibilidade integral deve vir antes da parcial",
 );
 assert.equal(
-  parentMatches.find((match) => match.recommendation.id === "asq3")
+  parentMatches.find((match) => match.recommendation.id === "swyc-marcos-48m")
     ?.ageFit,
   "partial",
-  "ASQ-3 deve declarar cobertura parcial quando a banda começa antes de 36 meses",
+  "SWYC Marcos 48m (47–58 meses; substitui o ASQ-3) deve declarar cobertura parcial numa banda de 24–48 meses",
 );
 
 assert.deepEqual(

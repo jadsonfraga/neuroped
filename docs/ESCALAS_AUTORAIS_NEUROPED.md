@@ -22,8 +22,18 @@ Marcadores de sintoma (`signalTags`) e domínio (`primaryDomain`, `overlapGroup`
   - CDI-2 (MHS) → `na-humor-crianca-autorrelato` (7–12 anos; 13+ segue em `na-humor-depressivo-adolescente`);
   - BRIEF-2 (PAR) → `na-funcoes-executivas-ampliado-pais` e `na-funcoes-executivas-escola-professor`;
   - CARS-2 (WPS) → `na-observacao-clinica-tea` (registro do profissional na consulta).
+- Substitutos da segunda leva de licenciados retirados em 17/10/2026:
+  - M-CHAT-R/F → `na-sinais-precoces-tea-pais` (16–36 meses; inclui perda de habilidades) e `na-interacao-social-precoce-pais`;
+  - PedsQL → `na-qualidade-vida-pais` e `na-qualidade-vida-autorrelato` (formas paralelas, mesmos blocos e número de itens);
+  - ABC → `na-comportamento-tea-di-pais` (acompanhamento em TEA e deficiência intelectual, com autoagressão e agressão separadas e frequência em vez de gravidade);
+  - SCARED → `na-ansiedade-autorrelato` (8–18 anos) e `na-ansiedade-seguimento-pais`;
+  - SDQ → `na-perfil-emocional-comportamental-adolescente` (autorrelato, terceira forma paralela do perfil) e as formas de pais e professor;
+  - Vanderbilt → `na-atencao-atividade-pais` e `na-atencao-atividade-professor`; CSHQ → `na-sono-crianca-pais`; CRAFFT → `na-uso-substancias-adolescente`; Vineland-3 → `na-comportamento-adaptativo-pais`;
+  - ASQ-3 e Denver II → SWYC Marcos do desenvolvimento (livre, Tufts, um formulário por idade), em vez de marcos autorais: é instrumento aberto já no app, com adaptação brasileira publicada.
 
-## Instrumentos proprietários retirados (17/10/2026)
-As páginas `/cbcl`, `/conners`, `/cdi2`, `/brief2` e `/cars` reproduziam itens, subescalas ou âncoras dos originais e calculavam "escore T" e pontos de corte sem norma. Foram removidas: o instrumento original segue apenas como ficha de referência em `/generic-scale/<id>` (`external_only`), que aponta a alternativa autoral, e a rota antiga redireciona para essa alternativa. Os roteiros de TEA (`/tea-checklists`) passaram a ter nome autoral; ADOS-2, ADI-R, CARS-2, GARS-3 e SRS-2 aparecem só como instrumentos de referência, com os dados psicométricos atribuídos a eles, não aos roteiros.
+## Instrumentos licenciados retirados (17/10/2026)
+Segunda leva, no mesmo dia: `/asq3`, `/denver`, `/pedsql`, `/cshq`, `/abc`, `/mchat`, `/crafft`, `/sdq`, `/scared` e `/vanderbilt` saíram pelo mesmo caminho (ficha de referência + alternativa + redirecionamento); ASQ-3 e Denver II abrem a própria ficha, que lista o formulário SWYC Marcos de cada idade. O M-CHAT-R também saiu do envio remoto às famílias, com o histórico de respostas preservado por número do item. Mapa completo em `docs/ESCALAS_LICENCAS.md`.
+
+Primeira leva: as páginas `/cbcl`, `/conners`, `/cdi2`, `/brief2` e `/cars` reproduziam itens, subescalas ou âncoras dos originais e calculavam "escore T" e pontos de corte sem norma. Foram removidas: o instrumento original segue apenas como ficha de referência em `/generic-scale/<id>` (`external_only`), que aponta a alternativa autoral, e a rota antiga redireciona para essa alternativa. Os roteiros de TEA (`/tea-checklists`) passaram a ter nome autoral; ADOS-2, ADI-R, CARS-2, GARS-3 e SRS-2 aparecem só como instrumentos de referência, com os dados psicométricos atribuídos a eles, não aos roteiros.
 
 Os substitutos cobrem o mesmo construto clínico com itens próprios, mas **não são equivalentes nem melhores em validade** que os originais: não têm norma, validação nem ponto de corte. O que oferecem a mais é uso livre, linguagem brasileira concreta, formas paralelas para comparar casa e escola, impacto funcional separado dos sintomas e leitura item a item. A validação (consistência interna, teste-reteste, validade convergente com instrumentos livres como SNAP-IV, PSC-35 e CES-DC) é a etapa seguinte e depende de coleta com crianças reais.

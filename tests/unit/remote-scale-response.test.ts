@@ -7,8 +7,10 @@
  * real da 0021, e a criptografia clínica REAL (functions/api/tenant/_crypto).
  *
  * Invariantes provados:
- *  1. só um id da allowlist (mchat, q-chat-10, psc17, ari, gad7ped, smfq)
- *     pode virar convite — id fora da lista é rejeitado antes de tocar o DB;
+ *  1. só um id da allowlist (q-chat-10, psc17, ari, gad7ped, smfq) pode virar
+ *     convite — id fora da lista é rejeitado antes de tocar o DB; o M-CHAT-R
+ *     (retirado em 17/10/2026) não aceita convite novo, avisa a retirada no link
+ *     pendente e o histórico segue legível por número do item;
  *  2. RBAC + billing entitlement + posse do paciente são exigidos para criar/
  *     revogar/revisar (mesmas primitivas do restante do LIVE);
  *  3. GET público nunca expõe peso de opção nem banda de interpretação —
@@ -200,13 +202,13 @@ assert.equal((await json(rejectedScale)).code, "VALIDATION_ERROR");
   assert.equal(count.n, 0, "id fora da allowlist não pode criar linha");
 }
 
-// ── 2) Convite legítimo (M-CHAT) ───────────────────────────────────────────
+// ── 2) Convite legítimo (Q-CHAT-10) ────────────────────────────────────────
 const createResponse = await createInvitation(
   staffContext("POST", "https://x/api/live/scale-invitations", {
     clinicId: CLINIC_A,
     patientId: PATIENT_A,
     respondentKind: "family",
-    scaleId: "mchat",
+    scaleId: "q-chat-10",
     expiresInHours: 168,
   }),
 );
@@ -221,7 +223,7 @@ const crossTenant = await createInvitation(
     clinicId: CLINIC_A,
     patientId: "patient-b-synthetic",
     respondentKind: "family",
-    scaleId: "mchat",
+    scaleId: "q-chat-10",
   }),
 );
 assert.equal(crossTenant.status, 404);
@@ -235,9 +237,9 @@ const getResponse = await publicGetScale(publicContext("GET", plaintextToken));
 assert.equal(getResponse.status, 200);
 const invite = await json(getResponse);
 const scale = invite.scale as { items: Array<{ text: string; options: Array<{ label: string; value?: number }> }> };
-const mchatDescriptor = getRemoteScaleDescriptor("mchat")!;
-assert.equal(scale.items.length, mchatDescriptor.items.length);
-assert.equal(scale.items[0].options.length, 2);
+const qchatDescriptor = getRemoteScaleDescriptor("q-chat-10")!;
+assert.equal(scale.items.length, qchatDescriptor.items.length);
+assert.equal(scale.items[0].options.length, qchatDescriptor.items[0].options.length);
 assert.ok(!("value" in scale.items[0].options[0]), "opção pública não pode ter peso de pontuação");
 assert.ok(!("bands" in invite), "GET público não pode incluir banda de interpretação");
 
@@ -249,7 +251,7 @@ assert.equal(shortAnswers.status, 400);
 
 // ── 7) POST público: índice de opção fora do intervalo ─────────────────────
 const outOfRange = new Array(scale.items.length).fill(0);
-outOfRange[0] = 5; // mchat só tem 2 opções (0/1)
+outOfRange[0] = 99; // nenhuma opção tem esse índice
 const invalidIndex = await publicPostScale(
   publicContext("POST", plaintextToken, { consentAccepted: true, answers: outOfRange }),
 );
@@ -275,7 +277,7 @@ assert.equal(submitResponse.status, 201);
 const responseRow = sqlite.prepare("SELECT * FROM live_scale_responses").get() as Record<string, unknown>;
 assert.equal(responseRow.review_status, "pending");
 assert.ok(
-  !JSON.stringify(responseRow).includes(mchatDescriptor.items[0].text),
+  !JSON.stringify(responseRow).includes(qchatDescriptor.items[0].text),
   "texto do item não pode aparecer em claro na linha persistida",
 );
 
@@ -298,7 +300,7 @@ assert.equal(audit.consent_version, REMOTE_SCALE_CONSENT_VERSION);
 const auditText = JSON.stringify(audit);
 assert.doesNotMatch(auditText, /Mãe da criança/, "a trilha não pode carregar nome do respondente");
 assert.ok(
-  !auditText.includes(mchatDescriptor.items[0].text),
+  !auditText.includes(qchatDescriptor.items[0].text),
   "a trilha não pode carregar texto de item clínico",
 );
 assert.ok(!auditText.includes(PATIENT_A), "a trilha não pode expor o patient_id");
@@ -329,7 +331,7 @@ const expiredToken = await createRemoteScaleToken(env as never, CLINIC_A, expire
 sqlite.prepare(
   `INSERT INTO live_scale_invitations
     (id, clinic_id, patient_id, created_by_user_id, respondent_kind, scale_id, token_hash, status, expires_at, created_at, updated_at)
-   VALUES (?, ?, ?, ?, 'family', 'mchat', ?, 'pending', ?, ?, ?)`,
+   VALUES (?, ?, ?, ?, 'family', 'q-chat-10', ?, 'pending', ?, ?, ?)`,
 ).run(expiredInvitationId, CLINIC_A, PATIENT_A, PROFESSIONAL_A, expiredToken.tokenHash, new Date(Date.now() - 60_000).toISOString(), now, now);
 assert.equal((await publicGetScale(publicContext("GET", expiredToken.token))).status, 410);
 
@@ -372,12 +374,12 @@ const listResponse = await listInvitations(
 assert.equal(listResponse.status, 200);
 const listBody = await json(listResponse);
 const items = listBody.data as Array<{ scaleId: string; response: { id: string; answers: Array<{ label: string; value: string }>; reviewStatus: string } | null }>;
-const mchatItem = items.find((item) => item.scaleId === "mchat" && item.response);
-assert.ok(mchatItem, "item M-CHAT com resposta deve aparecer na listagem");
-assert.equal(mchatItem!.response!.answers.length, mchatDescriptor.items.length);
-assert.equal(mchatItem!.response!.answers[0].label, mchatDescriptor.items[0].text);
-assert.equal(mchatItem!.response!.answers[0].value, "Sim");
-assert.equal(mchatItem!.response!.reviewStatus, "pending");
+const qchatItem = items.find((item) => item.scaleId === "q-chat-10" && item.response);
+assert.ok(qchatItem, "item Q-CHAT-10 com resposta deve aparecer na listagem");
+assert.equal(qchatItem!.response!.answers.length, qchatDescriptor.items.length);
+assert.equal(qchatItem!.response!.answers[0].label, qchatDescriptor.items[0].text);
+assert.equal(qchatItem!.response!.answers[0].value, qchatDescriptor.items[0].options[0].label);
+assert.equal(qchatItem!.response!.reviewStatus, "pending");
 
 // ── 14) Revisão marca como concluída; revisar de novo falha fechado ────────
 const reviewResponse = await patchInvitation(
@@ -385,7 +387,7 @@ const reviewResponse = await patchInvitation(
     clinicId: CLINIC_A,
     patientId: PATIENT_A,
     action: "review",
-    responseId: mchatItem!.response!.id,
+    responseId: qchatItem!.response!.id,
   }),
 );
 assert.equal(reviewResponse.status, 200);
@@ -394,7 +396,7 @@ const reviewAgain = await patchInvitation(
     clinicId: CLINIC_A,
     patientId: PATIENT_A,
     action: "review",
-    responseId: mchatItem!.response!.id,
+    responseId: qchatItem!.response!.id,
   }),
 );
 assert.equal(reviewAgain.status, 409);
@@ -444,5 +446,66 @@ assert.equal(reviewAgain.status, 409);
   }
 }
 
+// ── 16) M-CHAT-R retirado do app (17/10/2026): convite novo recusado, link pendente
+// avisa a retirada e o histórico segue legível por número do item, sem o texto do instrumento.
+{
+  const novo = await createInvitation(
+    staffContext("POST", "https://x/api/live/scale-invitations", {
+      clinicId: CLINIC_A,
+      patientId: PATIENT_A,
+      respondentKind: "family",
+      scaleId: "mchat",
+    }),
+  );
+  assert.equal(novo.status, 400, "M-CHAT retirado não aceita convite novo");
+
+  const pendingId = crypto.randomUUID();
+  const pending = await createRemoteScaleToken(env as never, CLINIC_A, pendingId);
+  sqlite.prepare(
+    `INSERT INTO live_scale_invitations
+      (id, clinic_id, patient_id, created_by_user_id, respondent_kind, scale_id, token_hash, status, expires_at, created_at, updated_at)
+     VALUES (?, ?, ?, ?, 'family', 'mchat', ?, 'pending', ?, ?, ?)`,
+  ).run(pendingId, CLINIC_A, PATIENT_A, PROFESSIONAL_A, pending.tokenHash, future, now, now);
+  const retiredGet = await publicGetScale(publicContext("GET", pending.token));
+  assert.equal(retiredGet.status, 410);
+  assert.equal((await json(retiredGet)).code, "SCALE_RETIRED");
+  const retiredPost = await publicPostScale(publicContext("POST", pending.token, { consentAccepted: true, answers: new Array(20).fill(0) }));
+  assert.equal(retiredPost.status, 410);
+
+  const { encryptClinicalJson, currentClinicalEncryptionVersion } = await import("../../functions/api/tenant/_crypto");
+  const oldInvitationId = crypto.randomUUID();
+  const oldResponseId = crypto.randomUUID();
+  const oldToken = await createRemoteScaleToken(env as never, CLINIC_A, oldInvitationId);
+  sqlite.prepare(
+    `INSERT INTO live_scale_invitations
+      (id, clinic_id, patient_id, created_by_user_id, respondent_kind, scale_id, token_hash, status, expires_at, submitted_at, created_at, updated_at)
+     VALUES (?, ?, ?, ?, 'family', 'mchat', ?, 'submitted', ?, ?, ?, ?)`,
+  ).run(oldInvitationId, CLINIC_A, PATIENT_A, PROFESSIONAL_A, oldToken.tokenHash, future, now, now, now);
+  const oldAnswers = new Array(20).fill(1);
+  oldAnswers[0] = 0;
+  const encrypted = await encryptClinicalJson(env as never, CLINIC_A, `remote-scale-response:${oldResponseId}`, { answers: oldAnswers });
+  sqlite.prepare(
+    `INSERT INTO live_scale_responses
+      (id, invitation_id, clinic_id, patient_id, respondent_kind, scale_id, answers_encrypted, encryption_version,
+       consent_notice_version, consented_at, review_status, submitted_at, created_at)
+     VALUES (?, ?, ?, ?, 'family', 'mchat', ?, ?, ?, ?, 'pending', ?, ?)`,
+  ).run(oldResponseId, oldInvitationId, CLINIC_A, PATIENT_A, encrypted, currentClinicalEncryptionVersion(env as never), REMOTE_SCALE_CONSENT_VERSION, now, now, now);
+
+  const historico = await listInvitations(
+    staffContext("GET", `https://x/api/live/scale-invitations?clinicId=${CLINIC_A}&patientId=${PATIENT_A}`),
+  );
+  assert.equal(historico.status, 200);
+  const historicoBody = await json(historico);
+  const antigo = (historicoBody.data as Array<{ invitationId: string; scaleName: string; response: { answers: Array<{ label: string; value: string }> } | null }>)
+    .find((item) => item.invitationId === oldInvitationId);
+  assert.ok(antigo?.response, "resposta antiga do M-CHAT continua na listagem");
+  assert.equal(antigo!.scaleName, "Registro M-CHAT-R (retirado do app)");
+  assert.equal(antigo!.response!.answers.length, 20);
+  assert.deepEqual(antigo!.response!.answers[0], { label: "Item 1", value: "Sim" });
+  assert.deepEqual(antigo!.response!.answers[1], { label: "Item 2", value: "Não" });
+  const disponiveis = (historicoBody.availableScales as Array<{ id: string }>).map((item) => item.id);
+  assert.ok(!disponiveis.includes("mchat"), "M-CHAT não aparece como opção de envio");
+}
+
 sqlite.close();
-console.log("✓ remote-scale-response: allowlist enforcement, RBAC, token hash-only, validação por item, cifra em repouso, ciclo de revisão e bloqueio por clínica suspensa provados contra o SQL real da 0021");
+console.log("✓ remote-scale-response: allowlist enforcement, M-CHAT retirado com histórico legível, RBAC, token hash-only, validação por item, cifra em repouso, ciclo de revisão e bloqueio por clínica suspensa provados contra o SQL real da 0021");

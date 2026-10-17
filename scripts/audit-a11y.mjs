@@ -20,7 +20,7 @@ const reportPath = resolve(__dirname, "guards/a11y-report.json");
 const baseline = JSON.parse(readFileSync(resolve(__dirname, "guards/baseline.json"), "utf8"));
 const MAX = typeof baseline.axeSeriousCriticalViolations === "number" ? baseline.axeSeriousCriticalViolations : 0;
 const MAX_TOTAL = typeof baseline.axeTotalViolations === "number" ? baseline.axeTotalViolations : Infinity;
-const SENTINEL_ROUTES = ["/", "/#/filtro", "/#/mchat", "/#/cars", "/#/espasticidade", "/#/caa", "/#/prontuario"];
+const SENTINEL_ROUTES = ["/", "/#/filtro", "/#/snap", "/#/cars", "/#/espasticidade", "/#/caa", "/#/prontuario"];
 const navigationSource = readFileSync(resolve(repoRoot, "client/src/data/navigation.ts"), "utf8");
 const FULL_ROUTES = [
   "/",

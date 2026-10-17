@@ -59,11 +59,11 @@ equal(filterComplaintOptions(queixas, "cefal", []).map(q => q.id), ["dor"]);
 equal(filterComplaintOptions(queixas, "inexistente", []).length, 0);
 equal(filterComplaintOptions(queixas, "cefal", ["sono"]).map(q => q.id), ["sono", "dor"], "seleção visível sem auto selecionar");
 const base = { queixas: ["tea"], ageMonths: 24, respondente: "pais" };
-const mchat = allScales.find(s => s.id === "mchat");
+const mchat = allScales.find(s => s.id === "na-sinais-precoces-tea-pais"); // substitui o M-CHAT-R/F (retirado em 17/10/2026)
 assert.ok(mchat);
 equal(clinicalHardBlock(mchat, base), null);
-for (const age of [15,31,66]) assert.ok(clinicalHardBlock(mchat,{...base,ageMonths:age}));
-const denver = allScales.find(s => s.id === "denver");
+for (const age of [15,37,66]) assert.ok(clinicalHardBlock(mchat,{...base,ageMonths:age}));
+const denver = allScales.find(s => s.id === "swyc-marcos-24m"); // substitui o Denver II (retirado)
 assert.ok(denver);
 for (const extra of [{ageInputInvalid:true}, {ageMonths:NaN}, {ageMonths:Infinity}, {ageMonths:-1},
   {ageBand:{min:48,max:24}}, {ageBand:{min:NaN,max:48}}, {ageBand:{min:0,max:Infinity}}]) {

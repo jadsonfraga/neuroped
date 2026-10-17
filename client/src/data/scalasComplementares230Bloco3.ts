@@ -547,7 +547,7 @@ export const comportamentoDisruptivo: ScaleEntry[] = [
     respondente: ["pais"],
     prioridade: "triagem",
     tempo: "10 min",
-    description: "Comportamento disruptivo em casa (desobediência, agressão, desafio). Exemplo: 'Seu filho bate nos pais?'",
+    description: "Comportamento disruptivo em casa (desobediência, agressão, desafio).",
     licencaUso: "comercial",
     modoApp: "aplicar",
     duplicataStatus: "possivel_duplicata",

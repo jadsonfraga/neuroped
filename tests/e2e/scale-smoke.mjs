@@ -64,15 +64,11 @@ function startStaticServer() {
 // Cobre o contrato GenericScale nas rotas dedicadas.
 const ALL_ROUTES = [
   { path: "/#/gad7", name: "GAD-7" },
-  { path: "/#/vanderbilt", name: "Vanderbilt" },
   { path: "/#/psc17", name: "PSC-17" },
   { path: "/#/aq10", name: "AQ-10" },
-  { path: "/#/abc", name: "ABC" },
-  // ASQ-3 fica de fora: fluxo divergente (pré-seleção de idade/versão antes dos
-  // itens), não segue o contrato radiogroup→submit direto. Smoke próprio se preciso.
-  // BRIEF-2, CBCL e CARS saíram (17/10/2026): os substitutos autorais abrem em /generic-scale/<id>
-  // e são cobertos pelo e2e do runner (tests/e2e/open-scales-runner.mjs).
-  { path: "/#/cshq", name: "CSHQ" },
+  // BRIEF-2, CBCL e CARS saíram (17/10/2026), e depois Vanderbilt, ABC, CSHQ, PedsQL e ASQ-3:
+  // os substitutos abrem em /generic-scale/<id> e são cobertos pelo e2e do runner
+  // (tests/e2e/open-scales-runner.mjs).
   { path: "/#/eaf", name: "EAF" },
   { path: "/#/eai", name: "EAI" },
   { path: "/#/easi", name: "EASI" },
@@ -83,7 +79,6 @@ const ALL_ROUTES = [
   { path: "/#/etare", name: "ETARE" },
   { path: "/#/ips", name: "IPS" },
   { path: "/#/pdae", name: "PDAE" },
-  { path: "/#/pedsql", name: "PedsQL" },
 ];
 const requestedRoute = process.env.E2E_ROUTE?.trim().toLowerCase();
 const ROUTES = requestedRoute

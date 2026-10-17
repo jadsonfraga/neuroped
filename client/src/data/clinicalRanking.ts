@@ -43,8 +43,8 @@ export const clinicalRanking: ClinicalTierRule[] = [
   // ============================ TEA / AUTISMO ============================
   {
     queixa: "tea", ageMin: 16, ageMax: 30,
-    ouro: "mchat", prata: "j26-009", bronze: "tea-checklists",
-    reason: "M-CHAT-R/F é o rastreio de primeira linha para TEA entre 16–30 meses; atenção conjunta precoce e checklist ampliam a observação.",
+    ouro: "na-sinais-precoces-tea-pais", prata: "j26-009", bronze: "tea-checklists",
+    reason: "Entre 16 e 30 meses, o inventário autoral de sinais precoces (pais) organiza os sinais de alerta de TEA, incluindo perda de habilidades; atenção conjunta precoce e os roteiros clínicos ampliam a observação. O rastreio padronizado licenciado segue fora do app.",
   },
   { queixa: "tea", ageMin: 0, ageMax: 16,
     ouro: "j26-009", prata: "j26-007", bronze: "eci-fraga-qdce",
@@ -58,39 +58,39 @@ export const clinicalRanking: ClinicalTierRule[] = [
 
   // ================================ TDAH ================================
   { queixa: "tdah", ageMin: 72, ageMax: 144,
-    ouro: "snap", prata: "vanderbilt", bronze: "na-funcoes-executivas-ampliado-pais",
-    reason: "SNAP-IV é o rastreio DSM de primeira linha para TDAH no escolar; Vanderbilt amplia ao professor e o inventário autoral de funções executivas cobre o dia a dia em casa e na escola." },
+    ouro: "snap", prata: "na-atencao-atividade-professor", bronze: "na-funcoes-executivas-ampliado-pais",
+    reason: "SNAP-IV é o rastreio DSM de primeira linha para TDAH no escolar; o inventário autoral de atenção e autocontrole traz o relato do professor e o de funções executivas cobre o dia a dia em casa e na escola." },
   { queixa: "tdah", ageMin: 144, ageMax: 216,
     ouro: "snap", prata: "na-atencao-atividade-pais", bronze: "na-funcoes-executivas-ampliado-pais",
     reason: "No adolescente, SNAP-IV mantém o núcleo DSM; o inventário autoral de atenção e autocontrole separa o impacto por contexto e o de funções executivas cobre a organização." },
   { queixa: "tdah", ageMin: 0, ageMax: 72,
-    ouro: "sdq", prata: "na-funcoes-executivas-ampliado-pais", bronze: "eci-fraga-qdce",
-    reason: "Antes dos 6 anos as escalas específicas de TDAH não estão validadas; SDQ rastreia comportamento amplamente, funções executivas no dia a dia (a partir de 5 anos) e ECI-Fraga QDCe o desenvolvimento." },
+    ouro: "swyc-ppsc", prata: "na-funcoes-executivas-ampliado-pais", bronze: "eci-fraga-qdce",
+    reason: "Antes dos 6 anos as escalas específicas de TDAH não estão validadas; o SWYC PPSC (livre) rastreia comportamento no pré-escolar, o inventário de funções executivas cobre o dia a dia (a partir de 5 anos) e ECI-Fraga QDCe o desenvolvimento." },
 
   // ============================ COMPORTAMENTO ============================
   { queixa: "comportamento", ageMin: 24, ageMax: 72,
-    ouro: "na-saude-mental-pre-escolar-pais", prata: "sdq", bronze: "abc",
-    reason: "No pré-escolar, o inventário autoral de saúde emocional descreve emoções, comportamento e brincar; SDQ acrescenta forças e ABC o componente aberrante." },
+    ouro: "na-saude-mental-pre-escolar-pais", prata: "swyc-ppsc", bronze: "na-comportamento-tea-di-pais",
+    reason: "No pré-escolar, o inventário autoral de saúde emocional descreve emoções, comportamento e brincar; o SWYC PPSC (livre) acrescenta o rastreio comportamental e o inventário de comportamentos em TEA e deficiência intelectual acompanha crises, agressão e comportamentos em que a criança se machuca." },
   { queixa: "comportamento", ageMin: 72, ageMax: 216,
-    ouro: "na-perfil-emocional-comportamental-pais", prata: "na-atencao-atividade-pais", bronze: "sdq",
-    reason: "O perfil autoral emocional e comportamental (com forma paralela para o professor) mapeia onde está a queixa e quanto pesa; atenção e autocontrole foca o comportamento disruptivo e SDQ rastreia rápido." },
+    ouro: "na-perfil-emocional-comportamental-pais", prata: "na-atencao-atividade-pais", bronze: "na-perfil-emocional-comportamental-professor",
+    reason: "O perfil autoral emocional e comportamental mapeia onde está a queixa e quanto pesa; atenção e autocontrole foca o comportamento disruptivo e a forma paralela do professor traz a escola (há também a do adolescente)." },
   { queixa: "comportamento", ageMin: 0, ageMax: 24,
     ouro: "tea-comportamentos", prata: "orientacao-parental",
     reason: "No início da infância, o checklist de comportamentos atípicos guia a observação e a orientação parental ancora o manejo." },
 
   // ============================= ANSIEDADE ==============================
   { queixa: "ansiedade", ageMin: 96, ageMax: 144,
-    ouro: "scared", prata: "eai", bronze: "sdq",
-    reason: "SCARED é o rastreio de primeira linha para ansiedade a partir dos 8 anos; EAI aprofunda e SDQ contextualiza." },
+    ouro: "na-ansiedade-autorrelato", prata: "eai", bronze: "na-ansiedade-seguimento-pais",
+    reason: "A partir dos 8 anos, o autorrelato autoral de ansiedade dá voz à criança em seis áreas, com o impacto separado; EAI aprofunda e o relato dos pais completa." },
   { queixa: "ansiedade", ageMin: 144, ageMax: 216,
-    ouro: "scared", prata: "gad7ped", bronze: "eai",
-    reason: "No adolescente, SCARED mapeia os domínios de ansiedade e o GAD-7 pediátrico quantifica a ansiedade generalizada." },
+    ouro: "na-ansiedade-autorrelato", prata: "gad7ped", bronze: "eai",
+    reason: "No adolescente, o autorrelato autoral mapeia preocupação, pânico, separação, ansiedade social e evitação; o GAD-7 pediátrico quantifica a ansiedade generalizada." },
   { queixa: "ansiedade", ageMin: 48, ageMax: 96,
     ouro: "eai", prata: "na-perfil-emocional-comportamental-pais", bronze: "easi",
     reason: "Abaixo dos 8 anos usa-se heteroavaliação: EAI/EASI (clínico) e o perfil autoral emocional e comportamental (pais, a partir de 6 anos), pois o autorrelato ainda não é confiável." },
   { queixa: "ansiedade", ageMin: 24, ageMax: 48,
-    ouro: "na-saude-mental-pre-escolar-pais", prata: "sdq", bronze: "ems",
-    reason: "No pré-escolar, o inventário autoral de saúde emocional e o SDQ rastreiam sintomas internalizantes observados pelos pais." },
+    ouro: "na-saude-mental-pre-escolar-pais", prata: "swyc-ppsc", bronze: "ems",
+    reason: "No pré-escolar, o inventário autoral de saúde emocional e o SWYC PPSC (livre) rastreiam sintomas internalizantes observados pelos pais." },
 
   // ============================= DEPRESSÃO ==============================
   { queixa: "depressao", ageMin: 132, ageMax: 216,
@@ -129,17 +129,17 @@ export const clinicalRanking: ClinicalTierRule[] = [
 
   // =============================== ATRASO ===============================
   { queixa: "atraso", ageMin: 12, ageMax: 48,
-    ouro: "denver", prata: "asq3", bronze: "emdi",
-    reason: "Denver II rastreia marcos nos 4 domínios; ASQ-3 traz o olhar dos pais e a triagem global complementa." },
+    ouro: "emdi", prata: "j26-107", bronze: "j26-003",
+    reason: "EMDI rastreia marcos na consulta; marcos motores e de linguagem detalham. No fluxograma por idade, o ouro é o formulário SWYC Marcos (livre) da idade exata." },
   { queixa: "atraso", ageMin: 0, ageMax: 6,
     ouro: "j26-001", prata: "j26-003", bronze: "j26-004",
     reason: "Triagem motora 0–6m com marcos de linguagem e cognição precoce é a porta de entrada no lactente." },
   { queixa: "atraso", ageMin: 6, ageMax: 12,
-    ouro: "j26-002", prata: "j26-003", bronze: "denver",
-    reason: "Triagem motora 6–12m, marcos de linguagem e Denver II detectam atraso global no primeiro ano." },
+    ouro: "j26-002", prata: "j26-003", bronze: "j26-004",
+    reason: "Triagem motora 6–12m, marcos de linguagem e cognição precoce detectam atraso global no primeiro ano; o formulário SWYC Marcos da idade (livre) entra pelo fluxograma." },
   { queixa: "atraso", ageMin: 48, ageMax: 72,
-    ouro: "denver", prata: "asq3", bronze: "emdi",
-    reason: "Denver II e ASQ-3 cobrem marcos pré-escolares; EMDI detalha o desenvolvimento infantil." },
+    ouro: "emdi", prata: "na-comportamento-adaptativo-pais", bronze: "efdi",
+    reason: "EMDI cobre marcos pré-escolares na consulta; o inventário autoral de comportamento adaptativo traz o dia a dia e EFDI a funcionalidade. O formulário SWYC Marcos da idade (livre) entra pelo fluxograma." },
   { queixa: "atraso", ageMin: 72, ageMax: 216,
     ouro: "efdi", prata: "ead-np", bronze: "pant",
     reason: "Após os 6 anos o foco é funcionamento adaptativo — EFDI e EAD-NP (construto Vineland, aplicáveis no app) — com perfil neuropsicológico pelo PANT." },
@@ -192,8 +192,8 @@ export const clinicalRanking: ClinicalTierRule[] = [
 
   // ================================ SONO ================================
   { queixa: "sono", ageMin: 48, ageMax: 120,
-    ouro: "cshq", prata: "bears", bronze: "j26-137",
-    reason: "CSHQ é o questionário de hábitos de sono validado; BEARS e a rotina noturna ampliam a investigação e guiam a intervenção." },
+    ouro: "na-sono-crianca-pais", prata: "bears", bronze: "j26-137",
+    reason: "O inventário autoral de sono (pais) descreve início, despertares, respiração e sonolência diurna; BEARS e a rotina noturna ampliam a investigação e guiam a intervenção." },
   { queixa: "sono", ageMin: 12, ageMax: 48,
     ouro: "bisq", prata: "j26-137", bronze: "j26-136",
     reason: "No toddler, BISQ e rotina noturna estruturam a avaliação; resposta à melatonina monitoriza quando indicada." },
@@ -266,11 +266,11 @@ export const clinicalRanking: ClinicalTierRule[] = [
 
   // ========================== FUNCIONALIDADE ============================
   { queixa: "funcionalidade", ageMin: 24, ageMax: 216,
-    ouro: "ead-np", prata: "efdi", bronze: "pedsql",
-    reason: "EAD-NP cobre comportamento adaptativo (construto Vineland) e EFDI a funcionalidade; PedsQL mede qualidade de vida." },
+    ouro: "ead-np", prata: "efdi", bronze: "na-qualidade-vida-pais",
+    reason: "EAD-NP cobre comportamento adaptativo (construto Vineland) e EFDI a funcionalidade; o inventário autoral de qualidade de vida (pais e criança) acompanha o peso das dificuldades no dia a dia." },
   { queixa: "funcionalidade", ageMin: 0, ageMax: 24,
-    ouro: "denver", prata: "ead-np", bronze: "efdi",
-    reason: "No lactente, Denver II rastreia marcos e EAD-NP/EFDI cobrem o adaptativo (construto Vineland) e a funcionalidade." },
+    ouro: "efdi", prata: "ead-np", bronze: "pant",
+    reason: "No lactente, EFDI e EAD-NP cobrem a funcionalidade e o adaptativo (construto Vineland); o PANT organiza o perfil do neurodesenvolvimento." },
 
   // ============================== EFEITOS ===============================
   { queixa: "efeitos", ageMin: 0, ageMax: 216,
@@ -309,8 +309,8 @@ export const clinicalRanking: ClinicalTierRule[] = [
     reason: "DVSS rastreia sintomas urinarios funcionais; BBD integra intestino-bexiga e o diario vesical documenta padrão, frequencia e resposta ao manejo." },
 
   { queixa: "substancias", ageMin: 144, ageMax: 216,
-    ouro: "crafft",
-    reason: "CRAFFT é o rastreio validado de uso de álcool/substâncias no adolescente." },
+    ouro: "na-uso-substancias-adolescente",
+    reason: "O autorrelato autoral abre a conversa sobre tabaco, álcool e outras substâncias no adolescente, com contexto e risco; o rastreio padronizado licenciado segue fora do app." },
 ];
 
 /**
