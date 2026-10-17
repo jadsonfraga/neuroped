@@ -46,6 +46,7 @@ import {
 
 const ORIGIN = "https://neuroped.test";
 const SENHA = "Senha-Smoke-Sintetica1!";
+const SECRET = "smoke-cliente-zero-jwt-secret-32-chars!";
 
 // ── Banco: bootstrap real ───────────────────────────────────────────────────
 const raw = new DatabaseSync(":memory:");
@@ -100,7 +101,7 @@ const db = {
 const BASE_ENV = {
   DB: db,
   ENVIRONMENT: "production",
-  NEUROPED_JWT_SECRET: "smoke-cliente-zero-jwt-secret-32-chars!",
+  NEUROPED_JWT_SECRET: SECRET,
   NEUROPED_E2E_EMAIL: "e2e-tecnico@exemplo.test",
 };
 const FECHADO = { ...BASE_ENV };
