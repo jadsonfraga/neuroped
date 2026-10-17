@@ -17,6 +17,7 @@
  * o cadastro está aberto, se há cobrança ativa e por qual provedor.
  */
 import { getContextUser, isAdmin } from "../auth/_authorization";
+import { mailTransportConfigured } from "../auth/_mailTransport";
 
 interface Env {
   DB?: D1Database;
@@ -25,6 +26,7 @@ interface Env {
   AUTH_PUBLIC_APP_URL?: string;
   AUTH_RESEND_API_KEY?: string;
   AUTH_EMAIL_FROM?: string;
+  AUTH_EMAIL_TRANSPORT?: string;
   ASAAS_API_KEY?: string;
   ASAAS_WEBHOOK_TOKEN?: string;
   ASAAS_ENVIRONMENT?: string;
@@ -62,10 +64,11 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
   // Os comprimentos mínimos espelham os exigidos pelos próprios fluxos: o
   // webhook do Asaas compara em tempo constante um token de 32+ (_provider.ts).
+  // Mesma função que o runtime usa para liberar cadastro e convites: o
+  // verificador não pode dizer "pronto" para uma configuração que o cadastro
+  // recusa (ex.: AUTH_EMAIL_TRANSPORT diferente de "resend").
   const entregaEmail =
-    baseUrlValida(env.AUTH_PUBLIC_APP_URL) &&
-    preenchido(env.AUTH_RESEND_API_KEY) &&
-    preenchido(env.AUTH_EMAIL_FROM);
+    baseUrlValida(env.AUTH_PUBLIC_APP_URL) && mailTransportConfigured(env);
 
   const cobranca =
     preenchido(env.ASAAS_API_KEY, 16) &&

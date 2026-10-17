@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  EmailVerificationBlockedError,
   resendEmailVerification,
   verifyEmailToken,
 } from "@/lib/emailVerificationClient";
@@ -36,6 +37,7 @@ export default function VerifyEmailPage() {
   const [email, setEmail] = useState("");
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
+  const [resendError, setResendError] = useState<string | null>(null);
 
   useEffect(() => {
     if (token.length < 32) return;
@@ -67,14 +69,22 @@ export default function VerifyEmailPage() {
   async function handleResend(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setResending(true);
+    setResendError(null);
     try {
       await resendEmailVerification(email.trim());
-    } catch {
-      // A API é anti-enumeração (202 genérico). Mostrar a mesma confirmação em
-      // qualquer caso é deliberado: a tela não pode virar oráculo de contas.
+      // 202 é genérico de propósito (anti-enumeração): a confirmação não revela
+      // se a conta existe. Só chega aqui se o servidor aceitou o pedido.
+      setResent(true);
+    } catch (error) {
+      // Falha real (provedor de e-mail indisponível, rede, 5xx) NÃO vira "o link
+      // chegará": nada foi enviado e a tela diz isso.
+      setResendError(
+        error instanceof EmailVerificationBlockedError
+          ? "O envio de e-mail não está configurado nesta instalação, então nenhum link foi enviado. Fale com o administrador."
+          : "Não foi possível solicitar o reenvio agora. Verifique a conexão e tente novamente.",
+      );
     } finally {
       setResending(false);
-      setResent(true);
     }
   }
 
@@ -180,6 +190,11 @@ export default function VerifyEmailPage() {
                   />
                 </div>
               </div>
+              {resendError && (
+                <p role="alert" data-testid="verify-email-resend-error" className="rounded-xl border border-destructive/40 p-3 text-sm leading-relaxed text-foreground">
+                  {resendError}
+                </p>
+              )}
               <Button
                 type="submit"
                 disabled={resending}

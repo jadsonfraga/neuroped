@@ -16,6 +16,9 @@ function readableSignupError(error: unknown): string {
   if (code === "EMAIL_VERIFICATION_NOT_CONFIGURED") {
     return "A confirmação de e-mail não está configurada nesta instalação. Nenhuma conta foi criada e o e-mail não foi marcado como verificado.";
   }
+  if (code === "AUTH_SESSION_UNAVAILABLE") {
+    return "Sua conta foi criada, mas não conseguimos abrir a sessão agora. Entre com seu e-mail e senha pelo login e confirme o e-mail pelo link que enviamos. Não crie a conta de novo.";
+  }
   if (code === "LEGAL_ACCEPTANCE_REQUIRED" || code === "LEGAL_VERSION_OUTDATED") return message;
   if (code === "EMAIL_IN_USE") return "Este e-mail não está disponível para cadastro. Se a conta já é sua, entre pelo login.";
   if (code === "WEAK_PASSWORD" || /senha/i.test(message)) return message;
@@ -32,6 +35,7 @@ export default function CadastroPage() {
   const [acceptedLegal, setAcceptedLegal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deliveryFailed, setDeliveryFailed] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -42,7 +46,12 @@ export default function CadastroPage() {
     }
     setSubmitting(true);
     try {
-      await signup(name.trim(), email.trim(), password, currentLegalVersions());
+      const result = await signup(name.trim(), email.trim(), password, currentLegalVersions());
+      if (result.emailVerificationDelivery === "failed") {
+        // Conta criada, e-mail NÃO enviado: dizer isso em vez de seguir como se o link existisse.
+        setDeliveryFailed(true);
+        return;
+      }
       setLocation("/onboarding");
     } catch (signupError) {
       setError(readableSignupError(signupError));
@@ -61,7 +70,20 @@ export default function CadastroPage() {
         Crie sua conta, monte sua clínica e comece com 14 dias de avaliação. Seus dados clínicos ficam isolados por clínica e cifrados no servidor.
       </p>
 
-      <form onSubmit={handleSubmit} className="mt-6 w-full max-w-sm space-y-4 rounded-3xl border border-primary/15 bg-card p-5 text-left shadow-xl shadow-primary/5 sm:p-6" data-testid="signup-form">
+      {deliveryFailed && (
+        <div role="alert" data-testid="signup-email-delivery-failed" className="mt-6 w-full max-w-sm space-y-3 rounded-3xl border border-destructive/40 bg-card p-5 text-left shadow-xl sm:p-6">
+          <p className="text-sm font-semibold text-foreground">Conta criada, mas o e-mail de confirmação não saiu.</p>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            Não conseguimos enviar o link agora, então o e-mail ainda não está verificado e a clínica só pode ser criada depois da confirmação. Tente reenviar o link em alguns minutos. Se persistir, o envio de e-mail desta instalação precisa de ajuste do administrador.
+          </p>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button asChild className="flex-1"><a href="#/verificar-email">Reenviar link de confirmação</a></Button>
+            <Button type="button" variant="outline" className="flex-1" onClick={() => setLocation("/onboarding")}>Continuar</Button>
+          </div>
+        </div>
+      )}
+
+      <form hidden={deliveryFailed} onSubmit={handleSubmit} className="mt-6 w-full max-w-sm space-y-4 rounded-3xl border border-primary/15 bg-card p-5 text-left shadow-xl shadow-primary/5 sm:p-6" data-testid="signup-form">
         <div className="space-y-2">
           <Label htmlFor="signup-name">Nome completo</Label>
           <div className="relative">

@@ -7,6 +7,22 @@ cadastro responde `EMAIL_VERIFICATION_NOT_CONFIGURED` com
 responde `INVITATION_DELIVERY_NOT_CONFIGURED` com o mesmo
 `blockedExternal` e **não emite token**.
 
+Reenvio de verificação (`POST /api/auth/resend-verification`) e recuperação de
+senha (`POST /api/auth/forgot-password`) sem provedor respondem `503`
+(`EMAIL_VERIFICATION_NOT_CONFIGURED` / `PASSWORD_RESET_NOT_CONFIGURED`,
+`blockedExternal: BLOCKED_EXTERNAL_RESEND`) **antes** de consultar o banco ou
+o limitador: o estado é do produto, igual para qualquer e-mail, e a tela não
+diz que um link vai chegar. Com provedor configurado o corpo continua `202`
+genérico (anti-enumeração) e o trabalho dependente da conta roda em
+`waitUntil`, para que conta existente e inexistente respondam no mesmo tempo.
+
+Se o provedor está configurado mas recusa o envio (domínio de `AUTH_EMAIL_FROM`
+não verificado, chave revogada), o cadastro cria a conta e responde `201` com
+`emailVerificationDelivery: "failed"` e `blockedExternal`; a tela avisa que o
+link não saiu. `"sent"` é só o provedor ter aceitado o envio, não entrega na
+caixa de entrada. O probe `--probe` não verifica o domínio do remetente:
+confirme-o no painel Resend antes de abrir `SAAS_SIGNUP_ENABLED`.
+
 Nenhum desses caminhos grava `email_verified_at`. E-mail verificado continua
 sendo só o consumo do token em `POST /api/auth/verify-email`
 (`email_verified_source = self_service_token`).

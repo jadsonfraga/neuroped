@@ -51,6 +51,8 @@ export interface LoginResponse {
   refreshToken: string;
   expiresIn: number;
   user: AuthUser;
+  /** Só no cadastro: o servidor informa se o link de confirmação de e-mail saiu de fato. */
+  emailVerificationDelivery?: "sent" | "failed";
 }
 
 function configuredAuthMode(): AuthMode {

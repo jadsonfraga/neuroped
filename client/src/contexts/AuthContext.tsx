@@ -18,6 +18,11 @@ import { clearInMemoryScaleDrafts } from "@/hooks/useSecureScaleDraft";
 
 export type AccessMode = "checking" | "remote" | "local";
 
+/** O que o servidor atesta sobre o envio do link de confirmação logo após o cadastro. */
+export interface SignupResult {
+  emailVerificationDelivery: "sent" | "failed";
+}
+
 interface AuthContextValue {
   user: AuthUser | null;
   isAuthenticated: boolean;
@@ -26,7 +31,7 @@ interface AuthContextValue {
   remoteConfigured: boolean;
   login: (email: string, password: string) => Promise<void>;
   /** `acceptedLegal`: versões aceitas dos Termos e da Política (shared/legal.ts). */
-  signup: (name: string, email: string, password: string, acceptedLegal: Record<string, string>) => Promise<void>;
+  signup: (name: string, email: string, password: string, acceptedLegal: Record<string, string>) => Promise<SignupResult>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -115,10 +120,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user);
   }, []);
 
-  const signup = useCallback(async (name: string, email: string, password: string, acceptedLegal: Record<string, string>): Promise<void> => {
+  const signup = useCallback(async (name: string, email: string, password: string, acceptedLegal: Record<string, string>): Promise<SignupResult> => {
     const data = await signupRequest(name, email, password, acceptedLegal);
     await clearSessionScopedClientState();
     setUser(data.user);
+    return { emailVerificationDelivery: data.emailVerificationDelivery === "failed" ? "failed" : "sent" };
   }, []);
 
   const changePassword = useCallback(async (
