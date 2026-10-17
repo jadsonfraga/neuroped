@@ -220,11 +220,15 @@ test("body-scoped invitation and checkout retain delivery/provider gates and rej
     const beta = f.snapshot(BETA);
     for (const [path, body, code] of [
       ["/api/billing/invitations", { clinicId: ALFA, email: "new-member@example.test", role: "assistant" }, "INVITATION_DELIVERY_NOT_CONFIGURED"],
-      ["/api/billing/checkout", { clinicId: ALFA, seats: 20 }, "BILLING_PROVIDER_UNAVAILABLE"],
+      ["/api/billing/checkout", { clinicId: ALFA, seats: 20 }, "BILLING_BLOCKED_EXTERNAL"],
     ] as const) {
       const allowed = await f.call("reader-owner", path, "POST", body);
       assert.equal(allowed.status, 503, "authorized management does not invent an integration");
-      assert.equal((await allowed.json() as { code: string }).code, code);
+      const allowedBody = await allowed.json() as { code: string; blockedExternal?: string };
+      assert.equal(allowedBody.code, code);
+      if (code === "BILLING_BLOCKED_EXTERNAL") {
+        assert.equal(allowedBody.blockedExternal, "BLOCKED_EXTERNAL_ASAAS");
+      }
       const denied = await f.call("reader-owner", path, "POST", { ...body, clinicId: BETA }, ALFA);
       assert.equal(denied.status, 403, "header cannot override body ownership");
       assert.equal((await f.call("reader-owner", path, "POST", null)).status, 400);
