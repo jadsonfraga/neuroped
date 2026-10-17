@@ -13,6 +13,9 @@ function readableSignupError(error: unknown): string {
   if (code === "SIGNUP_DISABLED") {
     return "O cadastro direto pelo site ainda não está habilitado. Peça um convite à sua clínica ou fale com o suporte.";
   }
+  if (code === "EMAIL_VERIFICATION_NOT_CONFIGURED") {
+    return "A confirmação de e-mail não está configurada nesta instalação. Nenhuma conta foi criada e o e-mail não foi marcado como verificado.";
+  }
   if (code === "LEGAL_ACCEPTANCE_REQUIRED" || code === "LEGAL_VERSION_OUTDATED") return message;
   if (code === "EMAIL_IN_USE") return "Este e-mail não está disponível para cadastro. Se a conta já é sua, entre pelo login.";
   if (code === "WEAK_PASSWORD" || /senha/i.test(message)) return message;

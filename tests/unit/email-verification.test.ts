@@ -318,10 +318,9 @@ assert.ok(
     ),
   );
   assert.equal(response.status, 503);
-  assert.equal(
-    ((await response.json()) as { code: string }).code,
-    "EMAIL_VERIFICATION_NOT_CONFIGURED",
-  );
+  const semEntregaBody = (await response.json()) as { code: string; blockedExternal?: string };
+  assert.equal(semEntregaBody.code, "EMAIL_VERIFICATION_NOT_CONFIGURED");
+  assert.equal(semEntregaBody.blockedExternal, "BLOCKED_EXTERNAL_RESEND");
   assert.equal(
     (sqlite.prepare("SELECT COUNT(*) AS n FROM users").get() as { n: number })
       .n,

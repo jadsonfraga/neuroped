@@ -44,6 +44,7 @@ export interface TransactionalEmail {
 }
 
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
+const RESEND_DOMAINS_ENDPOINT = "https://api.resend.com/domains";
 
 /**
  * Teto de espera pelo provedor. Agendamento, remarcação e cancelamento públicos
@@ -87,6 +88,71 @@ export function mailTransportConfigured(env: MailTransportEnv): boolean {
       env.AUTH_RESEND_API_KEY?.trim() &&
       env.AUTH_EMAIL_FROM?.trim(),
   );
+}
+
+export const RESEND_CONTRACT_DOES_NOT_PROVE = [
+  "ENTREGA_REAL",
+  "VERIFICACAO_DE_CONTA",
+  "CONVITE_ENTREGUE",
+  "EMAIL_VERIFICADO",
+] as const;
+
+export interface ResendContractAssessment {
+  status: "CONFIGURACAO_PRESENTE" | "BLOCKED_EXTERNAL";
+  code: "RESEND_CONTRACT_CONFIGURED" | "BLOCKED_EXTERNAL_RESEND";
+  missing: string[];
+  doesNotProve: readonly string[];
+}
+
+/**
+ * Presença de variável não entrega e-mail e não marca conta como verificada.
+ * O objeto não carrega valor de segredo.
+ */
+export function assessResendOperationalContract(env: MailTransportEnv): ResendContractAssessment {
+  const missing: string[] = [];
+  if (!transportName(env)) missing.push("AUTH_EMAIL_TRANSPORT");
+  if (!publicAppBaseUrl(env)) missing.push("AUTH_PUBLIC_APP_URL");
+  if (!env.AUTH_RESEND_API_KEY?.trim()) missing.push("AUTH_RESEND_API_KEY");
+  if (!env.AUTH_EMAIL_FROM?.trim()) missing.push("AUTH_EMAIL_FROM");
+  const ready = mailTransportConfigured(env);
+  return {
+    status: ready ? "CONFIGURACAO_PRESENTE" : "BLOCKED_EXTERNAL",
+    code: ready ? "RESEND_CONTRACT_CONFIGURED" : "BLOCKED_EXTERNAL_RESEND",
+    missing,
+    doesNotProve: RESEND_CONTRACT_DOES_NOT_PROVE,
+  };
+}
+
+/**
+ * Leitura dos domínios da conta. Não envia mensagem e não marca e-mail verificado.
+ * O corpo pode listar endereços; só o status HTTP sai daqui.
+ */
+export async function probeResendAccount(
+  env: MailTransportEnv,
+  fetchImpl: typeof fetch = fetch,
+): Promise<{ httpStatus: number; code: string }> {
+  if (!mailTransportConfigured(env)) {
+    return { httpStatus: 0, code: "BLOCKED_EXTERNAL_RESEND" };
+  }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15_000);
+  try {
+    const response = await fetchImpl(RESEND_DOMAINS_ENDPOINT, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${env.AUTH_RESEND_API_KEY!.trim()}` },
+      signal: controller.signal,
+    });
+    await response.arrayBuffer();
+    if (response.status === 200) return { httpStatus: 200, code: "RESEND_ACCOUNT_READ_OK" };
+    if (response.status === 401 || response.status === 403) {
+      return { httpStatus: response.status, code: "BLOCKED_EXTERNAL_RESEND_CREDENTIAL_REJECTED" };
+    }
+    return { httpStatus: response.status, code: `BLOCKED_EXTERNAL_RESEND_PROBE_HTTP_${response.status}` };
+  } catch {
+    return { httpStatus: 0, code: "BLOCKED_EXTERNAL_RESEND_PROBE_UNREACHABLE" };
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export async function sendTransactionalEmail(

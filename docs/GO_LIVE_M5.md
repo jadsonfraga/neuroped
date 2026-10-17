@@ -35,8 +35,10 @@ elas, a aba Comunicação continua em **envio manual**. A migração 0031
 tentativas.
 
 **Confirmação:** `pendencias` não contém `ENTREGA_EMAIL_NAO_CONFIGURADA`.
-Depois, peça uma redefinição de senha para um endereço seu e verifique que o
-e-mail chega.
+Antes disso, rode `docs/RESEND_OPERATIONAL_CONTRACT.md`. Exit 2 é
+`BLOCKED_EXTERNAL`: nenhuma conta nasce e nenhum e-mail é marcado verificado.
+Exit 0 do `--probe` só mostra que a chave lê os domínios. A entrega só fica
+comprovada quando uma mensagem real chega e o token de verificação é consumido.
 
 ## Passo 2 — Cobrança (sandbox antes de produção)
 

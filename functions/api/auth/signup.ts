@@ -55,6 +55,7 @@ export const onRequestPost: PagesFunction<EmailVerificationEnv> = async (
         error:
           "Cadastro indisponível: a confirmação de e-mail não está configurada.",
         code: "EMAIL_VERIFICATION_NOT_CONFIGURED",
+        blockedExternal: "BLOCKED_EXTERNAL_RESEND",
       },
       503,
     );
