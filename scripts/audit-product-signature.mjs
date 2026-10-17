@@ -21,7 +21,7 @@ const routes = [
   { id: "documentos", route: "/documentos", selector: '[data-testid="documentos-shell"]' },
   { id: "laudo", route: "/laudo-neuroped", query: `patientId=${patient}`, selector: '[data-testid="input-paciente"]' },
   { id: "familia", route: "/portal-familia", selector: "#family-resources-title" },
-  { id: "escala", route: "/mchat", selector: '[data-testid="card-question-0"]' },
+  { id: "escala", route: "/snap", selector: '[data-testid="card-question-0"]' },
 ];
 const sizes = [
   { id: "desktop-light", width: 1440, height: 1000, theme: "light" },

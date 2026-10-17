@@ -17,7 +17,7 @@
   "lighthouseRouteMinimums": {
     "/": 95,
     "/#/filtro": 95,
-    "/#/mchat": 95
+    "/#/snap": 95
   },
   "lighthouseMetricMaximums": {
     "fcpMs": 1200,
