@@ -23,8 +23,8 @@ fonte é a raiz; replique aqui apenas o que for específico destes arquivos.
 2. **Piloto:** a raiz oferece R$ 99/mês sem desconto; `INTERVIEW_PLAYBOOK.md` sugere R$ 1/mês
    como compromisso mínimo. A raiz prevalece; R$ 1 só como alternativa de teste.
 3. **"Comprovado em código" não é "pronto em produção":** `LGPD_PRE_GO_LIVE.md` marca A4/A5
-   (exportação, cifra) como ✅ por teste/código. A produção, hoje, está com
-   `clinicalCryptoConfigured=false` e exportação LGPD sem R2 (audit Clinical/LGPD,
+   (exportação, cifra) como ✅ por teste/código. A produção, em 17/10/2026, está com
+   `clinicalCryptoConfigured=true`, mas exportação LGPD ainda sem R2 (audit Clinical/LGPD,
    `ready=false`). Não usar esses ✅ como autorização para paciente real: vale o gate G1–G7.
 4. **Smoke da raiz (`go-live`):** `pronto: true` atesta configuração presente, não cifra clínica;
    não substitui G1/G4/G3.
