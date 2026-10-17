@@ -1,5 +1,11 @@
 # NeuroPed Autonomous SaaS — readiness verificável
 
+Adendo 2026-10-17: o contrato operacional do Asaas ficou fail-closed
+(`docs/ASAAS_OPERATIONAL_CONTRACT.md`). Checkout sem credencial devolve
+`BILLING_BLOCKED_EXTERNAL` e não chama o provedor. A linha 10 da matriz abaixo
+permanece `BLOCKED_EXTERNAL`: não houve cobrança, webhook originado pelo
+Asaas, entitlement pago, receita ou cliente pagante.
+
 Data da validação local: 2026-09-26 (reconciliado 2026-09-27)  
 Branch de trabalho: `value/autonomous-saas`  
 Base observada antes das alterações: `0b4f74fb49214d00944fc2a366d3b4454363601a`  

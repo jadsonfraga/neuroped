@@ -46,11 +46,141 @@ function requireSecret(value: string | undefined, name: string, minLength = 16):
   return clean;
 }
 
-export function asaasBaseUrl(env: BillingProviderEnv): string {
-  const mode = (env.ASAAS_ENVIRONMENT ?? "sandbox").trim().toLowerCase();
-  if (mode === "production") return "https://api.asaas.com/v3";
-  if (mode === "sandbox") return "https://api-sandbox.asaas.com/v3";
+/**
+ * Ambiente do provedor é explícito. Ausência não cai em sandbox: um checkout
+ * sem `ASAAS_ENVIRONMENT` iria cobrar (ou parecer cobrar) no lugar errado.
+ */
+export function asaasEnvironmentName(env: BillingProviderEnv): "sandbox" | "production" {
+  const mode = (env.ASAAS_ENVIRONMENT ?? "").trim().toLowerCase();
+  if (!mode) throw new Error("ASAAS_ENVIRONMENT_NOT_CONFIGURED");
+  if (mode === "production" || mode === "sandbox") return mode;
   throw new Error("ASAAS_ENVIRONMENT_INVALID");
+}
+
+export function asaasBaseUrl(env: BillingProviderEnv): string {
+  return asaasEnvironmentName(env) === "production"
+    ? "https://api.asaas.com/v3"
+    : "https://api-sandbox.asaas.com/v3";
+}
+
+export const ASAAS_CONTRACT_DOES_NOT_PROVE = [
+  "COBRANCA_REAL",
+  "WEBHOOK_ORIGINADO_PELO_PROVEDOR",
+  "ENTITLEMENT_PAGO",
+  "RECEITA",
+  "MRR",
+  "CLIENTE_PAGANTE",
+] as const;
+
+export interface AsaasContractAssessment {
+  status: "CONFIGURACAO_PRESENTE" | "BLOCKED_EXTERNAL";
+  code: "ASAAS_CONTRACT_CONFIGURED" | "BLOCKED_EXTERNAL_ASAAS";
+  missing: string[];
+  environment: "sandbox" | "production" | null;
+  doesNotProve: readonly string[];
+}
+
+function secretReady(value: string | undefined, minLength: number): boolean {
+  return (value?.trim().length ?? 0) >= minLength;
+}
+
+function returnUrlReady(env: BillingProviderEnv): boolean {
+  try {
+    return checkoutReturnBaseUrl(env).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Contrato operacional do checkout. Presença de variável não é cobrança:
+ * `doesNotProve` permanece mesmo quando o status é CONFIGURACAO_PRESENTE.
+ * Nenhum valor de segredo entra no objeto.
+ */
+export function assessAsaasOperationalContract(env: BillingProviderEnv): AsaasContractAssessment {
+  const missing: string[] = [];
+  if (!secretReady(env.ASAAS_API_KEY, 16)) missing.push("ASAAS_API_KEY");
+  if (!secretReady(env.ASAAS_WEBHOOK_TOKEN, 32)) missing.push("ASAAS_WEBHOOK_TOKEN");
+  let environment: "sandbox" | "production" | null = null;
+  try {
+    environment = asaasEnvironmentName(env);
+  } catch {
+    missing.push("ASAAS_ENVIRONMENT");
+  }
+  if (!returnUrlReady(env)) missing.push("AUTH_PUBLIC_APP_URL");
+  const ready = missing.length === 0;
+  return {
+    status: ready ? "CONFIGURACAO_PRESENTE" : "BLOCKED_EXTERNAL",
+    code: ready ? "ASAAS_CONTRACT_CONFIGURED" : "BLOCKED_EXTERNAL_ASAAS",
+    missing,
+    environment: ready ? environment : null,
+    doesNotProve: ASAAS_CONTRACT_DOES_NOT_PROVE,
+  };
+}
+
+const CHECKOUT_CONFIG_ERRORS = new Set([
+  "ASAAS_API_KEY_NOT_CONFIGURED",
+  "ASAAS_WEBHOOK_TOKEN_NOT_CONFIGURED",
+  "ASAAS_ENVIRONMENT_NOT_CONFIGURED",
+  "ASAAS_ENVIRONMENT_INVALID",
+  "APP_BASE_URL_NOT_CONFIGURED",
+]);
+
+export function checkoutUnavailableCode(
+  error: unknown,
+): "BILLING_BLOCKED_EXTERNAL" | "BILLING_PROVIDER_UNAVAILABLE" {
+  const message = error instanceof Error ? error.message : "";
+  return CHECKOUT_CONFIG_ERRORS.has(message)
+    ? "BILLING_BLOCKED_EXTERNAL"
+    : "BILLING_PROVIDER_UNAVAILABLE";
+}
+
+/** Recusa o checkout antes de qualquer chamada ao provedor. */
+export function assertAsaasCheckoutContract(env: BillingProviderEnv): void {
+  const assessment = assessAsaasOperationalContract(env);
+  if (assessment.status === "CONFIGURACAO_PRESENTE") return;
+  if (assessment.missing.includes("ASAAS_API_KEY")) throw new Error("ASAAS_API_KEY_NOT_CONFIGURED");
+  if (assessment.missing.includes("ASAAS_WEBHOOK_TOKEN")) throw new Error("ASAAS_WEBHOOK_TOKEN_NOT_CONFIGURED");
+  const rawEnvironment = (env.ASAAS_ENVIRONMENT ?? "").trim();
+  if (assessment.missing.includes("ASAAS_ENVIRONMENT")) {
+    throw new Error(rawEnvironment ? "ASAAS_ENVIRONMENT_INVALID" : "ASAAS_ENVIRONMENT_NOT_CONFIGURED");
+  }
+  throw new Error("APP_BASE_URL_NOT_CONFIGURED");
+}
+
+/**
+ * Leitura da conta no provedor. Não cria checkout, cobrança nem assinatura.
+ * O corpo da resposta pode conter nome e e-mail; só o status HTTP sai daqui.
+ */
+export async function probeAsaasAccount(
+  env: BillingProviderEnv,
+  fetchImpl: typeof fetch = fetch,
+): Promise<{ httpStatus: number; code: string }> {
+  if (assessAsaasOperationalContract(env).status !== "CONFIGURACAO_PRESENTE") {
+    return { httpStatus: 0, code: "BLOCKED_EXTERNAL_ASAAS" };
+  }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15_000);
+  try {
+    const response = await fetchImpl(`${asaasBaseUrl(env)}/myAccount`, {
+      method: "GET",
+      headers: {
+        accept: "application/json",
+        access_token: requireSecret(env.ASAAS_API_KEY, "ASAAS_API_KEY"),
+      },
+      signal: controller.signal,
+    });
+    await response.arrayBuffer();
+    if (response.status === 200) return { httpStatus: 200, code: "ASAAS_ACCOUNT_READ_OK" };
+    if (response.status === 401 || response.status === 403) {
+      return { httpStatus: response.status, code: "BLOCKED_EXTERNAL_ASAAS_CREDENTIAL_REJECTED" };
+    }
+    return { httpStatus: response.status, code: `BLOCKED_EXTERNAL_ASAAS_PROBE_HTTP_${response.status}` };
+  } catch {
+    return { httpStatus: 0, code: "BLOCKED_EXTERNAL_ASAAS_PROBE_UNREACHABLE" };
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export function validateAsaasWebhook(request: Request, env: BillingProviderEnv): boolean {
@@ -94,6 +224,9 @@ export async function createAsaasRecurringCheckout(
   },
 ): Promise<AsaasCheckout> {
   if (!Number.isInteger(params.seats) || params.seats < 1) throw new Error("INVALID_SEAT_COUNT");
+  // Sem webhook autenticado o pagamento no provedor não vira entitlement.
+  // A recusa acontece antes do POST /checkouts.
+  assertAsaasCheckoutContract(env);
 
   const apiKey = requireSecret(env.ASAAS_API_KEY, "ASAAS_API_KEY");
   const baseUrl = asaasBaseUrl(env);

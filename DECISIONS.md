@@ -27,7 +27,12 @@ Formato: contexto → decisão → consequência. Uma entrada por ciclo.
 - **Decisão:** criar `docs/LGPD_PRE_GO_LIVE.md` separando comprovado-em-código (A1–A8, com evidência e comando de verificação) de pendente-de-processo (B1–B10, cada um com ação e responsável), com hard gates explícitos: B7 (revisão jurídica) bloqueia `SAAS_SIGNUP_ENABLED=true`; B10 (consentimento específico) bloqueia qualquer paciente real em piloto.
 - **Consequência:** "conformidade LGPD" deixa de ser pendência difusa e vira gap-list rastreável com datas em `LGPD.md` §11; ordem de execução prioriza o caminho crítico (revisão jurídica); a CI já cobre os fundamentos da seção A por testes existentes.
 
-## Ciclo 5 — Contrato operacional Resend, fail-closed (Fase 1)
+## Ciclo 5 — Contrato operacional Asaas, fail-closed (Fase 1)
+- **Contexto:** checkout, webhook autenticado, idempotência e entitlement já eram `VERIFIED` em teste local, mas `asaasBaseUrl` tratava ambiente ausente como sandbox e o checkout devolvia indisponibilidade genérica. Sem credencial real, isso ainda é `BLOCKED_EXTERNAL` — e o caminho de produção não podia ficar implícito.
+- **Decisão:** ambiente Asaas passa a ser explícito (`sandbox` ou `production`); checkout sem chave, token de webhook, ambiente ou URL HTTPS devolve `BILLING_BLOCKED_EXTERNAL` antes de qualquer POST; o runbook `docs/ASAAS_OPERATIONAL_CONTRACT.md` e `scripts/ops/asaas-operational-contract.ts` inspecionam a configuração sem imprimir segredo e, com `--probe`, só leem `GET /myAccount`.
+- **Consequência:** instalação sem contrato declara `BLOCKED_EXTERNAL` e não cria cobrança. Probe aceito ou configuração presente não é pagamento, MRR nem cliente pagante. O marco de billing continua exigindo `charge_paid` persistido pelo webhook.
+
+## Ciclo 6 — Contrato operacional Resend, fail-closed (Fase 1)
 - **Contexto:** verificação de conta e convite já falhavam fechado sem transporte, mas a resposta não declarava `BLOCKED_EXTERNAL` e não havia runbook executável. Marcar `email_verified_at` sem token consumido seria bypass.
 - **Decisão:** cadastro e convite sem Resend devolvem o código que já existia mais `blockedExternal: BLOCKED_EXTERNAL_RESEND`, sem criar conta e sem emitir bearer. `scripts/ops/resend-operational-contract.ts` inspeciona a configuração sem imprimir segredo e, com `--probe`, só faz `GET /domains`.
 - **Consequência:** instalação sem provedor declara o bloqueio e não verifica e-mail por atalho. Probe aceito não é entrega, convite recebido nem conta confirmada. `email_verified_at` continua exclusivo do token `self_service_token`.

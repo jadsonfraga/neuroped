@@ -3,6 +3,7 @@ import { CANONICAL_PRICE_CENTS } from "../../../shared/billing";
 import { getClinicMembership, membershipHas, tenantError, tenantJson } from "../tenant/_core";
 import {
   checkoutExternalReference,
+  checkoutUnavailableCode,
   createAsaasRecurringCheckout,
   type BillingProviderEnv,
 } from "./_provider";
@@ -95,8 +96,16 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       customer: { name: user.name, email: user.email ?? "" },
     });
   } catch (error) {
-    console.error("[billing.checkout] provider error", error);
-    return tenantError("Checkout temporariamente indisponível.", "BILLING_PROVIDER_UNAVAILABLE", 503);
+    const code = checkoutUnavailableCode(error);
+    console.error("[billing.checkout] provider error", error instanceof Error ? error.message : "unknown");
+    if (code === "BILLING_BLOCKED_EXTERNAL") {
+      return tenantJson({
+        error: "Cobrança não configurada neste ambiente. Nenhuma cobrança foi criada.",
+        code,
+        blockedExternal: "BLOCKED_EXTERNAL_ASAAS",
+      }, 503);
+    }
+    return tenantError("Checkout temporariamente indisponível.", code, 503);
   }
 
   const checkoutId = crypto.randomUUID();

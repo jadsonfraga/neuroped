@@ -28,6 +28,9 @@ on:
       - "tests/unit/onboarding-progress-ui.test.tsx"
       - "tests/unit/migration-prefix-guard.test.mjs"
       - "tests/unit/saas-loop-artifacts-static.test.mjs"
+      - "tests/unit/asaas-operational-contract.test.ts"
+      - "scripts/ops/asaas-operational-contract.ts"
+      - "docs/ASAAS_OPERATIONAL_CONTRACT.md"
       - "tests/unit/resend-operational-contract.test.ts"
       - "tests/unit/email-verification.test.ts"
       - "scripts/ops/resend-operational-contract.ts"
@@ -64,6 +67,9 @@ on:
       - "tests/unit/onboarding-progress-ui.test.tsx"
       - "tests/unit/migration-prefix-guard.test.mjs"
       - "tests/unit/saas-loop-artifacts-static.test.mjs"
+      - "tests/unit/asaas-operational-contract.test.ts"
+      - "scripts/ops/asaas-operational-contract.ts"
+      - "docs/ASAAS_OPERATIONAL_CONTRACT.md"
       - "tests/unit/resend-operational-contract.test.ts"
       - "tests/unit/email-verification.test.ts"
       - "scripts/ops/resend-operational-contract.ts"
@@ -131,6 +137,9 @@ jobs:
 
       - name: Trilha de auditoria da própria clínica (AUTHZ-P1-10)
         run: node --import tsx tests/unit/tenant-audit-trail.test.ts
+
+      - name: Contrato operacional Asaas fail-closed
+        run: node --import tsx tests/unit/asaas-operational-contract.test.ts
 
       - name: Contrato operacional Resend fail-closed
         run: node --import tsx tests/unit/resend-operational-contract.test.ts
