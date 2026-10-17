@@ -28,6 +28,9 @@ on:
       - "tests/unit/onboarding-progress-ui.test.tsx"
       - "tests/unit/migration-prefix-guard.test.mjs"
       - "tests/unit/saas-loop-artifacts-static.test.mjs"
+      - "tests/unit/asaas-operational-contract.test.ts"
+      - "scripts/asaas-operational-contract.mts"
+      - "docs/ASAAS_OPERATIONAL_CONTRACT.md"
       - "ROADMAP.md"
       - "DECISIONS.md"
       - "METRICS.md"
@@ -59,6 +62,9 @@ on:
       - "tests/unit/onboarding-progress-ui.test.tsx"
       - "tests/unit/migration-prefix-guard.test.mjs"
       - "tests/unit/saas-loop-artifacts-static.test.mjs"
+      - "tests/unit/asaas-operational-contract.test.ts"
+      - "scripts/asaas-operational-contract.mts"
+      - "docs/ASAAS_OPERATIONAL_CONTRACT.md"
       - "ROADMAP.md"
       - "DECISIONS.md"
       - "METRICS.md"
@@ -115,6 +121,9 @@ jobs:
 
       - name: Cliente Zero — funil externo ponta a ponta (duas clínicas)
         run: node --import tsx tests/unit/cliente-zero-journey.test.ts
+
+      - name: Contrato operacional Asaas fail-closed
+        run: node --import tsx tests/unit/asaas-operational-contract.test.ts
 
       - name: Gate de billing de /members não bloqueia GET/DELETE (LTB-15)
         run: node --import tsx tests/unit/tenant-members-billing-gate.test.ts

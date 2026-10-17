@@ -15,6 +15,8 @@ on:
       - "tests/unit/saas-billing*.test.ts"
       - "tests/unit/billing-log-safety.test.mjs"
       - "tests/unit/saas-billing-production-wiring.test.mjs"
+      - "tests/unit/asaas-operational-contract.test.ts"
+      - "scripts/asaas-operational-contract.mts"
       - ".github/workflows/saas-billing-contract.yml"
       - ".github/workflows/saas-billing-d1-migration.yml"
   push:
@@ -36,6 +38,7 @@ jobs:
       - run: npm run lint
       - run: npx tsx tests/unit/saas-billing-contract.test.ts
       - run: npx tsx tests/unit/saas-billing-provider.test.ts
+      - run: npx tsx tests/unit/asaas-operational-contract.test.ts
       - run: node tests/unit/billing-log-safety.test.mjs
       - run: node tests/unit/saas-billing-production-wiring.test.mjs
       - run: git diff --check

@@ -17,6 +17,7 @@ Valores atuais são zero por ausência de fatos persistidos (regra de honestidad
 ## Instrumentação existente (fontes canônicas)
 - Onboarding: `GET /api/tenants/:id/onboarding` (10 marcos, projeção server-side).
 - Billing: `billing_invoice_events.kind = 'charge_paid' AND status = 'done'`.
+- Contrato Asaas (`scripts/asaas-operational-contract.mts`): classifica configuração. Não incrementa Assinatura. `cobrancaComprovada` sai `false` e `receitaCentavos` sai `0` mesmo quando o probe de leitura responde.
 - Eventos clínicos: `saas_audit_log` (metadata-only, sem PHI).
 
 ## Trava anti-regressão

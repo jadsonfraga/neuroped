@@ -2,6 +2,7 @@ import { getContextUser } from "../auth/_authorization";
 import { CANONICAL_PRICE_CENTS } from "../../../shared/billing";
 import { getClinicMembership, membershipHas, tenantError, tenantJson } from "../tenant/_core";
 import {
+  asaasContractFailureCode,
   checkoutExternalReference,
   createAsaasRecurringCheckout,
   type BillingProviderEnv,
@@ -95,7 +96,18 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       customer: { name: user.name, email: user.email ?? "" },
     });
   } catch (error) {
-    console.error("[billing.checkout] provider error", error);
+    const contractCode = asaasContractFailureCode(error);
+    if (contractCode) {
+      console.error("[billing.checkout] contract_blocked", { code: contractCode });
+      return tenantError(
+        "Cobrança não configurada neste ambiente.",
+        "BILLING_PROVIDER_NOT_CONFIGURED",
+        503,
+      );
+    }
+    console.error("[billing.checkout] provider error", {
+      code: error instanceof Error ? error.message : "unknown",
+    });
     return tenantError("Checkout temporariamente indisponível.", "BILLING_PROVIDER_UNAVAILABLE", 503);
   }
 

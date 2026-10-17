@@ -8,7 +8,8 @@ Critério de sucesso macro: um médico externo se cadastra sozinho, ativa, emite
 - [x] ✅ Ciclo 1 — Trava anti-regressão: suíte `test:saas-self-service` verde localmente (exit 0) + guard `saas-loop-artifacts-static.test.mjs` na CI validando artefatos vivos e contrato de pricing canônico
 - [ ] Definir ICP inicial (decisão do criador; bloqueia posicionamento e pricing)
 - [ ] Proposta de valor em uma frase validável
-- [ ] Fechar bloqueio externo Asaas: checkout + webhook real em ambiente autorizado (hoje `BLOCKED_EXTERNAL`)
+- [x] ✅ Ciclo 5 — Contrato operacional Asaas fail-closed (`docs/ASAAS_OPERATIONAL_CONTRACT.md`): sem ambiente explícito, sem webhook ou com chave de outro ambiente o checkout não chama o provedor
+- [ ] Fechar bloqueio externo Asaas: checkout + webhook originados pelo provedor em ambiente autorizado (contrato local pronto; cobrança real continua `BLOCKED_EXTERNAL`)
 - [x] ✅ Ciclo 2 — Runbook de smoke pós-deploy publicável (`docs/SMOKE_CLIENTE_ZERO.md`): jornada cliente-zero clique a clique, critérios de aceite e medição de time-to-first-value
 - [ ] Fechar bloqueio externo Resend (e-mail de verificação/convite em produção)
 - [ ] Smoke pós-deploy publicado do fluxo cliente-zero (cadastro → clínica → paciente → documento)

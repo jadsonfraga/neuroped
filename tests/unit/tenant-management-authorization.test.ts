@@ -220,7 +220,7 @@ test("body-scoped invitation and checkout retain delivery/provider gates and rej
     const beta = f.snapshot(BETA);
     for (const [path, body, code] of [
       ["/api/billing/invitations", { clinicId: ALFA, email: "new-member@example.test", role: "assistant" }, "INVITATION_DELIVERY_NOT_CONFIGURED"],
-      ["/api/billing/checkout", { clinicId: ALFA, seats: 20 }, "BILLING_PROVIDER_UNAVAILABLE"],
+      ["/api/billing/checkout", { clinicId: ALFA, seats: 20 }, "BILLING_PROVIDER_NOT_CONFIGURED"],
     ] as const) {
       const allowed = await f.call("reader-owner", path, "POST", body);
       assert.equal(allowed.status, 503, "authorized management does not invent an integration");

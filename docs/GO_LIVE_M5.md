@@ -47,12 +47,23 @@ e-mail chega.
 | `ASAAS_ENVIRONMENT` | `sandbox` para o primeiro ciclo; `production` depois |
 
 O token do webhook é comparado em tempo constante em
-`functions/api/billing/_provider.ts`. Um token curto não é aceito.
+`functions/api/billing/_provider.ts`. Um token curto não é aceito. Ambiente
+ausente não cai em sandbox: o checkout responde
+`503 BILLING_PROVIDER_NOT_CONFIGURED` e não chama o Asaas. Produção só segue
+com chave `$aact_prod_`. O runbook executável está em
+`docs/ASAAS_OPERATIONAL_CONTRACT.md`.
 
-**Confirmação:** `pendencias` não contém `COBRANCA_NAO_CONFIGURADA`. Depois,
-um checkout ponta a ponta em sandbox com o webhook chegando e o entitlement
-virando `active` — é isso que transforma "billing testado" em "billing
-comprovado".
+```bash
+node --import tsx scripts/asaas-operational-contract.mts
+```
+
+Exit 2 é `BLOCKED_EXTERNAL`. Exit 0 não é cobrança.
+
+**Confirmação:** `pendencias` não contém `COBRANCA_NAO_CONFIGURADA` e o
+comando acima sai 0. Depois, um checkout ponta a ponta em sandbox com o
+webhook chegando e o entitlement virando `active` — é isso que transforma
+"billing testado" em "billing comprovado". O comando com `--probe` só lê
+`GET /customers?limit=1` e continua com `cobrancaComprovada=false`.
 
 ## Passo 3 — Abrir o cadastro self-service
 
