@@ -11,8 +11,10 @@ Legenda: ✅ feito · 🔒 bloqueio externo (ação do proprietário) · ⏳ em 
 - ✅ ICP provisório A decidido (D-002) e proposta de valor v1 escrita (`VALUE_PROPOSITION.md`).
 - ✅ Ciclo 3: kit de convites + roteiro de demo fictícia (`INVITE_AND_DEMO_KIT.md`).
 - ⏳ Ciclo 2/3 (ação do proprietário): realizar as 3 primeiras entrevistas com o roteiro (`INTERVIEW_PLAYBOOK.md`) e registrar em `INTERVIEW_LOG.md`.
-- 🔒 Fechar P0 clínico/LGPD em produção: `CLINICAL_CRYPTO_NOT_READY` e
-  `LGPD_BUCKET_NOT_CONFIGURED` (`docs/audits/BLOCKED_EXTERNAL_CLINICAL_LGPD_PROVISIONING_2026-09-26.md`).
+- ✅ `CLINICAL_CRYPTO_NOT_READY` fechado (G1, 17/10/2026).
+- 🔒 Fechar P0 LGPD em produção: `LGPD_BUCKET_NOT_CONFIGURED` (token sem `Workers R2 Storage: Edit`;
+  `docs/audits/BLOCKED_EXTERNAL_CLINICAL_LGPD_PROVISIONING_2026-09-26.md`).
+- ⏳ G4 (ensaio de backup/restore com cifra real) está desbloqueado por G1 e ainda não foi executado.
 - 🔒 S9 (P0): associação legítima de dados clínicos legados a clínica
   (`docs/saas/spiral/BACKLOG.md`, `BLOCKED_EXTERNAL_LEGACY_TENANT_CENSUS_2026-09-26.md`).
 
