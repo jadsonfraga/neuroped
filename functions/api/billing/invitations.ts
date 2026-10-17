@@ -28,9 +28,12 @@ async function deliverInvitation(
   params: { to: string; clinicName: string; role: string; invitationUrl: string; expiresAt: string },
 ): Promise<Response | null> {
   if (!invitationDeliveryConfigured(env)) {
-    return tenantError(
-      "Entrega de convites por e-mail não está configurada.",
-      "INVITATION_DELIVERY_NOT_CONFIGURED",
+    return tenantJson(
+      {
+        error: "Entrega de convites por e-mail não está configurada.",
+        code: "INVITATION_DELIVERY_NOT_CONFIGURED",
+        blockedExternal: "BLOCKED_EXTERNAL_RESEND",
+      },
       503,
     );
   }
@@ -157,9 +160,12 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return tenantError("Ação de convite inválida.", "VALIDATION_ERROR", 400);
   }
   if (!invitationDeliveryConfigured(context.env)) {
-    return tenantError(
-      "Entrega de convites por e-mail não está configurada.",
-      "INVITATION_DELIVERY_NOT_CONFIGURED",
+    return tenantJson(
+      {
+        error: "Entrega de convites por e-mail não está configurada.",
+        code: "INVITATION_DELIVERY_NOT_CONFIGURED",
+        blockedExternal: "BLOCKED_EXTERNAL_RESEND",
+      },
       503,
     );
   }
