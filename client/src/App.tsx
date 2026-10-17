@@ -110,6 +110,9 @@ const EscalasNeuropsiquiatriaPage = lazy(
 const CaaPage = lazy(() => import("@/pages/caa"));
 const DiarioSonoPage = lazy(() => import("@/pages/diario-sono"));
 const DiarioAlimentarPage = lazy(() => import("@/pages/diario-alimentar"));
+const DiarioAderenciaPage = lazy(() => import("@/pages/diario-aderencia"));
+const DiarioDesregulacaoPage = lazy(() => import("@/pages/diario-desregulacao"));
+const DiarioDietaSensorialPage = lazy(() => import("@/pages/diario-dieta-sensorial"));
 const SobrePage = lazy(() => import("@/pages/sobre"));
 const ServicosClinicaPage = lazy(() => import("@/pages/servicos-clinica"));
 const EletroencefalogramaPage = lazy(() => import("@/pages/eletroencefalograma"));
@@ -364,6 +367,9 @@ function AppRouter() {
             <Route path="/caa" component={CaaPage} />
             <Route path="/diario-sono" component={DiarioSonoPage} />
             <Route path="/diario-alimentar" component={DiarioAlimentarPage} />
+            <Route path="/diario-aderencia" component={DiarioAderenciaPage} />
+            <Route path="/diario-desregulacao" component={DiarioDesregulacaoPage} />
+            <Route path="/diario-dieta-sensorial" component={DiarioDietaSensorialPage} />
             <Route path="/sobre" component={SobrePage} />
             <Route path="/servicos-clinica" component={ServicosClinicaPage} />
             <Route path="/eletroencefalograma" component={EletroencefalogramaPage} />

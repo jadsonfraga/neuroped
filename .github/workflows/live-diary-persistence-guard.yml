@@ -9,8 +9,12 @@ on:
       - "client/src/pages/neuroped-acompanhamento.tsx"
       - "client/src/pages/epilepsy-diary.tsx"
       - "client/src/pages/headache-calendar.tsx"
+      - "client/src/pages/diario-aderencia.tsx"
+      - "client/src/pages/diario-desregulacao.tsx"
+      - "client/src/pages/diario-dieta-sensorial.tsx"
       - "client/src/lib/persistentSecureStorage.ts"
       - "tests/unit/live-diary-persistence-guard.test.mjs"
+      - "tests/unit/diarios-nicho-longitudinais.test.mjs"
       - "tests/e2e/neuroped-acompanhamento.mjs"
       - "tests/e2e/live-diary-persistence-block.mjs"
       - ".github/workflows/live-diary-persistence-guard.yml"
@@ -22,8 +26,12 @@ on:
       - "client/src/pages/neuroped-acompanhamento.tsx"
       - "client/src/pages/epilepsy-diary.tsx"
       - "client/src/pages/headache-calendar.tsx"
+      - "client/src/pages/diario-aderencia.tsx"
+      - "client/src/pages/diario-desregulacao.tsx"
+      - "client/src/pages/diario-dieta-sensorial.tsx"
       - "client/src/lib/persistentSecureStorage.ts"
       - "tests/unit/live-diary-persistence-guard.test.mjs"
+      - "tests/unit/diarios-nicho-longitudinais.test.mjs"
       - "tests/e2e/neuroped-acompanhamento.mjs"
       - "tests/e2e/live-diary-persistence-block.mjs"
       - ".github/workflows/live-diary-persistence-guard.yml"
@@ -59,7 +67,7 @@ jobs:
         run: node scripts/guards/npm-audit-gate.mjs
 
       - name: Prove LIVE diary fail-closed contract
-        run: node tests/unit/live-diary-persistence-guard.test.mjs
+        run: node tests/unit/live-diary-persistence-guard.test.mjs && node tests/unit/diarios-nicho-longitudinais.test.mjs
 
       - name: TypeScript
         run: npm run check
