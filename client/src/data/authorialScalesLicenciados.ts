@@ -84,7 +84,7 @@ export const licenciadosSpecs: OpenScaleSpec[] = [
       { name: "Retraimento", items: ["Fica parado(a), sem iniciativa, por longos períodos.", "Ignora as pessoas mesmo quando elas tentam interagir.", "Mostra pouco interesse por atividades que antes chamavam sua atenção."] },
       { name: "Agitação", items: ["Não consegue ficar sentado(a) nem em atividades de que gosta.", "Corre ou sai de perto sem perceber o perigo (rua, piscina, lugares altos).", "Mexe em tudo o tempo todo, sem conseguir parar."] },
       { name: "Repetições", items: ["Repete movimentos do corpo por longos períodos (balançar, girar, sacudir as mãos).", "Repete sons, frases ou perguntas sem parar, mesmo depois de ter a resposta.", "Fala alto ou faz barulhos fora de hora, mesmo quando pedem silêncio."] },
-      { name: "Impacto", items: ["Esses comportamentos colocaram alguém em risco de se machucar.", "Esses comportamentos impediram a família de sair ou a criança de ir à escola ou à terapia."] },
+      { name: "Impacto", items: ["Por causa desses comportamentos, alguém se machucou ou quase se machucou.", "Esses comportamentos impediram a família de sair ou a criança de ir à escola ou à terapia."] },
     ],
     extraInfo: "Mudança súbita de comportamento em quem fala pouco pode ser dor (dente, ouvido, intestino, refluxo), sono ruim, crise epiléptica ou efeito de remédio: investigue causas clínicas antes de ajustar medicação. Autoagressão com lesão ou agressão grave pede plano de segurança com a família e a escola.",
   }),
