@@ -11,6 +11,7 @@ import { play1Up, playCoin, playFlagPole, playJump, playPowerUp } from "@/lib/so
 import { downloadTextDocument, safeTextFilename } from "@/lib/shareText";
 import { createChiptune, type Chiptune } from "@/features/super-neuropad/music";
 import { ClinicalCircuit } from "@/features/super-neuropad/ClinicalCircuit";
+import { AssessmentReadiness } from "@/features/super-neuropad/AssessmentReadiness";
 import { buildGameDocSpec, issuerLines } from "@/features/super-neuropad/pdf";
 import { DESCRIPTIVE_NOTICE } from "@/lib/descriptiveNotice";
 import {
@@ -1035,6 +1036,13 @@ export default function SuperNeuroPadGamePage() {
             </button>
           )}
 
+          {band && (
+            <button type="button" onClick={() => document.getElementById("snp-documentary-readiness")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+              className="snp-chip inline-flex min-h-11 items-center gap-2 bg-[var(--snp-sun-tint)]">
+              📋 Revisar informações que faltam para preparar um laudo médico (opcional; não emite documento)
+            </button>
+          )}
+
           <div className="snp-panel p-5">
             <h2 className="snp-pixel text-base">2 · Escolha o herói</h2>
             <p className="text-xs font-bold opacity-70">Deixe a criança escolher. Nenhum herói muda os desafios.</p>
@@ -1426,6 +1434,7 @@ export default function SuperNeuroPadGamePage() {
       {/* Extensão clínica opcional: fica montada e em memória durante o jogo.
           A troca de idade ou paciente descarta os registros via key. */}
       <ClinicalCircuit key={ageYears ?? "sem-idade"} years={ageYears} visible={screen === "setup" || screen === "results"} />
+      <AssessmentReadiness key={ageYears ?? "sem-idade"} years={ageYears} visible={screen === "setup" || screen === "results"} />
     </div>
   );
 }
