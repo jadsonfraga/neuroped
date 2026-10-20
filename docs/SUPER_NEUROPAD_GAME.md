@@ -566,7 +566,7 @@ Escopo: revisão de prontidão. Nada aqui valida conteúdo clínico, define norm
 
 **Fonte sem preenchimento automático.** Ao registrar, a fonte fica vazia até o auxiliar escolher. Antes, o jogo preenchia "examinador" sem escolha. Sem escolha, o registro sai sem proveniência.
 
-**Urgência fora da contagem.** Achado ou não realização em consciência, fundo de olho ou sinais meníngeos aparece em linha própria, com alerta, e não entra em "Pendências para revisão". Texto exibido: "URGÊNCIA: achado, ou exame não realizado, em consciência, fundo de olho ou sinais meníngeos exige avaliação imediata fora do jogo. Não é pendência de checklist. O alerta não aparece enquanto o item estiver apenas pendente de registro."
+**Achados potencialmente urgentes separados de exames ausentes.** Apenas achado a esclarecer nas estações de consciência, fundo de olho ou sinais meníngeos gera o aviso “ATENÇÃO CLÍNICA”, que solicita avaliação profissional imediata da gravidade e acionamento do protocolo de urgência quando houver sinais agudos. Não realizado, recusa ou ausência de registro aparecem na linha de documentação como limitação de exame — isoladamente **não** constituem urgência e não geram o aviso de achado. A linha permanece fora da contagem de “Pendências para revisão”, sem bloqueio. A orientação geral para sinais agudos continua independente da matriz.
 
 **Adaptação de procedimentos por estação e idade.** Os 16 perfis anuais foram mantidos. Quando a estação é um procedimento do médico, a dica traz a técnica específica:
 
