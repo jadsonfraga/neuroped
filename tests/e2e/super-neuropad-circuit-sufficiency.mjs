@@ -101,7 +101,7 @@ async function main() {
       assert.equal(await readiness.getByText("Registrado — não equivale a normal", { exact: true }).count(), 0, "nada examinado antes do registro");
       assert.ok(await readiness.getByText("Depende de decisão médica", { exact: true }).count() >= 4, "impressão, fundamentação, conduta e liberação pendentes");
       const antes = unresolvedCount(await readiness.innerText());
-      assert.equal(await readiness.getByText(/URGÊNCIA:/).count(), 0, "urgência pendente de registro não exibe alerta de achado");
+      assert.equal(await readiness.getByText(/ATENÇÃO CLÍNICA:/).count(), 0, "item pendente não emite alerta sem achado");
       observations.itensNaoResolvidosSemRegistro = antes;
 
       // 2. Registros do examinador e de fonte escolar; um achado de urgência deve bloquear.
@@ -131,7 +131,7 @@ async function main() {
       assert.match(txt, /Emissão automática: não\./);
       assert.doesNotMatch(txt, /Emissão automática: sim/);
       assert.match(txt, /Achado a esclarecer/);
-      assert.match(txt, /URGÊNCIA:/, "achado de urgência aparece como alerta, não como pendência de checklist");
+      assert.match(txt, /ATENÇÃO CLÍNICA:/, "achado a esclarecer aparece em aviso clínico, não como pendência de checklist");
       assert.match(txt, /Depende de decisão médica/);
       assert.match(txt, /Marcado: /, "marcadores tocados entram no registro");
 
