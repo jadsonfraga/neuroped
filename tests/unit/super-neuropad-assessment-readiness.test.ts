@@ -92,7 +92,7 @@ test("integração é aditiva e revisão documental permanece separada da emiss�
   const page=readFileSync("client/src/pages/super-neuropad-game.tsx","utf8");
   const ui=readFileSync("client/src/features/super-neuropad/AssessmentReadiness.tsx","utf8");
   assert.match(page,/import \{ AssessmentReadiness \}/);
-  assert.match(page,/<AssessmentReadiness key=\{ageYears \?\? "sem-idade"\}/);
+  assert.ok(page.includes("<AssessmentReadiness key={`documentary-${ageYears ?? \"sem-idade\"}`}"));
   assert.match(ui,/data-testid="super-neuropad-documentary-readiness"/);
   assert.match(ui,/Nenhuma resposta do jogo marca um campo como concluído/);
   assert.doesNotMatch(ui,/(localStorage|sessionStorage|MediaRecorder|getUserMedia|fetch\(|XMLHttpRequest|SaveToPatient)/);
