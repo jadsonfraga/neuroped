@@ -17,95 +17,108 @@
       "date": "2026-09-05"
     },
     "sha256:34a3e2f539e889cf275dd52a5de08089e4138594b9ea5f0faca1fa5f2b06d21f": {
-      "status": "pending",
-      "messageId": "gmail-intent-39350811372-6bb3b5eb3b8b",
+      "status": "sent_via_gmail",
+      "messageId": "gmail-sent-39350811372-6bb3b5eb3b8b",
       "run": "39350811372",
       "channel": "gmail",
-      "artifactSha256": "6bb3b5eb3b8bc69d2f2d0d01809dec26ccfdb4c785f737fb8eb7c30953237813"
+      "artifactSha256": "6bb3b5eb3b8bc69d2f2d0d01809dec26ccfdb4c785f737fb8eb7c30953237813",
+      "verifiedAttachmentCount": 16
     },
     "sha256:07953f10b29f83373388de403211a2aa298da1067098d14d7a326f4fdd896295": {
-      "status": "pending",
-      "messageId": "gmail-intent-39350811372-6bb3b5eb3b8b",
+      "status": "sent_via_gmail",
+      "messageId": "gmail-sent-39350811372-6bb3b5eb3b8b",
       "run": "39350811372",
       "channel": "gmail",
-      "artifactSha256": "6bb3b5eb3b8bc69d2f2d0d01809dec26ccfdb4c785f737fb8eb7c30953237813"
+      "artifactSha256": "6bb3b5eb3b8bc69d2f2d0d01809dec26ccfdb4c785f737fb8eb7c30953237813",
+      "verifiedAttachmentCount": 16
     },
     "sha256:aea9ea081ec13c4b088ac28e37b3948f2900d7a697d9c286f50d7cd1f1bf6b99": {
-      "status": "pending",
-      "messageId": "gmail-intent-39350811372-6bb3b5eb3b8b",
+      "status": "sent_via_gmail",
+      "messageId": "gmail-sent-39350811372-6bb3b5eb3b8b",
       "run": "39350811372",
       "channel": "gmail",
-      "artifactSha256": "6bb3b5eb3b8bc69d2f2d0d01809dec26ccfdb4c785f737fb8eb7c30953237813"
+      "artifactSha256": "6bb3b5eb3b8bc69d2f2d0d01809dec26ccfdb4c785f737fb8eb7c30953237813",
+      "verifiedAttachmentCount": 16
     },
     "sha256:813ef1b5bbd0ff2ffad1c167bdd066a88b66931e84ead3b2b8f27753a9cf137b": {
-      "status": "pending",
-      "messageId": "gmail-intent-39350811372-6bb3b5eb3b8b",
+      "status": "sent_via_gmail",
+      "messageId": "gmail-sent-39350811372-6bb3b5eb3b8b",
       "run": "39350811372",
       "channel": "gmail",
-      "artifactSha256": "6bb3b5eb3b8bc69d2f2d0d01809dec26ccfdb4c785f737fb8eb7c30953237813"
+      "artifactSha256": "6bb3b5eb3b8bc69d2f2d0d01809dec26ccfdb4c785f737fb8eb7c30953237813",
+      "verifiedAttachmentCount": 16
     },
     "sha256:82a397dc85c32f9921770e3894d37a59a0bc07fba1f3d6c10e4614de11a9f61c": {
-      "status": "pending",
-      "messageId": "gmail-intent-39350811372-6bb3b5eb3b8b",
+      "status": "sent_via_gmail",
+      "messageId": "gmail-sent-39350811372-6bb3b5eb3b8b",
       "run": "39350811372",
       "channel": "gmail",
-      "artifactSha256": "6bb3b5eb3b8bc69d2f2d0d01809dec26ccfdb4c785f737fb8eb7c30953237813"
+      "artifactSha256": "6bb3b5eb3b8bc69d2f2d0d01809dec26ccfdb4c785f737fb8eb7c30953237813",
+      "verifiedAttachmentCount": 16
     },
     "sha256:0388732b10ec80a49eee9c823a0f1cba2b61001523e8434cac01fca2a868c87c": {
-      "status": "pending",
-      "messageId": "gmail-intent-39350811372-6bb3b5eb3b8b",
+      "status": "sent_via_gmail",
+      "messageId": "gmail-sent-39350811372-6bb3b5eb3b8b",
       "run": "39350811372",
       "channel": "gmail",
-      "artifactSha256": "6bb3b5eb3b8bc69d2f2d0d01809dec26ccfdb4c785f737fb8eb7c30953237813"
+      "artifactSha256": "6bb3b5eb3b8bc69d2f2d0d01809dec26ccfdb4c785f737fb8eb7c30953237813",
+      "verifiedAttachmentCount": 16
     },
     "sha256:930aff450ab834376f0ba88fa435a91c41d6245710507f33d153dac6958d3ef9": {
-      "status": "pending",
-      "messageId": "gmail-intent-39350811372-6bb3b5eb3b8b",
+      "status": "sent_via_gmail",
+      "messageId": "gmail-sent-39350811372-6bb3b5eb3b8b",
       "run": "39350811372",
       "channel": "gmail",
-      "artifactSha256": "6bb3b5eb3b8bc69d2f2d0d01809dec26ccfdb4c785f737fb8eb7c30953237813"
+      "artifactSha256": "6bb3b5eb3b8bc69d2f2d0d01809dec26ccfdb4c785f737fb8eb7c30953237813",
+      "verifiedAttachmentCount": 16
     },
     "sha256:0e5ff787c64f47019a6072316ccd2abca6f4e9bb9b787969bba5b57079ef96d2": {
-      "status": "pending",
-      "messageId": "gmail-intent-39350811372-6bb3b5eb3b8b",
+      "status": "sent_via_gmail",
+      "messageId": "gmail-sent-39350811372-6bb3b5eb3b8b",
       "run": "39350811372",
       "channel": "gmail",
-      "artifactSha256": "6bb3b5eb3b8bc69d2f2d0d01809dec26ccfdb4c785f737fb8eb7c30953237813"
+      "artifactSha256": "6bb3b5eb3b8bc69d2f2d0d01809dec26ccfdb4c785f737fb8eb7c30953237813",
+      "verifiedAttachmentCount": 16
     },
     "sha256:4a50c75721682cea40ff4fd5c42ccf80cbc0988688fe44ba997af5475dc9d8c3": {
-      "status": "pending",
-      "messageId": "gmail-intent-39350811372-6bb3b5eb3b8b",
+      "status": "sent_via_gmail",
+      "messageId": "gmail-sent-39350811372-6bb3b5eb3b8b",
       "run": "39350811372",
       "channel": "gmail",
-      "artifactSha256": "6bb3b5eb3b8bc69d2f2d0d01809dec26ccfdb4c785f737fb8eb7c30953237813"
+      "artifactSha256": "6bb3b5eb3b8bc69d2f2d0d01809dec26ccfdb4c785f737fb8eb7c30953237813",
+      "verifiedAttachmentCount": 16
     },
     "sha256:4680f0bbb952105efc995c11c3c4c0fa1a38b3aae668d3c242d02022188c2149": {
-      "status": "pending",
-      "messageId": "gmail-intent-39350811372-6bb3b5eb3b8b",
+      "status": "sent_via_gmail",
+      "messageId": "gmail-sent-39350811372-6bb3b5eb3b8b",
       "run": "39350811372",
       "channel": "gmail",
-      "artifactSha256": "6bb3b5eb3b8bc69d2f2d0d01809dec26ccfdb4c785f737fb8eb7c30953237813"
+      "artifactSha256": "6bb3b5eb3b8bc69d2f2d0d01809dec26ccfdb4c785f737fb8eb7c30953237813",
+      "verifiedAttachmentCount": 16
     },
     "sha256:4e684eb57855132ad4c36a8978bd984c7b812adbf05ea8d39eada1ce3c7afdf3": {
-      "status": "pending",
-      "messageId": "gmail-intent-39350811372-6bb3b5eb3b8b",
+      "status": "sent_via_gmail",
+      "messageId": "gmail-sent-39350811372-6bb3b5eb3b8b",
       "run": "39350811372",
       "channel": "gmail",
-      "artifactSha256": "6bb3b5eb3b8bc69d2f2d0d01809dec26ccfdb4c785f737fb8eb7c30953237813"
+      "artifactSha256": "6bb3b5eb3b8bc69d2f2d0d01809dec26ccfdb4c785f737fb8eb7c30953237813",
+      "verifiedAttachmentCount": 16
     },
     "sha256:20b4189535976400a8b34d786a8214170118eba0120b75645336cdc88689547a": {
-      "status": "pending",
-      "messageId": "gmail-intent-39350811372-6bb3b5eb3b8b",
+      "status": "sent_via_gmail",
+      "messageId": "gmail-sent-39350811372-6bb3b5eb3b8b",
       "run": "39350811372",
       "channel": "gmail",
-      "artifactSha256": "6bb3b5eb3b8bc69d2f2d0d01809dec26ccfdb4c785f737fb8eb7c30953237813"
+      "artifactSha256": "6bb3b5eb3b8bc69d2f2d0d01809dec26ccfdb4c785f737fb8eb7c30953237813",
+      "verifiedAttachmentCount": 16
     },
     "sha256:ae24837018e4641482eb6be3222c84cb5f63471b23e3a12648105d6d783bf200": {
-      "status": "pending",
-      "messageId": "gmail-intent-39350811372-6bb3b5eb3b8b",
+      "status": "sent_via_gmail",
+      "messageId": "gmail-sent-39350811372-6bb3b5eb3b8b",
       "run": "39350811372",
       "channel": "gmail",
-      "artifactSha256": "6bb3b5eb3b8bc69d2f2d0d01809dec26ccfdb4c785f737fb8eb7c30953237813"
+      "artifactSha256": "6bb3b5eb3b8bc69d2f2d0d01809dec26ccfdb4c785f737fb8eb7c30953237813",
+      "verifiedAttachmentCount": 16
     }
   }
 }
