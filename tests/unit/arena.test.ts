@@ -133,7 +133,8 @@ test("relâmpago pega a estrela e deixa o meteoro passar", () => {
   assert.equal(gradeBolt("meteoro", "deixar"), true);
   assert.equal(gradeBolt("meteoro", "pegar"), false);
   assert.equal(resolveBoltTimeout("estrela"), false);
-  assert.equal(resolveBoltTimeout("meteoro"), true);
+  // Tempo esgotado sem resposta não prova inibição; registrar omissão observacional.
+  assert.equal(resolveBoltTimeout("meteoro"), false);
   const bolt = openPlay("relampago", "5-6");
   assert.equal(bolt.game, "relampago");
   if (bolt.game !== "relampago") return;
