@@ -119,6 +119,15 @@ async function main() {
       const reflexStation = page.getByTestId("super-neuropad-clinical-station");
       await reflexStation.getByRole("button", { name: /Não deu para fazer/ }).click();
       assert.equal(await reflexStation.getByRole("group", { name: /Toque no que você percebeu/ }).getByRole("button", { pressed: true }).count(), 0, "marcadores removidos após não realização");
+      const [refusalDownload] = await Promise.all([
+        page.waitForEvent("download"),
+        circuitOf(page).getByRole("button", { name: /Baixar TXT/ }).click(),
+      ]);
+      const refusalPath = `${dir}/recusa-sem-marcadores.txt`;
+      await refusalDownload.saveAs(refusalPath);
+      const refusalText = await readFile(refusalPath, "utf8");
+      assert.match(refusalText, /Escudo dos reflexos[^\n]*Não realizado/);
+      assert.doesNotMatch(refusalText, /Marcado:/, "tarefa não executada não exporta marcadores");
       await reflexStation.getByRole("button", { name: OBSERVADO }).click();
       await reflexStation.getByRole("group", { name: /Toque no que você percebeu/ }).getByRole("button").first().click();
       await record(page, "Janela do fundo", ACHADO, SOURCE_EXAMINADOR);
@@ -181,6 +190,9 @@ async function main() {
     await openTab(page, "Cobertura e lacunas");
     const readinessAge = readinessOf(page);
     await readinessAge.waitFor();
+    assert.equal(await page.getByTestId("super-neuropad-clinical-circuit").count(), 1, `faixa ${age}: apenas um circuito`);
+    assert.match(await circuitOf(page).getByTestId("super-neuropad-age-profile").innerText(), new RegExp(`Roteiro de ${age} anos`));
+    assert.match(await circuitOf(page).innerText(), /0\/\d+ missões registradas/, `faixa ${age}: dados de outra idade não podem migrar`);
     assert.match(await readinessAge.innerText(), /Emissão automática: não\./, `faixa ${age}: sem emissão automática`);
     assert.equal(await circuitOf(page).locator("button:disabled").count(), 0, `faixa ${age}: nenhum controle desabilitado`);
     const guias = await circuitOf(page).getByTestId("super-neuropad-clinical-hypotheses").locator("article").count();
