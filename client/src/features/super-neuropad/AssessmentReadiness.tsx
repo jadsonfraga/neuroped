@@ -95,7 +95,7 @@ export function AssessmentReadiness({ years, visible }: { years: number | null; 
               className="mt-1 w-full rounded-xl border-2 border-[var(--snp-ink-fixed)] bg-white p-3 text-sm font-normal text-[var(--snp-ink-fixed)]"
               placeholder="Registrar achado efetivo, fonte e circunstância; não inserir nome, telefone ou dados pessoais." />
           </label>
-          <p className="text-xs font-semibold">Para contar como documentado é necessário indicar a fonte e descrever o dado. Exame físico e síntese diagnóstica exigem fonte profissional; limitação ou inaplicabilidade requer justificativa.</p>
+          <p className="text-xs font-semibold">Para contar como documentado é necessário indicar a fonte e descrever o dado. Exame físico e síntese diagnóstica exigem fonte profissional; limitação ou inaplicabilidade requer justificativa. Os campos essenciais não podem ser dispensados como inaplicáveis.</p>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <button type="button" onClick={()=>setActive((x)=>Math.max(0,x-1))} disabled={active===0}
               className="snp-btn snp-btn--paper min-h-11 px-3 py-2 text-sm disabled:opacity-50">← Anterior</button>
