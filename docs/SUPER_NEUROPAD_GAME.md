@@ -431,3 +431,32 @@ Os vídeos são **links educativos externos para o profissional**, não reproduz
 - Regressões: `tests/unit/super-neuropad-clinical-circuit.test.ts`, incluído em `npm run test:super-neuropad`.
 - Rodar `npm run check`, `npm run test:super-neuropad`, `npm run build:client` e E2E do jogo antes de disponibilizar.
 - Rollback: reverter somente a PR; sem migração, banco ou contrato de API.
+
+
+## Matriz de suficiência documental por idade e queixa (20/10/2026)
+
+A expansão adiciona **Revisão documental antes do laudo**, sem modificar a bateria de seis mundos ou o fluxo original de PDF/WhatsApp. Não altera geradores PANT/PANTY ou permissões de assinatura. O checklist funciona apenas na tela Super NeuroPad, fica montado durante o jogo e é apagado ao mudar de idade/paciente; não há persistência, câmeras, requests ou salvamento automático. É necessário **copiar ou baixar explicitamente** a matriz para revisão no sistema clínico correto.
+
+**Núcleo comum 2–17 anos:** identificação conferida no prontuário, queixa com repercussões, cronologia/regressão, neurodesenvolvimento/autonomia, antecedentes e medicações, fontes e contextos, observação funcional por idade, exame físico, exame neurológico presencial, exame do estado mental, integração crítica e hipóteses diferenciais, conduta e revisão médica. Adaptação anual: 2–5 anos inclui brincadeira e educação infantil, 6–17 inclui perfil escolar. Marcação clínica deve separar fonte familiar, escolar, terapêutica, documento e exame direto.
+
+**Módulos condicionais acionados por queixa**, sem transformar as tarefas em instrumentos diagnósticos validados: neurodesenvolvimento global, TEA (reciprocidade, padrões restritos, história e diferencial), TDAH (critérios temporais/contextos e alternativas), linguagem (receptiva/expressiva/pragmática e investigação auditiva), epilepsia (semiologia, tratamento e segurança), motricidade (topografia e função), aprendizagem (exposição ao ensino e suportes), saúde mental (humor/afeto/pensamento e segurança). Campos incompatíveis com a faixa não aparecem. Seleção de foco não implica diagnóstico.
+
+**Sem falsos positivos de prontidão:** nenhum item nasce documentado, nem os acertos do jogo preenchem lacunas. Um item só conta após status explícito e nota justificativa; se marcado como documentado, também exige fonte identificada por categoria. Exame físico/síntese clínica exigem fonte profissional. Campos nucleares não podem ser dispensados como “não pertinente” para gerar um painel aparentemente completo. Itens limitados só são computados quando a limitação é descrita, e sua presença exige revisão médica. Mesmo com todos os itens documentados, a conclusão é apenas de **inventário revisado**, jamais autorização de emissão/diagnóstico/assinatura. Risco agudo segue manejo assistencial fora do jogo e não pode aguardar checklist.
+
+### Referências de suporte
+
+- AAP (2020), *Promoting Optimal Development*: observação longitudinal, fontes múltiplas, avaliação clínica e triagem padronizada em idades indicadas, quando aplicável. https://publications.aap.org/pediatrics/article/145/1/e20193449/36971
+- AAP (2025), *Screening for Mental Health, Emotional, and Behavioral Problems*: rastreamento contextual e idades recomendadas. https://doi.org/10.1542/peds.2025-073172
+- AAP (2022+), *Screening for Suicide Risk in Clinical Practice*: 12+ rastreamento universal quando apropriado, 8–11 sob indicação, abaixo de 8 avaliar apenas mediante sinais concretos. https://www.aap.org/en/patient-care/blueprint-for-youth-suicide-prevention/strategies-for-clinical-settings-for-youth-suicide-prevention/screening-for-suicide-risk-in-clinical-practice/
+
+O checklist é **autoral**, não é NIH Toolbox, não aplica critérios diagnósticos por fórmula e não pretende provar completude médico-legal universal.
+
+### Arquivos e comprovação
+
+- Regra e relatório textual: `client/src/features/super-neuropad/assessmentReadiness.ts`
+- Interface: `client/src/features/super-neuropad/AssessmentReadiness.tsx`
+- Testes por faixa, foco e caso adversarial: `tests/unit/super-neuropad-assessment-readiness.test.ts`, incorporados a `npm run test:super-neuropad`.
+- Jornada de navegador: `tests/e2e/super-neuropad-game.mjs`, com validação de idades representativas e preservação do registro antes/depois de jogar.
+- Rollback: reverter esta PR, sem migração D1 e sem alteração na assinatura de laudos.
+
+**Etapa clínica obrigatória fora da interface:** conferência da documentação original, diagnóstico diferencial, CID aplicável, aprovação médica expressa e emissão no módulo autorizado. Um game não deve ser capaz de desbloquear laudos automaticamente.
