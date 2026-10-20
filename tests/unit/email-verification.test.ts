@@ -606,6 +606,52 @@ assert.equal(
   );
 }
 
+// ── 8c) Falha combinada Resend 403 e gravação de sessão ─────────────────────
+// Regressão P2: 503 não pode ocultar a falha de envio em conta já criada.
+{
+  const previousFetch = globalThis.fetch;
+  const originalPrepare = db.prepare.bind(db);
+  const email = "sessao.sem.email@example.test";
+  let response: Response | undefined;
+  globalThis.fetch = (async () => new Response("{}", { status: 403 })) as typeof fetch;
+  db.prepare = ((sql: string) => {
+    if (sql.includes("INSERT INTO auth_refresh_sessions")) {
+      throw new Error("synthetic session write unavailable");
+    }
+    return originalPrepare(sql);
+  }) as typeof db.prepare;
+  try {
+    response = await signup(postContext("/api/auth/signup", {
+      name: "Sessao Sem Email",
+      email,
+      password: STRONG_PASSWORD,
+      acceptedLegal: currentLegalVersions(),
+    }, { ip: "198.51.100.230" }));
+  } finally {
+    db.prepare = originalPrepare;
+    globalThis.fetch = previousFetch;
+  }
+  assert.ok(response);
+  assert.equal(response.status, 503);
+  const body = await response.json() as {
+    code?: string; created?: boolean;
+    emailVerificationDelivery?: string; blockedExternal?: string;
+  };
+  assert.equal(body.code, "AUTH_SESSION_UNAVAILABLE");
+  assert.equal(body.created, true);
+  assert.equal(body.emailVerificationDelivery, "failed");
+  assert.equal(body.blockedExternal, "BLOCKED_EXTERNAL_RESEND");
+  const user = sqlite.prepare(
+    "SELECT id, email_verified_at FROM users WHERE lower(email) = ?",
+  ).get(email) as { id: string; email_verified_at: string | null };
+  assert.ok(user?.id, "a conta já existe, portanto não deve ser recadastrada");
+  assert.equal(user.email_verified_at, null);
+  const pending = sqlite.prepare(
+    "SELECT COUNT(*) AS n FROM auth_email_verification_tokens WHERE user_id = ?",
+  ).get(user.id) as { n: number };
+  assert.equal(pending.n, 0, "token de link não enviado deve ser removido");
+}
+
 // ── 9) Rate limit do reenvio vale SEM CF-Connecting-IP ─────────────────────
 {
   const bucketsBefore = (
