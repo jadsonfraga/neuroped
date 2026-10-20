@@ -15,6 +15,8 @@ o limitador: o estado é do produto, igual para qualquer e-mail, e a tela não
 diz que um link vai chegar. Com provedor configurado o corpo continua `202`
 genérico (anti-enumeração) e o trabalho dependente da conta roda em
 `waitUntil`, para que conta existente e inexistente respondam no mesmo tempo.
+Um `202` confirma apenas recebimento da solicitação pela API. O processamento
+assíncrono ainda pode falhar, de modo que a UI não deve prometer envio ou entrega.
 
 Se o provedor está configurado mas recusa o envio (domínio de `AUTH_EMAIL_FROM`
 não verificado, chave revogada), o cadastro cria a conta e responde `201` com
