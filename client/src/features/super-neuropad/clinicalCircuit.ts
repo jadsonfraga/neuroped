@@ -4,7 +4,7 @@
  * armazenamento local, acesso à câmera ou alteração da bateria principal.
  * Estações `presencial` nunca podem ser inferidas por resposta de tela.
  */
-export type CircuitArea = "neurologico" | "mental";
+export const CIRCUIT_VERSION = "2026-10-20.1";\nexport type CircuitArea = "neurologico" | "mental";
 export type CircuitMethod = "ludico" | "observacao" | "presencial" | "entrevista";
 export type CircuitStatus = "observado" | "achado" | "nao_realizado" | "nao_colaborou";
 export interface CircuitTask {
@@ -24,7 +24,7 @@ export interface CircuitTask {
 export interface CircuitEntry { status: CircuitStatus; note: string }
 export type CircuitRecords = Record<string, CircuitEntry>;
 export const CIRCUIT_STATUSES: Record<CircuitStatus,string> = {
-  observado: "Realizado — achado descrito",
+  observado: "Realizado — registrar descrição",
   achado: "Realizado — requer esclarecimento",
   nao_realizado: "Não realizado",
   nao_colaborou: "Sem colaboração suficiente",
@@ -84,7 +84,7 @@ export function buildCircuitReport(years: number, records: CircuitRecords, gener
   if (!tasks.length) return "Circuito não disponível para esta idade.";
   const entries = tasks.filter((task) => records[task.id]?.status);
   const text = [
-    "SUPER NEUROPAD GAME — CIRCUITO CLÍNICO COMPLEMENTAR",
+    `SUPER NEUROPAD GAME — CIRCUITO CLÍNICO COMPLEMENTAR v${CIRCUIT_VERSION}`,
     "Registro observacional NÃO padronizado, sem escore, norma ou conclusão diagnóstica.",
     `Idade informada: ${years} anos | Emissão local: ${at.toLocaleString("pt-BR")}`,
     `Estações registradas: ${entries.length}/${tasks.length}. As demais NÃO foram examinadas.`,
