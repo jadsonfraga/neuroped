@@ -17,7 +17,11 @@ function readableSignupError(error: unknown): string {
     return "A confirmação de e-mail não está configurada nesta instalação. Nenhuma conta foi criada e o e-mail não foi marcado como verificado.";
   }
   if (code === "AUTH_SESSION_UNAVAILABLE") {
-    return "Sua conta foi criada, mas não conseguimos abrir a sessão agora. Entre com seu e-mail e senha pelo login e confirme o e-mail pelo link que enviamos. Não crie a conta de novo.";
+    const delivery = (error as { emailVerificationDelivery?: "sent" | "failed" }).emailVerificationDelivery;
+    if (delivery === "failed") {
+      return "Sua conta foi criada, mas a sessão falhou e o e-mail de confirmação não foi enviado. Entre pelo login e solicite um novo link em Verificar e-mail. Não crie a conta de novo.";
+    }
+    return "Sua conta foi criada, mas não conseguimos abrir a sessão. Entre pelo login. Se não recebeu um link de confirmação, solicite o reenvio em Verificar e-mail. Não crie a conta de novo.";
   }
   if (code === "LEGAL_ACCEPTANCE_REQUIRED" || code === "LEGAL_VERSION_OUTDATED") return message;
   if (code === "EMAIL_IN_USE") return "Este e-mail não está disponível para cadastro. Se a conta já é sua, entre pelo login.";
