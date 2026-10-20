@@ -3,7 +3,7 @@ import test from "node:test";
 import { readFileSync } from "node:fs";
 import { circuitForAge, type CircuitRecords, type CircuitStatus } from "../../client/src/features/super-neuropad/clinicalCircuit";
 import {
-  itensNaoResolvidos, matrizSuficiencia, REQUISITOS_LAUDO, resumoDaBateria, SUFICIENCIA_LABELS,
+  pendenciasParaRevisao, matrizSuficiencia, REQUISITOS_LAUDO, resumoDaBateria, SUFICIENCIA_LABELS,
   textoProntidao, type BateriaResumo, type LinhaSuficiencia, type SuficienciaStatus,
 } from "../../client/src/features/super-neuropad/sufficiencia";
 import type { GameSummary } from "../../client/src/features/super-neuropad/model";
@@ -51,7 +51,7 @@ test("mesmo com todas as estações da faixa registradas, decisão médica e fon
   assert.equal(linha(linhas, "liberacao").status, "depende_decisao_medica");
   assert.equal(linha(linhas, "identificacao").status, "depende_fonte_externa");
   assert.equal(linha(linhas, "escolar").status, "depende_fonte_externa");
-  assert.ok(itensNaoResolvidos(linhas) > 0, "ainda há itens não resolvidos após o exame do jogo");
+  assert.ok(pendenciasParaRevisao(linhas) > 0, "ainda há pendências para revisão após o exame do jogo");
 });
 
 test("urgência: achado ou não realização em consciência, fundo de olho ou sinais meníngeos bloqueia a linha", () => {
@@ -99,7 +99,7 @@ test("texto de prontidão: declara ausência de emissão automática, conta pend
   const texto = textoProntidao(7, linhas).join("\n");
   assert.match(texto, /PRONTIDÃO PARA O LAUDO — MATRIZ DE SUFICIÊNCIA \(7 anos\)/);
   assert.match(texto, /Emissão automática: não\./);
-  assert.match(texto, new RegExp(`Itens não resolvidos: ${itensNaoResolvidos(linhas)} de ${linhas.length}\\.`));
+  assert.match(texto, new RegExp(`Pendências para revisão: ${pendenciasParaRevisao(linhas)} de ${linhas.length}\\.`));
   assert.match(texto, /Registrado — não equivale a normal/);
   assert.match(texto, /Depende de decisão médica/);
   assert.doesNotMatch(texto, /: normal\b/i);

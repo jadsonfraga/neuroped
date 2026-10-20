@@ -197,7 +197,7 @@ export function matrizSuficiencia(years: number, records: CircuitRecords, bateri
 }
 
 /** Itens que ainda não estão resolvidos. Contagem de pendências, não escore clínico. */
-export function itensNaoResolvidos(linhas: readonly LinhaSuficiencia[]): number {
+export function pendenciasParaRevisao(linhas: readonly LinhaSuficiencia[]): number {
   return linhas.filter((linha) => linha.status !== "examinado").length;
 }
 
@@ -205,7 +205,7 @@ export function textoProntidao(years: number, linhas: readonly LinhaSuficiencia[
   const out = [
     `PRONTIDÃO PARA O LAUDO — MATRIZ DE SUFICIÊNCIA (${years} anos)`,
     "Emissão automática: não. O jogo não preenche achados ausentes, não libera documentos e não conclui diagnóstico.",
-    `Itens não resolvidos: ${itensNaoResolvidos(linhas)} de ${linhas.length}. "Registrado" significa descrito no jogo ou na bateria; não equivale a normal.`,
+    `Pendências para revisão: ${pendenciasParaRevisao(linhas)} de ${linhas.length}. São lembretes e não impedem o registro nem a emissão. "Registrado" significa descrito no jogo ou na bateria; não equivale a normal.`,
   ];
   let secao = "";
   for (const linha of linhas) {

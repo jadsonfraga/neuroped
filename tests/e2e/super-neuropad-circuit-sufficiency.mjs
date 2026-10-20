@@ -10,8 +10,8 @@ import { startStaticServer, auditBrowserLaunchOptions, ACCEPTED_FIRST_VISIT_STOR
 import { createSyntheticClinicalApi, SYNTHETIC_CREDENTIALS } from "../../scripts/lib/synthetic-clinical-api.mjs";
 
 const dir = process.env.SUPER_NEUROPAD_ARTIFACT_DIR || "/tmp/super-neuropad-circuit-sufficiency";
-const OBSERVADO = "Realizado — registrar descrição";
-const ACHADO = "Realizado — requer esclarecimento";
+const OBSERVADO = /Conseguiu/;
+const ACHADO = /Teve dificuldade/;
 const SOURCE_EXAMINADOR = "Observação direta pelo examinador";
 const SOURCE_ESCOLA = "Relato escolar";
 
@@ -60,12 +60,13 @@ async function record(page, title, status, source) {
   assert.ok(index >= 0, `estação "${title}" disponível nesta faixa`);
   await select.selectOption({ index });
   const station = page.getByTestId("super-neuropad-clinical-station");
-  await station.getByRole("button", { name: status, exact: true }).click();
-  await station.getByRole("button", { name: source, exact: true }).click();
+  await station.getByRole("group", { name: /Toque no que você percebeu/ }).getByRole("button").first().click();
+  await station.getByRole("button", { name: status }).click();
+  if (source) await station.getByRole("button", { name: source, exact: true }).click();
 }
 
 function unresolvedCount(text) {
-  const match = text.match(/Itens não resolvidos: (\d+) de (\d+)/);
+  const match = text.match(/Pendências para revisão: (\d+) de (\d+)/);
   assert.ok(match, "contador de itens não resolvidos exibido");
   return Number(match[1]);
 }
@@ -85,6 +86,8 @@ async function main() {
       await openTab(page, "Cobertura e lacunas");
       const readiness = readinessOf(page);
       await readiness.waitFor();
+      assert.equal(await circuitOf(page).locator("button:disabled").count(), 0, "nenhum controle desabilitado antes do registro");
+      assert.equal(await circuitOf(page).getByRole("button", { name: /Baixar TXT/ }).isEnabled(), true, "exportação disponível sem registro");
       assert.match(await readiness.innerText(), /Emissão automática: não\./);
       assert.equal(await readiness.getByText("Registrado — não equivale a normal", { exact: true }).count(), 0, "nada examinado antes do registro");
       assert.ok(await readiness.getByText("Depende de decisão médica", { exact: true }).count() >= 4, "impressão, fundamentação, conduta e liberação pendentes");
@@ -119,6 +122,7 @@ async function main() {
       assert.doesNotMatch(txt, /Emissão automática: sim/);
       assert.match(txt, /Achado a esclarecer/);
       assert.match(txt, /Depende de decisão médica/);
+      assert.match(txt, /Marcado: /, "marcadores tocados entram no registro");
 
       // 4. Cola no laudo: sem download ou impressão automática; liberação segue manual.
       const downloadsAntes = downloads.length;
