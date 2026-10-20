@@ -129,11 +129,12 @@ export function buildReadinessReport(age: number,foci: readonly ConsultationFocu
   ];
   for(const task of tasks) {
     const entry=entries[task.id];
-    const status = entry && evidenceIsComplete(task,entry) ? entry.status : "pendente";
-    lines.push(`• ${task.title}: ${EVIDENCE_STATUS[status]}`);
-    if(status!=="pendente"){
+    const valid = evidenceIsComplete(task,entry);
+    lines.push(`• ${task.title}: ${valid && entry ? EVIDENCE_STATUS[entry.status] : "Documentação insuficiente para confirmação"}`);
+    if(entry){
+      if(!valid && entry.status !== "pendente")lines.push(`  Situação declarada, ainda não validada: ${EVIDENCE_STATUS[entry.status]}`);
       if(entry.source)lines.push(`  Fonte declarada: ${EVIDENCE_SOURCE[entry.source]}`);
-      lines.push(`  Registro: ${entry.note.trim()}`);
+      if(entry.note.trim())lines.push(`  Registro: ${entry.note.trim()}`);
     }
   }
   lines.push("Revisão clínica de diagnóstico diferencial, CID, conduta e emissão continua exclusiva do médico responsável.");
