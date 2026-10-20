@@ -4,7 +4,8 @@
  * armazenamento local, acesso à câmera ou alteração da bateria principal.
  * Estações `presencial` nunca podem ser inferidas por resposta de tela.
  */
-export const CIRCUIT_VERSION = "2026-10-20.1";\nexport type CircuitArea = "neurologico" | "mental";
+export const CIRCUIT_VERSION = "2026-10-20.1";
+export type CircuitArea = "neurologico" | "mental";
 export type CircuitMethod = "ludico" | "observacao" | "presencial" | "entrevista";
 export type CircuitStatus = "observado" | "achado" | "nao_realizado" | "nao_colaborou";
 export interface CircuitTask {
