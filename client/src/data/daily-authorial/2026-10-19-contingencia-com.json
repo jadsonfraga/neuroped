@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "id": "NEUROPED-DIARIO-20261019-009",
   "slug": "contingencia-com-2026-10-19",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "generatedOn": "2026-10-19",
   "generatedAt": "2026-10-19T00:00:00.000Z",
   "author": "NeuroPed SDG — Dr. Jadson Fraga",
@@ -28,204 +28,209 @@
   ],
   "assessmentUse": "observacao_clinica",
   "riskClass": "baixo",
-  "timeframe": "Considerar os últimos sete dias e registrar separadamente ocorrências com características diferentes.",
+  "timeframe": "Considerar os últimos sete dias. Registrar modalidade, fonte, oportunidades e contexto de cada habilidade observada; ausência de oportunidade não equivale a dificuldade.",
   "durationMinutes": 10,
-  "instructions": "Responder apenas com base no que foi diretamente observado ou relatado por fonte identificada. Usar exemplos concretos, registrar o contexto e marcar desconhecido quando não houver informação suficiente. Este registro não substitui avaliação clínica.",
+  "instructions": "Registro observacional, não diagnóstico. Considerar oportunidades reais dos últimos sete dias. Separar observação direta de relato, identificar informante, contexto, modalidade de comunicação e apoios. Classificar apenas a frequência de habilidades funcionais por oportunidade, nunca intensidade ou gravidade. Marcar desconhecido quando não houve oportunidade ou quando a habilidade não se aplica ao estágio de desenvolvimento, explicitando o motivo. Não exigir contato ocular, fala oral ou padrão cultural específico. CT13 e CT15 descrevem comprometimento atual; CT14 registra mudança súbita. Red flags têm resposta binária independente e exigem ação conforme o quadro; não aguardar o término do registro. Este registro não substitui avaliação clínica.",
   "responseOptions": [
     {
       "code": "N",
-      "label": "Não observado",
+      "label": "Não observado, embora houvesse oportunidade",
       "value": 0
     },
     {
       "code": "O",
-      "label": "Ocasional",
+      "label": "Ocasional nas oportunidades observadas",
       "value": 1
     },
     {
       "code": "F",
-      "label": "Frequente",
+      "label": "Frequente nas oportunidades observadas",
       "value": 2
     },
     {
       "code": "I",
-      "label": "Intenso ou com grande impacto",
+      "label": "Na maioria das oportunidades observadas",
       "value": 3
     },
     {
       "code": "D",
-      "label": "Desconhecido",
+      "label": "Desconhecido ou sem oportunidade para observar",
       "value": null
     }
   ],
   "domains": [
     {
-      "id": "padrao",
-      "label": "Padrão e mudança basal",
-      "description": "Frequência, repetição e mudança em relação ao funcionamento habitual."
+      "id": "iniciativa",
+      "label": "Iniciativa comunicativa",
+      "description": "Solicitar, recusar, pedir ajuda e compartilhar experiências por modalidades acessíveis."
     },
     {
-      "id": "contexto",
-      "label": "Contexto e antecedentes",
-      "description": "Situações associadas, ambientes e fatores que modificam a ocorrência."
+      "id": "compreensao",
+      "label": "Compreensão funcional",
+      "description": "Entender mensagens e orientações compatíveis com oportunidades e desenvolvimento."
     },
     {
-      "id": "impacto",
-      "label": "Impacto funcional",
-      "description": "Participação, autonomia e necessidade de apoio."
+      "id": "reciprocidade",
+      "label": "Resposta e reciprocidade",
+      "description": "Responder e sustentar trocas comunicativas sem exigir fala oral ou contato ocular."
     },
     {
-      "id": "estrategias",
-      "label": "Estratégias e recuperação",
-      "description": "Respostas de apoio, retorno ao basal e fatores que ajudam ou agravam."
+      "id": "reparo",
+      "label": "Reparo comunicativo",
+      "description": "Buscar esclarecimento e modificar a mensagem quando necessário."
+    },
+    {
+      "id": "participacao",
+      "label": "Participação e apoios",
+      "description": "Usar a comunicação para escolhas e participação em situações significativas."
     },
     {
       "id": "seguranca",
-      "label": "Segurança",
-      "description": "Sinais críticos analisados separadamente de qualquer perfil qualitativo."
+      "label": "Segurança — avaliação independente",
+      "description": "Eventos agudos não são pontuados nem interpretados como dificuldade pragmática."
     }
   ],
   "items": [
     {
       "id": "CT01",
-      "domainId": "padrao",
-      "text": "As manifestações relacionadas a comunicação funcional e participação social foram observadas em mais de uma ocasião no período de referência.",
+      "domainId": "iniciativa",
+      "text": "Diante de oportunidades reais, inicia comunicação para solicitar, recusar ou pedir ajuda por uma modalidade acessível.",
       "responseMode": "frequencia_0_3",
       "redFlag": false,
-      "clinicalNote": "Registrar exemplos concretos, datas e frequência aproximada."
+      "clinicalNote": "Registrar situação, interlocutor, modalidade (fala, gesto, sinais, imagens, escrita ou tecnologia assistiva) e apoios disponíveis."
     },
     {
       "id": "CT02",
-      "domainId": "padrao",
-      "text": "Houve mudança perceptível em relação ao funcionamento habitual da criança ou do adolescente.",
+      "domainId": "iniciativa",
+      "text": "Compartilha espontaneamente interesse, escolha ou experiência com outra pessoa, de modo compatível com seu repertório.",
       "responseMode": "frequencia_0_3",
       "redFlag": false,
-      "clinicalNote": "Descrever o funcionamento anterior e o momento aproximado da mudança."
+      "clinicalNote": "Descrever exemplo concreto; não exigir contato ocular, verbalização ou forma cultural específica."
     },
     {
       "id": "CT03",
-      "domainId": "padrao",
-      "text": "O padrão observado mantém características semelhantes entre diferentes ocorrências.",
+      "domainId": "compreensao",
+      "text": "Compreende mensagens relacionadas à rotina, quando apresentadas em modalidade e complexidade acessíveis.",
       "responseMode": "frequencia_0_3",
       "redFlag": false,
-      "clinicalNote": "Separar padrões distintos em registros diferentes."
+      "clinicalNote": "Registrar instrução, recursos de compreensão, adaptação e contexto; não presumir desatenção."
     },
     {
       "id": "CT04",
-      "domainId": "contexto",
-      "text": "É possível identificar o que aconteceu imediatamente antes do comportamento, sintoma ou dificuldade observada.",
+      "domainId": "compreensao",
+      "text": "Responde funcionalmente a pedidos ou informações comunicadas por outra pessoa, considerando acessibilidade sensorial e linguística.",
       "responseMode": "frequencia_0_3",
       "redFlag": false,
-      "clinicalNote": "Registrar antecedentes sem presumir causalidade."
+      "clinicalNote": "Distinguir compreensão de execução motora; avaliar se houve oportunidade observável."
     },
     {
       "id": "CT05",
-      "domainId": "contexto",
-      "text": "A manifestação ocorre em mais de um ambiente, atividade ou relação interpessoal relevante.",
+      "domainId": "reciprocidade",
+      "text": "Responde a tentativas de interação iniciadas por outra pessoa, utilizando sua modalidade habitual de comunicação.",
       "responseMode": "frequencia_0_3",
       "redFlag": false,
-      "clinicalNote": "Comparar casa, escola, clínica e situações comunitárias quando disponíveis."
+      "clinicalNote": "Registrar parceiro, tema, tempo de resposta e sinais comunicativos idiossincráticos."
     },
     {
       "id": "CT06",
-      "domainId": "contexto",
-      "text": "Sono, dor, fome, transições, exigências, ruído ou outros fatores ambientais parecem modificar o padrão observado.",
+      "domainId": "reciprocidade",
+      "text": "Mantém trocas comunicativas suficientes para atingir um objetivo compartilhado, com apoios quando necessários.",
       "responseMode": "frequencia_0_3",
       "redFlag": false,
-      "clinicalNote": "Distinguir associação temporal de explicação definitiva."
+      "clinicalNote": "Considerar jogo, rotina, conversa ou outra atividade própria da etapa de desenvolvimento; não exigir conversação formal."
     },
     {
       "id": "CT07",
-      "domainId": "impacto",
-      "text": "O padrão interfere na participação em atividades esperadas para a idade e para o contexto.",
+      "domainId": "reparo",
+      "text": "Quando sua mensagem não é compreendida, tenta esclarecê-la por repetição, reformulação ou outra modalidade acessível.",
       "responseMode": "frequencia_0_3",
       "redFlag": false,
-      "clinicalNote": "Descrever qual atividade foi limitada e em que grau."
+      "clinicalNote": "Registrar ruptura real, resposta e ajuda disponibilizada; se não houve ruptura, marcar desconhecido."
     },
     {
       "id": "CT08",
-      "domainId": "impacto",
-      "text": "A criança ou o adolescente passou a necessitar de ajuda maior do que a habitual para iniciar, manter ou concluir atividades.",
+      "domainId": "reparo",
+      "text": "Quando não compreende uma mensagem, sinaliza necessidade de repetição, esclarecimento ou ajuda de modo compatível com seu repertório.",
       "responseMode": "frequencia_0_3",
       "redFlag": false,
-      "clinicalNote": "Registrar tipo e intensidade do apoio necessário."
+      "clinicalNote": "Descrever a situação, sem penalizar habilidades ainda não esperadas para o estágio de desenvolvimento."
     },
     {
       "id": "CT09",
-      "domainId": "impacto",
-      "text": "Há evitação, afastamento, perda de oportunidades ou interrupção de atividades por causa do padrão observado.",
+      "domainId": "participacao",
+      "text": "Consegue expressar escolhas, preferências e necessidades em atividades significativas do cotidiano.",
       "responseMode": "frequencia_0_3",
       "redFlag": false,
-      "clinicalNote": "Considerar participação social, escolar, familiar e autocuidado."
+      "clinicalNote": "Observar autonomia e barreiras; registrar as modalidades de comunicação disponibilizadas."
     },
     {
       "id": "CT10",
-      "domainId": "estrategias",
-      "text": "Estratégias de antecipação, comunicação, pausa, organização do ambiente ou apoio visual reduzem a dificuldade observada.",
+      "domainId": "participacao",
+      "text": "A comunicação favorece sua participação em atividades familiares, escolares ou comunitárias quando há oportunidade e acessibilidade.",
       "responseMode": "frequencia_0_3",
       "redFlag": false,
-      "clinicalNote": "Anotar exatamente o que foi feito e qual resposta ocorreu."
+      "clinicalNote": "Descrever atividade, facilitadores, barreiras e diferentes fontes; não comparar sem ajuste de contexto."
     },
     {
       "id": "CT11",
-      "domainId": "estrategias",
-      "text": "O retorno ao funcionamento habitual ocorre em intervalo relativamente previsível.",
+      "domainId": "participacao",
+      "text": "Comunica desconforto, necessidade de pausa ou pedido de apoio em situações cotidianas.",
       "responseMode": "frequencia_0_3",
       "redFlag": false,
-      "clinicalNote": "Cronometrar quando possível e registrar o estado após a ocorrência."
+      "clinicalNote": "Considerar sinais não verbais e comunicação aumentativa e alternativa, sem presumir intenção comportamental."
     },
     {
       "id": "CT12",
-      "domainId": "estrategias",
-      "text": "Existem diferenças consistentes entre estratégias que ajudam e estratégias que intensificam a dificuldade.",
+      "domainId": "participacao",
+      "text": "Quando necessários, apoios comunicativos ou ambientais permitem que a mensagem seja compreendida e a atividade prossiga.",
       "responseMode": "frequencia_0_3",
       "redFlag": false,
-      "clinicalNote": "Usar descrição funcional, sem atribuir intenção moral."
+      "clinicalNote": "Registrar suporte efetivamente testado, efeito observado e se houve indicação de uso; ausência de necessidade não é déficit."
     },
     {
       "id": "CT13",
       "domainId": "seguranca",
-      "text": "Há risco imediato de lesão, fuga, perda de consciência, dificuldade respiratória ou incapacidade de manter a segurança.",
+      "text": "Há, no momento da aplicação, dificuldade respiratória, perda de consciência, trauma grave ou outra ameaça imediata à vida.",
       "responseMode": "presente_ausente",
       "redFlag": true,
-      "clinicalNote": "Sinal crítico independente de qualquer perfil ou soma."
+      "clinicalNote": "Se presente, interromper o registro e acionar emergência; não usar frequência para reduzir a prioridade."
     },
     {
       "id": "CT14",
       "domainId": "seguranca",
-      "text": "O padrão é novo, surgiu de forma abrupta ou mudou de maneira importante em relação às ocorrências anteriores.",
+      "text": "Houve perda súbita de habilidade comunicativa previamente adquirida ou alteração neurológica abrupta associada.",
       "responseMode": "presente_ausente",
       "redFlag": true,
-      "clinicalNote": "Registrar data, circunstâncias e natureza da mudança."
+      "clinicalNote": "Registrar momento de início e sinais neurológicos associados; diferenciar declínio gradual de mudança súbita."
     },
     {
       "id": "CT15",
       "domainId": "seguranca",
-      "text": "Após a ocorrência, não há retorno ao estado de responsividade ou funcionamento habitual.",
+      "text": "Após episódio recente de alteração da consciência, a pessoa permanece sem recuperar sua responsividade habitual.",
       "responseMode": "presente_ausente",
       "redFlag": true,
-      "clinicalNote": "Situação que pode exigir avaliação urgente conforme o estado clínico."
+      "clinicalNote": "Se presente agora, acionar emergência imediatamente; não aguardar completar o inventário."
     }
   ],
   "scoring": {
     "mode": "perfil_qualitativo_sem_total",
     "totalScoreEnabled": false,
-    "instructions": "Não somar os itens. Organizar as respostas por domínio, descrever exemplos e comparar a evolução ao longo do tempo.",
+    "instructions": "Não somar itens ou calcular gravidade. Descrever capacidades, oportunidades, apoios e barreiras por domínio, distinguindo fonte e contexto; CT13–CT15 ficam fora do perfil funcional.",
     "domainInterpretation": "A interpretação depende da idade, do desenvolvimento, do contexto, da mudança em relação ao basal e da convergência entre diferentes informantes.",
-    "redFlagRule": "Qualquer red flag exige análise independente e pode demandar ação imediata, mesmo quando os demais itens forem pouco frequentes."
+    "redFlagRule": "Qualquer red flag presente requer análise imediata independente; CT13 ou CT15 com comprometimento atual impõem SAMU 192 sem esperar pontuação, entrevista ou finalização do registro."
   },
   "redFlags": [
     {
       "itemId": "CT13",
-      "action": "Interromper a exposição ao risco e garantir segurança. Acionar o SAMU 192 diante de dificuldade respiratória, perda prolongada de responsividade, trauma importante ou ameaça imediata à vida."
+      "action": "Acionar imediatamente o SAMU 192 em dificuldade respiratória, perda de consciência, trauma grave ou ameaça imediata à vida. Proteger contra lesões sem atrasar o socorro."
     },
     {
       "itemId": "CT14",
-      "action": "Mudança abrupta, primeira ocorrência relevante ou agravamento importante exige avaliação clínica oportuna; buscar urgência quando houver instabilidade ou risco atual."
+      "action": "Perda súbita de habilidade adquirida ou alteração neurológica aguda requer avaliação médica urgente. Com fraqueza assimétrica, convulsão, rebaixamento de consciência ou dificuldade respiratória, acionar o SAMU 192 imediatamente."
     },
     {
       "itemId": "CT15",
-      "action": "Ausência de recuperação do estado habitual exige avaliação urgente conforme responsividade, respiração, trauma e condição clínica geral."
+      "action": "Ausência de recuperação da responsividade habitual após um episódio exige acionamento imediato do SAMU 192. Proteger contra lesões; não oferecer alimentos ou líquidos nem colocar objetos na boca."
     }
   ],
   "differentialConsiderations": [
@@ -241,12 +246,15 @@
     "Substituir ou complementar o registro de contingência após revisão clínica do instrumento principal."
   ],
   "limitations": [
-    "Registro autoral de contingência sem validação psicométrica ou normas populacionais.",
-    "Estrutura deliberadamente ampla, com menor especificidade temática que o gerador principal.",
-    "Relatos retrospectivos podem omitir contexto, duração e mudança basal.",
-    "Nenhum item isolado confirma ou exclui condição clínica."
+    "Instrumento de contingência sem validação psicométrica, normas etárias, pontos de corte ou capacidade diagnóstica.",
+    "A faixa etária ampla exige interpretação por estágio de desenvolvimento, repertório motor, sensorial e linguístico; ausência de oportunidade não equivale a incapacidade.",
+    "Frequência de habilidades observadas não representa gravidade; resultados não permitem soma, inversão automática ou classificação de transtorno.",
+    "A classificação temática de risco não exclui emergências: CT13–CT15 são avaliados separadamente.",
+    "A duração é apenas estimada; generatedAt pode ser carimbo determinístico de rastreabilidade e não hora efetiva de elaboração.",
+    "O campo de autoria identifica o responsável institucional pelo catálogo, não atesta revisão ou aprovação médica deste rascunho.",
+    "Observação retrospectiva pode omitir contexto; comunicação aumentativa e alternativa, diferenças culturais e necessidades de acessibilidade devem ser contempladas."
   ],
-  "safetyNote": "Este registro não substitui avaliação clínica, atendimento de urgência ou plano individual de segurança. Diante de risco atual, priorizar proteção e assistência apropriada.",
+  "safetyNote": "Rascunho não validado e bloqueado para uso clínico. Dificuldade respiratória, perda de consciência ou ausência de recuperação da responsividade exigem acionamento imediato do SAMU 192. Alteração neurológica súbita exige avaliação médica urgente. Em crise convulsiva, proteger contra lesões, cronometrar e não colocar nada na boca; acionar o SAMU 192 se durar cinco minutos ou mais, houver repetição sem recuperação, respiração comprometida ou primeira crise. Não retardar socorro para preencher o registro.",
   "tags": [
     "contingência",
     "continuidade diária",
