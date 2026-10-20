@@ -83,6 +83,10 @@ async function main() {
     const page = main7.page;
     try {
       await openGame(page, server.origin, 7);
+      const idade7 = circuitOf(page).getByTestId("super-neuropad-age-profile");
+      assert.match(await idade7.innerText(), /Roteiro de 7 anos · Detetives do cotidiano/);
+      await openTab(page, "Exame neurológico");
+      assert.match(await circuitOf(page).getByTestId("super-neuropad-age-station-guidance").innerText(), /Adaptação para 7 anos/);
       await openTab(page, "Cobertura e lacunas");
       const readiness = readinessOf(page);
       await readiness.waitFor();
@@ -138,10 +142,12 @@ async function main() {
 
       // 5. Adaptação por faixa etária: 2 anos mostra itens fora do jogo; 17 anos não mostra.
       await openGame(page, server.origin, 2);
+      assert.match(await circuitOf(page).getByTestId("super-neuropad-age-profile").innerText(), /Roteiro de 2 anos · Pequenas descobertas/);
       await openTab(page, "Cobertura e lacunas");
       const fora2 = await readinessOf(page).getByText("Fora do jogo nesta faixa", { exact: false }).count();
       assert.ok(fora2 >= 1, "2 anos: itens fora do jogo aparecem");
       await setAge(page, 17);
+      assert.match(await circuitOf(page).getByTestId("super-neuropad-age-profile").innerText(), /Roteiro de 17 anos · Transição de cuidados/);
       await openTab(page, "Cobertura e lacunas");
       const fora17 = await readinessOf(page).getByText("Fora do jogo nesta faixa", { exact: false }).count();
       assert.equal(fora17, 0, "17 anos: todas as estações da faixa existem");
