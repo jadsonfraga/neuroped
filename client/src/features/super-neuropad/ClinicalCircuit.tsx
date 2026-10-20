@@ -8,6 +8,7 @@ import {
 } from "./clinicalCircuit";
 import { ClinicalDemo } from "./ClinicalDemo";
 import { MISSOES } from "./missoes";
+import { dicaDeMissaoPorIdade, perfilAnual } from "./ageAdaptation";
 import {
   matrizSuficiencia, pendenciasParaRevisao, SUFICIENCIA_LABELS, textoProntidao,
   type BateriaResumo, type SuficienciaStatus,
@@ -156,6 +157,8 @@ export function ClinicalCircuit({ years, visible, bateria = null }: { years: num
     setStatuses({}); setMarks({}); setNotes({}); setSources({}); setGeneralNote(""); setActive(0); setTab("neurologico"); setFeedback("");
   };
   const missao = task ? MISSOES[task.id] : undefined;
+  const perfil = perfilAnual(years);
+  const dicaEtaria = task ? dicaDeMissaoPorIdade(years, task) : null;
   const pistasMarcadas = task ? (marks[task.id] ?? []) : [];
   return (
     <section id="snp-clinical-circuit" className={visible ? "snp-panel space-y-4 p-4 sm:p-6" : "hidden"} aria-label="Circuito clínico complementar" data-testid="super-neuropad-clinical-circuit">
@@ -178,6 +181,16 @@ export function ClinicalCircuit({ years, visible, bateria = null }: { years: num
         <ShieldAlert className="mr-1 inline-block h-4 w-4" />
         <strong>Sinais de urgência:</strong> {CIRCUIT_URGENCY_NOTE}
       </div>
+      {perfil && (
+        <div className="snp-panel snp-panel--soft space-y-2 p-3" data-testid="super-neuropad-age-profile">
+          <p className="text-sm font-black">🧩 Roteiro de {years} anos · {perfil.nome}</p>
+          <p className="text-xs font-semibold"><strong>Convite:</strong> {perfil.convite}</p>
+          <p className="text-xs font-semibold"><strong>Acessibilidade e ajuda:</strong> {perfil.acessibilidade}</p>
+          <p className="text-[11px] font-semibold opacity-80">
+            Sugestões de apresentação, sem comparação com referência etária. Cada ação só consta como executada após registro real.
+          </p>
+        </div>
+      )}
       <div className="flex flex-wrap gap-2" role="group" aria-label="Área clínica">
         {([
           { key: "neurologico", label: `🧠 Exame neurológico · ${countFor("neurologico")}` },
@@ -206,6 +219,8 @@ export function ClinicalCircuit({ years, visible, bateria = null }: { years: num
             <span className="snp-chip">{CIRCUIT_METHODS[task.method]}</span>
           </div>
           <h3 className="text-xl font-black">{task.emoji} {task.title}</h3>
+          {dicaEtaria && <p className="rounded-xl border-2 border-[var(--snp-ink-40)] bg-white p-3 text-sm font-semibold text-[var(--snp-ink-fixed)]"
+            data-testid="super-neuropad-age-station-guidance">{dicaEtaria}</p>}
           <div className="space-y-2">
             <h4 className="text-sm font-black">{task.method === "presencial" ? "Passo a passo do examinador" : "Passo a passo da brincadeira"}</h4>
             <ol className="space-y-2">
