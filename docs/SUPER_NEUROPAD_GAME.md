@@ -481,3 +481,26 @@ Alerta fixo na tela e no relatório: rebaixamento da consciência, convulsão, r
 - Testes: `tests/unit/super-neuropad-clinical-circuit.test.ts` e `tests/unit/super-neuropad-clinical-circuit-expansion.test.ts`, ambos em `npm run test:super-neuropad`.
 - Correção: a estação de risco deixou de usar a expressão "sinais de alerta", que o guarda `tests/unit/sem-classificacao.test.ts` proíbe em módulos do Super NeuroPad. A base da PR #1191 quebrava esse teste.
 - Rollback: os commits desta expansão podem ser revertidos isoladamente. Sem migração, banco ou contrato de API.
+
+### Prontidão para o laudo: matriz de suficiência (v2026-10-20.3)
+
+A aba **Cobertura e lacunas** tem uma matriz que organiza os itens exigidos pelo laudo neuropediátrico (estrutura de oito seções: identificação, motivo, história do neurodesenvolvimento, exame clínico, escalas e documentos, impressão diagnóstica, conduta e fechamento). Cada item recebe um de oito estados: **examinado** (descrito no jogo ou na bateria), **a esclarecer**, **falta exame direto**, **pendente de execução**, **não realizado**, **fora do jogo nesta faixa**, **depende de fonte externa** ou **depende de decisão médica**.
+
+**Regras**
+
+- O jogo não preenche achado ausente. Estados de fonte externa e de decisão médica nunca viram "examinado".
+- Impressão, fundamentação, conduta e liberação aparecem sempre como dependentes de decisão médica.
+- O texto exportado declara "Emissão automática: não" e conta os itens não resolvidos. A contagem é de pendências, não escore clínico.
+- "Registrado — não equivale a normal" é o rótulo de tudo que foi descrito. Nenhum item recebe rótulo de normalidade.
+- A bateria principal entra apenas pela contagem de mundos aplicados e pelo indicador de partida concluída. Não entra pontuação, acerto nem tempo.
+
+**Faixas.** A matriz tem a mesma estrutura de 2 a 17 anos. Itens sem estação na faixa aparecem como "fora do jogo nesta faixa". Por exemplo, aos 2 anos há seis itens fora do jogo; aos 17 não há nenhum.
+
+**Auditoria.** O registro do fluxo atual SuperNeuroPad → prontuário → laudo, com achados e recomendações, está em `docs/audits/SUPER_NEUROPAD_LAUDO_FLUXO_2026-10-20.md`. Destaque: a impressão do laudo fica habilitada por qualquer texto colado, sem checagem de seções, CIDs ou placeholders. Esse ponto depende de decisão do médico antes de qualquer alteração no laudo.
+
+**Testes**
+
+- `tests/unit/super-neuropad-sufficiencia.test.ts`: matriz por faixa, ausência de preenchimento automático, urgência, exame direto, fonte escolar, bateria, texto e integridade estática.
+- `tests/e2e/super-neuropad-circuit-sufficiency.mjs` (`npm run test:e2e:super-neuropad-circuit`): faixas 2, 7 e 17; registros que reduzem pendências; exportação TXT; colagem no laudo sem download automático; axe no circuito; celular de 390 px.
+
+**Limites.** Nenhum item é validado por médico nem calibrado em amostra. A conclusão diagnóstica, a conduta e a liberação do laudo dependem de revisão médica.
