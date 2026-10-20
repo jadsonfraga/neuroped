@@ -1433,8 +1433,8 @@ export default function SuperNeuroPadGamePage() {
       )}
       {/* Extensão clínica opcional: fica montada e em memória durante o jogo.
           A troca de idade ou paciente descarta os registros via key. */}
-      <ClinicalCircuit key={ageYears ?? "sem-idade"} years={ageYears} visible={screen === "setup" || screen === "results"} />
-      <AssessmentReadiness key={ageYears ?? "sem-idade"} years={ageYears} visible={screen === "setup" || screen === "results"} />
+      <ClinicalCircuit key={`clinical-${ageYears ?? "sem-idade"}`} years={ageYears} visible={screen === "setup" || screen === "results"} />
+      <AssessmentReadiness key={`documentary-${ageYears ?? "sem-idade"}`} years={ageYears} visible={screen === "setup" || screen === "results"} />
     </div>
   );
 }
