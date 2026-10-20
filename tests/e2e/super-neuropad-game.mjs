@@ -106,6 +106,10 @@ try {
       .filter({ hasText: new RegExp("· " + testAge + " anos\\.") }).last();
     await currentCircuit.waitFor({ state: "visible" });
     assert.match(await currentCircuit.innerText(), new RegExp("· " + testAge + " anos\\."));
+    assert.equal(await page.getByTestId("super-neuropad-clinical-circuit").count(),1,
+      "trocar de idade não pode duplicar o painel de exame clínico");
+    assert.equal(await page.getByTestId("super-neuropad-documentary-readiness").count(),1,
+      "trocar de idade não pode duplicar o painel documental");
     const availableReview = await readinessPanel.getByTestId("super-neuropad-readiness-summary").innerText();
     assert.match(availableReview, /0 de \d+ itens documentados/);
     assert.match(availableReview, /Documentação ainda incompleta/);
