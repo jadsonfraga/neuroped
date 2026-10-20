@@ -84,7 +84,7 @@ test("exportação explicita ausências e limitações, sem inventar achados ou 
   },new Date("2026-10-20T15:00:00Z"));
   assert.match(txt,/Linguagem expressiva com atraso referido/);
   assert.match(txt,/Sem cooperação para parte do exame/);
-  assert.match(txt,/Ainda não documentado/);
+  assert.match(txt,/Documentação insuficiente para confirmação/);
   assert.doesNotMatch(txt,/(CEP|CPF|CRM-BA)/);
 });
 
