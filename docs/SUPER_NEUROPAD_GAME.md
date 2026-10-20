@@ -504,3 +504,23 @@ A aba **Cobertura e lacunas** tem uma matriz que organiza os itens exigidos pelo
 - `tests/e2e/super-neuropad-circuit-sufficiency.mjs` (`npm run test:e2e:super-neuropad-circuit`): faixas 2, 7 e 17; registros que reduzem pendências; exportação TXT; colagem no laudo sem download automático; axe no circuito; celular de 390 px.
 
 **Limites.** Nenhum item é validado por médico nem calibrado em amostra. A conclusão diagnóstica, a conduta e a liberação do laudo dependem de revisão médica.
+
+### Missões guiadas e sem bloqueios (v2026-10-20.3)
+
+Diretriz do responsável clínico: **nenhum bloqueio no fluxo**. Nenhum controle do circuito fica desabilitado. Anterior, próxima, copiar, baixar e limpar estão sempre disponíveis. Fonte, anotação livre e resultado são opcionais. "Pendências para revisão" é um lembrete, não impede registro nem exportação.
+
+**Missões.** Cada estação do circuito virou uma missão, com:
+
+- **Passo a passo** em linguagem de jogo, para o auxiliar. O título muda entre "da brincadeira" e "do examinador", conforme o método.
+- **Marcadores tocáveis**, para registrar o que foi percebido sem perguntar à criança. Ex.: "Segue o alvo com os dois olhos", "Precisa de apoio".
+- **Resultado em quatro escolhas**: Conseguiu, Teve dificuldade, Não quis agora, Não deu para fazer. Cada escolha corresponde a um estado clínico já existente.
+- **Fonte sugerida**: estações de observação já vêm com "observação direta pelo examinador"; entrevistas pedem a fonte, sem obrigar.
+- **Orientação clínica completa** recolhida, com o texto original da estação.
+
+**Exceção deliberada.** A estação de risco (conversa reservada de segurança) não é gamificada. O próprio texto da estação proíbe apresentá-la como missão infantil. Continua como entrevista profissional.
+
+**Registro indireto.** Os marcadores e o resultado são suficientes para registrar. Os marcadores entram no relatório como "Marcado: ...". A anotação livre é opcional.
+
+**Atividade lúdica.** O circuito pede que o responsável seja informado antes de iniciar. É um aviso, não uma trava.
+
+**Limite.** O menor de 2 anos continua fora da aplicação do jogo, por regra clínica existente (OBS-10 e Sonda 10), e não é uma trava do circuito.

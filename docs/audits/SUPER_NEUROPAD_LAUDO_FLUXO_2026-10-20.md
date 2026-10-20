@@ -48,8 +48,9 @@ campo de laudo ligado às seções do circuito.
 
 ## 4. Recomendações (decisão do médico e do produto; não implementadas aqui)
 
-1. Ligar a impressão do laudo à ausência de bloqueios: seções obrigatórias presentes, CID-10 e CID-11 em
-   paralelo, zero marcadores "[completar]" e QA de doutrina aprovado.
+1. Mostrar avisos não bloqueantes no laudo: seções obrigatórias ausentes, CID-10 e CID-11 fora de paralelo,
+   marcadores "[completar]" restantes e QA de doutrina reprovado. Os avisos não impedem a impressão nem a
+   assinatura; a decisão de emitir é do médico. Diretriz do responsável clínico: nenhum bloqueio no fluxo.
 2. Mostrar a matriz de suficiência dentro de `laudo-super.tsx` como checklist de revisão, com a mesma
    terminologia.
 3. Manter a liberação sempre manual, com assinatura do médico. Não criar liberação automática a partir do jogo.
