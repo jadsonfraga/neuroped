@@ -88,10 +88,12 @@ export function guiasAplicaveis(years: number): GuiaHipotese[] {
 
 /** Estado de um item de coleta. Só a estação registrada resolve o item; fonte externa nunca vira coletada pelo jogo. */
 export function estadoItem(item: ItemColeta, years: number, records: CircuitRecords): EstadoItem {
+  // Invariante defensiva: fonte externa nunca se torna "coletado" por um toque,
+  // mesmo se uma revisão futura acidentalmente misturar estação e fonte no item.
+  if (item.fonteExterna) return "fonte_externa";
   const presentes = circuitForAge(years).map((task) => task.id);
   const aplicaveis = item.estacoes.filter((id) => presentes.includes(id));
   if (aplicaveis.some((id) => records[id]?.status === "achado")) return "achado_a_esclarecer";
   if (aplicaveis.some((id) => records[id]?.status === "observado")) return "coletado";
-  if (item.fonteExterna) return "fonte_externa";
   return "pendente";
 }
