@@ -42,7 +42,7 @@ export function ClinicalCircuit({ years, visible }: { years: number | null; visi
     setStatuses({}); setNotes({}); setGeneralNote(""); setActive(0); setArea("neurologico"); setFeedback("");
   };
   return (
-    <section className={visible ? "snp-panel space-y-4 p-4 sm:p-6" : "hidden"} aria-label="Circuito clínico complementar" data-testid="super-neuropad-clinical-circuit">
+    <section id="snp-clinical-circuit" className={visible ? "snp-panel space-y-4 p-4 sm:p-6" : "hidden"} aria-label="Circuito clínico complementar" data-testid="super-neuropad-clinical-circuit">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="snp-pixel flex items-center gap-2 text-base"><Stethoscope className="h-5 w-5" /> Missões clínicas extras</h2>
