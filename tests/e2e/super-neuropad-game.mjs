@@ -91,6 +91,31 @@ try {
   await screen("00-menor-de-2");
   await page.getByRole("group", { name: "Idade em anos" }).getByRole("button", { name: "7", exact: true }).click();
   assert.equal(await underTwo.count(), 0, "escolher a idade tira o bloqueio");
+  // E2E: circuito clínico/documental opcional cobre todas as faixas sem tocar nos seis mundos.
+  const readinessPanel = page.getByTestId("super-neuropad-documentary-readiness");
+  const clinicalPanel = page.getByTestId("super-neuropad-clinical-circuit");
+  for (const testAge of [2, 5, 9, 12, 17]) {
+    await page.getByRole("group", { name: "Idade em anos" }).getByRole("button", { name: String(testAge), exact: true }).click();
+    await readinessPanel.waitFor({ state: "visible" });
+    await clinicalPanel.waitFor({ state: "visible" });
+    assert.match(await readinessPanel.innerText(), new RegExp(testAge + " anos"));
+    assert.match(await clinicalPanel.innerText(), new RegExp(testAge + " anos"));
+    const availableReview = await readinessPanel.getByTestId("super-neuropad-readiness-summary").innerText();
+    assert.match(availableReview, /0 de \d+ itens documentados/);
+    assert.match(availableReview, /Documentação ainda incompleta/);
+  }
+  await page.getByRole("group", { name: "Idade em anos" }).getByRole("button", { name: "7", exact: true }).click();
+  const reviewSummary = readinessPanel.getByTestId("super-neuropad-readiness-summary");
+  await readinessPanel.getByRole("button", { name: /Investigação de TEA/ }).click();
+  assert.match(await reviewSummary.innerText(), /0 de \d+ itens documentados/);
+  const reviewItem = readinessPanel.getByTestId("super-neuropad-readiness-item");
+  await reviewItem.getByLabel("Situação documental").selectOption("documentado");
+  await reviewItem.getByLabel("Fonte da evidência").selectOption("clinico");
+  await reviewItem.getByLabel("Descrição da evidência").fill("Identificação verificada no prontuário protegido — sem dados pessoais neste teste.");
+  assert.match(await reviewSummary.innerText(), /1 de \d+ itens documentados/);
+  await clinicalPanel.getByRole("button", { name: /Estado mental/ }).click();
+  assert.match(await clinicalPanel.innerText(), /Aparência e comportamento|Portal do encontro/);
+  // Não envia automaticamente dados da matriz ao prontuário/PDF nem ao familiar.
   const estimate = page.getByTestId("super-neuropad-estimate");
   const minutes = Number((await estimate.innerText()).match(/cerca de (\d+) minutos/)?.[1]);
   assert.ok(minutes > 0 && minutes <= 20, `tempo estimado dentro de 20 min (${minutes})`);
@@ -245,6 +270,10 @@ try {
     await origins.getByText(label, { exact: false }).first().waitFor();
   }
   // Observações da aplicadora: chip + texto livre; vão para PDF/registro, nunca para o navegador.
+  // O estado clínico/documental permanece durante a aventura, sem integrar XP nem exportação familiar.
+  await readinessPanel.waitFor({ state: "visible" });
+  assert.match(await reviewSummary.innerText(), /1 de \d+ itens documentados/);
+  await clinicalPanel.waitFor({ state: "visible" });
   const observationsBox = page.getByTestId("super-neuropad-observations");
   await observationsBox.getByRole("button").first().click();
   await page.locator("#snp-observations").fill("Colaborou bem. Pediu água no mundo 3.");
