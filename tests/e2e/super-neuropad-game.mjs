@@ -93,13 +93,19 @@ try {
   assert.equal(await underTwo.count(), 0, "escolher a idade tira o bloqueio");
   // E2E: circuito clínico/documental opcional cobre todas as faixas sem tocar nos seis mundos.
   const readinessPanel = page.getByTestId("super-neuropad-documentary-readiness");
-  const clinicalPanel = page.getByTestId("super-neuropad-clinical-circuit");
+  const clinicalPanel = page.getByTestId("super-neuropad-clinical-circuit").last();
   for (const testAge of [2, 5, 9, 12, 17]) {
     await page.getByRole("group", { name: "Idade em anos" }).getByRole("button", { name: String(testAge), exact: true }).click();
     await readinessPanel.waitFor({ state: "visible" });
-    await clinicalPanel.waitFor({ state: "visible" });
+    // Keyed age transitions can momentarily have an outgoing and incoming section.
+    // Check the currently mounted section by exact age; do not infer readiness from a stale copy.
+    await page.waitForFunction((age) => [...document.querySelectorAll('[data-testid="super-neuropad-clinical-circuit"]')]
+      .some((el) => new RegExp("· " + age + " anos\\.").test(el.textContent || "")), testAge);
     assert.match(await readinessPanel.innerText(), new RegExp(testAge + " anos"));
-    assert.match(await clinicalPanel.innerText(), new RegExp(testAge + " anos"));
+    const currentCircuit = page.getByTestId("super-neuropad-clinical-circuit")
+      .filter({ hasText: new RegExp("· " + testAge + " anos\\.") }).last();
+    await currentCircuit.waitFor({ state: "visible" });
+    assert.match(await currentCircuit.innerText(), new RegExp("· " + testAge + " anos\\."));
     const availableReview = await readinessPanel.getByTestId("super-neuropad-readiness-summary").innerText();
     assert.match(availableReview, /0 de \d+ itens documentados/);
     assert.match(availableReview, /Documentação ainda incompleta/);
@@ -113,8 +119,12 @@ try {
   await reviewItem.getByLabel("Fonte da evidência").selectOption("clinico");
   await reviewItem.getByLabel("Descrição da evidência").fill("Identificação verificada no prontuário protegido — sem dados pessoais neste teste.");
   assert.match(await reviewSummary.innerText(), /1 de \d+ itens documentados/);
-  await clinicalPanel.getByRole("button", { name: /Estado mental/ }).click();
-  assert.match(await clinicalPanel.innerText(), /Aparência e comportamento|Portal do encontro/);
+  // A mesma idade selecionada no game é a fonte da versão clínica ativa.
+  await page.waitForFunction(() => [...document.querySelectorAll('[data-testid="super-neuropad-clinical-circuit"]')]
+    .some((el) => /· 7 anos\\./.test(el.textContent || "")));
+  const circuitAtSeven = page.getByTestId("super-neuropad-clinical-circuit").filter({ hasText: /· 7 anos\./ }).last();
+  await circuitAtSeven.getByRole("button", { name: /Estado mental/ }).click();
+  assert.match(await circuitAtSeven.innerText(), /Aparência e comportamento|Portal do encontro/);
   // Não envia automaticamente dados da matriz ao prontuário/PDF nem ao familiar.
   const estimate = page.getByTestId("super-neuropad-estimate");
   const minutes = Number((await estimate.innerText()).match(/cerca de (\d+) minutos/)?.[1]);
