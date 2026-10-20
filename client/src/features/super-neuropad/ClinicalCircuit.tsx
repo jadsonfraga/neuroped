@@ -2,9 +2,45 @@ import { useState } from "react";
 import { Check, ChevronLeft, ChevronRight, ClipboardCopy, Download, ExternalLink, RotateCcw, ShieldAlert, Stethoscope } from "lucide-react";
 import { downloadTextDocument } from "@/lib/shareText";
 import {
-  buildCircuitReport, circuitForAge, CIRCUIT_VERSION, CIRCUIT_METHODS, CIRCUIT_STATUSES,
-  CIRCUIT_VIDEO_LINKS, type CircuitArea, type CircuitRecords, type CircuitStatus,
+  buildCircuitReport, circuitForAge, CIRCUIT_VERSION, CIRCUIT_METHODS, CIRCUIT_SOURCES, CIRCUIT_STATUSES,
+  CIRCUIT_URGENCY_NOTE, CIRCUIT_VIDEO_LINKS, COVERAGE_LABELS, coverageStatus, MSE_SECTIONS, NEURO_BASIC_DOMAINS,
+  STATION_DEMO, type CircuitArea, type CircuitRecords, type CircuitSource, type CircuitStatus, type CoverageDomain, type CoverageStatus,
 } from "./clinicalCircuit";
+import { ClinicalDemo } from "./ClinicalDemo";
+
+type CircuitTab = CircuitArea | "cobertura";
+
+const COVERAGE_TONE: Record<CoverageStatus, string> = {
+  sem_estacao: "bg-[var(--snp-paper-fixed)]",
+  pendente: "bg-[var(--snp-paper-fixed)]",
+  parcial: "bg-[var(--snp-sun-tint)]",
+  registrado: "bg-[var(--snp-grass-tint)]",
+  esclarecer: "bg-[var(--snp-berry-tint)]",
+  nao_obtido: "bg-[var(--snp-paper-fixed)]",
+};
+
+function CoverageList({ title, domains, years, records }: { title: string; domains: readonly CoverageDomain[]; years: number; records: CircuitRecords }) {
+  return (
+    <div className="space-y-2">
+      <h3 className="text-sm font-black">{title}</h3>
+      <ul className="space-y-2">
+        {domains.map((domain) => {
+          const status = coverageStatus(domain, years, records);
+          const stations = circuitForAge(years).filter((task) => domain.stations.includes(task.id));
+          return (
+            <li key={domain.id} className="snp-panel snp-panel--soft p-3 text-sm">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <span className="font-black">{domain.label}</span>
+                <span className={`snp-chip ${COVERAGE_TONE[status]}`}>{COVERAGE_LABELS[status]}</span>
+              </div>
+              {stations.length > 0 && <p className="mt-1 text-xs font-semibold opacity-80">Estações: {stations.map((task) => task.title).join("; ")}</p>}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
 
 /**
  * Opcional e isolado da bateria principal: não entra em XP, contagem de itens,
@@ -12,18 +48,22 @@ import {
  * Estado mantido em memória durante a passagem pelos seis mundos.
  */
 export function ClinicalCircuit({ years, visible }: { years: number | null; visible: boolean }) {
-  const [area, setArea] = useState<CircuitArea>("neurologico");
+  const [tab, setTab] = useState<CircuitTab>("neurologico");
   const [active, setActive] = useState(0);
   const [statuses, setStatuses] = useState<Record<string, CircuitStatus>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [sources, setSources] = useState<Record<string, CircuitSource>>({});
   const [generalNote, setGeneralNote] = useState("");
   const [feedback, setFeedback] = useState("");
+  const area: CircuitArea = tab === "mental" ? "mental" : "neurologico";
   const all = years === null ? [] : circuitForAge(years);
   const tasks = years === null ? [] : circuitForAge(years, area);
   const task = tasks[Math.min(active, tasks.length - 1)];
+  const demo = task ? STATION_DEMO[task.id] : undefined;
   const recorded = all.filter((entry) => statuses[entry.id]).length;
+  const countFor = (option: CircuitArea) => `${all.filter((entry) => entry.area === option && statuses[entry.id]).length}/${all.filter((entry) => entry.area === option).length}`;
   const records: CircuitRecords = Object.fromEntries(all.filter((entry) => statuses[entry.id]).map((entry) =>
-    [entry.id, { status: statuses[entry.id], note: notes[entry.id] || "" }]));
+    [entry.id, { status: statuses[entry.id], note: notes[entry.id] || "", source: sources[entry.id] }]));
   const report = years === null ? "" : buildCircuitReport(years, records, generalNote);
   if (years === null || !all.length) return null;
   const previous = () => { setActive((index) => Math.max(0, index - 1)); setFeedback(""); };
@@ -39,7 +79,7 @@ export function ClinicalCircuit({ years, visible }: { years: number | null; visi
   };
   const reset = () => {
     if (!window.confirm("Apagar apenas as observações do circuito complementar desta criança? A bateria principal não será alterada.")) return;
-    setStatuses({}); setNotes({}); setGeneralNote(""); setActive(0); setArea("neurologico"); setFeedback("");
+    setStatuses({}); setNotes({}); setSources({}); setGeneralNote(""); setActive(0); setTab("neurologico"); setFeedback("");
   };
   return (
     <section id="snp-clinical-circuit" className={visible ? "snp-panel space-y-4 p-4 sm:p-6" : "hidden"} aria-label="Circuito clínico complementar" data-testid="super-neuropad-clinical-circuit">
@@ -56,18 +96,33 @@ export function ClinicalCircuit({ years, visible }: { years: number | null; visi
       <div className="snp-panel snp-panel--soft p-3 text-xs font-semibold" role="note">
         <ShieldAlert className="mr-1 inline-block h-4 w-4" />
         Exame presencial é obrigatório para inferir força, tônus, reflexos, pares cranianos ou sensibilidade.
-        Registro descritivo, sem escores ou interpretação automática. Vídeos são demonstrações externas da técnica, nunca gravações da criança.
+        Registro descritivo, sem escores ou interpretação automática. Vídeos e animações são demonstrações da técnica, nunca gravações da criança.
+      </div>
+      <div className="snp-panel snp-panel--soft p-3 text-xs font-semibold" role="note" data-testid="super-neuropad-clinical-urgency">
+        <ShieldAlert className="mr-1 inline-block h-4 w-4" />
+        <strong>Sinais de urgência:</strong> {CIRCUIT_URGENCY_NOTE}
       </div>
       <div className="flex flex-wrap gap-2" role="group" aria-label="Área clínica">
-        {(["neurologico", "mental"] as const).map((option) => (
-          <button key={option} type="button" aria-pressed={area === option} onClick={() => { setArea(option); setActive(0); setFeedback(""); }}
-            className={`snp-option min-h-11 px-4 py-2 text-sm font-black ${area === option ? "bg-[var(--snp-sun)]" : "bg-[var(--snp-paper-fixed)]"}`}>
-            {option === "neurologico" ? "🧠 Exame neurológico" : "💬 Estado mental"}
-            {" · "}{all.filter((entry) => entry.area === option && statuses[entry.id]).length}/{all.filter((entry) => entry.area === option).length}
+        {([
+          { key: "neurologico", label: `🧠 Exame neurológico · ${countFor("neurologico")}` },
+          { key: "mental", label: `💬 Estado mental · ${countFor("mental")}` },
+          { key: "cobertura", label: "🧭 Cobertura e lacunas" },
+        ] as const).map((option) => (
+          <button key={option.key} type="button" aria-pressed={tab === option.key} onClick={() => { setTab(option.key); setActive(0); setFeedback(""); }}
+            className={`snp-option min-h-11 px-4 py-2 text-sm font-black ${tab === option.key ? "bg-[var(--snp-sun)]" : "bg-[var(--snp-paper-fixed)]"}`}>
+            {option.label}
           </button>
         ))}
       </div>
-      {task && (
+      {tab === "cobertura" ? (
+        <div className="snp-panel snp-panel--soft space-y-4 p-4" data-testid="super-neuropad-clinical-coverage">
+          <p className="text-sm font-semibold">
+            A cobertura mostra somente o que foi registrado. Pendente, parcial ou não realizado não significa normal nem alterado.
+          </p>
+          <CoverageList title="Exame neurológico básico — domínios" domains={NEURO_BASIC_DOMAINS} years={years} records={records} />
+          <CoverageList title="Exame do estado mental — seções" domains={MSE_SECTIONS} years={years} records={records} />
+        </div>
+      ) : task && (
         <article className="snp-panel snp-panel--soft space-y-3 p-4" data-testid="super-neuropad-clinical-station">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="snp-chip">Estação {active + 1} de {tasks.length} · {task.domain}</span>
@@ -75,6 +130,7 @@ export function ClinicalCircuit({ years, visible }: { years: number | null; visi
           </div>
           <h3 className="text-xl font-black">{task.emoji} {task.title}</h3>
           <p className="text-sm font-semibold leading-relaxed">{task.guide}</p>
+          {demo && <ClinicalDemo kind={demo} />}
           <p className="text-sm"><strong>Descrever:</strong> {task.observe}</p>
           {task.safety && <div className="rounded-xl border-2 border-amber-700 bg-amber-50 p-3 text-sm font-semibold text-amber-950" role="alert">{task.safety}</div>}
           {task.video && <a className="snp-chip inline-flex min-h-11 items-center gap-2 bg-[var(--snp-sky-tint)]"
@@ -91,6 +147,18 @@ export function ClinicalCircuit({ years, visible }: { years: number | null; visi
                   {statuses[task.id] === key ? <Check className="h-4 w-4 shrink-0" /> : <span aria-hidden="true" className="h-4 w-4 shrink-0" />} {label}
                 </button>)}
             </div>
+          </fieldset>
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-black">Fonte da informação deste registro</legend>
+            <div className="flex flex-wrap gap-2">
+              {(Object.entries(CIRCUIT_SOURCES) as [CircuitSource,string][]).map(([key,label]) =>
+                <button key={key} type="button" aria-pressed={sources[task.id] === key}
+                  onClick={() => { setSources((prior) => ({...prior,[task.id]:key})); setFeedback(""); }}
+                  className={`snp-option min-h-11 px-3 py-2 text-left text-xs font-semibold ${sources[task.id] === key ? "bg-[var(--snp-sky-tint)]" : "bg-[var(--snp-paper-fixed)]"}`}>
+                  {label}
+                </button>)}
+            </div>
+            {statuses[task.id] && !sources[task.id] && <p className="text-xs font-semibold">Indique a fonte para que o registro seja exportado com proveniência.</p>}
           </fieldset>
           <label className="block text-sm font-black">Achados objetivos ou motivo de não realização
             <textarea rows={3} maxLength={1800} value={notes[task.id] || ""} onChange={(event) => setNotes((prior) => ({ ...prior, [task.id]:event.target.value }))}
