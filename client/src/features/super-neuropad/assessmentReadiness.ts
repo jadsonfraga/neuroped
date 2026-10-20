@@ -79,20 +79,29 @@ export function requirementsForAge(age: number, foci: readonly ConsultationFocus
   return REQUIREMENTS.filter((item) => age >= item.min && age <= item.max && (!item.focus || selected.has(item.focus)));
 }
 
+/** Campos nucleares não podem ser dispensados pelo operador para declarar cobertura documental.
+ *  Nos demais, justificativa de inaplicabilidade pode ser registrada sem inventar dados. */
+export const CRITICAL_REQUIREMENTS = new Set(["identity","complaint","neuro","mental","differential","plan"]);
+export function evidenceIsComplete(task: Requirement, entry?: EvidenceEntry): boolean {
+  if (!entry || entry.status === "pendente") return false;
+  const note = entry.note?.trim() || "";
+  if (!note) return false;
+  if (entry.status === "documentado") {
+    if (!entry.source) return false;
+    if (task.clinicianOnly && !["exame","clinico"].includes(entry.source)) return false;
+    return true;
+  }
+  if (entry.status === "inaplicavel") return !CRITICAL_REQUIREMENTS.has(task.id);
+  return entry.status === "limitado";
+}
+
 export function reviewDocumentarySufficiency(age: number, foci: readonly ConsultationFocus[], entries: EvidenceMap): ReadinessReview {
   const tasks = requirementsForAge(age,foci);
   const pending: string[] = [], limited: string[] = [], justified: string[] = [];
   let completed = 0;
   for (const task of tasks) {
     const entry = entries[task.id];
-    if (!entry || entry.status === "pendente") { pending.push(task.title); continue; }
-    const note = entry.note?.trim() || "";
-    if (entry.status === "documentado" && (!entry.source || !note)) { pending.push(task.title); continue; }
-    if (entry.status === "documentado" && task.clinicianOnly && entry.source !== "exame" && entry.source !== "clinico") {
-      pending.push(task.title); continue;
-    }
-    if (entry.status === "inaplicavel" && !note) { pending.push(task.title); continue; }
-    if (entry.status === "limitado" && !note) { pending.push(task.title); continue; }
+    if (!evidenceIsComplete(task,entry)) { pending.push(task.title); continue; }
     completed += 1;
     if (entry.status === "limitado") limited.push(task.title);
     if (entry.status === "inaplicavel") justified.push(task.title);
@@ -120,10 +129,7 @@ export function buildReadinessReport(age: number,foci: readonly ConsultationFocu
   ];
   for(const task of tasks) {
     const entry=entries[task.id];
-    const status=entry && (
-      (entry.status === "documentado" && !!entry.source && !!entry.note?.trim() && (!task.clinicianOnly || ["exame","clinico"].includes(entry.source))) ||
-      (["inaplicavel","limitado"].includes(entry.status) && !!entry.note?.trim())
-    ) ? entry.status : "pendente";
+    const status = evidenceIsComplete(task,entry) ? entry.status : "pendente";
     lines.push(`• ${task.title}: ${EVIDENCE_STATUS[status]}`);
     if(status!=="pendente"){
       if(entry.source)lines.push(`  Fonte declarada: ${EVIDENCE_SOURCE[entry.source]}`);
