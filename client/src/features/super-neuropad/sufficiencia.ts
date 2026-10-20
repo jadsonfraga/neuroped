@@ -125,7 +125,11 @@ const URGENCIA = ["consciencia", "fundus", "meningeal"];
 function statusDeEstacao(id: string, years: number, records: CircuitRecords): SuficienciaStatus {
   if (!circuitForAge(years).some((task) => task.id === id)) return "fora_do_jogo";
   const status = records[id]?.status;
-  if (status === "observado") return "examinado";
+  if (status === "observado") {
+    const task = CIRCUIT_TASKS.find((entry) => entry.id === id);
+    if (task?.method === "presencial" && records[id]?.source !== "examinador") return "falta_exame_direto";
+    return "examinado";
+  }
   if (status === "achado") return "a_esclarecer";
   if (status === "nao_realizado" || status === "nao_colaborou") return "nao_obtido";
   return "pendente_execucao";
@@ -144,7 +148,9 @@ function statusUrgencia(records: CircuitRecords): StatusUrgencia {
   const estados = URGENCIA.map((id) => records[id]?.status);
   if (estados.includes("achado")) return "a_esclarecer";
   if (estados.some((status) => status === "nao_realizado" || status === "nao_colaborou")) return "nao_obtido";
-  if (estados.every((status) => status === "observado")) return "examinado";
+  if (estados.every((status) => status === "observado")
+    && URGENCIA.every((id) => CIRCUIT_TASKS.find((task) => task.id === id)?.method !== "presencial" || records[id]?.source === "examinador"))
+    return "examinado";
   return "pendente_execucao";
 }
 

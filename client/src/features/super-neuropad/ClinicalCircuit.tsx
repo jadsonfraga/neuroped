@@ -3,7 +3,7 @@ import { Check, ChevronLeft, ChevronRight, ClipboardCopy, Download, ExternalLink
 import { downloadTextDocument } from "@/lib/shareText";
 import {
   buildCircuitReport, circuitForAge, CIRCUIT_VERSION, CIRCUIT_METHODS, CIRCUIT_SOURCES, CIRCUIT_STATUSES,
-  CIRCUIT_URGENCY_NOTE, CIRCUIT_VIDEO_LINKS, COVERAGE_LABELS, coverageStatus, MSE_SECTIONS, NEURO_BASIC_DOMAINS,
+  CIRCUIT_URGENCY_NOTE, CIRCUIT_VIDEO_LINKS, COVERAGE_LABELS, coverageStatus, notaDeEstacao, MSE_SECTIONS, NEURO_BASIC_DOMAINS,
   STATION_DEMO, type CircuitArea, type CircuitRecords, type CircuitSource, type CircuitStatus, type CoverageDomain, type CoverageStatus,
 } from "./clinicalCircuit";
 import { ClinicalDemo } from "./ClinicalDemo";
@@ -165,10 +165,7 @@ export function ClinicalCircuit({ years, visible, bateria = null }: { years: num
   const demo = task ? STATION_DEMO[task.id] : undefined;
   const recorded = all.filter((entry) => statuses[entry.id]).length;
   const countFor = (option: CircuitArea) => `${all.filter((entry) => entry.area === option && statuses[entry.id]).length}/${all.filter((entry) => entry.area === option).length}`;
-  const anotacaoDe = (id: string) => [
-    marks[id]?.length ? `Marcado: ${marks[id].join("; ")}.` : "",
-    (notes[id] || "").trim(),
-  ].filter(Boolean).join(" ");
+  const anotacaoDe = (id: string) => notaDeEstacao(statuses[id], marks[id] ?? [], notes[id] ?? "");
   const records: CircuitRecords = Object.fromEntries(all.filter((entry) => statuses[entry.id]).map((entry) =>
     [entry.id, { status: statuses[entry.id], note: anotacaoDe(entry.id), source: sources[entry.id], descricao: notes[entry.id] || "" }]));
   const report = years === null ? "" : `${buildCircuitReport(years, records, generalNote)}\n\n${textoProntidao(years, matrizSuficiencia(years, records, bateria)).join("\n")}`;
@@ -178,6 +175,7 @@ export function ClinicalCircuit({ years, visible, bateria = null }: { years: num
   const escolherResultado = (status: CircuitStatus) => {
     setStatuses((prior) => ({ ...prior, [task.id]: status }));
     if (status === "achado") setAnotacaoAberta(true);
+    if (status === "nao_realizado" || status === "nao_colaborou") setMarks((prior) => ({ ...prior, [task.id]: [] }));
     setFeedback("");
   };
   const alternarPista = (pista: string) => {
@@ -192,8 +190,7 @@ export function ClinicalCircuit({ years, visible, bateria = null }: { years: num
       await navigator.clipboard.writeText(report);
       setFeedback("Registro copiado. Revise antes de incorporar ao prontuário.");
     } catch {
-      downloadTextDocument(report, `super-neuropad-circuito-${years}a.txt`);
-      setFeedback("Área de transferência indisponível; TXT baixado no dispositivo.");
+      setFeedback("Área de transferência indisponível. Use Baixar TXT se desejar salvar o registro; nenhum arquivo foi criado automaticamente.");
     }
   };
   const reset = () => {

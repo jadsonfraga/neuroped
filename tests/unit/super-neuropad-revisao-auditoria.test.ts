@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
-import { CIRCUIT_TASKS, circuitForAge, coverageStatus, NEURO_BASIC_DOMAINS, type CircuitRecords, type CircuitStatus } from "../../client/src/features/super-neuropad/clinicalCircuit";
+import { CIRCUIT_TASKS, circuitForAge, coverageStatus, notaDeEstacao, buildCircuitReport, NEURO_BASIC_DOMAINS, type CircuitRecords, type CircuitStatus } from "../../client/src/features/super-neuropad/clinicalCircuit";
 import { dicaDeMissaoPorIdade } from "../../client/src/features/super-neuropad/ageAdaptation";
 import { GUIAS_HIPOTESE, estadoItem, guiasAplicaveis, type ItemColeta } from "../../client/src/features/super-neuropad/hipoteses";
 import { linhasDeRevisao, matrizSuficiencia, pendenciasParaRevisao, textoProntidao, urgenciaAtiva } from "../../client/src/features/super-neuropad/sufficiencia";
@@ -23,14 +23,26 @@ test("cobertura: domínio com várias estações só fica registrado quando toda
   // Sensibilidade aos 5 anos: mapa do toque e caixa surpresa são exame direto; uma delas não basta.
   const sensibilidade = domain("sensibilidade");
   assert.equal(coverageStatus(sensibilidade, 5, records({ sensation: "observado" })), "parcial");
-  assert.equal(coverageStatus(sensibilidade, 5, records({ sensation: "observado", stereognosis: "observado" })), "registrado");
+  assert.equal(coverageStatus(sensibilidade, 5, records({ sensation: "observado", stereognosis: "observado" }, "examinador")), "registrado");
   assert.equal(coverageStatus(sensibilidade, 5, records({ stereognosis: "achado" })), "esclarecer");
   // Marcha aos 4 anos: marcha em linha e Romberg são exigidas; a estação lúdica sozinha não completa o domínio.
   const marcha = domain("marcha");
   assert.equal(coverageStatus(marcha, 4, records({ gait2: "observado" })), "parcial");
-  assert.equal(coverageStatus(marcha, 4, records({ gait2: "observado", romberg: "observado" })), "registrado");
+  assert.equal(coverageStatus(marcha, 4, records({ gait2: "observado", romberg: "observado" }, "examinador")), "registrado");
 });
 
+test("resultados recusados não exportam marcadores antigos e não atribuem relatos ao examinador", () => {
+  assert.equal(notaDeEstacao("observado", ["Resposta bilateral"], " teste "), "Marcado: Resposta bilateral. teste");
+  assert.equal(notaDeEstacao("nao_realizado", ["Resposta bilateral"], "não foi possível"), "não foi possível");
+  assert.equal(notaDeEstacao("nao_colaborou", ["Resposta bilateral"], ""), "");
+  const report = buildCircuitReport(7, {
+    reflex: { status: "nao_realizado", note: notaDeEstacao("nao_realizado", ["Reflexos vivos"], "sem martelo"), source: "examinador" },
+    milestones: { status: "observado", note: "Relato por telefone", source: "cuidador" },
+  });
+  assert.doesNotMatch(report, /Marcado: Reflexos vivos/);
+  assert.match(report, /Descrição registrada: Relato por telefone/);
+  assert.doesNotMatch(report, /Descrição do examinador: Relato por telefone/);
+});
 test("urgência: achado de consciência, fundo de olho ou meninges aparece como urgência e sai da contagem de pendências", () => {
   const linhas = matrizSuficiencia(7, records({ fundus: "achado", reflex: "observado" }, "examinador"));
   assert.equal(urgenciaAtiva(linhas), true);

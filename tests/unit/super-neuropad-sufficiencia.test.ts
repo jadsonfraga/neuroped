@@ -62,9 +62,18 @@ test("urgência: achado ou não realização em consciência, fundo de olho ou s
 
 test("exame direto: lúdico não registra força presencial, e a estação presencial registra", () => {
   assert.equal(linha(matrizSuficiencia(3, records({ strength2: "observado" })), "forca").status, "falta_exame_direto");
-  assert.equal(linha(matrizSuficiencia(3, records({ strength2p: "observado" })), "forca").status, "examinado");
+  assert.equal(linha(matrizSuficiencia(3, records({ strength2p: "observado" }, "examinador")), "forca").status, "examinado");
 });
 
+test("proveniência do exame físico: terceiros e fonte ausente nunca completam domínio", () => {
+  for (const age of [2, 7, 17]) {
+    for (const source of [undefined, "cuidador", "escola"] as const) {
+      assert.equal(linha(matrizSuficiencia(age, records({ reflex: "observado" }, source)), "reflexos").status, "falta_exame_direto");
+    }
+    assert.equal(linha(matrizSuficiencia(age, records({ reflex: "observado" }, "examinador")), "reflexos").status, "examinado");
+  }
+  assert.equal(linha(matrizSuficiencia(7, records({ consciencia: "observado", fundus: "observado", meningeal: "observado" }, "escola")), "urgencia").status, "pendente_execucao");
+});
 test("fonte escolar: só conta com descrição do funcionamento escolar; fonte marcada sem texto não basta", () => {
   const semTexto = records({ milestones: "observado" }, "escola");
   assert.equal(linha(matrizSuficiencia(9, semTexto), "escolar").status, "depende_fonte_externa");

@@ -39,6 +39,12 @@ export const CIRCUIT_STATUSES: Record<CircuitStatus,string> = {
   nao_realizado: "Não realizado",
   nao_colaborou: "Sem colaboração suficiente",
 };
+/** Marcadores só constituem observação quando a tarefa foi realizada. */
+export function notaDeEstacao(status: CircuitStatus | undefined, marcadores: readonly string[], anotacao: string): string {
+  const marcas = (status === "observado" || status === "achado") && marcadores.length
+    ? `Marcado: ${marcadores.join("; ")}.` : "";
+  return [marcas, anotacao.trim()].filter(Boolean).join(" ");
+}
 export const CIRCUIT_METHODS: Record<CircuitMethod,string> = {
   ludico: "Missão lúdica supervisionada",
   observacao: "Observação clínica",
@@ -162,13 +168,14 @@ export function coverageStatus(domain: CoverageDomain, years: number, records: C
   const stations = circuitForAge(years).filter((task) => domain.stations.includes(task.id));
   if (!stations.length) return "sem_estacao";
   const statusOf = (id: string) => records[id]?.status;
-  const done = (task: CircuitTask) => statusOf(task.id) === "observado" || statusOf(task.id) === "achado";
+  const done = (task: CircuitTask) => (statusOf(task.id) === "observado" || statusOf(task.id) === "achado")
+    && (task.method !== "presencial" || records[task.id]?.source === "examinador");
   if (stations.some((task) => statusOf(task.id) === "achado")) return "esclarecer";
   // Registrado exige todas as estações exigidas do domínio na faixa: exame direto, se o domínio for presencial; todas, caso contrário.
   // Uma estação isolada deixa o domínio parcial, nunca completo.
   const exigidas = domain.presencial ? stations.filter((task) => task.method === "presencial") : stations;
   if (exigidas.length && exigidas.every(done)) return "registrado";
-  if (stations.some(done)) return "parcial";
+  if (stations.some((task) => statusOf(task.id) === "observado" || statusOf(task.id) === "achado")) return "parcial";
   if (stations.some((task) => statusOf(task.id) === "nao_realizado" || statusOf(task.id) === "nao_colaborou")) return "nao_obtido";
   return "pendente";
 }
@@ -198,7 +205,9 @@ export function buildCircuitReport(years: number, records: CircuitRecords, gener
       const record = records[task.id];
       text.push(`• ${task.domain} — ${task.title} [${CIRCUIT_METHODS[task.method]}]: ${CIRCUIT_STATUSES[record.status]}.`);
       text.push(`  Fonte: ${record.source ? CIRCUIT_SOURCES[record.source] : "não informada — registrar antes de incorporar ao prontuário"}.`);
-      if (record.note.trim()) text.push(`  Descrição do examinador: ${record.note.trim()}`);
+      if (record.note.trim()) text.push(`  Descrição registrada: ${record.note.trim()}`);
+      if (task.method === "presencial" && record.source !== "examinador" && (record.status === "observado" || record.status === "achado"))
+        text.push("  Sem comprovação de exame físico direto: requer fonte do examinador e revisão profissional.");
       else if (record.status === "observado" || record.status === "achado") text.push("  Descrição específica não fornecida; não inferir normalidade ou alteração.");
     }
     if (!entries.some((entry) => entry.area === area)) text.push("Não registrado.");

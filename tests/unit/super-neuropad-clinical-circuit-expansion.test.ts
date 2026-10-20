@@ -37,7 +37,7 @@ const domain = (id: string): CoverageDomain => {
   return found;
 };
 const records = (entries: Record<string, CircuitRecords[string]["status"]>, note = ""): CircuitRecords =>
-  Object.fromEntries(Object.entries(entries).map(([id, status]) => [id, { status, note }]));
+  Object.fromEntries(Object.entries(entries).map(([id, status]) => [id, { status, note, source: "examinador" }]));
 
 test("não regride as 27 estações publicadas: id, área, faixa e método idênticos", () => {
   assert.equal(PUBLISHED_STATIONS.length, 27);

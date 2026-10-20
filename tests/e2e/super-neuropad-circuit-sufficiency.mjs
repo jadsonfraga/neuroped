@@ -88,6 +88,12 @@ async function main() {
     const page = main7.page;
     try {
       await openGame(page, server.origin, 7);
+      const unexpectedDownloads = [];
+      page.on("download", (download) => unexpectedDownloads.push(download));
+      await page.evaluate(() => Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async () => { throw new Error("permission denied"); } } }));
+      await circuitOf(page).getByRole("button", { name: /Copiar registro clínico/ }).click();
+      await circuitOf(page).getByText(/nenhum arquivo foi criado automaticamente/i).waitFor();
+      assert.equal(unexpectedDownloads.length, 0, "falha ao copiar não deve baixar arquivo sem pedido");
       const idade7 = circuitOf(page).getByTestId("super-neuropad-age-profile");
       assert.match(await idade7.innerText(), /Roteiro de 7 anos · Detetives do cotidiano/);
       await openTab(page, "Exame neurológico");
@@ -106,6 +112,15 @@ async function main() {
 
       // 2. Registros do examinador e de fonte escolar; um achado de urgência deve bloquear.
       await record(page, "Escudo dos reflexos", OBSERVADO, SOURCE_EXAMINADOR);
+      await openTab(page, "Exame neurológico");
+      const selectReflex = circuitOf(page).getByLabel("Ir para estação");
+      const indexReflex = await selectReflex.evaluate((el) => Array.from(el.options).findIndex((option) => option.text.includes("Escudo dos reflexos")));
+      await selectReflex.selectOption({ index: indexReflex });
+      const reflexStation = page.getByTestId("super-neuropad-clinical-station");
+      await reflexStation.getByRole("button", { name: /Não deu para fazer/ }).click();
+      assert.equal(await reflexStation.getByRole("group", { name: /Toque no que você percebeu/ }).getByRole("button", { pressed: true }).count(), 0, "marcadores removidos após não realização");
+      await reflexStation.getByRole("button", { name: OBSERVADO }).click();
+      await reflexStation.getByRole("group", { name: /Toque no que você percebeu/ }).getByRole("button").first().click();
       await record(page, "Janela do fundo", ACHADO, SOURCE_EXAMINADOR);
       await record(page, "Linha do tempo da aventura", OBSERVADO, SOURCE_ESCOLA, "Relatório da escola descreve leitura e escrita adequadas à série e atenção oscilante em atividades longas.");
       await openTab(page, "Cobertura e lacunas");

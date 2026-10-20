@@ -598,3 +598,11 @@ Cada item aponta para estações reais e mostra um de quatro estados: coletado, 
 - Nenhum item foi validado por médico, normatizado ou calibrado em amostra.
 
 **Verificação.** `npm run test:super-neuropad` (112 de 112); `npx tsc --noEmit`; `npm run lint`; `npm run build:client`; `npm run test:e2e:super-neuropad-circuit` (16 faixas, de 2 a 17 anos, sem erro de console e sem rolagem horizontal em 390 px); `npm run test:e2e:super-neuropad` (regressão do jogo, sem divergência).
+
+
+### Provas adversariais de proveniência e consentimento de exportação
+- Marcação manual de um exame físico sem fonte ou com fonte cuidador/escola não completa domínio presencial; o examinador precisa estar identificado, e sua identificação manual não substitui revisão clínica.
+- Marcadores de uma missão são limpos quando ela passa a “Não quis agora” ou “Não deu para fazer”, e jamais entram no TXT como observação não executada; a explicação livre da limitação é preservada.
+- Falha da área de transferência na ação “Copiar” mostra orientação para exportação explícita em “Baixar TXT”, **sem download automático**.
+- Relatos de terceiros aparecem como “Descrição registrada”, sem atribuição falsa ao examinador.
+- Testes unitários contemplam 2, 7 e 17 anos; o E2E real cobre falha simulada da área de transferência, troca de status, exportação e percurso anterior.
