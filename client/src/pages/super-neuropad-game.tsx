@@ -1029,6 +1029,12 @@ export default function SuperNeuroPadGamePage() {
             )}
           </div>
 
+          {band && (
+            <a href="#snp-clinical-circuit" className="snp-chip inline-flex min-h-11 items-center gap-2 bg-[var(--snp-sky-tint)]">
+              🩺 Ir para as missões extras: exame neurológico e estado mental (opcional, fora da partida)
+            </a>
+          )}
+
           <div className="snp-panel p-5">
             <h2 className="snp-pixel text-base">2 · Escolha o herói</h2>
             <p className="text-xs font-bold opacity-70">Deixe a criança escolher. Nenhum herói muda os desafios.</p>
