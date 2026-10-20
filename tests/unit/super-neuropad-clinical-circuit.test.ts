@@ -70,7 +70,7 @@ test("integração aditiva na tela existente e isolamento de envio, gravação e
   const page = readFileSync("client/src/pages/super-neuropad-game.tsx","utf8");
   const component = readFileSync("client/src/features/super-neuropad/ClinicalCircuit.tsx","utf8");
   assert.match(page,/import \{ ClinicalCircuit \}/);
-  assert.match(page,/<ClinicalCircuit key=\{ageYears \?\? "sem-idade"\}/);
+  assert.ok(page.includes("<ClinicalCircuit key={`clinical-${ageYears ?? \"sem-idade\"}`}"));
   assert.match(component,/visible=|visible: boolean/);
   assert.match(component,/screen|Somente apoio|Não altera os seis mundos|Não são anexados ao PDF/);
   assert.doesNotMatch(component,/(localStorage|sessionStorage|MediaRecorder|getUserMedia|fetch\(|XMLHttpRequest)/);
