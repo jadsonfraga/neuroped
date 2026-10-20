@@ -1030,9 +1030,9 @@ export default function SuperNeuroPadGamePage() {
           </div>
 
           {band && (
-            <a href="#snp-clinical-circuit" className="snp-chip inline-flex min-h-11 items-center gap-2 bg-[var(--snp-sky-tint)]">
+            <button type="button" onClick={() => document.getElementById("snp-clinical-circuit")?.scrollIntoView({ behavior: "smooth", block: "start" })} className="snp-chip inline-flex min-h-11 items-center gap-2 bg-[var(--snp-sky-tint)]">
               🩺 Ir para as missões extras: exame neurológico e estado mental (opcional, fora da partida)
-            </a>
+            </button>
           )}
 
           <div className="snp-panel p-5">
