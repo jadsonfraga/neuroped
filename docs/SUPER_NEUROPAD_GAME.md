@@ -431,3 +431,53 @@ Os vídeos são **links educativos externos para o profissional**, não reproduz
 - Regressões: `tests/unit/super-neuropad-clinical-circuit.test.ts`, incluído em `npm run test:super-neuropad`.
 - Rodar `npm run check`, `npm run test:super-neuropad`, `npm run build:client` e E2E do jogo antes de disponibilizar.
 - Rollback: reverter somente a PR; sem migração, banco ou contrato de API.
+
+### Expansão v2026-10-20.2: cobertura, estado mental, fontes e demonstrações
+
+Construída sobre o circuito de jadsonfraga/neuroped#1191. As 27 estações publicadas foram preservadas (id, área, faixa e método) e são verificadas por teste de regressão. Foram acrescentadas 14 estações, somando 41.
+
+**O que o circuito faz e o que não faz**
+
+- Não infere normalidade nem alteração. Mostra, por domínio do exame neurológico básico, o que foi registrado, em qual estação e por qual método.
+- Domínios presenciais (pares cranianos, tônus, força, reflexos, sensibilidade, coordenação, sinais meníngeos, fundo de olho, perímetro cefálico) só ficam "registrados" com estação de exame direto. Tarefa lúdica deixa o domínio como "parcial".
+- Estados: sem estação nesta faixa · pendente · parcial · registrado (descrição obrigatória; não equivale a normal) · achado a esclarecer · não realizado ou sem colaboração.
+- Sem escore, percentual, norma ou corte. Os contadores de estações são de preenchimento, não de desempenho.
+
+**Estado mental infantojuvenil**
+
+Seções em ordem clínica usual: aparência e comportamento; atividade psicomotora e atenção; fala; humor e afeto; pensamento e percepção; cognição; juízo e insight; funções neurovegetativas (relato); segurança (entrevista reservada, somente profissional). A ordenação segue a prática clínica geral do exame do estado mental. Não é texto literal de parametria nem instrumento padronizado, e não produz pontuação.
+
+**Fonte de cada registro**
+
+Cada estação pede a origem da informação: observação direta do examinador, relato do cuidador, relato escolar ou outra fonte identificada na nota. Registro sem fonte aparece no relatório como "não informada". Base: Kraemer et al. (2003), que trata da integração de múltiplos informantes e de sua discordância como dado clínico.
+
+**Demonstrações quando o texto não basta**
+
+Quatro animações vetoriais em loop (romberg, marcha em tandem, dedo–nariz e seguimento ocular), sem foto e sem gravação de criança. O movimento é desligado quando o sistema pede redução de animação. Os links para as videotecas externas (Utah e Stanford) permanecem.
+
+**Sinais de urgência**
+
+Alerta fixo na tela e no relatório: rebaixamento da consciência, convulsão, rigidez de nuca com febre, déficit focal agudo, papiledema, cefaleia súbita e intensa ou risco imediato. As estações de fundo de olho e de sinais meníngeos têm alerta próprio e interrompem a sequência.
+
+**Referências consultadas em 20/10/2026**
+
+- NIH Toolbox Cognition: bateria computadorizada para 3 a 85 anos, segundo fontes secundárias. Conferir a página oficial: https://nihtoolbox.org/domain/cognition/ (respondeu 200).
+- NIH Baby Toolbox: tarefas observacionais em tablet. As fontes consultadas descrevem a faixa de 1 a 42 meses, não 0 a 3 anos como citado no pedido. https://nihbabytoolbox.org (respondeu 200).
+- AACAP: King et al., *Practice parameters for the psychiatric assessment of children and adolescents*, JAACAP, 1997. A busca confirmou a existência da parametria, mas não seu conteúdo sobre exame do estado mental. Conferir o texto integral antes de citar a estrutura como sua. https://www.aacap.org/AACAP/Policy_Statements/2003/Psychiatric_Diagnostic_Evaluations.aspx (respondeu 200, documento de 2003, não o de 1997).
+- Kraemer HC et al., *A new approach to integrating data from multiple informants in psychiatric assessment and research*, Am J Psychiatry, 2003. doi:10.1176/appi.ajp.160.9.1566.
+- Videoteca pediátrica da Universidade de Utah (respondeu 200) e Stanford Medicine 25 (não respondeu no ambiente de desenvolvimento; conferir antes de uso).
+
+**Limites clínicos**
+
+- Tarefas digitais e relatos não substituem exame neurológico presencial, avaliação psiquiátrica completa, audiometria, avaliação oftalmológica ou avaliação do desenvolvimento com instrumento validado.
+- Nenhum item foi calibrado ou validado em amostra. Não há norma nem ponto de corte.
+- As demonstrações são ilustrações da técnica, não filmagens de referência.
+
+**Código, testes e correção incluída**
+
+- `client/src/features/super-neuropad/clinicalCircuit.ts`: estações, domínios, cobertura, fontes e relatório.
+- `client/src/features/super-neuropad/ClinicalCircuit.tsx`: interface, abas, fonte e cobertura.
+- `client/src/features/super-neuropad/ClinicalDemo.tsx`: demonstrações animadas.
+- Testes: `tests/unit/super-neuropad-clinical-circuit.test.ts` e `tests/unit/super-neuropad-clinical-circuit-expansion.test.ts`, ambos em `npm run test:super-neuropad`.
+- Correção: a estação de risco deixou de usar a expressão "sinais de alerta", que o guarda `tests/unit/sem-classificacao.test.ts` proíbe em módulos do Super NeuroPad. A base da PR #1191 quebrava esse teste.
+- Rollback: os commits desta expansão podem ser revertidos isoladamente. Sem migração, banco ou contrato de API.
