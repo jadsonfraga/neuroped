@@ -32,7 +32,7 @@ function genericAccepted(): Response {
   return json(
     {
       ok: true,
-      message: "Se existir uma conta ativa para este e-mail, enviaremos instruções de redefinição.",
+      message: "Solicitação recebida. Se existir uma conta ativa para este e-mail, o envio será tentado.",
     },
     202,
   );
