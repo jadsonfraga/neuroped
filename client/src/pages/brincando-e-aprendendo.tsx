@@ -151,7 +151,7 @@ const arenas: Arena[] = [
     tagline: "Texturas, sons, cores e tamanhos",
     description: "Descubra as características do mundo ao seu redor!",
     color: "var(--kids-coral)",
-    softColor: "var(--kids-soft-red)",
+    softColor: "var(--kids-peach)",
     icon: "🖐️",
     art: generalArt,
     mascotLine: "O que você percebe nas figuras?",
@@ -323,11 +323,13 @@ function KidsButton({
       disabled={disabled}
       className="kids-button inline-flex items-center justify-center gap-2 rounded-full border-[3px] px-4 py-2 text-sm font-extrabold tracking-tight shadow-[3px_3px_0_var(--kids-ink)] transition-transform hover:-translate-y-0.5 active:translate-y-0 active:shadow-[1px_1px_0_var(--kids-ink)]"
       style={{
-        backgroundColor: variant === "solid" ? color : "var(--kids-white)",
+        // O coral padrão com texto escuro não atinge o contraste mínimo.
+        // Nos botões, usar o tom escuro da paleta; nas demais superfícies, manter coral.
+        backgroundColor: variant === "solid" ? (color === "var(--kids-coral)" ? "var(--kids-red)" : color) : "var(--kids-white)",
         borderColor: "var(--kids-ink)",
         color:
           variant === "solid" &&
-          (color === "var(--kids-blue)" || color === "var(--kids-purple)")
+          (color === "var(--kids-blue)" || color === "var(--kids-purple)" || color === "var(--kids-coral)")
             ? "var(--kids-white)"
             : "var(--kids-ink)",
       }}
