@@ -55,7 +55,7 @@ test("relatório descritivo: somente respostas executadas, lacunas e nenhuma nor
     rapport: { status: "observado", note: "" },
   }, "Rever em consulta.", new Date("2026-10-20T12:00:00.000Z"));
   assert.match(report,/Estações registradas: 3\//);
-  assert.match(report,/2026-10-20.2/);
+  assert.match(report,/2026-10-20.3/);
   assert.match(report,/EXAME NEUROLÓGICO BÁSICO/);
   assert.match(report,/ESTADO MENTAL/);
   assert.match(report,/Sem martelo disponível/);

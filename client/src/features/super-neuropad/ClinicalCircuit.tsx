@@ -7,6 +7,10 @@ import {
   STATION_DEMO, type CircuitArea, type CircuitRecords, type CircuitSource, type CircuitStatus, type CoverageDomain, type CoverageStatus,
 } from "./clinicalCircuit";
 import { ClinicalDemo } from "./ClinicalDemo";
+import {
+  itensNaoResolvidos, matrizSuficiencia, SUFICIENCIA_LABELS, textoProntidao,
+  type BateriaResumo, type SuficienciaStatus,
+} from "./sufficiencia";
 
 type CircuitTab = CircuitArea | "cobertura";
 
@@ -42,12 +46,53 @@ function CoverageList({ title, domains, years, records }: { title: string; domai
   );
 }
 
+const SUFICIENCIA_TONE: Record<SuficienciaStatus, string> = {
+  examinado: "bg-[var(--snp-grass-tint)]",
+  a_esclarecer: "bg-[var(--snp-berry-tint)]",
+  nao_obtido: "bg-[var(--snp-berry-tint)]",
+  falta_exame_direto: "bg-[var(--snp-sun-tint)]",
+  pendente_execucao: "bg-[var(--snp-sun-tint)]",
+  depende_fonte_externa: "bg-[var(--snp-sky-tint)]",
+  depende_decisao_medica: "bg-[var(--snp-paper-fixed)]",
+  fora_do_jogo: "bg-[var(--snp-paper-fixed)]",
+};
+
+function MatrizList({ years, records, bateria }: { years: number; records: CircuitRecords; bateria: BateriaResumo | null }) {
+  const linhas = matrizSuficiencia(years, records, bateria);
+  const secoes = Array.from(new Set(linhas.map((linha) => linha.secao)));
+  return (
+    <div className="space-y-3" data-testid="super-neuropad-clinical-readiness">
+      <h3 className="text-sm font-black">Prontidão para o laudo — matriz de suficiência</h3>
+      <p className="text-xs font-semibold">
+        Emissão automática: não. O jogo não preenche achados ausentes nem libera documentos. Itens de fonte externa e decisão médica permanecem pendentes até revisão do médico.
+        Itens não resolvidos: {itensNaoResolvidos(linhas)} de {linhas.length}.
+      </p>
+      {secoes.map((secao) => (
+        <div key={secao} className="space-y-2">
+          <h4 className="text-xs font-black uppercase">{secao}</h4>
+          <ul className="space-y-2">
+            {linhas.filter((linha) => linha.secao === secao).map((linha) => (
+              <li key={linha.id} className="snp-panel snp-panel--soft p-3 text-sm">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <span className="font-semibold">{linha.label}</span>
+                  <span className={`snp-chip ${SUFICIENCIA_TONE[linha.status]}`}>{SUFICIENCIA_LABELS[linha.status]}</span>
+                </div>
+                <p className="mt-1 text-xs font-semibold opacity-80">{linha.detalhe}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /**
  * Opcional e isolado da bateria principal: não entra em XP, contagem de itens,
  * resultado estatístico, PDF do jogo ou entrega automática à família.
  * Estado mantido em memória durante a passagem pelos seis mundos.
  */
-export function ClinicalCircuit({ years, visible }: { years: number | null; visible: boolean }) {
+export function ClinicalCircuit({ years, visible, bateria = null }: { years: number | null; visible: boolean; bateria?: BateriaResumo | null }) {
   const [tab, setTab] = useState<CircuitTab>("neurologico");
   const [active, setActive] = useState(0);
   const [statuses, setStatuses] = useState<Record<string, CircuitStatus>>({});
@@ -64,7 +109,7 @@ export function ClinicalCircuit({ years, visible }: { years: number | null; visi
   const countFor = (option: CircuitArea) => `${all.filter((entry) => entry.area === option && statuses[entry.id]).length}/${all.filter((entry) => entry.area === option).length}`;
   const records: CircuitRecords = Object.fromEntries(all.filter((entry) => statuses[entry.id]).map((entry) =>
     [entry.id, { status: statuses[entry.id], note: notes[entry.id] || "", source: sources[entry.id] }]));
-  const report = years === null ? "" : buildCircuitReport(years, records, generalNote);
+  const report = years === null ? "" : `${buildCircuitReport(years, records, generalNote)}\n\n${textoProntidao(years, matrizSuficiencia(years, records, bateria)).join("\n")}`;
   if (years === null || !all.length) return null;
   const previous = () => { setActive((index) => Math.max(0, index - 1)); setFeedback(""); };
   const next = () => { setActive((index) => Math.min(tasks.length - 1, index + 1)); setFeedback(""); };
@@ -121,6 +166,7 @@ export function ClinicalCircuit({ years, visible }: { years: number | null; visi
           </p>
           <CoverageList title="Exame neurológico básico — domínios" domains={NEURO_BASIC_DOMAINS} years={years} records={records} />
           <CoverageList title="Exame do estado mental — seções" domains={MSE_SECTIONS} years={years} records={records} />
+          <MatrizList years={years} records={records} bateria={bateria} />
         </div>
       ) : task && (
         <article className="snp-panel snp-panel--soft space-y-3 p-4" data-testid="super-neuropad-clinical-station">
