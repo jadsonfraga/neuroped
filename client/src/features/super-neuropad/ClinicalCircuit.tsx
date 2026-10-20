@@ -48,7 +48,7 @@ function HipotesesPanel({ years, records }: { years: number; records: CircuitRec
 }
 import { dicaDeMissaoPorIdade, perfilAnual } from "./ageAdaptation";
 import {
-  linhasDeRevisao, matrizSuficiencia, pendenciasParaRevisao, SUFICIENCIA_LABELS, textoProntidao, urgenciaAtiva,
+  linhasDeRevisao, matrizSuficiencia, pendenciasParaRevisao, SUFICIENCIA_LABELS, textoProntidao, URGENCIA_ALERTA, urgenciaAtiva,
   type BateriaResumo, type SuficienciaStatus,
 } from "./sufficiencia";
 import { ESTADO_ITEM_LABELS, estadoItem, guiasAplicaveis, type EstadoItem } from "./hipoteses";
@@ -114,7 +114,7 @@ function MatrizList({ years, records, bateria }: { years: number; records: Circu
       <h3 className="text-sm font-black">Prontidão para o laudo — matriz de suficiência</h3>
       {urgenciaAtiva(linhas) && (
         <div className="rounded-xl border-2 border-amber-700 bg-amber-50 p-3 text-sm font-semibold text-amber-950" role="alert">
-          URGÊNCIA: achado de consciência, fundo de olho ou sinais meníngeos exige avaliação imediata fora do jogo. Não é pendência de checklist.
+          {URGENCIA_ALERTA}
         </div>
       )}
       <p className="text-xs font-semibold">

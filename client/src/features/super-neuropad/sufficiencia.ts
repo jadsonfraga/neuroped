@@ -131,7 +131,16 @@ function statusDeEstacao(id: string, years: number, records: CircuitRecords): Su
   return "pendente_execucao";
 }
 
-function statusUrgencia(records: CircuitRecords): SuficienciaStatus {
+type StatusUrgencia = "a_esclarecer" | "nao_obtido" | "examinado" | "pendente_execucao";
+
+const DETALHE_URGENCIA: Record<StatusUrgencia, string> = {
+  a_esclarecer: "Achado de urgência: avaliação imediata fora do jogo, não pendência de checklist",
+  nao_obtido: "Exame de urgência não realizado ou sem colaboração: avaliação fora do jogo, não pendência de checklist",
+  examinado: "Consciência, fundo de olho e sinais meníngeos registrados sem achado de urgência",
+  pendente_execucao: "Consciência, fundo de olho e sinais meníngeos ainda não registrados",
+};
+
+function statusUrgencia(records: CircuitRecords): StatusUrgencia {
   const estados = URGENCIA.map((id) => records[id]?.status);
   if (estados.includes("achado")) return "a_esclarecer";
   if (estados.some((status) => status === "nao_realizado" || status === "nao_colaborou")) return "nao_obtido";
@@ -164,7 +173,8 @@ function resolver(origem: Origem, years: number, records: CircuitRecords, bateri
     };
   }
   if (origem.tipo === "urgencia") {
-    return { status: statusUrgencia(records), detalhe: "Achado de urgência: avaliação imediata fora do jogo, não pendência de checklist" };
+    const status = statusUrgencia(records);
+    return { status, detalhe: DETALHE_URGENCIA[status] };
   }
   if (origem.tipo === "escola") {
     const relatos = Object.values(records).filter((entry) => entry.source === "escola");
@@ -213,15 +223,19 @@ export function pendenciasParaRevisao(linhas: readonly LinhaSuficiencia[]): numb
   return linhasDeRevisao(linhas).filter((linha) => linha.status !== "examinado").length;
 }
 
+/** Texto único do alerta de urgência, usado pela matriz e pelo componente. */
+export const URGENCIA_ALERTA = "URGÊNCIA: achado, ou exame não realizado, em consciência, fundo de olho ou sinais meníngeos exige avaliação imediata fora do jogo. Não é pendência de checklist.";
+
+/** Alerta só para achado ou exame de urgência não realizado. Item ainda não registrado não dispara alerta. */
 export function urgenciaAtiva(linhas: readonly LinhaSuficiencia[]): boolean {
-  return linhas.some((linha) => linha.urgencia && linha.status !== "examinado");
+  return linhas.some((linha) => linha.urgencia && (linha.status === "a_esclarecer" || linha.status === "nao_obtido"));
 }
 
 export function textoProntidao(years: number, linhas: readonly LinhaSuficiencia[]): string[] {
   const out = [
     `PRONTIDÃO PARA O LAUDO — MATRIZ DE SUFICIÊNCIA (${years} anos)`,
     "Emissão automática: não. O jogo não preenche achados ausentes, não libera documentos e não conclui diagnóstico.",
-    ...(urgenciaAtiva(linhas) ? ["URGÊNCIA: achado de consciência, fundo de olho ou sinais meníngeos exige avaliação imediata fora do jogo. Não é pendência de checklist."] : []),
+    ...(urgenciaAtiva(linhas) ? [URGENCIA_ALERTA] : []),
     `Pendências para revisão: ${pendenciasParaRevisao(linhas)} de ${linhasDeRevisao(linhas).length}. São lembretes e não impedem o registro nem a emissão. "Registrado" significa descrito no jogo ou na bateria; não equivale a normal.`,
   ];
   let secao = "";

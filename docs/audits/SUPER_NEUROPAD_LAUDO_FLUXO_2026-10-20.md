@@ -60,7 +60,7 @@ campo de laudo ligado às seções do circuito.
 ## 5. Evidências
 
 - Testes unitários: `tests/unit/super-neuropad-sufficiencia.test.ts` e os dois arquivos do circuito
-  (`npm run test:super-neuropad`, 97 de 97).
+  (`npm run test:super-neuropad`, 97 de 97 na versão auditada; contagem atual na seção 7).
 - E2E novo: `npm run test:e2e:super-neuropad-circuit` (faixas 2, 7 e 17; registros; exportação; colagem no laudo
   sem download automático; axe sem violações no circuito; celular de 390 px sem rolagem horizontal).
 - E2E de regressão do jogo: `npm run test:e2e:super-neuropad`.

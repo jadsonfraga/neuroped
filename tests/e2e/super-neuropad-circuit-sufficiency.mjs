@@ -101,6 +101,7 @@ async function main() {
       assert.equal(await readiness.getByText("Registrado — não equivale a normal", { exact: true }).count(), 0, "nada examinado antes do registro");
       assert.ok(await readiness.getByText("Depende de decisão médica", { exact: true }).count() >= 4, "impressão, fundamentação, conduta e liberação pendentes");
       const antes = unresolvedCount(await readiness.innerText());
+      assert.equal(await readiness.getByText(/URGÊNCIA:/).count(), 0, "urgência pendente de registro não exibe alerta de achado");
       observations.itensNaoResolvidosSemRegistro = antes;
 
       // 2. Registros do examinador e de fonte escolar; um achado de urgência deve bloquear.

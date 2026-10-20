@@ -36,7 +36,8 @@ export const GUIAS_HIPOTESE: readonly GuiaHipotese[] = [
       { id: "comunicacao_funcional", texto: "Comunicação funcional por fala, gesto ou comunicação alternativa", estacoes: ["language2", "social2"] },
       { id: "padroes_repetitivos", texto: "Interesses restritos e movimentos repetitivos observados", estacoes: ["involuntary", "attention2"] },
       { id: "historia_desenvolvimento", texto: "Marcos e perda de habilidades relatados pelo cuidador", estacoes: ["milestones"] },
-      { id: "audicao", texto: "Resposta auditiva e avaliação audiológica quando indicada", estacoes: ["hearing"], fonteExterna: "audiologia, quando indicada" },
+      { id: "audicao", texto: "Resposta auditiva observada na estação de audição", estacoes: ["hearing"] },
+      { id: "avaliacao_audiologica", texto: "Avaliação audiológica, quando indicada", estacoes: [], fonteExterna: "audiologia, quando indicada" },
     ],
   },
   {
@@ -50,7 +51,7 @@ export const GUIAS_HIPOTESE: readonly GuiaHipotese[] = [
       { id: "flexibilidade", texto: "Flexibilidade e troca de regra", estacoes: ["attention6"] },
       { id: "leitura_escrita_calculo", texto: "Leitura, escrita e cálculo observados, quando alfabetizado", estacoes: ["language6", "copy6"] },
       { id: "funcionamento_escolar", texto: "Desempenho escolar e instrução recebida, relatados pela escola", estacoes: [], fonteExterna: "relatório ou relato escolar" },
-      { id: "multiplos_contextos", texto: "Sintomas relatados em mais de um contexto (casa e escola)", estacoes: ["milestones"], fonteExterna: "relato de dois contextos" },
+      { id: "multiplos_contextos", texto: "Sintomas relatados em mais de um contexto (casa e escola)", estacoes: [], fonteExterna: "relato de dois contextos (casa e escola)" },
       { id: "sono_humor_diferenciais", texto: "Sono, humor e ansiedade como diferenciais", estacoes: ["sleep", "emotion6"] },
     ],
   },

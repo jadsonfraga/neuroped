@@ -562,11 +562,11 @@ Escopo: revisão de prontidão. Nada aqui valida conteúdo clínico, define norm
 
 **Cobertura por domínio.** Um domínio só fica "Registrado" quando todas as estações exigidas foram observadas ou achadas. Em domínios presenciais, a exigência é o exame direto; relato e atividade lúdica não completam o domínio. Um registro isolado fica "Parcial". Achado em qualquer estação do domínio fica "Esclarecer". Exemplo: marcha aos 4 anos só fica registrada com as duas estações do domínio (marcha lúdica e Romberg).
 
-**Fonte escolar com descrição.** A fonte "escola" só conta quando há descrição livre do funcionamento escolar com pelo menos 20 caracteres, no campo próprio (`descricao`), separado da anotação. Marcar apenas a fonte, ou texto curto, mantém o item como "depende de fonte externa". Relato de cuidador não substitui relato escolar.
+**Fonte escolar com descrição.** A fonte "escola" só conta quando há descrição livre do funcionamento escolar com pelo menos 20 caracteres, no campo `descricao`, que recebe só o texto livre da anotação, sem os marcadores. Marcar apenas a fonte, ou texto curto, mantém o item como "depende de fonte externa". Relato de cuidador não substitui relato escolar.
 
 **Fonte sem preenchimento automático.** Ao registrar, a fonte fica vazia até o auxiliar escolher. Antes, o jogo preenchia "examinador" sem escolha. Sem escolha, o registro sai sem proveniência.
 
-**Urgência fora da contagem.** Achado ou não realização em consciência, fundo de olho ou sinais meníngeos aparece em linha própria, com alerta, e não entra em "Pendências para revisão". Texto exibido: "URGÊNCIA: achado de consciência, fundo de olho ou sinais meníngeos exige avaliação imediata fora do jogo. Não é pendência de checklist."
+**Urgência fora da contagem.** Achado ou não realização em consciência, fundo de olho ou sinais meníngeos aparece em linha própria, com alerta, e não entra em "Pendências para revisão". Texto exibido: "URGÊNCIA: achado, ou exame não realizado, em consciência, fundo de olho ou sinais meníngeos exige avaliação imediata fora do jogo. Não é pendência de checklist. O alerta não aparece enquanto o item estiver apenas pendente de registro."
 
 **Adaptação de procedimentos por estação e idade.** Os 16 perfis anuais foram mantidos. Quando a estação é um procedimento do médico, a dica traz a técnica específica:
 

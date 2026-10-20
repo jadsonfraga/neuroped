@@ -39,8 +39,16 @@ test("urgência: achado de consciência, fundo de olho ou meninges aparece como 
   assert.equal(linhasDeRevisao(linhas).some((linha) => linha.id === "urgencia"), false);
   assert.equal(pendenciasParaRevisao(linhas), linhasDeRevisao(linhas).filter((linha) => linha.status !== "examinado").length);
   const texto = textoProntidao(7, linhas).join("\n");
-  assert.match(texto, /URGÊNCIA: achado de consciência, fundo de olho ou sinais meníngeos exige avaliação imediata fora do jogo/);
+  assert.match(texto, /URGÊNCIA: achado, ou exame não realizado, em consciência, fundo de olho ou sinais meníngeos exige avaliação imediata fora do jogo/);
   assert.equal(urgenciaAtiva(matrizSuficiencia(7, records({ consciencia: "observado", fundus: "observado", meningeal: "observado" }))), false);
+  // Item apenas pendente não é achado: não dispara alerta nem usa o texto de achado.
+  const pendente = matrizSuficiencia(7, records({ consciencia: "observado", fundus: "observado" }));
+  const urgenciaPendente = pendente.find((entry) => entry.id === "urgencia");
+  assert.equal(urgenciaPendente?.status, "pendente_execucao");
+  assert.match(urgenciaPendente?.detalhe ?? "", /ainda não registrados/);
+  assert.equal(urgenciaAtiva(pendente), false);
+  assert.equal(textoProntidao(7, pendente).some((entry) => entry.startsWith("URGÊNCIA")), false);
+  assert.equal(urgenciaAtiva(matrizSuficiencia(7, records({ meningeal: "nao_realizado" }))), true);
 });
 
 test("hipóteses: guias por faixa etária, itens com estações reais e nenhum item marcado como coletado sem estação", () => {
@@ -80,4 +88,17 @@ test("cada faixa etária tem composição de estações íntegra (2 a 17 anos)",
   for (let age = 2; age <= 17; age++) {
     assert.ok(circuitForAge(age).length >= 22, `idade ${age}`);
   }
+});
+
+test("hipóteses: item de fonte externa não mistura estação, para não virar coletado com um só registro", () => {
+  for (const guia of GUIAS_HIPOTESE) {
+    for (const item of guia.itens) assert.ok(!(item.estacoes.length && item.fonteExterna), `${guia.id}.${item.id} mistura estação e fonte externa`);
+  }
+  const itens = GUIAS_HIPOTESE.flatMap((guia) => guia.itens);
+  const audiologia = itens.find((item) => item.id === "avaliacao_audiologica");
+  assert.ok(audiologia);
+  assert.equal(estadoItem(audiologia, 3, records({ hearing: "observado" })), "fonte_externa");
+  const contextos = itens.find((item) => item.id === "multiplos_contextos");
+  assert.ok(contextos);
+  assert.equal(estadoItem(contextos, 9, records({ milestones: "observado" }, "cuidador")), "fonte_externa");
 });
