@@ -124,7 +124,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = await signupRequest(name, email, password, acceptedLegal);
     await clearSessionScopedClientState();
     setUser(data.user);
-    return { emailVerificationDelivery: data.emailVerificationDelivery === "failed" ? "failed" : "sent" };
+    // Resposta ausente/incompleta não comprova aceite do provedor.
+    return { emailVerificationDelivery: data.emailVerificationDelivery === "sent" ? "sent" : "failed" };
   }, []);
 
   const changePassword = useCallback(async (
