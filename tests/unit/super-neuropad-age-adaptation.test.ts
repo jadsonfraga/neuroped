@@ -10,7 +10,8 @@ test("16 perfis anuais distintos, do início aos 17 anos, sem interpolação ou 
   for(let years=2;years<=17;years++){
     const p=perfilAnual(years);
     assert.ok(p);
-    for(const key of ["nome","convite","comunicacao","interacao","motricidade","cognicao","acessibilidade"] as const)
+    assert.ok(p.nome.length > 8,"título anual presente em " + years);
+    for(const key of ["convite","comunicacao","interacao","motricidade","cognicao","acessibilidade"] as const)
       assert.ok(p[key].length > 45,key+" " + years);
     assert.ok(circuitForAge(years).length>=10);
   }
