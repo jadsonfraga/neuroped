@@ -33,6 +33,7 @@ const nativeStorageGetItem =
   typeof Storage !== "undefined" ? Storage.prototype.getItem : null;
 
 const exactClinicalNamespaces: Record<string, ClinicalBrowserDataType> = {
+  "neuroped.arena.ficha.v1": "CLINICAL_LONGITUDINAL",
   "pre-consultas": "CLINICAL_EPHEMERAL",
   "pre-retornos": "CLINICAL_EPHEMERAL",
   "caa:workspace:v3": "CLINICAL_LONGITUDINAL",
