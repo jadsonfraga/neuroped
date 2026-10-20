@@ -52,6 +52,8 @@ test("nenhuma conclusão automática: pendências, fontes e justificativas não 
   assert.ok(s.pending.includes("Identificação e idade verificadas no prontuário protegido"));
   assert.ok(s.limited.includes("Exame físico e dados antropométricos relevantes"));
   assert.match(s.summary,/Documentação ainda incompleta/);
+  const waived=reviewDocumentarySufficiency(7,[],{neuro:{status:"inaplicavel",note:"Dispensado."}});
+  assert.ok(waived.pending.includes("Exame neurológico presencial documentado"));
 });
 
 test("mesmo com todos os itens informados, jamais há liberação médica automática",()=>{
