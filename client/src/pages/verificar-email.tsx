@@ -72,8 +72,7 @@ export default function VerifyEmailPage() {
     setResendError(null);
     try {
       await resendEmailVerification(email.trim());
-      // 202 é genérico de propósito (anti-enumeração): a confirmação não revela
-      // se a conta existe. Só chega aqui se o servidor aceitou o pedido.
+      // 202 reconhece a solicitação, não o envio assíncrono nem a entrega.
       setResent(true);
     } catch (error) {
       // Falha real (provedor de e-mail indisponível, rede, 5xx) NÃO vira "o link
@@ -155,8 +154,8 @@ export default function VerifyEmailPage() {
                   aria-hidden="true"
                 />
                 <p className="text-sm leading-relaxed text-foreground">
-                  Se existir uma conta pendente de confirmação para esse
-                  endereço, o novo link chegará em instantes.
+                  Sua solicitação de reenvio foi recebida. Se existir uma conta
+                  pendente, o sistema tentará enviar um novo link. A entrega não foi confirmada.
                 </p>
               </div>
               <p className="text-xs leading-relaxed text-muted-foreground">
