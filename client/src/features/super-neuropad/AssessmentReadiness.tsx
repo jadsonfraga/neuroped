@@ -25,7 +25,7 @@ export function AssessmentReadiness({ years, visible }: { years: number | null; 
   };
   const changeEntry = (id:string,field:"status"|"source"|"note",value:string) => {
     setEntries((prior)=>({
-      ...prior,[id]:{status:prior[id]?.status || "pendente",note:prior[id]?.note || "",...(prior[id]||{}),[field]:value}
+      ...prior,[id]:{...(prior[id] ?? {status:"pendente",note:""}),[field]:value}
     }));
     setMessage("");
   };
