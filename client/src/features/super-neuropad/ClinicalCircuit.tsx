@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Check, ChevronLeft, ChevronRight, ClipboardCopy, Download, ExternalLink, RotateCcw, ShieldAlert, Stethoscope } from "lucide-react";
 import { downloadTextDocument } from "@/lib/shareText";
 import {
-  buildCircuitReport, circuitForAge, CIRCUIT_METHODS, CIRCUIT_STATUSES,
+  buildCircuitReport, circuitForAge, CIRCUIT_VERSION, CIRCUIT_METHODS, CIRCUIT_STATUSES,
   CIRCUIT_VIDEO_LINKS, type CircuitArea, type CircuitRecords, type CircuitStatus,
 } from "./clinicalCircuit";
 
@@ -47,7 +47,7 @@ export function ClinicalCircuit({ years, visible }: { years: number | null; visi
         <div>
           <h2 className="snp-pixel flex items-center gap-2 text-base"><Stethoscope className="h-5 w-5" /> Missões clínicas extras</h2>
           <p className="mt-2 max-w-3xl text-sm font-semibold">
-            Circuito opcional de exame neurológico e estado mental · {years} anos. Supervisão profissional.
+            Circuito opcional de exame neurológico e estado mental · v{CIRCUIT_VERSION} · {years} anos. Supervisão profissional.
             Não altera os seis mundos, o tempo da partida, XP ou pontuação. Nenhuma tarefa isolada estabelece diagnóstico.
           </p>
         </div>
