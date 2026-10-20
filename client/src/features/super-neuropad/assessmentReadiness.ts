@@ -129,7 +129,7 @@ export function buildReadinessReport(age: number,foci: readonly ConsultationFocu
   ];
   for(const task of tasks) {
     const entry=entries[task.id];
-    const status = evidenceIsComplete(task,entry) ? entry.status : "pendente";
+    const status = entry && evidenceIsComplete(task,entry) ? entry.status : "pendente";
     lines.push(`• ${task.title}: ${EVIDENCE_STATUS[status]}`);
     if(status!=="pendente"){
       if(entry.source)lines.push(`  Fonte declarada: ${EVIDENCE_SOURCE[entry.source]}`);
