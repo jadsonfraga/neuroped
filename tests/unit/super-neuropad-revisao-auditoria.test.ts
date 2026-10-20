@@ -39,7 +39,7 @@ test("urgência: achado de consciência, fundo de olho ou meninges aparece como 
   assert.equal(linhasDeRevisao(linhas).some((linha) => linha.id === "urgencia"), false);
   assert.equal(pendenciasParaRevisao(linhas), linhasDeRevisao(linhas).filter((linha) => linha.status !== "examinado").length);
   const texto = textoProntidao(7, linhas).join("\n");
-  assert.match(texto, /URGÊNCIA: achado, ou exame não realizado, em consciência, fundo de olho ou sinais meníngeos exige avaliação imediata fora do jogo/);
+  assert.match(texto, /ATENÇÃO CLÍNICA: achado a esclarecer em consciência, fundo de olho ou sinais meníngeos/);
   assert.equal(urgenciaAtiva(matrizSuficiencia(7, records({ consciencia: "observado", fundus: "observado", meningeal: "observado" }))), false);
   // Item apenas pendente não é achado: não dispara alerta nem usa o texto de achado.
   const pendente = matrizSuficiencia(7, records({ consciencia: "observado", fundus: "observado" }));
@@ -47,8 +47,10 @@ test("urgência: achado de consciência, fundo de olho ou meninges aparece como 
   assert.equal(urgenciaPendente?.status, "pendente_execucao");
   assert.match(urgenciaPendente?.detalhe ?? "", /ainda não registrados/);
   assert.equal(urgenciaAtiva(pendente), false);
-  assert.equal(textoProntidao(7, pendente).some((entry) => entry.startsWith("URGÊNCIA")), false);
-  assert.equal(urgenciaAtiva(matrizSuficiencia(7, records({ meningeal: "nao_realizado" }))), true);
+  assert.equal(textoProntidao(7, pendente).some((entry) => entry.startsWith("ATENÇÃO CLÍNICA")), false);
+  assert.equal(urgenciaAtiva(matrizSuficiencia(7, records({ meningeal: "nao_realizado" }))), false, "exame ausente não constitui achado agudo");
+  assert.equal(textoProntidao(7, matrizSuficiencia(7, records({ meningeal: "nao_realizado" }))).some((entry) => entry.startsWith("ATENÇÃO CLÍNICA")), false);
+  assert.match(matrizSuficiencia(7, records({ meningeal: "nao_realizado" })).find((entry) => entry.id === "urgencia")?.detalhe ?? "", /ausência de exame isolada não caracteriza urgência/);
 });
 
 test("hipóteses: guias por faixa etária, itens com estações reais e nenhum item marcado como coletado sem estação", () => {
@@ -101,4 +103,7 @@ test("hipóteses: item de fonte externa não mistura estação, para não virar 
   const contextos = itens.find((item) => item.id === "multiplos_contextos");
   assert.ok(contextos);
   assert.equal(estadoItem(contextos, 9, records({ milestones: "observado" }, "cuidador")), "fonte_externa");
+  const sinteticamenteMisto: ItemColeta = { id: "misto", texto: "proveniência externa e estação", estacoes: ["attention6"], fonteExterna: "entrevista em dois contextos" };
+  assert.equal(estadoItem(sinteticamenteMisto, 9, records({ attention6: "observado" })), "fonte_externa", "mesmo um item misto criado no futuro não deve autorizar coleta por toque");
+  assert.equal(estadoItem(sinteticamenteMisto, 9, records({ attention6: "achado" })), "fonte_externa", "achado não substitui fonte externa");
 });
