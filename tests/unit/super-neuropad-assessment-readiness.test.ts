@@ -54,6 +54,9 @@ test("nenhuma conclusão automática: pendências, fontes e justificativas não 
   assert.match(s.summary,/Documentação ainda incompleta/);
   const waived=reviewDocumentarySufficiency(7,[],{neuro:{status:"inaplicavel",note:"Dispensado."}});
   assert.ok(waived.pending.includes("Exame neurológico presencial documentado"));
+  const unverified=buildReadinessReport(7,[],{neuro:{status:"inaplicavel",note:"Exame não realizado na consulta inicial."}});
+  assert.match(unverified,/Documentação insuficiente para confirmação/);
+  assert.match(unverified,/Exame não realizado na consulta inicial/);
 });
 
 test("mesmo com todos os itens informados, jamais há liberação médica automática",()=>{
