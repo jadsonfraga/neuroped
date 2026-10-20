@@ -26,7 +26,7 @@ function genericAccepted(): Response {
     {
       ok: true,
       message:
-        "Se existir uma conta pendente de confirmação para este e-mail, enviaremos um novo link.",
+        "Solicitação recebida. Se existir uma conta pendente de confirmação para este e-mail, o envio será tentado.",
     },
     202,
   );
