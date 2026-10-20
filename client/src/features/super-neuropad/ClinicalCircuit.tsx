@@ -87,7 +87,7 @@ export function ClinicalCircuit({ years, visible }: { years: number | null; visi
               {(Object.entries(CIRCUIT_STATUSES) as [CircuitStatus,string][]).map(([key,label]) =>
                 <button key={key} type="button" aria-pressed={statuses[task.id] === key}
                   onClick={() => { setStatuses((prior) => ({...prior,[task.id]:key})); setFeedback(""); }}
-                  className={`snp-option flex min-h-11 items-center gap-2 px-3 py-2 text-left text-sm font-semibold ${statuses[task.id] === key ? "bg-[var(--snp-grass-tint)]" : "bg-[var(--snp-paper-fixed)]"}`}>
+                  className={`snp-option flex min-h-11 items-center gap-2 px-3 py-2 text-left text-sm font-semibold ${statuses[task.id] === key ? (key === "achado" ? "bg-[var(--snp-berry-tint)]" : "bg-[var(--snp-grass-tint)]") : "bg-[var(--snp-paper-fixed)]"}`}>
                   {statuses[task.id] === key ? <Check className="h-4 w-4 shrink-0" /> : <span aria-hidden="true" className="h-4 w-4 shrink-0" />} {label}
                 </button>)}
             </div>
