@@ -399,3 +399,35 @@ recalibração de cortes e validação com amostra de crianças.
   escolhas e dos erros, maior sequência na mesma posição. Só contagens e dispersão; sem norma nem corte. Aparece no
   relatório, no PDF (seção "Perfil de resposta") e na linha estruturada `PERFIL`.
 - Rollback: reverter a PR; nenhum dado persistido muda.
+
+
+## Circuito clínico complementar por idade (proposta 20/10/2026)
+
+Adicionado à própria aba **Super NeuroPad Game**, abaixo do fluxo principal, com duas áreas: **Exame neurológico** e **Estado mental**. É opcional, só aparece após escolher idade de 2 a 17 anos, e permanece montado em memória ao atravessar os seis mundos. Trocar a idade ou iniciar nova criança destrói o estado. Não modifica `PHASE_ORDER`, `AGE_BANDS`, `GameSession`, `AnswerRecord`, XP, critérios, duração da partida nem PDF/fluxos de envio existentes.
+
+### Delimitação clínica
+
+- As estações são roteiro **autoral não padronizado** de exame clínico assistido, não uma bateria normativa ou equivalente à avaliação psiquiátrica completa.
+- Cada estação informa **faixa etária, método** (lúdico, observação, entrevista ou exame presencial por profissional), instrução e achados a documentar. O operador marca `realizado — achado descrito`, `realizado — requer esclarecimento`, `não realizado` ou `sem colaboração`; nenhum estado é presumido. Notas são livres e sem dados reais em testes.
+- Reflexos, tônus, força, sensibilidade, pupilas e parte da avaliação dos nervos cranianos **exigem exame presencial** e não podem ser medidos/inferidos pelo tablet. Resultado observado sem descrição específica não se transforma em normalidade.
+- Entrevista sobre pensamento/percepção e risco é **exclusiva do profissional**, não apresentada como jogo à criança, sem perguntas pontuadas, sugestivas ou classificação automatizada. Risco agudo exige avaliação de segurança imediata e protocolo clínico.
+- O módulo não fotografa, grava, solicita acesso à câmera/microfone, transmite, armazena nem envia observações à família. Copiar/baixar texto é ação explícita. O relatório do circuito é separado da exportação original para impedir inclusão inadvertida de conteúdo sensível no PDF familiar; revisão médica antes de uso no prontuário.
+- Tarefas de 2 e 3 anos permanecem respeitosas com recusa, comunicação alternativa e diferenças desenvolvimentais. Menores de 2 anos seguem o direcionamento anterior para OBS-10/Sonda 10.
+
+### Referências e vídeos demonstrativos
+
+- **NIH Toolbox Cognition:** estrutura internacional para domínios cognitivos por desenvolvimento, não replicada nem anunciada como versão validada do produto. https://nihtoolbox.org/domain/cognition/
+- **AACAP:** necessidade de exame do estado mental com história clínica e múltiplas fontes. https://aacap.org/AACAP/Policy_Statements/2003/Psychiatric_Diagnostic_Evaluations.aspx
+- **Universidade de Utah / Nebraska — Pediatric Neurologic Examination:** vídeos educacionais de colaboração, coordenação, tônus, reflexos e marcha em criança pequena. https://neurologicexam.med.utah.edu/pediatric/html/30month.html
+- **Stanford Medicine 25:** galeria com demonstrações de avaliação cerebelar, marcha e reflexos. https://med.stanford.edu/stanfordmedicine25/videos.html
+
+Os vídeos são **links educativos externos para o profissional**, não reproduzidos ou re-hospedados; conferir pertinência para a idade e selecionar clipe na página indicada. O app não envia identificadores da criança às videotecas (`referrerPolicy=no-referrer`).
+
+### Código, validação e reversão
+
+- Catálogo e exportação: `client/src/features/super-neuropad/clinicalCircuit.ts`
+- Interface: `client/src/features/super-neuropad/ClinicalCircuit.tsx`
+- Inclusão na aba: `client/src/pages/super-neuropad-game.tsx` (apenas import e montagem aditiva)
+- Regressões: `tests/unit/super-neuropad-clinical-circuit.test.ts`, incluído em `npm run test:super-neuropad`.
+- Rodar `npm run check`, `npm run test:super-neuropad`, `npm run build:client` e E2E do jogo antes de disponibilizar.
+- Rollback: reverter somente a PR; sem migração, banco ou contrato de API.
