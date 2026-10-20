@@ -134,9 +134,9 @@ function statusDeEstacao(id: string, years: number, records: CircuitRecords): Su
 type StatusUrgencia = "a_esclarecer" | "nao_obtido" | "examinado" | "pendente_execucao";
 
 const DETALHE_URGENCIA: Record<StatusUrgencia, string> = {
-  a_esclarecer: "Achado de urgência: avaliação imediata fora do jogo, não pendência de checklist",
-  nao_obtido: "Exame de urgência não realizado ou sem colaboração: avaliação fora do jogo, não pendência de checklist",
-  examinado: "Consciência, fundo de olho e sinais meníngeos registrados sem achado de urgência",
+  a_esclarecer: "Achado a esclarecer: o profissional deve avaliar a gravidade imediatamente; seguir protocolo de urgência quando houver sinais clínicos agudos",
+  nao_obtido: "Exame não realizado ou sem colaboração: registrar limitação e avaliar indicação clínica; ausência de exame isolada não caracteriza urgência",
+  examinado: "Estações registradas; o preenchimento não exclui situações de urgência nem substitui a interpretação profissional",
   pendente_execucao: "Consciência, fundo de olho e sinais meníngeos ainda não registrados",
 };
 
@@ -224,11 +224,11 @@ export function pendenciasParaRevisao(linhas: readonly LinhaSuficiencia[]): numb
 }
 
 /** Texto único do alerta de urgência, usado pela matriz e pelo componente. */
-export const URGENCIA_ALERTA = "URGÊNCIA: achado, ou exame não realizado, em consciência, fundo de olho ou sinais meníngeos exige avaliação imediata fora do jogo. Não é pendência de checklist.";
+export const URGENCIA_ALERTA = "ATENÇÃO CLÍNICA: achado a esclarecer em consciência, fundo de olho ou sinais meníngeos. O profissional deve avaliar a gravidade sem demora; havendo sinais agudos de urgência, interromper o jogo e seguir o protocolo assistencial. Não é pendência de checklist.";
 
-/** Alerta só para achado ou exame de urgência não realizado. Item ainda não registrado não dispara alerta. */
+/** Apenas achado a esclarecer ativa atenção clínica; ausência ou recusa do exame não prova emergência. */
 export function urgenciaAtiva(linhas: readonly LinhaSuficiencia[]): boolean {
-  return linhas.some((linha) => linha.urgencia && (linha.status === "a_esclarecer" || linha.status === "nao_obtido"));
+  return linhas.some((linha) => linha.urgencia && linha.status === "a_esclarecer");
 }
 
 export function textoProntidao(years: number, linhas: readonly LinhaSuficiencia[]): string[] {
