@@ -308,8 +308,9 @@ export function gradeBolt(kind: BoltKind, action: "pegar" | "deixar"): boolean {
   return (kind === "estrela" && action === "pegar") || (kind === "meteoro" && action === "deixar");
 }
 
-export function resolveBoltTimeout(kind: BoltKind): boolean {
-  return kind === "meteoro";
+export function resolveBoltTimeout(_kind: BoltKind): boolean {
+  // An absence of response is an omission, not evidence of inhibitory control.
+  return false;
 }
 
 export function tickBolt(remainingMs: number, deltaMs: number, paused: boolean): number {
