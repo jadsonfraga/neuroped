@@ -524,3 +524,33 @@ Diretriz do responsável clínico: **nenhum bloqueio no fluxo**. Nenhum controle
 **Atividade lúdica.** O circuito pede que o responsável seja informado antes de iniciar. É um aviso, não uma trava.
 
 **Limite.** O menor de 2 anos continua fora da aplicação do jogo, por regra clínica existente (OBS-10 e Sonda 10), e não é uma trava do circuito.
+
+
+## Refinamento anual das missões (20/10/2026; aditivo à PR #1192)
+
+O circuito agora apresenta um **perfil próprio para cada ano de 2 a 17**, além dos intervalos usados para disponibilizar estações. A idade escolhida gera **forma de apresentação**, recursos de acesso e uma dica concreta para a estação ativa; não altera quais estações existem, os 6 mundos, respostas, tempo, medalhas, exportação familiar ou status clínico. Os perfis são autorais e destinados à **observação guiada**, não são equivalentes a escala validada e não definem marcos obrigatórios.
+
+| Idade | Proposta de observação (exemplos, não critérios de acerto) |
+| --- | --- |
+| 2 | Objeto familiar, uma ação por vez, atenção compartilhada, gesto e deslocamento espontâneo |
+| 3 | Brincadeira simbólica e imitação com apoio, alternância e manipulação |
+| 4 | História com personagens, sequência simples e gestos bilaterais |
+| 5 | Sequência de figuras, regra de turnos, descrição de ações |
+| 6 | Rotina escolar/atividade, narrativa; leitura apenas se alfabetizado |
+| 7 | Organização de materiais, explicação de escolha, interação com colega |
+| 8 | Plano curto, esclarecimento de instrução e adaptação de estratégia |
+| 9 | Alternativas, exceção de regra, revisão sem cronometragem normativa |
+| 10 | Etapas, obstáculo e ajuda, resolução de problemas contextualizada |
+| 11 | Justificativa de estratégia, contexto escolar/social, coordenação conforme indicação |
+| 12 | Autonomia progressiva, participação, privacidade e assentimento |
+| 13 | Decisões cotidianas, contexto de apoio, entrevista não infantilizada |
+| 14 | Projetos e rotina, discurso espontâneo e respeito à privacidade |
+| 15 | Planejamento semanal, apoio social e prioridades pessoais |
+| 16 | Plano com alternativas, escolhas e necessidades de apoio |
+| 17 | Transição de cuidados, objetivos, participação nas decisões |
+
+**Garantias e ética:** a escolha por idade não afirma que a criança deva demonstrar habilidade específica. A criança pode responder com gesto/comunicação alternativa e pode recusar. Tarefas motoras e do exame físico só são interpretáveis quando executadas pelo examinador habilitado, conforme indicação e segurança. O auxiliar pode registrar a observação, mas não substituir manobras neurológicas. Entrevista reservada de risco continua sem brincadeira e sem dica gamificada. O circuito não grava imagem/áudio nem envia dados externos.
+
+**Referências conceituais:** CDC *Learn the Signs. Act Early.* (monitoramento não substitui rastreio validado), https://www.cdc.gov/act-early/about/developmental-monitoring-and-screening.html; AACAP *Practice Parameters for Psychiatric Assessment of Children and Adolescents* (exame mental ajustado ao desenvolvimento), https://www.aacap.org/App_Themes/AACAP/docs/practice_parameters/psychiatric_assessment_practice_parameter.pdf; NICE NG217 (história e exame em eventos epilépticos), https://www.nice.org.uk/guidance/ng217/chapter/diagnosis-and-assessment-of-epilepsy. Não foram reproduzidos instrumentos proprietários.
+
+**Rastreabilidade:** `client/src/features/super-neuropad/ageAdaptation.ts` possui 16 perfis e adaptações por estação/método. `ClinicalCircuit.tsx` mostra perfil anual e dica de estação sem botões novos e sem `<details>` que interfiram na contagem dos seis mundos. A suíte `tests/unit/super-neuropad-age-adaptation.test.ts` cobre todas as idades e os métodos; `tests/e2e/super-neuropad-circuit-sufficiency.mjs` prova os perfis de 2, 7 e 17 anos no navegador. Manter PR como rascunho até checagem de CI, E2Es e validação clínica do conteúdo. Reversão por commit sem migração de dados.
