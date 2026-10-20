@@ -192,7 +192,7 @@ async function main() {
     await readinessAge.waitFor();
     assert.equal(await page.getByTestId("super-neuropad-clinical-circuit").count(), 1, `faixa ${age}: apenas um circuito`);
     assert.match(await circuitOf(page).getByTestId("super-neuropad-age-profile").innerText(), new RegExp(`Roteiro de ${age} anos`));
-    assert.match(await circuitOf(page).innerText(), /0\/\d+ missões registradas/, `faixa ${age}: dados de outra idade não podem migrar`);
+    assert.match(await circuitOf(page).innerText(), /0\/\d+ missões registradas/i, `faixa ${age}: dados de outra idade não podem migrar`);
     assert.match(await readinessAge.innerText(), /Emissão automática: não\./, `faixa ${age}: sem emissão automática`);
     assert.equal(await circuitOf(page).locator("button:disabled").count(), 0, `faixa ${age}: nenhum controle desabilitado`);
     const guias = await circuitOf(page).getByTestId("super-neuropad-clinical-hypotheses").locator("article").count();
