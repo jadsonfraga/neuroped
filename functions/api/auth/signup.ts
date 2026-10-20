@@ -209,6 +209,8 @@ export const onRequestPost: PagesFunction<EmailVerificationEnv> = async (
         created: true,
         error: "Conta criada. Faça login para continuar.",
         code: "AUTH_SESSION_UNAVAILABLE",
+        emailVerificationDelivery: verificationDelivered ? "sent" : "failed",
+        ...(verificationDelivered ? {} : { blockedExternal: "BLOCKED_EXTERNAL_RESEND" }),
       },
       503,
     );
