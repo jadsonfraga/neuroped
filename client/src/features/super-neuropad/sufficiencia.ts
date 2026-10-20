@@ -164,14 +164,17 @@ function resolver(origem: Origem, years: number, records: CircuitRecords, bateri
     };
   }
   if (origem.tipo === "urgencia") {
-    return { status: statusUrgencia(records), detalhe: "Achados de urgência precisam ser esclarecidos antes de qualquer conclusão" };
+    return { status: statusUrgencia(records), detalhe: "Achado de urgência: avaliação imediata fora do jogo, não pendência de checklist" };
   }
   if (origem.tipo === "escola") {
-    const registrado = Object.values(records).some((entry) => entry.source === "escola");
-    return {
-      status: registrado ? "examinado" : "depende_fonte_externa",
-      detalhe: registrado ? "Relato escolar registrado no circuito" : "Solicitar relato da escola ou creche; o jogo não verifica este item",
-    };
+    const relatos = Object.values(records).filter((entry) => entry.source === "escola");
+    if (relatos.some((entry) => (entry.descricao ?? "").trim().length >= DESCRICAO_ESCOLAR_MINIMA)) {
+      return { status: "examinado", detalhe: "Relato escolar com descrição do funcionamento registrado no circuito" };
+    }
+    if (relatos.length) {
+      return { status: "depende_fonte_externa", detalhe: "Fonte escolar sinalizada sem descrição do funcionamento escolar; complete a anotação ou solicite o relatório" };
+    }
+    return { status: "depende_fonte_externa", detalhe: "Solicitar relato da escola ou creche; o jogo não verifica este item" };
   }
   if (origem.tipo === "bateria") {
     const detalhe = bateria
@@ -185,27 +188,41 @@ function resolver(origem: Origem, years: number, records: CircuitRecords, bateri
   return { status: "depende_decisao_medica", detalhe: "Decisão e assinatura do médico; o jogo não preenche este campo" };
 }
 
-export interface LinhaSuficiencia { id: string; secao: string; label: string; status: SuficienciaStatus; detalhe: string }
+export interface LinhaSuficiencia { id: string; secao: string; label: string; status: SuficienciaStatus; detalhe: string; urgencia?: boolean }
+
+/** Relato escolar só conta como descrito com texto livre de pelo menos este tamanho (marcadores não bastam). */
+export const DESCRICAO_ESCOLAR_MINIMA = 20;
 
 export function matrizSuficiencia(years: number, records: CircuitRecords, bateria: BateriaResumo | null = null): LinhaSuficiencia[] {
   return REQUISITOS_LAUDO.map((requisito) => ({
     id: requisito.id,
     secao: requisito.secao,
     label: requisito.label,
+    urgencia: requisito.origem.tipo === "urgencia",
     ...resolver(requisito.origem, years, records, bateria),
   }));
 }
 
 /** Itens que ainda não estão resolvidos. Contagem de pendências, não escore clínico. */
+/** Linhas de revisão de checklist. Urgência fica fora, porque exige resposta clínica imediata fora do jogo. */
+export function linhasDeRevisao(linhas: readonly LinhaSuficiencia[]): LinhaSuficiencia[] {
+  return linhas.filter((linha) => !linha.urgencia);
+}
+
 export function pendenciasParaRevisao(linhas: readonly LinhaSuficiencia[]): number {
-  return linhas.filter((linha) => linha.status !== "examinado").length;
+  return linhasDeRevisao(linhas).filter((linha) => linha.status !== "examinado").length;
+}
+
+export function urgenciaAtiva(linhas: readonly LinhaSuficiencia[]): boolean {
+  return linhas.some((linha) => linha.urgencia && linha.status !== "examinado");
 }
 
 export function textoProntidao(years: number, linhas: readonly LinhaSuficiencia[]): string[] {
   const out = [
     `PRONTIDÃO PARA O LAUDO — MATRIZ DE SUFICIÊNCIA (${years} anos)`,
     "Emissão automática: não. O jogo não preenche achados ausentes, não libera documentos e não conclui diagnóstico.",
-    `Pendências para revisão: ${pendenciasParaRevisao(linhas)} de ${linhas.length}. São lembretes e não impedem o registro nem a emissão. "Registrado" significa descrito no jogo ou na bateria; não equivale a normal.`,
+    ...(urgenciaAtiva(linhas) ? ["URGÊNCIA: achado de consciência, fundo de olho ou sinais meníngeos exige avaliação imediata fora do jogo. Não é pendência de checklist."] : []),
+    `Pendências para revisão: ${pendenciasParaRevisao(linhas)} de ${linhasDeRevisao(linhas).length}. São lembretes e não impedem o registro nem a emissão. "Registrado" significa descrito no jogo ou na bateria; não equivale a normal.`,
   ];
   let secao = "";
   for (const linha of linhas) {

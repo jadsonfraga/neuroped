@@ -53,7 +53,7 @@ test("gamificação: passos e marcadores são tocáveis, resultado em quatro esc
   assert.match(component, /🤔 Teve dificuldade/);
   assert.match(component, /🙅 Não quis agora/);
   assert.match(component, /🚫 Não deu para fazer/);
-  assert.match(component, /prior\[task\.id\] \?\? "examinador"/);
+  assert.doesNotMatch(component, /\?\? "examinador"/, "a fonte não é preenchida automaticamente");
   assert.match(component, /Orientação clínica completa/);
   assert.match(component, /Anotação livre \(opcional\)/);
 });

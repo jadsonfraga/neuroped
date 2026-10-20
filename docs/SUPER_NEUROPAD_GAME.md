@@ -554,3 +554,47 @@ O circuito agora apresenta um **perfil próprio para cada ano de 2 a 17**, além
 **Referências conceituais:** CDC *Learn the Signs. Act Early.* (monitoramento não substitui rastreio validado), https://www.cdc.gov/act-early/about/developmental-monitoring-and-screening.html; AACAP *Practice Parameters for Psychiatric Assessment of Children and Adolescents* (exame mental ajustado ao desenvolvimento), https://www.aacap.org/App_Themes/AACAP/docs/practice_parameters/psychiatric_assessment_practice_parameter.pdf; NICE NG217 (história e exame em eventos epilépticos), https://www.nice.org.uk/guidance/ng217/chapter/diagnosis-and-assessment-of-epilepsy. Não foram reproduzidos instrumentos proprietários.
 
 **Rastreabilidade:** `client/src/features/super-neuropad/ageAdaptation.ts` possui 16 perfis e adaptações por estação/método. `ClinicalCircuit.tsx` mostra perfil anual e dica de estação sem botões novos e sem `<details>` que interfiram na contagem dos seis mundos. A suíte `tests/unit/super-neuropad-age-adaptation.test.ts` cobre todas as idades e os métodos; `tests/e2e/super-neuropad-circuit-sufficiency.mjs` prova os perfis de 2, 7 e 17 anos no navegador. Manter PR como rascunho até checagem de CI, E2Es e validação clínica do conteúdo. Reversão por commit sem migração de dados.
+
+
+### Correções da auditoria da PR #1192 (v2026-10-20.4)
+
+Escopo: revisão de prontidão. Nada aqui valida conteúdo clínico, define norma ou ponto de corte, nem libera documento. Conclusão diagnóstica, conduta e liberação do laudo continuam sob decisão do médico.
+
+**Cobertura por domínio.** Um domínio só fica "Registrado" quando todas as estações exigidas foram observadas ou achadas. Em domínios presenciais, a exigência é o exame direto; relato e atividade lúdica não completam o domínio. Um registro isolado fica "Parcial". Achado em qualquer estação do domínio fica "Esclarecer". Exemplo: marcha aos 4 anos só fica registrada com as duas estações do domínio (marcha lúdica e Romberg).
+
+**Fonte escolar com descrição.** A fonte "escola" só conta quando há descrição livre do funcionamento escolar com pelo menos 20 caracteres, no campo próprio (`descricao`), separado da anotação. Marcar apenas a fonte, ou texto curto, mantém o item como "depende de fonte externa". Relato de cuidador não substitui relato escolar.
+
+**Fonte sem preenchimento automático.** Ao registrar, a fonte fica vazia até o auxiliar escolher. Antes, o jogo preenchia "examinador" sem escolha. Sem escolha, o registro sai sem proveniência.
+
+**Urgência fora da contagem.** Achado ou não realização em consciência, fundo de olho ou sinais meníngeos aparece em linha própria, com alerta, e não entra em "Pendências para revisão". Texto exibido: "URGÊNCIA: achado de consciência, fundo de olho ou sinais meníngeos exige avaliação imediata fora do jogo. Não é pendência de checklist."
+
+**Adaptação de procedimentos por estação e idade.** Os 16 perfis anuais foram mantidos. Quando a estação é um procedimento do médico, a dica traz a técnica específica:
+
+- consciência: observação contínua sem estímulo doloroso; registrar alerta, sonolência e responsividade;
+- fundo de olho: oftalmoscopia direta em ambiente de pouca luz, com fixação em alvo; registrar o disco óptico ou a não tolerância;
+- sinais meníngeos: flexão cervical passiva suave, sem forçar; registrar resistência e dor. "Febre, confusão ou convulsão associadas são urgência";
+- crescimento: perímetro cefálico medido com fita; registrar apenas o que foi medido ou observado.
+
+A tolerância muda por faixa: até 5 anos, "tolerância curta"; acima, "explique o procedimento antes e respeite a recusa". Em todas, o auxiliar não realiza manobras. A estação de risco continua sem dica de procedimento.
+
+**Guias de coleta por hipótese.** Três guias orientam a coleta, sem pontuação e sem diagnóstico:
+
+- linguagem e comunicação (2 a 5 anos);
+- aprendizagem e atenção (6 a 17 anos);
+- saúde mental na adolescência (12 a 17 anos).
+
+Cada item aponta para estações reais e mostra um de quatro estados: coletado, achado a esclarecer, fonte externa ou pendente. Item de fonte externa nunca vira "coletado".
+
+**TXT e privacidade.** O TXT é salvo localmente e traz o aviso: "contém observações clínicas. Revise antes de incorporar ao prontuário e guarde conforme a política da clínica, sem enviar a terceiros." A matriz continua declarando "Emissão automática: não".
+
+**Anotação descritiva.** O campo de anotação orienta a descrição ("Fatos observados, condições, lateralidade e limitações"). Não é exigido, para não criar bloqueio.
+
+**Limites desta versão.**
+
+- A impressão do laudo continua habilitada por qualquer texto colado. A suficiência da matriz não bloqueia a emissão. Qualquer bloqueio seria decisão de produto e do médico, não implementada aqui.
+- A exigência de descrição semiológica para marcadores tocáveis não foi implementada, por ser incompatível com a diretriz sem bloqueios.
+- Controle de acesso por perfil ("somente a aplicadora") não foi implementado.
+- A reconciliação das branches #1191 e #1192 não foi feita.
+- Nenhum item foi validado por médico, normatizado ou calibrado em amostra.
+
+**Verificação.** `npm run test:super-neuropad` (112 de 112); `npx tsc --noEmit`; `npm run lint`; `npm run build:client`; `npm run test:e2e:super-neuropad-circuit` (16 faixas, de 2 a 17 anos, sem erro de console e sem rolagem horizontal em 390 px); `npm run test:e2e:super-neuropad` (regressão do jogo, sem divergência).

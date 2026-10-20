@@ -71,3 +71,19 @@ campo de laudo ligado às seções do circuito.
 - Nenhum item foi validado por médico nem calibrado em amostra. Não há norma nem ponto de corte.
 - Stanford Medicine 25 (videoteca) não respondeu no ambiente de desenvolvimento.
 - Este registro não substitui revisão médica do conteúdo clínico nem da liberação de documentos.
+
+## 7. Correções aplicadas após a auditoria (v2026-10-20.4)
+
+Detalhes em `docs/SUPER_NEUROPAD_GAME.md`, seção "Correções da auditoria da PR #1192". Resumo:
+
+- Cobertura exige todas as estações do domínio; domínio presencial exige exame direto.
+- Fonte escolar só conta com descrição do funcionamento escolar (mínimo de 20 caracteres).
+- Urgência em linha própria, fora da contagem de pendências.
+- Fonte não é mais preenchida automaticamente.
+- Adaptação de procedimentos específica por estação e idade, com a execução sob responsabilidade do profissional.
+- Guias de coleta por hipótese, sem pontuação e sem diagnóstico.
+- TXT com aviso de conteúdo clínico local.
+
+Não implementado nesta rodada: reconciliação das branches #1191 e #1192, controle de acesso por perfil, exigência de descrição semiológica e bloqueio de impressão pela matriz. Essas são decisões do médico e do produto.
+
+Verificação: `npm run test:super-neuropad` (112 de 112), E2E do circuito (16 faixas) e regressão do jogo, ambos aprovados.

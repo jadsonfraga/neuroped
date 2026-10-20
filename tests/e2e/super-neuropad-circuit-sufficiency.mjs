@@ -53,7 +53,7 @@ async function openTab(page, name) {
   await circuitOf(page).getByRole("button", { name, exact: false }).first().click();
 }
 
-async function record(page, title, status, source) {
+async function record(page, title, status, source, nota = "") {
   await openTab(page, "Exame neurológico");
   const select = circuitOf(page).getByLabel("Ir para estação");
   const index = await select.evaluate((element, wanted) => Array.from(element.options).findIndex((option) => option.text.includes(wanted)), title);
@@ -63,6 +63,11 @@ async function record(page, title, status, source) {
   await station.getByRole("group", { name: /Toque no que você percebeu/ }).getByRole("button").first().click();
   await station.getByRole("button", { name: status }).click();
   if (source) await station.getByRole("button", { name: source, exact: true }).click();
+  if (nota) {
+    const toggle = station.getByRole("button", { name: /Anotação livre/ });
+    if ((await toggle.getAttribute("aria-expanded")) !== "true") await toggle.click();
+    await station.locator("textarea").fill(nota);
+  }
 }
 
 function unresolvedCount(text) {
@@ -101,13 +106,13 @@ async function main() {
       // 2. Registros do examinador e de fonte escolar; um achado de urgência deve bloquear.
       await record(page, "Escudo dos reflexos", OBSERVADO, SOURCE_EXAMINADOR);
       await record(page, "Janela do fundo", ACHADO, SOURCE_EXAMINADOR);
-      await record(page, "Linha do tempo da aventura", OBSERVADO, SOURCE_ESCOLA);
+      await record(page, "Linha do tempo da aventura", OBSERVADO, SOURCE_ESCOLA, "Relatório da escola descreve leitura e escrita adequadas à série e atenção oscilante em atividades longas.");
       await openTab(page, "Cobertura e lacunas");
       const depois = unresolvedCount(await readiness.innerText());
       assert.ok(depois < antes, `registros reduzem pendências (${antes} → ${depois})`);
       assert.ok(await readiness.getByText("Achado a esclarecer", { exact: true }).count() >= 1, "achado de urgência aparece como a esclarecer");
       assert.ok(await readiness.getByText("Registrado — não equivale a normal", { exact: true }).count() >= 1, "item descrito aparece como registrado");
-      assert.match(await readiness.innerText(), /Relato escolar registrado no circuito/);
+      assert.match(await readiness.innerText(), /Relato escolar com descrição do funcionamento registrado no circuito/);
       assert.ok(await readiness.getByText("Depende de decisão médica", { exact: true }).count() >= 4, "decisão médica sem preenchimento automático");
       observations.itensNaoResolvidosComRegistro = depois;
 
@@ -125,6 +130,7 @@ async function main() {
       assert.match(txt, /Emissão automática: não\./);
       assert.doesNotMatch(txt, /Emissão automática: sim/);
       assert.match(txt, /Achado a esclarecer/);
+      assert.match(txt, /URGÊNCIA:/, "achado de urgência aparece como alerta, não como pendência de checklist");
       assert.match(txt, /Depende de decisão médica/);
       assert.match(txt, /Marcado: /, "marcadores tocados entram no registro");
 
@@ -153,7 +159,20 @@ async function main() {
       assert.equal(fora17, 0, "17 anos: todas as estações da faixa existem");
       observations.itensForaDoJogo = { anos2: fora2, anos17: fora17 };
 
-      // 6. Acessibilidade do circuito com a matriz visível.
+      // 5b. Todas as faixas de 2 a 17: matriz presente, nenhum controle desabilitado e guias de hipótese conforme a faixa.
+  for (let age = 2; age <= 17; age++) {
+    await setAge(page, age);
+    await openTab(page, "Cobertura e lacunas");
+    const readinessAge = readinessOf(page);
+    await readinessAge.waitFor();
+    assert.match(await readinessAge.innerText(), /Emissão automática: não\./, `faixa ${age}: sem emissão automática`);
+    assert.equal(await circuitOf(page).locator("button:disabled").count(), 0, `faixa ${age}: nenhum controle desabilitado`);
+    const guias = await circuitOf(page).getByTestId("super-neuropad-clinical-hypotheses").locator("article").count();
+    assert.equal(guias, age <= 5 ? 1 : age <= 11 ? 1 : 2, `faixa ${age}: guias de hipótese conforme a faixa`);
+  }
+  observations.faixasVerificadas = 16;
+
+  // 6. Acessibilidade do circuito com a matriz visível.
       await openTab(page, "Cobertura e lacunas");
       const axe = await new AxeBuilder({ page }).include('[data-testid="super-neuropad-clinical-circuit"]').analyze();
       await writeFile(`${dir}/axe-circuito.json`, JSON.stringify(axe.violations, null, 2));

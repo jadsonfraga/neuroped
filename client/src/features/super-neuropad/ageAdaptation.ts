@@ -46,11 +46,27 @@ const MOTRICIDADE = new Set(["posture","strength2","strength2p","strength6","ref
 const COGNICAO = new Set(["attention2","attention6","memory6","insight9","vision","milestones"]);
 const INTERACAO = new Set(["rapport","social2","emotion2","emotion6","thought6"]);
 
+/** Procedimentos: a técnica não muda com a idade; muda a tolerância e a forma de pedir colaboração. */
+const TECNICA_DO_PROCEDIMENTO: Readonly<Record<string, string>> = {
+  consciencia: "observação contínua sem estímulo doloroso; registre alerta, sonolência e responsividade.",
+  fundus: "oftalmoscopia direta em ambiente de pouca luz, com fixação em alvo; registre o disco óptico ou a não tolerância.",
+  meningeal: "flexão cervical passiva suave, sem forçar; registre resistência e dor. Febre, confusão ou convulsão associadas são urgência.",
+  growth: "perímetro cefálico medido com fita; registre apenas o que foi medido ou observado.",
+};
+
+function toleranciaPorFaixa(anos: number): string {
+  return anos <= 5
+    ? "Tolerância curta: pausas, colo do cuidador e brincadeira antes do procedimento."
+    : "Explique o procedimento antes e respeite a recusa; registre a não colaboração.";
+}
+
 /** A entrevista de risco fica de fora: não acrescentar convites de jogo. */
 export function dicaDeMissaoPorIdade(anos: number, estacao: Pick<CircuitTask,"id"|"method">): string | null {
   if (estacao.id === "risk") return null;
   const perfil = perfilAnual(anos);
   if (!perfil) return null;
+  const tecnica = TECNICA_DO_PROCEDIMENTO[estacao.id];
+  if (tecnica) return `Adaptação para ${anos} anos — orientação ao examinador (procedimento do médico): ${tecnica} ${toleranciaPorFaixa(anos)} A execução pertence ao profissional; o auxiliar não realiza manobras.`;
   const proposta = LINGUAGEM.has(estacao.id) ? perfil.comunicacao
     : MOTRICIDADE.has(estacao.id) ? perfil.motricidade
     : COGNICAO.has(estacao.id) ? perfil.cognicao

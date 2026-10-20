@@ -8,11 +8,50 @@ import {
 } from "./clinicalCircuit";
 import { ClinicalDemo } from "./ClinicalDemo";
 import { MISSOES } from "./missoes";
+
+const ESTADO_TONE: Record<EstadoItem, string> = {
+  coletado: "bg-[var(--snp-grass-tint)]",
+  achado_a_esclarecer: "bg-[var(--snp-berry-tint)]",
+  fonte_externa: "bg-[var(--snp-sky-tint)]",
+  pendente: "bg-[var(--snp-paper-fixed)]",
+};
+
+/** Guias de coleta por hipótese. Organizam dados a coletar; não pontuam nem estabelecem diagnóstico. */
+function HipotesesPanel({ years, records }: { years: number; records: CircuitRecords }) {
+  const guias = guiasAplicaveis(years);
+  if (!guias.length) return null;
+  return (
+    <div className="space-y-3" data-testid="super-neuropad-clinical-hypotheses">
+      <h3 className="text-sm font-black">Hipóteses em investigação: dados a coletar</h3>
+      <p className="text-xs font-semibold">
+        Guias para o médico. Não pontuam e não estabelecem diagnóstico; a conclusão depende de história longitudinal, de mais de um contexto e de avaliação clínica.
+      </p>
+      {guias.map((guia) => (
+        <article key={guia.id} className="snp-panel snp-panel--soft space-y-2 p-3">
+          <h4 className="text-sm font-black">{guia.titulo}</h4>
+          <p className="text-xs font-semibold opacity-80">{guia.objetivo}</p>
+          <ul className="space-y-2">
+            {guia.itens.map((item) => {
+              const estado = estadoItem(item, years, records);
+              return (
+                <li key={item.id} className="flex flex-wrap items-start justify-between gap-2 text-sm">
+                  <span>{item.texto}</span>
+                  <span className={`snp-chip ${ESTADO_TONE[estado]}`}>{ESTADO_ITEM_LABELS[estado]}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </article>
+      ))}
+    </div>
+  );
+}
 import { dicaDeMissaoPorIdade, perfilAnual } from "./ageAdaptation";
 import {
-  matrizSuficiencia, pendenciasParaRevisao, SUFICIENCIA_LABELS, textoProntidao,
+  linhasDeRevisao, matrizSuficiencia, pendenciasParaRevisao, SUFICIENCIA_LABELS, textoProntidao, urgenciaAtiva,
   type BateriaResumo, type SuficienciaStatus,
 } from "./sufficiencia";
+import { ESTADO_ITEM_LABELS, estadoItem, guiasAplicaveis, type EstadoItem } from "./hipoteses";
 
 type CircuitTab = CircuitArea | "cobertura";
 
@@ -73,9 +112,14 @@ function MatrizList({ years, records, bateria }: { years: number; records: Circu
   return (
     <div className="space-y-3" data-testid="super-neuropad-clinical-readiness">
       <h3 className="text-sm font-black">Prontidão para o laudo — matriz de suficiência</h3>
+      {urgenciaAtiva(linhas) && (
+        <div className="rounded-xl border-2 border-amber-700 bg-amber-50 p-3 text-sm font-semibold text-amber-950" role="alert">
+          URGÊNCIA: achado de consciência, fundo de olho ou sinais meníngeos exige avaliação imediata fora do jogo. Não é pendência de checklist.
+        </div>
+      )}
       <p className="text-xs font-semibold">
         Emissão automática: não. O jogo não preenche achados ausentes nem libera documentos. Itens de fonte externa e decisão médica permanecem pendentes até revisão do médico.
-        Pendências para revisão: {pendenciasParaRevisao(linhas)} de {linhas.length}. São lembretes, não impedem o registro nem a emissão.
+        Pendências para revisão: {pendenciasParaRevisao(linhas)} de {linhasDeRevisao(linhas).length}. São lembretes, não impedem o registro nem a emissão.
       </p>
       {secoes.map((secao) => (
         <div key={secao} className="space-y-2">
@@ -126,14 +170,14 @@ export function ClinicalCircuit({ years, visible, bateria = null }: { years: num
     (notes[id] || "").trim(),
   ].filter(Boolean).join(" ");
   const records: CircuitRecords = Object.fromEntries(all.filter((entry) => statuses[entry.id]).map((entry) =>
-    [entry.id, { status: statuses[entry.id], note: anotacaoDe(entry.id), source: sources[entry.id] }]));
+    [entry.id, { status: statuses[entry.id], note: anotacaoDe(entry.id), source: sources[entry.id], descricao: notes[entry.id] || "" }]));
   const report = years === null ? "" : `${buildCircuitReport(years, records, generalNote)}\n\n${textoProntidao(years, matrizSuficiencia(years, records, bateria)).join("\n")}`;
   if (years === null || !all.length) return null;
   const previous = () => { setActive((index) => Math.max(0, index - 1)); setFeedback(""); };
   const next = () => { setActive((index) => Math.min(tasks.length - 1, index + 1)); setFeedback(""); };
   const escolherResultado = (status: CircuitStatus) => {
     setStatuses((prior) => ({ ...prior, [task.id]: status }));
-    if (task.method !== "entrevista") setSources((prior) => ({ ...prior, [task.id]: prior[task.id] ?? "examinador" }));
+    if (status === "achado") setAnotacaoAberta(true);
     setFeedback("");
   };
   const alternarPista = (pista: string) => {
@@ -211,6 +255,7 @@ export function ClinicalCircuit({ years, visible, bateria = null }: { years: num
           <CoverageList title="Exame neurológico básico — domínios" domains={NEURO_BASIC_DOMAINS} years={years} records={records} />
           <CoverageList title="Exame do estado mental — seções" domains={MSE_SECTIONS} years={years} records={records} />
           <MatrizList years={years} records={records} bateria={bateria} />
+          <HipotesesPanel years={years} records={records} />
         </div>
       ) : task && missao ? (
         <article className="snp-panel snp-panel--soft space-y-4 p-4" data-testid="super-neuropad-clinical-station">
@@ -263,7 +308,7 @@ export function ClinicalCircuit({ years, visible, bateria = null }: { years: num
             {pistasMarcadas.length > 0 && !statuses[task.id] && <p className="text-xs font-semibold">Escolha o resultado para incluir esta missão no registro.</p>}
           </fieldset>
           <fieldset className="space-y-2">
-            <legend className="text-sm font-black">Quem informou (opcional)</legend>
+            <legend className="text-sm font-black">Quem informou — sem escolha, o registro sai sem proveniência</legend>
             <div className="flex flex-wrap gap-2">
               {(Object.entries(CIRCUIT_SOURCES) as [CircuitSource,string][]).map(([key,label]) =>
                 <button key={key} type="button" aria-pressed={sources[task.id] === key}
@@ -356,7 +401,7 @@ export function ClinicalCircuit({ years, visible, bateria = null }: { years: num
       <div className="flex flex-wrap gap-2">
         <button type="button" onClick={() => void copyReport()}
           className="snp-btn snp-btn--sun inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm"><ClipboardCopy className="h-4 w-4" /> Copiar registro clínico</button>
-        <button type="button" onClick={() => { downloadTextDocument(report, `super-neuropad-circuito-${years}a.txt`); setFeedback("TXT clínico salvo localmente. Revise antes de incorporar ao prontuário."); }}
+        <button type="button" onClick={() => { downloadTextDocument(report, `super-neuropad-circuito-${years}a.txt`); setFeedback("TXT clínico salvo localmente: contém observações clínicas. Revise antes de incorporar ao prontuário e guarde conforme a política da clínica, sem enviar a terceiros."); }}
           className="snp-btn snp-btn--paper inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm"><Download className="h-4 w-4" /> Baixar TXT</button>
         <button type="button" onClick={reset}
           className="snp-btn snp-btn--slate inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm"><RotateCcw className="h-4 w-4" /> Limpar circuito</button>

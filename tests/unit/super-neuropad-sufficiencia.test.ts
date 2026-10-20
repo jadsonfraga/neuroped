@@ -3,7 +3,7 @@ import test from "node:test";
 import { readFileSync } from "node:fs";
 import { circuitForAge, type CircuitRecords, type CircuitStatus } from "../../client/src/features/super-neuropad/clinicalCircuit";
 import {
-  pendenciasParaRevisao, matrizSuficiencia, REQUISITOS_LAUDO, resumoDaBateria, SUFICIENCIA_LABELS,
+  linhasDeRevisao, pendenciasParaRevisao, matrizSuficiencia, REQUISITOS_LAUDO, resumoDaBateria, SUFICIENCIA_LABELS,
   textoProntidao, type BateriaResumo, type LinhaSuficiencia, type SuficienciaStatus,
 } from "../../client/src/features/super-neuropad/sufficiencia";
 import type { GameSummary } from "../../client/src/features/super-neuropad/model";
@@ -65,8 +65,14 @@ test("exame direto: lúdico não registra força presencial, e a estação prese
   assert.equal(linha(matrizSuficiencia(3, records({ strength2p: "observado" })), "forca").status, "examinado");
 });
 
-test("fonte escolar: relato registrado com fonte escola torna o item examinado; sem fonte continua externo", () => {
-  assert.equal(linha(matrizSuficiencia(9, records({ milestones: "observado" }, "escola")), "escolar").status, "examinado");
+test("fonte escolar: só conta com descrição do funcionamento escolar; fonte marcada sem texto não basta", () => {
+  const semTexto = records({ milestones: "observado" }, "escola");
+  assert.equal(linha(matrizSuficiencia(9, semTexto), "escolar").status, "depende_fonte_externa");
+  assert.match(linha(matrizSuficiencia(9, semTexto), "escolar").detalhe, /sem descrição do funcionamento escolar/);
+  const curto: CircuitRecords = { milestones: { status: "observado", note: "", source: "escola", descricao: "curto" } };
+  assert.equal(linha(matrizSuficiencia(9, curto), "escolar").status, "depende_fonte_externa");
+  const comTexto: CircuitRecords = { milestones: { status: "observado", note: "Marcado: Relatou sentar.", source: "escola", descricao: "Relatório da escola descreve leitura adequada e atenção oscilante em tarefas longas." } };
+  assert.equal(linha(matrizSuficiencia(9, comTexto), "escolar").status, "examinado");
   assert.equal(linha(matrizSuficiencia(9, records({ milestones: "observado" }, "cuidador")), "escolar").status, "depende_fonte_externa");
 });
 
@@ -99,7 +105,7 @@ test("texto de prontidão: declara ausência de emissão automática, conta pend
   const texto = textoProntidao(7, linhas).join("\n");
   assert.match(texto, /PRONTIDÃO PARA O LAUDO — MATRIZ DE SUFICIÊNCIA \(7 anos\)/);
   assert.match(texto, /Emissão automática: não\./);
-  assert.match(texto, new RegExp(`Pendências para revisão: ${pendenciasParaRevisao(linhas)} de ${linhas.length}\\.`));
+  assert.match(texto, new RegExp(`Pendências para revisão: ${pendenciasParaRevisao(linhas)} de ${linhasDeRevisao(linhas).length}\\.`));
   assert.match(texto, /Registrado — não equivale a normal/);
   assert.match(texto, /Depende de decisão médica/);
   assert.doesNotMatch(texto, /: normal\b/i);

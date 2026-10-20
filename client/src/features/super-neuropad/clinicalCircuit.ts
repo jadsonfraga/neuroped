@@ -4,7 +4,7 @@
  * armazenamento local, acesso à câmera ou alteração da bateria principal.
  * Estações `presencial` nunca podem ser inferidas por resposta de tela.
  */
-export const CIRCUIT_VERSION = "2026-10-20.3";
+export const CIRCUIT_VERSION = "2026-10-20.4";
 export type CircuitArea = "neurologico" | "mental";
 export type CircuitMethod = "ludico" | "observacao" | "presencial" | "entrevista";
 export type CircuitStatus = "observado" | "achado" | "nao_realizado" | "nao_colaborou";
@@ -23,7 +23,8 @@ export interface CircuitTask {
   safety?: string;
 }
 export type CircuitSource = "examinador" | "cuidador" | "escola" | "outra";
-export interface CircuitEntry { status: CircuitStatus; note: string; source?: CircuitSource }
+/** `note` reúne marcadores e descrição para o relatório; `descricao` é só o texto livre digitado pelo auxiliar. */
+export interface CircuitEntry { status: CircuitStatus; note: string; source?: CircuitSource; descricao?: string }
 export const CIRCUIT_SOURCES: Record<CircuitSource,string> = {
   examinador: "Observação direta pelo examinador",
   cuidador: "Relato do cuidador",
@@ -41,7 +42,7 @@ export const CIRCUIT_STATUSES: Record<CircuitStatus,string> = {
 export const CIRCUIT_METHODS: Record<CircuitMethod,string> = {
   ludico: "Missão lúdica supervisionada",
   observacao: "Observação clínica",
-  presencial: "Exame físico presencial — profissional habilitado",
+  presencial: "Exame direto — quando indicado pelo médico (profissional habilitado)",
   entrevista: "Entrevista clínica — somente profissional",
 };
 export const CIRCUIT_VIDEO_LINKS = {
@@ -161,10 +162,13 @@ export function coverageStatus(domain: CoverageDomain, years: number, records: C
   const stations = circuitForAge(years).filter((task) => domain.stations.includes(task.id));
   if (!stations.length) return "sem_estacao";
   const statusOf = (id: string) => records[id]?.status;
-  const filled = stations.filter((task) => statusOf(task.id) === "observado" || statusOf(task.id) === "achado");
-  if (filled.some((task) => statusOf(task.id) === "achado")) return "esclarecer";
-  if (filled.some((task) => !domain.presencial || task.method === "presencial")) return "registrado";
-  if (filled.length) return "parcial";
+  const done = (task: CircuitTask) => statusOf(task.id) === "observado" || statusOf(task.id) === "achado";
+  if (stations.some((task) => statusOf(task.id) === "achado")) return "esclarecer";
+  // Registrado exige todas as estações exigidas do domínio na faixa: exame direto, se o domínio for presencial; todas, caso contrário.
+  // Uma estação isolada deixa o domínio parcial, nunca completo.
+  const exigidas = domain.presencial ? stations.filter((task) => task.method === "presencial") : stations;
+  if (exigidas.length && exigidas.every(done)) return "registrado";
+  if (stations.some(done)) return "parcial";
   if (stations.some((task) => statusOf(task.id) === "nao_realizado" || statusOf(task.id) === "nao_colaborou")) return "nao_obtido";
   return "pendente";
 }
