@@ -40,6 +40,9 @@ test("segurança: tarefas de risco são entrevista profissional sem gamificaçã
   assert.ok(risk);
   assert.equal(risk.method,"entrevista");
   assert.equal(risk.area,"mental");
+  assert.equal(risk.min,8);
+  assert.ok(circuitForAge(7).every((task) => task.id !== "risk"));
+  assert.ok(circuitForAge(8).some((task) => task.id === "risk"));
   assert.match(risk.safety || "",/NÃO é um jogo/);
   assert.ok(CIRCUIT_TASKS.filter((task) => task.id === "reflex" || task.id === "vision").every((task) => task.method === "presencial"));
 });
