@@ -121,7 +121,7 @@ try {
   assert.match(await reviewSummary.innerText(), /1 de \d+ itens documentados/);
   // A mesma idade selecionada no game é a fonte da versão clínica ativa.
   await page.waitForFunction(() => [...document.querySelectorAll('[data-testid="super-neuropad-clinical-circuit"]')]
-    .some((el) => /· 7 anos\\./.test(el.textContent || "")));
+    .some((el) => /· 7 anos\./.test(el.textContent || "")));
   const circuitAtSeven = page.getByTestId("super-neuropad-clinical-circuit").filter({ hasText: /· 7 anos\./ }).last();
   await circuitAtSeven.getByRole("button", { name: /Estado mental/ }).click();
   assert.match(await circuitAtSeven.innerText(), /Aparência e comportamento|Portal do encontro/);
