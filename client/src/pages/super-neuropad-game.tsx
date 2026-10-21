@@ -10,6 +10,8 @@ import { softTap } from "@/lib/softSounds";
 import { play1Up, playCoin, playFlagPole, playJump, playPowerUp } from "@/lib/sounds";
 import { downloadTextDocument, safeTextFilename } from "@/lib/shareText";
 import { createChiptune, type Chiptune } from "@/features/super-neuropad/music";
+import { ClinicalCircuit } from "@/features/super-neuropad/ClinicalCircuit";
+import { resumoDaBateria } from "@/features/super-neuropad/sufficiencia";
 import { buildGameDocSpec, issuerLines } from "@/features/super-neuropad/pdf";
 import { DESCRIPTIVE_NOTICE } from "@/lib/descriptiveNotice";
 import {
@@ -944,6 +946,7 @@ export default function SuperNeuroPadGamePage() {
   }
 
   const summary = session ? summarize(session) : null;
+  const resumoBateria = summary ? resumoDaBateria(summary) : null;
   const wallSeconds = session ? sessionWallSeconds(session) : null;
   const patientRecord = session && screen === "results" ? buildPatientRecordItems(session) : [];
   const missedAnswers = session && screen === "results" ? session.answers.filter((answer) => answer.status !== "acerto") : [];
@@ -1027,6 +1030,12 @@ export default function SuperNeuroPadGamePage() {
               </div>
             )}
           </div>
+
+          {band && (
+            <button type="button" onClick={() => document.getElementById("snp-clinical-circuit")?.scrollIntoView({ behavior: "smooth", block: "start" })} className="snp-chip inline-flex min-h-11 items-center gap-2 bg-[var(--snp-sky-tint)]">
+              🩺 Ir para as missões extras: exame neurológico e estado mental (opcional, fora da partida)
+            </button>
+          )}
 
           <div className="snp-panel p-5">
             <h2 className="snp-pixel text-base">2 · Escolha o herói</h2>
@@ -1416,6 +1425,9 @@ export default function SuperNeuroPadGamePage() {
           </p>
         </section>
       )}
+      {/* Extensão clínica opcional: fica montada e em memória durante o jogo.
+          A troca de idade ou paciente descarta os registros via key. */}
+      <ClinicalCircuit key={ageYears ?? "sem-idade"} years={ageYears} visible={screen === "setup" || screen === "results"} bateria={resumoBateria} />
     </div>
   );
 }

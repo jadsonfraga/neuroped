@@ -399,3 +399,210 @@ recalibração de cortes e validação com amostra de crianças.
   escolhas e dos erros, maior sequência na mesma posição. Só contagens e dispersão; sem norma nem corte. Aparece no
   relatório, no PDF (seção "Perfil de resposta") e na linha estruturada `PERFIL`.
 - Rollback: reverter a PR; nenhum dado persistido muda.
+
+
+## Circuito clínico complementar por idade (proposta 20/10/2026)
+
+Adicionado à própria aba **Super NeuroPad Game**, abaixo do fluxo principal, com duas áreas: **Exame neurológico** e **Estado mental**. É opcional, só aparece após escolher idade de 2 a 17 anos, e permanece montado em memória ao atravessar os seis mundos. Trocar a idade ou iniciar nova criança destrói o estado. Não modifica `PHASE_ORDER`, `AGE_BANDS`, `GameSession`, `AnswerRecord`, XP, critérios, duração da partida nem PDF/fluxos de envio existentes.
+
+### Delimitação clínica
+
+- As estações são roteiro **autoral não padronizado** de exame clínico assistido, não uma bateria normativa ou equivalente à avaliação psiquiátrica completa.
+- Cada estação informa **faixa etária, método** (lúdico, observação, entrevista ou exame presencial por profissional), instrução e achados a documentar. O operador marca `realizado — achado descrito`, `realizado — requer esclarecimento`, `não realizado` ou `sem colaboração`; nenhum estado é presumido. Notas são livres e sem dados reais em testes.
+- Reflexos, tônus, força, sensibilidade, pupilas e parte da avaliação dos nervos cranianos **exigem exame presencial** e não podem ser medidos/inferidos pelo tablet. Resultado observado sem descrição específica não se transforma em normalidade.
+- Entrevista sobre pensamento/percepção e risco é **exclusiva do profissional**, não apresentada como jogo à criança, sem perguntas pontuadas, sugestivas ou classificação automatizada. Conforme a AAP, a partir de 12 anos usar rastreio de risco suicida validado em rotina; de 8 a 11 anos quando clinicamente indicado; abaixo de 8 não fazer rastreio formal, mas investigar sinais de alerta clinicamente. Risco agudo exige avaliação de segurança imediata e protocolo clínico. Referência: https://www.aap.org/en/patient-care/blueprint-for-youth-suicide-prevention/strategies-for-clinical-settings-for-youth-suicide-prevention/screening-for-suicide-risk-in-clinical-practice/
+- O módulo não fotografa, grava, solicita acesso à câmera/microfone, transmite, armazena nem envia observações à família. Copiar/baixar texto é ação explícita. O relatório do circuito é separado da exportação original para impedir inclusão inadvertida de conteúdo sensível no PDF familiar; revisão médica antes de uso no prontuário.
+- Tarefas de 2 e 3 anos permanecem respeitosas com recusa, comunicação alternativa e diferenças desenvolvimentais. Menores de 2 anos seguem o direcionamento anterior para OBS-10/Sonda 10.
+
+### Referências e vídeos demonstrativos
+
+- **NIH Toolbox Cognition:** estrutura internacional para domínios cognitivos por desenvolvimento, não replicada nem anunciada como versão validada do produto. https://nihtoolbox.org/domain/cognition/
+- **AACAP:** necessidade de exame do estado mental com história clínica e múltiplas fontes. https://aacap.org/AACAP/Policy_Statements/2003/Psychiatric_Diagnostic_Evaluations.aspx
+- **Universidade de Utah / Nebraska — Pediatric Neurologic Examination:** vídeos educacionais de colaboração, coordenação, tônus, reflexos e marcha em criança pequena. https://neurologicexam.med.utah.edu/pediatric/html/30month.html
+- **Stanford Medicine 25:** galeria com demonstrações de avaliação cerebelar, marcha e reflexos. https://med.stanford.edu/stanfordmedicine25/videos.html
+
+Os vídeos são **links educativos externos para o profissional**, não reproduzidos ou re-hospedados; conferir pertinência para a idade e selecionar clipe na página indicada. O app não envia identificadores da criança às videotecas (`referrerPolicy=no-referrer`).
+
+### Código, validação e reversão
+
+- Catálogo e exportação: `client/src/features/super-neuropad/clinicalCircuit.ts`
+- Interface: `client/src/features/super-neuropad/ClinicalCircuit.tsx`
+- Inclusão na aba: `client/src/pages/super-neuropad-game.tsx` (apenas import e montagem aditiva)
+- Regressões: `tests/unit/super-neuropad-clinical-circuit.test.ts`, incluído em `npm run test:super-neuropad`.
+- Rodar `npm run check`, `npm run test:super-neuropad`, `npm run build:client` e E2E do jogo antes de disponibilizar.
+- Rollback: reverter somente a PR; sem migração, banco ou contrato de API.
+
+### Expansão v2026-10-20.2: cobertura, estado mental, fontes e demonstrações
+
+Construída sobre o circuito de jadsonfraga/neuroped#1191. As 27 estações publicadas foram preservadas (id, área, faixa e método) e são verificadas por teste de regressão. Foram acrescentadas 14 estações, somando 41.
+
+**O que o circuito faz e o que não faz**
+
+- Não infere normalidade nem alteração. Mostra, por domínio do exame neurológico básico, o que foi registrado, em qual estação e por qual método.
+- Domínios presenciais (pares cranianos, tônus, força, reflexos, sensibilidade, coordenação, sinais meníngeos, fundo de olho, perímetro cefálico) só ficam "registrados" com estação de exame direto. Tarefa lúdica deixa o domínio como "parcial".
+- Estados: sem estação nesta faixa · pendente · parcial · registrado (descrição obrigatória; não equivale a normal) · achado a esclarecer · não realizado ou sem colaboração.
+- Sem escore, percentual, norma ou corte. Os contadores de estações são de preenchimento, não de desempenho.
+
+**Estado mental infantojuvenil**
+
+Seções em ordem clínica usual: aparência e comportamento; atividade psicomotora e atenção; fala; humor e afeto; pensamento e percepção; cognição; juízo e insight; funções neurovegetativas (relato); segurança (entrevista reservada, somente profissional). A ordenação segue a prática clínica geral do exame do estado mental. Não é texto literal de parametria nem instrumento padronizado, e não produz pontuação.
+
+**Fonte de cada registro**
+
+Cada estação pede a origem da informação: observação direta do examinador, relato do cuidador, relato escolar ou outra fonte identificada na nota. Registro sem fonte aparece no relatório como "não informada". Base: Kraemer et al. (2003), que trata da integração de múltiplos informantes e de sua discordância como dado clínico.
+
+**Demonstrações quando o texto não basta**
+
+Quatro animações vetoriais em loop (romberg, marcha em tandem, dedo–nariz e seguimento ocular), sem foto e sem gravação de criança. O movimento é desligado quando o sistema pede redução de animação. Os links para as videotecas externas (Utah e Stanford) permanecem.
+
+**Sinais de urgência**
+
+Alerta fixo na tela e no relatório: rebaixamento da consciência, convulsão, rigidez de nuca com febre, déficit focal agudo, papiledema, cefaleia súbita e intensa ou risco imediato. As estações de fundo de olho e de sinais meníngeos têm alerta próprio e interrompem a sequência.
+
+**Referências consultadas em 20/10/2026**
+
+- NIH Toolbox Cognition: bateria computadorizada para 3 a 85 anos, segundo fontes secundárias. Conferir a página oficial: https://nihtoolbox.org/domain/cognition/ (respondeu 200).
+- NIH Baby Toolbox: tarefas observacionais em tablet. As fontes consultadas descrevem a faixa de 1 a 42 meses, não 0 a 3 anos como citado no pedido. https://nihbabytoolbox.org (respondeu 200).
+- AACAP: King et al., *Practice parameters for the psychiatric assessment of children and adolescents*, JAACAP, 1997. A busca confirmou a existência da parametria, mas não seu conteúdo sobre exame do estado mental. Conferir o texto integral antes de citar a estrutura como sua. https://www.aacap.org/AACAP/Policy_Statements/2003/Psychiatric_Diagnostic_Evaluations.aspx (respondeu 200, documento de 2003, não o de 1997).
+- Kraemer HC et al., *A new approach to integrating data from multiple informants in psychiatric assessment and research*, Am J Psychiatry, 2003. doi:10.1176/appi.ajp.160.9.1566.
+- Videoteca pediátrica da Universidade de Utah (respondeu 200) e Stanford Medicine 25 (não respondeu no ambiente de desenvolvimento; conferir antes de uso).
+
+**Limites clínicos**
+
+- Tarefas digitais e relatos não substituem exame neurológico presencial, avaliação psiquiátrica completa, audiometria, avaliação oftalmológica ou avaliação do desenvolvimento com instrumento validado.
+- Nenhum item foi calibrado ou validado em amostra. Não há norma nem ponto de corte.
+- As demonstrações são ilustrações da técnica, não filmagens de referência.
+
+**Código, testes e correção incluída**
+
+- `client/src/features/super-neuropad/clinicalCircuit.ts`: estações, domínios, cobertura, fontes e relatório.
+- `client/src/features/super-neuropad/ClinicalCircuit.tsx`: interface, abas, fonte e cobertura.
+- `client/src/features/super-neuropad/ClinicalDemo.tsx`: demonstrações animadas.
+- Testes: `tests/unit/super-neuropad-clinical-circuit.test.ts` e `tests/unit/super-neuropad-clinical-circuit-expansion.test.ts`, ambos em `npm run test:super-neuropad`.
+- Correção: a estação de risco deixou de usar a expressão "sinais de alerta", que o guarda `tests/unit/sem-classificacao.test.ts` proíbe em módulos do Super NeuroPad. A base da PR #1191 quebrava esse teste.
+- Rollback: os commits desta expansão podem ser revertidos isoladamente. Sem migração, banco ou contrato de API.
+
+### Prontidão para o laudo: matriz de suficiência (v2026-10-20.3)
+
+A aba **Cobertura e lacunas** tem uma matriz que organiza os itens exigidos pelo laudo neuropediátrico (estrutura de oito seções: identificação, motivo, história do neurodesenvolvimento, exame clínico, escalas e documentos, impressão diagnóstica, conduta e fechamento). Cada item recebe um de oito estados: **examinado** (descrito no jogo ou na bateria), **a esclarecer**, **falta exame direto**, **pendente de execução**, **não realizado**, **fora do jogo nesta faixa**, **depende de fonte externa** ou **depende de decisão médica**.
+
+**Regras**
+
+- O jogo não preenche achado ausente. Estados de fonte externa e de decisão médica nunca viram "examinado".
+- Impressão, fundamentação, conduta e liberação aparecem sempre como dependentes de decisão médica.
+- O texto exportado declara "Emissão automática: não" e conta os itens não resolvidos. A contagem é de pendências, não escore clínico.
+- "Registrado — não equivale a normal" é o rótulo de tudo que foi descrito. Nenhum item recebe rótulo de normalidade.
+- A bateria principal entra apenas pela contagem de mundos aplicados e pelo indicador de partida concluída. Não entra pontuação, acerto nem tempo.
+
+**Faixas.** A matriz tem a mesma estrutura de 2 a 17 anos. Itens sem estação na faixa aparecem como "fora do jogo nesta faixa". Por exemplo, aos 2 anos há seis itens fora do jogo; aos 17 não há nenhum.
+
+**Auditoria.** O registro do fluxo atual SuperNeuroPad → prontuário → laudo, com achados e recomendações, está em `docs/audits/SUPER_NEUROPAD_LAUDO_FLUXO_2026-10-20.md`. Destaque: a impressão do laudo fica habilitada por qualquer texto colado, sem checagem de seções, CIDs ou placeholders. Esse ponto depende de decisão do médico antes de qualquer alteração no laudo.
+
+**Testes**
+
+- `tests/unit/super-neuropad-sufficiencia.test.ts`: matriz por faixa, ausência de preenchimento automático, urgência, exame direto, fonte escolar, bateria, texto e integridade estática.
+- `tests/e2e/super-neuropad-circuit-sufficiency.mjs` (`npm run test:e2e:super-neuropad-circuit`): faixas 2, 7 e 17; registros que reduzem pendências; exportação TXT; colagem no laudo sem download automático; axe no circuito; celular de 390 px.
+
+**Limites.** Nenhum item é validado por médico nem calibrado em amostra. A conclusão diagnóstica, a conduta e a liberação do laudo dependem de revisão médica.
+
+### Missões guiadas e sem bloqueios (v2026-10-20.3)
+
+Diretriz do responsável clínico: **nenhum bloqueio no fluxo**. Nenhum controle do circuito fica desabilitado. Anterior, próxima, copiar, baixar e limpar estão sempre disponíveis. Fonte, anotação livre e resultado são opcionais. "Pendências para revisão" é um lembrete, não impede registro nem exportação.
+
+**Missões.** Cada estação do circuito virou uma missão, com:
+
+- **Passo a passo** em linguagem de jogo, para o auxiliar. O título muda entre "da brincadeira" e "do examinador", conforme o método.
+- **Marcadores tocáveis**, para registrar o que foi percebido sem perguntar à criança. Ex.: "Segue o alvo com os dois olhos", "Precisa de apoio".
+- **Resultado em quatro escolhas**: Conseguiu, Teve dificuldade, Não quis agora, Não deu para fazer. Cada escolha corresponde a um estado clínico já existente.
+- **Fonte sugerida**: estações de observação já vêm com "observação direta pelo examinador"; entrevistas pedem a fonte, sem obrigar.
+- **Orientação clínica completa** recolhida, com o texto original da estação.
+
+**Exceção deliberada.** A estação de risco (conversa reservada de segurança) não é gamificada. O próprio texto da estação proíbe apresentá-la como missão infantil. Continua como entrevista profissional.
+
+**Registro indireto.** Os marcadores e o resultado são suficientes para registrar. Os marcadores entram no relatório como "Marcado: ...". A anotação livre é opcional.
+
+**Atividade lúdica.** O circuito pede que o responsável seja informado antes de iniciar. É um aviso, não uma trava.
+
+**Limite.** O menor de 2 anos continua fora da aplicação do jogo, por regra clínica existente (OBS-10 e Sonda 10), e não é uma trava do circuito.
+
+
+## Refinamento anual das missões (20/10/2026; aditivo à PR #1192)
+
+O circuito agora apresenta um **perfil próprio para cada ano de 2 a 17**, além dos intervalos usados para disponibilizar estações. A idade escolhida gera **forma de apresentação**, recursos de acesso e uma dica concreta para a estação ativa; não altera quais estações existem, os 6 mundos, respostas, tempo, medalhas, exportação familiar ou status clínico. Os perfis são autorais e destinados à **observação guiada**, não são equivalentes a escala validada e não definem marcos obrigatórios.
+
+| Idade | Proposta de observação (exemplos, não critérios de acerto) |
+| --- | --- |
+| 2 | Objeto familiar, uma ação por vez, atenção compartilhada, gesto e deslocamento espontâneo |
+| 3 | Brincadeira simbólica e imitação com apoio, alternância e manipulação |
+| 4 | História com personagens, sequência simples e gestos bilaterais |
+| 5 | Sequência de figuras, regra de turnos, descrição de ações |
+| 6 | Rotina escolar/atividade, narrativa; leitura apenas se alfabetizado |
+| 7 | Organização de materiais, explicação de escolha, interação com colega |
+| 8 | Plano curto, esclarecimento de instrução e adaptação de estratégia |
+| 9 | Alternativas, exceção de regra, revisão sem cronometragem normativa |
+| 10 | Etapas, obstáculo e ajuda, resolução de problemas contextualizada |
+| 11 | Justificativa de estratégia, contexto escolar/social, coordenação conforme indicação |
+| 12 | Autonomia progressiva, participação, privacidade e assentimento |
+| 13 | Decisões cotidianas, contexto de apoio, entrevista não infantilizada |
+| 14 | Projetos e rotina, discurso espontâneo e respeito à privacidade |
+| 15 | Planejamento semanal, apoio social e prioridades pessoais |
+| 16 | Plano com alternativas, escolhas e necessidades de apoio |
+| 17 | Transição de cuidados, objetivos, participação nas decisões |
+
+**Garantias e ética:** a escolha por idade não afirma que a criança deva demonstrar habilidade específica. A criança pode responder com gesto/comunicação alternativa e pode recusar. Tarefas motoras e do exame físico só são interpretáveis quando executadas pelo examinador habilitado, conforme indicação e segurança. O auxiliar pode registrar a observação, mas não substituir manobras neurológicas. Entrevista reservada de risco continua sem brincadeira e sem dica gamificada. O circuito não grava imagem/áudio nem envia dados externos.
+
+**Referências conceituais:** CDC *Learn the Signs. Act Early.* (monitoramento não substitui rastreio validado), https://www.cdc.gov/act-early/about/developmental-monitoring-and-screening.html; AACAP *Practice Parameters for Psychiatric Assessment of Children and Adolescents* (exame mental ajustado ao desenvolvimento), https://www.aacap.org/App_Themes/AACAP/docs/practice_parameters/psychiatric_assessment_practice_parameter.pdf; NICE NG217 (história e exame em eventos epilépticos), https://www.nice.org.uk/guidance/ng217/chapter/diagnosis-and-assessment-of-epilepsy. Não foram reproduzidos instrumentos proprietários.
+
+**Rastreabilidade:** `client/src/features/super-neuropad/ageAdaptation.ts` possui 16 perfis e adaptações por estação/método. `ClinicalCircuit.tsx` mostra perfil anual e dica de estação sem botões novos e sem `<details>` que interfiram na contagem dos seis mundos. A suíte `tests/unit/super-neuropad-age-adaptation.test.ts` cobre todas as idades e os métodos; `tests/e2e/super-neuropad-circuit-sufficiency.mjs` prova os perfis de 2, 7 e 17 anos no navegador. Manter PR como rascunho até checagem de CI, E2Es e validação clínica do conteúdo. Reversão por commit sem migração de dados.
+
+
+### Correções da auditoria da PR #1192 (v2026-10-20.4)
+
+Escopo: revisão de prontidão. Nada aqui valida conteúdo clínico, define norma ou ponto de corte, nem libera documento. Conclusão diagnóstica, conduta e liberação do laudo continuam sob decisão do médico.
+
+**Cobertura por domínio.** Um domínio só fica "Registrado" quando todas as estações exigidas foram observadas ou achadas. Em domínios presenciais, a exigência é o exame direto; relato e atividade lúdica não completam o domínio. Um registro isolado fica "Parcial". Achado em qualquer estação do domínio fica "Esclarecer". Exemplo: marcha aos 4 anos só fica registrada com as duas estações do domínio (marcha lúdica e Romberg).
+
+**Fonte escolar com descrição.** A fonte "escola" só conta quando há descrição livre do funcionamento escolar com pelo menos 20 caracteres, no campo `descricao`, que recebe só o texto livre da anotação, sem os marcadores. Marcar apenas a fonte, ou texto curto, mantém o item como "depende de fonte externa". Relato de cuidador não substitui relato escolar.
+
+**Fonte sem preenchimento automático.** Ao registrar, a fonte fica vazia até o auxiliar escolher. Antes, o jogo preenchia "examinador" sem escolha. Sem escolha, o registro sai sem proveniência.
+
+**Achados potencialmente urgentes separados de exames ausentes.** Apenas achado a esclarecer nas estações de consciência, fundo de olho ou sinais meníngeos gera o aviso “ATENÇÃO CLÍNICA”, que solicita avaliação profissional imediata da gravidade e acionamento do protocolo de urgência quando houver sinais agudos. Não realizado, recusa ou ausência de registro aparecem na linha de documentação como limitação de exame — isoladamente **não** constituem urgência e não geram o aviso de achado. A linha permanece fora da contagem de “Pendências para revisão”, sem bloqueio. A orientação geral para sinais agudos continua independente da matriz.
+
+**Adaptação de procedimentos por estação e idade.** Os 16 perfis anuais foram mantidos. Quando a estação é um procedimento do médico, a dica traz a técnica específica:
+
+- consciência: observação contínua sem estímulo doloroso; registrar alerta, sonolência e responsividade;
+- fundo de olho: oftalmoscopia direta em ambiente de pouca luz, com fixação em alvo; registrar o disco óptico ou a não tolerância;
+- sinais meníngeos: flexão cervical passiva suave, sem forçar; registrar resistência e dor. "Febre, confusão ou convulsão associadas são urgência";
+- crescimento: perímetro cefálico medido com fita; registrar apenas o que foi medido ou observado.
+
+A tolerância muda por faixa: até 5 anos, "tolerância curta"; acima, "explique o procedimento antes e respeite a recusa". Em todas, o auxiliar não realiza manobras. A estação de risco continua sem dica de procedimento.
+
+**Guias de coleta por hipótese.** Três guias orientam a coleta, sem pontuação e sem diagnóstico:
+
+- linguagem e comunicação (2 a 5 anos);
+- aprendizagem e atenção (6 a 17 anos);
+- saúde mental na adolescência (12 a 17 anos).
+
+Cada item aponta para estações reais e mostra um de quatro estados: coletado, achado a esclarecer, fonte externa ou pendente. Item de fonte externa nunca vira "coletado".
+
+**TXT e privacidade.** O TXT é salvo localmente e traz o aviso: "contém observações clínicas. Revise antes de incorporar ao prontuário e guarde conforme a política da clínica, sem enviar a terceiros." A matriz continua declarando "Emissão automática: não".
+
+**Anotação descritiva.** O campo de anotação orienta a descrição ("Fatos observados, condições, lateralidade e limitações"). Não é exigido, para não criar bloqueio.
+
+**Limites desta versão.**
+
+- A impressão do laudo continua habilitada por qualquer texto colado. A suficiência da matriz não bloqueia a emissão. Qualquer bloqueio seria decisão de produto e do médico, não implementada aqui.
+- A exigência de descrição semiológica para marcadores tocáveis não foi implementada, por ser incompatível com a diretriz sem bloqueios.
+- Controle de acesso por perfil ("somente a aplicadora") não foi implementado.
+- A reconciliação das branches #1191 e #1192 não foi feita.
+- Nenhum item foi validado por médico, normatizado ou calibrado em amostra.
+
+**Verificação.** `npm run test:super-neuropad` (112 de 112); `npx tsc --noEmit`; `npm run lint`; `npm run build:client`; `npm run test:e2e:super-neuropad-circuit` (16 faixas, de 2 a 17 anos, sem erro de console e sem rolagem horizontal em 390 px); `npm run test:e2e:super-neuropad` (regressão do jogo, sem divergência).
+
+
+### Provas adversariais de proveniência e consentimento de exportação
+- Marcação manual de um exame físico sem fonte ou com fonte cuidador/escola não completa domínio presencial; o examinador precisa estar identificado, e sua identificação manual não substitui revisão clínica.
+- Marcadores de uma missão são limpos quando ela passa a “Não quis agora” ou “Não deu para fazer”, e jamais entram no TXT como observação não executada; a explicação livre da limitação é preservada.
+- Falha da área de transferência na ação “Copiar” mostra orientação para exportação explícita em “Baixar TXT”, **sem download automático**.
+- Relatos de terceiros aparecem como “Descrição registrada”, sem atribuição falsa ao examinador.
+- Testes unitários contemplam 2, 7 e 17 anos; o E2E real cobre falha simulada da área de transferência, troca de status, exportação e percurso anterior.
