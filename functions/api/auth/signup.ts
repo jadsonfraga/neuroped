@@ -174,8 +174,13 @@ export const onRequestPost: PagesFunction<EmailVerificationEnv> = async (
     );
   }
 
+  // O servidor diz a verdade sobre o envio: o booleano de issueEmailVerification
+  // é false quando o provedor recusou (domínio não verificado, chave revogada) e
+  // o token pendente já foi apagado. Sem isso a conta nascia "verificação
+  // pendente" sem que ninguém soubesse que o link nunca saiu.
+  let verificationDelivered = false;
   try {
-    await issueEmailVerification(env.DB, env, {
+    verificationDelivered = await issueEmailVerification(env.DB, env, {
       id: user.id,
       email: user.email,
     });
@@ -186,7 +191,15 @@ export const onRequestPost: PagesFunction<EmailVerificationEnv> = async (
   try {
     const tokens = await createSessionTokens(env.DB, user, secret);
     return json(
-      { ...tokens, user: publicUser(user), emailVerificationRequired: true },
+      {
+        ...tokens,
+        user: publicUser(user),
+        emailVerificationRequired: true,
+        emailVerificationDelivery: verificationDelivered ? "sent" : "failed",
+        ...(verificationDelivered
+          ? {}
+          : { blockedExternal: "BLOCKED_EXTERNAL_RESEND" }),
+      },
       201,
     );
   } catch (error) {
@@ -196,6 +209,8 @@ export const onRequestPost: PagesFunction<EmailVerificationEnv> = async (
         created: true,
         error: "Conta criada. Faça login para continuar.",
         code: "AUTH_SESSION_UNAVAILABLE",
+        emailVerificationDelivery: verificationDelivered ? "sent" : "failed",
+        ...(verificationDelivered ? {} : { blockedExternal: "BLOCKED_EXTERNAL_RESEND" }),
       },
       503,
     );
