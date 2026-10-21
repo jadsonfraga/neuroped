@@ -20,6 +20,7 @@ import {
   pendentesDeCopia,
   proximoPendente,
   registrarOpcional,
+  avisoDeIdade,
   textoOpcionais,
   type RegistrosOpcionais,
 } from "@/features/super-neuropad/extensao";
@@ -579,6 +580,14 @@ function OpcionaisPanel({ years, registros, copiados, seed, onRegistrar, onCopia
     [atual, seed, posicao],
   );
   useEffect(() => { inicio.current = performance.now(); setRepetido(false); }, [atualId, aberto, pausado]);
+  // Tela bloqueada ou troca de aba com um opcional aberto: pausa sozinho, como na partida principal,
+  // para o tempo do item não inflar. Retomar reinicia a contagem do item atual.
+  useEffect(() => {
+    if (!aberto || pausado) return;
+    const onVisibility = () => { if (document.hidden) setPausado(true); };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [aberto, pausado]);
   if (!atual) return null;
   const segundos = () => (performance.now() - inicio.current) / 1000;
   const registrar = (record: AnswerRecord, event: { timeStamp: number }) => {
@@ -647,6 +656,7 @@ function OpcionaisPanel({ years, registros, copiados, seed, onRegistrar, onCopia
                 Opcional {posicao + 1} de {lista.length} · {mundo.emoji} {mundo.name} · {ORIGIN_LABELS[item.origin]} · {item.ref}
               </p>
               {anterior && <p className="snp-chip mb-2 bg-[var(--snp-sun-tint)]" role="status">Já registrado: {STATUS_LABELS[anterior.status]}. Registrar de novo substitui.</p>}
+              {avisoDeIdade(years, item) && <p className="snp-panel snp-panel--soft mb-2 p-2 text-xs font-bold normal-case" role="note" data-testid="super-neuropad-optional-age-note">{avisoDeIdade(years, item)}</p>}
               {item.kind === "toque" ? (
                 <div className="space-y-4">
                   <TouchStage key={item.id} item={item} paused={pausado} order={ordem}
