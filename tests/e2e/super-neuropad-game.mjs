@@ -215,6 +215,8 @@ try {
     if (phase < WORLDS) {
       await waitScreen("phase-done");
       if (phase === 1) await screen("05-phase-done");
+      // O circuito clínico obrigatório acompanha o fluxo: aparece entre os mundos sem travar o botão de avançar.
+      if (phase === 1) await page.getByTestId("super-neuropad-circuit-required").waitFor();
       await page.getByRole("button", { name: /Próximo mundo/ }).click();
     }
   }

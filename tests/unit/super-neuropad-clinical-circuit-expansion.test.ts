@@ -110,7 +110,7 @@ test("relatório: cobertura por domínio, fonte de cada registro, urgência e se
     milestones: { status: "achado", note: "Perda de palavras relatada pelo cuidador.", source: "cuidador" },
     romberg: { status: "observado", note: "" },
   }, "", new Date("2026-10-20T12:00:00.000Z"));
-  assert.match(report, /v2026-10-20\.4/);
+  assert.match(report, /v2026-10-21\.1/);
   assert.match(report, /COBERTURA DO EXAME NEUROLÓGICO BÁSICO POR DOMÍNIO/);
   assert.match(report, /COBERTURA DAS SEÇÕES DO EXAME DO ESTADO MENTAL/);
   assert.match(report, /Fonte: Observação direta pelo examinador/);

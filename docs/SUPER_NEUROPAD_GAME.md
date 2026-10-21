@@ -403,7 +403,7 @@ recalibração de cortes e validação com amostra de crianças.
 
 ## Circuito clínico complementar por idade (proposta 20/10/2026)
 
-Adicionado à própria aba **Super NeuroPad Game**, abaixo do fluxo principal, com duas áreas: **Exame neurológico** e **Estado mental**. É opcional, só aparece após escolher idade de 2 a 17 anos, e permanece montado em memória ao atravessar os seis mundos. Trocar a idade ou iniciar nova criança destrói o estado. Não modifica `PHASE_ORDER`, `AGE_BANDS`, `GameSession`, `AnswerRecord`, XP, critérios, duração da partida nem PDF/fluxos de envio existentes.
+Adicionado à própria aba **Super NeuroPad Game**, abaixo do fluxo principal, com duas áreas: **Exame neurológico** e **Estado mental**. É obrigatório na avaliação (ver "Estrutura obrigatória do circuito" no fim deste documento), só aparece após escolher idade de 2 a 17 anos, e permanece montado em memória ao atravessar os seis mundos. Trocar a idade ou iniciar nova criança destrói o estado. Não modifica `PHASE_ORDER`, `AGE_BANDS`, `GameSession`, `AnswerRecord`, XP, critérios, duração da partida nem PDF/fluxos de envio existentes.
 
 ### Delimitação clínica
 
@@ -507,7 +507,7 @@ A aba **Cobertura e lacunas** tem uma matriz que organiza os itens exigidos pelo
 
 ### Missões guiadas e sem bloqueios (v2026-10-20.3)
 
-Diretriz do responsável clínico: **nenhum bloqueio no fluxo**. Nenhum controle do circuito fica desabilitado. Anterior, próxima, copiar, baixar e limpar estão sempre disponíveis. Fonte, anotação livre e resultado são opcionais. "Pendências para revisão" é um lembrete, não impede registro nem exportação.
+Diretriz do responsável clínico: **nenhum bloqueio no fluxo**. Nenhum controle do circuito fica desabilitado. Anterior, próxima, copiar, baixar e limpar estão sempre disponíveis. Até a v2026-10-20.4, fonte, anotação livre e resultado eram opcionais; desde a v2026-10-21.1 são obrigatórios (ver "Estrutura obrigatória do circuito"), ainda sem desabilitar nenhum controle. "Pendências para revisão" é um lembrete, não impede registro nem exportação.
 
 **Missões.** Cada estação do circuito virou uma missão, com:
 
@@ -519,7 +519,7 @@ Diretriz do responsável clínico: **nenhum bloqueio no fluxo**. Nenhum controle
 
 **Exceção deliberada.** A estação de risco (conversa reservada de segurança) não é gamificada. O próprio texto da estação proíbe apresentá-la como missão infantil. Continua como entrevista profissional.
 
-**Registro indireto.** Os marcadores e o resultado são suficientes para registrar. Os marcadores entram no relatório como "Marcado: ...". A anotação livre é opcional.
+**Registro indireto.** Marcadores, resultado e quem informou concluem uma missão realizada sem achado. Os marcadores entram no relatório como "Marcado: ...". A anotação livre é obrigatória apenas em "Teve dificuldade".
 
 **Atividade lúdica.** O circuito pede que o responsável seja informado antes de iniciar. É um aviso, não uma trava.
 
@@ -606,3 +606,34 @@ Cada item aponta para estações reais e mostra um de quatro estados: coletado, 
 - Falha da área de transferência na ação “Copiar” mostra orientação para exportação explícita em “Baixar TXT”, **sem download automático**.
 - Relatos de terceiros aparecem como “Descrição registrada”, sem atribuição falsa ao examinador.
 - Testes unitários contemplam 2, 7 e 17 anos; o E2E real cobre falha simulada da área de transferência, troca de status, exportação e percurso anterior.
+
+
+## Estrutura obrigatória do circuito (v2026-10-21.1)
+
+**Decisão do responsável clínico:** o circuito clínico deixa de ser opcional. Toda a estrutura criada (missões, resultado, fonte, marcadores, descrição, síntese, cobertura e matriz) passa a ser parte obrigatória da avaliação, de ponta a ponta.
+
+**Como "obrigatório" convive com "nenhum bloqueio".** A diretriz anterior continua valendo: nenhum controle fica desabilitado e a navegação é livre. Obrigatório significa que cada missão só conta como concluída com os campos exigidos, que o circuito é declarado COMPLETO ou INCOMPLETO no relatório e que a pendência fica visível em todo o fluxo. O jogo não libera documento nem conclui diagnóstico; a decisão de emitir o laudo continua sendo do médico, que vê esse status.
+
+**Campos obrigatórios por missão** (`obrigatorio.ts`):
+
+- resultado ("Como foi?");
+- quem informou;
+- missão realizada ("Conseguiu"): ao menos um marcador ou uma descrição;
+- "Teve dificuldade" (achado): descrição do achado com pelo menos 10 caracteres (o marcador sozinho não basta);
+- "Não quis agora" e "Não deu para fazer": resultado e quem informou.
+
+A **síntese final do examinador** também é obrigatória para o circuito ficar COMPLETO. O mínimo de 10 caracteres é mecânico; o sistema não avalia a qualidade clínica do texto.
+
+**Onde a obrigatoriedade aparece**
+
+- Preparação: passo "Circuito clínico N/M", sem a marca "(opcional)".
+- Entre os mundos e na tela de resultados: aviso "Circuito clínico obrigatório: N/M missões concluídas · completo/incompleto", que leva ao circuito. O circuito fica visível na preparação, entre os mundos e nos resultados, e não durante a partida.
+- Cada missão: legendas com "(obrigatório)" e uma linha de status ("Missão concluída" ou "Obrigatório ainda pendente: ..."). A lista de missões marca ✓ para concluída e ⚠ para incompleta.
+- Aba "Cobertura e lacunas": painel "Estrutura obrigatória" com as pendências e o botão "Ir para a missão".
+- TXT: o cabeçalho traz "CIRCUITO CLÍNICO OBRIGATÓRIO: COMPLETO/INCOMPLETO — N de M missões concluídas; síntese do examinador registrada/pendente"; as pendências por missão vêm depois do corpo do relatório, antes da matriz de prontidão.
+
+**O que não mudou:** os seis mundos, o tempo, o XP, o PDF e o envio à família; a matriz de 37 itens; "Emissão automática: não"; a impressão do laudo, que continua habilitada por qualquer texto colado.
+
+**Se o responsável quiser bloqueio rígido** (impedir resultados, exportação ou impressão até o circuito ficar completo), é uma mudança de política que contraria a diretriz "nenhum bloqueio" e precisa de decisão explícita.
+
+**Verificação.** `npm run test:super-neuropad` (inclui `super-neuropad-obrigatorio.test.ts`); E2E do circuito conclui as 31 missões de 9 anos pela interface, inclusive a entrevista de segurança, e confere COMPLETO só com a síntese final; E2E do jogo confere o aviso entre os mundos.

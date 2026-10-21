@@ -10,7 +10,7 @@ import { softTap } from "@/lib/softSounds";
 import { play1Up, playCoin, playFlagPole, playJump, playPowerUp } from "@/lib/sounds";
 import { downloadTextDocument, safeTextFilename } from "@/lib/shareText";
 import { createChiptune, type Chiptune } from "@/features/super-neuropad/music";
-import { ClinicalCircuit } from "@/features/super-neuropad/ClinicalCircuit";
+import { ClinicalCircuit, type ProgressoCircuito } from "@/features/super-neuropad/ClinicalCircuit";
 import { resumoDaBateria } from "@/features/super-neuropad/sufficiencia";
 import { buildGameDocSpec, issuerLines } from "@/features/super-neuropad/pdf";
 import { DESCRIPTIVE_NOTICE } from "@/lib/descriptiveNotice";
@@ -309,10 +309,23 @@ function BadgeShelf({ done, years }: { done: boolean[]; years?: number }) {
   );
 }
 
-function SetupSteps({ hasAge, hasHero, kitDone, kitTotal }: { hasAge: boolean; hasHero: boolean; kitDone: number; kitTotal: number }) {
+/** Aviso do circuito clínico obrigatório, repetido nas telas do fluxo. Leva ao circuito; não trava nada. */
+function CircuitoObrigatorioAviso({ circuito }: { circuito: ProgressoCircuito | null }) {
+  if (!circuito) return null;
+  return (
+    <button type="button" data-testid="super-neuropad-circuit-required"
+      onClick={() => document.getElementById("snp-clinical-circuit")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+      className={`snp-chip inline-flex min-h-11 items-center gap-2 ${circuito.completo ? "bg-[var(--snp-grass-tint)]" : "bg-[var(--snp-sun-tint)]"}`}>
+      🩺 Circuito clínico obrigatório: {circuito.concluidas}/{circuito.total} missões concluídas · {circuito.completo ? "completo" : "incompleto"} — abrir
+    </button>
+  );
+}
+
+function SetupSteps({ hasAge, hasHero, kitDone, kitTotal, circuito }: { hasAge: boolean; hasHero: boolean; kitDone: number; kitTotal: number; circuito: ProgressoCircuito | null }) {
   const steps = [
     { label: "Idade", ok: hasAge },
     { label: "Herói", ok: hasHero },
+    { label: circuito ? `Circuito clínico ${circuito.concluidas}/${circuito.total}` : "Circuito clínico", ok: Boolean(circuito?.completo) },
     { label: kitTotal > 0 ? `Ambiente ${kitDone}/${kitTotal}` : "Ambiente", ok: kitTotal > 0 && kitDone === kitTotal, optional: true },
   ];
   return (
@@ -538,6 +551,7 @@ export default function SuperNeuroPadGamePage() {
   const { toast } = useToast();
   const { issuer } = useIssuer();
   const [screen, setScreen] = useState<Screen>("setup");
+  const [circuito, setCircuito] = useState<ProgressoCircuito | null>(null);
   const [ageYears, setAgeYears] = useState<number | null>(null);
   const [character, setCharacter] = useState<Character | null>(null);
   const [kitChecked, setKitChecked] = useState<Record<string, boolean>>({});
@@ -983,7 +997,7 @@ export default function SuperNeuroPadGamePage() {
       {screen === "setup" && (
         <section className="space-y-5">
           <div className="snp-panel snp-panel--soft flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-            <SetupSteps hasAge={Boolean(band)} hasHero={Boolean(character)} kitDone={band ? band.ambient.filter((entry) => kitChecked[entry]).length : 0} kitTotal={band?.ambient.length ?? 0} />
+            <SetupSteps hasAge={Boolean(band)} hasHero={Boolean(character)} kitDone={band ? band.ambient.filter((entry) => kitChecked[entry]).length : 0} kitTotal={band?.ambient.length ?? 0} circuito={circuito} />
             <span className="text-xs font-bold opacity-70">Três toques e começa: idade, herói e, se der, a conferência da sala.</span>
           </div>
           <div className="snp-panel p-5">
@@ -1031,11 +1045,7 @@ export default function SuperNeuroPadGamePage() {
             )}
           </div>
 
-          {band && (
-            <button type="button" onClick={() => document.getElementById("snp-clinical-circuit")?.scrollIntoView({ behavior: "smooth", block: "start" })} className="snp-chip inline-flex min-h-11 items-center gap-2 bg-[var(--snp-sky-tint)]">
-              🩺 Ir para as missões extras: exame neurológico e estado mental (opcional, fora da partida)
-            </button>
-          )}
+          {band && <CircuitoObrigatorioAviso circuito={circuito} />}
 
           <div className="snp-panel p-5">
             <h2 className="snp-pixel text-base">2 · Escolha o herói</h2>
@@ -1265,6 +1275,7 @@ export default function SuperNeuroPadGamePage() {
           <h2 className="snp-pixel text-2xl sm:text-3xl">Conquista: {phase.badge}!</h2>
           <p className="mt-1 text-base font-bold opacity-90">{character.name} {character.role} chegou ao mundo {phaseIndex + 2}.</p>
           <div className="mt-4"><SpeechBubble character={character} text={HERO_LINES[character.id]?.done ?? "Conquista no bolso!"} /></div>
+          <div className="mt-4 flex justify-center"><CircuitoObrigatorioAviso circuito={circuito} /></div>
           <ArcadeButton tone="sun" className="mt-5 px-6 py-3 text-base" onClick={nextPhase}>
             Próximo mundo: {phaseById(PHASE_ORDER[phaseIndex + 1], ageYears ?? undefined).emoji} {phaseById(PHASE_ORDER[phaseIndex + 1], ageYears ?? undefined).name}
           </ArcadeButton>
@@ -1285,6 +1296,8 @@ export default function SuperNeuroPadGamePage() {
               {(session.pausedSeconds ?? 0) > 0 ? ` (${formatDuration(session.pausedSeconds ?? 0)} em pausa)` : ""}
             </p>
           </div>
+
+          <div className="flex justify-center"><CircuitoObrigatorioAviso circuito={circuito} /></div>
 
           <div className="snp-panel snp-panel--soft p-5" data-testid="super-neuropad-incomplete">
             <div className="snp-pixel text-[11px] opacity-80">Registro de respostas · {summary.band.label} · {summary.complete ? "partida completa" : `partida incompleta (${session.answers.length} de ${summary.total} itens)`}</div>
@@ -1425,9 +1438,9 @@ export default function SuperNeuroPadGamePage() {
           </p>
         </section>
       )}
-      {/* Extensão clínica opcional: fica montada e em memória durante o jogo.
-          A troca de idade ou paciente descarta os registros via key. */}
-      <ClinicalCircuit key={ageYears ?? "sem-idade"} years={ageYears} visible={screen === "setup" || screen === "results"} bateria={resumoBateria} />
+      {/* Circuito clínico obrigatório: fica montado e em memória durante o jogo e aparece na preparação,
+          entre os mundos e nos resultados. A troca de idade ou paciente descarta os registros via key. */}
+      <ClinicalCircuit key={ageYears ?? "sem-idade"} years={ageYears} visible={screen === "setup" || screen === "phase-done" || screen === "results"} bateria={resumoBateria} onProgresso={setCircuito} />
     </div>
   );
 }
