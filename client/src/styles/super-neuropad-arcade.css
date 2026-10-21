@@ -79,3 +79,7 @@
 @media (prefers-reduced-motion: reduce) {
   .snp-btn, .snp-option, .snp-xp * { transition: none !important; animation: none !important; }
 }
+
+/* Melhorias isoladas: leitura dos comandos durante a aplicação, sem alterar o jogo. */
+.snp .snp-clinical-instruction { font-size: clamp(1rem, 1.4vw, 1.2rem); line-height: 1.55; overflow-wrap: anywhere; }
+.snp .snp-clinical-criterion { font-size: 1rem; line-height: 1.55; overflow-wrap: anywhere; }

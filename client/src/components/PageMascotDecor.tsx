@@ -109,7 +109,7 @@ function hasInlineNino(path: string): boolean {
 }
 
 function isDenseClinicalWorkspace(path: string): boolean {
-  return /^\/(prontuario|agenda|recepcao|pacientes|paciente|pre-consulta|pre-retorno|documentos|laudo-neuroped|laudo-super|laudo-um-clique|receita-c1|receita-c1-express|assinatura-digital|medicamentos|farmacologia|calculadora-dose)(?:\/|$)/.test(path);
+  return /^\/(super-neuropad-game|prontuario|agenda|recepcao|pacientes|paciente|pre-consulta|pre-retorno|documentos|laudo-neuroped|laudo-super|laudo-um-clique|receita-c1|receita-c1-express|assinatura-digital|medicamentos|farmacologia|calculadora-dose)(?:\/|$)/.test(path);
 }
 
 /**
