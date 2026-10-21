@@ -216,6 +216,9 @@ async function main() {
       assert.match(await obrigatorios.innerText(), /Falta a síntese final do examinador/i);
       assert.match(await aviso.innerText(), /incompleto — abrir/i, "sem a síntese final o circuito segue incompleto");
       await circuitOf(page).getByLabel(/Síntese final do examinador/).fill("Síntese sintética de teste, sem dados reais.");
+      // O aviso da página é atualizado por um efeito do React, um instante depois do preenchimento: espera refletir antes de afirmar.
+      await page.waitForFunction((total) => new RegExp(`${total}/${total} missões concluídas · completo — abrir`, "i")
+        .test(document.querySelector('[data-testid="super-neuropad-circuit-required"]')?.textContent ?? ""), totalMissoes);
       assert.match(await aviso.innerText(), new RegExp(`${totalMissoes}/${totalMissoes} missões concluídas · completo — abrir`, "i"));
       assert.equal(await circuitOf(page).locator("button:disabled").count(), 0, "nenhum controle desabilitado com a estrutura completa");
       const [downloadCompleto] = await Promise.all([page.waitForEvent("download"), circuitOf(page).getByRole("button", { name: /Baixar TXT/ }).click()]);
