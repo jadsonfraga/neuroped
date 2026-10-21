@@ -87,3 +87,7 @@ Detalhes em `docs/SUPER_NEUROPAD_GAME.md`, seção "Correções da auditoria da 
 Não implementado nesta rodada: reconciliação das branches #1191 e #1192, controle de acesso por perfil, exigência de descrição semiológica e bloqueio de impressão pela matriz. Essas são decisões do médico e do produto.
 
 Verificação: `npm run test:super-neuropad` (112 de 112), E2E do circuito (16 faixas) e regressão do jogo, ambos aprovados.
+
+## 8. Estrutura obrigatória do circuito (v2026-10-21.1)
+
+O circuito deixou de ser opcional por decisão do responsável clínico: cada missão exige resultado, quem informou e marcador ou descrição (descrição do achado em "Teve dificuldade"), e a síntese final também é obrigatória. O circuito é declarado COMPLETO ou INCOMPLETO no relatório e a pendência aparece na preparação, entre os mundos, nos resultados e na aba de cobertura. Nenhum controle é desabilitado e nada libera documento. Detalhes em `docs/SUPER_NEUROPAD_GAME.md`, seção "Estrutura obrigatória do circuito".

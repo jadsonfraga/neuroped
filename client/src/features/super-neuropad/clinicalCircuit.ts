@@ -4,7 +4,7 @@
  * armazenamento local, acesso à câmera ou alteração da bateria principal.
  * Estações `presencial` nunca podem ser inferidas por resposta de tela.
  */
-export const CIRCUIT_VERSION = "2026-10-20.4";
+export const CIRCUIT_VERSION = "2026-10-21.1";
 export type CircuitArea = "neurologico" | "mental";
 export type CircuitMethod = "ludico" | "observacao" | "presencial" | "entrevista";
 export type CircuitStatus = "observado" | "achado" | "nao_realizado" | "nao_colaborou";
@@ -187,7 +187,7 @@ function coverageSection(title: string, domains: readonly CoverageDomain[], year
   return [title, ...rows, ""];
 }
 
-export function buildCircuitReport(years: number, records: CircuitRecords, generalNote = "", at = new Date()): string {
+export function buildCircuitReport(years: number, records: CircuitRecords, generalNote = "", at = new Date(), cabecalho: readonly string[] = []): string {
   const tasks = circuitForAge(years);
   if (!tasks.length) return "Circuito não disponível para esta idade.";
   const entries = tasks.filter((task) => records[task.id]?.status);
@@ -197,6 +197,7 @@ export function buildCircuitReport(years: number, records: CircuitRecords, gener
     `Idade informada: ${years} anos | Emissão local: ${at.toLocaleString("pt-BR")}`,
     `Estações registradas: ${entries.length}/${tasks.length}. As demais NÃO foram examinadas.`,
     "A execução de tarefas digitais não equivale ao exame neurológico físico presencial.",
+    ...cabecalho,
     "",
   ];
   for (const area of ["neurologico","mental"] as const) {

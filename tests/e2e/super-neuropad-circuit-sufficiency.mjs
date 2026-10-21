@@ -1,7 +1,9 @@
 // Super NeuroPad — circuito clínico e matriz de suficiência para o laudo, ponta a ponta no navegador.
 // Cobre: adaptação por faixa etária; registro de estações; matriz que distingue examinado, a esclarecer,
 // depende de fonte externa e depende de decisão médica; exportação TXT; cola no laudo SEM emissão
-// automática; acessibilidade (axe) e largura em celular. Dados sintéticos; sem câmera; sem rede clínica.
+// automática; acessibilidade (axe) e largura em celular. Estrutura obrigatória: toda missão exige resultado,
+// quem informou e marcador ou descrição (descrição do achado em "Teve dificuldade") e a síntese final; o circuito
+// é declarado COMPLETO ou INCOMPLETO sem desabilitar nenhum controle. Dados sintéticos; sem câmera; sem rede clínica.
 import assert from "node:assert/strict";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { chromium } from "playwright";
@@ -11,7 +13,7 @@ import { createSyntheticClinicalApi, SYNTHETIC_CREDENTIALS } from "../../scripts
 
 const dir = process.env.SUPER_NEUROPAD_ARTIFACT_DIR || "/tmp/super-neuropad-circuit-sufficiency";
 const OBSERVADO = /Conseguiu/;
-const ACHADO = /Teve dificuldade/;
+const ACHADO = /^🤔 Teve dificuldade/;
 const SOURCE_EXAMINADOR = "Observação direta pelo examinador";
 const SOURCE_ESCOLA = "Relato escolar";
 
@@ -68,6 +70,24 @@ async function record(page, title, status, source, nota = "") {
     if ((await toggle.getAttribute("aria-expanded")) !== "true") await toggle.click();
     await station.locator("textarea").fill(nota);
   }
+}
+
+/** Conclui uma missão pelo caminho real da interface: marcador, resultado, quem informou (e descrição se não gamificada). */
+async function concluirMissao(page, aba, indice) {
+  await openTab(page, aba);
+  await circuitOf(page).getByLabel("Ir para estação").selectOption({ index: indice });
+  const station = page.getByTestId("super-neuropad-clinical-station");
+  const marcadores = station.getByRole("group", { name: /Toque no que você percebeu/ });
+  if (await marcadores.count()) {
+    const primeiro = marcadores.getByRole("button").first();
+    if ((await primeiro.getAttribute("aria-pressed")) !== "true") await primeiro.click();
+    await station.getByRole("button", { name: OBSERVADO }).click();
+  } else {
+    await station.getByRole("button", { name: /^Realizado — registrar descrição/ }).click();
+    await station.locator("textarea").fill("Descrição sintética de teste da entrevista profissional.");
+  }
+  await station.getByRole("button", { name: SOURCE_EXAMINADOR, exact: true }).click();
+  assert.match(await station.getByTestId("super-neuropad-mission-status").innerText(), /Missão concluída/, `missão ${indice} da aba "${aba}" concluída`);
 }
 
 function unresolvedCount(text) {
@@ -131,6 +151,15 @@ async function main() {
       await reflexStation.getByRole("button", { name: OBSERVADO }).click();
       await reflexStation.getByRole("group", { name: /Toque no que você percebeu/ }).getByRole("button").first().click();
       await record(page, "Janela do fundo", ACHADO, SOURCE_EXAMINADOR);
+      // Obrigatório: "Teve dificuldade" sem descrição do achado deixa a missão pendente, sem desabilitar nada.
+      const fundusStation = page.getByTestId("super-neuropad-clinical-station");
+      assert.match(await fundusStation.getByTestId("super-neuropad-mission-status").innerText(), /Obrigatório ainda pendente.*descrição do achado/);
+      assert.equal(await circuitOf(page).locator("button:disabled").count(), 0, "pendência obrigatória não desabilita controles");
+      const axeEstacao = await new AxeBuilder({ page }).include('[data-testid="super-neuropad-clinical-station"]').analyze();
+      await writeFile(`${dir}/axe-estacao-pendente.json`, JSON.stringify(axeEstacao.violations, null, 2));
+      assert.deepEqual(axeEstacao.violations.map((violation) => ({ id: violation.id, targets: violation.nodes.map((node) => node.target) })), [], "axe sem violações na missão com pendência obrigatória");
+      await fundusStation.locator("textarea").fill("Achado sintético de teste descrito pelo examinador em frase completa.");
+      assert.match(await fundusStation.getByTestId("super-neuropad-mission-status").innerText(), /Missão concluída/);
       await record(page, "Linha do tempo da aventura", OBSERVADO, SOURCE_ESCOLA, "Relatório da escola descreve leitura e escrita adequadas à série e atenção oscilante em atividades longas.");
       await openTab(page, "Cobertura e lacunas");
       const depois = unresolvedCount(await readiness.innerText());
@@ -140,6 +169,9 @@ async function main() {
       assert.match(await readiness.innerText(), /Relato escolar com descrição do funcionamento registrado no circuito/);
       assert.ok(await readiness.getByText("Depende de decisão médica", { exact: true }).count() >= 4, "decisão médica sem preenchimento automático");
       observations.itensNaoResolvidosComRegistro = depois;
+      const chipConcluidas = (await circuitOf(page).innerText()).match(/(\d+)\/(\d+) missões concluídas/i);
+      assert.ok(chipConcluidas, "contador de missões concluídas exibido");
+      assert.equal(chipConcluidas[1], "3", `reflexos, fundo de olho e marcos concluídos; as demais seguem pendentes (exibido ${chipConcluidas[0]})`);
 
       // 3. Exportação: o TXT carrega a matriz e a declaração de não emissão automática.
       const downloads = [];
@@ -158,6 +190,41 @@ async function main() {
       assert.match(txt, /ATENÇÃO CLÍNICA:/, "achado a esclarecer aparece em aviso clínico, não como pendência de checklist");
       assert.match(txt, /Depende de decisão médica/);
       assert.match(txt, /Marcado: /, "marcadores tocados entram no registro");
+      assert.match(txt, /CIRCUITO CLÍNICO OBRIGATÓRIO: INCOMPLETO — 3 de \d+ missões concluídas; síntese do examinador pendente\./);
+      assert.match(txt, /Síntese final do examinador: falta registrar\./);
+      assert.match(txt, /Obrigatório não trava a interface nem libera documento/);
+
+      // 3b. Estrutura obrigatória de ponta a ponta (9 anos, inclui a entrevista de segurança não gamificada):
+      // só fica COMPLETO com todas as missões concluídas e a síntese final; nenhum controle é desabilitado.
+      await openGame(page, server.origin, 9);
+      const aviso = page.getByTestId("super-neuropad-circuit-required");
+      // A troca de idade remonta o circuito e zera os registros; aguarda o contador refletir isso antes de afirmar.
+      await page.waitForFunction(() => /0\/\d+ missões concluídas/i.test(document.querySelector('[data-testid="super-neuropad-circuit-required"]')?.textContent ?? ""));
+      assert.match(await aviso.innerText(), /0\/\d+ missões concluídas · incompleto — abrir/i);
+      assert.match(await page.getByRole("list", { name: "Passos da preparação" }).innerText(), /Circuito clínico 0\/\d+/i);
+      let totalMissoes = 0;
+      for (const aba of ["Exame neurológico", "Estado mental"]) {
+        await openTab(page, aba);
+        const total = await circuitOf(page).getByLabel("Ir para estação").locator("option").count();
+        totalMissoes += total;
+        for (let indice = 0; indice < total; indice++) await concluirMissao(page, aba, indice);
+      }
+      assert.match(await circuitOf(page).innerText(), new RegExp(`${totalMissoes}/${totalMissoes} missões concluídas`, "i"));
+      await openTab(page, "Cobertura e lacunas");
+      const obrigatorios = circuitOf(page).getByTestId("super-neuropad-clinical-mandatory");
+      assert.match(await obrigatorios.innerText(), /Todas as missões obrigatórias estão concluídas/i);
+      assert.match(await obrigatorios.innerText(), /Falta a síntese final do examinador/i);
+      assert.match(await aviso.innerText(), /incompleto — abrir/i, "sem a síntese final o circuito segue incompleto");
+      await circuitOf(page).getByLabel(/Síntese final do examinador/).fill("Síntese sintética de teste, sem dados reais.");
+      assert.match(await aviso.innerText(), new RegExp(`${totalMissoes}/${totalMissoes} missões concluídas · completo — abrir`, "i"));
+      assert.equal(await circuitOf(page).locator("button:disabled").count(), 0, "nenhum controle desabilitado com a estrutura completa");
+      const [downloadCompleto] = await Promise.all([page.waitForEvent("download"), circuitOf(page).getByRole("button", { name: /Baixar TXT/ }).click()]);
+      const caminhoCompleto = `${dir}/circuito-obrigatorio-completo-9a.txt`;
+      await downloadCompleto.saveAs(caminhoCompleto);
+      const txtCompleto = await readFile(caminhoCompleto, "utf8");
+      assert.match(txtCompleto, new RegExp(`CIRCUITO CLÍNICO OBRIGATÓRIO: COMPLETO — ${totalMissoes} de ${totalMissoes} missões concluídas; síntese do examinador registrada\\.`));
+      assert.doesNotMatch(txtCompleto, /INCOMPLETO/);
+      observations.circuitoObrigatorioCompleto9Anos = totalMissoes;
 
       // 4. Cola no laudo: sem download ou impressão automática; liberação segue manual.
       const downloadsAntes = downloads.length;
@@ -192,7 +259,7 @@ async function main() {
     await readinessAge.waitFor();
     assert.equal(await page.getByTestId("super-neuropad-clinical-circuit").count(), 1, `faixa ${age}: apenas um circuito`);
     assert.match(await circuitOf(page).getByTestId("super-neuropad-age-profile").innerText(), new RegExp(`Roteiro de ${age} anos`));
-    assert.match(await circuitOf(page).innerText(), /0\/\d+ missões registradas/i, `faixa ${age}: dados de outra idade não podem migrar`);
+    assert.match(await circuitOf(page).innerText(), /0\/\d+ missões concluídas/i, `faixa ${age}: dados de outra idade não podem migrar`);
     assert.match(await readinessAge.innerText(), /Emissão automática: não\./, `faixa ${age}: sem emissão automática`);
     assert.equal(await circuitOf(page).locator("button:disabled").count(), 0, `faixa ${age}: nenhum controle desabilitado`);
     const guias = await circuitOf(page).getByTestId("super-neuropad-clinical-hypotheses").locator("article").count();

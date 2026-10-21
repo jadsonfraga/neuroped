@@ -55,7 +55,7 @@ test("relatório descritivo: somente respostas executadas, lacunas e nenhuma nor
     rapport: { status: "observado", note: "" },
   }, "Rever em consulta.", new Date("2026-10-20T12:00:00.000Z"));
   assert.match(report,/Estações registradas: 3\//);
-  assert.match(report,/2026-10-20.4/);
+  assert.match(report,/2026-10-21.1/);
   assert.match(report,/EXAME NEUROLÓGICO BÁSICO/);
   assert.match(report,/ESTADO MENTAL/);
   assert.match(report,/Sem martelo disponível/);
@@ -69,7 +69,7 @@ test("relatório descritivo: somente respostas executadas, lacunas e nenhuma nor
 test("integração aditiva na tela existente e isolamento de envio, gravação e XP", () => {
   const page = readFileSync("client/src/pages/super-neuropad-game.tsx","utf8");
   const component = readFileSync("client/src/features/super-neuropad/ClinicalCircuit.tsx","utf8");
-  assert.match(page,/import \{ ClinicalCircuit \}/);
+  assert.match(page,/import \{ ClinicalCircuit(, type ProgressoCircuito)? \}/);
   assert.match(page,/<ClinicalCircuit key=\{ageYears \?\? "sem-idade"\}/);
   assert.match(component,/visible=|visible: boolean/);
   assert.match(component,/screen|Somente apoio|Não altera os seis mundos|Não são anexados ao PDF/);

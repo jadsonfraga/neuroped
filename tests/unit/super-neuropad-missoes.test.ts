@@ -55,7 +55,8 @@ test("gamificação: passos e marcadores são tocáveis, resultado em quatro esc
   assert.match(component, /🚫 Não deu para fazer/);
   assert.doesNotMatch(component, /\?\? "examinador"/, "a fonte não é preenchida automaticamente");
   assert.match(component, /Orientação clínica completa/);
-  assert.match(component, /Anotação livre \(opcional\)/);
+  assert.match(component, /Anotação livre \(obrigatória em/);
+  assert.doesNotMatch(component, /\(opcional\)|Circuito opcional|Missões clínicas extras/, "nada do circuito é apresentado como opcional");
 });
 
 test("risco continua fora da gamificação: entrevista profissional sem passos de brincadeira", () => {

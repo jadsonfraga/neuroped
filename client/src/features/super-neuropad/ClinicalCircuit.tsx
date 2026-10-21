@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, ChevronLeft, ChevronRight, ClipboardCopy, Download, ExternalLink, RotateCcw, ShieldAlert, Stethoscope } from "lucide-react";
 import { downloadTextDocument } from "@/lib/shareText";
 import {
@@ -8,6 +8,13 @@ import {
 } from "./clinicalCircuit";
 import { ClinicalDemo } from "./ClinicalDemo";
 import { MISSOES } from "./missoes";
+import {
+  CAMPO_LABELS, camposPendentes, detalheObrigatorio, linhaObrigatorio, resumoObrigatorio,
+  type EstadoMissao, type ResumoObrigatorio,
+} from "./obrigatorio";
+
+/** Progresso da estrutura obrigatória, repassado à página para aparecer em todo o fluxo. */
+export interface ProgressoCircuito { concluidas: number; total: number; completo: boolean }
 
 const ESTADO_TONE: Record<EstadoItem, string> = {
   coletado: "bg-[var(--snp-grass-tint)]",
@@ -95,6 +102,45 @@ function CoverageList({ title, domains, years, records }: { title: string; domai
   );
 }
 
+/** Situação da missão atual: concluída ou com campos obrigatórios pendentes. Informa, não trava. */
+function MissaoStatus({ faltam }: { faltam: readonly (keyof typeof CAMPO_LABELS)[] }) {
+  const concluida = faltam.length === 0;
+  return (
+    <p role="status" data-testid="super-neuropad-mission-status"
+      className={`rounded-xl border-2 p-3 text-xs font-bold ${concluida ? "border-[var(--snp-ink-40)] bg-white text-[var(--snp-ink-fixed)]" : "border-amber-700 bg-amber-50 text-amber-950"}`}>
+      {concluida
+        ? "✅ Missão concluída: campos obrigatórios preenchidos."
+        : `⏳ Obrigatório ainda pendente nesta missão: ${faltam.map((campo) => CAMPO_LABELS[campo]).join("; ")}.`}
+    </p>
+  );
+}
+
+/** Missões obrigatórias que ainda faltam. Cada item leva direto à missão; nada é desabilitado. */
+function ObrigatoriosPanel({ resumo, onIr }: { resumo: ResumoObrigatorio; onIr: (id: string) => void }) {
+  return (
+    <div className="space-y-2" data-testid="super-neuropad-clinical-mandatory">
+      <h3 className="text-sm font-black">Estrutura obrigatória — {resumo.concluidas} de {resumo.total} missões concluídas</h3>
+      <p className="text-xs font-semibold">
+        Toda missão exige resultado e quem informou; a missão realizada exige marcador ou descrição; “Teve dificuldade” exige descrição do achado; a síntese final do examinador também é obrigatória.
+        O circuito consta como {resumo.completo ? "COMPLETO" : "INCOMPLETO"} no relatório. Nada é desabilitado e a decisão de emitir o laudo continua sendo do médico.
+      </p>
+      {resumo.pendencias.length === 0 ? (
+        <p className="snp-chip bg-[var(--snp-grass-tint)]">✅ Todas as missões obrigatórias estão concluídas.</p>
+      ) : (
+        <ul className="space-y-2">
+          {resumo.pendencias.map((pendencia) => (
+            <li key={pendencia.id} className="snp-panel snp-panel--soft flex flex-wrap items-start justify-between gap-2 p-3 text-sm">
+              <span><strong>{pendencia.titulo}</strong>: falta {pendencia.faltam.map((campo) => CAMPO_LABELS[campo]).join("; ")}.</span>
+              <button type="button" onClick={() => onIr(pendencia.id)} className="snp-btn snp-btn--sky inline-flex min-h-11 items-center px-3 py-2 text-xs">Ir para a missão</button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {!resumo.sinteseFeita && <p className="text-xs font-semibold">Falta a síntese final do examinador (campo no fim desta seção).</p>}
+    </div>
+  );
+}
+
 const SUFICIENCIA_TONE: Record<SuficienciaStatus, string> = {
   examinado: "bg-[var(--snp-grass-tint)]",
   a_esclarecer: "bg-[var(--snp-berry-tint)]",
@@ -142,12 +188,15 @@ function MatrizList({ years, records, bateria }: { years: number; records: Circu
 }
 
 /**
- * Opcional e isolado da bateria principal: não entra em XP, contagem de itens,
- * resultado estatístico, PDF do jogo ou entrega automática à família.
+ * Parte obrigatória da avaliação, isolada da pontuação da bateria principal: não entra em XP,
+ * contagem de itens, resultado estatístico, PDF do jogo ou entrega automática à família.
  * Estado mantido em memória durante a passagem pelos seis mundos.
- * Nenhum controle trava o fluxo: cada missão pode ser registrada, revisada ou deixada em branco.
+ * Toda missão tem campos obrigatórios (ver obrigatorio.ts) e o circuito é declarado COMPLETO ou INCOMPLETO.
+ * Obrigatório não trava a interface: nenhum controle é desabilitado e a navegação é livre.
  */
-export function ClinicalCircuit({ years, visible, bateria = null }: { years: number | null; visible: boolean; bateria?: BateriaResumo | null }) {
+export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }: {
+  years: number | null; visible: boolean; bateria?: BateriaResumo | null; onProgresso?: (progresso: ProgressoCircuito | null) => void;
+}) {
   const [tab, setTab] = useState<CircuitTab>("neurologico");
   const [active, setActive] = useState(0);
   const [statuses, setStatuses] = useState<Record<string, CircuitStatus>>({});
@@ -163,13 +212,32 @@ export function ClinicalCircuit({ years, visible, bateria = null }: { years: num
   const tasks = years === null ? [] : circuitForAge(years, area);
   const task = tasks[Math.min(active, tasks.length - 1)];
   const demo = task ? STATION_DEMO[task.id] : undefined;
-  const recorded = all.filter((entry) => statuses[entry.id]).length;
-  const countFor = (option: CircuitArea) => `${all.filter((entry) => entry.area === option && statuses[entry.id]).length}/${all.filter((entry) => entry.area === option).length}`;
+  const estados: Record<string, EstadoMissao> = Object.fromEntries(all.map((entry) =>
+    [entry.id, { status: statuses[entry.id], source: sources[entry.id], marcadores: marks[entry.id] ?? [], descricao: notes[entry.id] ?? "" }]));
+  const resumo = years === null ? null : resumoObrigatorio(years, estados, generalNote);
+  const faltamDe = (id: string) => camposPendentes(estados[id] ?? {});
+  const marcaDe = (id: string) => (faltamDe(id).length === 0 ? " ✓" : statuses[id] ? " ⚠" : "");
+  const countFor = (option: CircuitArea) => `${all.filter((entry) => entry.area === option && faltamDe(entry.id).length === 0).length}/${all.filter((entry) => entry.area === option).length}`;
   const anotacaoDe = (id: string) => notaDeEstacao(statuses[id], marks[id] ?? [], notes[id] ?? "");
   const records: CircuitRecords = Object.fromEntries(all.filter((entry) => statuses[entry.id]).map((entry) =>
     [entry.id, { status: statuses[entry.id], note: anotacaoDe(entry.id), source: sources[entry.id], descricao: notes[entry.id] || "" }]));
-  const report = years === null ? "" : `${buildCircuitReport(years, records, generalNote)}\n\n${textoProntidao(years, matrizSuficiencia(years, records, bateria)).join("\n")}`;
-  if (years === null || !all.length) return null;
+  const report = years === null || !resumo ? ""
+    : `${buildCircuitReport(years, records, generalNote, new Date(), [linhaObrigatorio(resumo)])}\n\n${detalheObrigatorio(resumo).join("\n")}\n\n${textoProntidao(years, matrizSuficiencia(years, records, bateria)).join("\n")}`;
+  const progressoConcluidas = resumo ? resumo.concluidas : null;
+  const progressoTotal = resumo ? resumo.total : null;
+  const progressoCompleto = resumo ? resumo.completo : null;
+  useEffect(() => {
+    onProgresso?.(progressoConcluidas === null || progressoTotal === null || progressoCompleto === null
+      ? null : { concluidas: progressoConcluidas, total: progressoTotal, completo: progressoCompleto });
+  }, [onProgresso, progressoConcluidas, progressoTotal, progressoCompleto]);
+  if (years === null || !all.length || !resumo) return null;
+  const irParaMissao = (id: string) => {
+    const alvo = all.find((entry) => entry.id === id);
+    if (!alvo) return;
+    setTab(alvo.area);
+    setActive(Math.max(0, circuitForAge(years, alvo.area).findIndex((entry) => entry.id === id)));
+    setFeedback("");
+  };
   const previous = () => { setActive((index) => Math.max(0, index - 1)); setFeedback(""); };
   const next = () => { setActive((index) => Math.min(tasks.length - 1, index + 1)); setFeedback(""); };
   const escolherResultado = (status: CircuitStatus) => {
@@ -205,17 +273,17 @@ export function ClinicalCircuit({ years, visible, bateria = null }: { years: num
     <section id="snp-clinical-circuit" className={visible ? "snp-panel space-y-4 p-4 sm:p-6" : "hidden"} aria-label="Circuito clínico complementar" data-testid="super-neuropad-clinical-circuit">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="snp-pixel flex items-center gap-2 text-base"><Stethoscope className="h-5 w-5" /> Missões clínicas extras</h2>
+          <h2 className="snp-pixel flex items-center gap-2 text-base"><Stethoscope className="h-5 w-5" /> Missões clínicas obrigatórias</h2>
           <p className="mt-2 max-w-3xl text-sm font-semibold">
-            Circuito opcional de exame neurológico e estado mental · v{CIRCUIT_VERSION} · {years} anos. Supervisão profissional.
+            Parte obrigatória da avaliação: exame neurológico e estado mental · v{CIRCUIT_VERSION} · {years} anos. Supervisão profissional.
             Não altera os seis mundos, o tempo da partida, XP ou pontuação. Nenhuma tarefa isolada estabelece diagnóstico.
           </p>
         </div>
-        <span className="snp-chip bg-[var(--snp-sun-tint)]" aria-live="polite">{recorded}/{all.length} missões registradas</span>
+        <span className="snp-chip bg-[var(--snp-sun-tint)]" aria-live="polite">{resumo.concluidas}/{resumo.total} missões concluídas</span>
       </div>
       <div className="snp-panel snp-panel--soft p-3 text-xs font-semibold" role="note">
         <ShieldAlert className="mr-1 inline-block h-4 w-4" />
-        Atividade lúdica de observação: avise o responsável antes de iniciar. Os toques registram o que foi percebido, a anotação livre é opcional e nenhuma etapa trava a próxima.
+        Atividade lúdica de observação: avise o responsável antes de iniciar. Os toques registram o que foi percebido. Em cada missão são obrigatórios o resultado, quem informou e um marcador ou descrição (descrição do achado em “Teve dificuldade”), e nenhuma etapa trava a próxima.
         Exame presencial é feito pelo profissional para inferir força, tônus, reflexos, pares cranianos ou sensibilidade. Vídeos e animações são demonstrações da técnica, nunca gravações da criança.
       </div>
       <div className="snp-panel snp-panel--soft p-3 text-xs font-semibold" role="note" data-testid="super-neuropad-clinical-urgency">
@@ -249,6 +317,7 @@ export function ClinicalCircuit({ years, visible, bateria = null }: { years: num
           <p className="text-sm font-semibold">
             A cobertura mostra somente o que foi registrado. Pendente, parcial ou não realizado não significa normal nem alterado.
           </p>
+          <ObrigatoriosPanel resumo={resumo} onIr={irParaMissao} />
           <CoverageList title="Exame neurológico básico — domínios" domains={NEURO_BASIC_DOMAINS} years={years} records={records} />
           <CoverageList title="Exame do estado mental — seções" domains={MSE_SECTIONS} years={years} records={records} />
           <MatrizList years={years} records={records} bateria={bateria} />
@@ -281,7 +350,7 @@ export function ClinicalCircuit({ years, visible, bateria = null }: { years: num
             <ExternalLink className="h-4 w-4" /> Ver vídeo demonstrativo: {CIRCUIT_VIDEO_LINKS[task.video].label}
           </a>}
           <fieldset className="space-y-2">
-            <legend className="text-sm font-black">Toque no que você percebeu (pode marcar mais de um)</legend>
+            <legend className="text-sm font-black">Toque no que você percebeu (pode marcar mais de um) · obrigatório: um marcador ou uma descrição</legend>
             <div className="flex flex-wrap gap-2">
               {missao.pistas.map((pista) => (
                 <button key={pista} type="button" aria-pressed={pistasMarcadas.includes(pista)} onClick={() => alternarPista(pista)}
@@ -292,7 +361,7 @@ export function ClinicalCircuit({ years, visible, bateria = null }: { years: num
             </div>
           </fieldset>
           <fieldset className="space-y-2">
-            <legend className="text-sm font-black">Como foi?</legend>
+            <legend className="text-sm font-black">Como foi? (obrigatório)</legend>
             <div className="grid gap-2 sm:grid-cols-2">
               {RESULTADOS.map((opcao) => (
                 <button key={opcao.status} type="button" aria-pressed={statuses[task.id] === opcao.status} onClick={() => escolherResultado(opcao.status)}
@@ -305,7 +374,7 @@ export function ClinicalCircuit({ years, visible, bateria = null }: { years: num
             {pistasMarcadas.length > 0 && !statuses[task.id] && <p className="text-xs font-semibold">Escolha o resultado para incluir esta missão no registro.</p>}
           </fieldset>
           <fieldset className="space-y-2">
-            <legend className="text-sm font-black">Quem informou — sem escolha, o registro sai sem proveniência</legend>
+            <legend className="text-sm font-black">Quem informou (obrigatório) — sem escolha, a missão não conta como concluída</legend>
             <div className="flex flex-wrap gap-2">
               {(Object.entries(CIRCUIT_SOURCES) as [CircuitSource,string][]).map(([key,label]) =>
                 <button key={key} type="button" aria-pressed={sources[task.id] === key}
@@ -317,7 +386,7 @@ export function ClinicalCircuit({ years, visible, bateria = null }: { years: num
           </fieldset>
           <div className="space-y-2">
             <button type="button" aria-expanded={anotacaoAberta} onClick={() => setAnotacaoAberta((aberta) => !aberta)}
-              className="snp-option min-h-11 px-4 py-2 text-left text-sm font-black bg-[var(--snp-paper-fixed)]">{anotacaoAberta ? "▾" : "▸"} Anotação livre (opcional)</button>
+              className="snp-option min-h-11 px-4 py-2 text-left text-sm font-black bg-[var(--snp-paper-fixed)]">{anotacaoAberta ? "▾" : "▸"} Anotação livre (obrigatória em “Teve dificuldade”)</button>
             {anotacaoAberta && (
               <textarea rows={3} maxLength={1800} value={notes[task.id] || ""} onChange={(event) => setNotes((prior) => ({ ...prior, [task.id]:event.target.value }))}
                 className="w-full rounded-xl border-2 border-[var(--snp-ink-fixed)] bg-white p-3 text-sm font-normal text-[var(--snp-ink-fixed)]"
@@ -330,12 +399,13 @@ export function ClinicalCircuit({ years, visible, bateria = null }: { years: num
             {orientacaoAberta && <p className="font-semibold leading-relaxed">{task.guide}</p>}
           </div>
           <p className="text-xs font-semibold opacity-80"><strong>Documentar:</strong> {task.observe}</p>
+          <MissaoStatus faltam={faltamDe(task.id)} />
           <div className="flex flex-wrap items-center justify-between gap-2">
             <button type="button" onClick={previous}
               className="snp-btn snp-btn--paper inline-flex min-h-11 items-center gap-1 px-4 py-2 text-sm"><ChevronLeft className="h-4 w-4" /> Anterior</button>
             <select aria-label="Ir para estação" value={active} onChange={(event) => setActive(Number(event.target.value))}
               className="min-w-0 max-w-52 rounded-xl border-2 border-[var(--snp-ink-fixed)] bg-white p-2 text-sm text-[var(--snp-ink-fixed)]">
-              {tasks.map((entry,index) => <option key={entry.id} value={index}>{index + 1}. {entry.title}{statuses[entry.id] ? " ✓" : ""}</option>)}
+              {tasks.map((entry,index) => <option key={entry.id} value={index}>{index + 1}. {entry.title}{marcaDe(entry.id)}</option>)}
             </select>
             <button type="button" onClick={next}
               className="snp-btn snp-btn--sky inline-flex min-h-11 items-center gap-1 px-4 py-2 text-sm">Próxima <ChevronRight className="h-4 w-4" /></button>
@@ -352,7 +422,7 @@ export function ClinicalCircuit({ years, visible, bateria = null }: { years: num
           <p className="text-sm"><strong>Descrever:</strong> {task.observe}</p>
           {task.safety && <div className="rounded-xl border-2 border-amber-700 bg-amber-50 p-3 text-sm font-semibold text-amber-950" role="alert">{task.safety}</div>}
           <fieldset className="space-y-2">
-            <legend className="text-sm font-black">Resultado observado — selecione somente após executar</legend>
+            <legend className="text-sm font-black">Resultado observado (obrigatório) — selecione somente após executar</legend>
             <div className="grid gap-2 sm:grid-cols-2">
               {(Object.entries(CIRCUIT_STATUSES) as [CircuitStatus,string][]).map(([key,label]) =>
                 <button key={key} type="button" aria-pressed={statuses[task.id] === key}
@@ -363,7 +433,7 @@ export function ClinicalCircuit({ years, visible, bateria = null }: { years: num
             </div>
           </fieldset>
           <fieldset className="space-y-2">
-            <legend className="text-sm font-black">Fonte da informação deste registro</legend>
+            <legend className="text-sm font-black">Fonte da informação deste registro (obrigatória)</legend>
             <div className="flex flex-wrap gap-2">
               {(Object.entries(CIRCUIT_SOURCES) as [CircuitSource,string][]).map(([key,label]) =>
                 <button key={key} type="button" aria-pressed={sources[task.id] === key}
@@ -373,24 +443,25 @@ export function ClinicalCircuit({ years, visible, bateria = null }: { years: num
                 </button>)}
             </div>
           </fieldset>
-          <label className="block text-sm font-black">Achados objetivos ou motivo de não realização
+          <label className="block text-sm font-black">Achados objetivos ou motivo de não realização (obrigatório quando realizado ou com achado)
             <textarea rows={3} maxLength={1800} value={notes[task.id] || ""} onChange={(event) => setNotes((prior) => ({ ...prior, [task.id]:event.target.value }))}
               className="mt-2 w-full rounded-xl border-2 border-[var(--snp-ink-fixed)] bg-white p-3 text-sm font-normal text-[var(--snp-ink-fixed)]"
               placeholder="Somente fatos efetivamente observados, condições, lateralidade, colaboração e limitações. Evite identificadores pessoais." />
           </label>
+          <MissaoStatus faltam={faltamDe(task.id)} />
           <div className="flex flex-wrap items-center justify-between gap-2">
             <button type="button" onClick={previous}
               className="snp-btn snp-btn--paper inline-flex min-h-11 items-center gap-1 px-4 py-2 text-sm"><ChevronLeft className="h-4 w-4" /> Anterior</button>
             <select aria-label="Ir para estação" value={active} onChange={(event) => setActive(Number(event.target.value))}
               className="min-w-0 max-w-52 rounded-xl border-2 border-[var(--snp-ink-fixed)] bg-white p-2 text-sm text-[var(--snp-ink-fixed)]">
-              {tasks.map((entry,index) => <option key={entry.id} value={index}>{index + 1}. {entry.title}{statuses[entry.id] ? " ✓" : ""}</option>)}
+              {tasks.map((entry,index) => <option key={entry.id} value={index}>{index + 1}. {entry.title}{marcaDe(entry.id)}</option>)}
             </select>
             <button type="button" onClick={next}
               className="snp-btn snp-btn--sky inline-flex min-h-11 items-center gap-1 px-4 py-2 text-sm">Próxima <ChevronRight className="h-4 w-4" /></button>
           </div>
         </article>
       )}
-      <label className="block text-sm font-black">Síntese adicional do examinador (opcional)
+      <label className="block text-sm font-black">Síntese final do examinador (obrigatória)
         <textarea rows={2} maxLength={2000} value={generalNote} onChange={(event) => setGeneralNote(event.target.value)}
           className="mt-2 w-full rounded-xl border-2 border-[var(--snp-ink-fixed)] bg-white p-3 text-sm font-normal text-[var(--snp-ink-fixed)]"
           placeholder="Limitações, necessidade de exame dirigido ou informações de fonte distinta, com proveniência." />
