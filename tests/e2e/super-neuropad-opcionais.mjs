@@ -215,6 +215,36 @@ async function main() {
       assert.ok(observations.paginaInteiraEmCelularExcessoPx <= 1, "página sem rolagem horizontal em 390 px");
       assert.equal(await mobile.page.getByTestId("super-neuropad-game").getAttribute("data-age-style"), "adolescente", "apresentação sóbria a partir de 13 anos");
       await mobile.page.screenshot({ path: `${dir}/opcionais-celular.png`, fullPage: true });
+
+      // 7b. Auditoria 21/10/2026: durante a partida no celular a barra do app e o botão de ajuda saem do caminho e
+      // os botões de resposta ficam livres; fora da partida a barra volta.
+      mobile.page.on("dialog", (dialog) => dialog.accept());
+      const dock = mobile.page.getByTestId("mobile-primary-dock");
+      await dock.waitFor();
+      await mobile.page.getByRole("group", { name: "Personagens" }).getByRole("button", { name: /Robô Guerreiro/ }).click();
+      await mobile.page.getByRole("button", { name: "Começar a aventura", exact: true }).click();
+      await mobile.page.getByRole("button", { name: /Entrar na fase/ }).click();
+      await mobile.page.getByText(/Desafio 1 de/).waitFor();
+      assert.equal(await dock.isVisible(), false, "barra inferior escondida durante a partida");
+      assert.equal(await mobile.page.getByTestId("button-floating-help").isVisible(), false, "botão de ajuda escondido durante a partida");
+      const answer = mobile.page.locator('[data-testid="super-neuropad-game"] button:has-text("Acertou"), [data-testid="super-neuropad-game"] [role="group"][aria-label="Opções"] button').first();
+      await answer.scrollIntoViewIfNeeded();
+      const covered = await answer.evaluate((element) => {
+        const box = element.getBoundingClientRect();
+        const top = document.elementFromPoint(box.left + box.width / 2, Math.min(box.top + box.height / 2, window.innerHeight - 2));
+        return !(top && (top === element || element.contains(top)));
+      });
+      assert.equal(covered, false, "nenhum elemento fixo cobre o botão de resposta");
+      await mobile.page.screenshot({ path: `${dir}/partida-celular-14-anos.png` });
+      await mobile.page.waitForTimeout(MANUAL_TAP_GAP_MS);
+      const skip = mobile.page.getByRole("button", { name: "Não respondeu", exact: true });
+      if (await skip.count()) await skip.click();
+      else await mobile.page.getByRole("button", { name: "Aplicadora: não respondeu · pular", exact: true }).click();
+      await mobile.page.getByRole("button", { name: "Encerrar", exact: true }).click();
+      await mobile.page.locator('[data-testid="super-neuropad-game"][data-screen="results"]').waitFor();
+      await dock.waitFor();
+      assert.equal(await dock.isVisible(), true, "barra inferior volta fora da partida");
+      observations.barraEscondidaNaPartidaNoCelular = true;
     } finally {
       await mobile.context.close();
     }

@@ -811,6 +811,13 @@ export default function SuperNeuroPadGamePage() {
 
   useEffect(() => () => { music.current?.stop(); if (cheerTimer.current) window.clearTimeout(cheerTimer.current); }, []);
 
+  // Durante a partida a barra inferior do app e o botão de ajuda cobriam "Acertou/Errou" no celular.
+  // O CSS (flow-os.css) esconde os dois enquanto esta classe estiver no <body>; fora da partida voltam.
+  useEffect(() => {
+    document.body.classList.toggle("np-task-running", screen === "play");
+    return () => document.body.classList.remove("np-task-running");
+  }, [screen]);
+
   useEffect(() => {
     if (screen === "play") { itemStart.current = performance.now(); activeItemMs.current = 0; }
     setRepeated(false);
@@ -1158,7 +1165,7 @@ export default function SuperNeuroPadGamePage() {
   const compact = screen !== "setup";
 
   return (
-    <div ref={rootRef} className="snp scroll-mt-4 space-y-5 pb-8" data-testid="super-neuropad-game" data-screen={screen} data-age-style={ageYears !== null && ageYears >= 13 ? "adolescente" : "infantil"}>
+    <div ref={rootRef} className="snp scroll-mt-20 space-y-5 pb-8 lg:scroll-mt-4" data-testid="super-neuropad-game" data-screen={screen} data-age-style={ageYears !== null && ageYears >= 13 ? "adolescente" : "infantil"}>
       <header className={`snp-panel snp-scanlines snp-sky-bg relative overflow-hidden ${compact ? "px-4 py-3" : "p-5 sm:p-6"}`}>
         {!compact && <Clouds />}
         <div className="relative flex items-center gap-3">
