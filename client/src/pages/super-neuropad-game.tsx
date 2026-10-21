@@ -461,8 +461,8 @@ function JudgeStage({ item, onJudge }: { item: JudgedItem; onJudge: (status: Ans
           {item.informant === "cuidador" && <span className="snp-chip bg-[var(--snp-sun-tint)]" data-testid="super-neuropad-caregiver">Relato do cuidador</span>}
           <TurnCue who="aplicadora" />
         </div>
-        <p className="mt-1 text-lg font-black leading-snug">{item.prompt}</p>
-        <p className="mt-2 text-sm"><span className="font-black">Conta como acerto:</span> {item.expected}</p>
+        <p className="snp-clinical-instruction mt-1 font-black">{item.prompt}</p>
+        <p className="snp-clinical-criterion mt-2"><span className="font-black">Conta como acerto:</span> {item.expected}</p>
         {item.gesture && <p className="mt-1 text-sm"><span className="font-black">Alternativa aceita:</span> {item.gesture}</p>}
         <div className={`mt-4 grid gap-3 ${item.gesture ? "sm:grid-cols-5" : "sm:grid-cols-4"}`}>
           <ArcadeButton tone="grass" className="min-h-14 text-base" aria-keyshortcuts="1" onClick={(event) => onJudge("acerto", event)}>
