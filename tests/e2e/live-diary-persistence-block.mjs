@@ -14,6 +14,9 @@ const SENTINELS = {
   "diario:diario-escola": "school-existing-local",
   "diario:diario-sono": "sleep-existing-local",
   "diario:diario-alimentar": "food-existing-local",
+  "diario:diario-aderencia": "adherence-existing-local",
+  "diario:diario-desregulacao": "dysregulation-existing-local",
+  "diario:diario-dieta-sensorial": "sensory-diet-existing-local",
   "diario:epilepsia:v1": "epilepsy-existing-local",
   "diario:cefaleia:v1": "headache-existing-local",
 };
@@ -189,6 +192,9 @@ async function main() {
     await assertBlockedRoute(page, base, "/diario-escola", "diario-local-persistence-disabled");
     await assertBlockedRoute(page, base, "/diario-sono", "diario-local-persistence-disabled");
     await assertBlockedRoute(page, base, "/diario-alimentar", "diario-local-persistence-disabled");
+    await assertBlockedRoute(page, base, "/diario-aderencia", "diario-local-persistence-disabled");
+    await assertBlockedRoute(page, base, "/diario-desregulacao", "diario-local-persistence-disabled");
+    await assertBlockedRoute(page, base, "/diario-dieta-sensorial", "diario-local-persistence-disabled");
     await assertBlockedRoute(page, base, "/epilepsia", "epilepsy-diary-local-persistence-disabled");
     await assertBlockedRoute(page, base, "/cefaleia", "headache-diary-local-persistence-disabled");
 
@@ -207,7 +213,7 @@ async function main() {
     const loginVisible = await page.getByRole("heading", { name: /entrar|login/i }).isVisible().catch(() => false);
     if (loginVisible) throw new Error("sessão remota E2E não foi reconhecida como autenticada");
 
-    console.log("[live-diary-block] ✓ remoto autenticado: 6 superfícies bloqueadas e IndexedDB local preservado sem migração");
+    console.log("[live-diary-block] ✓ remoto autenticado: 9 superfícies bloqueadas e IndexedDB local preservado sem migração");
   } finally {
     await browser.close();
     server.close();
