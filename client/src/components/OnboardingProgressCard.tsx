@@ -3,11 +3,9 @@ import {
   AlertTriangle,
   CheckCircle2,
   Circle,
-  RefreshCw,
   Rocket,
 } from "lucide-react";
 import { z } from "zod";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClinic } from "@/contexts/ClinicContext";
@@ -413,48 +411,7 @@ export function OnboardingProgressCard() {
 
   if (!canLoad) return null;
   if (query.isPending) return <OnboardingLoading />;
-  if (query.isError || !query.data) {
-    return (
-      <section
-        className="rounded-3xl border border-destructive/20 bg-card p-4 sm:p-5"
-        aria-labelledby="onboarding-progress-error-title"
-        data-testid="onboarding-progress-error"
-      >
-        <div className="flex flex-wrap items-center gap-3">
-          <AlertTriangle
-            className="h-5 w-5 shrink-0 text-destructive"
-            aria-hidden="true"
-          />
-          <div className="min-w-0 flex-1">
-            <h2
-              id="onboarding-progress-error-title"
-              className="text-[14px] font-semibold text-foreground"
-            >
-              Progresso indisponível
-            </h2>
-            <p className="mt-0.5 text-[12px] text-muted-foreground" role="alert">
-              Não foi possível confirmar as etapas agora. Nenhuma conclusão foi
-              presumida.
-            </p>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={query.isFetching}
-            onClick={() => void query.refetch()}
-            className="gap-2"
-          >
-            <RefreshCw
-              className={`h-4 w-4 ${query.isFetching ? "animate-spin" : ""}`}
-              aria-hidden="true"
-            />
-            Tentar novamente
-          </Button>
-        </div>
-      </section>
-    );
-  }
+  if (query.isError || !query.data) return null;
 
   return <OnboardingProgressSummary onboarding={query.data} />;
 }
