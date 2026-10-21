@@ -37,11 +37,11 @@ function play(years: number, plan: (item: Item, phaseId: PhaseId) => AnswerStatu
 test("o relatório e o resumo da família descrevem contagens e não trazem leitura do jogo", () => {
   const session = play(8, (_item, phaseId) => (phaseId === "memoria" ? "erro" : "acerto"));
   const summary = summarize(session);
-  assert.equal(summary.hits, 30);
-  assert.equal(summary.phases.find((phase) => phase.phase.id === "memoria")!.errors, 6);
+  assert.equal(summary.hits, 42);
+  assert.equal(summary.phases.find((phase) => phase.phase.id === "memoria")!.errors, 8);
   assert.equal("familyReading" in familyDelivery, false);
   const text = buildFamilySummary(session, { email: "familia@exemplo.com", phone: "" });
-  assert.match(text, /Caverna da Memória: 0\/6/);
+  assert.match(text, /Caverna da Memória: 0\/8/);
   assert.doesNotMatch(text, /Leitura do jogo|merece conversa|referência interna|dentro d/i);
   assert.match(buildGameReport(session), /Registro descritivo; sem classificação\. Interpretação a cargo do profissional\./);
   assert.notEqual(SUPER_NEUROPAD_VERSION, "2026-09-30.1", "versão acompanha o banco de itens atual");

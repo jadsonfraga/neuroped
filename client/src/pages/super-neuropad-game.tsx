@@ -448,8 +448,8 @@ function JudgeStage({ item, onJudge }: { item: JudgedItem; onJudge: (status: Ans
           {item.informant === "cuidador" && <span className="snp-chip bg-[var(--snp-sun-tint)]" data-testid="super-neuropad-caregiver">Relato do cuidador</span>}
           <TurnCue who="aplicadora" />
         </div>
-        <p className="mt-1 text-lg font-black leading-snug">{item.prompt}</p>
-        <p className="mt-2 text-sm"><span className="font-black">Conta como acerto:</span> {item.expected}</p>
+        <p className="snp-clinical-instruction mt-1 font-black">{item.prompt}</p>
+        <p className="snp-clinical-criterion mt-2"><span className="font-black">Conta como acerto:</span> {item.expected}</p>
         {item.gesture && <p className="mt-1 text-sm"><span className="font-black">Alternativa aceita:</span> {item.gesture}</p>}
         <div className={`mt-4 grid gap-3 ${item.gesture ? "sm:grid-cols-5" : "sm:grid-cols-4"}`}>
           <ArcadeButton tone="grass" className="min-h-14 text-base" aria-keyshortcuts="1" onClick={(event) => onJudge("acerto", event)}>
@@ -955,7 +955,7 @@ export default function SuperNeuroPadGamePage() {
   const compact = screen !== "setup";
 
   return (
-    <div ref={rootRef} className="snp scroll-mt-4 space-y-5 pb-8" data-testid="super-neuropad-game" data-screen={screen}>
+    <div ref={rootRef} className="snp scroll-mt-4 space-y-5 pb-8" data-testid="super-neuropad-game" data-screen={screen} data-age-style={ageYears !== null && ageYears >= 13 ? "adolescente" : "infantil"}>
       <header className={`snp-panel snp-scanlines snp-sky-bg relative overflow-hidden ${compact ? "px-4 py-3" : "p-5 sm:p-6"}`}>
         {!compact && <Clouds />}
         <div className="relative flex items-center gap-3">
@@ -965,8 +965,8 @@ export default function SuperNeuroPadGamePage() {
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <span className="snp-chip">pré-consulta · aplicadora com a criança · {MIN_AGE_YEARS}–{MAX_AGE_YEARS} anos</span>
                 <span className="snp-chip">v{SUPER_NEUROPAD_VERSION}</span>
-                <span className="snp-chip">{PHASES.length} mundos · 3–6 desafios cada</span>
-                <span className="snp-chip">até 20 min (12 min aos 2 anos, 15 min aos 3)</span>
+                <span className="snp-chip">{PHASES.length} mundos · 3–9 desafios por mundo, conforme a idade</span>
+                <span className="snp-chip">12 min aos 2 anos · 15 aos 3 · 20 de 4–7 · até 32 min de 8–17 (50 desafios)</span>
                 <span className="snp-chip">sem câmera · sem material externo</span>
               </div>
             )}

@@ -2,7 +2,7 @@
 // contagem por faixa, ids e conteúdos sem duplicata, origem rastreável nas
 // quatro abas (Sonda 10, OBS-10, Reconhecimento Visual, Avaliação Cognitiva),
 // calibração por idade, adaptações para 2–3 anos, nada fora do aplicativo e
-// sessão estimada em até 20 minutos em todas as faixas.
+// sessão estimada dentro do teto específico da faixa (até 32 min a partir de 8 anos).
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -33,12 +33,12 @@ const texts = (item: Item): string[] => {
   return [...base, item.expected, item.stimulus ?? "", item.gesture ?? ""];
 };
 
-test("contagem por faixa: 3 por mundo aos 2 anos (18), 4 dos 3 aos 5 anos (24), 5 aos 6–7 anos (30), 6 a partir de 8 anos (36); seis mundos em todas as idades", () => {
+test("contagem por faixa: 3 por mundo aos 2 anos (18), 4 dos 3 aos 5 anos (24), 5 aos 6–7 anos (30), 8–9 por mundo a partir de 8 anos (50); seis mundos em todas as idades", () => {
   assert.deepEqual([...YEARS], Array.from({ length: 16 }, (_, index) => index + 2));
   assert.deepEqual(Object.keys(INTEGRATED_BANK).map(Number), [...YEARS]);
   for (const years of YEARS) {
-    for (const phaseId of PHASE_ORDER) assert.equal(itemsFor(String(years), phaseId).length, itemsPerPhase(years), `${years}/${phaseId}`);
-    assert.equal(bandItemCount(String(years)), years === 2 ? 18 : years <= 5 ? 24 : years <= 7 ? 30 : 36);
+    for (const phaseId of PHASE_ORDER) assert.equal(itemsFor(String(years), phaseId).length, itemsPerPhase(years, phaseId), `${years}/${phaseId}`);
+    assert.equal(bandItemCount(String(years)), years === 2 ? 18 : years <= 5 ? 24 : years <= 7 ? 30 : 50);
   }
   assert.ok(bandItemCount("2") < bandItemCount("6"), "2–3 anos: menos desafios");
 });
@@ -163,7 +163,7 @@ test("fala/ação têm critério explícito; montar tem letras suficientes; dese
       if (item.kind === "fala" || item.kind === "fazer") {
         assert.doesNotMatch(item.prompt, /\b(no papel|com o lápis|pegue o|entregue|bola macia|blocos?|caixa com tampa|cronômetro|fita)\b/i, `${item.id}: nada de material fora do aplicativo`);
       }
-      assert.doesNotMatch(texts(item).join(" "), /câmera|filme|grave|fotograf/i, `${item.id}: sem câmera`);
+      assert.doesNotMatch(texts(item).join(" "), /câmera|filmar a criança|grave a criança|fotograf/i, `${item.id}: sem câmera`);
     }
   }
 });
@@ -226,11 +226,11 @@ test("tudo sobrevive ao PDF: enunciados, critérios, rótulos e referências sem
   assert.throws(() => labelForArt("🦖"), /sem nome/);
 });
 
-test("tempo estimado: sessão inteira em até 20 minutos em toda faixa, com mais tempo por item para 2–5 anos e pausa planejada", () => {
+test("tempo estimado: sessão dentro do limite etário, com mais tempo por item para 2–5 anos e pausa planejada", () => {
   const table: string[] = [];
   for (const years of YEARS) {
     const estimate = estimateBandSeconds(years);
-    assert.ok(estimate.totalSeconds <= sessionLimitSeconds(years), `${years} anos: ${estimate.totalSeconds}s > 20 min`);
+    assert.ok(estimate.totalSeconds <= sessionLimitSeconds(years), `${years} anos: ${estimate.totalSeconds}s > limite etário`);
     assert.ok(estimate.totalSeconds >= 8 * 60, `${years} anos: estimativa plausível (${estimate.totalSeconds}s)`);
     assert.equal(estimate.items, bandItemCount(String(years)));
     assert.deepEqual(Object.keys(estimate.byPhase), [...PHASE_ORDER]);

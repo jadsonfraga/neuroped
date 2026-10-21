@@ -79,3 +79,24 @@
 @media (prefers-reduced-motion: reduce) {
   .snp-btn, .snp-option, .snp-xp * { transition: none !important; animation: none !important; }
 }
+
+
+/* Auditoria visual 21/10: leitura clínica, contraste e alvos acessíveis. */
+.snp .snp-pixel { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; letter-spacing: 0.025em; line-height: 1.45; font-weight: 800; }
+.snp .snp-btn, .snp .snp-chip { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; letter-spacing: 0.015em; line-height: 1.35; }
+.snp .snp-chip { font-size: max(.78rem, 12px); white-space: normal; overflow-wrap: anywhere; }
+.snp .snp-clinical-instruction { font-size: clamp(1rem, 1.4vw, 1.2rem); line-height: 1.55; overflow-wrap: anywhere; }
+.snp .snp-clinical-criterion { font-size: 1rem; line-height: 1.55; overflow-wrap: anywhere; }
+.snp .snp-hearts { flex-wrap: wrap; max-width: 100%; }
+.snp .snp-option, .snp .snp-btn { overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+  .snp .snp-pixel { letter-spacing: 0.01em; }
+  .snp .snp-panel { max-width: 100%; }
+  .snp .snp-clinical-instruction { font-size: 1rem; }
+}
+
+/* A apresentação ao adolescente prioriza sobriedade sem alterar conteúdo. */
+.snp[data-age-style="adolescente"] .snp-scanlines::after { background: none; }
+.snp[data-age-style="adolescente"] .snp-sprite { filter: none; }
+.snp[data-age-style="adolescente"] .snp-panel { border-radius: 14px; box-shadow: 2px 3px 0 var(--snp-shadow); }
+.snp[data-age-style="adolescente"] .snp-btn { border-radius: 10px; box-shadow: 0 3px 0 var(--snp-ink-fixed); }

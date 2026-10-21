@@ -60,7 +60,7 @@ test("faixas etárias: um ano cada, de 2 a 17, sem lacuna; menores de 2 anos blo
     assert.equal(band.min, years);
     assert.equal(band.max, years);
     assert.equal(band.label, `${years} anos`);
-    assert.equal(band.perPhase, years === 2 ? 3 : years <= 5 ? 4 : years <= 7 ? 5 : 6);
+    assert.equal(band.perPhase, years === 2 ? 3 : years <= 5 ? 4 : years <= 7 ? 5 : 8);
     const gate = ageGate(years);
     assert.equal(gate.ok, true);
   }
@@ -201,10 +201,10 @@ function play(years: number, plan: Plan = () => "acerto"): GameSession {
 
 test("resumo conta acertos por mundo e no total, com completude", () => {
   const perfect = summarize(play(8));
-  assert.equal(perfect.hits, 36);
-  assert.equal(perfect.total, 36);
+  assert.equal(perfect.hits, 50);
+  assert.equal(perfect.total, 50);
   assert.equal(perfect.complete, true);
-  assert.deepEqual(perfect.phases.map((phase) => phase.hits), [6, 6, 6, 6, 6, 6]);
+  assert.deepEqual(perfect.phases.map((phase) => phase.hits), [9, 9, 8, 8, 8, 8]);
 
   const young = summarize(play(4));
   assert.equal(young.total, 24);
@@ -404,7 +404,7 @@ test("desfazer último registro devolve mundo e índice exatos do desafio a refa
 
 test("estatísticas descritivas: contagens, tipos de resposta, gesto, repetição, tempos e eventos — sem prioridade, padrão ou roteiro", () => {
   const perfect = sessionStats(play(8));
-  assert.deepEqual([perfect.registered, perfect.hits, perfect.errors, perfect.noResponse, perfect.refused], [36, 36, 0, 0, 0]);
+  assert.deepEqual([perfect.registered, perfect.hits, perfect.errors, perfect.noResponse, perfect.refused], [50, 50, 0, 0, 0]);
 
   const mixed = sessionStats(play(6, (index) => (index >= 20 && index < 25 ? "recusa" : index === 10 || index === 11 ? "erro" : "acerto")));
   assert.deepEqual([mixed.errors, mixed.noResponse, mixed.refused], [2, 0, 5]);
@@ -494,7 +494,7 @@ test("salvar no prontuário: resumo, partida, instrumentos, observações e cada
   const rows = buildPatientRecordItems(full);
   assert.equal(rows.length, full.answers.length + 4);
   assert.deepEqual(rows[0], { question: "Resumo para o prontuário", answer: buildGameBrief(full) });
-  assert.match(rows[1].answer, /Idade informada: 8 anos \(faixa anual\) · 36 de 36 itens registrados \(completa\)/);
+  assert.match(rows[1].answer, /Idade informada: 8 anos \(faixa anual\) · 50 de 50 itens registrados \(completa\)/);
   assert.match(rows[1].answer, /duração da sessão 15 min/);
   assert.match(rows[1].answer, /2 pausa\(s\) · 1 desfeito\(s\)/);
   assert.equal(rows[2].question, "O que foi testado por instrumento");

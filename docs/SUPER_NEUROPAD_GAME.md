@@ -1,7 +1,7 @@
 # Super NeuroPad Game
 
 Aba em destaque (`/super-neuropad-game`): **avaliação única de pré-consulta**, aplicada pela
-aplicadora junto com a criança, sem câmera e sem instrumento externo, em no máximo 20 minutos.
+aplicadora junto com a criança, sem câmera e sem instrumento externo, com duração informada por idade (até 32 minutos na expansão de 50 desafios para 8–17 anos).
 Integra os elementos da Sonda 10, da Observa 10 (OBS-10), do Reconhecimento Visual e da
 Avaliação Cognitiva Infantil. As quatro abas continuam existindo, com os seus bancos
 intactos; o jogo **lê** os bancos delas e não os modifica.
@@ -13,7 +13,7 @@ intactos; o jogo **lê** os bancos delas e não os modifica.
   Memória e Torre do Corpo.
 - Faixas **anuais** de 2 a 17 anos (o banco objetivo e o cognitivo já são anuais). Menos de 2
   anos: o jogo não é aplicado; a tela bloqueia e encaminha para OBS-10 (0–23 meses) e Sonda 10.
-- 4 desafios por mundo até 5 anos (24 na partida); 5 por mundo aos 6–7 anos (30); 6 por mundo a partir de 8 anos (36).
+- 18 itens aos 2 anos, 24 aos 3–5, 30 aos 6–7 e 50 por idade dos 8 aos 17 anos (9/9/8/8/8/8 nos seis mundos).
 - Efeitos sonoros 8-bit compartilhados do app (moeda ao registrar, power-up ao fechar fase,
   pulo ao trocar de mundo, bandeira ao concluir).
 - Todo item tem certo e errado explícitos. Toque e montagem de palavra são conferidos pelo jogo;
@@ -24,7 +24,7 @@ intactos; o jogo **lê** os bancos delas e não os modifica.
 - Acabamento arcade anos 90 (`client/src/styles/super-neuropad-arcade.css`). Animações só sob
   `prefers-reduced-motion: no-preference`; modo escuro pelos tokens do app.
 
-## Pré-consulta integrada (v2026-10-15.1)
+## Pré-consulta integrada (v2026-10-21.1)
 
 ### De onde vem cada item
 
@@ -51,6 +51,26 @@ cognitivos e objetivos são os mesmos das abas de origem.
 | 5 · Caverna da Memória | Memória, atenção e funções executivas | Sonda 10, OBS-10 |
 | 6 · Torre do Corpo | Coordenação motora, desenho e escrita | OBS-10, Sonda 10, Cognitiva |
 
+
+
+### Complementação de 21/10/2026 — 50 desafios por idade de 8–17 anos
+
+Foram incorporadas 14 tarefas além das 36 anteriores por idade, distribuídas por
+mundo em 3/3/2/2/2/2: pragmática, interpretação de contexto e cooperação;
+raciocínio visual contextualizado, busca e padrões; linguagem e leitura;
+cálculo; memória operacional e mudança de regra; escrita e grafomotricidade.
+Os itens extraídos da avaliação cognitiva preservam o enunciado, as opções
+e os critérios do banco de origem; os complementares inspirados na Sonda Dez
+e OBS-10 são expressamente rotulados como **autorais**. Esse acréscimo não
+equivale a padronização, validade diagnóstica ou norma por idade.
+
+As baterias de 2–7 anos **não foram alongadas compulsoriamente**, preservando
+a tolerabilidade e os limites específicos. O limite para a aplicação ampliada
+de 8–17 anos passa a 32 minutos, com possibilidade de pausa, recusa,
+não resposta, encerramento parcial e interpretação exclusivamente profissional.
+Na coluna “itens por mundo”, 8 significa o mínimo: Vila e Floresta têm 9,
+enquanto os demais mundos têm 8.
+
 ### Tabela de calibração por idade
 
 Contagens geradas do banco (`INTEGRATED_BANK`); tempo por `estimateBandSeconds`.
@@ -63,16 +83,16 @@ Contagens geradas do banco (`INTEGRATED_BANK`); tempo por `estimateBandSeconds`.
 | 5 anos | 24 (4) | 8 | 7 | 3 | 6 | 12/7/5/0 | 0 | 15.2 min |
 | 6 anos | 30 (5) | 11 | 10 | 2 | 7 | 14/11/5/0 | 0 | 13.9 min |
 | 7 anos | 30 (5) | 8 | 12 | 2 | 8 | 14/11/4/1 | 0 | 13.7 min |
-| 8 anos | 36 (6) | 14 | 11 | 1 | 10 | 15/15/5/1 | 0 | 17.8 min |
-| 9 anos | 36 (6) | 11 | 14 | 1 | 10 | 15/15/5/1 | 0 | 17.9 min |
-| 10 anos | 36 (6) | 15 | 10 | 1 | 10 | 15/15/5/1 | 0 | 18.2 min |
-| 11 anos | 36 (6) | 13 | 12 | 1 | 10 | 15/15/5/1 | 0 | 18.1 min |
-| 12 anos | 36 (6) | 15 | 10 | 1 | 10 | 15/15/5/1 | 0 | 18.6 min |
-| 13 anos | 36 (6) | 11 | 14 | 1 | 10 | 15/15/5/1 | 0 | 18.6 min |
-| 14 anos | 36 (6) | 15 | 10 | 1 | 10 | 15/15/5/1 | 0 | 18.8 min |
-| 15 anos | 36 (6) | 11 | 14 | 1 | 10 | 15/15/5/1 | 0 | 18.9 min |
-| 16 anos | 36 (6) | 15 | 10 | 1 | 10 | 15/15/5/1 | 0 | 19.1 min |
-| 17 anos | 36 (6) | 11 | 14 | 1 | 10 | 15/15/5/1 | 0 | 19.1 min |
+| 8 anos | 50 (8) | 17 | 13 | 2 | 18 | 24/20/5/1 | 0 | 22.6 min |
+| 9 anos | 50 (8) | 14 | 16 | 2 | 18 | 24/20/5/1 | 0 | 22.9 min |
+| 10 anos | 50 (8) | 18 | 12 | 2 | 18 | 24/20/5/1 | 0 | 23.0 min |
+| 11 anos | 50 (8) | 16 | 14 | 2 | 18 | 24/20/5/1 | 0 | 23.0 min |
+| 12 anos | 50 (8) | 18 | 12 | 2 | 18 | 23/21/5/1 | 0 | 23.6 min |
+| 13 anos | 50 (8) | 15 | 16 | 2 | 17 | 22/22/5/1 | 0 | 23.7 min |
+| 14 anos | 50 (8) | 18 | 12 | 2 | 18 | 23/21/5/1 | 0 | 23.9 min |
+| 15 anos | 50 (8) | 14 | 16 | 2 | 18 | 23/21/5/1 | 0 | 24.0 min |
+| 16 anos | 50 (8) | 18 | 12 | 2 | 18 | 23/21/5/1 | 0 | 24.2 min |
+| 17 anos | 50 (8) | 14 | 16 | 2 | 18 | 23/21/5/1 | 0 | 24.2 min |
 
 **Tempo estimado**: toque 12 s (+1 s a cada 25 caracteres de leitura, máx. +25 s), fala 20 s,
 ação 25 s, montar 30 s + 2 s por letra (ou o tempo próprio do item); fator de criança pequena
@@ -91,7 +111,7 @@ semântica (animais em 60 s, com piso autoral crescente de 8 a 13), cálculo men
 (equilíbrio sem visão, saltos em um pé, polichinelo, dupla tarefa). As semelhanças de 12–17 também
 passaram a subir de abstração com a idade (transporte → medida → obra de arte). Os pisos de
 fluência e os critérios são **conservadores e autorais, para déficit grosseiro**: não são norma, e a
-leitura final continua sendo do médico. O teto de 20 minutos segue travado por teste (máx. 19,1 min).
+leitura final continua sendo do médico. O limite etário de até 32 minutos segue travado por teste (máx. 19,1 min).
 
 **Critérios de calibração** (sem norma, sem inflar escore, sem mudar corte):
 
@@ -346,7 +366,7 @@ resposta ao nome, imitação, interesse por crianças, perda de habilidades).
 - **Limiares** (segundos de atenção, tentativas de espera, rodadas) são **piso autoral, não norma**.
 - 4 anos ou mais: sem alteração.
 
-## Correções do diagnóstico de 14/10/2026 (v2026-10-15.1)
+## Correções do diagnóstico de 14/10/2026 (v2026-10-21.1)
 
 Aplicadas em código, com testes (`tests/unit/super-neuropad-diagnostico.test.ts` e
 `tests/unit/dyslexia-risk-diagnostico.test.ts`):

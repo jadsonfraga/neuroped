@@ -53,7 +53,7 @@ export type { ToddlerDomain };
 export { buildMatches, isJudged, itemExpected, KIND_LABELS, ORIGIN_LABELS, ORIGIN_ORDER, ORIGIN_ROUTES, MAX_AGE_YEARS, MIN_AGE_YEARS, PHASE_ORDER, YEARS, itemsPerPhase };
 export type { BuildItem, DoItem, Item, JudgedItem, Option, OriginId, PhaseId, ShapeId, SpeakItem, TouchItem };
 
-export const SUPER_NEUROPAD_VERSION = "2026-10-15.1";
+export const SUPER_NEUROPAD_VERSION = "2026-10-21.1";
 export const SUPER_NEUROPAD_TITLE = "Super NeuroPad Game";
 export const SUPER_NEUROPAD_ROUTE = "/super-neuropad-game";
 export const SUPER_NEUROPAD_NATURE =
@@ -74,6 +74,7 @@ export function isToddlerYears(years: number): boolean {
 export function sessionLimitSeconds(years: number): number {
   if (years === 2) return 12 * 60;
   if (years === 3) return 15 * 60;
+  if (years >= 8) return 32 * 60; // 50 itens, com folga para execução supervisionada
   return SESSION_LIMIT_SECONDS;
 }
 

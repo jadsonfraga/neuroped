@@ -34,10 +34,11 @@ export const YEARS: readonly number[] = Array.from({ length: MAX_AGE_YEARS - MIN
  * A criança maior sustenta mais itens e precisa de mais domínios cobertos (fluência, controle
  * mental, busca visual, cognição social, dupla tarefa motora); o teto de 20 minutos é travado por teste.
  */
-export function itemsPerPhase(years: number): number {
+export function itemsPerPhase(years: number, phase?: PhaseId): number {
   if (years === 2) return 3;
   if (years <= 5) return 4;
-  return years <= 7 ? 5 : 6;
+  if (years <= 7) return 5;
+  return phase === "vila" || phase === "olhos" ? 9 : 8;
 }
 
 // ─────────────────────────────── nomes das figuras (registro e PDF) ───────────────────────────────
@@ -732,6 +733,72 @@ const EXTRAS: Record<PhaseId, (years: number) => Draft<Item>> = {
 };
 
 
+
+// ─── Ampliação estratégica (8–17 anos): 14 itens por idade, auditáveis ───
+// Itens importados preservam alternativas/critério do banco de origem.
+// Itens clínicos inspirados nos protocolos são identificados como autorais.
+const SUPPLEMENT = (ref: string, skill: string) => ref + " · " + skill + " (amostra complementar autoral do jogo)";
+const cognitiveAt = (years: number, domain: CognitiveDomain, index: number): AnyDraft => {
+  const list = COGNITIVE_BANK[years][domain];
+  const entry = list[index];
+  if (!entry) throw new Error("Item ausente: " + years + "/" + domain + "/" + index);
+  const occurrence = list.slice(0, index).filter((other) => other.prompt === entry.prompt).length;
+  return cog(years, domain, entry.prompt, occurrence);
+};
+function complementaryItems(years: number, phase: PhaseId): Draft<Item>[] {
+  if (years < 8) return [];
+  const teen = years >= 12;
+  const band = teen ? "12–17 anos" : "8–11 anos";
+  const social = [
+    fala("sonda10", SUPPLEMENT(SONDA(band, "pragmática conversacional"), "reparo comunicativo"),
+      teen ? "Pergunte: “Você mandou uma mensagem ambígua e alguém entendeu mal. Como esclareceria o que quis dizer?”" : "Pergunte: “Seu colega não entendeu o que você explicou. O que pode fazer para ajudar?”",
+      teen ? "Explica novamente, considera a interpretação alheia e pede confirmação da compreensão, sem hostilidade" : "Oferece outra explicação ou exemplo e verifica se o colega entendeu", { seconds: 22 }),
+    fala("obs10", SUPPLEMENT(OBS(band, "linguagem e raciocínio social"), "explicações alternativas"),
+      teen ? "Pergunte: “Um colega não respondeu a um convite. Conte duas razões possíveis antes de concluir que ele não quer sua amizade.”" : "Pergunte: “Um amigo não cumprimentou você hoje. Diga duas razões diferentes para isso.”",
+      "Apresenta duas hipóteses plausíveis sem afirmar que conhece a intenção do outro", { seconds: 22 }),
+    fala("sonda10", SUPPLEMENT(SONDA(band, "planejamento social"), "solução colaborativa"),
+      teen ? "Pergunte: “Você participa de um trabalho em grupo; duas pessoas discordam sobre o plano. Como organizaria a decisão?”" : "Pergunte: “Duas crianças querem usar o mesmo brinquedo ao mesmo tempo. O que pode ser combinado?”",
+      teen ? "Propõe ouvir as opções, combinar critérios e dividir responsabilidades, respeitando a participação de todos" : "Propõe revezamento, combinação de turnos ou outra solução cooperativa", { seconds: 22 }),
+  ];
+  const dogs = years <= 10 ? 3 : years <= 13 ? 4 : 5;
+  const row = Array.from({ length: dogs * 3 + 3 }, (_, i) => i % 3 === 1 && i < dogs * 3 ? "🐶" : "🐱").join(" ");
+  const visual = [
+    vrShow(years, "tartaruga", years * 107),
+    toque("cognitivo", SUPPLEMENT("Cognitivos " + years + " anos", "busca visual e contagem"),
+      "Observe a fileira. Quantos cachorros aparecem?",
+      [dogs - 1, dogs, dogs + 1, dogs + 2].map((n) => opt(String(n))), String(dogs),
+      { stimulus: row, seconds: 22 }),
+    toque("cognitivo", SUPPLEMENT("Cognitivos " + years + " anos", "padrão visual progressivo"),
+      teen ? "Observe a progressão. Qual número completa o padrão?" : "Observe a sequência. Qual número vem depois?",
+      (years <= 10 ? [8, 10, 12, 14] : years <= 13 ? [24, 36, 42, 48] : [30, 34, 35, 36]).map((n) => opt(String(n))),
+      years <= 10 ? "10" : years <= 13 ? "48" : "36",
+      { stimulus: years <= 10 ? "2 → 4 → 6 → 8 → ?" : years <= 13 ? "3 → 6 → 12 → 24 → ?" : "1 → 4 → 9 → 16 → 25 → ?", seconds: 24 }),
+  ];
+  const memory = [
+    fala("sonda10", SUPPLEMENT(SONDA(band, "memória operacional verbal"), "sequência de palavras"),
+      teen ? "Diga uma vez, pausadamente: “ponte – chuva – janela – livro – noite”. Peça que repita na ordem inversa." : "Diga uma vez, pausadamente: “pato – flor – casa”. Peça que repita na ordem inversa.",
+      teen ? "Repete noite – livro – janela – chuva – ponte, na ordem solicitada" : "Repete casa – flor – pato, na ordem solicitada",
+      { seconds: 24 }),
+    fala("obs10", SUPPLEMENT(OBS(band, "atenção e alternância de regras"), "mudança de resposta"),
+      teen ? "Regra: ALTO vira BAIXO e BAIXO vira ALTO. Agora troque para dizer a mesma palavra que ouvir. Apresente ALTO – BAIXO – ALTO – BAIXO."
+           : "Regra: DIA vira NOITE e NOITE vira DIA. Agora troque para repetir a palavra ouvida. Apresente DIA – NOITE – DIA – NOITE.",
+      teen ? "Diz alto – baixo – alto – baixo depois da mudança" : "Diz dia – noite – dia – noite depois da mudança",
+      { seconds: 24 }),
+  ];
+  const byPhase: Record<PhaseId, Draft<Item>[]> = {
+    vila: social,
+    olhos: visual,
+    palavras: [cognitiveAt(years, "leitura", years === 9 || years === 11 ? 2 : years <= 11 ? 1 : 0), cognitiveAt(years, "leitura", years <= 11 ? 3 : 2)],
+    numeros: years === 13
+      ? [cognitiveAt(years, "aritmetica", 3), fala("sonda10", SUPPLEMENT(SONDA(band, "raciocínio matemático aplicado"), "estimativa de custo"),
+          "Pergunte: “Três entradas custam R$ 12 cada. Quanto custam as três juntas?”", "Responde R$ 36, podendo explicar o cálculo", { seconds: 22 })]
+      : [cognitiveAt(years, "aritmetica", 1), cognitiveAt(years, "aritmetica", 3)],
+    memoria: memory,
+    corpo: [cognitiveAt(years, "escrita", 2), cognitiveAt(years, "escrita", 3)],
+  };
+  return byPhase[phase];
+}
+
 // ─────────────────────────────── baterias dedicadas de 2 e 3 anos ───────────────────────────────
 // Versão 2026-10-13. Mundos curtos, figuras grandes, toque simples; conteúdo criado para o jogo.
 // Itens criados para o jogo (2 e 3 anos). Cada mundo vira UM domínio. Itens de relato do cuidador são marcados como tal.
@@ -853,7 +920,7 @@ function build(): Record<number, Record<PhaseId, Item[]>> {
   for (const years of YEARS) {
     const perPhase = {} as Record<PhaseId, Item[]>;
     for (const phaseId of PHASE_ORDER) {
-      const drafts = TODDLER[years] ? TODDLER[years][phaseId] : years >= 8 ? [...BUILDERS[phaseId](years), EXTRAS[phaseId](years)] : BUILDERS[phaseId](years);
+      const drafts = TODDLER[years] ? TODDLER[years][phaseId] : years >= 8 ? [...BUILDERS[phaseId](years), EXTRAS[phaseId](years), ...complementaryItems(years, phaseId)] : BUILDERS[phaseId](years);
       perPhase[phaseId] = drafts.map((draft, index) => ({ ...draft, id: `${years}.${phaseId}.${index + 1}` }) as Item);
     }
     bank[years] = perPhase;
