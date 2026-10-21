@@ -122,6 +122,19 @@ const AMBIENTE_COMPLETO = {
   );
 }
 
+// 5b) O verificador usa a MESMA regra do runtime: transporte diferente de
+//     "resend" é recusado pelo cadastro (503), então go-live não pode dizer pronto.
+{
+  const outroTransporte = await chamar(
+    { ...AMBIENTE_COMPLETO, AUTH_EMAIL_TRANSPORT: "smtp" },
+    ADMIN,
+  );
+  const corpo = await outroTransporte.json() as { pronto: boolean; pendencias: string[]; ordemInvertida: boolean };
+  assert.equal(corpo.pronto, false, "transporte não suportado não pode ser pronto");
+  assert.ok(corpo.pendencias.includes("ENTREGA_EMAIL_NAO_CONFIGURADA"));
+  assert.equal(corpo.ordemInvertida, true, "cadastro aberto sem entrega real é o estado perigoso");
+}
+
 // 6) Token de webhook curto reprova: o provider compara 32+ em tempo constante.
 {
   const curto = await chamar(

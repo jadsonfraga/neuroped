@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  EmailVerificationBlockedError,
   resendEmailVerification,
   verifyEmailToken,
 } from "@/lib/emailVerificationClient";
@@ -36,6 +37,7 @@ export default function VerifyEmailPage() {
   const [email, setEmail] = useState("");
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
+  const [resendError, setResendError] = useState<string | null>(null);
 
   useEffect(() => {
     if (token.length < 32) return;
@@ -67,14 +69,21 @@ export default function VerifyEmailPage() {
   async function handleResend(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setResending(true);
+    setResendError(null);
     try {
       await resendEmailVerification(email.trim());
-    } catch {
-      // A API é anti-enumeração (202 genérico). Mostrar a mesma confirmação em
-      // qualquer caso é deliberado: a tela não pode virar oráculo de contas.
+      // 202 reconhece a solicitação, não o envio assíncrono nem a entrega.
+      setResent(true);
+    } catch (error) {
+      // Falha real (provedor de e-mail indisponível, rede, 5xx) NÃO vira "o link
+      // chegará": nada foi enviado e a tela diz isso.
+      setResendError(
+        error instanceof EmailVerificationBlockedError
+          ? "O envio de e-mail não está configurado nesta instalação, então nenhum link foi enviado. Fale com o administrador."
+          : "Não foi possível solicitar o reenvio agora. Verifique a conexão e tente novamente.",
+      );
     } finally {
       setResending(false);
-      setResent(true);
     }
   }
 
@@ -145,8 +154,8 @@ export default function VerifyEmailPage() {
                   aria-hidden="true"
                 />
                 <p className="text-sm leading-relaxed text-foreground">
-                  Se existir uma conta pendente de confirmação para esse
-                  endereço, o novo link chegará em instantes.
+                  Sua solicitação de reenvio foi recebida. Se existir uma conta
+                  pendente, o sistema tentará enviar um novo link. A entrega não foi confirmada.
                 </p>
               </div>
               <p className="text-xs leading-relaxed text-muted-foreground">
@@ -180,6 +189,11 @@ export default function VerifyEmailPage() {
                   />
                 </div>
               </div>
+              {resendError && (
+                <p role="alert" data-testid="verify-email-resend-error" className="rounded-xl border border-destructive/40 p-3 text-sm leading-relaxed text-foreground">
+                  {resendError}
+                </p>
+              )}
               <Button
                 type="submit"
                 disabled={resending}

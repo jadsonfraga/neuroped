@@ -187,17 +187,26 @@ const unknownBody = await unknownResponse.text();
 assert.equal(tokenRows().length, 0, "e-mail desconhecido não pode criar token");
 assert.equal(sentEmails.length, 0);
 
-// ── 2) Entrega desconfigurada: 202 idêntico, sem token ─────────────────────
+// ── 2) Entrega desconfigurada: BLOCKED_EXTERNAL declarado, igual p/ qualquer e-mail
+// O estado do PROVEDOR é do produto, não da conta: 503 idêntico para e-mail
+// existente e inexistente (nenhum oráculo), sem token e sem prometer envio.
 const unconfiguredEnv = { ...env, AUTH_RESEND_API_KEY: undefined };
 const unconfiguredResponse = await forgotPassword(forgotContext(USER_EMAIL, unconfiguredEnv));
-assert.equal(unconfiguredResponse.status, 202);
-assert.equal(await unconfiguredResponse.text(), unknownBody, "corpo deve ser indistinguível");
+assert.equal(unconfiguredResponse.status, 503);
+const unconfiguredText = await unconfiguredResponse.text();
+const unconfiguredBody = JSON.parse(unconfiguredText) as { code: string; blockedExternal?: string };
+assert.equal(unconfiguredBody.code, "PASSWORD_RESET_NOT_CONFIGURED");
+assert.equal(unconfiguredBody.blockedExternal, "BLOCKED_EXTERNAL_RESEND");
+const unconfiguredUnknown = await forgotPassword(forgotContext("ninguem@example.test", unconfiguredEnv));
+assert.equal(unconfiguredUnknown.status, 503);
+assert.equal(await unconfiguredUnknown.text(), unconfiguredText, "estado bloqueado idêntico para conta existente e inexistente");
 assert.equal(tokenRows().length, 0, "sem entrega configurada não pode restar token pendente");
+assert.equal(sentEmails.length, 0);
 
 // Base URL http:// (não-https) também conta como desconfigurada.
 const httpEnv = { ...env, AUTH_PUBLIC_APP_URL: "http://app.neuroped.example" };
 const httpResponse = await forgotPassword(forgotContext(USER_EMAIL, httpEnv));
-assert.equal(httpResponse.status, 202);
+assert.equal(httpResponse.status, 503);
 assert.equal(tokenRows().length, 0);
 
 // ── 3) Falha de entrega apaga o token recém-criado ─────────────────────────
@@ -299,7 +308,7 @@ assert.equal(await blockedResponse.text(), unknownBody);
 assert.equal(sentEmails.length, emailsBeforeBlock, "bloqueado não pode enviar e-mail");
 assert.equal(tokenRows().length, tokensBeforeBlock, "bloqueado não pode criar token");
 const rateRow = sqlite.prepare(
-  "SELECT blocked_until FROM auth_password_reset_rate_limits LIMIT 1",
+  "SELECT blocked_until FROM auth_password_reset_rate_limits WHERE blocked_until IS NOT NULL LIMIT 1",
 ).get() as { blocked_until: string | null } | undefined;
 assert.ok(rateRow?.blocked_until, "o bucket deve registrar blocked_until persistente");
 

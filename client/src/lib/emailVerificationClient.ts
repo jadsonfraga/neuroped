@@ -21,6 +21,14 @@ export async function verifyEmailToken(token: string): Promise<void> {
   }
 }
 
+/** Falha tipada de reenvio: o servidor declarou o provedor de e-mail indisponível (BLOCKED_EXTERNAL). */
+export class EmailVerificationBlockedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "EmailVerificationBlockedError";
+  }
+}
+
 export async function resendEmailVerification(email: string): Promise<void> {
   const response = await fetch(`${API_BASE}/api/auth/resend-verification`, {
     method: "POST",
@@ -28,8 +36,8 @@ export async function resendEmailVerification(email: string): Promise<void> {
     body: JSON.stringify({ email }),
   });
   if (!response.ok) {
-    throw new Error(
-      await errorMessage(response, `Solicitação falhou (${response.status})`),
-    );
+    const message = await errorMessage(response, `Solicitação falhou (${response.status})`);
+    if (response.status === 503) throw new EmailVerificationBlockedError(message);
+    throw new Error(message);
   }
 }
