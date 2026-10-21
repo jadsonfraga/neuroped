@@ -637,3 +637,30 @@ A **síntese final do examinador** também é obrigatória para o circuito ficar
 **Se o responsável quiser bloqueio rígido** (impedir resultados, exportação ou impressão até o circuito ficar completo), é uma mudança de política que contraria a diretriz "nenhum bloqueio" e precisa de decisão explícita.
 
 **Verificação.** `npm run test:super-neuropad` (inclui `super-neuropad-obrigatorio.test.ts`); E2E do circuito conclui as 31 missões de 9 anos pela interface, inclusive a entrevista de segurança, e confere COMPLETO só com a síntese final; E2E do jogo confere o aviso entre os mundos.
+
+## Extensão opcional: 50 desafios disponíveis por idade (v2026-10-21.1)
+
+Desenho aprovado pelo responsável clínico em 21/10/2026: **50 desafios disponíveis em cada idade de 2 a 17 anos**, sem alongar a sessão principal. A bateria principal continua a mesma (18 aos 2 anos; 24 dos 3 aos 5; 30 aos 6 e 7; 36 dos 8 aos 17), com os mesmos limites de tempo (12, 15 e 20 minutos), XP, contagem, PDF, prontuário e envio à família. Os desafios que faltam para 50 ficam como **extensão opcional**.
+
+| Idade | Bateria principal | Opcionais | Disponíveis |
+| --- | --- | --- | --- |
+| 2 anos | 18 | 32 | 50 |
+| 3 a 5 anos | 24 | 26 | 50 |
+| 6 e 7 anos | 30 | 20 | 50 |
+| 8 a 17 anos | 36 | 14 | 50 |
+
+**De onde vêm os opcionais.** São itens dos mesmos bancos de origem da idade que ainda não estão na bateria: Avaliação Cognitiva Infantil (`cognitive-age/bank`) e banco objetivo compartilhado da Sonda 10/OBS-10 (`objectiveBank`). **Nenhum item foi criado para a extensão.** Cada opcional mantém a referência exata do banco de origem (por exemplo, "Cognitivos 2 anos · visual 1"). A seleção alterna entre os domínios de cada banco e exclui o que já está na bateria ou repete outro opcional: mesmo tipo, enunciado e critério (`OPTIONAL_BANK` em `bank.ts`). Os 14 itens autorais da PR #1195 para 8–17 anos **não** entram aqui; dependem de revisão clínica própria.
+
+**Na tela.** O painel "Desafios opcionais · N anos" aparece na preparação e nos resultados, recolhido por padrão. Não aparece durante a partida. Ele informa "50 disponíveis: X na bateria principal + Y opcionais", a estimativa de tempo dos opcionais (sem pausas nem adaptações) e a orientação de interromper diante de cansaço ou recusa. Usa os mesmos componentes da partida (toque, fala ou ação, montar palavra), com "Repeti o comando", "Não respondeu" e "Recusou". Também tem seletor do desafio, anterior/próximo, "Pausar opcionais" e "Recolher opcionais". Nenhum controle do painel fica desabilitado.
+
+**Registro.** É separado da partida, fica em memória e é guardado por idade: trocar a idade não apaga os opcionais já registrados. Registrar de novo um item substitui o registro anterior. "Copiar registro dos opcionais" copia o texto (ou baixa TXT se a área de transferência falhar). Só o retrato copiado conta como copiado: uma resposta dada enquanto a cópia está pendente continua marcada como não copiada. "Nova partida" pergunta antes de apagar opcionais não copiados, e a saída da página também avisa. Os opcionais não entram na contagem, no tempo, no XP nem no PDF da partida principal.
+
+**Apresentação por idade.** A partir de 13 anos a tela fica mais sóbria (`data-age-style="adolescente"`: sem linhas de varredura, sombras menores), sem mudar conteúdo nem desafios. Textos longos em opções, botões e contadores quebram linha no celular.
+
+**Código.** `bank.ts` (`OPTIONAL_BANK`, `DESAFIOS_DISPONIVEIS_POR_IDADE`; `objAt` só reorganiza a conversão do item objetivo, sem mudar a bateria), `extensao.ts` (registro, pendências de cópia e texto), painel `OpcionaisPanel` em `super-neuropad-game.tsx`, CSS em `super-neuropad-arcade.css`.
+
+**Verificação.** `tests/unit/super-neuropad-extensao.test.ts`: 50 por idade; bateria principal, limites e estimativas inalterados; procedência só dos bancos de origem; nenhuma repetição; registro, pendências de cópia e texto sem classificação; painel sem controle desabilitado. `npm run test:e2e:super-neuropad-opcionais` confere as 16 idades, registro por toque e por fala, pausa, cópia, troca de idade, painel nos resultados, aviso da "Nova partida", axe e celular a 390 px. A bateria principal foi comparada byte a byte (JSON do banco, estimativas e limites) antes e depois da mudança.
+
+**Pendente.** Revisão médica item a item dos opcionais para cada idade (a seleção é mecânica, por banco de origem), teste manual em tablet e decisão sobre levar os opcionais ao PDF e ao prontuário.
+
+**Reversão.** Reverter o commit. Sem migração, sem dependência nova e sem dado persistido.
