@@ -6,23 +6,16 @@ import { calcularEvolucao, faixasDe, INSTRUMENTOS_EVOLUCAO, instrumentoDe, AVISO
 const r = (scaleName: string, totalScore: number | null, createdAt: string, extra: Record<string, unknown> = {}) => ({ id: `${scaleName}-${createdAt}`, scaleName, totalScore, createdAt, ...extra });
 
 describe("registro de instrumentos validados", () => {
-  it("reconhece instrumentos e deixa fora os proprietários sem aplicação no app", () => {
-    assert.equal(instrumentoDe("M-CHAT-R/F (rastreio)")?.id, "mchat");
+  it("reconhece instrumentos e deixa fora os licenciados sem aplicação no app", () => {
     assert.equal(instrumentoDe("PHQ-A")?.id, "phqa");
-    // CARS e CDI-2 viraram fichas de referência (17/10/2026): sem faixa inventada, registros antigos ficam pendentes.
-    assert.equal(instrumentoDe("CARS"), null);
-    assert.equal(instrumentoDe("CARS-2"), null);
-    assert.equal(instrumentoDe("CDI-2"), null);
+    // Licenciados que viraram fichas de referência (17/10/2026): sem faixa inventada, registros antigos ficam pendentes.
+    for (const nome of ["CARS", "CARS-2", "CDI-2", "M-CHAT-R/F (rastreio)", "M-CHAT", "CSHQ", "CRAFFT"]) assert.equal(instrumentoDe(nome), null, nome);
     assert.equal(instrumentoDe("SNAP-IV"), null);
   });
 
   it("faixas e cortes saem do classificador do app (sem tabela paralela)", () => {
     const phqa = faixasDe(instrumentoDe("PHQ-A")!);
     assert.deepEqual(phqa.map((f) => f.deEscore), [0, 5, 10, 15, 20]);
-    const mchat = faixasDe(instrumentoDe("M-CHAT")!);
-    assert.deepEqual(mchat.map((f) => f.deEscore), [0, 3, 8]);
-    const cshq = faixasDe(instrumentoDe("CSHQ")!);
-    assert.equal(cshq[1].deEscore, 42);
   });
 
   it("todo instrumento registrado cita a fonte no app", () => {
@@ -91,8 +84,12 @@ describe("calcularEvolucao", () => {
   });
 
   it("aceita formato LIVE (payload.title, appliedAt) e entrada inválida", () => {
-    const live = { id: "x", instrumentId: "mchat", payload: { title: "M-CHAT-R/F" }, appliedAt: "2026-03-01T00:00:00Z", totalScore: 5 };
-    assert.equal(calcularEvolucao([live]).series[0].instrumento.id, "mchat");
+    const live = { id: "x", instrumentId: "phqa", payload: { title: "PHQ-A" }, appliedAt: "2026-03-01T00:00:00Z", totalScore: 5 };
+    assert.equal(calcularEvolucao([live]).series[0].instrumento.id, "phqa");
+    // Registro LIVE antigo de instrumento retirado (M-CHAT) fica pendente, sem faixa.
+    const antigo = { id: "y", instrumentId: "mchat", payload: { title: "M-CHAT-R/F" }, appliedAt: "2026-03-01T00:00:00Z", totalScore: 5 };
+    assert.equal(calcularEvolucao([antigo]).series.length, 0);
+    assert.equal(calcularEvolucao([antigo]).pendentes.length, 1);
     assert.deepEqual(calcularEvolucao(null as unknown as unknown[]), { series: [], pendentes: [] });
   });
 

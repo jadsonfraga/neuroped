@@ -8,7 +8,7 @@ Base: `docs/saas-live-clinical-rollout.md`, `shared/onboarding.ts`, `shared/prod
 ## Pré-condições (D0)
 | # | Condição | Evidência |
 |---|---|---|
-| P1 | G1: keyring clínico em Production | audit Clinical/LGPD: `clinicalCryptoConfigured=true` |
+| P1 | G1: keyring clínico em Production | audit Clinical/LGPD: `clinicalCryptoConfigured=true` (✅ em 17/10/2026) |
 | P2 | G4: backup/restore provado com cifra real | run verde do ensaio de DR |
 | P3 | G3: S9 resolvido (legados destinados, bypass admin removido) | censo repetido + testes negativos Alfa/Beta |
 | P4 | Backup operacional do D1 feito imediatamente antes | registro da data/hora (sem conteúdo) |

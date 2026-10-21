@@ -185,15 +185,12 @@ assert.deepEqual(
 await clearScaleDraft(store, storageKey);
 assert.equal(await store.get(storageKey), null, "clear remove o rascunho");
 
+// mchat, sdq, scared e crafft saíram em 17/10/2026 (licenciados; páginas removidas).
 const requiredPages = [
   "pant",
-  "mchat",
   "snap",
-  "sdq",
-  "scared",
   "phqa",
   "cssrs",
-  "crafft",
   "ygtss",
 ];
 const repoRoot = fileURLToPath(new URL("../../", import.meta.url));

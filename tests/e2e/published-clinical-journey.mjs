@@ -6,7 +6,7 @@ const origins = (process.env.PUBLISHED_ORIGINS ?? "https://neuroped.pages.dev,ht
   .split(",")
   .map((value) => value.trim().replace(/\/$/, ""))
   .filter(Boolean);
-const routes = ["/", "/#/filtro", "/#/mchat", "/#/marcacao", "/#/missao-saude", "/#/eletroencefalograma", "/#/prontuario"];
+const routes = ["/", "/#/filtro", "/#/snap", "/#/marcacao", "/#/missao-saude", "/#/eletroencefalograma", "/#/prontuario"];
 const result = { startedAt: new Date().toISOString(), origins, environments: [] };
 const e2eEmail = process.env.PUBLISHED_E2E_EMAIL?.trim();
 const e2ePassword = process.env.PUBLISHED_E2E_PASSWORD;
@@ -48,10 +48,12 @@ async function inspectEnvironment(browser, origin) {
   }
   async function runClinicalJourney() {
     if (!environment.auth.succeeded) return;
-    await page.goto(`${origin}/#/mchat`, { waitUntil: "domcontentloaded", timeout: 30000 });
-    await page.getByTestId("button-yes-0").waitFor({ timeout: 20000 });
-    const total = await page.locator('[data-testid^="button-yes-"]').count();
-    for (let index = 0; index < total; index += 1) await page.getByTestId(`button-no-${index}`).click();
+    // SNAP-IV (uso livre): o M-CHAT saiu do app em 17/10/2026 por ser licenciado.
+    await page.goto(`${origin}/#/snap`, { waitUntil: "domcontentloaded", timeout: 30000 });
+    await page.getByTestId("card-question-0").first().waitFor({ timeout: 20000 });
+    const firstOptions = page.locator('label[for$="-o0"]');
+    const total = await firstOptions.count();
+    for (let index = 0; index < total; index += 1) await firstOptions.nth(index).click();
     const submit = page.getByTestId("button-submit");
     await submit.waitFor({ timeout: 10000 });
     await page.waitForFunction(() => document.querySelector('[data-testid="button-submit"]')?.getAttribute("aria-disabled") !== "true", null, { timeout: 10000 });
@@ -59,7 +61,7 @@ async function inspectEnvironment(browser, origin) {
     await page.locator("[data-scale-response-report]").waitFor({ state: "visible", timeout: 20000 });
     await page.getByTestId("button-print-report").waitFor({ state: "visible", timeout: 10000 });
     await page.locator("[data-scale-response-action]").waitFor({ state: "visible", timeout: 10000 });
-    return { scale: "M-CHAT-R/F", questionsAnswered: total, reportVisible: true, printActionVisible: true, persistenceActionVisible: true, finalUrl: page.url() };
+    return { scale: "SNAP-IV", questionsAnswered: total, reportVisible: true, printActionVisible: true, persistenceActionVisible: true, finalUrl: page.url() };
   }
   await loginIfConfigured();
   if (environment.auth.succeeded) {

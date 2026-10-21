@@ -12,6 +12,7 @@ import {
   checkoutUnavailableCode,
   createAsaasRecurringCheckout,
   probeAsaasAccount,
+  validateAsaasWebhook,
 } from "../../functions/api/billing/_provider";
 
 const SECRET = "segredo-sintetico-nao-imprimir-0001";
@@ -119,5 +120,76 @@ assert.equal(run.status, 2);
 assert.match(run.stdout, /BLOCKED_EXTERNAL_ASAAS/);
 assert.equal(run.stdout.includes(SECRET), false);
 assert.equal(run.stderr.includes(SECRET), false);
+
+// Chave x ambiente e token x chave (valores 100% sintéticos).
+const PROD_KEY = "$aact_prod_sintetica-nao-real-0001";
+const PROD_ENV = {
+  ...CONFIGURED,
+  ASAAS_ENVIRONMENT: "production",
+  ASAAS_API_KEY: PROD_KEY,
+};
+const prodOk = assessAsaasOperationalContract(PROD_ENV);
+assert.equal(prodOk.status, "CONFIGURACAO_PRESENTE");
+assert.equal(prodOk.environment, "production");
+
+const prodWithSandboxKey = assessAsaasOperationalContract({ ...PROD_ENV, ASAAS_API_KEY: CONFIGURED.ASAAS_API_KEY });
+assert.equal(prodWithSandboxKey.status, "BLOCKED_EXTERNAL");
+assert.deepEqual(prodWithSandboxKey.missing, ["ASAAS_API_KEY_ENVIRONMENT_MISMATCH"]);
+
+const sandboxWithProdKey = assessAsaasOperationalContract({ ...CONFIGURED, ASAAS_API_KEY: PROD_KEY });
+assert.equal(sandboxWithProdKey.status, "BLOCKED_EXTERNAL");
+assert.deepEqual(sandboxWithProdKey.missing, ["ASAAS_API_KEY_ENVIRONMENT_MISMATCH"]);
+assert.equal(JSON.stringify(sandboxWithProdKey).includes(PROD_KEY), false);
+
+const SHARED = "z".repeat(40);
+const tokenEqualsKey = assessAsaasOperationalContract({
+  ...CONFIGURED,
+  ASAAS_API_KEY: SHARED,
+  ASAAS_WEBHOOK_TOKEN: SHARED,
+});
+assert.equal(tokenEqualsKey.status, "BLOCKED_EXTERNAL");
+assert.deepEqual(tokenEqualsKey.missing, ["ASAAS_WEBHOOK_TOKEN_INVALID"]);
+assert.equal(JSON.stringify(tokenEqualsKey).includes(SHARED), false);
+
+let guardFetches = 0;
+globalThis.fetch = (async () => {
+  guardFetches += 1;
+  throw new Error("fetch não deveria ocorrer");
+}) as typeof fetch;
+try {
+  const params = { externalReference: "neuroped:teste", seats: 1 };
+  await assert.rejects(
+    () => createAsaasRecurringCheckout({ ...CONFIGURED, ASAAS_API_KEY: PROD_KEY }, params),
+    /ASAAS_API_KEY_ENVIRONMENT_MISMATCH/,
+  );
+  await assert.rejects(
+    () => createAsaasRecurringCheckout({ ...PROD_ENV, ASAAS_API_KEY: CONFIGURED.ASAAS_API_KEY }, params),
+    /ASAAS_API_KEY_ENVIRONMENT_MISMATCH/,
+  );
+  await assert.rejects(
+    () => createAsaasRecurringCheckout({ ...CONFIGURED, ASAAS_API_KEY: SHARED, ASAAS_WEBHOOK_TOKEN: SHARED }, params),
+    /ASAAS_WEBHOOK_TOKEN_INVALID/,
+  );
+  assert.equal(guardFetches, 0, "recusa antes de qualquer chamada ao provedor");
+} finally {
+  globalThis.fetch = originalFetch;
+}
+for (const code of ["ASAAS_API_KEY_ENVIRONMENT_MISMATCH", "ASAAS_WEBHOOK_TOKEN_INVALID"]) {
+  assert.equal(checkoutUnavailableCode(new Error(code)), "BILLING_BLOCKED_EXTERNAL");
+}
+assert.throws(
+  () => validateAsaasWebhook(
+    new Request("https://x.test/api/billing/webhook", { headers: { "asaas-access-token": SHARED } }),
+    { ASAAS_API_KEY: SHARED, ASAAS_WEBHOOK_TOKEN: SHARED },
+  ),
+  /ASAAS_WEBHOOK_TOKEN_INVALID/,
+);
+assert.equal(
+  validateAsaasWebhook(
+    new Request("https://x.test/api/billing/webhook", { headers: { "asaas-access-token": CONFIGURED.ASAAS_WEBHOOK_TOKEN } }),
+    CONFIGURED,
+  ),
+  true,
+);
 
 console.log("asaas operational contract: fail-closed, sem cobrança simulada ✔");

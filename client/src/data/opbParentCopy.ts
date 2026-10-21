@@ -22,10 +22,10 @@ export interface OPBCopy {
 
 export const opbParentCopy: Record<string, OPBCopy> = {
   // ============================== TEA / AUTISMO ==============================
-  mchat: {
-    mainQuestion: "Há sinais de risco para autismo nesta idade crítica?",
-    parentExample: 'Você responde ~20 perguntas como: "Ele aponta para mostrar algo que achou interessante?", "Olha quando você chama o nome?", "Brinca de faz-de-conta?".',
-    whyUseful: "Rastreio de 1ª linha para TEA aos 16–30 meses; alta sensibilidade para encaminhar cedo.",
+  "na-sinais-precoces-tea-pais": {
+    mainQuestion: "Há sinais de alerta para autismo nesta idade?",
+    parentExample: "Você conta se a criança olha nos olhos, atende pelo nome, aponta, imita, faz de conta, se tem movimentos repetidos ou se perdeu palavras que já falava.",
+    whyUseful: "Organiza os sinais de alerta de 16 a 36 meses, com peso especial para perda de habilidades, e ajuda a decidir o encaminhamento.",
   },
   "tea-checklists": {
     mainQuestion: "Quais sinais do espectro estão presentes no dia a dia?",
@@ -64,10 +64,10 @@ export const opbParentCopy: Record<string, OPBCopy> = {
     parentExample: 'Você avalia itens como: "Não presta atenção a detalhes", "Não termina tarefas", "Não para quieto", "Interrompe os outros".',
     whyUseful: "Rastreio alinhado ao DSM, com versões para pais e professor.",
   },
-  vanderbilt: {
-    mainQuestion: "Os sintomas aparecem também na escola e há comorbidades?",
-    parentExample: "Professor e pais respondem sobre atenção, agitação, desafio, ansiedade e desempenho escolar.",
-    whyUseful: "Cobre os múltiplos ambientes e rastreia comorbidades comuns ao TDAH.",
+  "na-atencao-atividade-professor": {
+    mainQuestion: "Os sintomas aparecem também na escola?",
+    parentExample: "O professor responde sobre desatenção, agitação, impulsividade, organização e o impacto na aprendizagem e na turma.",
+    whyUseful: "Mesmos blocos da forma dos pais, para comparar casa e escola lado a lado.",
   },
   "na-funcoes-executivas-ampliado-pais": {
     mainQuestion: "As funções executivas (começar, organizar, lembrar, controlar) atrapalham o dia a dia?",
@@ -79,10 +79,15 @@ export const opbParentCopy: Record<string, OPBCopy> = {
     parentExample: "Você responde sobre desatenção, agitação, impulsividade, organização e o impacto em casa, na escola e nas amizades.",
     whyUseful: "Separa sintomas de impacto por contexto e tem forma paralela para comparar com a escola.",
   },
-  sdq: {
-    mainQuestion: "Quais as dificuldades emocionais/comportamentais e quais as forças da criança?",
-    parentExample: 'Itens como: "Distrai-se com facilidade", "Preocupa-se muito", "Ajuda os outros", "Tem boas amizades".',
-    whyUseful: "Triagem breve e ampla (pais/professor/criança) que também valoriza os pontos fortes.",
+  "swyc-ppsc": {
+    mainQuestion: "Há sinais de dificuldade emocional ou de comportamento no pré-escolar?",
+    parentExample: "Você responde sobre birras, agitação, medos, atenção e convivência da criança de 1 ano e meio a 5 anos.",
+    whyUseful: "Rastreio breve, de uso livre, do mesmo conjunto (SWYC) dos marcos do desenvolvimento.",
+  },
+  "na-perfil-emocional-comportamental-professor": {
+    mainQuestion: "Como estão as emoções, o comportamento e as relações na escola?",
+    parentExample: "O professor responde sobre tristeza, medo de errar, atenção, raiva, regras e amizades em sala e no recreio.",
+    whyUseful: "Lido ao lado do relato dos pais (e do próprio adolescente), mostra se a dificuldade aparece em casa, na escola ou nos dois.",
   },
   "na-perfil-emocional-comportamental-pais": {
     mainQuestion: "Qual o perfil geral de emoções, comportamento e relações?",
@@ -91,16 +96,6 @@ export const opbParentCopy: Record<string, OPBCopy> = {
   },
 
   // ================================= ATRASO =================================
-  denver: {
-    mainQuestion: "Em quais marcos do desenvolvimento a criança está atrasada?",
-    parentExample: "Observa-se diretamente: senta/anda, pega objetos, fala palavras, sorri e interage — comparando ao esperado para a idade.",
-    whyUseful: "Rastreio clássico dos 4 domínios (motor grosso/fino, linguagem, pessoal-social).",
-  },
-  asq3: {
-    mainQuestion: "Há atraso global ou apenas em uma área?",
-    parentExample: 'Você responde se a criança "sobe escada com ajuda", "faz frases", "rabisca" e "brinca com outras crianças".',
-    whyUseful: "Traz o olhar dos pais sobre o cotidiano nos cinco domínios.",
-  },
   "j26-001": {
     mainQuestion: "Os marcos motores do primeiro semestre estão presentes?",
     parentExample: "Verifica-se sustento de cabeça, simetria dos movimentos, fixação/seguimento visual e reações posturais.",
@@ -170,10 +165,10 @@ export const opbParentCopy: Record<string, OPBCopy> = {
   },
 
   // =============================== ANSIEDADE ================================
-  scared: {
-    mainQuestion: "Quais tipos de ansiedade estão presentes?",
-    parentExample: 'Itens como: "Fica muito nervoso longe de você", "Tem medo de ir à escola", "Tem ataques de pânico", "É muito tímido".',
-    whyUseful: "Rastreio de 1ª linha (≥8 anos) que separa pânico, generalizada, separação, social e fobia escolar.",
+  "na-ansiedade-autorrelato": {
+    mainQuestion: "Quais medos e preocupações a própria criança ou o adolescente relata?",
+    parentExample: "A criança responde (quase nunca, às vezes, muitas vezes) sobre preocupações, coração disparado, ficar longe da família, vergonha, escola e medos específicos.",
+    whyUseful: "Dá voz à criança a partir dos 8 anos e separa o impacto dos sintomas; o relato dos pais fica no seguimento de ansiedade.",
   },
   eai: {
     mainQuestion: "Há sinais de ansiedade observáveis na criança?",
@@ -219,10 +214,10 @@ export const opbParentCopy: Record<string, OPBCopy> = {
   },
 
   // ============================= COMPORTAMENTO =============================
-  abc: {
-    mainQuestion: "Há comportamentos aberrantes (irritabilidade, estereotipias)?",
-    parentExample: "Você avalia irritabilidade, hiperatividade, fala repetitiva, isolamento e comportamentos estereotipados.",
-    whyUseful: "Quantifica e monitora comportamentos-alvo, inclusive no TEA.",
+  "na-comportamento-tea-di-pais": {
+    mainQuestion: "Quais comportamentos preocupam e com que frequência acontecem?",
+    parentExample: "Você marca, nas últimas 2 semanas, crises, autoagressão, agressão, retraimento, agitação e repetições, de \"não aconteceu\" a \"várias vezes ao dia\".",
+    whyUseful: "Acompanha a resposta a terapia ou remédio em autismo e deficiência intelectual, com autoagressão e agressão separadas.",
   },
   "tea-comportamentos": {
     mainQuestion: "Quais comportamentos atípicos estão presentes?",
@@ -231,10 +226,10 @@ export const opbParentCopy: Record<string, OPBCopy> = {
   },
 
   // ================================== SONO =================================
-  cshq: {
+  "na-sono-crianca-pais": {
     mainQuestion: "Como estão os hábitos e os problemas de sono?",
-    parentExample: "Você responde sobre hora de dormir, resistência, despertares, pesadelos, ronco e sonolência diurna.",
-    whyUseful: "Questionário validado que cobre as principais áreas do sono infantil.",
+    parentExample: "Você responde sobre a hora de dormir, despertares, pesadelos, ronco, pausas na respiração e sono durante o dia.",
+    whyUseful: "Descreve as principais áreas do sono infantil e sinaliza quando pedir avaliação específica.",
   },
   "j26-137": {
     mainQuestion: "Existe uma rotina noturna previsível?",

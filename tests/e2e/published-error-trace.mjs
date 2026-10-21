@@ -3,7 +3,7 @@ import { chromium } from "playwright";
 import { auditBrowserLaunchOptions } from "../../scripts/lib/browser-audit-runtime.mjs";
 
 const origins = ["https://neuroped.pages.dev", "https://superneuroped.vercel.app"];
-const routes = ["/#/", "/#/filtro", "/#/mchat", "/#/marcacao", "/#/missao-saude", "/#/prontuario"];
+const routes = ["/#/", "/#/filtro", "/#/snap", "/#/marcacao", "/#/missao-saude", "/#/prontuario"];
 const output = { startedAt: new Date().toISOString(), environments: [] };
 const browser = await chromium.launch(auditBrowserLaunchOptions());
 try {

@@ -6,13 +6,19 @@
 import { allScales } from "../../client/src/data/scaleFilter.ts";
 import { noCostWorldScales } from "../../client/src/data/noCostWorldScales.ts";
 import { mergeFilterableCatalog } from "../../client/src/data/filterableCatalog.ts";
-import { CANONICAL_ALIASES, CANONICAL_ALIAS_IDS } from "../../client/src/data/scaleLicenseRegistry.ts";
+import { CANONICAL_ALIASES, CANONICAL_ALIAS_IDS, getExplicitLicenseRecord } from "../../client/src/data/scaleLicenseRegistry.ts";
 
 const offered = mergeFilterableCatalog([...allScales, ...noCostWorldScales]);
 const ids = new Set(offered.map((s) => s.id));
 const errors: string[] = [];
+// Licenciado retirado pelo responsável (uso em software não permitido): o canônico vira ficha e sai do filtro.
+const retired = (id: string) => {
+  const rec = getExplicitLicenseRecord(id);
+  return rec?.basis === "owner_decision" && rec.softwareAllowed === false;
+};
 for (const [canon, aliases] of Object.entries(CANONICAL_ALIASES)) {
-  if (!ids.has(canon)) errors.push(`canônico ${canon} não está oferecido.`);
+  if (!ids.has(canon) && !retired(canon)) errors.push(`canônico ${canon} não está oferecido.`);
+  if (retired(canon) && ids.has(canon)) errors.push(`canônico ${canon} foi retirado e ainda está oferecido.`);
   for (const a of aliases) if (ids.has(a)) errors.push(`alias ${a} (de ${canon}) está oferecido.`);
 }
 for (const id of CANONICAL_ALIAS_IDS) if (ids.has(id)) errors.push(`alias ${id} vazou no catálogo.`);

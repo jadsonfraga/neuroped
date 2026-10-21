@@ -1,6 +1,8 @@
 import {
+  decodeRetiredRemoteAnswers,
   getRemoteScaleDescriptor,
   isRemoteScaleId,
+  RETIRED_REMOTE_SCALES,
   isRemoteScaleRespondentKind,
   REMOTE_SCALE_SUMMARIES,
   type RemoteScaleId,
@@ -32,7 +34,8 @@ interface ScaleRow {
   clinic_id: string;
   patient_id: string;
   respondent_kind: RemoteScaleRespondentKind;
-  scale_id: RemoteScaleId;
+  /** Pode ser também uma escala retirada (RETIRED_REMOTE_SCALES) em convites antigos. */
+  scale_id: RemoteScaleId | string;
   invitation_status: "pending" | "submitted" | "revoked";
   expires_at: string;
   invitation_created_at: string;
@@ -76,10 +79,13 @@ function computedInvitationStatus(row: ScaleRow): "pending" | "submitted" | "rev
   return Date.parse(row.expires_at) <= Date.now() ? "expired" : "pending";
 }
 
-/** Rótulo/opção reconstruídos a partir do catálogo canônico — nunca duplicados. */
-function decodeAnswers(scaleId: RemoteScaleId, answers: number[]): Array<{ label: string; value: string }> {
+/**
+ * Rótulo/opção reconstruídos a partir do catálogo canônico — nunca duplicados. Escala retirada do app:
+ * resposta por número do item, sem o texto do instrumento.
+ */
+function decodeAnswers(scaleId: string, answers: number[]): Array<{ label: string; value: string }> {
   const descriptor = getRemoteScaleDescriptor(scaleId);
-  if (!descriptor) return [];
+  if (!descriptor) return decodeRetiredRemoteAnswers(scaleId, answers);
   return descriptor.items.map((item, index) => ({
     label: item.text,
     value: item.options[answers[index]]?.label ?? "—",
@@ -158,7 +164,7 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
           invitationId: row.invitation_id,
           respondentKind: row.respondent_kind,
           scaleId: row.scale_id,
-          scaleName: descriptor?.name ?? row.scale_id,
+          scaleName: descriptor?.name ?? RETIRED_REMOTE_SCALES[row.scale_id]?.name ?? row.scale_id,
           invitationStatus: computedInvitationStatus(row),
           expiresAt: row.expires_at,
           createdAt: row.invitation_created_at,

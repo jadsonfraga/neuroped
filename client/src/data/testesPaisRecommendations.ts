@@ -16,6 +16,23 @@ export interface ParentTestRecommendation {
   complementa: string; // qual teste direto complementa
 }
 
+// SWYC Marcos (livre, Tufts): um formulário por janela de idade, aplicado pelos pais.
+const SWYC_MARCOS_PAIS: ParentTestRecommendation[] = ([
+  ["24m", 23, 28], ["30m", 29, 34], ["36m", 35, 46], ["48m", 47, 58], ["60m", 59, 65],
+] as const).map(([form, ageMin, ageMax]): ParentTestRecommendation => ({
+  id: `swyc-marcos-${form}`,
+  name: `SWYC Marcos ${form}`,
+  route: `/generic-scale/swyc-marcos-${form}`,
+  queixas: ["atraso", "linguagem", "motor", "cognicao"],
+  ageMin,
+  ageMax,
+  tempo: "3–5 min",
+  seal: "ouro",
+  razao: "Atraso do desenvolvimento ou da linguagem: marcos de linguagem, cognição e motricidade do formulário da idade, de uso livre (SWYC). Ajuda a separar atraso específico de linguagem de atraso global.",
+  icon: "Baby",
+  complementa: "Linguagem e Fonologia",
+}));
+
 // Testes para pais — recomendações clínicas
 // OURO = Escalas essenciais/clássicas bem-validadas
 // PRATA = Questionários complementares para aspectos específicos
@@ -50,19 +67,8 @@ export const testesPaisRecommendations: ParentTestRecommendation[] = [
   },
 
   // ===== LINGUAGEM: Desenvolvimento e Preocupações =====
-  {
-    id: "asq3",
-    name: "ASQ-3",
-    route: "/asq3",
-    queixas: ["linguagem", "atraso", "cognicao"],
-    ageMin: 36,
-    ageMax: 72,
-    tempo: "10–15 min",
-    seal: "ouro",
-    razao: "Atraso de linguagem/desenvolvim: Rastreio de marco de desenvolvimento global. Essencial em < 6 anos para diferenciar atraso específico de linguagem vs. atraso global. Complementa Linguagem e Fonologia.",
-    icon: "Baby",
-    complementa: "Linguagem e Fonologia",
-  },
+  // Marcos do desenvolvimento: formulário SWYC da idade (livre, Tufts), que substituiu ASQ-3 e Denver II.
+  ...SWYC_MARCOS_PAIS,
   {
     id: "na-comportamentos-repetitivos-pais",
     name: "Comportamentos repetitivos (autoral)",
@@ -120,58 +126,45 @@ export const testesPaisRecommendations: ParentTestRecommendation[] = [
     complementa: "Motricidade",
   },
   {
-    id: "vineland",
-    name: "Vineland-3",
-    route: "/generic-scale/vineland",
+    id: "na-comportamento-adaptativo-pais",
+    name: "Comportamento adaptativo (autoral)",
+    route: "/generic-scale/na-comportamento-adaptativo-pais",
     queixas: ["motor", "atraso", "cognicao"],
-    ageMin: 24,
+    ageMin: 36,
     ageMax: 168,
-    tempo: "20–30 min",
-    seal: "prata",
-    razao: "Atraso global/deficiência intelectual: Avalia comportamento adaptativo (comunicação, vida diária, socialização). Complementa bateria motora com avaliação de autonomia funcional.",
+    tempo: "5–8 min",
+    seal: "bronze",
+    razao: "Atraso global/deficiência intelectual: habilidades da vida diária, comunicação e socialização no relato dos pais. Autoral NeuroPed, sem validação; complementa a bateria motora com a autonomia funcional.",
     icon: "Users",
     complementa: "Motricidade + Conhecimentos Gerais",
   },
 
-  // ===== ATRASO: Marcos de Desenvolvimento Global =====
+  // ===== ATRASO: sono como fator =====
   {
-    id: "denver2",
-    name: "Denver II",
-    route: "/denver",
-    queixas: ["atraso", "motor", "linguagem"],
-    ageMin: 24,
-    ageMax: 120,
-    tempo: "15–20 min",
-    seal: "ouro",
-    razao: "Atraso do desenvolvimento: Rastreio de marcos em 4 domínios (motor grosso, motor fino, linguagem, socioemocional). Imprescindível em < 5 anos com suspeita de atraso global.",
-    icon: "BookOpen",
-    complementa: "Motricidade + Linguagem",
-  },
-  {
-    id: "cshq",
-    name: "CSHQ",
-    route: "/cshq",
+    id: "na-sono-crianca-pais",
+    name: "Sono da criança (autoral)",
+    route: "/generic-scale/na-sono-crianca-pais",
     queixas: ["atraso", "comportamento", "cognicao"],
     ageMin: 48,
     ageMax: 144,
-    tempo: "10–15 min",
-    seal: "prata",
-    razao: "Qualidade do sono: Problemas de sono frequentemente causam atraso comportamental e cognitivo. Complementa avaliação de atraso global investigando causa ambiental.",
+    tempo: "4–6 min",
+    seal: "bronze",
+    razao: "Qualidade do sono: problemas de sono pioram comportamento, atenção e aprendizagem. Descreve início, despertares, respiração e sonolência diurna. Autoral NeuroPed, sem validação.",
     icon: "Moon",
     complementa: "Conhecimentos Gerais",
   },
 
   // ===== COGNIÇÃO: Funcionamento Intelectual =====
   {
-    id: "mchat",
-    name: "M-CHAT-R/F",
-    route: "/mchat",
+    id: "na-sinais-precoces-tea-pais",
+    name: "Sinais precoces do espectro autista (autoral)",
+    route: "/generic-scale/na-sinais-precoces-tea-pais",
     queixas: ["cognicao", "atraso", "linguagem"],
-    ageMin: 18,
-    ageMax: 48,
-    tempo: "5–8 min",
-    seal: "ouro",
-    razao: "Suspeita de autismo < 3 anos: Rastreio de TEA em primeira infância. Se positivo, diferencia autismo de atraso cognitivo puro. Complementa Conhecimento Visual.",
+    ageMin: 16,
+    ageMax: 36,
+    tempo: "5–7 min",
+    seal: "bronze",
+    razao: "Suspeita de autismo antes dos 3 anos: sinais de alerta em seis áreas, incluindo perda de habilidades. Ajuda a diferenciar autismo de atraso cognitivo. Autoral NeuroPed, sem validação.",
     icon: "Baby",
     complementa: "Conhecimento Visual",
   },
@@ -191,15 +184,15 @@ export const testesPaisRecommendations: ParentTestRecommendation[] = [
 
   // ===== EMOCIONAL: Ansiedade e Humor =====
   {
-    id: "scared",
-    name: "SCARED",
-    route: "/scared",
+    id: "na-ansiedade-seguimento-pais",
+    name: "Seguimento de ansiedade (autoral)",
+    route: "/generic-scale/na-ansiedade-seguimento-pais",
     queixas: ["emocional", "comportamento", "aprendizagem"],
     ageMin: 48,
-    ageMax: 180,
-    tempo: "5–8 min",
-    seal: "ouro",
-    razao: "Ansiedade: Rastreio de transtornos de ansiedade em crianças. Frequentemente mascarado como desatenção ou hiperatividade. Essencial se irritabilidade ou evitação presentes.",
+    ageMax: 168,
+    tempo: "4–6 min",
+    seal: "bronze",
+    razao: "Ansiedade: muitas vezes se mascara como desatenção ou agitação. Os pais descrevem medos, preocupações e evitação; a partir dos 8 anos a própria criança responde a forma de autorrelato. Autoral NeuroPed, sem validação.",
     icon: "ShieldAlert",
     complementa: "Atenção e Concentração",
   },
@@ -219,15 +212,15 @@ export const testesPaisRecommendations: ParentTestRecommendation[] = [
 
   // ===== RISCO/PROTEÇÃO: Comportamento e Bem-estar =====
   {
-    id: "sdq",
-    name: "SDQ",
-    route: "/sdq",
+    id: "swyc-ppsc",
+    name: "SWYC PPSC (pré-escolar)",
+    route: "/generic-scale/swyc-ppsc",
     queixas: ["comportamento", "emocional", "aprendizagem"],
     ageMin: 36,
-    ageMax: 180,
-    tempo: "5–8 min",
+    ageMax: 65,
+    tempo: "3–5 min",
     seal: "prata",
-    razao: "Bem-estar geral: Rastreio de problemas emocionais, comportamentais, de hiperatividade, relacionais e prosociais. Útil como triagem ampla antes de especificar diagnóstico.",
+    razao: "Bem-estar no pré-escolar: rastreio breve de problemas emocionais e de comportamento, de uso livre (SWYC). Útil como triagem ampla antes de especificar o diagnóstico; a partir dos 6 anos, use o Perfil emocional e comportamental.",
     icon: "BarChart3",
     complementa: "Funções Executivas",
   },
@@ -294,10 +287,10 @@ export const parentAssessmentPaths: ParentAssessmentPath[] = [
   {
     queixa: "linguagem",
     label: "Investigação de Linguagem (Pais)",
-    primaryTests: ["asq3", "na-comportamentos-repetitivos-pais"],
-    duration: "20–30 min",
+    primaryTests: ["swyc-marcos-24m", "swyc-marcos-30m", "swyc-marcos-36m", "swyc-marcos-48m", "swyc-marcos-60m", "na-comportamentos-repetitivos-pais"],
+    duration: "10–15 min",
     description:
-      "Protocolo parental: ASQ-3 (marco geral) + Comportamentos repetitivos (autoral; rigidez e interesses intensos). Se < 6 anos, imprescindível para diferenciar atraso específico vs. global.",
+      "Protocolo parental: SWYC Marcos do formulário da idade (livre; marco geral) + Comportamentos repetitivos (autoral; rigidez e interesses intensos). Se < 6 anos, imprescindível para diferenciar atraso específico vs. global.",
   },
   {
     queixa: "aprendizagem",
@@ -310,42 +303,42 @@ export const parentAssessmentPaths: ParentAssessmentPath[] = [
   {
     queixa: "motor",
     label: "Investigação de Motricidade (Pais)",
-    primaryTests: ["gmfcs", "vineland"],
-    duration: "25–40 min",
+    primaryTests: ["gmfcs", "na-comportamento-adaptativo-pais"],
+    duration: "10–20 min",
     description:
-      "Protocolo parental: GMFCS (classificação motora) + Vineland-3 (autonomia). Se PC suspeita, essencial para caracterizar impacto funcional.",
+      "Protocolo parental: GMFCS (classificação motora) + Comportamento adaptativo (autoral; autonomia no dia a dia). Se PC suspeita, essencial para caracterizar impacto funcional.",
   },
   {
     queixa: "atraso",
     label: "Investigação de Atraso (Pais)",
-    primaryTests: ["denver2", "cshq"],
-    duration: "25–35 min",
+    primaryTests: ["swyc-marcos-24m", "swyc-marcos-30m", "swyc-marcos-36m", "swyc-marcos-48m", "swyc-marcos-60m", "na-sono-crianca-pais"],
+    duration: "10–15 min",
     description:
-      "Protocolo parental: Denver II (marcos dos 4 domínios) + CSHQ (sono como fator). Triagem abrangente para atraso global em < 5 anos.",
+      "Protocolo parental: SWYC Marcos do formulário da idade (livre; linguagem, cognição e motricidade) + Sono da criança (autoral; sono como fator). Triagem abrangente para atraso global em < 5 anos.",
   },
   {
     queixa: "cognicao",
     label: "Investigação de Cognição (Pais)",
-    primaryTests: ["mchat", "aq10"],
+    primaryTests: ["na-sinais-precoces-tea-pais", "aq10"],
     duration: "10–15 min",
     description:
-      "Protocolo parental: M-CHAT (< 3 anos) ou AQ-10 (> 6 anos) para rastreio de TEA. Complementa avaliação cognitiva com investigação de fenótipo autístico.",
+      "Protocolo parental: Sinais precoces do espectro autista (autoral, < 3 anos) ou AQ-10 (> 6 anos) para investigar o fenótipo autístico. Complementa a avaliação cognitiva.",
   },
   {
     queixa: "emocional",
     label: "Investigação Emocional (Pais)",
-    primaryTests: ["scared", "phqa"],
+    primaryTests: ["na-ansiedade-seguimento-pais", "phqa"],
     duration: "10–15 min",
     description:
-      "Protocolo parental: SCARED (ansiedade) + PHQ-A (depressão). Diferencia transtornos emocionais que mascaramse como TDAH.",
+      "Protocolo parental: Seguimento de ansiedade (autoral) + PHQ-A (depressão). Diferencia transtornos emocionais que se mascaram como TDAH.",
   },
   {
     queixa: "comportamento",
     label: "Investigação de Comportamento (Pais)",
-    primaryTests: ["sdq", "na-atencao-atividade-pais"],
+    primaryTests: ["swyc-ppsc", "na-perfil-emocional-comportamental-pais", "na-atencao-atividade-pais"],
     duration: "15–25 min",
     description:
-      "Protocolo parental: SDQ (rastreio amplo) + Atenção, atividade e autocontrole (autoral; detalha agitação, impulsividade e impacto). Complementa avaliação de funções executivas com contexto de vida real.",
+      "Protocolo parental: SWYC PPSC (livre, pré-escolar) ou Perfil emocional e comportamental (autoral, a partir de 6 anos) para o rastreio amplo + Atenção, atividade e autocontrole (autoral; detalha agitação, impulsividade e impacto). Complementa avaliação de funções executivas com contexto de vida real.",
   },
 ];
 

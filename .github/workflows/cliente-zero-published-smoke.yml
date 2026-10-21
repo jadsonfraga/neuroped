@@ -1,0 +1,108 @@
+name: Cliente-zero published smoke
+
+# Jornada cliente-zero contra o site publicado (docs/SMOKE_CLIENTE_ZERO.md),
+# pela API, com relatório por marco: VERIFIED, BLOCKED_EXTERNAL, FAILED ou
+# NOT_RUN. Só por acionamento manual: com --write-synthetic ele grava paciente,
+# consulta e documento sintéticos numa clínica de nome reservado.
+#
+# Sem NEUROPED_SMOKE_OWNER_EMAIL/PASSWORD, roda apenas as sondas públicas
+# (saúde, portão do cadastro, portão do webhook) e não cria nada. O titular
+# precisa ser uma conta sintética já verificada pelo link do e-mail; a
+# identidade técnica NEUROPED_E2E_EMAIL é recusada pelo próprio script.
+#
+# O job reprova (exit 2) enquanto houver BLOCKED_EXTERNAL ou NOT_RUN: verde só
+# quando todos os marcos, inclusive charge_paid persistido, forem comprovados.
+# O script não cria checkout, não envia e-mail e não chama Asaas nem Resend.
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Origem publicada (HTTPS)"
+        required: true
+        default: "https://neuroped.pages.dev"
+      write_synthetic:
+        description: "Gravar paciente, consulta e documento sintéticos"
+        type: boolean
+        default: false
+      close_clinic:
+        description: "Pedir encerramento da clínica sintética ao final"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cliente-zero-published-smoke
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    name: Cliente-zero journey on published site
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
+      - name: Run cliente-zero smoke
+        env:
+          SMOKE_BASE_URL: ${{ inputs.base_url }}
+          SMOKE_OWNER_EMAIL: ${{ secrets.NEUROPED_SMOKE_OWNER_EMAIL }}
+          SMOKE_OWNER_PASSWORD: ${{ secrets.NEUROPED_SMOKE_OWNER_PASSWORD }}
+          NEUROPED_E2E_EMAIL: ${{ secrets.NEUROPED_E2E_EMAIL }}
+          WRITE_SYNTHETIC: ${{ inputs.write_synthetic }}
+          CLOSE_CLINIC: ${{ inputs.close_clinic }}
+        run: |
+          set -euo pipefail
+          # A senha do titular vai para esta origem: só o Pages do projeto
+          # (produção ou preview) é aceito.
+          if ! [[ "$SMOKE_BASE_URL" =~ ^https://([a-z0-9-]+\.)?neuroped\.pages\.dev/?$ ]]; then
+            echo "::error::base_url fora das origens permitidas (https://[preview.]neuroped.pages.dev)."
+            exit 1
+          fi
+          mkdir -p artifacts/ops
+          flags=()
+          [ "$WRITE_SYNTHETIC" = "true" ] && flags+=(--write-synthetic)
+          [ "$CLOSE_CLINIC" = "true" ] && flags+=(--close-clinic)
+          node --import tsx scripts/ops/cliente-zero-published-smoke.ts \
+            --out artifacts/ops/cliente-zero-smoke.json "${flags[@]}"
+
+      - name: Summarize report
+        if: always()
+        run: |
+          [ -f artifacts/ops/cliente-zero-smoke.json ] || exit 0
+          node -e '
+            const r = JSON.parse(require("fs").readFileSync("artifacts/ops/cliente-zero-smoke.json", "utf8"));
+            const rows = r.steps.map((s) => `| ${s.id} | ${s.status} | ${s.code} | ${s.detail.replace(/\|/g, "/")} |`);
+            const out = [
+              `### Cliente-zero: ${r.verdict}`,
+              `Alvo: ${r.target}. Não comprova: ${r.doesNotProve.join(", ")}.`,
+              "",
+              "| Marco | Estado | Código | Detalhe |",
+              "|---|---|---|---|",
+              ...rows,
+            ].join("\n");
+            require("fs").appendFileSync(process.env.GITHUB_STEP_SUMMARY, out + "\n");
+          '
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cliente-zero-smoke-${{ github.run_id }}
+          path: artifacts/ops/cliente-zero-smoke.json
+          if-no-files-found: warn
+          retention-days: 14

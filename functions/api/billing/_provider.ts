@@ -80,6 +80,27 @@ export interface AsaasContractAssessment {
   doesNotProve: readonly string[];
 }
 
+/**
+ * Chave de produção (`$aact_prod_`) só vale em produção; em sandbox é recusada.
+ * Chave sem prefixo continua aceita em sandbox (suíte local usa chave sintética).
+ * Nunca recebe nem devolve o valor da chave.
+ */
+export function asaasKeyMatchesEnvironment(
+  environment: "sandbox" | "production",
+  apiKey: string | undefined,
+): boolean {
+  const key = apiKey?.trim() ?? "";
+  const productionKey = key.startsWith("$aact_prod_");
+  return environment === "production" ? productionKey : !productionKey;
+}
+
+/** O token do webhook não pode ser a própria chave da API. */
+export function asaasWebhookTokenDiffersFromKey(env: BillingProviderEnv): boolean {
+  const token = env.ASAAS_WEBHOOK_TOKEN?.trim() ?? "";
+  const key = env.ASAAS_API_KEY?.trim() ?? "";
+  return !(token && key && token === key);
+}
+
 function secretReady(value: string | undefined, minLength: number): boolean {
   return (value?.trim().length ?? 0) >= minLength;
 }
@@ -108,6 +129,12 @@ export function assessAsaasOperationalContract(env: BillingProviderEnv): AsaasCo
     missing.push("ASAAS_ENVIRONMENT");
   }
   if (!returnUrlReady(env)) missing.push("AUTH_PUBLIC_APP_URL");
+  if (environment && secretReady(env.ASAAS_API_KEY, 16) && !asaasKeyMatchesEnvironment(environment, env.ASAAS_API_KEY)) {
+    missing.push("ASAAS_API_KEY_ENVIRONMENT_MISMATCH");
+  }
+  if (secretReady(env.ASAAS_API_KEY, 16) && !asaasWebhookTokenDiffersFromKey(env)) {
+    missing.push("ASAAS_WEBHOOK_TOKEN_INVALID");
+  }
   const ready = missing.length === 0;
   return {
     status: ready ? "CONFIGURACAO_PRESENTE" : "BLOCKED_EXTERNAL",
@@ -123,6 +150,8 @@ const CHECKOUT_CONFIG_ERRORS = new Set([
   "ASAAS_WEBHOOK_TOKEN_NOT_CONFIGURED",
   "ASAAS_ENVIRONMENT_NOT_CONFIGURED",
   "ASAAS_ENVIRONMENT_INVALID",
+  "ASAAS_API_KEY_ENVIRONMENT_MISMATCH",
+  "ASAAS_WEBHOOK_TOKEN_INVALID",
   "APP_BASE_URL_NOT_CONFIGURED",
 ]);
 
@@ -141,6 +170,8 @@ export function assertAsaasCheckoutContract(env: BillingProviderEnv): void {
   if (assessment.status === "CONFIGURACAO_PRESENTE") return;
   if (assessment.missing.includes("ASAAS_API_KEY")) throw new Error("ASAAS_API_KEY_NOT_CONFIGURED");
   if (assessment.missing.includes("ASAAS_WEBHOOK_TOKEN")) throw new Error("ASAAS_WEBHOOK_TOKEN_NOT_CONFIGURED");
+  if (assessment.missing.includes("ASAAS_WEBHOOK_TOKEN_INVALID")) throw new Error("ASAAS_WEBHOOK_TOKEN_INVALID");
+  if (assessment.missing.includes("ASAAS_API_KEY_ENVIRONMENT_MISMATCH")) throw new Error("ASAAS_API_KEY_ENVIRONMENT_MISMATCH");
   const rawEnvironment = (env.ASAAS_ENVIRONMENT ?? "").trim();
   if (assessment.missing.includes("ASAAS_ENVIRONMENT")) {
     throw new Error(rawEnvironment ? "ASAAS_ENVIRONMENT_INVALID" : "ASAAS_ENVIRONMENT_NOT_CONFIGURED");
@@ -185,6 +216,7 @@ export async function probeAsaasAccount(
 
 export function validateAsaasWebhook(request: Request, env: BillingProviderEnv): boolean {
   const expected = requireSecret(env.ASAAS_WEBHOOK_TOKEN, "ASAAS_WEBHOOK_TOKEN", 32);
+  if (!asaasWebhookTokenDiffersFromKey(env)) throw new Error("ASAAS_WEBHOOK_TOKEN_INVALID");
   const received = request.headers.get("asaas-access-token")?.trim() ?? "";
   if (received.length !== expected.length) return false;
   let diff = 0;

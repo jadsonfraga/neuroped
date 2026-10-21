@@ -55,7 +55,7 @@ const trustPillars = [
 
 const clinicalFlows: ClinicalFlow[] = [
   {
-    href: "/mchat",
+    href: "/snap",
     title: "Aplicar escala",
     subtitle:
       "Abra um instrumento implementado e registre o resultado no atendimento.",

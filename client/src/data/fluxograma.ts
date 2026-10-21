@@ -38,7 +38,7 @@ export interface FluxoNode {
 }
 
 export const fluxoMasterRule =
-  "Percorra sempre 4 nós → 1) a idade define a coluna · 2) a queixa define a linha · 3) o respondente desempata (pais / criança / professor / clínico) · 4) a finalidade: para monitorização, troque a escala inicial pela versão Follow-up da mesma família (Vanderbilt Initial→Follow-up; SCARED / RCADS / YGTSS seriados).";
+  "Percorra sempre 4 nós → 1) a idade define a coluna · 2) a queixa define a linha · 3) o respondente desempata (pais / criança / professor / clínico) · 4) a finalidade: para monitorização, troque a escala inicial pela versão Follow-up da mesma família (o mesmo instrumento reaplicado no mesmo intervalo; RCADS / YGTSS seriados).";
 
 export const fluxoBands: FluxoBand[] = [
   {
@@ -52,17 +52,17 @@ export const fluxoBands: FluxoBand[] = [
   {
     id: "toddler", ageLabel: "1–2 anos", stage: "Toddler", emoji: "🧸", ageBandId: "1-2a",
     cells: [
-      { emoji: "🧩", queixa: "TEA", queixaId: "tea", ouro: { label: "M-CHAT-R", id: "mchat", sub: "rastreio · pais" }, prata: [{ label: "M-CHAT-R/F", id: "mchat", sub: "se + → entrevista" }] },
+      { emoji: "🧩", queixa: "TEA", queixaId: "tea", ouro: { label: "Sinais precoces (autoral)", id: "na-sinais-precoces-tea-pais", sub: "rastreio · pais" }, prata: [{ label: "Atenção conjunta precoce", id: "j26-009", sub: "clínico" }] },
       { emoji: "👶", queixa: "Desenvolvimento", queixaId: "atraso", ouro: { label: "SWYC-POSI", sub: "social · pais" } },
-      { emoji: "🔥", queixa: "Comportamento", queixaId: "comportamento", ouro: { label: "SDQ (pais)", id: "sdq", sub: "pais" } },
+      { emoji: "🔥", queixa: "Comportamento", queixaId: "comportamento", ouro: { label: "SWYC PPSC", id: "swyc-ppsc", sub: "pais" } },
       { emoji: "😴", queixa: "Sono", queixaId: "sono", ouro: { label: "PSQ-SRBD", id: "world-psq-srbd", sub: "pais" } },
     ],
   },
   {
     id: "pre-escolar", ageLabel: "2–4 anos", stage: "Pré-escolar", emoji: "🧒", ageBandId: "2-4a",
     cells: [
-      { emoji: "🧩", queixa: "TEA", queixaId: "tea", ouro: { label: "M-CHAT-R/F", id: "mchat", sub: "pais + entrevista" } },
-      { emoji: "🔥", queixa: "Comportamento", queixaId: "comportamento", ouro: { label: "PSC-35", id: "psc17", sub: "pais" }, prata: [{ label: "SDQ (professor)", id: "sdq", sub: "creche" }] },
+      { emoji: "🧩", queixa: "TEA", queixaId: "tea", ouro: { label: "Sinais precoces (autoral)", id: "na-sinais-precoces-tea-pais", sub: "pais · até 3 anos" }, prata: [{ label: "Observação clínica (autoral)", id: "na-observacao-clinica-tea", sub: "clínico" }] },
+      { emoji: "🔥", queixa: "Comportamento", queixaId: "comportamento", ouro: { label: "PSC-35", id: "psc17", sub: "pais" }, prata: [{ label: "SWYC PPSC", id: "swyc-ppsc", sub: "pais" }] },
       { emoji: "😰", queixa: "Ansiedade", queixaId: "ansiedade", ouro: { label: "PAS", sub: "pré-escolar · pais" } },
       { emoji: "🛡️", queixa: "Trauma", queixaId: "trauma", ouro: { label: "CATS (cuidador)", id: "cats", sub: "cuidador" } },
     ],
@@ -70,17 +70,17 @@ export const fluxoBands: FluxoBand[] = [
   {
     id: "pre-escolar-plus", ageLabel: "4–6 anos", stage: "Pré-escolar +", emoji: "🎨", ageBandId: "4-6a",
     cells: [
-      { emoji: "⚡", queixa: "TDAH", queixaId: "tdah", ouro: { label: "Vanderbilt (pais)", id: "vanderbilt", sub: "pais" }, prata: [{ label: "Vanderbilt (professor)", id: "vanderbilt", sub: "escola" }, { label: "SNAP-IV", id: "snap", sub: "dimensional" }] },
+      { emoji: "⚡", queixa: "TDAH", queixaId: "tdah", ouro: { label: "SWYC PPSC", id: "swyc-ppsc", sub: "pais · até 5 anos" }, prata: [{ label: "Funções executivas (autoral)", id: "na-funcoes-executivas-ampliado-pais", sub: "pais · a partir de 5 anos" }, { label: "SNAP-IV", id: "snap", sub: "dimensional" }] },
       { emoji: "🧩", queixa: "TEA", queixaId: "tea", ouro: { label: "ASSQ", id: "assq", sub: "pais / professor" } },
-      { emoji: "🔥", queixa: "Comportamento", queixaId: "comportamento", ouro: { label: "PSC-35 / SDQ", id: "sdq", sub: "pais + professor" } },
+      { emoji: "🔥", queixa: "Comportamento", queixaId: "comportamento", ouro: { label: "Saúde emocional do pré-escolar (autoral)", id: "na-saude-mental-pre-escolar-pais", sub: "pais" } },
       { emoji: "🧠", queixa: "Função global", queixaId: "funcionalidade", ouro: { label: "CGAS", id: "cgas", sub: "clínico" } },
     ],
   },
   {
     id: "escolar", ageLabel: "6–12 anos", stage: "Escolar", emoji: "🎒", ageBandId: "6-12a",
     cells: [
-      { emoji: "⚡", queixa: "TDAH", queixaId: "tdah", ouro: { label: "Vanderbilt (pais/escola)", id: "vanderbilt", sub: "pais · escola" }, prata: [{ label: "SNAP-IV", id: "snap", sub: "dimensional" }, { label: "WFIRS-P", id: "world-wfirs-p", sub: "impacto funcional" }] },
-      { emoji: "😰", queixa: "Ansiedade", queixaId: "ansiedade", ouro: { label: "SCARED / SCAS", id: "scared", sub: "criança" }, prata: [{ label: "RCADS", id: "rcads", sub: "ansiedade + humor" }] },
+      { emoji: "⚡", queixa: "TDAH", queixaId: "tdah", ouro: { label: "SNAP-IV", id: "snap", sub: "pais · escola" }, prata: [{ label: "Atenção, atividade e autocontrole (autoral)", id: "na-atencao-atividade-professor", sub: "escola" }, { label: "WFIRS-P", id: "world-wfirs-p", sub: "impacto funcional" }] },
+      { emoji: "😰", queixa: "Ansiedade", queixaId: "ansiedade", ouro: { label: "Ansiedade — autorrelato (autoral)", id: "na-ansiedade-autorrelato", sub: "criança" }, prata: [{ label: "RCADS", id: "rcads", sub: "ansiedade + humor" }] },
       { emoji: "🛡️", queixa: "Trauma", queixaId: "trauma", ouro: { label: "CATS (jovem/cuidador)", id: "cats", sub: "conforme respondente" } },
       { emoji: "✨", queixa: "Tiques", queixaId: "tiques", ouro: { label: "YGTSS", id: "ygtss", sub: "clínico" } },
     ],
@@ -89,9 +89,9 @@ export const fluxoBands: FluxoBand[] = [
     id: "adolescente", ageLabel: "12–18 anos", stage: "Adolescente", emoji: "🧑", ageBandId: "12-18a",
     cells: [
       { emoji: "☁️", queixa: "Depressão", queixaId: "depressao", ouro: { label: "PHQ-A", id: "phqa", sub: "autorrelato" } },
-      { emoji: "😰", queixa: "Ansiedade", queixaId: "ansiedade", ouro: { label: "SCARED / RCADS", id: "scared", sub: "autorrelato" } },
+      { emoji: "😰", queixa: "Ansiedade", queixaId: "ansiedade", ouro: { label: "Ansiedade — autorrelato (autoral)", id: "na-ansiedade-autorrelato", sub: "autorrelato" } },
       { emoji: "⚡", queixa: "TDAH", queixaId: "tdah", ouro: { label: "SNAP-IV", id: "snap", sub: "autorrelato + impacto" }, prata: [{ label: "WFIRS-S", id: "world-wfirs-p", sub: "impacto funcional" }] },
-      { emoji: "🍷", queixa: "Substâncias", queixaId: "substancias", ouro: { label: "CRAFFT 2.1", id: "crafft", sub: "autorrelato" } },
+      { emoji: "🍷", queixa: "Substâncias", queixaId: "substancias", ouro: { label: "Uso de substâncias (autoral)", id: "na-uso-substancias-adolescente", sub: "autorrelato" } },
       { emoji: "🍴", queixa: "Alimentação", queixaId: "alimentacao", ouro: { label: "SCOFF", id: "scoff", sub: "autorrelato" }, prata: [{ label: "EAT-26", id: "world-eat26", sub: "autorrelato" }] },
     ],
   },

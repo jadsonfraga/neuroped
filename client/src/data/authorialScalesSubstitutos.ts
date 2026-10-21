@@ -30,7 +30,7 @@ export const substitutosSpecs: OpenScaleSpec[] = [
       { name: "Amizades e relações", items: ["Tem poucos amigos ou nenhum amigo próximo.", "É deixado(a) de lado, provocado(a) ou alvo de apelidos pelos colegas.", "Prefere ficar sozinho(a) mesmo quando é convidado(a) para brincar ou sair.", "Tem dificuldade de entender brincadeiras, ironias ou regras de jogos com outras crianças."] },
       { name: "Impacto", items: ["Essas dificuldades atrapalham a rotina e a convivência em casa.", "Essas dificuldades atrapalham a escola ou as amizades."] },
     ],
-    extraInfo: "Forma paralela: Perfil emocional e comportamental (professor), com os mesmos blocos e número de itens. Fala em morrer ou se machucar pede conversa direta imediata; este questionário não faz esse rastreio.",
+    extraInfo: "Formas paralelas: Perfil emocional e comportamental (professor) e (adolescente), com os mesmos blocos e número de itens. Fala em morrer ou se machucar pede conversa direta imediata; este questionário não faz esse rastreio.",
   }),
   authorial({
     wave: 3, id: "na-perfil-emocional-comportamental-professor", name: "Perfil emocional e comportamental (professor)",
@@ -51,7 +51,7 @@ export const substitutosSpecs: OpenScaleSpec[] = [
       { name: "Amizades e relações", items: ["Tem poucos colegas com quem conversa ou brinca.", "É deixado(a) de lado, provocado(a) ou alvo de apelidos pela turma.", "Fica sozinho(a) no recreio mesmo quando é chamado(a) para participar.", "Tem dificuldade de entender brincadeiras, ironias ou regras de jogos da turma."] },
       { name: "Impacto", items: ["Essas dificuldades atrapalham a aprendizagem.", "Essas dificuldades atrapalham a convivência com a turma."] },
     ],
-    extraInfo: "Forma paralela: Perfil emocional e comportamental (pais), com os mesmos blocos e número de itens.",
+    extraInfo: "Formas paralelas: Perfil emocional e comportamental (pais) e (adolescente), com os mesmos blocos e número de itens.",
   }),
   authorial({
     wave: 3, id: "na-atencao-atividade-pais", name: "Atenção, atividade e autocontrole (pais)",
@@ -170,7 +170,12 @@ export const substitutosSpecs: OpenScaleSpec[] = [
   }),
 ];
 
-/** Instrumento proprietário (ficha de referência) → alternativa(s) autoral(is) aberta(s) no app. */
+const SWYC_MARCOS = ["2m", "4m", "6m", "9m", "12m", "15m", "18m", "24m", "30m", "36m", "48m", "60m"].map((m) => `swyc-marcos-${m}`);
+
+/**
+ * Instrumento licenciado (ficha de referência) → alternativa(s) que abrem no app: autoral NeuroPed ou,
+ * quando existe, instrumento livre com licença verificada (SWYC Marcos para ASQ-3 e Denver II).
+ */
 export const AUTHORIAL_ALTERNATIVES: Readonly<Record<string, readonly string[]>> = {
   cbcl: ["na-perfil-emocional-comportamental-pais", "na-perfil-emocional-comportamental-professor"],
   trf: ["na-perfil-emocional-comportamental-professor", "na-perfil-emocional-comportamental-pais"],
@@ -183,5 +188,18 @@ export const AUTHORIAL_ALTERNATIVES: Readonly<Record<string, readonly string[]>>
   srs2: ["na-interacao-social-precoce-pais", "na-observacao-clinica-tea"],
   scq: ["na-interacao-social-precoce-pais", "na-comportamentos-repetitivos-pais"],
   masc2: ["na-ansiedade-seguimento-pais"],
+  // Retirados em 17/10/2026 (segunda leva: Brookes, Denver, Mapi, Slosson, Robins, Youth in Mind, AAP/NICHQ,
+  // Boston Children's, Pearson e autores com permissão restrita).
+  asq3: SWYC_MARCOS,
+  denver: SWYC_MARCOS,
+  pedsql: ["na-qualidade-vida-pais", "na-qualidade-vida-autorrelato"],
+  cshq: ["na-sono-crianca-pais"],
+  abc: ["na-comportamento-tea-di-pais", "na-comportamentos-repetitivos-pais"],
+  mchat: ["na-sinais-precoces-tea-pais", "na-interacao-social-precoce-pais"],
+  crafft: ["na-uso-substancias-adolescente"],
+  sdq: ["na-perfil-emocional-comportamental-pais", "na-perfil-emocional-comportamental-professor", "na-perfil-emocional-comportamental-adolescente", "swyc-ppsc"],
+  scared: ["na-ansiedade-autorrelato", "na-ansiedade-seguimento-pais"],
+  vanderbilt: ["na-atencao-atividade-pais", "na-atencao-atividade-professor"],
+  vineland: ["na-comportamento-adaptativo-pais"],
 };
 

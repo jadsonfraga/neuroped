@@ -6,6 +6,14 @@ Adendo 2026-10-17: o contrato operacional do Asaas ficou fail-closed
 permanece `BLOCKED_EXTERNAL`: não houve cobrança, webhook originado pelo
 Asaas, entitlement pago, receita ou cliente pagante.
 
+Adendo 2026-10-17 (smoke publicado): `scripts/ops/cliente-zero-published-smoke.ts`
+percorre a jornada pela API do ambiente publicado e classifica cada marco como
+`VERIFIED`, `BLOCKED_EXTERNAL`, `FAILED` ou `NOT_RUN`. Onboarding e cobrança
+vêm só do servidor. O teste `tests/unit/cliente-zero-published-smoke.test.ts`
+roda o script contra o middleware e os handlers reais. A execução publicada
+ainda não aconteceu: falta a conta sintética de titular verificada por e-mail
+real. Nenhuma linha da matriz abaixo mudou de estado.
+
 Data da validação local: 2026-09-26 (reconciliado 2026-09-27)  
 Branch de trabalho: `value/autonomous-saas`  
 Base observada antes das alterações: `0b4f74fb49214d00944fc2a366d3b4454363601a`  

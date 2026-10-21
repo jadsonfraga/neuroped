@@ -68,22 +68,12 @@ const SplashScreen = lazy(() =>
     default: SplashScreen,
   })),
 );
-const MchatPage = lazy(() => import("@/pages/mchat"));
 const SnapPage = lazy(() => import("@/pages/snap"));
-const DenverPage = lazy(() => import("@/pages/denver"));
-const SdqPage = lazy(() => import("@/pages/sdq"));
-const ScaredPage = lazy(() => import("@/pages/scared"));
 const PantPage = lazy(() => import("@/pages/pant"));
 const FluxogramaPage = lazy(() => import("@/pages/fluxograma"));
 const PhqaPage = lazy(() => import("@/pages/phqa"));
 const CssrsPage = lazy(() => import("@/pages/cssrs"));
-const CrafftPage = lazy(() => import("@/pages/crafft"));
-const VanderbiltPage = lazy(() => import("@/pages/vanderbilt"));
-const AbcPage = lazy(() => import("@/pages/abc"));
-const Asq3Page = lazy(() => import("@/pages/asq3"));
-const PedsqlPage = lazy(() => import("@/pages/pedsql"));
 const GmfcsPage = lazy(() => import("@/pages/gmfcs"));
-const CshqPage = lazy(() => import("@/pages/cshq"));
 const YgtssPage = lazy(() => import("@/pages/ygtss"));
 const EpilepsyDiaryPage = lazy(() => import("@/pages/epilepsy-diary"));
 const NeuropedAcompanhamentoPage = lazy(() => import("@/pages/neuroped-acompanhamento"));
@@ -323,22 +313,12 @@ function AppRouter() {
             <Route path="/consentimento-lgpd" component={LgpdConsentPage} />
 
             <Route path="/" component={HomePage} />
-            <Route path="/mchat" component={MchatPage} />
             <Route path="/snap" component={SnapPage} />
-            <Route path="/denver" component={DenverPage} />
-            <Route path="/sdq" component={SdqPage} />
-            <Route path="/scared" component={ScaredPage} />
             <Route path="/pant" component={PantPage} />
             <Route path="/fluxograma" component={FluxogramaPage} />
             <Route path="/phqa" component={PhqaPage} />
             <Route path="/cssrs" component={CssrsPage} />
-            <Route path="/crafft" component={CrafftPage} />
-            <Route path="/vanderbilt" component={VanderbiltPage} />
-            <Route path="/abc" component={AbcPage} />
-            <Route path="/asq3" component={Asq3Page} />
-            <Route path="/pedsql" component={PedsqlPage} />
             <Route path="/gmfcs" component={GmfcsPage} />
-            <Route path="/cshq" component={CshqPage} />
             <Route path="/ygtss" component={YgtssPage} />
             <Route path="/epilepsia" component={EpilepsyDiaryPage} />
             <Route path="/neuroacompanhamento" component={NeuropedAcompanhamentoPage} />
