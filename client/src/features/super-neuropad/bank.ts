@@ -942,6 +942,16 @@ function buildOptional(): Record<number, OptionalItem[]> {
     for (const domain of ["figuras", "letras", "leitura", "escrita", "numeros"] as const) {
       queues.push(band.items.flatMap((entry, index) => (entry.domain === domain ? [{ draft: objAt(years, index) as AnyDraft, phaseId: OBJECTIVE_PHASE[domain] }] : [])));
     }
+    // Inclui tarefas visuais do manifesto da idade e preserva graduação e distratores da fonte original.
+    // A seleção continua sujeita à deduplicação de tarefa, conceito e referência logo abaixo.
+    const visualTargets = eligibleItems(years * 12, "receptivo").filter((entry) => !entry.context);
+    const visualOffset = (years * 7) % visualTargets.length;
+    queues.push(visualTargets.map((_, index) => {
+      const target = visualTargets[(visualOffset + index) % visualTargets.length];
+      const draft = vrShow(years, target.id, years * 1000 + index);
+      draft.ref = draft.ref.replace(/\(\d+ opções,/, `(${draft.options.length} opções,`);
+      return { draft, phaseId: "olhos" };
+    }));
     const picked: Array<{ draft: AnyDraft; phaseId: PhaseId }> = [];
     const pickedKeys = new Set<string>();
     const pickedIds = new Set<AnyDraft>();

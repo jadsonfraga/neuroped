@@ -10,7 +10,8 @@ import { softTap } from "@/lib/softSounds";
 import { play1Up, playCoin, playFlagPole, playJump, playPowerUp } from "@/lib/sounds";
 import { downloadTextDocument, safeTextFilename } from "@/lib/shareText";
 import { createChiptune, type Chiptune } from "@/features/super-neuropad/music";
-import { ClinicalCircuit, type ProgressoCircuito } from "@/features/super-neuropad/ClinicalCircuit";
+import { ClinicalCircuit, type ProgressoCircuito } from "@/features/super-neuropad/ClinicalCircuit.tsx";
+import { activeClockSeconds, emptyActiveClock, transitionActiveClock } from "@/features/super-neuropad/activeClock";
 import { resumoDaBateria } from "@/features/super-neuropad/sufficiencia";
 import {
   DESAFIOS_DISPONIVEIS_POR_IDADE,
@@ -29,6 +30,7 @@ import { DESCRIPTIVE_NOTICE } from "@/lib/descriptiveNotice";
 import {
   buildFamilyDocSpec,
   buildFamilySummary,
+  snapshotCompletedFamilySession,
   isValidFamilyEmail,
   type FamilyContact,
 } from "@/features/super-neuropad/familyDelivery";
@@ -568,7 +570,8 @@ function OpcionaisPanel({ years, registros, copiados, seed, onRegistrar, onCopia
   const [pausado, setPausado] = useState(false);
   const [escolhido, setEscolhido] = useState<string | null>(null);
   const [repetido, setRepetido] = useState(false);
-  const inicio = useRef(0);
+  const cronometro = useRef(emptyActiveClock());
+  const itemCronometrado = useRef<string | null>(null);
   const ultimoToque = useRef(Number.NEGATIVE_INFINITY);
   const atualId = escolhido ?? proximoPendente(years, registros) ?? lista[0]?.item.id;
   const posicao = Math.max(0, lista.findIndex((entry) => entry.item.id === atualId));
@@ -579,9 +582,17 @@ function OpcionaisPanel({ years, registros, copiados, seed, onRegistrar, onCopia
     () => (atual && atual.item.kind === "toque" ? optionOrder(atual.item, seed + posicao * 17, posicao) : []),
     [atual, seed, posicao],
   );
-  useEffect(() => { inicio.current = performance.now(); setRepetido(false); }, [atualId, aberto, pausado]);
+  useEffect(() => {
+    const agora = performance.now();
+    if (itemCronometrado.current !== atualId) {
+      itemCronometrado.current = atualId;
+      cronometro.current = emptyActiveClock();
+      setRepetido(false);
+    }
+    cronometro.current = transitionActiveClock(cronometro.current, agora, aberto && !pausado);
+  }, [atualId, aberto, pausado]);
   // Tela bloqueada ou troca de aba com um opcional aberto: pausa sozinho, como na partida principal,
-  // para o tempo do item não inflar. Retomar reinicia a contagem do item atual.
+  // para o tempo do item não inflar. Retomar continua a contagem acumulada do item atual.
   useEffect(() => {
     if (!aberto || pausado) return;
     const onVisibility = () => { if (document.hidden) setPausado(true); };
@@ -589,7 +600,7 @@ function OpcionaisPanel({ years, registros, copiados, seed, onRegistrar, onCopia
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, [aberto, pausado]);
   if (!atual) return null;
-  const segundos = () => (performance.now() - inicio.current) / 1000;
+  const segundos = () => activeClockSeconds(cronometro.current, performance.now());
   const registrar = (record: AnswerRecord, event: { timeStamp: number }) => {
     if (pausado || !acceptManualTap(ultimoToque.current, event.timeStamp)) return;
     ultimoToque.current = event.timeStamp;
@@ -873,6 +884,9 @@ export default function SuperNeuroPadGamePage() {
     // Ordem das opções nova a cada partida: recomeçar não repete as posições já vistas.
     setSeed(Math.floor(Math.random() * 1_000_000));
     setResultKept(false);
+    // Repetir com a mesma criança deve rearmar o envio; "done" vale só para a partida anterior.
+    const contactValid = Boolean(familyContact && (isValidFamilyEmail(familyContact.email) || isValidPhone(familyContact.phone)));
+    setFamilyDeliveryStatus(contactValid ? "ready" : "");
     setAnswers([]);
     setPhaseIndex(0);
     setItemIndex(0);
@@ -931,27 +945,31 @@ export default function SuperNeuroPadGamePage() {
     cheerTimer.current = window.setTimeout(() => setCheer(null), 900);
   }
 
-  function finishGame() {
+  function finishGame(finalAnswers: AnswerRecord[] = answers, finalSkipped: GameSession["skipped"] = skipped) {
     if (pausedAt.current !== null) { pausedMs.current += performance.now() - pausedAt.current; pausedAt.current = null; }
-    finishedAt.current = new Date().toISOString();
+    const closedAt = new Date().toISOString();
+    finishedAt.current = closedAt;
+    // A última resposta e o último mundo pulado ainda não chegaram ao render do React.
+    const deliverySnapshot = session ? snapshotCompletedFamilySession(
+      { ...session, pausedSeconds: Math.round(pausedMs.current / 1000) }, closedAt, finalAnswers, finalSkipped,
+    ) : null;
     playFlagPole();
     celebrate();
     music.current?.stop();
     setPaused(false);
     setScreen("results");
-    if (familyContact && familyDeliveryStatus === "ready") void deliverToFamily(familyContact);
+    if (familyContact && familyDeliveryStatus === "ready" && deliverySnapshot) void deliverToFamily(familyContact, deliverySnapshot);
   }
 
   /** Encaminhamento automático ao encerrar: PDF familiar baixa, WhatsApp abre com o resumo e o e-mail abre em rascunho.
    *  Nada é transmitido a servidor: o envio final é confirmado pela aplicadora no próprio cliente. */
-  async function deliverToFamily(contact: FamilyContact) {
-    if (!session) return;
-    const appliedAt = formatClinicalDateTime(new Date(session.finishedAt ?? session.startedAt));
-    const baseName = `super-neuropad-familia-${session.bandId}-${localIsoDate(new Date(session.startedAt))}`;
-    const summaryText = buildFamilySummary(session, contact);
+  async function deliverToFamily(contact: FamilyContact, deliveredSession: GameSession) {
+    const appliedAt = formatClinicalDateTime(new Date(deliveredSession.finishedAt ?? deliveredSession.startedAt));
+    const baseName = `super-neuropad-familia-${deliveredSession.bandId}-${localIsoDate(new Date(deliveredSession.startedAt))}`;
+    const summaryText = buildFamilySummary(deliveredSession, contact);
     try {
       const { buildDocumentPdf } = await import("@/lib/documentPdf");
-      const bytes = await buildDocumentPdf(buildFamilyDocSpec(session, issuerLines(issuer, issuerCredentials(issuer)), appliedAt));
+      const bytes = await buildDocumentPdf(buildFamilyDocSpec(deliveredSession, issuerLines(issuer, issuerCredentials(issuer)), appliedAt));
       const blob = new Blob([bytes as BlobPart], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
@@ -981,7 +999,7 @@ export default function SuperNeuroPadGamePage() {
         await new Promise((resolve) => window.setTimeout(resolve, 400));
         await openEmailDraft({
           to: contact.email,
-          subject: `${SUPER_NEUROPAD_TITLE} — resumo da aventura (${summary?.band.label ?? ""})`,
+          subject: `${SUPER_NEUROPAD_TITLE} — resumo da aventura (${summarize(deliveredSession).band.label})`,
           body: `${summaryText}\n\nO PDF com o relatório completo foi baixado neste dispositivo: anexe-o antes de enviar.`,
           filename: baseName,
         });
@@ -1021,7 +1039,7 @@ export default function SuperNeuroPadGamePage() {
       setScreen("phase-done");
       return;
     }
-    finishGame();
+    finishGame(next);
   }
 
   function undo() {
@@ -1088,14 +1106,15 @@ export default function SuperNeuroPadGamePage() {
   function skipPhase(reason: string) {
     softTap();
     setSkipOpen(false);
-    setSkipped((current) => [...current.filter((entry) => entry.phaseId !== phaseId), { phaseId, reason }]);
+    const nextSkipped = [...skipped.filter((entry) => entry.phaseId !== phaseId), { phaseId, reason }];
+    setSkipped(nextSkipped);
     if (phaseIndex + 1 < PHASE_ORDER.length) {
       setPhaseIndex(phaseIndex + 1);
       setItemIndex(0);
       setScreen("intro");
       return;
     }
-    finishGame();
+    finishGame(answers, nextSkipped);
   }
 
   async function exportPdf() {
@@ -1165,7 +1184,7 @@ export default function SuperNeuroPadGamePage() {
   const compact = screen !== "setup";
 
   return (
-    <div ref={rootRef} className="snp scroll-mt-20 space-y-5 pb-8 lg:scroll-mt-4" data-testid="super-neuropad-game" data-screen={screen} data-age-style={ageYears !== null && ageYears >= 13 ? "adolescente" : "infantil"}>
+    <div ref={rootRef} className="snp scroll-mt-20 space-y-5 pb-8 lg:scroll-mt-4" data-testid="super-neuropad-game" data-screen={screen} data-age-style={ageYears !== null && ageYears >= 13 ? "adolescente" : "infantil"} data-age-theme={ageYears === null ? "neutro" : ageYears <= 3 ? "primeiros-passos" : ageYears <= 7 ? "exploracao" : ageYears <= 12 ? "estrategia" : "autonomia"}>
       <header className={`snp-panel snp-scanlines snp-sky-bg relative overflow-hidden ${compact ? "px-4 py-3" : "p-5 sm:p-6"}`}>
         {!compact && <Clouds />}
         <div className="relative flex items-center gap-3">

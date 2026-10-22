@@ -6,6 +6,11 @@ Integra os elementos da Sonda 10, da Observa 10 (OBS-10), do Reconhecimento Visu
 Avaliação Cognitiva Infantil. As quatro abas continuam existindo, com os seus bancos
 intactos; o jogo **lê** os bancos delas e não os modifica.
 
+Desde v2026-10-21.1, cada idade de 2 a 17 anos tem **50 desafios disponíveis**:
+o núcleo de 18/24/30/36 itens permanece intacto, e os demais são opcionais,
+fora do limite da sessão principal e com registro separado. Não é obrigatório
+aplicar todos. Consulte [catálogo de 50, segurança e QA](audits/SUPER_NEUROPAD_CATALOGO_50_2026-10-21.md).
+
 ## O que é
 
 - Seis mundos (RPG com personagem, XP, conquistas e trilha chiptune sintetizada no dispositivo):
@@ -649,7 +654,7 @@ Desenho aprovado pelo responsável clínico em 21/10/2026: **50 desafios dispon�
 | 6 e 7 anos | 30 | 20 | 50 |
 | 8 a 17 anos | 36 | 14 | 50 |
 
-**De onde vêm os opcionais.** São itens dos mesmos bancos de origem da idade que ainda não estão na bateria: Avaliação Cognitiva Infantil (`cognitive-age/bank`) e banco objetivo compartilhado da Sonda 10/OBS-10 (`objectiveBank`). **Nenhum item foi criado para a extensão.** Cada opcional mantém a referência exata do banco de origem (por exemplo, "Cognitivos 2 anos · visual 1"). A seleção alterna entre os domínios de cada banco e exclui o que já está na bateria ou repete outro opcional: mesmo tipo, enunciado e critério (`OPTIONAL_BANK` em `bank.ts`). Os 14 itens autorais da PR #1195 para 8–17 anos **não** entram aqui; dependem de revisão clínica própria.
+**De onde vêm os opcionais.** São itens dos bancos de origem da idade que ainda não estão na bateria: Reconhecimento Visual (`visual-recognition/model`), Avaliação Cognitiva Infantil (`cognitive-age/bank`) e banco objetivo compartilhado da Sonda 10/OBS-10 (`objectiveBank`). **Nenhum item foi criado para a extensão.** Cada opcional mantém a referência exata do banco de origem. A seleção alterna entre domínios, aplica elegibilidade e graduação visual por idade e exclui tarefas e conceitos já apresentados; a inclusão do banco visual permite completar os 50 aos 5 anos sem repetição de conceito (`OPTIONAL_BANK` em `bank.ts`). Os 14 itens autorais da PR #1195 para 8–17 anos **não** entram aqui; dependem de revisão clínica própria.
 
 **Na tela.** O painel "Desafios opcionais · N anos" aparece na preparação e nos resultados, recolhido por padrão. Não aparece durante a partida. Ele informa "50 disponíveis: X na bateria principal + Y opcionais", a estimativa de tempo dos opcionais (sem pausas nem adaptações) e a orientação de interromper diante de cansaço ou recusa. Usa os mesmos componentes da partida (toque, fala ou ação, montar palavra), com "Repeti o comando", "Não respondeu" e "Recusou". Também tem seletor do desafio, anterior/próximo, "Pausar opcionais" e "Recolher opcionais". Nenhum controle do painel fica desabilitado.
 
@@ -659,7 +664,7 @@ Desenho aprovado pelo responsável clínico em 21/10/2026: **50 desafios dispon�
 
 **Código.** `bank.ts` (`OPTIONAL_BANK`, `DESAFIOS_DISPONIVEIS_POR_IDADE`; `objAt` só reorganiza a conversão do item objetivo, sem mudar a bateria), `extensao.ts` (registro, pendências de cópia e texto), painel `OpcionaisPanel` em `super-neuropad-game.tsx`, CSS em `super-neuropad-arcade.css`.
 
-**Verificação.** `tests/unit/super-neuropad-extensao.test.ts`: 50 por idade; bateria principal, limites e estimativas inalterados; procedência só dos bancos de origem; nenhuma repetição; registro, pendências de cópia e texto sem classificação; painel sem controle desabilitado. `npm run test:e2e:super-neuropad-opcionais` confere as 16 idades, registro por toque e por fala, pausa, cópia, troca de idade, painel nos resultados, aviso da "Nova partida", axe e celular a 390 px. A bateria principal foi comparada byte a byte (JSON do banco, estimativas e limites) antes e depois da mudança.
+**Verificação.** `tests/unit/super-neuropad-extensao.test.ts`: 50 por idade; bateria principal, limites e estimativas inalterados; procedência só dos bancos de origem; nenhuma tarefa ou conceito repetido; registro, pendências de cópia e texto sem classificação; painel sem controle desabilitado. `npm run test:e2e:super-neuropad-opcionais` confere as 16 idades, registro por toque e por fala, pausa, cópia, troca de idade, painel nos resultados, aviso da "Nova partida", axe e celular a 390 px. A bateria principal foi comparada byte a byte (JSON do banco, estimativas e limites) antes e depois da mudança.
 
 **Pendente.** Revisão médica item a item dos opcionais para cada idade (a seleção é mecânica, por banco de origem), teste manual em tablet e decisão sobre levar os opcionais ao PDF e ao prontuário.
 
