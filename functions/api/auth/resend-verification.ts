@@ -17,6 +17,7 @@ import {
   issueEmailVerification,
   type EmailVerificationEnv,
 } from "./_emailVerification";
+import { runAfterResponse } from "./_afterResponse";
 import { AUTH_INPUT_LIMITS } from "./_limits";
 import { json } from "./_shared";
 import { boundedText, isPlainObject } from "../_request";
@@ -114,17 +115,7 @@ export const onRequestPost: PagesFunction<EmailVerificationEnv> = async (
   }
   };
 
-  if (typeof context.waitUntil === "function") {
-    context.waitUntil(
-      work().catch((error) =>
-        console.error("[auth/resend-verification] fluxo falhou", error),
-      ),
-    );
-  } else {
-    await work().catch((error) =>
-      console.error("[auth/resend-verification] fluxo falhou", error),
-    );
-  }
+  await runAfterResponse(context, "auth/resend-verification", work);
 
   return genericAccepted();
 };

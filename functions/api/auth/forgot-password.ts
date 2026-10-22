@@ -13,6 +13,7 @@
  * - falha na entrega do e-mail apaga o token recém-criado (nada fica pendente
  *   sem que o destinatário tenha recebido o link).
  */
+import { runAfterResponse } from "./_afterResponse";
 import { sha256Hex } from "./_crypto";
 import { AUTH_INPUT_LIMITS } from "./_limits";
 import {
@@ -277,17 +278,7 @@ export const onRequestPost: PagesFunction<PasswordResetDeliveryEnv> = async (con
 
   };
 
-  if (typeof context.waitUntil === "function") {
-    context.waitUntil(
-      work().catch((error) =>
-        console.error("[auth/forgot-password] fluxo falhou", error),
-      ),
-    );
-  } else {
-    await work().catch((error) =>
-      console.error("[auth/forgot-password] fluxo falhou", error),
-    );
-  }
+  await runAfterResponse(context, "auth/forgot-password", work);
 
   return genericAccepted();
 };
