@@ -20,7 +20,7 @@ posterior a esse SHA não altera código executado pela suíte.
    Mínimo técnico de 8 caracteres; recomendado 16 ou mais, com gerador de
    senhas. A senha não deve ir a chat, issue, PR nem commit.
 2. Autorizar o merge da PR #1207 e o deploy da `main`.
-3. Após o deploy, validar o login em produção: usuário `visitante`, a senha
+3. Após o deploy, validar o login em produção: usuário `guest2027`, a senha
    definida, e confirmar que o acesso fica restrito às escalas.
 4. Confirmar no Cloudflare que o segredo existe com o valor esperado (ou que
    foi removido, se o segredo ficou vazio).
@@ -41,7 +41,7 @@ posterior a esse SHA não altera código executado pela suíte.
   `secret NEUROPED_VISITOR_PASSWORD: definido no Pages`.
 - `npx wrangler@4 pages secret list --project-name neuroped` lista
   `NEUROPED_VISITOR_PASSWORD` (quando definido).
-- Login em produção com `visitante` abre só as escalas; `GET /api/auth/me`
+- Login em produção com `guest2027` abre só as escalas; `GET /api/auth/me`
   retorna papel `visitor`; rotas de clínica retornam `403 VISITOR_RESTRICTED`.
 
 ## Limite desta verificação
@@ -54,4 +54,4 @@ de deploy deve confirmar a remoção pela listagem, que o próprio script
 verifica.
 
 Rollback: reverter a PR. Desligamento imediato sem deploy:
-`UPDATE users SET is_active = 0 WHERE lower(email) = 'visitante';` no D1.
+`UPDATE users SET is_active = 0 WHERE lower(email) = 'guest2027';` no D1.

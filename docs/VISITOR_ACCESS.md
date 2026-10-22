@@ -1,6 +1,6 @@
 # Login de visitante: abre só as escalas
 
-Usuário `visitante`, com a senha definida por você num segredo do ambiente. A
+Usuário `guest2027`, com a senha definida por você num segredo do ambiente. A
 conta existe e só autentica enquanto o segredo existir. Nenhuma senha está no
 repositório nem no banco.
 
@@ -18,11 +18,11 @@ repositório nem no banco.
      `NEUROPED_VISITOR_PASSWORD`. Não é fonte estável: o próximo deploy da `main`
      remove do Pages qualquer valor que não exista no GitHub. Segredos do Pages
      valem a partir do **próximo deploy**.
-2. Na tela de login, usuário `visitante` e a senha escolhida.
+2. Na tela de login, usuário `guest2027` e a senha escolhida.
 
-A conta `visitante` é criada no primeiro login correto e sem clínica. No banco
+A conta `guest2027` é criada no primeiro login correto e sem clínica. No banco
 ela tem o papel mínimo `reader` (a tabela `users` só aceita
-admin/professional/reader/operator) e o e-mail reservado `visitante`; a API
+admin/professional/reader/operator) e o e-mail reservado `guest2027`; a API
 expõe o papel `visitor`. O cadastro exige "@", então ninguém consegue criar essa
 identidade pelo site. A coluna `password_hash` guarda só uma impressão digital
 do segredo vigente (`visitor-fp:...`), nunca a senha nem um hash verificável.
@@ -40,7 +40,7 @@ do segredo vigente (`visitor-fp:...`), nunca a senha nem um hash verificável.
   confirma a remoção por listagem. Antes desse deploy, a senha antiga continua
   aceita: apagar só no GitHub não basta.
 - **Corte imediato, sem esperar deploy:** `UPDATE users SET is_active = 0 WHERE
-  lower(email) = 'visitante';` no D1. O middleware recusa conta inativa a cada
+  lower(email) = 'guest2027';` no D1. O middleware recusa conta inativa a cada
   requisição (401), inclusive com o segredo ainda no Pages. O login não reativa
   a conta.
 - Abas já abertas continuam navegando nas páginas de escala (que não chamam a

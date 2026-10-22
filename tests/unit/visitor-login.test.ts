@@ -91,7 +91,7 @@ const jwtSecret = ["visitor", "test", "jwt", "secret", "with", "enough", "length
 const visitorPw = ["visitor", "fixture", "pw"].join("-");
 const baseEnv = { DB: db, NEUROPED_JWT_SECRET: jwtSecret, NEUROPED_VISITOR_PASSWORD: visitorPw };
 
-const users = () => sqlite.prepare("SELECT * FROM users WHERE lower(email) = 'visitante'").all() as Array<Record<string, unknown>>;
+const users = () => sqlite.prepare("SELECT * FROM users WHERE lower(email) = 'guest2027'").all() as Array<Record<string, unknown>>;
 const families = () => (sqlite.prepare("SELECT COUNT(DISTINCT family_id) AS n FROM auth_refresh_sessions").get() as { n: number }).n;
 
 let ipCounter = 0;
@@ -113,7 +113,7 @@ for (const env of [
   { ...baseEnv, NEUROPED_VISITOR_PASSWORD: "curta" },
   { ...baseEnv, NEUROPED_VISITOR_PASSWORD: "   " },
 ]) {
-  const response = await login(loginContext("visitante", visitorPw, env));
+  const response = await login(loginContext("guest2027", visitorPw, env));
   assert.equal(response.status, 401, "sem segredo configurado o login não existe");
   assert.equal(((await response.json()) as { code: string }).code, "INVALID_CREDENTIALS");
 }
@@ -121,11 +121,11 @@ assert.equal(users().length, 0, "login desligado não cria conta");
 
 // ── 2) Senha errada: 401 e nada criado; certa: sessão visitor ──────────────
 {
-  const wrong = await login(loginContext("visitante", "senha-errada", baseEnv));
+  const wrong = await login(loginContext("guest2027", "senha-errada", baseEnv));
   assert.equal(wrong.status, 401);
   assert.equal(users().length, 0, "senha errada não provisiona conta");
 }
-const ok = await login(loginContext("visitante", visitorPw, baseEnv));
+const ok = await login(loginContext("guest2027", visitorPw, baseEnv));
 assert.equal(ok.status, 200);
 const session = (await ok.json()) as {
   accessToken: string;
@@ -133,7 +133,7 @@ const session = (await ok.json()) as {
   user: { id: string; role: string; email: string; mustChangePassword: boolean };
 };
 assert.equal(session.user.role, "visitor");
-assert.equal(session.user.email, "visitante");
+assert.equal(session.user.email, "guest2027");
 assert.equal(session.user.mustChangePassword, false);
 {
   const rows = users();
@@ -152,7 +152,7 @@ assert.equal(session.user.mustChangePassword, false);
 }
 // Variantes de caixa/espaço são a mesma identidade; segunda sessão é outra família.
 {
-  const again = await login(loginContext("  VISITANTE ", visitorPw, baseEnv));
+  const again = await login(loginContext("  GUEST2027 ", visitorPw, baseEnv));
   assert.equal(again.status, 200);
   assert.equal(users().length, 1, "idempotente: uma única linha");
   assert.equal(families(), 2, "cada login é uma sessão independente");
@@ -160,14 +160,14 @@ assert.equal(session.user.mustChangePassword, false);
 
 // ── 3) Sem lockout por conta ───────────────────────────────────────────────
 for (let attempt = 0; attempt < 8; attempt++) {
-  const wrong = await login(loginContext("visitante", `errada-${attempt}`, baseEnv));
+  const wrong = await login(loginContext("guest2027", `errada-${attempt}`, baseEnv));
   assert.equal(wrong.status, 401);
 }
 {
   const row = users()[0];
   assert.equal(row.failed_login_attempts, 0);
   assert.equal(row.locked_until, null, "terceiros não trancam a conta compartilhada");
-  const stillOk = await login(loginContext("visitante", visitorPw, baseEnv));
+  const stillOk = await login(loginContext("guest2027", visitorPw, baseEnv));
   assert.equal(stillOk.status, 200);
 }
 
@@ -234,16 +234,16 @@ async function callApi(method: string, path: string, token: string, env: Record<
 {
   const row = (email: string, role: string) =>
     ({ id: "u", name: "N", email, role, is_active: 1, password_hash: null, must_change_password: 0, failed_login_attempts: 0, locked_until: null }) as UserRow;
-  assert.equal(publicUser(row("visitante", "reader")).role, "visitor");
-  assert.equal(publicUser(row("  Visitante ", "reader")).role, "visitor");
+  assert.equal(publicUser(row("guest2027", "reader")).role, "visitor");
+  assert.equal(publicUser(row("  Guest2027 ", "reader")).role, "visitor");
   assert.equal(publicUser(row("leitor@clinica.example", "reader")).role, "reader", "reader de clínica não vira visitante");
-  assert.equal(publicUser(row("visitante", "professional")).role, "professional", "outro papel nunca é rebaixado nem promovido por e-mail");
-  assert.equal(publicUser(row("visitante", "admin")).role, "admin");
+  assert.equal(publicUser(row("guest2027", "professional")).role, "professional", "outro papel nunca é rebaixado nem promovido por e-mail");
+  assert.equal(publicUser(row("guest2027", "admin")).role, "admin");
 }
 
 // ── 6) Handlers de clínica recusam o papel por construção ──────────────────
 assert.equal(
-  getContextUser({ data: { authUser: { id: session.user.id, role: "visitor", email: "visitante", name: "V", mustChangePassword: false } } }),
+  getContextUser({ data: { authUser: { id: session.user.id, role: "visitor", email: "guest2027", name: "V", mustChangePassword: false } } }),
   null,
 );
 
@@ -281,7 +281,7 @@ async function callRefresh(refreshToken: string, env: Record<string, unknown>) {
 
 // ── 5b2) Rotação: trocar o segredo derruba as sessões antigas na hora ──────
 {
-  const old = (await (await login(loginContext("visitante", visitorPw, baseEnv))).json()) as typeof session;
+  const old = (await (await login(loginContext("guest2027", visitorPw, baseEnv))).json()) as typeof session;
   assert.equal((await callApi("GET", "/api/auth/me", old.accessToken, baseEnv)).status, 200);
 
   const rotatedPw = ["visitor", "fixture", "rotated"].join("-");
@@ -289,12 +289,12 @@ async function callRefresh(refreshToken: string, env: Record<string, unknown>) {
   // Antes de qualquer login novo: o segredo vigente já não é o da sessão.
   assert.equal((await callApi("GET", "/api/auth/me", old.accessToken, rot)).status, 401, "sessão antiga morre no primeiro uso após a rotação");
   assert.equal((await callRefresh(old.refreshToken, rot)).status, 401, "refresh antigo também");
-  assert.equal((await login(loginContext("visitante", visitorPw, rot))).status, 401, "senha antiga não loga");
+  assert.equal((await login(loginContext("guest2027", visitorPw, rot))).status, 401, "senha antiga não loga");
 
   // Dois logins simultâneos com o segredo novo: ambos valem (o perdedor da corrida não revoga o outro).
   const [a, b] = await Promise.all([
-    login(loginContext("visitante", rotatedPw, rot)),
-    login(loginContext("visitante", rotatedPw, rot)),
+    login(loginContext("guest2027", rotatedPw, rot)),
+    login(loginContext("guest2027", rotatedPw, rot)),
   ]);
   assert.equal(a.status, 200);
   assert.equal(b.status, 200);
@@ -307,21 +307,21 @@ async function callRefresh(refreshToken: string, env: Record<string, unknown>) {
 
 // ── 5c) Segundo interruptor: desativar a conta ─────────────────────────────
 {
-  const fresh = (await (await login(loginContext("visitante", visitorPw, baseEnv))).json()) as typeof session;
-  sqlite.prepare("UPDATE users SET is_active = 0 WHERE lower(email) = 'visitante'").run();
-  const relogin = await login(loginContext("visitante", visitorPw, baseEnv));
+  const fresh = (await (await login(loginContext("guest2027", visitorPw, baseEnv))).json()) as typeof session;
+  sqlite.prepare("UPDATE users SET is_active = 0 WHERE lower(email) = 'guest2027'").run();
+  const relogin = await login(loginContext("guest2027", visitorPw, baseEnv));
   assert.equal(relogin.status, 401, "conta desativada não loga e não é reativada");
   assert.equal(users()[0].is_active, 0);
   const me = await callApi("GET", "/api/auth/me", fresh.accessToken);
   assert.equal(me.status, 401);
-  sqlite.prepare("UPDATE users SET is_active = 1 WHERE lower(email) = 'visitante'").run();
+  sqlite.prepare("UPDATE users SET is_active = 1 WHERE lower(email) = 'guest2027'").run();
 }
 
 // ── 5d) Identidade ocupada por outro papel nunca é sequestrada ─────────────
 {
-  sqlite.prepare("UPDATE users SET role = 'professional' WHERE lower(email) = 'visitante'").run();
-  const blocked = await login(loginContext("visitante", visitorPw, baseEnv));
-  assert.equal(blocked.status, 401, "e-mail 'visitante' com outro papel não vira visitante");
+  sqlite.prepare("UPDATE users SET role = 'professional' WHERE lower(email) = 'guest2027'").run();
+  const blocked = await login(loginContext("guest2027", visitorPw, baseEnv));
+  assert.equal(blocked.status, 401, "e-mail 'guest2027' com outro papel não vira visitante");
   assert.equal(users()[0].role, "professional", "a linha existente não é reescrita");
 }
 

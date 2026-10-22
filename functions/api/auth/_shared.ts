@@ -66,10 +66,10 @@ export { json } from "../_request";
  * Login de visitante (somente escalas, auth/_visitor.ts). A tabela `users` só
  * aceita admin/professional/reader/operator (CHECK em schema.d1.sql), então a
  * linha do visitante fica com o papel mínimo `reader` e a identidade reservada
- * `visitante`. Como o cadastro exige e-mail com "@", só o provisionamento do
+ * `guest2027`. Como o cadastro exige e-mail com "@", só o provisionamento do
  * próprio login cria essa identidade.
  */
-export const VISITOR_LOGIN = "visitante";
+export const VISITOR_LOGIN = "guest2027";
 export const VISITOR_DB_ROLE = "reader";
 export const VISITOR_API_ROLE = "visitor";
 

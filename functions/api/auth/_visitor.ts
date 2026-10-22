@@ -11,7 +11,7 @@
  *   senha) que prende as sessões ao segredo vigente. Nenhum outro caminho (login
  *   comum, recuperação de senha, troca de senha) consegue autenticá-la;
  * - no banco a linha tem o papel mínimo `reader` (a tabela `users` só aceita
- *   admin/professional/reader/operator) e a identidade reservada `visitante`; a
+ *   admin/professional/reader/operator) e a identidade reservada `guest2027`; a
  *   API expõe `visitor` (ver publicUser), ausente de `KNOWN_ROLES`: todo handler
  *   que usa `getContextUser` já responde 401 para ele. Além disso o middleware nega por
  *   padrão: fora da allowlist abaixo, 403, inclusive escritas, troca de senha,
@@ -102,7 +102,7 @@ export async function visitorPasswordMatches(
  * Garante a linha do visitante, sem nunca reativar ou reescrever uma existente.
  * Desativar a conta (is_active = 0) é um segundo interruptor do operador.
  * Retorna null se a identidade estiver ocupada por outro papel ou desativada
- * (nesse caso o login de `visitante` simplesmente não existe).
+ * (nesse caso o login de `guest2027` simplesmente não existe).
  */
 export async function ensureVisitorAccount(
   db: D1Database,
