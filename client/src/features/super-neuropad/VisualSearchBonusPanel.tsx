@@ -70,7 +70,7 @@ export function VisualSearchBonusPanel({ years, visible }: { years: number; visi
   };
 
   return (
-    <section hidden={!visible} className="snp-panel space-y-3 p-4 sm:p-5" data-testid="super-neuropad-visual-search" aria-labelledby="snp-search-title">
+    <div hidden={!visible} className="snp-panel space-y-3 p-4 sm:p-5" data-testid="super-neuropad-visual-search" aria-labelledby="snp-search-title">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 id="snp-search-title" className="snp-pixel text-base">Onde está o explorador?</h2>
@@ -103,6 +103,6 @@ export function VisualSearchBonusPanel({ years, visible }: { years: number; visi
           <span className="text-xs">{copyStatus}</span>
         </div>
       )}
-    </section>
+    </div>
   );
 }

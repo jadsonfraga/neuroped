@@ -4,22 +4,22 @@ import { buildVisualSearchBoard, visualSearchProfile, type ExplorerVariant } fro
 
 /** Ilustração vetorial autoral: nenhuma imagem do jogo comercial é utilizada. */
 function SearchExplorer({ variant, similar }: { variant: ExplorerVariant; similar: boolean }) {
-  const hat = similar ? "#235e81" : variant === 0 ? "#f29e2f" : ["#235e81", "#57a389", "#a777c4"][variant - 1];
+  const hat = similar ? "var(--snp-sky)" : variant === 0 ? "var(--snp-sun)" : ["var(--snp-sky)", "var(--snp-grass)", "var(--snp-lilac)"][variant - 1];
   return (
     <svg viewBox="0 0 64 72" className="h-full w-full" aria-hidden="true" focusable="false">
-      <rect x="17" y="43" width="30" height="26" rx="9" fill="#447aaf" stroke="#24354c" strokeWidth="2" />
-      <circle cx="32" cy="34" r="18" fill="#f7d4ac" stroke="#24354c" strokeWidth="2.5" />
-      <path d="M14 27V18Q14 10 23 10H41Q50 10 50 18V27Z" fill={hat} stroke="#24354c" strokeWidth="2" />
-      <path d="M9 26Q32 32 55 26" fill="none" stroke="#24354c" strokeWidth="3" strokeLinecap="round" />
+      <rect x="17" y="43" width="30" height="26" rx="9" fill="var(--snp-sky)" stroke="var(--snp-ink-fixed)" strokeWidth="2" />
+      <circle cx="32" cy="34" r="18" fill="var(--snp-paper-fixed)" stroke="var(--snp-ink-fixed)" strokeWidth="2.5" />
+      <path d="M14 27V18Q14 10 23 10H41Q50 10 50 18V27Z" fill={hat} stroke="var(--snp-ink-fixed)" strokeWidth="2" />
+      <path d="M9 26Q32 32 55 26" fill="none" stroke="var(--snp-ink-fixed)" strokeWidth="3" strokeLinecap="round" />
       {variant === 0 ? (
-        <path d="M32 12L34.1 16.6L39 17.1L35.4 20.5L36.3 25.4L32 23L27.7 25.4L28.6 20.5L25 17.1L29.9 16.6Z" fill="#ffd644" stroke="#5b3d15" strokeWidth="0.7" />
-      ) : variant === 1 ? <circle cx="32" cy="19" r="5" fill="#f2c644" stroke="#5b3d15" strokeWidth="0.9" />
-        : variant === 2 ? <path d="M32 13L38 19L32 25L26 19Z" fill="#f2c644" stroke="#5b3d15" strokeWidth="0.9" />
-        : <path d="M26 15H38V23H26Z" fill="#f2c644" stroke="#5b3d15" strokeWidth="0.9" />}
-      <circle cx="26" cy="36" r="2" fill="#24354c" />
-      <circle cx="38" cy="36" r="2" fill="#24354c" />
-      <path d="M28 43Q32 47 36 43" fill="none" stroke="#a85953" strokeWidth="2" strokeLinecap="round" />
-      <path d="M22 54H42" stroke="#e4efff" strokeWidth="2" />
+        <path d="M32 12L34.1 16.6L39 17.1L35.4 20.5L36.3 25.4L32 23L27.7 25.4L28.6 20.5L25 17.1L29.9 16.6Z" fill="var(--snp-sun)" stroke="var(--snp-ink-fixed)" strokeWidth="0.7" />
+      ) : variant === 1 ? <circle cx="32" cy="19" r="5" fill="var(--snp-sun)" stroke="var(--snp-ink-fixed)" strokeWidth="0.9" />
+        : variant === 2 ? <path d="M32 13L38 19L32 25L26 19Z" fill="var(--snp-sun)" stroke="var(--snp-ink-fixed)" strokeWidth="0.9" />
+        : <path d="M26 15H38V23H26Z" fill="var(--snp-sun)" stroke="var(--snp-ink-fixed)" strokeWidth="0.9" />}
+      <circle cx="26" cy="36" r="2" fill="var(--snp-ink-fixed)" />
+      <circle cx="38" cy="36" r="2" fill="var(--snp-ink-fixed)" />
+      <path d="M28 43Q32 47 36 43" fill="none" stroke="var(--snp-berry)" strokeWidth="2" strokeLinecap="round" />
+      <path d="M22 54H42" stroke="var(--snp-paper-fixed)" strokeWidth="2" />
     </svg>
   );
 }
