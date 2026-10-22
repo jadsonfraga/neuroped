@@ -133,6 +133,8 @@ test("anti-regressão da página: cadastro na 1\u00aa tela e disparo automático
   assert.match(page, /buildFamilyDocSpec\(deliveredSession,/, "PDF usa o mesmo retrato");
   assert.doesNotMatch(page, /\b(?:localStorage|sessionStorage|indexedDB)\s*\./, "contato da família nunca persiste no navegador (LGPD)");
   assert.match(page, /setFamilyContact\(null\)/, "contato limpo ao iniciar partida de outra criança");
+  assert.match(page, /setFamilyDeliveryStatus\(contactValid \? "ready" : ""\)/, "cada nova partida rearma o contato válido");
+  assert.match(page, /function replaySameChild\(\)[\s\S]*?startGame\(\)/, "repetição da mesma criança também rearma o envio");
   assert.match(page, /isValidPhone\(contact\.phone\)/, "telefone validado antes de abrir o WhatsApp");
   assert.match(page, /isValidFamilyEmail\(contact\.email\)/, "e-mail validado antes de abrir o rascunho");
 });
