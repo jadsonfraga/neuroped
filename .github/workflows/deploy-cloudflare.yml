@@ -351,14 +351,10 @@ jobs:
           put_optional NEUROPED_E2E_PASSWORD "$e2e_pw"
           put_optional NEUROPED_E2E_EMAIL "$e2e_mail"
           put_optional NEUROPED_E2E_NAME "$e2e_name"
-          # Login de visitante (somente escalas): sem este segredo o login não
-          # existe. Opcional; para desligar, remova o segredo no Cloudflare
-          # (docs/VISITOR_ACCESS.md).
-          if [ -n "$visitor_pw" ] && [ "${#visitor_pw}" -lt 8 ]; then
-            echo "::warning::NEUROPED_VISITOR_PASSWORD tem menos de 8 caracteres: o login de visitante fica desligado e o segredo não foi gravado"
-          else
-            put_optional NEUROPED_VISITOR_PASSWORD "$visitor_pw"
-          fi
+          # Login de visitante (somente escalas): o GitHub é a fonte. Valor
+          # ausente ou inválido REMOVE o segredo do Pages, para que uma senha
+          # antiga não continue válida (docs/VISITOR_ACCESS.md).
+          VISITOR_PW_VALUE="$visitor_pw" bash scripts/visitor-secret-sync.sh
           # Agenda pública: sem chave operacional dedicada (>=32 chars) o POST
           # book responde 503 CRYPTO_NOT_CONFIGURED. Opcional para não quebrar o
           # deploy; a chave é do dono e precisa de backup (perda = dados ilegíveis).

@@ -10,11 +10,14 @@ repositório nem no banco.
    destes lugares:
    - **GitHub** → Settings → Secrets → Actions → `NEUROPED_VISITOR_PASSWORD`.
      O próximo deploy da `main` o grava no Cloudflare Pages
-     (`deploy-cloudflare.yml`, passo "Configurar secrets/vars de auth"). Se a
-     senha tiver menos de 8 caracteres o deploy avisa e não a grava.
+     (`deploy-cloudflare.yml`, passo "Configurar secrets/vars de auth", via
+     `scripts/visitor-secret-sync.sh`). Se o segredo estiver vazio ou tiver
+     menos de 8 caracteres, o deploy **remove** o valor do Pages e o login fica
+     desligado.
    - **Cloudflare** → Pages → neuroped → Settings → Variables and Secrets →
-     `NEUROPED_VISITOR_PASSWORD`. Segredos do Pages valem a partir do **próximo
-     deploy** (rode o workflow de deploy ou "Retry deployment").
+     `NEUROPED_VISITOR_PASSWORD`. Não é fonte estável: o próximo deploy da `main`
+     remove do Pages qualquer valor que não exista no GitHub. Segredos do Pages
+     valem a partir do **próximo deploy**.
 2. Na tela de login, usuário `visitante` e a senha escolhida.
 
 A conta `visitante` é criada no primeiro login correto e sem clínica. No banco
@@ -32,10 +35,14 @@ do segredo vigente (`visitor-fp:...`), nunca a senha nem um hash verificável.
   também para "remover e recolocar": sessões revogadas não voltam. Se o mesmo
   segredo for restaurado sem que nenhuma sessão tenha feito chamada no
   intervalo, ela continua válida (é o mesmo segredo).
-- Se o segredo também existir no GitHub, **apague-o lá**: senão o próximo
-  deploy o recoloca.
-- **Corte imediato, sem deploy:** `UPDATE users SET is_active = 0 WHERE
-  lower(email) = 'visitante';` no D1. O login não reativa a conta.
+- **Para desligar pelo segredo, apague `NEUROPED_VISITOR_PASSWORD` no GitHub e
+  faça um deploy da `main`.** O passo de secrets remove o valor do Pages e
+  confirma a remoção por listagem. Antes desse deploy, a senha antiga continua
+  aceita: apagar só no GitHub não basta.
+- **Corte imediato, sem esperar deploy:** `UPDATE users SET is_active = 0 WHERE
+  lower(email) = 'visitante';` no D1. O middleware recusa conta inativa a cada
+  requisição (401), inclusive com o segredo ainda no Pages. O login não reativa
+  a conta.
 - Abas já abertas continuam navegando nas páginas de escala (que não chamam a
   API) até recarregar; o corte vale para a API e para o próximo carregamento.
 
@@ -76,4 +83,7 @@ dock mostram só as escalas.
 `node --import tsx tests/unit/visitor-login.test.ts` (login, sem lockout,
 deny-by-default no middleware, interruptores, sem sequestro de identidade) e
 `node --import tsx tests/unit/route-guard-policy.test.ts` (rotas do visitante).
-Ambos fazem parte de `npm run test:quick-wins`.
+`node tests/unit/visitor-secret-sync.test.mjs` (passo de deploy com dublê do
+wrangler: valor válido grava; vazio ou inválido remove o valor antigo do Pages;
+falha de remoção reprova o passo). Os três fazem parte de
+`npm run test:quick-wins`.
