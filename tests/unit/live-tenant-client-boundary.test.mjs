@@ -50,7 +50,9 @@ assert.match(
   "bootstrap de auth não pode apagar a seleção tenant persistida antes da revalidação da sessão",
 );
 const bootstrapGuard = clinicContext.indexOf('if (accessMode === "checking" || isAuthLoading) return;');
-const definitiveClear = clinicContext.indexOf('if (accessMode !== "remote" || !isAuthenticated || user?.mustChangePassword)');
+// Localiza o ramo de limpeza independentemente de predicados adicionais de bloqueio,
+// como a exclusão explícita do papel visitante, sem relaxar a ordem de segurança.
+const definitiveClear = clinicContext.search(/if\s*\(accessMode\s*!==\s*"remote"\s*\|\|\s*!isAuthenticated\s*\|\|\s*user\?\.mustChangePassword/);
 assert.ok(bootstrapGuard >= 0 && definitiveClear > bootstrapGuard, "guard transitório deve preceder a limpeza definitiva de tenant");
 const betweenBootstrapAndDefinitiveClear = clinicContext.slice(bootstrapGuard, definitiveClear);
 assert.doesNotMatch(

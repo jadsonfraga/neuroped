@@ -406,7 +406,7 @@ function operationsDashboard() {
  * @property {Set<string>|string[]} [hanging] Prefixos de rota que nunca respondem (estado de carregamento).
  * @property {boolean} [expiredSession] Faz `/api/auth/me` e as rotas clínicas responderem 401.
  * @property {"owner"|"clinic_admin"|"professional"|"assistant"|"financial"} [primaryRole] Papel de membership na clínica primária.
- * @property {"admin"|"professional"|"reader"|"operator"} [userRole] Papel global sintético, independente da membership.
+ * @property {"admin"|"professional"|"reader"|"operator"|"visitor"} [userRole] Papel global sintético, independente da membership.
  */
 
 /**
@@ -547,6 +547,13 @@ export function createSyntheticClinicalApi(scenario = {}) {
     // A partir daqui tudo é clínico: sem sessão válida, 401 — igual à produção.
     if (!authorized(request)) {
       send(response, 401, { error: "Sessão inválida." });
+      return true;
+    }
+
+    // Visitante (somente escalas): espelha o middleware real, que nega por
+    // padrão tudo fora de GET /api/auth/me (functions/api/auth/_visitor.ts).
+    if (user.role === "visitor") {
+      send(response, 403, { error: "Acesso de visitante restrito às escalas.", code: "VISITOR_RESTRICTED" });
       return true;
     }
 

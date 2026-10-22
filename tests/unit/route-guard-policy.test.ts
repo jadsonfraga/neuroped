@@ -5,8 +5,11 @@ import {
   decideRouteAccess,
   isReaderClinicalRoute,
   isRouteSensitive,
+  isVisitorRoute,
   READER_CLINICAL_ROUTES,
   SENSITIVE_ROUTES,
+  VISITOR_HOME,
+  VISITOR_ROUTES,
 } from "../../client/src/security/routeGuardPolicy.ts";
 
 // Modo ACESSO ABERTO (decisão do autor): sem qualquer senha, TODA rota é pública
@@ -525,4 +528,80 @@ console.log(
 // OBS-10 is an exact operator exception, never a public or descendant route.
 for (const path of ["/avaliacao-pre-consulta-faixa-etaria/interno", "/avaliacao-pre-consulta-faixa-etaria-extra"]) {
   assert.equal(decideRouteAccess({ path, accessMode: "remote", isAuthenticated: true, isLoading: false, userRole: "operator" }), "forbidden");
+}
+
+// ── Login de visitante: abre SOMENTE as escalas ────────────────────────────
+{
+  const visitor = (path: string, authenticated = true) =>
+    decideRouteAccess({ path, accessMode: "remote", isAuthenticated: authenticated, isLoading: false, userRole: "visitor" });
+
+  for (const path of [
+    "/biblioteca-instrumentos",
+    "/instrumentos-padronizados",
+    "/filtro",
+    "/filtro-escalas",
+    "/generic-scale/smfq",
+    "/mchat",
+    "/cars",
+    "/snap",
+    "/cdi2",
+    "/vineland",
+    "/escalas-neuropsiquiatria",
+    "/login",
+    "/sessao-expirada",
+  ]) {
+    assert.equal(visitor(path), "allow", `${path} deve abrir para o visitante`);
+  }
+
+  // Nada além das escalas: clínico, administrativo, público e conta.
+  for (const path of [
+    "/",
+    "/onboarding",
+    "/configuracoes",
+    "/pacientes",
+    "/paciente/abc",
+    "/prontuario",
+    "/documentos",
+    "/laudo-neuroped",
+    "/receita-c1",
+    "/assinatura-digital",
+    "/agenda",
+    "/recepcao",
+    "/testes-diretos",
+    "/super-neuropad-game",
+    "/medicamentos",
+    "/calculadora-dose",
+    "/fluxograma",
+    "/valores-referencia",
+    "/qualidade",
+    "/familia",
+    "/agendar",
+    "/planos",
+    "/cadastro",
+    "/privacidade",
+    "/caa",
+    "/mchat/extra",
+    "/generic-scale",
+  ]) {
+    assert.equal(visitor(path), "forbidden", `${path} não pode abrir para o visitante`);
+  }
+
+  // Lista exata: nenhuma rota sensível ou de conta entra por engano.
+  for (const route of VISITOR_ROUTES) {
+    assert.equal(isRouteSensitive(route), false, `${route} está em SENSITIVE_ROUTES e não pode ser do visitante`);
+    assert.ok(
+      (READER_CLINICAL_ROUTES as readonly string[]).includes(route) || ["/filtro", "/filtro-escalas"].includes(route),
+      `${route} precisa ser uma rota que o papel reader já tinha (ou o filtro público)`,
+    );
+  }
+  assert.ok(isVisitorRoute(VISITOR_HOME), "o destino pós-login precisa ser permitido");
+
+  // Visitante só existe em sessão remota autenticada: local/anônimo não muda.
+  assert.equal(
+    decideRouteAccess({ path: "/mchat", accessMode: "remote", isAuthenticated: false, isLoading: false, userRole: "visitor" }),
+    "login",
+  );
+  assert.equal(decideRouteAccess({ path: "/pacientes", accessMode: "remote", isAuthenticated: true, isLoading: false, userRole: "professional" }), "allow");
+
+  console.log("✓ visitante: abre somente as escalas; clínico, conta e páginas públicas ficam fora");
 }
