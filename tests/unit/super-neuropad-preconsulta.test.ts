@@ -70,3 +70,11 @@ test("opcionais: a seleção padrão não reapresenta conceitos da bateria nem r
     assert.equal(proximoPendenteNaLista([], {}), null);
   }
 });
+
+test("proveniência da pré-consulta é assistente, nunca exame médico presumido", async () => {
+  const { CIRCUIT_SOURCES } = await import("../../client/src/features/super-neuropad/clinicalCircuit");
+  assert.match(CIRCUIT_SOURCES.assistente, /assistente.*pré-consulta/);
+  assert.match(CIRCUIT_SOURCES.examinador, /examinador/);
+  const code = readFileSync("client/src/features/super-neuropad/ClinicalCircuit.tsx", "utf8");
+  assert.match(code, /key === "assistente" \|\| key === "cuidador"/);
+});
