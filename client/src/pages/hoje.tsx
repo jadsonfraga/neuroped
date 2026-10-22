@@ -82,8 +82,26 @@ async function apagarChave(chave: string): Promise<boolean> {
   }
 }
 
+const HOJE_SONDA_CHAVE = "diario:hoje:v1:sonda";
+
+/**
+ * Uma releitura vazia só prova apagamento se o cofre estiver respondendo.
+ * Sem isso, cofre indisponível e registro apagado parecem iguais.
+ */
+async function cofreResponde(): Promise<boolean> {
+  try {
+    const gravou = await secureSet(HOJE_SONDA_CHAVE, true);
+    const lido = gravou ? await secureGet<boolean>(HOJE_SONDA_CHAVE) : null;
+    await secureClear(HOJE_SONDA_CHAVE);
+    return lido === true;
+  } catch {
+    return false;
+  }
+}
+
 /** Devolve só as datas comprovadamente apagadas. */
 async function apagarDias(datas: string[]): Promise<string[]> {
+  if (!(await cofreResponde())) return [];
   const resultados = await Promise.all(
     datas.map(async (data) => ((await apagarChave(chaveDoDia(data))) ? data : null)),
   );
@@ -214,7 +232,7 @@ export default function HojePage() {
       });
       return;
     }
-    if (!(await apagarChave(HOJE_INDICE_CHAVE))) {
+    if (!(await cofreResponde()) || !(await apagarChave(HOJE_INDICE_CHAVE))) {
       toast({ title: "Não foi possível apagar o índice", variant: "destructive" });
       return;
     }

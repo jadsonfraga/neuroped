@@ -642,7 +642,7 @@ function AgeTab({
                           size="sm"
                           aria-pressed={current === resposta.value}
                           data-testid={`marco-${milestone.id}-${resposta.value}`}
-                          className="h-7 px-2.5 text-[11px]"
+                          className="px-2.5 text-[11px]"
                           onClick={() => onAnswer(milestone.id, nextMarcoAnswer(current, resposta.value))}
                         >
                           {resposta.label}

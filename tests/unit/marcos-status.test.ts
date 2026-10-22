@@ -54,5 +54,5 @@ test("página de marcos não volta a marcar tudo como atingido nem a usar limiar
   assert.doesNotMatch(source, /start all checked|Por padrão todos os marcos/i);
   assert.doesNotMatch(source, /missed\s*>=\s*4|maxDomainMissed\s*>=\s*2|2 ou mais marcos/);
   assert.doesNotMatch(source, /encaminhar para avaliação especializada/i);
-  assert.doesNotMatch(source, /summary\.aindaNao\s*>\s*0/, "nenhum alerta condicional por contagem de 'ainda não'");
+  assert.doesNotMatch(source, /summary\.aindaNao\s*(>=?|<=?|!==?|===?)/, "nenhum alerta condicional por contagem de 'ainda não'");
 });
