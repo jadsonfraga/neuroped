@@ -421,7 +421,7 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
           <fieldset className="space-y-2">
             <legend className="text-sm font-black">Quem informou (obrigatório) — sem escolha, a missão não conta como concluída</legend>
             <div className="flex flex-wrap gap-2">
-              {(Object.entries(CIRCUIT_SOURCES) as [CircuitSource,string][]).filter(([key]) => perfilOperador === "medico" || key === "examinador" || key === "cuidador").map(([key,label]) =>
+              {(Object.entries(CIRCUIT_SOURCES) as [CircuitSource,string][]).filter(([key]) => perfilOperador === "medico" || key === "assistente" || key === "cuidador").map(([key,label]) =>
                 <button key={key} type="button" aria-pressed={sources[task.id] === key}
                   onClick={() => { setSources((prior) => ({...prior,[task.id]:key})); setFeedback(""); }}
                   className={`snp-option min-h-11 px-3 py-2 text-left text-xs font-semibold ${sources[task.id] === key ? "bg-[var(--snp-sky-tint)]" : "bg-[var(--snp-paper-fixed)]"}`}>
