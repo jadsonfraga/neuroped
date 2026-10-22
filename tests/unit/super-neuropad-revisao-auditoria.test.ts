@@ -57,7 +57,7 @@ test("urgência: achado de fundo de olho ou meninges aparece como urgência e sa
   assert.equal(linhasDeRevisao(linhas).some((linha) => linha.id === "urgencia"), false);
   assert.equal(pendenciasParaRevisao(linhas), linhasDeRevisao(linhas).filter((linha) => linha.status !== "examinado").length);
   const texto = textoProntidao(7, linhas).join("\n");
-  assert.match(texto, /ATENÇÃO CLÍNICA: achado a esclarecer em fundo de olho ou sinais meníngeos/);
+  assert.match(texto, /ATENÇÃO CLÍNICA: achado a esclarecer em consciência, fundo de olho ou sinais meníngeos/);
   assert.equal(urgenciaAtiva(matrizSuficiencia(7, records({ fundus: "observado", meningeal: "observado" }))), false);
   // Item apenas pendente não é achado: não dispara alerta nem usa o texto de achado.
   const pendente = matrizSuficiencia(7, records({ fundus: "observado" }));
