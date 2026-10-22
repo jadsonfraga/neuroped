@@ -11,7 +11,7 @@
  */
 import { DESCRIPTIVE_NOTICE } from "../../lib/descriptiveNotice";
 import { DESAFIOS_DISPONIVEIS_POR_IDADE, OPTIONAL_BANK, type OptionalItem } from "./bank";
-import { bandItemCount, formatDuration, itemSeconds, KIND_LABELS, ORIGIN_LABELS, phaseById, STATUS_LABELS, youngFactor, type AnswerRecord } from "./model";
+import { bandItemCount, formatDuration, itemSeconds, KIND_LABELS, ORIGIN_LABELS, phaseById, STATUS_LABELS, youngFactor, type AnswerRecord, type Item } from "./model";
 
 export const EXTENSAO_VERSAO = "2026-10-21.1";
 export { DESAFIOS_DISPONIVEIS_POR_IDADE };
@@ -22,6 +22,21 @@ export type RegistrosOpcionais = Readonly<Record<string, AnswerRecord>>;
 
 export function opcionaisDaIdade(years: number): readonly OptionalItem[] {
   return OPTIONAL_BANK[years] ?? [];
+}
+
+/** Idades em que letras e numerais ainda não são marco universal; o item continua disponível, com aviso. */
+const IDADE_MAXIMA_AVISO_LETRAMENTO = 3;
+
+/**
+ * Aviso de contexto para opcionais que pedem letra ou numeral aos 2–3 anos (auditoria de 21/10/2026).
+ * Não remove nem troca o item: a aplicadora decide. O aviso vai na tela e no texto copiado.
+ */
+export function avisoDeIdade(years: number, item: Item): string | null {
+  if (years > IDADE_MAXIMA_AVISO_LETRAMENTO) return null;
+  const alvo = item.kind === "toque" ? item.answer : item.kind === "montar" ? item.word : item.expected;
+  const pedeLetraOuNumeral = /\b(letra|n[úu]mero)\b/i.test(item.prompt) || (item.kind === "toque" && /^[A-Za-zÀ-ÿ0-9]$/.test(alvo.trim()));
+  if (!pedeLetraOuNumeral) return null;
+  return `Aviso de idade: reconhecer letras ou números não é marco universal aos ${years} anos. Registre só o que ocorreu; erro, recusa ou falta de resposta não deve ser lido como achado.`;
 }
 
 export function disponiveisDaIdade(years: number): { principal: number; opcionais: number; total: number } {
@@ -64,6 +79,10 @@ export function pendentesDeCopia(registros: RegistrosOpcionais, copiados: Regist
   return Object.values(registros).filter((record) => copiados[record.itemId] !== record).length;
 }
 
+function itemDoRegistro(years: number, record: AnswerRecord): Item | undefined {
+  return opcionaisDaIdade(years).find((entry) => entry.item.id === record.itemId)?.item;
+}
+
 export function registradosNaOrdem(years: number, registros: RegistrosOpcionais): AnswerRecord[] {
   return opcionaisDaIdade(years).flatMap((entry) => (registros[entry.item.id] ? [registros[entry.item.id]] : []));
 }
@@ -88,6 +107,8 @@ export function textoOpcionais(years: number, registros: RegistrosOpcionais, qua
     linhas.push(`${index + 1}. [${mundo.name}] ${record.prompt}`);
     linhas.push(`   Registrado: ${record.given} (${STATUS_LABELS[record.status]}) · Critério de acerto: ${record.expected}`);
     linhas.push(`   ${KIND_LABELS[record.kind]} · ${ORIGIN_LABELS[record.origin]} · ${record.ref} · ${extras}`);
+    const aviso = itemDoRegistro(years, record) ? avisoDeIdade(years, itemDoRegistro(years, record)!) : null;
+    if (aviso) linhas.push(`   ${aviso}`);
   });
   if (naoAplicados.length) {
     linhas.push("", `Opcionais não aplicados: ${naoAplicados.length}.`);
