@@ -69,6 +69,7 @@ async function main() {
     try {
       await openGame(page, server.origin);
       assert.match(await page.getByTestId("super-neuropad-game").innerText(), /50 disponíveis por idade com os opcionais/i);
+      assert.equal(await page.locator('[data-testid="page-mascot-decor"] .np-mascot-nino').count(), 0, "mascote global fora da trilha do jogo");
 
       // 1. As 16 idades: 50 disponíveis; a bateria principal continua com a contagem de antes.
       for (let age = 2; age <= 17; age++) {
@@ -202,6 +203,35 @@ async function main() {
       await context.close();
     }
 
+    // Regressão: a pausa exclui apenas o intervalo pausado e conserva a marca de comando repetido.
+    const timed = await newPage(browser, { width: 1180, height: 900 }, collected);
+    try {
+      await openGame(timed.page, server.origin);
+      await setAge(timed.page, 9);
+      const timedPanel = panelOf(timed.page);
+      await timedPanel.getByRole("button", { name: "Abrir opcionais" }).click();
+      const timedStage = timedPanel.getByTestId("super-neuropad-optional-stage");
+      await goTo(timed.page, (text) => text.startsWith("○") && /Mostre:/.test(text), "opcional visual cronometrado");
+      await timedStage.getByRole("button", { name: "Repeti o comando" }).click();
+      await timed.page.waitForTimeout(550);
+      await timedPanel.getByRole("button", { name: "Pausar opcionais" }).click();
+      await timed.page.waitForTimeout(1200);
+      await timedPanel.getByRole("button", { name: "Retomar opcionais" }).click();
+      await timedStage.waitFor();
+      await timedStage.getByRole("button", { name: "Comando repetido 1x" }).waitFor();
+      await timed.page.waitForTimeout(550);
+      await timedStage.getByRole("group", { name: "Opções" }).getByRole("button").first().click();
+      await timedPanel.getByTestId("super-neuropad-optional-status").getByText(/1 registro\(s\) opcional\(is\) ainda não copiado/).waitFor();
+      await timedPanel.getByRole("button", { name: "Copiar registro dos opcionais" }).click();
+      const timedCopy = await timed.page.evaluate(() => navigator.clipboard.readText());
+      const measured = Number(timedCopy.match(/· (\d+) s(?: ·|\r?\n)/)?.[1]);
+      assert.ok(measured >= 1, `tempo ativo do item registrado (${measured}s)`);
+      assert.match(timedCopy, /comando repetido 1x/, "marca de repetição mantida após pausa");
+      observations.pausaPreservaSinalDeRepeticao = { segundosRegistrados: measured, intervaloPausadoMs: 1200 };
+    } finally {
+      await timed.context.close();
+    }
+
     // 7. Celular: o painel aberto cabe em 390 px sem rolagem horizontal.
     const mobile = await newPage(browser, { width: 390, height: 844 }, collected);
     try {
@@ -214,6 +244,7 @@ async function main() {
       observations.paginaInteiraEmCelularExcessoPx = await mobile.page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       assert.ok(observations.paginaInteiraEmCelularExcessoPx <= 1, "página sem rolagem horizontal em 390 px");
       assert.equal(await mobile.page.getByTestId("super-neuropad-game").getAttribute("data-age-style"), "adolescente", "apresentação sóbria a partir de 13 anos");
+      assert.equal(await mobile.page.getByTestId("super-neuropad-game").getAttribute("data-age-theme"), "autonomia", "tema de autonomia para adolescentes");
       await mobile.page.screenshot({ path: `${dir}/opcionais-celular.png`, fullPage: true });
 
       // 7b. Auditoria 21/10/2026: durante a partida no celular a barra do app e o botão de ajuda saem do caminho e

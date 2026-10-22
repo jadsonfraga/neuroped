@@ -21,6 +21,7 @@ import {
 import {
   buildFamilyDocSpec,
   buildFamilySummary,
+  snapshotCompletedFamilySession,
   isValidFamilyEmail,
   parseFamilyContact,
   serializeFamilyContact,
@@ -123,10 +124,53 @@ test("anti-regressão da página: cadastro na 1\u00aa tela e disparo automático
   assert.match(page, /buildFamilyDocSpec/, "PDF para a família");
   assert.match(page, /shareWhatsAppDocument/, "WhatsApp no encaminhamento");
   assert.match(page, /openEmailDraft/, "e-mail no encaminhamento");
-  assert.match(page, /function finishGame\(\)[\s\S]*?deliverToFamily/, "encerramento dispara o encaminhamento");
-  assert.match(page, /setScreen\("results"\);\s*\n\s*if \(familyContact && familyDeliveryStatus === "ready"\)/, "disparo só com cadastro válido");
+  assert.match(page, /function finishGame\(finalAnswers: AnswerRecord\[\] = answers/, "encerramento recebe a resposta final");
+  assert.match(page, /finishGame\(next\)/, "última resposta enviada ao encerramento");
+  assert.match(page, /finishGame\(answers, nextSkipped\)/, "último mundo pulado enviado ao encerramento");
+  assert.match(page, /setScreen\("results"\);\s*\n\s*if \(familyContact && familyDeliveryStatus === "ready" && deliverySnapshot\)/, "disparo somente com contato válido e retrato atual");
+  assert.match(page, /deliverToFamily\(familyContact, deliverySnapshot\)/, "entrega recebe retrato atualizado");
+  assert.match(page, /buildFamilySummary\(deliveredSession, contact\)/, "mensagem usa o retrato atualizado");
+  assert.match(page, /buildFamilyDocSpec\(deliveredSession,/, "PDF usa o mesmo retrato");
   assert.doesNotMatch(page, /\b(?:localStorage|sessionStorage|indexedDB)\s*\./, "contato da família nunca persiste no navegador (LGPD)");
   assert.match(page, /setFamilyContact\(null\)/, "contato limpo ao iniciar partida de outra criança");
+  assert.match(page, /setFamilyDeliveryStatus\(contactValid \? "ready" : ""\)/, "cada nova partida rearma o contato válido");
+  assert.match(page, /function replaySameChild\(\)[\s\S]*?startGame\(\)/, "repetição da mesma criança também rearma o envio");
   assert.match(page, /isValidPhone\(contact\.phone\)/, "telefone validado antes de abrir o WhatsApp");
   assert.match(page, /isValidFamilyEmail\(contact\.email\)/, "e-mail validado antes de abrir o rascunho");
+});
+
+test("última resposta integra texto e PDF familiar antes do render (2, 8 e 17 anos)", () => {
+  for (const years of [2, 8, 17]) {
+    const complete = play(years, (index) => index === 0 ? "erro" : "acerto");
+    const last = { ...complete.answers.at(-1)!, status: "erro" as const, given: "Resposta sintética divergente" };
+    const stale = { ...complete, answers: complete.answers.slice(0, -1), finishedAt: null, pausedSeconds: 0 };
+    const previousCount = stale.answers.length;
+    const closedAt = "2026-09-30T12:18:00.000Z";
+    const snapshot = snapshotCompletedFamilySession(stale, closedAt, [...stale.answers, last]);
+    assert.equal(stale.answers.length, previousCount, "estado anterior não é mutado");
+    assert.equal(stale.finishedAt, null);
+    assert.equal(snapshot.finishedAt, closedAt);
+    assert.equal(snapshot.answers.length, complete.answers.length);
+    assert.equal(snapshot.answers.at(-1)?.itemId, last.itemId);
+    assert.equal(summarize(snapshot).complete, true, "não perde a resposta final");
+    const text = buildFamilySummary(snapshot, CONTACT, new Date(closedAt));
+    assert.match(text, /Aventura completa:/);
+    assert.equal(summarize(snapshot).hits, complete.answers.length - 2);
+    const pdf = buildFamilyDocSpec(snapshot, ISSUER, "30/09/2026 12:18", new Date(closedAt));
+    assert.ok(pdf.sections.some((section) => section.body.includes(last.prompt)), "PDF registra o último erro");
+    assert.ok(pdf.sections.some((section) => section.body.includes("Resposta sintética divergente")), "PDF registra a resposta final");
+  }
+});
+
+test("pular o último mundo preserva motivo e parcialidade na entrega", () => {
+  const full = play(8);
+  const remaining = full.answers.filter((entry) => entry.phaseId !== "corpo");
+  const stale = { ...full, answers: remaining, skipped: [], finishedAt: null };
+  const reason = "Pedido da família";
+  const snapshot = snapshotCompletedFamilySession(stale, "2026-09-30T12:20:00.000Z", remaining, [{ phaseId: "corpo", reason }]);
+  assert.equal(stale.skipped.length, 0, "motivo anterior não é mutado");
+  assert.equal(summarize(snapshot).complete, false);
+  assert.match(buildFamilySummary(snapshot, CONTACT), /encerrada antes do fim/);
+  const pdf = buildFamilyDocSpec(snapshot, ISSUER, "30/09/2026 12:20");
+  assert.match(pdf.sections.find((section) => section.heading === "Respostas por mundo")?.body ?? "", /Pedido da família/);
 });

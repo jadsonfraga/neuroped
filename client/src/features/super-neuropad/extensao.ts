@@ -97,7 +97,7 @@ export function textoOpcionais(years: number, registros: RegistrosOpcionais, qua
     `Data: ${quando} · Idade: ${years} anos (faixa anual)`,
     `Disponíveis nesta idade: ${disponivel.total} desafios (${disponivel.principal} na bateria principal + ${disponivel.opcionais} opcionais). Opcionais registrados: ${registrados.length} de ${disponivel.opcionais}.`,
     "Os opcionais ficam fora da contagem, do tempo e do XP da partida principal. Aplicação livre, a critério da aplicadora; item não aplicado não tem registro.",
-    "Itens dos bancos de origem do NeuroPed (Avaliação Cognitiva Infantil, Sonda 10 e OBS-10); nenhum item foi criado para a extensão.",
+    "Itens dos bancos de origem do NeuroPed (Reconhecimento Visual, Avaliação Cognitiva Infantil, Sonda 10 e OBS-10); nenhum item foi criado para a extensão.",
     "",
   ];
   if (registrados.length === 0) linhas.push("Nenhum desafio opcional registrado.");
