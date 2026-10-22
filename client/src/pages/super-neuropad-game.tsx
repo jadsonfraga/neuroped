@@ -884,6 +884,9 @@ export default function SuperNeuroPadGamePage() {
     // Ordem das opções nova a cada partida: recomeçar não repete as posições já vistas.
     setSeed(Math.floor(Math.random() * 1_000_000));
     setResultKept(false);
+    // Repetir com a mesma criança deve rearmar o envio; "done" vale só para a partida anterior.
+    const contactValid = Boolean(familyContact && (isValidFamilyEmail(familyContact.email) || isValidPhone(familyContact.phone)));
+    setFamilyDeliveryStatus(contactValid ? "ready" : "");
     setAnswers([]);
     setPhaseIndex(0);
     setItemIndex(0);
