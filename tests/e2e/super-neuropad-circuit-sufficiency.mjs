@@ -110,6 +110,16 @@ async function main() {
     const page = main7.page;
     try {
       await openGame(page, server.origin, 7);
+      // Percurso real de pré-consulta: acesso simples e atos médicos fora do roteiro da assistente.
+      await circuitOf(page).getByRole("button", { name: /Pré-consulta · assistente/ }).click();
+      await circuitOf(page).getByTestId("super-neuropad-preconsulta-help").waitFor();
+      const preOptions = await circuitOf(page).getByLabel("Ir para estação").locator("option").allTextContents();
+      assert.ok(preOptions.some((item) => item.includes("Portal do encontro")), "começa pelo acolhimento");
+      assert.ok(!preOptions.some((item) => /Escudo dos reflexos|Janela do fundo|Nuca em alerta/.test(item)), "procedimentos médicos ocultos para assistente");
+      const preStation = circuitOf(page).getByTestId("super-neuropad-clinical-station");
+      assert.match(await preStation.innerText(), /3 passos fáceis/);
+      assert.match(await preStation.innerText(), /Observação direta pela assistente na pré-consulta/);
+      await circuitOf(page).getByRole("button", { name: /Avaliação médica/ }).click();
       const unexpectedDownloads = [];
       page.on("download", (download) => unexpectedDownloads.push(download));
       await page.evaluate(() => Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async () => { throw new Error("permission denied"); } } }));
