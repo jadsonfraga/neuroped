@@ -145,9 +145,10 @@ const DETALHE_URGENCIA: Record<StatusUrgencia, string> = {
   pendente_execucao: "Fundo de olho e sinais meníngeos ainda não registrados",
 };
 
+// Somente achado documentado pelo examinador em exame físico ativa urgência; relatos de terceiros continuam exigindo avaliação médica.
 function statusUrgencia(records: CircuitRecords): StatusUrgencia {
   const estados = URGENCIA.map((id) => records[id]?.status);
-  if (estados.includes("achado")) return "a_esclarecer";
+  if (URGENCIA.some((id) => records[id]?.status === "achado" && records[id]?.source === "examinador")) return "a_esclarecer";
   if (estados.some((status) => status === "nao_realizado" || status === "nao_colaborou")) return "nao_obtido";
   if (estados.every((status) => status === "observado")
     && URGENCIA.every((id) => CIRCUIT_TASKS.find((task) => task.id === id)?.method !== "presencial" || records[id]?.source === "examinador"))
