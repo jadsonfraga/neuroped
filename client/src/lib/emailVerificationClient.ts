@@ -8,12 +8,16 @@ async function errorMessage(
   return typeof body?.error === "string" ? body.error : fallback;
 }
 
-export async function verifyEmailToken(token: string): Promise<void> {
-  const response = await fetch(`${API_BASE}/api/auth/verify-email`, {
+function postJson(path: string, body: unknown): Promise<Response> {
+  return fetch(`${API_BASE}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token }),
+    body: JSON.stringify(body),
   });
+}
+
+export async function verifyEmailToken(token: string): Promise<void> {
+  const response = await postJson("/api/auth/verify-email", { token });
   if (!response.ok) {
     throw new Error(
       await errorMessage(response, `Confirmação falhou (${response.status})`),
@@ -30,11 +34,7 @@ export class EmailVerificationBlockedError extends Error {
 }
 
 export async function resendEmailVerification(email: string): Promise<void> {
-  const response = await fetch(`${API_BASE}/api/auth/resend-verification`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email }),
-  });
+  const response = await postJson("/api/auth/resend-verification", { email });
   if (!response.ok) {
     const message = await errorMessage(response, `Solicitação falhou (${response.status})`);
     if (response.status === 503) throw new EmailVerificationBlockedError(message);
