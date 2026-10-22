@@ -624,7 +624,7 @@ function OpcionaisPanel({ years, registros, copiados, seed, onRegistrar, onCopia
         <div>
           <h2 id="snp-optional-title" className="snp-pixel text-base">Desafios opcionais · {years} anos</h2>
           <p className="mt-1 text-xs font-bold opacity-80">
-            {disponivel.total} disponíveis: {disponivel.principal} na bateria principal + {disponivel.opcionais} opcionais, dos mesmos bancos de origem. A seleção padrão mostra {quantidadeSemRepetir} tarefas sem repetir o conceito da bateria. Não é preciso aplicar todos.
+            {disponivel.total} disponíveis: {disponivel.principal} na bateria principal + {disponivel.opcionais} opcionais, dos mesmos bancos de origem. A seleção padrão mostra {quantidadeSemRepetir} tarefas sem repetir o conceito da bateria; não é preciso aplicar todos.
           </p>
           <p className="mt-1 text-xs font-semibold opacity-70">
             Fora da contagem, do tempo e do XP da partida principal. Estimativa de todos os opcionais: {formatDuration(estimativaOpcionaisSegundos(years))}, sem pausas nem adaptações. Interrompa diante de cansaço ou recusa.
