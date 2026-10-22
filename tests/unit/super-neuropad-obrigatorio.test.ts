@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
-import { buildCircuitReport, circuitForAge, missoesDaAuxiliar, type CircuitStatus } from "../../client/src/features/super-neuropad/clinicalCircuit";
+import { buildCircuitReport, circuitForAge, missoesPreConsulta, type CircuitStatus } from "../../client/src/features/super-neuropad/clinicalCircuit";
 import {
   camposPendentes, CAMPO_LABELS, DESCRICAO_ACHADO_MINIMA, detalheObrigatorio, linhaObrigatorio, resumoObrigatorio,
   type EstadoMissao,
@@ -35,7 +35,7 @@ test("tarefa não realizada ou sem colaboração conclui com resultado e quem in
 
 test("resumo: todas as missões da auxiliar na faixa são obrigatórias, de 2 a 17 anos, e a síntese também; exame do médico fica fora", () => {
   for (let age = 2; age <= 17; age++) {
-    const tarefas = missoesDaAuxiliar(age);
+    const tarefas = missoesPreConsulta(age);
     assert.ok(tarefas.length >= 12 && tarefas.length <= 17, `idade ${age}: ${tarefas.length} missões é prático para a auxiliar`);
     assert.ok(tarefas.length < circuitForAge(age).length, `idade ${age}: exame do médico não entra na conta`);
     const vazio = resumoObrigatorio(age, {}, "");
@@ -52,7 +52,7 @@ test("resumo: todas as missões da auxiliar na faixa são obrigatórias, de 2 a 
 });
 
 test("resumo: uma pendência isolada derruba o circuito para incompleto e é nomeada", () => {
-  const tarefas = missoesDaAuxiliar(9);
+  const tarefas = missoesPreConsulta(9);
   const estados = Object.fromEntries(tarefas.map((tarefa) => [tarefa.id, completa()]));
   const alvo = tarefas[3];
   estados[alvo.id] = { ...completa("achado"), marcadores: [], descricao: "curto" };
@@ -63,7 +63,7 @@ test("resumo: uma pendência isolada derruba o circuito para incompleto e é nom
 });
 
 test("texto: declara COMPLETO ou INCOMPLETO, lista as pendências e afirma que não trava nem libera documento", () => {
-  const tarefas = missoesDaAuxiliar(7);
+  const tarefas = missoesPreConsulta(7);
   const incompleto = resumoObrigatorio(7, { [tarefas[0].id]: completa() }, "");
   const linha = linhaObrigatorio(incompleto);
   assert.match(linha, new RegExp(`^CIRCUITO CLÍNICO OBRIGATÓRIO: INCOMPLETO — 1 de ${tarefas.length} missões concluídas; síntese do examinador pendente\\.$`));
@@ -88,7 +88,7 @@ test("obrigatório sem bloqueio: nenhum controle desabilitado e nada apresentado
   const pagina = readFileSync("client/src/pages/super-neuropad-game.tsx", "utf8");
   assert.doesNotMatch(componente, /\bdisabled\b|\baria-disabled\b/);
   assert.doesNotMatch(componente, /\(opcional\)|Circuito opcional|Missões clínicas extras/);
-  assert.match(componente, /Missões da auxiliar · antes da consulta/);
+  assert.match(componente, /Missões da pré-consulta · auxiliar e secretaria/);
   assert.match(componente, /nenhuma etapa trava a próxima/);
   assert.match(componente, /MissaoStatus/);
   assert.match(componente, /ObrigatoriosPanel/);
