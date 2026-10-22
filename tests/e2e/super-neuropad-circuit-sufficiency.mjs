@@ -49,6 +49,8 @@ async function openGame(page, origin, age) {
 async function setAge(page, age) {
   await page.getByRole("group", { name: "Idade em anos" }).getByRole("button", { name: String(age), exact: true }).click();
   await circuitOf(page).waitFor();
+  // O padrão agora é pré-consulta; este E2E examina o percurso reservado ao médico.
+  await circuitOf(page).getByRole("button", { name: /Avaliação médica/ }).click();
 }
 
 async function openTab(page, name) {
