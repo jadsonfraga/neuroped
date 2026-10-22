@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, ClipboardCopy, ClipboardList, Info, MessageCircleQuestion } from "lucide-react";
 import { Link } from "wouter";
+import { formatIsoDateBr } from "@/lib/clinicalDate";
 import { Button } from "@/components/ui/button";
 import { PageHero } from "@/components/PageHero";
 import { EvolucaoEscalasPanel } from "@/components/EvolucaoEscalasPanel";
@@ -13,10 +14,7 @@ import { readRouteParam } from "@/lib/routeQuery";
 
 interface Carga { nome: string; nascimento: string; cid: string; eventos: unknown[]; resultados: unknown[] }
 
-function br(iso: string): string {
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? "—" : d.toISOString().slice(0, 10).split("-").reverse().join("/");
-}
+const br = (iso: string): string => formatIsoDateBr(iso) ?? "—";
 
 export default function ResumoPreConsultaPage() {
   const patientId = readRouteParam("patientId") || null;

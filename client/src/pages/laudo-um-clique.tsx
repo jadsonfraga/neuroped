@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PageHero } from "@/components/PageHero";
+import { localIsoDate } from "@/lib/clinicalDate";
 import { escapeHtml } from "@/lib/htmlEscape";
 import { issuerCredentials, useIssuer } from "@/lib/issuer";
 import { apiRequest } from "@/lib/queryClient";
@@ -59,7 +60,7 @@ h1{font-size:14pt;margin:0 0 4mm}pre{white-space:pre-wrap;font-family:inherit}.s
 export default function LaudoUmCliquePage() {
   const { issuer } = useIssuer();
   const patientId = readRouteParam("patientId") || null;
-  const [e, setE] = useState<EntradaLaudoUmClique>(() => ({ ...entradaVazia(), dataConsulta: new Date().toISOString().slice(0, 10) }));
+  const [e, setE] = useState<EntradaLaudoUmClique>(() => ({ ...entradaVazia(), dataConsulta: localIsoDate() }));
   const [gerado, setGerado] = useState<ReturnType<typeof gerarLaudoUmClique> | null>(null);
   const [revisado, setRevisado] = useState(false);
   const [pacote, setPacote] = useState<{ prompt: string; mapa: MapaPseudonimos; contagem: Record<string, number> } | null>(null);

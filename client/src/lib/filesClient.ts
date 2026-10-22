@@ -13,6 +13,9 @@
 
 import { authFetch } from "./authClient";
 
+const STORAGE_UNAVAILABLE_MESSAGE =
+  "Arquivo avulso não pode ser guardado neste ambiente: o armazenamento de arquivos não está ativo. Para arquivar no prontuário, abra o documento a partir do paciente da clínica ativa.";
+
 export interface FileUploadParams {
   file: File;
   category: "laudo" | "receita" | "exame" | "anamnese" | "consentimento" | "imagem-clinica" | "audio-anamnese" | "outros";
@@ -52,6 +55,12 @@ export async function uploadFile(params: FileUploadParams): Promise<FileMetadata
 
   if (!signResponse.ok) {
     const err = await signResponse.json().catch(() => ({}));
+    // O catch-all de /api/* responde 404 com `path` quando a rota não existe neste
+    // deploy. Produção não tem object storage ativo (ver CLOUD-STORAGE.md), então
+    // o erro genérico escondia a causa; aqui ela é dita ao profissional.
+    if (signResponse.status === 404 && err.code === "NOT_FOUND" && typeof err.path === "string") {
+      throw new Error(STORAGE_UNAVAILABLE_MESSAGE);
+    }
     throw new Error(err.error || `Falha ao solicitar URL assinada (${signResponse.status})`);
   }
 

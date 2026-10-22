@@ -8,6 +8,7 @@
 // As perguntas são modelos fixos acionados por regras sobre os dados, sempre
 // rotuladas como SUGESTÃO.
 // ============================================================================
+import { formatIsoDateBr, localIsoDate } from "../clinicalDate";
 import { calcularEvolucao, type PendenteEvolucao, type SerieEvolucao } from "../evolucaoEscalas";
 import { decodificarProntuario, type Exame, type Medicacao, type ProntuarioDecodificado, type Terapia } from "./prontuario";
 
@@ -53,8 +54,7 @@ const t = (s: unknown) => (typeof s === "string" ? s.trim() : "");
 const DIA = 86_400_000;
 
 function br(iso: string): string {
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? "data não registrada" : d.toISOString().slice(0, 10).split("-").reverse().join("/");
+  return formatIsoDateBr(iso) ?? "data não registrada";
 }
 
 export function idadeEm(nasc: string | undefined, ref: string): string {
@@ -193,7 +193,7 @@ export function montarResumo(e: EntradaResumo): ResumoPreConsulta {
   const perguntasUnicas = [...new Set(perguntas)];
 
   const resumo: ResumoPreConsulta = {
-    paciente: { nome: e.paciente.nome, idade: idadeEm(e.paciente.dataNascimento, hoje), cid: t(e.paciente.cid) || t(p.identificacao.cid), hipotese: t(p.identificacao.hipoteseDiagnostica) },
+    paciente: { nome: e.paciente.nome, idade: idadeEm(e.paciente.dataNascimento, localIsoDate(new Date(hoje))), cid: t(e.paciente.cid) || t(p.identificacao.cid), hipotese: t(p.identificacao.hipoteseDiagnostica) },
     ultimaVisita: ultima ? { data: ultima, diasDesde: dias } : null,
     totalVisitas: p.encontros.length,
     historico: {

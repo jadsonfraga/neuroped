@@ -45,92 +45,6 @@ function todayBr(): string {
 }
 
 // ── PDF assinável (template pdf-lib, 2 vias) ─────────────────────
-function _canonicalExpressPayload(f: FormFields, issuedAt: string, issuer: DocumentIssuer) {
-  return [
-    [pdfSafe(issuer.clinicName), "Receita C1 Express"].filter(Boolean).join(" - "),
-    pdfSafe(issuer.doctorName),
-    pdfSafe(issuerCredentials(issuer)),
-    `Emitida em: ${issuedAt}`,
-    `Paciente: ${f.paciente || "-"}`,
-    `CPF/passaporte: ${f.cpf || "-"}`,
-    `Idade do paciente: ${f.idadePaciente || "-"}`,
-    `Doses por dia: ${f.dosesPorDia || "-"}`,
-    `Data de nascimento: ${fmtNasc(f.dataNasc) || "-"}`,
-    `Endereco: ${f.endereco || "-"}`,
-    `Municipio/UF: ${f.municipio || "-"}`,
-    `CEP: ${f.cep || "-"}`,
-    `Medicamento: ${f.medicamento || "-"}`,
-    `Concentracao: ${f.concentracao || "-"}`,
-    `Forma: ${f.forma || "-"}`,
-    `Quantidade: ${f.quantidade || "-"} ${f.quantidadeExtenso || ""}`.trim(),
-    `Instrucoes: ${f.instrucoes || "-"}`,
-    `CID-10: ${f.cid || "-"}`,
-  ].join("\n");
-}
-
-// ── PDF assinável (texto estruturado) ────────────────────────────
-async function _buildC1PdfBytes(f: FormFields, issuer: DocumentIssuer): Promise<Uint8Array> {
-  const { buildDocumentPdf } = await import("@/lib/documentPdf");
-  const data = todayBr();
-  const cidadeUf = issuerCityLine(issuer);
-  const validade = new Date();
-  validade.setDate(validade.getDate() + 30);
-  const valBr = validade.toLocaleDateString("pt-BR");
-
-  return buildDocumentPdf({
-    title: "RECEITA DE CONTROLE ESPECIAL — C1",
-    subtitle: "Via para farmácia · Validade: 30 dias",
-    credentials: [
-      [issuer.doctorName, issuerCredentials(issuer)].filter(Boolean).join("  "),
-      issuer.specialty,
-      issuerContactLine(issuer),
-    ].filter(Boolean),
-    clinicName: issuer.clinicName,
-    motto: issuer.motto,
-    sections: [
-      {
-        heading: "Dados do Paciente",
-        body: [
-          `Nome: ${f.paciente || "—"}`,
-          `CPF/passaporte: ${f.cpf || "—"}`,
-          `Idade do paciente: ${f.idadePaciente || "—"}`,
-          `Doses por dia: ${f.dosesPorDia || "—"}`,
-          `Data de nascimento: ${fmtNasc(f.dataNasc) || "—"}`,
-          `Endereço: ${f.endereco || "—"}`,
-          `Município/UF: ${f.municipio || "—"}  CEP: ${f.cep || "—"}`,
-        ].join("\n"),
-      },
-      {
-        heading: "Prescrição",
-        body: [
-          `Rp./ ${f.medicamento || "—"}`,
-          f.concentracao ? `Concentração: ${f.concentracao}` : "",
-          f.forma ? `Forma farmacêutica: ${f.forma}` : "",
-          `Quantidade: ${f.quantidade || "—"}${f.quantidadeExtenso ? ` (${f.quantidadeExtenso})` : ""}`,
-          `Doses por dia: ${f.dosesPorDia || "—"}`,
-          `\nPosologia / Instrução de uso:\n${f.instrucoes || "—"}`,
-        ].filter(Boolean).join("\n"),
-      },
-      {
-        heading: "Validade e Assinatura",
-        body: [
-          `${cidadeUf ? `${cidadeUf}, ` : ""}${data}`,
-          `Validade da receita: ${valBr}`,
-          f.cid ? `CID-10: ${f.cid}` : "",
-          "\n_________________________________",
-          issuer.doctorName,
-          issuerCredentials(issuer),
-          "Assinatura digital ICP-Brasil PAdES-BES",
-        ].filter(Boolean).join("\n"),
-      },
-    ],
-    footer:
-      "Receita de Controle Especial (C1) — 1ª Via. " +
-      "Assinatura digital ICP-Brasil em padrão PAdES-BES, verificável em iti.br/repositorio. " +
-      `Emitida em ${data}. Validade: 30 dias.`,
-  });
-}
-
 // pdf-lib (Helvetica/WinAnsi, Windows-1252) LANÇA em qualquer caractere fora do
 // Latin-1 — inclusive ao só MEDIR a largura. Num C1 assinado, "≥/→/emoji" colado
 // abortava a geração. Normaliza tipografia e mapeia símbolos comuns para ASCII,
@@ -296,7 +210,7 @@ async function buildC1TemplatePdfBytes(f: FormFields, issuer: DocumentIssuer): P
     }
 
     page.drawLine({ start: { x: m, y: 120 }, end: { x: A5.w - m, y: 120 }, thickness: 0.4, color: line });
-    page.drawText(`${cidadeUf ? `${cidadeUf}, ` : ""}${data}  -  Validade: ${valBr}${f.cid ? `  -  CID-10: ${f.cid}` : ""}`, { x: m, y: 108, size: 5.8, font: helv, color: muted });
+    page.drawText(`${cidadeUf ? `${cidadeUf}, ` : ""}${data}  -  Validade: ${valBr}${f.cid ? `  -  CID-10: ${pdfSafe(f.cid)}` : ""}`, { x: m, y: 108, size: 5.8, font: helv, color: muted });
 
     page.drawRectangle({ x: 218, y: 44, width: 176, height: 66, borderWidth: 0.6, borderColor: rgb(0.2, 0.45, 0.34), color: rgb(0.93, 0.99, 0.96) });
     page.drawLine({ start: { x: 228, y: 76 }, end: { x: 384, y: 76 }, thickness: 0.25, color: rgb(0.18, 0.22, 0.2) });

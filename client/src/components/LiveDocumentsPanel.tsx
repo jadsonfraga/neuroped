@@ -71,7 +71,7 @@ export function LiveDocumentsPanel({ clinicId, patientId }: { clinicId: string; 
     const content = document.version?.content;
     if (content?.schema !== "neuroped.live-pdf.v1" || !content.pdfBase64) return;
     const bytes = base64ToBytes(content.pdfBase64);
-    const blob = new Blob([bytes.buffer], { type: content.mimeType || "application/pdf" });
+    const blob = new Blob([bytes], { type: content.mimeType || "application/pdf" });
     const url = URL.createObjectURL(blob);
     const anchor = window.document.createElement("a");
     anchor.href = url;

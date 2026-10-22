@@ -50,6 +50,12 @@ assert.match(archiveClient, /authFetch\("\/api\/documents"/);
 assert.match(archiveClient, /sha256/);
 assert.doesNotMatch(archiveClient, /p12|pfx|privateKey|senha/i);
 
+// Armazenamento avulso só existe onde o catch-all de /api não responde 404: o
+// erro precisa dizer isso, e não a mensagem genérica de rota inexistente.
+const filesClient = read("client/src/lib/filesClient.ts");
+assert.match(filesClient, /STORAGE_UNAVAILABLE_MESSAGE/);
+assert.match(filesClient, /signResponse\.status === 404 && err\.code === "NOT_FOUND"/);
+
 const documentRoutes = read("server/routes/documents.ts");
 assert.match(documentRoutes, /retentionPolicy: "permanent"/);
 assert.match(documentRoutes, /isImmutable: true/);

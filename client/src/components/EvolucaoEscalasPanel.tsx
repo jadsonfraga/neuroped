@@ -1,11 +1,9 @@
 import { AlertTriangle, Info, TrendingDown, TrendingUp } from "lucide-react";
 import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { AVISO_APOIO, type PendenteEvolucao, type SerieEvolucao } from "@/lib/evolucaoEscalas";
+import { formatIsoDateBr } from "@/lib/clinicalDate";
 
-function br(iso: string): string {
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? "—" : d.toISOString().slice(0, 10).split("-").reverse().join("/");
-}
+const br = (iso: string): string => formatIsoDateBr(iso) ?? "—";
 
 /** Gráficos de evolução + alertas (apoio ao médico). Dados já calculados em lib/evolucaoEscalas. */
 export function EvolucaoEscalasPanel({ series, pendentes }: { series: SerieEvolucao[]; pendentes: PendenteEvolucao[] }) {

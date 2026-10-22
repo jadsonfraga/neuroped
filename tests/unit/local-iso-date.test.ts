@@ -7,7 +7,8 @@ process.env.TZ = "America/Sao_Paulo";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
-import { localIsoDate } from "../../client/src/lib/clinicalDate";
+import { formatIsoDateBr, localIsoDate } from "../../client/src/lib/clinicalDate";
+import { montarResumo } from "../../client/src/lib/resumoPreConsulta";
 
 describe("localIsoDate", () => {
   it("usa o calendário local, não UTC", () => {
@@ -25,9 +26,11 @@ describe("localIsoDate", () => {
       "client/src/pages/fichas-registro.tsx",
       "client/src/pages/epilepsy-diary.tsx",
       "client/src/pages/headache-calendar.tsx",
+      "client/src/pages/laudo-um-clique.tsx",
     ]) {
       const source = readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
-      assert.doesNotMatch(source, /(data|date|f\[field\.key\])\s*[:=]\s*(new Date\(\)|now)\.toISOString\(\)\.slice\(0, 10\)/, path);
+      // Qualquer chave de data (`data`, `dataConsulta`, `date`, `f[field.key]`…).
+      assert.doesNotMatch(source, /(\w*(?:data|date|Data|Date)\w*|f\[field\.key\])\s*[:=]\s*(new Date\(\)|now)\.toISOString\(\)\.slice\(0, 10\)/, path);
       assert.match(source, /localIsoDate\((now)?\)/, path);
     }
   });
@@ -47,6 +50,35 @@ describe("localIsoDate", () => {
       assert.doesNotMatch(source, /toISOString\(\)\.(slice\(0, 10\)|split\("T"\)\[0\])/, path);
       assert.doesNotMatch(source, /startedAt\.slice\(0, 10\)/, path);
     }
+  });
+
+  it("datas exibidas: timestamp mostra o dia local; data pura fica como está", () => {
+    // Escala aplicada às 22h em Brasília (01h UTC do dia seguinte) é do dia 21.
+    assert.equal(formatIsoDateBr("2026-10-22T01:30:00.000Z"), "21/10/2026");
+    assert.equal(formatIsoDateBr("2026-10-21"), "21/10/2026");
+    assert.equal(formatIsoDateBr("não é data"), null);
+    assert.equal(formatIsoDateBr("2026-13-45"), null, "data pura impossível não vira dd/mm");
+    for (const path of [
+      "client/src/components/EvolucaoEscalasPanel.tsx",
+      "client/src/pages/resumo-pre-consulta.tsx",
+      "client/src/lib/evolucaoEscalas/evolucao.ts",
+      "client/src/lib/resumoPreConsulta/resumo.ts",
+    ]) {
+      const source = readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
+      assert.doesNotMatch(source, /toISOString\(\)\.slice\(0, 10\)\.split\("-"\)\.reverse/, path);
+      assert.match(source, /formatIsoDateBr/, path);
+    }
+  });
+
+  it("idade do resumo pré-consulta conta o dia local, não o UTC", () => {
+    // 21/10 às 22h em Brasília já é 22/10 em UTC: a criança ainda não completou 10 anos.
+    const r = montarResumo({
+      paciente: { nome: "Paciente Fictício", dataNascimento: "2016-10-22" },
+      eventos: [],
+      resultados: [],
+      hoje: "2026-10-22T01:00:00Z",
+    });
+    assert.equal(r.paciente.idade, "9 anos");
   });
 
   it("prontuário recalcula hoje a cada uso e o diário de crises lê a data no fuso local", () => {

@@ -25,4 +25,11 @@ for (const path of pages) {
 const panel = readFileSync("client/src/components/AssinaturaIcpPanel.tsx", "utf8");
 assert.match(panel, /disabled=\{!!busy \|\| !p12 \|\| !!signingBlockedReason\}/);
 assert.match(panel, /healthDocument,\n\s*\}\);/);
+// Todo texto livre desenhado no PDF da receita passa por pdfSafe: pdf-lib (WinAnsi)
+// lança em caractere fora do Latin-1 e a receita assinada não sai.
+const expressPdf = readFileSync("client/src/pages/receita-c1-express.tsx", "utf8");
+assert.doesNotMatch(expressPdf, /CID-10: \$\{f\.cid\}/);
+assert.match(expressPdf, /CID-10: \$\{pdfSafe\(f\.cid\)\}/);
+assert.doesNotMatch(expressPdf, /function _buildC1PdfBytes|function _canonicalExpressPayload/);
+
 console.log("[receita-c1-compliance] ✓ CPF, layout do emitente, metadados ITI e trava SNCR conectados.");
