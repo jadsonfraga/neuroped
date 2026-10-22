@@ -16,6 +16,7 @@ const OBSERVADO = /Conseguiu/;
 const ACHADO = /^🤔 Teve dificuldade/;
 const SOURCE_EXAMINADOR = "Observação direta pelo examinador";
 const SOURCE_AUXILIAR = "Observei diretamente (auxiliar)";
+const SOURCE_CUIDADOR = "Relato do cuidador";
 const REALIZADO_MEDICO = /^Realizado — registrar descrição/;
 const SOURCE_ESCOLA = "Relato escolar";
 
@@ -101,7 +102,9 @@ async function concluirMissao(page, aba, indice) {
     await station.getByRole("button", { name: /^Realizado — registrar descrição/ }).click();
     await station.locator("textarea").fill("Descrição sintética de teste da entrevista profissional.");
   }
-  await station.getByRole("button", { name: SOURCE_AUXILIAR, exact: true }).click();
+  // Secretaria registra relato (cuidador); a auxiliar registra observação direta. Escolher a fonte errada não pode concluir a missão.
+  const secretaria = await station.getByText("Roteiro do contato para esta idade").count();
+  await station.getByRole("button", { name: secretaria ? SOURCE_CUIDADOR : SOURCE_AUXILIAR, exact: true }).click();
   assert.match(await station.getByTestId("super-neuropad-mission-status").innerText(), /Missão concluída/, `missão ${indice} da aba "${aba}" concluída`);
 }
 
@@ -126,7 +129,7 @@ async function main() {
       const unexpectedDownloads = [];
       page.on("download", (download) => unexpectedDownloads.push(download));
       await page.evaluate(() => Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async () => { throw new Error("permission denied"); } } }));
-      await circuitOf(page).getByRole("button", { name: /Copiar registro clínico/ }).click();
+      await circuitOf(page).getByRole("button", { name: /Copiar registro da pré-consulta/ }).click();
       await circuitOf(page).getByText(/nenhum arquivo foi criado automaticamente/i).waitFor();
       assert.equal(unexpectedDownloads.length, 0, "falha ao copiar não deve baixar arquivo sem pedido");
       const idade7 = circuitOf(page).getByTestId("super-neuropad-age-profile");
