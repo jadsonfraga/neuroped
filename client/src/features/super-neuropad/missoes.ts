@@ -1,177 +1,161 @@
 /**
- * Missões guiadas do circuito clínico complementar. Cada estação vira uma brincadeira com passos
- * em linguagem de jogo para o auxiliar e marcadores tocáveis do que foi percebido. O auxiliar registra
- * pelos toques; a criança não é interrogada sobre sintomas. A estação `risk` não é gamificada de propósito:
- * é entrevista reservada somente para profissional e não pode ser apresentada como missão infantil.
- * Esta lista não pontua, não compara com norma e não conclui diagnóstico.
+ * Missões da assistente na pré-consulta. Cada estação que a assistente executa vira uma brincadeira curta, com o
+ * material necessário, passos em linguagem simples e marcadores tocáveis do que foi percebido. Nenhuma missão pede
+ * manobra, instrumento médico, contato físico com resistência ou pergunta sobre sintomas à criança.
+ * Exames com técnica (fundo de olho, reflexos, sinais meníngeos, força, sensibilidade, pares cranianos, tônus,
+ * Romberg, tandem, dedo-nariz) e entrevistas sobre pensamento, insight ou risco pertencem ao médico e não têm missão.
+ * Esta lista não pontua, não compara com referência e não conclui diagnóstico.
  */
 export interface Missao {
+  /** Em uma frase, o que a assistente está olhando, sem termo técnico. */
+  objetivo: string;
+  /** Material necessário; "nenhum" quando a missão usa só a conversa ou o ambiente. */
+  material: string;
+  /** Duração aproximada, em minutos. */
+  minutos: number;
   passos: readonly string[];
   pistas: readonly string[];
 }
 
 export const MISSOES: Readonly<Record<string, Missao>> = {
-  consciencia: {
-    passos: ["Chame a criança pelo nome e converse normalmente, sem estímulo doloroso.", "Observe se responde, procura você com o olhar e acompanha a sala.", "Repare se fica sonolenta ou agitada ao longo das missões."],
-    pistas: ["Alerta e responsiva", "Responde com demora", "Sonolenta", "Agitada ou irritada", "Procura o adulto"],
-  },
-  language2: {
-    passos: ["Mostre figuras de objetos conhecidos e peça para apontar o que você nomear.", "Peça um comando simples, como pegar a bola ou pôr no balde.", "Convide a criança a contar algo por fala, gesto ou comunicação alternativa."],
-    pistas: ["Aponta o que é pedido", "Nomeia objetos", "Usa frases curtas", "Usa gestos ou apontar", "Usa comunicação alternativa"],
-  },
-  language6: {
-    passos: ["Peça para contar o que fez hoje, na ordem em que aconteceu.", "Dê uma instrução com três etapas, como pegar o lápis, desenhar um círculo e entregar.", "Se a criança for alfabetizada, peça para ler uma frase curta em voz alta."],
-    pistas: ["Conta em sequência", "Segue as três etapas", "Fala com fluência", "Troca palavras ou faz pausas longas", "Lê com dificuldade"],
-  },
-  vision: {
-    passos: ["Segure um alvo colorido à frente dos olhos, a uma distância confortável.", "Mova o alvo devagar para os lados, para cima e para baixo, pedindo que siga com os olhos sem mover a cabeça.", "Observe se os olhos acompanham juntos e compare os dois lados, com a técnica de pupila do médico."],
-    pistas: ["Segue o alvo com os dois olhos", "Olhos desalinhados", "Dificuldade em uma direção", "Movimentos bruscos ou tremor", "Pupilas iguais à luz"],
-  },
-  fundus: {
-    passos: ["Com o oftalmoscópio, peça para a criança olhar para um ponto fixo, em ambiente de pouca luz.", "Observe a borda e a cor do disco óptico e os vasos, olho a olho.", "Se a criança não tolerar, registre o motivo e siga para a próxima missão."],
-    pistas: ["Exame feito", "Não tolerou", "Bordas do disco nítidas", "Bordas elevadas ou borradas", "Assimetria entre os olhos"],
-  },
-  face: {
-    passos: ["Peça para a criança fazer careta de dragão: sorrir, fechar os olhos com força e encher as bochechas.", "Observe os dois lados do rosto em cada movimento, espontâneo e pedido.", "Se houver colaboração, peça para franzir a testa e mostrar os dentes."],
-    pistas: ["Movimenta os dois lados igual", "Um lado mais fraco", "Fecha os dois olhos", "Não colaborou", "Mímica espontânea simétrica"],
-  },
-  hearing: {
-    passos: ["Chame a criança por trás, sem que ela veja você, em voz de conversa e depois mais baixa.", "Observe se vira ou responde, e compare as duas orelhas quando possível.", "Peça para repetir uma palavra simples e observe a voz e a articulação."],
-    pistas: ["Responde ao chamado", "Resposta diferente entre as orelhas", "Voz clara", "Voz rouca ou fraca", "Articulação com dificuldade"],
-  },
-  shoulders: {
-    passos: ["Peça para encolher os ombros contra a sua mão, com resistência gentil.", "Peça para virar a cabeça para um lado contra a sua mão e depois para o outro.", "Compare os lados e observe amplitude e esforço."],
-    pistas: ["Força igual nos dois lados", "Mais fraco de um lado", "Dor relatada", "Não colaborou", "Amplitude completa"],
-  },
-  meningeal: {
-    passos: ["Com a criança deitada, flexione a cabeça suavemente em direção ao peito, sem forçar.", "Observe resistência, dor ou desconforto relatado.", "Se houver febre, confusão ou convulsão, pare e acione atendimento de urgência."],
-    pistas: ["Flexão livre", "Resistência ao movimento", "Dor ao mover a nuca", "Não colaborou", "Febre referida no momento"],
-  },
-  posture: {
-    passos: ["Peça para a criança ficar parada como uma estátua, com os braços estendidos à frente.", "Observe por alguns segundos se os braços ficam firmes, caem ou tremem.", "Mova suavemente braços e pernas, um lado de cada vez, e observe a resistência."],
-    pistas: ["Braços firmes", "Tremor ou movimento involuntário", "Braço cai de um lado", "Resistência igual nos dois lados", "Rígido ou muito flexível ao mover"],
-  },
-  strength2: {
-    passos: ["Peça para a criança sentar no chão e se levantar sem apoio.", "Peça para alcançar um brinquedo com cada mão, alternando.", "Peça para agachar e voltar a ficar em pé, com você por perto."],
-    pistas: ["Levanta sem apoio", "Usa as duas mãos", "Usa uma mão mais que a outra", "Precisa de apoio", "Cai ou perde o equilíbrio"],
-  },
-  strength2p: {
-    passos: ["Peça para a criança empurrar suas mãos com força, como num jogo de braço.", "Peça para puxar um brinquedo e depois empurrar um bloco, com resistência gentil.", "Compare os dois lados e observe cansaço ou queda."],
-    pistas: ["Força igual nos dois lados", "Mais fraco de um lado", "Cansa rápido", "Cai ou perde o equilíbrio", "Não quis"],
-  },
-  strength6: {
-    passos: ["Peça para manter os braços estendidos à frente, palmas para baixo, por alguns segundos.", "Faça resistência gentil nos braços e nas pernas, um lado de cada vez, comparando.", "Peça para subir na ponta dos pés e nos calcanhares, se houver segurança."],
-    pistas: ["Mantém os braços estendidos", "Um braço desce ou gira", "Força igual nos lados", "Força menor em um lado", "Dor relatada"],
-  },
-  reflex: {
-    passos: ["Com a criança sentada e relaxada, distraia-a com uma conversa e examine os joelhos com o martelo.", "Compare o lado direito com o esquerdo e teste a sola do pé suavemente.", "Registre apenas o que foi efetivamente examinado."],
-    pistas: ["Joelho direito igual ao esquerdo", "Resposta reduzida de um lado", "Resposta plantar em flexão", "Resposta plantar em extensão", "Não examinado"],
-  },
-  sensation: {
-    passos: ["Com os olhos da criança fechados, toque de leve a pele com algodão em diferentes pontos.", "Peça para dizer ou mostrar com a mão quando sentir, comparando os dois lados.", "Pare se a criança demonstrar desconforto."],
-    pistas: ["Sente igual dos dois lados", "Não sente em uma área", "Sente com atraso", "Não colaborou", "Relata formigamento"],
-  },
-  stereognosis: {
-    passos: ["Coloque um objeto familiar e seguro na mão da criança, com os olhos fechados.", "Peça para dizer ou mostrar o que é, com cada mão.", "Compare as duas mãos e registre erros ou tempo de resposta."],
-    pistas: ["Reconhece nas duas mãos", "Reconhece só em uma mão", "Precisou de dica", "Não reconheceu", "Não colaborou"],
-  },
-  reach2: {
-    passos: ["Coloque um brinquedo em lugares diferentes à frente da criança.", "Peça para pegar com cada mão, alternando.", "Observe a pinça e se a mão erra o alvo ou treme ao se aproximar."],
-    pistas: ["Pega com precisão", "Erra o alvo", "Tremor ao se aproximar", "Usa uma mão só", "Pega e solta com facilidade"],
-  },
-  dismetria2: {
-    passos: ["Use um brinquedo como alvo e avise antes de mudar de lugar.", "Peça para tocar o alvo com cada mão, em posições diferentes.", "Observe a aproximação, a correção no meio do caminho e o tremor."],
-    pistas: ["Toca no alvo com precisão", "Passa do alvo", "Corrige no meio do caminho", "Tremor ao se aproximar", "Diferença entre as mãos"],
-  },
-  finger6: {
-    passos: ["Peça para tocar a ponta do nariz e depois o seu dedo, alternando.", "Peça para fazer o movimento mais rápido, alternando as mãos.", "Se for pertinente, peça para deslizar o calcanhar pelo joelho de cada lado."],
-    pistas: ["Precisão nos dois lados", "Erra o alvo", "Tremor ao se aproximar", "Movimento rápido lento", "Diferença entre os lados"],
-  },
-  gait2: {
-    passos: ["Peça para a criança andar até a porta como um animal da escolha dela.", "Peça para correr um pouco e depois fazer uma curva.", "Peça para ficar em pé sem apoio por alguns segundos."],
-    pistas: ["Anda com firmeza", "Cai ou tropeça", "Braços abertos para equilibrar", "Faz a curva com facilidade", "Precisa de apoio"],
-  },
-  romberg: {
-    passos: ["Peça para ficar em pé com os pés juntos e os braços ao lado, de olhos abertos, por alguns segundos.", "Repita de olhos fechados, com você por perto para proteger.", "Pare ao primeiro sinal de insegurança."],
-    pistas: ["Mantém de olhos abertos", "Oscila de olhos abertos", "Oscila mais de olhos fechados", "Precisa de apoio", "Interrompido por segurança"],
-  },
-  gait6: {
-    passos: ["Peça para andar em linha reta, normalmente, por alguns passos.", "Peça para andar em linha reta com um pé na frente do outro, calcanhar encostado na ponta.", "Peça para ficar na ponta dos pés e depois nos calcanhares, se houver segurança."],
-    pistas: ["Marcha firme", "Desvio para um lado", "Precisa de apoio", "Oscila na marcha em linha", "Não conseguiu nas pontas"],
-  },
-  involuntary: {
-    passos: ["Observe a criança sentada e em repouso por alguns minutos, durante a brincadeira.", "Peça para manter os braços estendidos com os dedos abertos.", "Anote o tipo, o local e se o movimento piora ou melhora com atenção ou distração."],
-    pistas: ["Movimento em repouso", "Movimento com braços estendidos", "Piora com atenção ou tarefa", "Diminui com distração", "Piscadas, caretas ou sons repetidos"],
-  },
-  praxis3: {
-    passos: ["Faça um gesto simples, como acenar ou bater palmas, e peça para copiar como num espelho.", "Repita com outro gesto, como tocar o nariz ou mostrar o polegar.", "Observe se copia com as duas mãos e se precisa de modelo."],
-    pistas: ["Copia com as duas mãos", "Copia com uma mão só", "Precisa de modelo", "Não entendeu a instrução", "Copia com esforço"],
-  },
-  praxis6: {
-    passos: ["Mostre uma sequência de três gestos, incluindo um gesto simbólico, como dar tchau.", "Peça para repetir de memória e depois por imitação espelhada.", "Observe a ordem, o lado usado e se corrige sozinha."],
-    pistas: ["Repete a sequência", "Ordem trocada", "Usa o lado errado", "Corrige sozinha", "Precisa de modelo em cada gesto"],
-  },
-  copy6: {
-    passos: ["Mostre uma figura simples e peça para copiar no papel, com lápis.", "Peça para copiar sem apagar, com a mão de costume.", "Observe forma, proporção, posição e ordem dos traços."],
-    pistas: ["Copia a forma", "Proporções fora", "Posição trocada", "Ordem dos traços desorganizada", "Precisa de modelo"],
-  },
-  hand: {
-    passos: ["Observe com qual mão a criança pega, aponta e desenha ao longo das missões.", "Proponha uma tarefa com as duas mãos, como segurar um objeto com uma e manipular com a outra.", "Anote a troca de mão, se houver."],
-    pistas: ["Prefere a mão direita", "Prefere a mão esquerda", "Troca de mão", "Usa as duas mãos juntas", "Ainda não definida"],
-  },
-  milestones: {
-    passos: ["Pergunte ao cuidador, com a fonte identificada, sobre sentar, andar e as primeiras palavras.", "Pergunte sobre frases, habilidades motoras finas e desempenho escolar ou na creche.", "Pergunte se houve perda de habilidades ou mudança recente."],
-    pistas: ["Relatou sentar", "Relatou andar", "Relatou primeiras palavras", "Relatou frases", "Relatou perda de habilidade", "Não sabe informar"],
-  },
-  growth: {
-    passos: ["Meça o perímetro cefálico com fita, quando a criança tolerar.", "Observe postura, assimetrias do rosto e do corpo e manchas na pele.", "Registre só o que foi medido ou observado; o restante fica como não examinado."],
-    pistas: ["Perímetro medido", "Não medido", "Assimetria observada", "Manchas na pele", "Traços dismórficos observados"],
-  },
   rapport: {
-    passos: ["Receba a criança como convidada, com um brinquedo na mesa.", "Observe apresentação, contato e reação à sala e ao adulto.", "Repare no nível de atividade e na adaptação ao ambiente."],
-    pistas: ["Contato espontâneo", "Contato reduzido", "Reage bem à sala", "Inquieta", "Lenta ou sem iniciativa", "Adaptação difícil"],
+    objetivo: "Como a criança chega e se adapta à sala.",
+    material: "Um brinquedo sobre a mesa.",
+    minutos: 2,
+    passos: ["Receba a criança com um sorriso e deixe um brinquedo à vista, sem pressa.", "Observe como ela cumprimenta, olha para você e reage à sala.", "Repare se está agitada, quieta ou se adapta aos poucos."],
+    pistas: ["Cumprimenta ou olha para você", "Demora a se aproximar", "Explora a sala com interesse", "Fica agitada", "Fica quieta e sem iniciativa"],
   },
   social2: {
-    passos: ["Proponha um brinquedo para dividir a vez, como rolar uma bola.", "Mostre algo interessante e observe se a criança compartilha.", "Observe gestos, imitação e atenção compartilhada."],
-    pistas: ["Alterna turnos", "Mostra algo ao adulto", "Imita gestos", "Compartilha atenção", "Precisa de ajuda"],
+    objetivo: "Brincar junto: revezar, mostrar, imitar.",
+    material: "Uma bola e um brinquedo que faça algo divertido.",
+    minutos: 3,
+    passos: ["Role a bola para a criança e espere ela devolver, para brincarem de revezar.", "Mostre um brinquedo interessante e veja se ela olha para você ou mostra de volta.", "Faça um gesto simples, como acenar, e veja se ela imita."],
+    pistas: ["Devolve a bola e espera a vez", "Mostra algo para você", "Imita gestos", "Olha para você durante a brincadeira", "Precisou de muita ajuda"],
   },
   conversation6: {
-    passos: ["Converse sobre um interesse da criança e um fato do dia a dia.", "Observe se os turnos são respeitados e se a fala segue o tema.", "Repare no tom, no ritmo e se entende o contexto."],
-    pistas: ["Turnos respeitados", "Fala segue o tema", "Tom e ritmo registrados", "Dificuldade de entender o contexto", "Precisa de ajuda para continuar"],
+    objetivo: "Como a criança conversa sobre um assunto de que gosta.",
+    material: "Nenhum.",
+    minutos: 3,
+    passos: ["Pergunte sobre algo de que ela gosta, como um jogo, um desenho ou um animal.", "Deixe falar e responda com interesse, esperando a sua vez de falar.", "Repare se ela fala sobre o assunto, espera a vez e entende o que você pergunta."],
+    pistas: ["Conversa sobre o assunto", "Espera a vez de falar", "Entende o que é perguntado", "Muda de assunto sozinha", "Precisa de ajuda para continuar"],
+  },
+  consciencia: {
+    objetivo: "Se a criança está desperta e atenta ao ambiente.",
+    material: "Nenhum.",
+    minutos: 1,
+    passos: ["Chame a criança pelo nome em voz de conversa, sem tocar nem estimular.", "Veja se ela olha para você e acompanha o que acontece na sala.", "Repare, ao longo das missões, se ela fica muito sonolenta ou muito agitada."],
+    pistas: ["Desperta e atenta", "Demora a responder", "Sonolenta", "Agitada ou irritada", "Procura o adulto com o olhar"],
+  },
+  language2: {
+    objetivo: "Se a criança entende pedidos simples e se faz entender.",
+    material: "Figuras ou objetos conhecidos (bola, copo, sapato).",
+    minutos: 3,
+    passos: ["Mostre duas ou três figuras e peça para ela apontar a que você nomear.", "Peça uma tarefa simples, como pôr a bola no balde.", "Convide a criança a contar algo por fala, gesto ou como ela se comunica."],
+    pistas: ["Aponta o que é pedido", "Fala o nome de objetos", "Usa frases curtas", "Usa gestos ou aponta", "Usa figuras ou aparelho para se comunicar"],
+  },
+  language6: {
+    objetivo: "Se a criança conta uma história em ordem e segue pedidos em etapas.",
+    material: "Lápis e papel.",
+    minutos: 3,
+    passos: ["Peça para a criança contar o que fez hoje, desde que acordou.", "Dê um pedido em três etapas: pegar o lápis, desenhar uma bola e entregar a você.", "Se ela já lê, peça para ler em voz alta uma frase curta."],
+    pistas: ["Conta na ordem certa", "Faz as três etapas", "Fala sem travar", "Faz pausas longas ou troca palavras", "Lê com dificuldade"],
+  },
+  strength2: {
+    objetivo: "Como a criança levanta, alcança e agacha numa brincadeira.",
+    material: "Um brinquedo e espaço livre no chão.",
+    minutos: 3,
+    passos: ["Sente a criança no chão e convide para se levantar sozinha, ficando por perto.", "Coloque um brinquedo de cada lado e peça para pegar, uma mão de cada vez.", "Peça para agachar e voltar a ficar em pé, sempre perto para evitar queda."],
+    pistas: ["Levanta sem apoio", "Usa as duas mãos", "Usa mais uma mão que a outra", "Precisa de apoio", "Cai ou perde o equilíbrio"],
+  },
+  reach2: {
+    objetivo: "Se a mão vai certeira até o brinquedo.",
+    material: "Um brinquedo pequeno e seguro.",
+    minutos: 2,
+    passos: ["Segure o brinquedo à frente da criança, num lugar de cada vez: à direita, à esquerda e no meio.", "Peça para pegar com cada mão, alternando.", "Observe se a mão acerta o brinquedo e se pega e solta com facilidade."],
+    pistas: ["Pega o brinquedo de primeira", "Erra o alvo", "A mão treme ao chegar", "Usa só uma das mãos", "Pega e solta com facilidade"],
+  },
+  gait2: {
+    objetivo: "Como a criança anda, corre e muda de direção.",
+    material: "Espaço livre e seguro, com alguns metros.",
+    minutos: 3,
+    passos: ["Convide a criança a andar até a porta como um bichinho que ela escolher.", "Peça para correr um pouco e fazer uma curva em volta de um objeto.", "Peça para ficar em pé parada por alguns segundos, sem se apoiar."],
+    pistas: ["Anda com firmeza", "Tropeça ou cai", "Abre os braços para se equilibrar", "Faz a curva sem dificuldade", "Precisa de apoio"],
+  },
+  involuntary: {
+    objetivo: "Se aparece algum movimento que a criança não controla.",
+    material: "Nenhum.",
+    minutos: 2,
+    passos: ["Durante a brincadeira, repare nas mãos, no rosto e no corpo quando a criança está parada.", "Peça para esticar os braços à frente, com os dedos abertos, por alguns segundos.", "Se notar algo, anote onde aparece e se muda quando ela se distrai."],
+    pistas: ["Nenhum movimento diferente notado", "Movimento com a criança parada", "Movimento com os braços esticados", "Piscadas, caretas ou sons repetidos", "Diminui quando se distrai"],
+  },
+  praxis3: {
+    objetivo: "Se a criança copia gestos como num espelho.",
+    material: "Nenhum.",
+    minutos: 2,
+    passos: ["Diga que vão brincar de espelho e faça um gesto simples, como acenar ou bater palmas.", "Peça para a criança fazer igual e repita o gesto uma vez, se ela precisar.", "Faça outro gesto, como mostrar o polegar, e observe se usa as duas mãos."],
+    pistas: ["Copia com as duas mãos", "Copia só com uma mão", "Precisa que você repita o gesto", "Não entendeu a brincadeira", "Copia com muito esforço"],
+  },
+  praxis6: {
+    objetivo: "Se a criança repete uma sequência de gestos.",
+    material: "Nenhum.",
+    minutos: 3,
+    passos: ["Mostre três gestos seguidos, por exemplo dar tchau, bater palmas e tocar o nariz.", "Peça para ela repetir a sequência logo depois de você, como um espelho.", "Peça de novo, depois de alguns segundos, sem você mostrar."],
+    pistas: ["Repete a sequência toda", "Troca a ordem", "Usa a mão trocada", "Corrige sozinha", "Precisa que você mostre cada gesto"],
+  },
+  copy6: {
+    objetivo: "Como a criança copia desenhos simples.",
+    material: "Lápis, papel e figuras simples (círculo, cruz, quadrado).",
+    minutos: 4,
+    passos: ["Mostre uma figura simples, como um círculo, e peça para copiar no papel.", "Repita com a cruz e o quadrado, sem apagar.", "Observe a mão que usa, a forma do desenho e por onde ela começa."],
+    pistas: ["Copia a forma", "Desenho com tamanho ou posição trocados", "Começa por lugares diferentes", "Precisa ver o modelo o tempo todo", "Cansa ou desiste"],
+  },
+  hand: {
+    objetivo: "Qual mão a criança prefere.",
+    material: "Nenhum além do que já está sendo usado.",
+    minutos: 1,
+    passos: ["Durante as missões, repare com qual mão ela pega, aponta e desenha.", "Peça para segurar o papel com uma mão enquanto desenha com a outra.", "Anote se ela troca de mão ao longo das tarefas."],
+    pistas: ["Prefere a mão direita", "Prefere a mão esquerda", "Troca de mão", "Usa as duas mãos juntas", "Ainda não tem preferência"],
+  },
+  milestones: {
+    objetivo: "O que o cuidador conta sobre o desenvolvimento da criança.",
+    material: "Nenhum. Converse com quem convive com a criança.",
+    minutos: 4,
+    passos: ["Pergunte ao cuidador com que idade a criança sentou, andou e falou as primeiras palavras.", "Pergunte como ela está hoje na fala, nas habilidades com as mãos e na escola ou creche.", "Pergunte se alguma habilidade foi perdida ou mudou de repente nos últimos meses."],
+    pistas: ["Cuidador contou quando sentou", "Cuidador contou quando andou", "Cuidador contou as primeiras palavras", "Cuidador contou como fala hoje", "Cuidador contou perda de habilidade", "Cuidador não sabe informar"],
   },
   attention2: {
-    passos: ["Deixe a criança brincar livremente com dois brinquedos novos.", "Chame a atenção para o segundo brinquedo e observe a mudança.", "Interrompa gentilmente e observe como volta à brincadeira."],
-    pistas: ["Sustenta a brincadeira", "Muda de atividade com frequência", "Volta à tarefa com ajuda", "Atividade motora intensa", "Atenção conjunta"],
+    objetivo: "Por quanto tempo a criança brinca e como volta à brincadeira.",
+    material: "Dois brinquedos que a criança ainda não conhece.",
+    minutos: 3,
+    passos: ["Deixe a criança brincar à vontade com os dois brinquedos.", "Mostre o segundo brinquedo e veja se ela olha e troca de brincadeira.", "Interrompa com gentileza e observe como ela volta a brincar."],
+    pistas: ["Brinca com um brinquedo por um tempo", "Troca de brincadeira toda hora", "Volta à brincadeira com ajuda", "Muito movimento durante a brincadeira", "Olha o que você mostra"],
   },
   attention6: {
-    passos: ["Mostre cartas e peça para separar por cor, com uma regra simples.", "Troque a regra com instrução clara, por exemplo, separar por forma.", "Suspenda se a criança ficar frustrada."],
-    pistas: ["Entende a regra", "Troca de regra com facilidade", "Continua na regra antiga", "Pede ajuda", "Frustração"],
+    objetivo: "Se a criança segue uma regra e se adapta quando ela muda.",
+    material: "Cartas ou figuras de cores e formas diferentes.",
+    minutos: 4,
+    passos: ["Peça para separar as cartas por cor e treine com duas cartas antes de valer.", "Depois de alguns minutos, avise que a regra mudou e peça para separar por forma.", "Pare se a criança ficar frustrada ou cansada."],
+    pistas: ["Entende a primeira regra", "Troca de regra com facilidade", "Continua na regra antiga", "Pede ajuda", "Fica frustrada"],
   },
   memory6: {
-    passos: ["Pergunte, em linguagem da idade, onde estão e que dia é hoje.", "Retome algo combinado minutos antes, na conversa.", "Observe se lembra sozinha ou com pistas."],
-    pistas: ["Orientada no lugar", "Orientada no tempo", "Lembra sem pista", "Lembra com pista", "Não lembra"],
+    objetivo: "Se a criança sabe onde está, que dia é e lembra do que foi combinado.",
+    material: "Nenhum.",
+    minutos: 3,
+    passos: ["Combine uma coisa simples no início, como lembrar de uma palavra, e siga com as outras missões.", "Mais adiante, pergunte em tom de conversa onde estão e que dia é hoje.", "Pergunte pela coisa combinada e veja se lembra sozinha ou com uma dica."],
+    pistas: ["Sabe onde está", "Sabe o dia aproximado", "Lembra do combinado sozinha", "Lembra com uma dica", "Não lembra"],
   },
   emotion2: {
-    passos: ["Observe as expressões ao longo do encontro, na brincadeira e nas trocas.", "Pergunte ao cuidador sobre humor, irritabilidade e sono, separando o relato da observação.", "Registre se o afeto combina com a situação."],
-    pistas: ["Expressão alegre", "Expressão triste", "Irritada", "Afeto combina com a situação", "Afeto diferente da situação"],
-  },
-  emotion6: {
-    passos: ["Pergunte como a criança tem se sentido nas últimas semanas.", "Pergunte o que mudou e como ela reage a situações difíceis.", "Observe o afeto durante a fala e separe o relato da observação."],
-    pistas: ["Relata humor triste", "Relata irritabilidade", "Relata ansiedade", "Afeto combina com o relato", "Afeto diferente do relato"],
+    objetivo: "Como a criança demonstra o que sente durante o encontro.",
+    material: "Nenhum.",
+    minutos: 2,
+    passos: ["Observe o rosto e o jeito da criança durante as brincadeiras: alegria, frustração, medo.", "Pergunte ao cuidador como ela costuma ficar em casa: humor, irritação e sono.", "Anote separado o que você viu e o que o cuidador contou."],
+    pistas: ["Demonstra alegria", "Demonstra tristeza", "Fica irritada", "Reação combina com a situação", "Cuidador contou mudança em casa"],
   },
   sleep: {
-    passos: ["Pergunte sobre horário, despertares e pesadelos.", "Pergunte sobre roncos, pausas na respiração e cansaço ao acordar.", "Pergunte sobre apetite e energia durante o dia."],
-    pistas: ["Relata dificuldade para dormir", "Relata despertares", "Relata roncos ou pausas", "Relata sonolência diurna", "Relata mudança de apetite"],
-  },
-  thought6: {
-    passos: ["Converse sobre o dia da criança, deixando que ela conte com as próprias palavras.", "Observe se o raciocínio segue e se a fala tem começo, meio e fim.", "Se surgir tema incomum, registre o que a criança disse, sem questionar nem sugerir."],
-    pistas: ["Raciocínio organizado", "Raciocínio desorganizado", "Muda de assunto", "Tema incomum relatado", "Fantasia infantil"],
-  },
-  insight9: {
-    passos: ["Converse sobre uma decisão do dia a dia e suas consequências.", "Pergunte quem poderia ajudar nas dificuldades.", "Observe como ela se percebe diante das próprias dificuldades."],
-    pistas: ["Reflete sobre consequências", "Reconhece dificuldades", "Nega dificuldades", "Pede ajuda", "Precisa de exemplos"],
+    objetivo: "O que o cuidador conta sobre sono, apetite e energia.",
+    material: "Nenhum. Converse com o cuidador.",
+    minutos: 3,
+    passos: ["Pergunte a que horas a criança dorme e acorda e se acorda durante a noite.", "Pergunte se ronca, faz pausas na respiração ou tem pesadelos.", "Pergunte como estão o apetite e a energia durante o dia."],
+    pistas: ["Cuidador contou dificuldade para dormir", "Cuidador contou despertares", "Cuidador contou roncos ou pausas", "Cuidador contou sono durante o dia", "Cuidador contou mudança no apetite"],
   },
 };
-
-/** Estações sem missão: somente entrevista reservada ao profissional. */
-export const ESTACOES_SEM_MISSAO = ["risk"] as const;

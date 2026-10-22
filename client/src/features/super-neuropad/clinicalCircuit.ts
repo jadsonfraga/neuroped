@@ -8,8 +8,11 @@ export const CIRCUIT_VERSION = "2026-10-21.1";
 export type CircuitArea = "neurologico" | "mental";
 export type CircuitMethod = "ludico" | "observacao" | "presencial" | "entrevista";
 export type CircuitStatus = "observado" | "achado" | "nao_realizado" | "nao_colaborou";
+/** Quem executa a estação: a assistente na pré-consulta (brincadeira, observação ou relato do cuidador) ou o médico na consulta. */
+export type CircuitExecutor = "assistente" | "medico";
 export interface CircuitTask {
   id: string;
+  executor: CircuitExecutor;
   area: CircuitArea;
   domain: string;
   title: string;
@@ -62,7 +65,7 @@ export const CIRCUIT_VIDEO_LINKS = {
   },
 } as const;
 
-export const CIRCUIT_TASKS: readonly CircuitTask[] = [
+const RAW_TASKS: readonly Omit<CircuitTask, "executor">[] = [
   {id:"rapport",area:"mental",domain:"Aparência e comportamento",title:"Portal do encontro",emoji:"🤝",min:2,max:17,method:"observacao",guide:"Durante o acolhimento, observe apresentação, consciência aparente, contato, reciprocidade, atitude, atividade psicomotora e adaptação ao ambiente; respeite neurodiversidade e diferenças culturais.",observe:"Descreva fatos observáveis; não equipare contato ocular reduzido a diagnóstico.",video:"utah"},
   {id:"social2",area:"mental",domain:"Comunicação social",title:"Brinquedo compartilhado",emoji:"🧸",min:2,max:5,method:"ludico",guide:"Convide a criança a alternar turnos de brincadeira, mostrar algo de interesse e compartilhar atenção, sem exigir olhar nos olhos.",observe:"Registre iniciativa, atenção conjunta, reciprocidade, gestos e imitação; ajuda prestada.",video:"utah"},
   {id:"conversation6",area:"mental",domain:"Pragmática",title:"Conversa de exploradores",emoji:"💬",min:6,max:17,method:"entrevista",guide:"Converse sobre interesse pessoal e situação social cotidiana; observe turnos, coerência temática, prosódia e entendimento de contexto.",observe:"Exemplos literais de comunicação e necessidade de facilitação."},
@@ -105,18 +108,34 @@ export const CIRCUIT_TASKS: readonly CircuitTask[] = [
   {id:"insight9",area:"mental",domain:"Juízo crítico e insight",title:"Escolhas da vida real",emoji:"🧭",min:9,max:17,method:"entrevista",guide:"Converse sobre uma decisão cotidiana, consequências, apoio disponível e compreensão das próprias dificuldades.",observe:"Capacidade de reflexão e julgamento situada na idade e no contexto; não aplicar rótulos globais."},
   {id:"risk",area:"mental",domain:"Segurança clínica",title:"Conversa reservada de segurança",emoji:"🫶",min:8,max:17,method:"entrevista",guide:"Somente profissional: a partir dos 12 anos realizar rastreio com instrumento validado fora deste circuito; entre 8 e 11 anos, rastrear apenas com indicação clínica. Se houver indicadores clínicos de risco, investigar sofrimento intenso, autoagressão, ideação suicida, violência ou abuso em ambiente protegido e respeitando os limites legais da confidencialidade.",observe:"Registrar apenas informação clinicamente necessária no prontuário protegido; evitar detalhes identificáveis em exportação compartilhável.",safety:"Esta etapa NÃO é um jogo, não deve ser exibida como missão infantil, não substitui entrevista de risco nem protocolo de proteção. Risco atual demanda avaliação/intervenção clínica imediata."},
 ];
+/**
+ * Estações que uma assistente treinada executa antes da consulta, sem técnica médica: brincadeiras, observação do
+ * comportamento e relato do cuidador. Todo exame com manobra (fundo de olho, reflexos, sinais meníngeos, força segmentar,
+ * sensibilidade, pares cranianos, tônus, Romberg, tandem, dedo-nariz) e toda entrevista que sonda pensamento, insight ou
+ * risco ficam reservados ao médico: nunca aparecem como missão da assistente.
+ */
+export const ASSISTANT_STATION_IDS: ReadonlySet<string> = new Set([
+  "rapport", "social2", "consciencia", "language2", "language6", "strength2", "reach2", "gait2", "involuntary", "praxis3",
+  "praxis6", "copy6", "hand", "milestones", "attention2", "attention6", "memory6", "emotion2", "sleep", "conversation6",
+]);
+export const CIRCUIT_TASKS: readonly CircuitTask[] = RAW_TASKS.map((task) => ({ ...task, executor: ASSISTANT_STATION_IDS.has(task.id) ? "assistente" : "medico" }));
 export function circuitForAge(years: number, area?: CircuitArea): CircuitTask[] {
   if (!Number.isInteger(years) || years < 2 || years > 17) return [];
   return CIRCUIT_TASKS.filter((task) => years >= task.min && years <= task.max && (!area || task.area === area));
+}
+/** Missões da assistente na pré-consulta; o restante da faixa fica reservado ao médico. */
+export function circuitForAssistant(years: number, area?: CircuitArea): CircuitTask[] {
+  return circuitForAge(years, area).filter((task) => task.executor === "assistente");
 }
 /**
  * Cobertura: registra o que foi examinado. Não pontua, não compara com norma e não transforma
  * ausência de registro em normalidade. Domínio `presencial` só conta com estação de exame direto.
  */
-export type CoverageStatus = "sem_estacao" | "pendente" | "parcial" | "registrado" | "esclarecer" | "nao_obtido";
+export type CoverageStatus = "sem_estacao" | "reservado_medico" | "pendente" | "parcial" | "registrado" | "esclarecer" | "nao_obtido";
 export interface CoverageDomain { id: string; label: string; stations: readonly string[]; presencial: boolean }
 export const COVERAGE_LABELS: Record<CoverageStatus,string> = {
   sem_estacao: "Sem estação nesta faixa — exame direto se indicado",
+  reservado_medico: "Reservado ao médico na consulta — não é feito na pré-consulta",
   pendente: "Pendente — não registrado",
   parcial: "Parcial — apenas tarefa lúdica ou relato, sem exame direto",
   registrado: "Registrado — descrição obrigatória; não equivale a normal",
@@ -167,6 +186,8 @@ export const STATION_DEMO: Partial<Record<string, CircuitDemo>> = {
 export function coverageStatus(domain: CoverageDomain, years: number, records: CircuitRecords): CoverageStatus {
   const stations = circuitForAge(years).filter((task) => domain.stations.includes(task.id));
   if (!stations.length) return "sem_estacao";
+  // Domínio cujas estações são todas do médico: a assistente não executa nem registra; não é lacuna dela.
+  if (stations.every((task) => task.executor === "medico") && !stations.some((task) => records[task.id]?.status)) return "reservado_medico";
   const statusOf = (id: string) => records[id]?.status;
   const done = (task: CircuitTask) => (statusOf(task.id) === "observado" || statusOf(task.id) === "achado")
     && (task.method !== "presencial" || records[task.id]?.source === "examinador");

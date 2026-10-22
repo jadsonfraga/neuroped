@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Check, ChevronLeft, ChevronRight, ClipboardCopy, Download, ExternalLink, RotateCcw, ShieldAlert, Stethoscope } from "lucide-react";
 import { downloadTextDocument } from "@/lib/shareText";
 import {
-  buildCircuitReport, circuitForAge, CIRCUIT_VERSION, CIRCUIT_METHODS, CIRCUIT_SOURCES, CIRCUIT_STATUSES,
+  buildCircuitReport, circuitForAge, circuitForAssistant, CIRCUIT_VERSION, CIRCUIT_METHODS, CIRCUIT_SOURCES, CIRCUIT_STATUSES,
   CIRCUIT_URGENCY_NOTE, CIRCUIT_VIDEO_LINKS, COVERAGE_LABELS, coverageStatus, notaDeEstacao, MSE_SECTIONS, NEURO_BASIC_DOMAINS,
   STATION_DEMO, type CircuitArea, type CircuitRecords, type CircuitSource, type CircuitStatus, type CoverageDomain, type CoverageStatus,
 } from "./clinicalCircuit";
@@ -72,6 +72,7 @@ const RESULTADOS: readonly { status: CircuitStatus; label: string; dica: string 
 
 const COVERAGE_TONE: Record<CoverageStatus, string> = {
   sem_estacao: "bg-[var(--snp-paper-fixed)]",
+  reservado_medico: "bg-[var(--snp-paper-fixed)]",
   pendente: "bg-[var(--snp-paper-fixed)]",
   parcial: "bg-[var(--snp-sun-tint)]",
   registrado: "bg-[var(--snp-grass-tint)]",
@@ -97,6 +98,23 @@ function CoverageList({ title, domains, years, records }: { title: string; domai
             </li>
           );
         })}
+      </ul>
+    </div>
+  );
+}
+
+/** Estações que não são missão da assistente. Lembrete de que ficam para a consulta; não é pendência da pré-consulta. */
+function ReservadoMedico({ years }: { years: number }) {
+  const reservadas = circuitForAge(years).filter((task) => task.executor === "medico");
+  if (!reservadas.length) return null;
+  return (
+    <div className="space-y-2" data-testid="super-neuropad-doctor-reserved">
+      <h3 className="text-sm font-black">Reservado ao médico na consulta</h3>
+      <p className="text-xs font-semibold">
+        Não são missões da pré-consulta e não contam como pendência da assistente. O médico decide o que examinar.
+      </p>
+      <ul className="flex flex-wrap gap-2">
+        {reservadas.map((task) => <li key={task.id} className="snp-chip bg-[var(--snp-paper-fixed)]">{task.emoji} {task.title}</li>)}
       </ul>
     </div>
   );
@@ -208,8 +226,8 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
   const [anotacaoAberta, setAnotacaoAberta] = useState(false);
   const [orientacaoAberta, setOrientacaoAberta] = useState(false);
   const area: CircuitArea = tab === "mental" ? "mental" : "neurologico";
-  const all = years === null ? [] : circuitForAge(years);
-  const tasks = years === null ? [] : circuitForAge(years, area);
+  const all = years === null ? [] : circuitForAssistant(years);
+  const tasks = years === null ? [] : circuitForAssistant(years, area);
   const task = tasks[Math.min(active, tasks.length - 1)];
   const demo = task ? STATION_DEMO[task.id] : undefined;
   const estados: Record<string, EstadoMissao> = Object.fromEntries(all.map((entry) =>
@@ -235,7 +253,7 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
     const alvo = all.find((entry) => entry.id === id);
     if (!alvo) return;
     setTab(alvo.area);
-    setActive(Math.max(0, circuitForAge(years, alvo.area).findIndex((entry) => entry.id === id)));
+    setActive(Math.max(0, circuitForAssistant(years, alvo.area).findIndex((entry) => entry.id === id)));
     setFeedback("");
   };
   const previous = () => { setActive((index) => Math.max(0, index - 1)); setFeedback(""); };
@@ -273,9 +291,9 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
     <section id="snp-clinical-circuit" className={visible ? "snp-panel space-y-4 p-4 sm:p-6" : "hidden"} aria-label="Circuito clínico complementar" data-testid="super-neuropad-clinical-circuit">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="snp-pixel flex items-center gap-2 text-base"><Stethoscope className="h-5 w-5" /> Missões clínicas obrigatórias</h2>
+          <h2 className="snp-pixel flex items-center gap-2 text-base"><Stethoscope className="h-5 w-5" /> Missões da pré-consulta</h2>
           <p className="mt-2 max-w-3xl text-sm font-semibold">
-            Parte obrigatória da avaliação: exame neurológico e estado mental · v{CIRCUIT_VERSION} · {years} anos. Supervisão profissional.
+            Brincadeiras rápidas para a assistente aplicar antes da consulta · v{CIRCUIT_VERSION} · {years} anos. Siga o passo a passo, toque no que percebeu e escolha como foi.
             Não altera os seis mundos, o tempo da partida, XP ou pontuação. Nenhuma tarefa isolada estabelece diagnóstico.
           </p>
         </div>
@@ -283,8 +301,8 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
       </div>
       <div className="snp-panel snp-panel--soft p-3 text-xs font-semibold" role="note">
         <ShieldAlert className="mr-1 inline-block h-4 w-4" />
-        Atividade lúdica de observação: avise o responsável antes de iniciar. Os toques registram o que foi percebido. Em cada missão são obrigatórios o resultado, quem informou e um marcador ou descrição (descrição do achado em “Teve dificuldade”), e nenhuma etapa trava a próxima.
-        Exame presencial é feito pelo profissional para inferir força, tônus, reflexos, pares cranianos ou sensibilidade. Vídeos e animações são demonstrações da técnica, nunca gravações da criança.
+        Avise o responsável antes de iniciar e fique perto da criança. Os toques registram o que foi percebido. Em cada missão são obrigatórios o resultado, quem informou e um marcador ou descrição (descrição do achado em “Teve dificuldade”), e nenhuma etapa trava a próxima.
+        Esta etapa não inclui nenhum exame médico: fundo de olho, reflexos, nuca, força, sensibilidade e nervos cranianos ficam para o médico na consulta.
       </div>
       <div className="snp-panel snp-panel--soft p-3 text-xs font-semibold" role="note" data-testid="super-neuropad-clinical-urgency">
         <ShieldAlert className="mr-1 inline-block h-4 w-4" />
@@ -320,20 +338,23 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
           <ObrigatoriosPanel resumo={resumo} onIr={irParaMissao} />
           <CoverageList title="Exame neurológico básico — domínios" domains={NEURO_BASIC_DOMAINS} years={years} records={records} />
           <CoverageList title="Exame do estado mental — seções" domains={MSE_SECTIONS} years={years} records={records} />
+          <ReservadoMedico years={years} />
           <MatrizList years={years} records={records} bateria={bateria} />
           <HipotesesPanel years={years} records={records} />
         </div>
       ) : task && missao ? (
         <article className="snp-panel snp-panel--soft space-y-4 p-4" data-testid="super-neuropad-clinical-station">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="snp-chip">Missão {active + 1} de {tasks.length} · {task.domain}</span>
+            <span className="snp-chip">Missão {active + 1} de {tasks.length} · cerca de {missao.minutos} min</span>
             <span className="snp-chip">{CIRCUIT_METHODS[task.method]}</span>
           </div>
           <h3 className="text-xl font-black">{task.emoji} {task.title}</h3>
+          <p className="text-sm font-semibold" data-testid="super-neuropad-mission-goal"><strong>O que olhar:</strong> {missao.objetivo}</p>
+          <p className="text-sm font-semibold" data-testid="super-neuropad-mission-material"><strong>Você vai precisar de:</strong> {missao.material}</p>
           {dicaEtaria && <p className="rounded-xl border-2 border-[var(--snp-ink-40)] bg-white p-3 text-sm font-semibold text-[var(--snp-ink-fixed)]"
             data-testid="super-neuropad-age-station-guidance">{dicaEtaria}</p>}
           <div className="space-y-2">
-            <h4 className="text-sm font-black">{task.method === "presencial" ? "Passo a passo do examinador" : "Passo a passo da brincadeira"}</h4>
+            <h4 className="text-sm font-black">Passo a passo da brincadeira</h4>
             <ol className="space-y-2">
               {missao.passos.map((passo, index) => (
                 <li key={passo} className="flex gap-3 rounded-xl bg-white p-3 text-sm font-semibold text-[var(--snp-ink-fixed)]">

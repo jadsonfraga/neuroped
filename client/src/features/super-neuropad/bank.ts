@@ -925,6 +925,37 @@ export function conceptKey(draft: AnyDraft | Item): string {
   return `${draft.kind}:${words.join(" ")}:${plain(criterion)}`;
 }
 
+/**
+ * Formato da tarefa = o enunciado sem o estímulo específico ("Mostre: avião", "Qual letra falta? BO_A", "Quantas flores?").
+ * Dois itens do mesmo formato parecem repetidos para a aplicadora, mesmo com figura e resposta diferentes.
+ * A extensão limita quantos itens do mesmo formato oferece (auditoria de 22/10/2026).
+ */
+const FORMAT_FILLER = new Set(["palavra", "numero", "letra", "figura", "opcoes", "leia", "alta", "voz", "crianca", "para", "as", "os", "em"]);
+export function formatKey(draft: AnyDraft | Item): string {
+  if (draft.kind === "montar") return "montar";
+  const lead = draft.prompt.split(/[:?.]/)[0];
+  const stem = plain(lead.replace(/\p{Extended_Pictographic}/gu, " ").replace(/\b[\p{Lu}0-9_]{2,}\b/gu, " ").replace(/\([^)]*\)/g, " "))
+    .replace(/[^\p{L}\s]/gu, " ")
+    .replace(/\bquant[oa]s\s+\S+/g, "quantos")
+    .split(/\s+/)
+    .filter((word) => word && !FORMAT_FILLER.has(word))
+    .slice(0, 4)
+    .join(" ");
+  return `${draft.kind}:${stem}`;
+}
+
+/** Evita dois itens do mesmo formato em sequência dentro do mundo, quando há alternativa; não muda quais itens entram. */
+function spreadFormats<T extends { draft: AnyDraft }>(list: T[]): T[] {
+  const rest = [...list];
+  const out: T[] = [];
+  while (rest.length) {
+    const last = out.length ? formatKey(out[out.length - 1].draft) : "";
+    const index = rest.findIndex((entry) => formatKey(entry.draft) !== last);
+    out.push(rest.splice(index === -1 ? 0 : index, 1)[0]);
+  }
+  return out;
+}
+
 function buildOptional(): Record<number, OptionalItem[]> {
   const out: Record<number, OptionalItem[]> = {};
   for (const years of YEARS) {
@@ -955,25 +986,47 @@ function buildOptional(): Record<number, OptionalItem[]> {
     const picked: Array<{ draft: AnyDraft; phaseId: PhaseId }> = [];
     const pickedKeys = new Set<string>();
     const pickedIds = new Set<AnyDraft>();
-    // Primeira passada: só conceitos distintos entre si e da bateria. Segunda: se o banco da idade não tem
-    // conceitos distintos suficientes para chegar a 50, completa com a mesma tarefa em outra redação
-    // (nunca a mesma tarefa idêntica); `conceitosRepetidosNosOpcionais` informa quantos casos restam.
-    for (const strict of [true, false]) {
+    const mainFormats = new Set(main.map(formatKey));
+    const formatCount = new Map<string, number>();
+    // Passadas do mais ao menos rigoroso. A 1ª só aceita formato novo (nem na bateria, nem entre os opcionais) e conceito
+    // distinto; as seguintes relaxam o formato (até 2, depois 3 por formato) e, por último, o conceito, para fechar 50
+    // quando o banco da idade é pequeno (nunca a mesma tarefa idêntica). `formatosRepetidosNosOpcionais` informa o resto.
+    const passes = [
+      { maxFormat: 1, avoidMain: true, strict: true },
+      { maxFormat: 2, avoidMain: true, strict: true },
+      { maxFormat: 2, avoidMain: false, strict: true },
+      { maxFormat: 3, avoidMain: false, strict: true },
+      { maxFormat: 3, avoidMain: false, strict: false },
+      { maxFormat: 99, avoidMain: false, strict: false },
+    ];
+    // A tarefa visual elegível da idade entra sempre, antes de os formatos disputarem as vagas (garantia do banco de origem).
+    const visualQueue = queues[queues.length - 1];
+    const firstVisual = visualQueue.find((candidate) => !isUsed(candidate.draft.ref) && !usedKeys.has(taskKey(candidate.draft)));
+    if (firstVisual && need > 0) {
+      picked.push(firstVisual);
+      pickedIds.add(firstVisual.draft);
+      formatCount.set(formatKey(firstVisual.draft), 1);
+      [taskKey(firstVisual.draft), conceptKey(firstVisual.draft)].forEach((key) => pickedKeys.add(key));
+    }
+    for (const pass of passes) {
       for (let round = 0; picked.length < need && queues.some((queue) => queue.length > round); round++) {
         for (const queue of queues) {
           const candidate = queue[round];
           if (!candidate || picked.length >= need || pickedIds.has(candidate.draft)) continue;
           const keys = [taskKey(candidate.draft), conceptKey(candidate.draft)];
-          const blocked = strict ? keys : keys.slice(0, 1);
+          const blocked = pass.strict ? keys : keys.slice(0, 1);
+          const format = formatKey(candidate.draft);
           if (isUsed(candidate.draft.ref) || blocked.some((key) => usedKeys.has(key) || pickedKeys.has(key))) continue;
+          if ((formatCount.get(format) ?? 0) >= pass.maxFormat || (pass.avoidMain && mainFormats.has(format))) continue;
           picked.push(candidate);
           pickedIds.add(candidate.draft);
+          formatCount.set(format, (formatCount.get(format) ?? 0) + 1);
           keys.forEach((key) => pickedKeys.add(key));
         }
       }
     }
     if (picked.length !== need) throw new Error(`Extensão opcional incompleta aos ${years} anos: ${picked.length} de ${need}`);
-    const ordered = PHASE_ORDER.flatMap((phaseId) => picked.filter((entry) => entry.phaseId === phaseId));
+    const ordered = PHASE_ORDER.flatMap((phaseId) => spreadFormats(picked.filter((entry) => entry.phaseId === phaseId)));
     out[years] = ordered.map((entry, index) => ({ phaseId: entry.phaseId, item: { ...entry.draft, id: `${years}.opcional.${index + 1}` } as Item }));
   }
   return out;

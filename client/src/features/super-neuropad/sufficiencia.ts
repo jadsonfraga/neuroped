@@ -115,6 +115,7 @@ const DE_COBERTURA: Record<CoverageStatus, SuficienciaStatus> = {
   registrado: "examinado",
   esclarecer: "a_esclarecer",
   parcial: "falta_exame_direto",
+  reservado_medico: "pendente_execucao", // a matriz é do médico: o exame reservado a ele continua pendente até a consulta
   pendente: "pendente_execucao",
   nao_obtido: "nao_obtido",
   sem_estacao: "fora_do_jogo",

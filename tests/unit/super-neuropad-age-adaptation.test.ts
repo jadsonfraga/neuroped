@@ -24,6 +24,7 @@ test("refinamento ajustado à idade respeita método e entrevista clínica de ri
       const hint=dicaDeMissaoPorIdade(age,task);
       if(task.id==="risk"){assert.equal(hint,null);continue;}
       assert.ok(hint && hint.includes(age+" anos"),task.id);
+      if(task.executor==="assistente"){assert.match(hint,/^Dica para \d+ anos:/);continue;}
       if(task.method==="presencial")assert.match(hint,/examinador.*auxiliar não realiza manobras/i);
       if(task.method==="entrevista")assert.match(hint,/entrevista profissional.*privacidade/i);
     }

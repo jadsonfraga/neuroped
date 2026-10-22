@@ -1,7 +1,7 @@
 /**
  * Estrutura obrigatória do circuito clínico.
  *
- * Toda missão da faixa etária exige: resultado ("Como foi?"), quem informou e,
+ * Toda missão da assistente na faixa etária (as estações do médico não entram) exige: resultado ("Como foi?"), quem informou e,
  * quando a tarefa foi realizada, ao menos um marcador ou uma descrição. "Teve dificuldade"
  * (achado) exige descrição do achado. A síntese final do examinador também é obrigatória.
  *
@@ -9,7 +9,7 @@
  * COMPLETO ou INCOMPLETO no relatório e a pendência fica visível em todo o fluxo. Nenhum controle
  * é desabilitado e a navegação segue livre: o jogo não libera documento nem conclui diagnóstico.
  */
-import { circuitForAge, type CircuitArea, type CircuitSource, type CircuitStatus } from "./clinicalCircuit";
+import { circuitForAssistant, type CircuitArea, type CircuitSource, type CircuitStatus } from "./clinicalCircuit";
 
 export const DESCRICAO_ACHADO_MINIMA = 10;
 
@@ -57,7 +57,7 @@ export function camposPendentes(estado: EstadoMissao): CampoObrigatorio[] {
 }
 
 export function resumoObrigatorio(years: number, estados: Readonly<Record<string, EstadoMissao>>, sintese: string): ResumoObrigatorio {
-  const tarefas = circuitForAge(years);
+  const tarefas = circuitForAssistant(years);
   const pendencias: PendenciaMissao[] = [];
   for (const tarefa of tarefas) {
     const faltam = camposPendentes(estados[tarefa.id] ?? {});

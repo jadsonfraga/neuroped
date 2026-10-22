@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
-import { buildCircuitReport, circuitForAge, type CircuitStatus } from "../../client/src/features/super-neuropad/clinicalCircuit";
+import { buildCircuitReport, circuitForAssistant, type CircuitStatus } from "../../client/src/features/super-neuropad/clinicalCircuit";
 import {
   camposPendentes, CAMPO_LABELS, DESCRICAO_ACHADO_MINIMA, detalheObrigatorio, linhaObrigatorio, resumoObrigatorio,
   type EstadoMissao,
@@ -34,7 +34,7 @@ test("tarefa não realizada ou sem colaboração conclui com resultado e quem in
 
 test("resumo: todas as estações da faixa são obrigatórias, de 2 a 17 anos, e a síntese também", () => {
   for (let age = 2; age <= 17; age++) {
-    const tarefas = circuitForAge(age);
+    const tarefas = circuitForAssistant(age);
     const vazio = resumoObrigatorio(age, {}, "");
     assert.equal(vazio.total, tarefas.length, `idade ${age}`);
     assert.equal(vazio.concluidas, 0, `idade ${age}: nada começa concluído`);
@@ -49,7 +49,7 @@ test("resumo: todas as estações da faixa são obrigatórias, de 2 a 17 anos, e
 });
 
 test("resumo: uma pendência isolada derruba o circuito para incompleto e é nomeada", () => {
-  const tarefas = circuitForAge(9);
+  const tarefas = circuitForAssistant(9);
   const estados = Object.fromEntries(tarefas.map((tarefa) => [tarefa.id, completa()]));
   const alvo = tarefas[3];
   estados[alvo.id] = { ...completa("achado"), descricao: "curto" };
@@ -60,7 +60,7 @@ test("resumo: uma pendência isolada derruba o circuito para incompleto e é nom
 });
 
 test("texto: declara COMPLETO ou INCOMPLETO, lista as pendências e afirma que não trava nem libera documento", () => {
-  const tarefas = circuitForAge(7);
+  const tarefas = circuitForAssistant(7);
   const incompleto = resumoObrigatorio(7, { [tarefas[0].id]: completa() }, "");
   const linha = linhaObrigatorio(incompleto);
   assert.match(linha, new RegExp(`^CIRCUITO CLÍNICO OBRIGATÓRIO: INCOMPLETO — 1 de ${tarefas.length} missões concluídas; síntese do examinador pendente\\.$`));
@@ -85,7 +85,7 @@ test("obrigatório sem bloqueio: nenhum controle desabilitado e nada apresentado
   const pagina = readFileSync("client/src/pages/super-neuropad-game.tsx", "utf8");
   assert.doesNotMatch(componente, /\bdisabled\b|\baria-disabled\b/);
   assert.doesNotMatch(componente, /\(opcional\)|Circuito opcional|Missões clínicas extras/);
-  assert.match(componente, /Missões clínicas obrigatórias/);
+  assert.match(componente, /Missões da pré-consulta/);
   assert.match(componente, /nenhuma etapa trava a próxima/);
   assert.match(componente, /MissaoStatus/);
   assert.match(componente, /ObrigatoriosPanel/);

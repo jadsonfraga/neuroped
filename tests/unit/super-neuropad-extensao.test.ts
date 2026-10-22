@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
-import { conceptKey, INTEGRATED_BANK, PHASE_ORDER, YEARS } from "../../client/src/features/super-neuropad/bank";
+import { conceptKey, formatKey, INTEGRATED_BANK, PHASE_ORDER, YEARS } from "../../client/src/features/super-neuropad/bank";
 import {
   avisoDeIdade, DESAFIOS_DISPONIVEIS_POR_IDADE, disponiveisDaIdade, estimativaOpcionaisSegundos, opcionaisDaIdade, pendentesDeCopia, proximoPendente,
   registradosNaOrdem, registrarOpcional, apagarOpcional, textoOpcionais, type RegistrosOpcionais,
@@ -63,6 +63,24 @@ test("extensão: opcionais vêm dos bancos de origem da idade, sem itens criados
       if (item.kind === "toque") assert.ok(item.options.some((option) => option.label === item.answer), `${item.id}: resposta entre as opções`);
     }
     assert.ok(opcionaisDaIdade(years).some(({ item }) => item.origin === "visual"), `${years}: inclui tarefa visual elegível para a idade`);
+  }
+});
+
+test("opcionais não repetem o mesmo formato de tarefa: no máximo 3 por formato e nenhum sequencial no mesmo mundo", () => {
+  for (const years of YEARS) {
+    const lista = opcionaisDaIdade(years);
+    const contagem = new Map<string, number>();
+    for (const { item } of lista) contagem.set(formatKey(item), (contagem.get(formatKey(item)) ?? 0) + 1);
+    for (const [formato, total] of contagem) assert.ok(total <= 3, `${years} anos: formato "${formato}" repetido ${total}x`);
+    // Idades com banco de origem amplo oferecem quase só formatos distintos.
+    if (years >= 12) assert.ok(contagem.size >= lista.length - 1, `${years} anos: formatos distintos (${contagem.size} de ${lista.length})`);
+    for (let index = 1; index < lista.length; index++) {
+      if (lista[index].phaseId !== lista[index - 1].phaseId) continue;
+      const mesmo = formatKey(lista[index].item) === formatKey(lista[index - 1].item);
+      if (!mesmo) continue;
+      const alternativa = lista.slice(index + 1).some((entry) => entry.phaseId === lista[index].phaseId && formatKey(entry.item) !== formatKey(lista[index].item));
+      assert.ok(!alternativa, `${years} anos: formato igual em sequência com alternativa disponível (${lista[index].item.id})`);
+    }
   }
 });
 
