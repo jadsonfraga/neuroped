@@ -107,7 +107,8 @@ export function textoOpcionais(years: number, registros: RegistrosOpcionais, qua
     linhas.push(`${index + 1}. [${mundo.name}] ${record.prompt}`);
     linhas.push(`   Registrado: ${record.given} (${STATUS_LABELS[record.status]}) · Critério de acerto: ${record.expected}`);
     linhas.push(`   ${KIND_LABELS[record.kind]} · ${ORIGIN_LABELS[record.origin]} · ${record.ref} · ${extras}`);
-    const aviso = itemDoRegistro(years, record) ? avisoDeIdade(years, itemDoRegistro(years, record)!) : null;
+    const item = itemDoRegistro(years, record);
+    const aviso = item ? avisoDeIdade(years, item) : null;
     if (aviso) linhas.push(`   ${aviso}`);
   });
   if (naoAplicados.length) {

@@ -2,32 +2,37 @@ import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import type { Option, TouchItem } from "./items";
 import { buildVisualSearchBoard, visualSearchChoice, visualSearchProfile, type ExplorerVariant } from "./visualSearch";
 
+const STAR_PATH = "M32 12L34.1 16.6L39 17.1L35.4 20.5L36.3 25.4L32 23L27.7 25.4L28.6 20.5L25 17.1L29.9 16.6Z";
+const OTHER_HATS = ["var(--snp-sky)", "var(--snp-grass)", "var(--snp-lilac)"];
+
+/**
+ * Cor do boné por nível: 2–3 anos com contraste forte; 4–9 anos misturando cores;
+ * 10–17 anos com todos os bonés da mesma cor, exigindo analisar o símbolo.
+ */
+function hatFor(variant: ExplorerVariant, tier: number): string {
+  if (tier >= 3) return "var(--snp-sky)";
+  if (tier === 2) return variant === 0 || variant === 2 ? "var(--snp-sky)" : OTHER_HATS[(variant - 1) % 3];
+  if (tier === 1) return variant === 0 || variant === 1 ? "var(--snp-sun)" : OTHER_HATS[(variant - 1) % 3];
+  return variant === 0 ? "var(--snp-sun)" : OTHER_HATS[(variant - 1) % 3];
+}
+
+/** Símbolo no boné. O alvo é a estrela cheia no centro (0); os distratores variam forma, vazamento e posição. */
+function symbolFor(variant: ExplorerVariant) {
+  switch (variant) {
+    case 0: return <path d={STAR_PATH} fill="var(--snp-sun)" stroke="var(--snp-ink-fixed)" strokeWidth="0.7" />;
+    case 1: return <circle cx="32" cy="19" r="5" fill="var(--snp-sun)" stroke="var(--snp-ink-fixed)" strokeWidth="0.9" />;
+    case 2: return <path d="M32 13L38 19L32 25L26 19Z" fill="var(--snp-sun)" stroke="var(--snp-ink-fixed)" strokeWidth="0.9" />;
+    case 3: return <path d="M26 15H38V23H26Z" fill="var(--snp-sun)" stroke="var(--snp-ink-fixed)" strokeWidth="0.9" />;
+    case 4: return <path d="M32 11L35 16L40 19L35 22L32 27L29 22L24 19L29 16Z" fill="var(--snp-sun)" stroke="var(--snp-ink-fixed)" strokeWidth="0.7" />;
+    case 5: return <path d={STAR_PATH} fill="none" stroke="var(--snp-sun)" strokeWidth="2.5" />;
+    case 6: return <path d={STAR_PATH} transform="translate(9 0)" fill="var(--snp-sun)" stroke="var(--snp-ink-fixed)" strokeWidth="0.7" />;
+  }
+}
+
 /** Ilustração vetorial autoral; os distratores diferem por cor e/ou forma. */
 function SearchExplorer({ variant, tier }: { variant: ExplorerVariant; tier: number }) {
-  // 2-3 anos: contraste; 4-9 anos: gradualmente misturamos cores;
-  // 10-17 anos: todos os bonés têm a mesma cor, exigindo análise do símbolo.
-  const otherHats = ["var(--snp-sky)", "var(--snp-grass)", "var(--snp-lilac)"];
-  const hat = tier >= 3
-    ? "var(--snp-sky)"
-    : tier === 2
-      ? (variant === 0 || variant === 2 ? "var(--snp-sky)" : otherHats[(variant - 1) % 3])
-      : tier === 1
-        ? (variant === 0 || variant === 1 ? "var(--snp-sun)" : otherHats[(variant - 1) % 3])
-        : variant === 0 ? "var(--snp-sun)" : otherHats[(variant - 1) % 3];
-  const star = "M32 12L34.1 16.6L39 17.1L35.4 20.5L36.3 25.4L32 23L27.7 25.4L28.6 20.5L25 17.1L29.9 16.6Z";
-  const symbol = variant === 0
-    ? <path d={star} fill="var(--snp-sun)" stroke="var(--snp-ink-fixed)" strokeWidth="0.7" />
-    : variant === 1
-      ? <circle cx="32" cy="19" r="5" fill="var(--snp-sun)" stroke="var(--snp-ink-fixed)" strokeWidth="0.9" />
-      : variant === 2
-        ? <path d="M32 13L38 19L32 25L26 19Z" fill="var(--snp-sun)" stroke="var(--snp-ink-fixed)" strokeWidth="0.9" />
-        : variant === 3
-          ? <path d="M26 15H38V23H26Z" fill="var(--snp-sun)" stroke="var(--snp-ink-fixed)" strokeWidth="0.9" />
-          : variant === 4
-            ? <path d="M32 11L35 16L40 19L35 22L32 27L29 22L24 19L29 16Z" fill="var(--snp-sun)" stroke="var(--snp-ink-fixed)" strokeWidth="0.7" />
-            : variant === 5
-              ? <path d={star} fill="none" stroke="var(--snp-sun)" strokeWidth="2.5" />
-              : <path d={star} transform="translate(9 0)" fill="var(--snp-sun)" stroke="var(--snp-ink-fixed)" strokeWidth="0.7" />;
+  const hat = hatFor(variant, tier);
+  const symbol = symbolFor(variant);
   return (
     <svg viewBox="0 0 64 72" className="h-full w-full" aria-hidden="true" focusable="false">
       <rect x="17" y="43" width="30" height="26" rx="9" fill="var(--snp-sky)" stroke="var(--snp-ink-fixed)" strokeWidth="2" />
@@ -53,6 +58,11 @@ const SEARCH_LABELS: Readonly<Record<ExplorerVariant, string>> = {
   6: "estrela preenchida fora do centro do boné",
 };
 
+/** Milissegundos ativos até `now`: o acumulado das pausas mais o segmento corrente, se houver. */
+function activeMsOf(accumulated: number, segmentStart: number | null, now: number): number {
+  return accumulated + (segmentStart === null ? 0 : now - segmentStart);
+}
+
 /** Cronômetro mede apenas tempo ativo e finaliza a tentativa sem resposta ao esgotar. */
 export function VisualSearchStage({ item, years, seed, paused, onAnswer }: {
   item: TouchItem;
@@ -73,6 +83,9 @@ export function VisualSearchStage({ item, years, seed, paused, onAnswer }: {
   const activeMs = useRef(0);
   const answered = useRef(false);
   const startedSegment = useRef<number | null>(null);
+  // O callback fica numa ref: um pai que re-renderiza não reinicia o cronômetro.
+  const answerRef = useRef(onAnswer);
+  useEffect(() => { answerRef.current = onAnswer; }, [onAnswer]);
 
   // Cada ciclo recomeça em performance.now(), preservando os milissegundos
   // acumulados antes da pausa; o relógio não depende do throttling de setInterval.
@@ -81,12 +94,12 @@ export function VisualSearchStage({ item, years, seed, paused, onAnswer }: {
     const start = performance.now();
     startedSegment.current = start;
     const timer = window.setInterval(() => {
-      const active = activeMs.current + performance.now() - start;
+      const active = activeMsOf(activeMs.current, startedSegment.current, performance.now());
       const remaining = Math.max(0, Math.ceil((profile.seconds * 1000 - active) / 1000));
       setLeft(remaining);
       if (active >= profile.seconds * 1000 && !answered.current) {
         answered.current = true;
-        onAnswer(null, { timeStamp: performance.now() }, Math.min(profile.seconds, active / 1000));
+        answerRef.current(null, { timeStamp: performance.now() }, Math.min(profile.seconds, active / 1000));
       }
     }, 100);
     return () => {
@@ -94,13 +107,12 @@ export function VisualSearchStage({ item, years, seed, paused, onAnswer }: {
       startedSegment.current = null;
       window.clearInterval(timer);
     };
-  }, [paused, profile.seconds, onAnswer]);
+  }, [paused, profile.seconds]);
 
   function choose(variant: ExplorerVariant, event: MouseEvent<HTMLButtonElement>) {
     if (paused || answered.current) return;
     answered.current = true;
-    const now = performance.now();
-    const seconds = (activeMs.current + (startedSegment.current === null ? 0 : now - startedSegment.current)) / 1000;
+    const seconds = activeMsOf(activeMs.current, startedSegment.current, performance.now()) / 1000;
     const selectedIndex = visualSearchChoice(variant, seconds, profile.seconds);
     onAnswer(selectedIndex === null ? null : item.options[selectedIndex], event,
       Math.min(seconds, profile.seconds));

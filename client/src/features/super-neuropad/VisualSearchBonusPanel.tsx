@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { AnswerRecord } from "./model";
 import { recordTouch, STATUS_LABELS } from "./model";
 import type { TouchItem } from "./items";
-import { visualSearchProfile } from "./visualSearch";
+import { TIER_LABELS, visualSearchProfile } from "./visualSearch";
 import { VisualSearchStage } from "./VisualSearchStage";
 
 /** Missão complementar, sem entrar nas contagens, normas ou pontuação da bateria de 50. */
@@ -80,7 +80,7 @@ export function VisualSearchBonusPanel({ years, visible }: { years: number; visi
             <span className="snp-chip">{profile.cells} personagens</span>
             <span className="snp-chip">{profile.seconds} segundos</span>
           </div>
-          <p className="text-sm font-semibold opacity-90">Dificuldade: {["alto contraste e alvos grandes", "formas simples com algumas cores iguais", "mais personagens com cores semelhantes", "símbolos parecidos e maior densidade", "quase iguais, exigindo identificar forma e posição"][profile.tier]}.</p>
+          <p className="text-sm font-semibold opacity-90">Dificuldade: {TIER_LABELS[profile.tier]}.</p>
           <p className="text-xs opacity-80">
             Missão complementar independente, com personagens originais. Não altera os 50 desafios,
             o XP nem o resultado da bateria principal. Tempo operacional não validado como norma.
@@ -90,7 +90,7 @@ export function VisualSearchBonusPanel({ years, visible }: { years: number; visi
           {running ? (
             <>
               <button type="button" className="snp-option min-h-[44px] px-4 py-2 font-bold"
-                aria-pressed={paused || !visible} onClick={() => setPaused((value) => !value)}>
+                onClick={() => setPaused((value) => !value)}>
                 {paused || !visible ? "▶ Continuar" : "⏸ Pausar"}
               </button>
               <button type="button" className="snp-option min-h-[44px] px-4 py-2 font-bold" onClick={() => setRunning(false)}>Encerrar sem registro</button>

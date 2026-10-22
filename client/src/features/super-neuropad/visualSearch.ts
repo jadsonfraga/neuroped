@@ -7,6 +7,20 @@
 export type VisualSearchTier = 0 | 1 | 2 | 3 | 4;
 export type ExplorerVariant = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
+/** Posição das opções no item: 0 é o explorador-alvo; 1 é qualquer outro. */
+export const OPCAO_ALVO = 0;
+export const OPCAO_OUTRA = 1;
+export type OpcaoBusca = typeof OPCAO_ALVO | typeof OPCAO_OUTRA;
+
+/** Rótulo de dificuldade exibido na missão, pelo nível de semelhança (tier). */
+export const TIER_LABELS: readonly string[] = [
+  "alto contraste e alvos grandes",
+  "formas simples com algumas cores iguais",
+  "mais personagens com cores semelhantes",
+  "símbolos parecidos e maior densidade",
+  "quase iguais, exigindo identificar forma e posição",
+];
+
 export interface VisualSearchProfile {
   years: number;
   cells: number;
@@ -94,9 +108,9 @@ export function visualSearchChoice(
   variant: ExplorerVariant,
   elapsedSeconds: number,
   limitSeconds: number,
-): 0 | 1 | null {
+): OpcaoBusca | null {
   if (!Number.isFinite(elapsedSeconds) || elapsedSeconds < 0
     || !Number.isFinite(limitSeconds) || limitSeconds <= 0
     || elapsedSeconds >= limitSeconds) return null;
-  return variant === 0 ? 0 : 1;
+  return variant === 0 ? OPCAO_ALVO : OPCAO_OUTRA;
 }
