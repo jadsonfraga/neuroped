@@ -14,7 +14,8 @@ import { createSyntheticClinicalApi, SYNTHETIC_CREDENTIALS } from "../../scripts
 const dir = process.env.SUPER_NEUROPAD_ARTIFACT_DIR || "/tmp/super-neuropad-circuit-sufficiency";
 const OBSERVADO = /Conseguiu/;
 const ACHADO = /^🤔 Teve dificuldade/;
-const SOURCE_EXAMINADOR = "Observei diretamente (auxiliar ou examinador)";
+const SOURCE_EXAMINADOR = "Observação direta pelo examinador";
+const SOURCE_AUXILIAR = "Observei diretamente (auxiliar)";
 const REALIZADO_MEDICO = /^Realizado — registrar descrição/;
 const SOURCE_ESCOLA = "Relato escolar";
 
@@ -100,7 +101,7 @@ async function concluirMissao(page, aba, indice) {
     await station.getByRole("button", { name: /^Realizado — registrar descrição/ }).click();
     await station.locator("textarea").fill("Descrição sintética de teste da entrevista profissional.");
   }
-  await station.getByRole("button", { name: SOURCE_EXAMINADOR, exact: true }).click();
+  await station.getByRole("button", { name: SOURCE_AUXILIAR, exact: true }).click();
   assert.match(await station.getByTestId("super-neuropad-mission-status").innerText(), /Missão concluída/, `missão ${indice} da aba "${aba}" concluída`);
 }
 
@@ -169,7 +170,7 @@ async function main() {
       assert.doesNotMatch(refusalText, /Marcado:/, "tarefa não executada não exporta marcadores");
       await auxStation.getByRole("button", { name: OBSERVADO }).click();
       await auxStation.getByRole("group", { name: /Toque no que você percebeu/ }).getByRole("button").first().click();
-      await auxStation.getByRole("button", { name: SOURCE_EXAMINADOR, exact: true }).click();
+      await auxStation.getByRole("button", { name: SOURCE_AUXILIAR, exact: true }).click();
       // Achado de urgência no exame do médico.
       await recordMedico(page, "Janela do fundo", /^Realizado — requer esclarecimento/, SOURCE_EXAMINADOR, "Achado sintético de teste descrito pelo médico em frase completa.");
       // Obrigatório: "Teve dificuldade" sem marcador nem descrição deixa a missão pendente, sem desabilitar nada.
@@ -179,7 +180,7 @@ async function main() {
       await selectEncontro.selectOption({ index: indexEncontro });
       const encontroStation = page.getByTestId("super-neuropad-clinical-station");
       await encontroStation.getByRole("button", { name: ACHADO }).click();
-      await encontroStation.getByRole("button", { name: SOURCE_EXAMINADOR, exact: true }).click();
+      await encontroStation.getByRole("button", { name: SOURCE_AUXILIAR, exact: true }).click();
       assert.match(await encontroStation.getByTestId("super-neuropad-mission-status").innerText(), /Obrigatório ainda pendente.*o que foi visto/);
       assert.equal(await circuitOf(page).locator("button:disabled").count(), 0, "pendência obrigatória não desabilita controles");
       const axeEstacao = await new AxeBuilder({ page }).include('[data-testid="super-neuropad-clinical-station"]').analyze();

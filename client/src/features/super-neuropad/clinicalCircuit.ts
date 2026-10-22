@@ -25,11 +25,12 @@ export interface CircuitTask {
   video?: "utah" | "stanford";
   safety?: string;
 }
-export type CircuitSource = "examinador" | "cuidador" | "escola" | "outra";
+export type CircuitSource = "examinador" | "auxiliar" | "cuidador" | "escola" | "outra";
 /** `note` reúne marcadores e descrição para o relatório; `descricao` é só o texto livre digitado pelo auxiliar. */
 export interface CircuitEntry { status: CircuitStatus; note: string; source?: CircuitSource; descricao?: string }
 export const CIRCUIT_SOURCES: Record<CircuitSource,string> = {
-  examinador: "Observei diretamente (auxiliar ou examinador)",
+  examinador: "Observação direta pelo examinador",
+  auxiliar: "Observei diretamente (auxiliar)",
   cuidador: "Relato do cuidador",
   escola: "Relato escolar",
   outra: "Outra fonte (identificar a proveniência na nota)",

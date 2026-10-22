@@ -214,7 +214,7 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
   const tasks = years === null ? [] : tab === "medico" ? doMedico : missoesPreConsulta(years, area);
   const task = tasks[Math.min(active, tasks.length - 1)];
   const demo = task ? STATION_DEMO[task.id] : undefined;
-  const estados: Record<string, EstadoMissao> = Object.fromEntries(all.map((entry) =>
+  const estados: Record<string, EstadoMissao> = Object.fromEntries(todas.map((entry) =>
     [entry.id, { status: statuses[entry.id], source: sources[entry.id], marcadores: marks[entry.id] ?? [], descricao: notes[entry.id] ?? "" }]));
   const resumo = years === null ? null : resumoObrigatorio(years, estados, generalNote);
   const faltamDe = (id: string) => camposPendentes(estados[id] ?? {});

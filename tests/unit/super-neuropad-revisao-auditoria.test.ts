@@ -49,7 +49,7 @@ test("resultados recusados não exportam marcadores antigos e não atribuem rela
   assert.match(report, /Descrição registrada: Relato por telefone/);
   assert.doesNotMatch(report, /Descrição do examinador: Relato por telefone/);
 });
-test("urgência: achado de consciência, fundo de olho ou meninges aparece como urgência e sai da contagem de pendências", () => {
+test("urgência: achado de fundo de olho ou meninges aparece como urgência e sai da contagem de pendências", () => {
   const linhas = matrizSuficiencia(7, records({ fundus: "achado", reflex: "observado" }, "examinador"));
   assert.equal(urgenciaAtiva(linhas), true);
   const urgencia = linhas.find((linha) => linha.id === "urgencia");
@@ -57,10 +57,10 @@ test("urgência: achado de consciência, fundo de olho ou meninges aparece como 
   assert.equal(linhasDeRevisao(linhas).some((linha) => linha.id === "urgencia"), false);
   assert.equal(pendenciasParaRevisao(linhas), linhasDeRevisao(linhas).filter((linha) => linha.status !== "examinado").length);
   const texto = textoProntidao(7, linhas).join("\n");
-  assert.match(texto, /ATENÇÃO CLÍNICA: achado a esclarecer em consciência, fundo de olho ou sinais meníngeos/);
-  assert.equal(urgenciaAtiva(matrizSuficiencia(7, records({ rapport: "observado", fundus: "observado", meningeal: "observado" }))), false);
+  assert.match(texto, /ATENÇÃO CLÍNICA: achado a esclarecer em fundo de olho ou sinais meníngeos/);
+  assert.equal(urgenciaAtiva(matrizSuficiencia(7, records({ fundus: "observado", meningeal: "observado" }))), false);
   // Item apenas pendente não é achado: não dispara alerta nem usa o texto de achado.
-  const pendente = matrizSuficiencia(7, records({ rapport: "observado", fundus: "observado" }));
+  const pendente = matrizSuficiencia(7, records({ fundus: "observado" }));
   const urgenciaPendente = pendente.find((entry) => entry.id === "urgencia");
   assert.equal(urgenciaPendente?.status, "pendente_execucao");
   assert.match(urgenciaPendente?.detalhe ?? "", /ainda não registrados/);
