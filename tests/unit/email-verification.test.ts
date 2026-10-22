@@ -318,10 +318,9 @@ assert.ok(
     ),
   );
   assert.equal(response.status, 503);
-  assert.equal(
-    ((await response.json()) as { code: string }).code,
-    "EMAIL_VERIFICATION_NOT_CONFIGURED",
-  );
+  const semEntregaBody = (await response.json()) as { code: string; blockedExternal?: string };
+  assert.equal(semEntregaBody.code, "EMAIL_VERIFICATION_NOT_CONFIGURED");
+  assert.equal(semEntregaBody.blockedExternal, "BLOCKED_EXTERNAL_RESEND");
   assert.equal(
     (sqlite.prepare("SELECT COUNT(*) AS n FROM users").get() as { n: number })
       .n,
@@ -496,6 +495,162 @@ assert.equal(
   emailsBeforeResend,
   "conta já verificada não recebe novo link",
 );
+
+// ── 8b) Entrega honesta: o servidor diz quando o link NÃO saiu ─────────────
+{
+  // O cadastro bem-sucedido acima já declarou o envio.
+  assert.equal(
+    (signupBody as { emailVerificationDelivery?: string }).emailVerificationDelivery,
+    "sent",
+    "link enviado precisa ser declarado como enviado",
+  );
+
+  // Provedor recusa (domínio não verificado, chave revogada): a conta existe,
+  // mas o 201 NÃO pode parecer idêntico ao de sucesso.
+  const okFetch = globalThis.fetch;
+  globalThis.fetch = (async () =>
+    new Response("{}", { status: 403 })) as typeof fetch;
+  const falhaEmail = "entrega.falhou@example.test";
+  const falha = await signup(
+    postContext("/api/auth/signup", {
+      name: "Entrega Falhou",
+      email: falhaEmail,
+      password: STRONG_PASSWORD,
+      acceptedLegal: currentLegalVersions(),
+    }),
+  );
+  globalThis.fetch = okFetch;
+  assert.equal(falha.status, 201, "a conta foi criada");
+  const falhaBody = (await falha.json()) as {
+    emailVerificationDelivery?: string;
+    blockedExternal?: string;
+    accessToken?: string;
+  };
+  assert.equal(falhaBody.emailVerificationDelivery, "failed");
+  assert.equal(falhaBody.blockedExternal, "BLOCKED_EXTERNAL_RESEND");
+  const falhaUser = sqlite
+    .prepare(
+      "SELECT id, email_verified_at FROM users WHERE lower(email) = ?",
+    )
+    .get(falhaEmail) as { id: string; email_verified_at: string | null };
+  assert.equal(falhaUser.email_verified_at, null, "falha de entrega nunca marca e-mail verificado");
+  assert.equal(
+    (
+      sqlite
+        .prepare("SELECT COUNT(*) AS n FROM auth_email_verification_tokens WHERE user_id = ?")
+        .get(falhaUser.id) as { n: number }
+    ).n,
+    0,
+    "sem entrega não resta token pendente",
+  );
+
+  // Reenvio e recuperação sem provedor: estado do PRODUTO, igual para qualquer
+  // e-mail, e sem consumir o rate limit nem consultar contas.
+  const semEntrega = { ...env, AUTH_RESEND_API_KEY: undefined };
+  const bucketsAntes = (
+    sqlite
+      .prepare("SELECT COUNT(*) AS n FROM auth_email_verification_rate_limits")
+      .get() as { n: number }
+  ).n;
+  const bloqueados: string[] = [];
+  for (const alvo of [falhaEmail, "ninguem@example.test"]) {
+    const r = await resendVerification(
+      postContext(
+        "/api/auth/resend-verification",
+        { email: alvo },
+        { envOverride: semEntrega, ip: "203.0.113.77" },
+      ),
+    );
+    assert.equal(r.status, 503);
+    const corpo = (await r.json()) as { code: string; blockedExternal?: string };
+    assert.equal(corpo.code, "EMAIL_VERIFICATION_NOT_CONFIGURED");
+    assert.equal(corpo.blockedExternal, "BLOCKED_EXTERNAL_RESEND");
+    bloqueados.push(JSON.stringify(corpo));
+  }
+  assert.equal(bloqueados[0], bloqueados[1], "estado bloqueado não pode servir de oráculo de conta");
+  assert.equal(
+    (
+      sqlite
+        .prepare("SELECT COUNT(*) AS n FROM auth_email_verification_rate_limits")
+        .get() as { n: number }
+    ).n,
+    bucketsAntes,
+    "estado bloqueado não consome o limitador",
+  );
+
+  // Equalização de tempo: com waitUntil, conta pendente e conta inexistente
+  // devolvem o mesmo 202 imediatamente; o envio acontece fora da resposta.
+  const pendentes: Promise<unknown>[] = [];
+  const comWaitUntil = (email: string) => {
+    const ctx = postContext(
+      "/api/auth/resend-verification",
+      { email },
+      { ip: "203.0.113.78" },
+    ) as unknown as { waitUntil?: (p: Promise<unknown>) => void };
+    ctx.waitUntil = (p) => {
+      pendentes.push(p);
+    };
+    return ctx as never;
+  };
+  const enviadosAntes = sentEmails.length;
+  const rPendente = await resendVerification(comWaitUntil(falhaEmail));
+  const rInexistente = await resendVerification(comWaitUntil("ninguem2@example.test"));
+  assert.equal(rPendente.status, 202);
+  assert.equal(rInexistente.status, 202);
+  assert.equal(await rPendente.text(), await rInexistente.text(), "corpos indistinguíveis");
+  await Promise.all(pendentes);
+  assert.equal(
+    sentEmails.length,
+    enviadosAntes + 1,
+    "o trabalho em segundo plano ainda envia o link só para a conta pendente",
+  );
+}
+
+// ── 8c) Falha combinada Resend 403 e gravação de sessão ─────────────────────
+// Regressão P2: 503 não pode ocultar a falha de envio em conta já criada.
+{
+  const previousFetch = globalThis.fetch;
+  const originalPrepare = db.prepare.bind(db);
+  const email = "sessao.sem.email@example.test";
+  let response: Response | undefined;
+  globalThis.fetch = (async () => new Response("{}", { status: 403 })) as typeof fetch;
+  db.prepare = ((sql: string) => {
+    if (sql.includes("INSERT INTO auth_refresh_sessions")) {
+      throw new Error("synthetic session write unavailable");
+    }
+    return originalPrepare(sql);
+  }) as typeof db.prepare;
+  try {
+    response = await signup(postContext("/api/auth/signup", {
+      name: "Sessao Sem Email",
+      email,
+      password: STRONG_PASSWORD,
+      acceptedLegal: currentLegalVersions(),
+    }, { ip: "198.51.100.230" }));
+  } finally {
+    db.prepare = originalPrepare;
+    globalThis.fetch = previousFetch;
+  }
+  assert.ok(response);
+  assert.equal(response.status, 503);
+  const body = await response.json() as {
+    code?: string; created?: boolean;
+    emailVerificationDelivery?: string; blockedExternal?: string;
+  };
+  assert.equal(body.code, "AUTH_SESSION_UNAVAILABLE");
+  assert.equal(body.created, true);
+  assert.equal(body.emailVerificationDelivery, "failed");
+  assert.equal(body.blockedExternal, "BLOCKED_EXTERNAL_RESEND");
+  const user = sqlite.prepare(
+    "SELECT id, email_verified_at FROM users WHERE lower(email) = ?",
+  ).get(email) as { id: string; email_verified_at: string | null };
+  assert.ok(user?.id, "a conta já existe, portanto não deve ser recadastrada");
+  assert.equal(user.email_verified_at, null);
+  const pending = sqlite.prepare(
+    "SELECT COUNT(*) AS n FROM auth_email_verification_tokens WHERE user_id = ?",
+  ).get(user.id) as { n: number };
+  assert.equal(pending.n, 0, "token de link não enviado deve ser removido");
+}
 
 // ── 9) Rate limit do reenvio vale SEM CF-Connecting-IP ─────────────────────
 {

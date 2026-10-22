@@ -139,7 +139,7 @@ function podiumTotal(p: ReturnType<typeof selectPodium>): number {
 
 // ── 4. Discriminação do matcher canônico contra o CATÁLOGO REAL ────────────
 // Evidência forte exigida: sinal de impulsividade do TDAH é "falado" pelas
-// escalas de TDAH e NUNCA por M-CHAT/CARS/Denver — sobreposição de verbos
+// escalas de TDAH e NUNCA pelas de TEA/desenvolvimento — sobreposição de verbos
 // genéricos da descrição não vira afirmação categórica.
 {
   const { scaleMatchesSelectedSignals } = await import(
@@ -155,8 +155,9 @@ function podiumTotal(p: ReturnType<typeof selectPodium>): number {
       `${id}: esperado ${expected} para sinal real da UI`,
     );
   };
-  for (const id of ["snap", "na-atencao-atividade-pais", "vanderbilt", "na-atencao-atividade-professor"]) check(id, true);
-  for (const id of ["mchat", "na-observacao-clinica-tea", "denver", "scared"]) check(id, false);
+  for (const id of ["snap", "na-atencao-atividade-pais", "na-atencao-atividade-professor"]) check(id, true);
+  // M-CHAT, Denver II e SCARED saíram em 17/10/2026: as alternativas no app não podem "falar" impulsividade.
+  for (const id of ["na-sinais-precoces-tea-pais", "na-observacao-clinica-tea", "swyc-marcos-24m", "na-ansiedade-autorrelato"]) check(id, false);
   console.log("✓ matcher canônico discrimina sinais reais da UI no catálogo real");
 }
 

@@ -1,5 +1,6 @@
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { COMMUNICATION_DOMAINS, COMMUNICATION_ITEMS, COMMUNICATION_RED_FLAGS, COMMUNICATION_RESPONSE_OPTIONS, COMMUNICATION_INSTRUCTIONS, COMMUNICATION_LIMITATIONS, COMMUNICATION_SAFETY_NOTE } from "./daily-authorial-communication.mjs";
 import { fileURLToPath } from "node:url";
 import { isValidCalendarDate, selectInventorySerial } from "./generate-daily-authorial-inventory.mts";
 
@@ -307,7 +308,7 @@ async function main() {
 
   const topic = TOPICS[weekday(date)];
   const serial = selectInventorySerial(date, records);
-  const items = buildItems(topic);
+  const items = topic.code === "COM" ? COMMUNICATION_ITEMS : buildItems(topic);
   const record = {
     schemaVersion: "1.0.0",
     id: `NEUROPED-DIARIO-${date.replaceAll("-", "")}-${serial}`,
@@ -334,19 +335,19 @@ async function main() {
     contexts: topic.contexts,
     assessmentUse: topic.assessmentUse,
     riskClass: topic.riskClass,
-    timeframe:
+    timeframe: topic.code === "COM" ? "Considerar os últimos sete dias. Registrar modalidade, fonte, oportunidades e contexto de cada habilidade observada; ausência de oportunidade não equivale a dificuldade." :
       "Considerar os últimos sete dias e registrar separadamente ocorrências com características diferentes.",
     durationMinutes: 10,
-    instructions:
+    instructions: topic.code === "COM" ? COMMUNICATION_INSTRUCTIONS :
       "Responder apenas com base no que foi diretamente observado ou relatado por fonte identificada. Usar exemplos concretos, registrar o contexto e marcar desconhecido quando não houver informação suficiente. Este registro não substitui avaliação clínica.",
-    responseOptions: [
+    responseOptions: topic.code === "COM" ? COMMUNICATION_RESPONSE_OPTIONS : [
       { code: "N", label: "Não observado", value: 0 },
       { code: "O", label: "Ocasional", value: 1 },
       { code: "F", label: "Frequente", value: 2 },
       { code: "I", label: "Intenso ou com grande impacto", value: 3 },
       { code: "D", label: "Desconhecido", value: null },
     ],
-    domains: [
+    domains: topic.code === "COM" ? COMMUNICATION_DOMAINS : [
       {
         id: "padrao",
         label: "Padrão e mudança basal",
@@ -377,14 +378,14 @@ async function main() {
     scoring: {
       mode: "perfil_qualitativo_sem_total",
       totalScoreEnabled: false,
-      instructions:
+      instructions: topic.code === "COM" ? "Não somar itens ou calcular gravidade. Descrever capacidades, oportunidades, apoios e barreiras por domínio, distinguindo fonte e contexto; CT13–CT15 ficam fora do perfil funcional." :
         "Não somar os itens. Organizar as respostas por domínio, descrever exemplos e comparar a evolução ao longo do tempo.",
       domainInterpretation:
         "A interpretação depende da idade, do desenvolvimento, do contexto, da mudança em relação ao basal e da convergência entre diferentes informantes.",
-      redFlagRule:
+      redFlagRule: topic.code === "COM" ? "Qualquer red flag presente requer análise imediata independente; CT13 ou CT15 com comprometimento atual impõem SAMU 192 sem esperar pontuação, entrevista ou finalização do registro." :
         "Qualquer red flag exige análise independente e pode demandar ação imediata, mesmo quando os demais itens forem pouco frequentes.",
     },
-    redFlags: [
+    redFlags: topic.code === "COM" ? COMMUNICATION_RED_FLAGS : [
       {
         itemId: "CT13",
         action:
@@ -413,13 +414,13 @@ async function main() {
       "Rever registros longitudinais e exemplos concretos antes de qualquer conclusão.",
       "Substituir ou complementar o registro de contingência após revisão clínica do instrumento principal.",
     ],
-    limitations: [
+    limitations: topic.code === "COM" ? COMMUNICATION_LIMITATIONS : [
       "Registro autoral de contingência sem validação psicométrica ou normas populacionais.",
       "Estrutura deliberadamente ampla, com menor especificidade temática que o gerador principal.",
       "Relatos retrospectivos podem omitir contexto, duração e mudança basal.",
       "Nenhum item isolado confirma ou exclui condição clínica.",
     ],
-    safetyNote:
+    safetyNote: topic.code === "COM" ? COMMUNICATION_SAFETY_NOTE :
       "Este registro não substitui avaliação clínica, atendimento de urgência ou plano individual de segurança. Diante de risco atual, priorizar proteção e assistência apropriada.",
     tags: [
       "contingência",

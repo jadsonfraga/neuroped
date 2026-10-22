@@ -32,6 +32,16 @@ export interface SignalFlowchart {
   monitoring?: FlowchartTierSet;
 }
 
+/** Ramo do fluxograma de atraso cujo ouro é o formulário SWYC Marcos da idade (janela [min, max) em meses). */
+function swycMarcosBranch(form: string, minMonths: number, maxMonths: number, prata: string[], bronze: string[]): FlowchartAgeBranch {
+  return {
+    label: `${minMonths}–${maxMonths - 1} meses · SWYC Marcos ${form}`,
+    minMonths,
+    maxMonths,
+    tiers: { ouro: [`swyc-marcos-${form}`], prata, bronze },
+  };
+}
+
 export const signalFlowcharts: Record<string, SignalFlowchart> = {
   // ═══════════════════════════════════════════════════════════
   // TEA / AUTISMO
@@ -45,7 +55,7 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 0,
         maxMonths: 18,
         tiers: {
-          ouro: ["mchat", "q-chat-10"],
+          ouro: ["na-sinais-precoces-tea-pais", "q-chat-10"],
           prata: ["j26-009", "psn-np"],
           bronze: ["j26-007", "eci-fraga-qdce"],
         },
@@ -55,7 +65,7 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 18,
         maxMonths: 36,
         tiers: {
-          ouro: ["mchat"],
+          ouro: ["na-sinais-precoces-tea-pais"],
           prata: ["na-observacao-clinica-tea", "j26-216"],
           bronze: ["j26-217", "atec"],
         },
@@ -120,8 +130,8 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 0,
         maxMonths: 72,
         tiers: {
-          ouro: ["sdq", "na-perfil-emocional-comportamental-pais", "na-saude-mental-pre-escolar-pais"],
-          prata: ["na-perfil-emocional-comportamental-pais", "na-saude-mental-pre-escolar-pais", "sdq"],
+          ouro: ["swyc-ppsc", "na-saude-mental-pre-escolar-pais"],
+          prata: ["na-saude-mental-pre-escolar-pais", "na-funcoes-executivas-ampliado-pais"],
           bronze: ["eci-fraga-qdce"],
         },
       },
@@ -130,9 +140,9 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 72,
         maxMonths: 144,
         tiers: {
-          ouro: ["snap", "vanderbilt"],
-          prata: ["na-funcoes-executivas-ampliado-pais", "na-perfil-emocional-comportamental-pais", "na-saude-mental-pre-escolar-pais"],
-          bronze: ["sdq", "na-atencao-atividade-pais"],
+          ouro: ["snap", "na-atencao-atividade-professor"],
+          prata: ["na-funcoes-executivas-ampliado-pais", "na-perfil-emocional-comportamental-pais"],
+          bronze: ["na-atencao-atividade-pais", "na-perfil-emocional-comportamental-professor"],
         },
       },
       {
@@ -142,7 +152,7 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         tiers: {
           ouro: ["snap", "na-atencao-atividade-pais"],
           prata: ["na-funcoes-executivas-ampliado-pais"],
-          bronze: ["sdq"],
+          bronze: ["na-perfil-emocional-comportamental-adolescente"],
         },
       },
     ],
@@ -165,7 +175,7 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 0,
         maxMonths: 24,
         tiers: {
-          ouro: ["na-perfil-emocional-comportamental-pais", "na-saude-mental-pre-escolar-pais"],
+          ouro: ["swyc-bpsc", "swyc-ppsc"],
           prata: ["tea-comportamentos"],
           bronze: ["orientacao-parental"],
         },
@@ -175,9 +185,9 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 24,
         maxMonths: 72,
         tiers: {
-          ouro: ["na-perfil-emocional-comportamental-pais", "na-saude-mental-pre-escolar-pais", "sdq"],
-          prata: ["sdq", "abc"],
-          bronze: ["abc"],
+          ouro: ["swyc-ppsc", "na-saude-mental-pre-escolar-pais"],
+          prata: ["na-saude-mental-pre-escolar-pais", "na-comportamento-tea-di-pais"],
+          bronze: ["na-comportamento-tea-di-pais"],
         },
       },
       {
@@ -186,15 +196,15 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         maxMonths: 216,
         tiers: {
           ouro: ["na-perfil-emocional-comportamental-pais", "na-saude-mental-pre-escolar-pais"],
-          prata: ["na-atencao-atividade-pais", "sdq"],
-          bronze: ["sdq"],
+          prata: ["na-atencao-atividade-pais", "na-perfil-emocional-comportamental-professor"],
+          bronze: ["na-perfil-emocional-comportamental-professor", "na-perfil-emocional-comportamental-adolescente"],
         },
       },
     ],
     monitoring: {
       ouro: ["na-perfil-emocional-comportamental-pais", "na-saude-mental-pre-escolar-pais"],
-      prata: ["sdq"],
-      bronze: ["abc"],
+      prata: ["na-perfil-emocional-comportamental-professor"],
+      bronze: ["na-comportamento-tea-di-pais"],
     },
   },
 
@@ -210,8 +220,8 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 24,
         maxMonths: 48,
         tiers: {
-          ouro: ["na-perfil-emocional-comportamental-pais", "na-saude-mental-pre-escolar-pais"],
-          prata: ["sdq"],
+          ouro: ["swyc-ppsc", "na-saude-mental-pre-escolar-pais"],
+          prata: ["na-saude-mental-pre-escolar-pais"],
           bronze: ["ems"],
         },
       },
@@ -230,9 +240,9 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 96,
         maxMonths: 144,
         tiers: {
-          ouro: ["scared"],
+          ouro: ["na-ansiedade-autorrelato"],
           prata: ["scas", "eai"],
-          bronze: ["sdq", "eai"],
+          bronze: ["na-ansiedade-seguimento-pais", "eai"],
         },
       },
       {
@@ -240,14 +250,14 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 144,
         maxMonths: 216,
         tiers: {
-          ouro: ["scared"],
+          ouro: ["na-ansiedade-autorrelato"],
           prata: ["gad7ped"],
           bronze: ["scas", "eai"],
         },
       },
     ],
     monitoring: {
-      ouro: ["scared"],
+      ouro: ["na-ansiedade-autorrelato", "na-ansiedade-seguimento-pais"],
       prata: ["eai"],
       bronze: ["na-perfil-emocional-comportamental-pais", "na-saude-mental-pre-escolar-pais"],
     },
@@ -277,7 +287,7 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         tiers: {
           ouro: ["na-humor-crianca-autorrelato", "na-humor-depressivo-adolescente"],
           prata: ["cssrs"],
-          bronze: ["na-perfil-emocional-comportamental-pais", "na-saude-mental-pre-escolar-pais", "sdq"],
+          bronze: ["na-perfil-emocional-comportamental-pais"],
         },
       },
       {
@@ -400,34 +410,26 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
           bronze: ["j26-004"],
         },
       },
+      // 6–66 meses: o ouro é o formulário SWYC Marcos da idade (livre, Tufts), que substituiu
+      // Denver II e ASQ-3 em 17/10/2026. Cada ramo segue a janela de idade do formulário.
+      swycMarcosBranch("6m", 6, 9, ["j26-002"], ["j26-003"]),
+      swycMarcosBranch("9m", 9, 12, ["j26-002"], ["j26-003"]),
+      swycMarcosBranch("12m", 12, 15, ["emdi"], ["j26-003"]),
+      swycMarcosBranch("15m", 15, 18, ["emdi"], ["j26-003"]),
+      swycMarcosBranch("18m", 18, 23, ["emdi"], ["j26-003"]),
+      swycMarcosBranch("24m", 23, 29, ["emdi"], ["j26-107"]),
+      swycMarcosBranch("30m", 29, 35, ["emdi"], ["j26-107"]),
+      swycMarcosBranch("36m", 35, 47, ["emdi"], ["j26-107"]),
+      swycMarcosBranch("48m", 47, 59, ["emdi"], ["j26-107"]),
+      swycMarcosBranch("60m", 59, 66, ["emdi"], ["na-comportamento-adaptativo-pais"]),
       {
-        label: "6–12 meses · bebê",
-        minMonths: 6,
-        maxMonths: 12,
-        tiers: {
-          ouro: ["j26-002"],
-          prata: ["j26-003"],
-          bronze: ["denver"],
-        },
-      },
-      {
-        label: "1–4 anos · toddler",
-        minMonths: 12,
-        maxMonths: 48,
-        tiers: {
-          ouro: ["denver"],
-          prata: ["asq3"],
-          bronze: ["emdi"],
-        },
-      },
-      {
-        label: "4–6 anos · pré-escolar",
-        minMonths: 48,
+        label: "5 anos e meio a 6 anos · pré-escolar",
+        minMonths: 66,
         maxMonths: 72,
         tiers: {
-          ouro: ["denver"],
-          prata: ["asq3"],
-          bronze: ["emdi"],
+          ouro: ["emdi"],
+          prata: ["na-comportamento-adaptativo-pais"],
+          bronze: ["efdi"],
         },
       },
       {
@@ -442,9 +444,9 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
       },
     ],
     monitoring: {
-      ouro: ["denver"],
-      prata: ["asq3"],
-      bronze: ["efdi"],
+      ouro: ["emdi"],
+      prata: ["efdi"],
+      bronze: ["j26-107"],
     },
   },
 
@@ -605,8 +607,8 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 48,
         maxMonths: 120,
         tiers: {
-          ouro: ["cshq"],
-          prata: ["bears", "cshq"],
+          ouro: ["na-sono-crianca-pais"],
+          prata: ["bears"],
           bronze: ["j26-137", "bears"],
         },
       },
@@ -622,7 +624,7 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
       },
     ],
     monitoring: {
-      ouro: ["cshq"],
+      ouro: ["na-sono-crianca-pais"],
       prata: ["bears"],
       bronze: ["j26-136"],
     },
@@ -641,7 +643,7 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         maxMonths: 24,
         tiers: {
           ouro: ["efdi"],
-          prata: ["denver"],
+          prata: ["ead-np"],
           bronze: ["pant"],
         },
       },
@@ -651,14 +653,14 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         maxMonths: 216,
         tiers: {
           ouro: ["efdi"],
-          prata: ["pedsql"],
+          prata: ["na-qualidade-vida-pais"],
           bronze: ["eaf"],
         },
       },
     ],
     monitoring: {
       ouro: ["efdi"],
-      prata: ["pedsql"],
+      prata: ["na-qualidade-vida-pais"],
       bronze: [],
     },
   },

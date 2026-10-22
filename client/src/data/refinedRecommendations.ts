@@ -93,14 +93,15 @@ export const refinedRecommendations: RefinedRecommendation[] = [
       appRoute: "/generic-scale/na-funcoes-executivas-ampliado-pais"
     },
     bronze: {
-      scaleId: "cshq",
-      scaleName: "CSHQ",
-      fullName: "Children's Sleep Habits Questionnaire",
+      scaleId: "na-sono-crianca-pais",
+      scaleName: "Sono da criança (autoral)",
+      fullName: "Hábitos e problemas de sono — relato dos pais (autoral NeuroPed)",
       respondente: "pais",
-      tempo: "10-15 min",
-      mainQuestion: "Hay problemas de sono que podem agravar desatenção?",
-      parentExample: "Perguntas como: 'Seu filho demora quanto tempo para dormir?' 'Acorda durante a noite?' 'Ronca?' Sono ruim piora atenção dramatically.",
-      whyUseful: "Sono insuficiente simula TDAH; descartar antes de diagnóstico; tratar sono pode resolver queixa"
+      tempo: "4-6 min",
+      mainQuestion: "Há problemas de sono que podem agravar a desatenção?",
+      parentExample: "Você marca a frequência de situações como demorar mais de meia hora para dormir, acordar várias vezes, roncar alto ou ter sono durante o dia. Sono ruim piora muito a atenção.",
+      whyUseful: "Sono insuficiente simula TDAH; descartar antes do diagnóstico; tratar o sono pode resolver a queixa. Autoral, sem validação nem ponto de corte",
+      appRoute: "/generic-scale/na-sono-crianca-pais"
     },
     directTest: {
       testId: "attention-tower-test",
@@ -175,26 +176,26 @@ export const refinedRecommendations: RefinedRecommendation[] = [
     ageMin: 6,
     ageMax: 11,
     ouro: {
-      scaleId: "mchat",
-      scaleName: "M-CHAT-R/F",
-      fullName: "Modified Checklist for Autism in Toddlers - Revised with Follow-Up",
-      respondente: "pais",
+      scaleId: "j26-009",
+      scaleName: "Atenção conjunta precoce (NEXUS-009)",
+      fullName: "Protocolo de Triagem de Atenção Conjunta e Apontamento em 9 a 18 Meses",
+      respondente: "clinico",
       tempo: "5-10 min",
-      mainQuestion: "Há sinais de risco para TEA entre 16-30 meses? Déficit social, comunicação, comportamento.",
-      parentExample: "23 itens sim/não: 'Seu filho olha nos olhos quando você fala?' 'Aponta para coisas interessantes?' 'Brinca de forma criativa com brinquedos?' Se ≥3 sim = follow-up necessário.",
-      whyUseful: "Gold standard de triagem para TEA nesta idade; sensibilidade 95%; detecta casos precoce",
-      appRoute: "/mchat",
-      cutoff: "≥3 itens: risco inicial; ≥8: alto risco; follow-up reduz falso positivo"
+      mainQuestion: "Há sinais precoces de alteração social e comunicativa: olhar, resposta ao nome, apontar e compartilhar?",
+      parentExample: "O profissional observa se o bebê acompanha o olhar e o apontar, mostra objetos e responde ao nome, junto com o relato da família.",
+      whyUseful: "Antes dos 16 meses, atenção conjunta é o melhor sinal de alerta; a partir dos 16 meses entra o inventário autoral de sinais precoces (pais)",
+      appRoute: "/generic-scale/j26-009"
     },
     prata: {
-      scaleId: "asq3",
-      scaleName: "ASQ-3",
-      fullName: "Ages & Stages Questionnaire 3",
+      scaleId: "swyc-marcos-9m",
+      scaleName: "SWYC Marcos (formulário da idade)",
+      fullName: "SWYC — Marcos do Desenvolvimento, formulários de 6 e 9 meses (livre)",
       respondente: "pais",
-      tempo: "10-15 min",
-      mainQuestion: "Como está o desenvolvimento global (comunicação, motor, pessoal-social, cognitivo)?",
-      parentExample: "30 perguntas sobre marcos: 'Seu filho diz 2-3 palavras?' 'Senta sem apoio?' 'Entende instruções simples?' Cada domínio avaliado.",
-      whyUseful: "Diferencia atraso global de TEA puro; se desenvolvimento geral atrasado, sugere outra causa"
+      tempo: "3-5 min",
+      mainQuestion: "Como está o desenvolvimento global (linguagem, cognição, motricidade)?",
+      parentExample: "Os pais respondem o formulário da idade (6 a 8 meses: o de 6 meses; 9 a 11 meses: o de 9 meses) sobre sons, brincadeiras e movimentos do bebê.",
+      whyUseful: "Diferencia atraso global de alteração social isolada; se o desenvolvimento geral está atrasado, sugere outra causa",
+      appRoute: "/generic-scale/swyc-marcos-9m"
     },
     bronze: {
       scaleId: "bayley",
@@ -204,7 +205,7 @@ export const refinedRecommendations: RefinedRecommendation[] = [
       tempo: "30-90 min",
       mainQuestion: "Qual nível preciso de desenvolvimento cognitivo, motor e de linguagem?",
       parentExample: "Clinician observa criança brincando, fazendo tarefas. Oferece brinquedos, mede resposta. Não é questionário, é observação direta.",
-      whyUseful: "Padrão-ouro para avaliação desenvolvimento 1-42m; só deve fazer se M-CHAT positivo"
+      whyUseful: "Padrão-ouro para avaliação desenvolvimento 1-42m; indicado quando a triagem sugere atraso ou sinais de alerta"
     },
     directTest: {
       testId: "ados-module-toddler",
@@ -213,10 +214,10 @@ export const refinedRecommendations: RefinedRecommendation[] = [
       time: "40-45 min",
       what: "Nível de atenção conjunta, imitação, resposta a nome, qualidade de brincadeira",
       howChildResponds: "Criança com TEA: brinca sozinha, ignora clinician, não compartilha interesse, movimento repetitivo",
-      whyHere: "ADOS é gold standard diagnóstico TEA; só aplicar se M-CHAT positivo (confirmação é necessário)"
+      whyHere: "ADOS é gold standard diagnóstico TEA (aplicado fora do app); indicado quando os sinais de alerta persistem"
     },
-    clinicalContext: "Bebê de 6-12m com pais preocupados: 'não olha, não aponta, muita fixação em objetos'. M-CHAT é triagem inicial; se positivo, referir para avaliação completa com ADOS.",
-    nextSteps: "Se M-CHAT positivo: encaminhar para avaliação especializada (psicologo + fono). Não fazer diagnóstico em pré-triagem. Se confirmado TEA: iniciar terapia precoce (ABA, fono, TO) ASAP."
+    clinicalContext: "Bebê de 6-12m com pais preocupados: 'não olha, não aponta, muita fixação em objetos'. A atenção conjunta e os marcos da idade são a triagem inicial; com sinais de alerta, referir para avaliação completa.",
+    nextSteps: "Se os sinais de alerta persistirem: encaminhar para avaliação especializada (psicólogo + fono) e reavaliar com o inventário de sinais precoces a partir dos 16 meses. Não fazer diagnóstico em pré-triagem. Se confirmado TEA: iniciar terapia precoce (ABA, fono, TO) o quanto antes."
   },
 
   // COMPORTAMENTO OPOSITIVO (2-4 anos)
@@ -279,15 +280,15 @@ export const refinedRecommendations: RefinedRecommendation[] = [
     ageMin: 48,
     ageMax: 71,
     ouro: {
-      scaleId: "scared",
-      scaleName: "SCARED",
-      fullName: "Screen for Child Anxiety Related Disorders",
+      scaleId: "na-ansiedade-seguimento-pais",
+      scaleName: "Seguimento de ansiedade (autoral)",
+      fullName: "Acompanhamento de sintomas de ansiedade na criança — relato dos pais (autoral NeuroPed)",
       respondente: "pais",
-      tempo: "10 min",
-      mainQuestion: "Há evidência de transtorno de ansiedade? Que tipo? Separação vs social vs outra?",
-      parentExample: "38 itens tipo: 'Seu filho fica preocupado quando separado de você?' 'Tem medo de ficar sozinho?' 'Pensa em coisas ruins?' Cada subescala (separação, social, pânico, etc) interpretada.",
-      whyUseful: "Especifica TIPO de ansiedade; crucial porque tratamento difere (separação vs social vs pânico)",
-      cutoff: "≥25: probable anxiety disorder; subescalas ≥5-6: concern naquele tipo"
+      tempo: "4-6 min",
+      mainQuestion: "Há sinais de ansiedade? De que tipo: separação, social ou outra?",
+      parentExample: "Você marca a frequência de situações como aflição ao se separar, medo de ficar sozinho, preocupações e evitação de lugares ou pessoas.",
+      whyUseful: "Mostra o tipo de ansiedade que predomina, o que muda o tratamento (separação vs social vs pânico); autoral, sem validação nem ponto de corte",
+      appRoute: "/generic-scale/na-ansiedade-seguimento-pais"
     },
     prata: {
       scaleId: "rcads",
@@ -306,8 +307,8 @@ export const refinedRecommendations: RefinedRecommendation[] = [
       respondente: "pais",
       tempo: "10 min",
       mainQuestion: "Panorama completo de todo ansiedade em 6 domínios?",
-      parentExample: "45 itens cobrindo: separação, social, obsessões, pânico, generalizada, medo de lesão. Mais itens que SCARED, detalhe mais fino.",
-      whyUseful: "Mais sensível para diferenciar subtipos; útil se SCARED deixou unclear"
+      parentExample: "45 itens cobrindo: separação, social, obsessões, pânico, generalizada, medo de lesão. Detalhe mais fino por subtipo.",
+      whyUseful: "Mais sensível para diferenciar subtipos; útil se a triagem inicial deixou dúvida"
     },
     directTest: {
       testId: "separation-challenge",
@@ -351,14 +352,15 @@ export const refinedRecommendations: RefinedRecommendation[] = [
       whyUseful: "Diferencia atraso motor puro de atraso global (muda recomendação terapêutica)"
     },
     bronze: {
-      scaleId: "asq3",
-      scaleName: "ASQ-3",
-      fullName: "Ages & Stages Questionnaire 3",
+      scaleId: "swyc-marcos-6m",
+      scaleName: "SWYC Marcos (formulário da idade)",
+      fullName: "SWYC — Marcos do Desenvolvimento, formulários de 6 e 9 meses (livre)",
       respondente: "pais",
-      tempo: "10-15 min",
-      mainQuestion: "Confirmação parental de atraso motor; pais concordam que há déficit?",
-      parentExample: "Pais respondem: 'Seu bebê engatinha?' 'Senta sem apoio?' 'Fica de pé com apoio?' Pais geralmente reconhecem atraso motor mas não cognitivo às vezes.",
-      whyUseful: "Valida percepção parental; útil para engagement na terapia (pais precisam ser partner)"
+      tempo: "3-5 min",
+      mainQuestion: "Confirmação parental do atraso: os pais percebem a dificuldade motora e em outras áreas?",
+      parentExample: "Os pais respondem o formulário da idade (6 a 8 meses: o de 6 meses; 9 a 11 meses: o de 9 meses) sobre movimentos, sons e brincadeiras do bebê.",
+      whyUseful: "Valida a percepção dos pais e mostra se o atraso é só motor ou global; ajuda a engajar a família na terapia",
+      appRoute: "/generic-scale/swyc-marcos-6m"
     },
     directTest: {
       testId: "gma",

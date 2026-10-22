@@ -8,10 +8,10 @@ Critério de sucesso macro: um médico externo se cadastra sozinho, ativa, emite
 - [x] ✅ Ciclo 1 — Trava anti-regressão: suíte `test:saas-self-service` verde localmente (exit 0) + guard `saas-loop-artifacts-static.test.mjs` na CI validando artefatos vivos e contrato de pricing canônico
 - [ ] Definir ICP inicial (decisão do criador; bloqueia posicionamento e pricing)
 - [ ] Proposta de valor em uma frase validável
-- [ ] Fechar bloqueio externo Asaas: checkout + webhook real em ambiente autorizado (hoje `BLOCKED_EXTERNAL`)
+- [ ] Fechar bloqueio externo Asaas: checkout + webhook real em ambiente autorizado (contrato fail-closed e runbook em `docs/ASAAS_OPERATIONAL_CONTRACT.md`; execução continua `BLOCKED_EXTERNAL`)
 - [x] ✅ Ciclo 2 — Runbook de smoke pós-deploy publicável (`docs/SMOKE_CLIENTE_ZERO.md`): jornada cliente-zero clique a clique, critérios de aceite e medição de time-to-first-value
-- [ ] Fechar bloqueio externo Resend (e-mail de verificação/convite em produção)
-- [ ] Smoke pós-deploy publicado do fluxo cliente-zero (cadastro → clínica → paciente → documento)
+- [ ] Fechar bloqueio externo Resend (e-mail de verificação/convite em produção; contrato fail-closed e runbook em `docs/RESEND_OPERATIONAL_CONTRACT.md`; execução continua `BLOCKED_EXTERNAL`)
+- [ ] Smoke pós-deploy publicado do fluxo cliente-zero (cadastro → clínica → paciente → documento). Script e workflow manual em `scripts/ops/cliente-zero-published-smoke.ts`; execução publicada continua `BLOCKED_EXTERNAL` (`docs/audits/BLOCKED_EXTERNAL_CLIENTE_ZERO_PUBLISHED_SMOKE_2026-10-17.md`)
 
 ## Next (Fase 2–3)
 - [ ] Pricing híbrido: hoje preço único canônico R$ 99/profissional/mês (`shared/billing.ts:67`); avaliar 2–3 tiers e consumo

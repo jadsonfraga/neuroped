@@ -8,6 +8,45 @@ use o e-mail sintético `cliente.zero+<data>@exemplo.com` e dados fictícios.
 Pré-requisitos: credenciais Asaas/Resend já provisionadas no Cloudflare
 (`docs/GO_LIVE_M5.md`), admin conhecido.
 
+## Execução automatizada pela API
+
+`scripts/ops/cliente-zero-published-smoke.ts` percorre esta jornada contra a
+origem publicada e devolve um relatório JSON por marco: `VERIFIED`,
+`BLOCKED_EXTERNAL`, `FAILED` ou `NOT_RUN`. Onboarding e cobrança vêm só de
+`GET /api/tenants/:id/onboarding`; o redirect de checkout nunca é lido.
+
+```bash
+# Só sondas públicas (saúde, portão do cadastro, portão do webhook). Não cria nada.
+node --import tsx scripts/ops/cliente-zero-published-smoke.ts
+
+# Jornada do titular sintético, com escrita clínica sintética e encerramento ao final.
+SMOKE_OWNER_EMAIL=... SMOKE_OWNER_PASSWORD=... \
+  node --import tsx scripts/ops/cliente-zero-published-smoke.ts --write-synthetic --close-clinic
+```
+
+| Exit | Significado |
+| --- | --- |
+| 0 | Todos os marcos `VERIFIED`, inclusive `charge_paid` persistido |
+| 2 | Algum `BLOCKED_EXTERNAL` ou `NOT_RUN`; nada falhou |
+| 1 | Algum `FAILED` |
+
+No GitHub: workflow **Cliente-zero published smoke** (manual), com os
+segredos `NEUROPED_SMOKE_OWNER_EMAIL` e `NEUROPED_SMOKE_OWNER_PASSWORD`.
+
+Limites do script:
+
+- **Titular:** precisa ser uma conta sintética já verificada pelo link do
+  e-mail (passos 1–2 abaixo, feitos uma vez à mão). A identidade técnica
+  `NEUROPED_E2E_EMAIL` é recusada antes do login: o middleware revoga a sessão
+  dela se ganhar clínica.
+- **Fora do script:** não cria conta, checkout ou convite e não chama Asaas
+  nem Resend. Os passos 4–8 (pagamento e convite) continuam manuais.
+- **Escrita clínica:** `--write-synthetic` grava paciente, consulta e
+  documento em rascunho, todos sintéticos, numa clínica de nome reservado
+  (`Clínica Sintética Smoke Cliente-Zero`).
+- **Relatório:** sem senha, token, e-mail do titular nem conteúdo clínico. O
+  corpo do export é descartado depois de conferir o digest.
+
 ## Fase A — Diagnóstico de configuração (2 min)
 
 1. Autenticado como admin:

@@ -10,6 +10,19 @@ import { softTap } from "@/lib/softSounds";
 import { play1Up, playCoin, playFlagPole, playJump, playPowerUp } from "@/lib/sounds";
 import { downloadTextDocument, safeTextFilename } from "@/lib/shareText";
 import { createChiptune, type Chiptune } from "@/features/super-neuropad/music";
+import { ClinicalCircuit, type ProgressoCircuito } from "@/features/super-neuropad/ClinicalCircuit";
+import { resumoDaBateria } from "@/features/super-neuropad/sufficiencia";
+import {
+  DESAFIOS_DISPONIVEIS_POR_IDADE,
+  disponiveisDaIdade,
+  estimativaOpcionaisSegundos,
+  opcionaisDaIdade,
+  pendentesDeCopia,
+  proximoPendente,
+  registrarOpcional,
+  textoOpcionais,
+  type RegistrosOpcionais,
+} from "@/features/super-neuropad/extensao";
 import { buildGameDocSpec, issuerLines } from "@/features/super-neuropad/pdf";
 import { DESCRIPTIVE_NOTICE } from "@/lib/descriptiveNotice";
 import {
@@ -307,10 +320,23 @@ function BadgeShelf({ done, years }: { done: boolean[]; years?: number }) {
   );
 }
 
-function SetupSteps({ hasAge, hasHero, kitDone, kitTotal }: { hasAge: boolean; hasHero: boolean; kitDone: number; kitTotal: number }) {
+/** Aviso do circuito clínico obrigatório, repetido nas telas do fluxo. Leva ao circuito; não trava nada. */
+function CircuitoObrigatorioAviso({ circuito }: { circuito: ProgressoCircuito | null }) {
+  if (!circuito) return null;
+  return (
+    <button type="button" data-testid="super-neuropad-circuit-required"
+      onClick={() => document.getElementById("snp-clinical-circuit")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+      className={`snp-chip inline-flex min-h-11 items-center gap-2 ${circuito.completo ? "bg-[var(--snp-grass-tint)]" : "bg-[var(--snp-sun-tint)]"}`}>
+      🩺 Circuito clínico obrigatório: {circuito.concluidas}/{circuito.total} missões concluídas · {circuito.completo ? "completo" : "incompleto"} — abrir
+    </button>
+  );
+}
+
+function SetupSteps({ hasAge, hasHero, kitDone, kitTotal, circuito }: { hasAge: boolean; hasHero: boolean; kitDone: number; kitTotal: number; circuito: ProgressoCircuito | null }) {
   const steps = [
     { label: "Idade", ok: hasAge },
     { label: "Herói", ok: hasHero },
+    { label: circuito ? `Circuito clínico ${circuito.concluidas}/${circuito.total}` : "Circuito clínico", ok: Boolean(circuito?.completo) },
     { label: kitTotal > 0 ? `Ambiente ${kitDone}/${kitTotal}` : "Ambiente", ok: kitTotal > 0 && kitDone === kitTotal, optional: true },
   ];
   return (
@@ -446,8 +472,8 @@ function JudgeStage({ item, onJudge }: { item: JudgedItem; onJudge: (status: Ans
           {item.informant === "cuidador" && <span className="snp-chip bg-[var(--snp-sun-tint)]" data-testid="super-neuropad-caregiver">Relato do cuidador</span>}
           <TurnCue who="aplicadora" />
         </div>
-        <p className="mt-1 text-lg font-black leading-snug">{item.prompt}</p>
-        <p className="mt-2 text-sm"><span className="font-black">Conta como acerto:</span> {item.expected}</p>
+        <p className="snp-clinical-instruction mt-1 font-black">{item.prompt}</p>
+        <p className="snp-clinical-criterion mt-2"><span className="font-black">Conta como acerto:</span> {item.expected}</p>
         {item.gesture && <p className="mt-1 text-sm"><span className="font-black">Alternativa aceita:</span> {item.gesture}</p>}
         <div className={`mt-4 grid gap-3 ${item.gesture ? "sm:grid-cols-5" : "sm:grid-cols-4"}`}>
           <ArcadeButton tone="grass" className="min-h-14 text-base" aria-keyshortcuts="1" onClick={(event) => onJudge("acerto", event)}>
@@ -522,6 +548,147 @@ function BuildStage({ item, seed, onDone }: { item: BuildItem; seed: number; onD
   );
 }
 
+/**
+ * Desafios opcionais: completam 50 por idade com itens dos mesmos bancos de origem. Ficam fora da contagem,
+ * do tempo e do XP da partida; registro próprio, em memória e por idade (trocar a idade não apaga nada).
+ * Nenhum controle fica desabilitado: aplicar, pular, pausar e recolher são sempre possíveis.
+ */
+function OpcionaisPanel({ years, registros, copiados, seed, onRegistrar, onCopiar }: {
+  years: number;
+  registros: RegistrosOpcionais;
+  copiados: RegistrosOpcionais;
+  seed: number;
+  onRegistrar: (record: AnswerRecord) => void;
+  onCopiar: () => void;
+}) {
+  const lista = opcionaisDaIdade(years);
+  const disponivel = disponiveisDaIdade(years);
+  const [aberto, setAberto] = useState(false);
+  const [pausado, setPausado] = useState(false);
+  const [escolhido, setEscolhido] = useState<string | null>(null);
+  const [repetido, setRepetido] = useState(false);
+  const inicio = useRef(0);
+  const ultimoToque = useRef(Number.NEGATIVE_INFINITY);
+  const atualId = escolhido ?? proximoPendente(years, registros) ?? lista[0]?.item.id;
+  const posicao = Math.max(0, lista.findIndex((entry) => entry.item.id === atualId));
+  const atual = lista[posicao];
+  const registrados = Object.keys(registros).length;
+  const pendentes = pendentesDeCopia(registros, copiados);
+  const ordem = useMemo(
+    () => (atual && atual.item.kind === "toque" ? optionOrder(atual.item, seed + posicao * 17, posicao) : []),
+    [atual, seed, posicao],
+  );
+  useEffect(() => { inicio.current = performance.now(); setRepetido(false); }, [atualId, aberto, pausado]);
+  if (!atual) return null;
+  const segundos = () => (performance.now() - inicio.current) / 1000;
+  const registrar = (record: AnswerRecord, event: { timeStamp: number }) => {
+    if (pausado || !acceptManualTap(ultimoToque.current, event.timeStamp)) return;
+    ultimoToque.current = event.timeStamp;
+    playCoin();
+    onRegistrar(record);
+    setEscolhido(proximoPendente(years, { ...registros, [record.itemId]: record }, record.itemId));
+  };
+  const ir = (delta: number) => { softTap(); setEscolhido(lista[(posicao + delta + lista.length) % lista.length].item.id); };
+  const item = atual.item;
+  const anterior = registros[item.id];
+  // Nome padrão do mundo (conteúdo do item); aos 2–3 anos os mundos da bateria levam nomes de domínio.
+  const mundo = phaseById(atual.phaseId);
+  return (
+    <section className="snp-panel p-5" data-testid="super-neuropad-optional" aria-labelledby="snp-optional-title">
+      <div className="space-y-3">
+        <div>
+          <h2 id="snp-optional-title" className="snp-pixel text-base">Desafios opcionais · {years} anos</h2>
+          <p className="mt-1 text-xs font-bold opacity-80">
+            {disponivel.total} disponíveis: {disponivel.principal} na bateria principal + {disponivel.opcionais} opcionais, dos mesmos bancos de origem. Escolha conforme a finalidade e a tolerância da criança; não é preciso aplicar todos.
+          </p>
+          <p className="mt-1 text-xs font-semibold opacity-70">
+            Fora da contagem, do tempo e do XP da partida principal. Estimativa de todos os opcionais: {formatDuration(estimativaOpcionaisSegundos(years))}, sem pausas nem adaptações. Interrompa diante de cansaço ou recusa.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="snp-chip" data-testid="super-neuropad-optional-count">{registrados} de {disponivel.opcionais} registrados</span>
+          {aberto && (
+            <ArcadeButton tone="paper" aria-pressed={pausado} onClick={() => { softTap(); setPausado((current) => !current); }}>
+              {pausado ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />} {pausado ? "Retomar opcionais" : "Pausar opcionais"}
+            </ArcadeButton>
+          )}
+          <ArcadeButton tone={aberto ? "slate" : "sky"} aria-expanded={aberto} onClick={() => { softTap(); setAberto((current) => !current); setPausado(false); }}>
+            {aberto ? "Recolher opcionais" : "Abrir opcionais"}
+          </ArcadeButton>
+        </div>
+      </div>
+
+      {aberto && (
+        <div className="mt-4 space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="flex min-w-0 basis-full flex-col text-xs font-black sm:basis-auto sm:flex-1">
+              Ir para o desafio opcional
+              <select
+                className="snp-option mt-1 w-full bg-[var(--snp-paper-fixed)] px-2 py-2 text-sm font-semibold"
+                value={item.id}
+                onChange={(event) => { softTap(); setEscolhido(event.target.value); }}
+              >
+                {lista.map((entry, index) => (
+                  <option key={entry.item.id} value={entry.item.id}>
+                    {registros[entry.item.id] ? "✓" : "○"} {index + 1} · {phaseById(entry.phaseId).name} · {entry.item.prompt.slice(0, 70)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <ArcadeButton tone="paper" onClick={() => ir(-1)}>Anterior</ArcadeButton>
+            <ArcadeButton tone="paper" onClick={() => ir(1)}>Próximo</ArcadeButton>
+          </div>
+
+          {pausado ? (
+            <p className="snp-panel snp-panel--soft p-4 text-center text-sm font-bold" role="status">Opcionais em pausa: nada é registrado até retomar.</p>
+          ) : (
+            <div className="rounded-2xl bg-[var(--snp-stage)] p-3 text-[var(--snp-stage-text)] sm:p-4" data-testid="super-neuropad-optional-stage">
+              <p className="snp-pixel mb-2 text-[11px] opacity-80">
+                Opcional {posicao + 1} de {lista.length} · {mundo.emoji} {mundo.name} · {ORIGIN_LABELS[item.origin]} · {item.ref}
+              </p>
+              {anterior && <p className="snp-chip mb-2 bg-[var(--snp-sun-tint)]" role="status">Já registrado: {STATUS_LABELS[anterior.status]}. Registrar de novo substitui.</p>}
+              {item.kind === "toque" ? (
+                <div className="space-y-4">
+                  <TouchStage key={item.id} item={item} paused={pausado} order={ordem}
+                    onAnswer={(chosen, event) => registrar(recordTouch(item, atual.phaseId, chosen, segundos(), repetido, false, ordem), event)} />
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <RepeatToggle repeated={repetido} onToggle={() => setRepetido((current) => !current)} />
+                    <MissBar onMiss={(status, event) => registrar(recordTouch(item, atual.phaseId, null, segundos(), repetido, status === "recusa", ordem), event)} />
+                  </div>
+                </div>
+              ) : item.kind === "montar" ? (
+                <div className="space-y-4">
+                  <BuildStage key={item.id} item={item} seed={seed + posicao * 17}
+                    onDone={(placed, event) => registrar(recordBuild(item, atual.phaseId, placed, segundos(), repetido), event)} />
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <RepeatToggle repeated={repetido} onToggle={() => setRepetido((current) => !current)} />
+                    <MissBar onMiss={(status, event) => registrar(recordBuild(item, atual.phaseId, null, segundos(), repetido, status === "recusa"), event)} />
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <JudgeStage key={item.id} item={item}
+                    onJudge={(status, event, gesture) => registrar(recordJudged(item, atual.phaseId, status, segundos(), repetido, gesture ? "gesto" : undefined), event)} />
+                  <RepeatToggle repeated={repetido} onToggle={() => setRepetido((current) => !current)} />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <ArcadeButton tone="paper" onClick={() => { softTap(); onCopiar(); }}>
+          <Copy className="h-4 w-4" /> Copiar registro dos opcionais
+        </ArcadeButton>
+        <p className="text-xs font-bold opacity-70" role="status" data-testid="super-neuropad-optional-status">
+          {registrados === 0 ? "Nenhum opcional registrado." : pendentes > 0 ? `${pendentes} registro(s) opcional(is) ainda não copiado(s).` : "Registro dos opcionais copiado."}
+        </p>
+      </div>
+    </section>
+  );
+}
+
 function Clouds() {
   return (
     <>
@@ -536,6 +703,7 @@ export default function SuperNeuroPadGamePage() {
   const { toast } = useToast();
   const { issuer } = useIssuer();
   const [screen, setScreen] = useState<Screen>("setup");
+  const [circuito, setCircuito] = useState<ProgressoCircuito | null>(null);
   const [ageYears, setAgeYears] = useState<number | null>(null);
   const [character, setCharacter] = useState<Character | null>(null);
   const [kitChecked, setKitChecked] = useState<Record<string, boolean>>({});
@@ -556,9 +724,14 @@ export default function SuperNeuroPadGamePage() {
   const [underTwo, setUnderTwo] = useState(false);
   const [skipped, setSkipped] = useState<SkippedPhase[]>([]);
   const [skipOpen, setSkipOpen] = useState(false);
+  /** Desafios opcionais por idade: trocar a idade não apaga os registros; "Nova partida" pergunta antes. */
+  const [opcionais, setOpcionais] = useState<Record<number, RegistrosOpcionais>>({});
+  /** Retrato de cada cópia confirmada: resposta dada durante a cópia continua pendente. */
+  const [opcionaisCopiados, setOpcionaisCopiados] = useState<Record<number, RegistrosOpcionais>>({});
+  const opcionaisPendentes = Object.entries(opcionais).reduce((sum, [years, registros]) => sum + pendentesDeCopia(registros, opcionaisCopiados[Number(years)] ?? {}), 0);
   // A partida só existe em memória (privacidade): avisa antes de recarregar/fechar com partida em andamento
   // ou com resultado ainda não copiado, baixado ou salvo.
-  const leaveGuard = screen === "intro" || screen === "play" || screen === "phase-done" || (screen === "results" && !resultKept);
+  const leaveGuard = screen === "intro" || screen === "play" || screen === "phase-done" || (screen === "results" && !resultKept) || opcionaisPendentes > 0;
   useEffect(() => {
     if (!leaveGuard) return;
     const handler = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
@@ -596,7 +769,7 @@ export default function SuperNeuroPadGamePage() {
   const done = PHASE_ORDER.map((id) => band ? answers.filter((answer) => answer.phaseId === id).length >= itemsFor(band.id, id).length : false);
   const totalItems = band ? bandItemCount(band.id) : 0;
   const estimate = band ? estimateBandSeconds(band.min) : null;
-  const dirty = answers.length > 0;
+  const dirty = answers.length > 0 || opcionaisPendentes > 0;
   useSondaExitGuard(dirty, "Sair apaga os registros desta partida. Copie ou baixe o resultado antes de sair. Deseja sair mesmo assim?");
   const ready = Boolean(band && character);
   // O encaminhamento só arma com cadastro válido; contato vazio nunca dispara no encerramento.
@@ -704,8 +877,11 @@ export default function SuperNeuroPadGamePage() {
   function restart() {
     if (answers.length > 0 && screen !== "results" && !window.confirm("Reiniciar apaga o registro desta partida. Deseja reiniciar?")) return;
     if (screen === "results" && !resultKept && !window.confirm("O resultado ainda não foi copiado, baixado nem salvo em paciente. Começar uma nova partida apaga este resultado. Continuar?")) return;
+    if (opcionaisPendentes > 0 && !window.confirm(`${opcionaisPendentes} desafio(s) opcional(is) registrado(s) ainda não foram copiados. A nova partida apaga esses registros. Continuar?`)) return;
     softTap();
     music.current?.stop();
+    setOpcionais({});
+    setOpcionaisCopiados({});
     setAnswers([]);
     setPhaseIndex(0);
     setItemIndex(0);
@@ -943,7 +1119,27 @@ export default function SuperNeuroPadGamePage() {
     }
   }
 
+  function registrarOpcionalDaIdade(years: number, record: AnswerRecord) {
+    setOpcionais((current) => ({ ...current, [years]: registrarOpcional(current[years] ?? {}, record) }));
+  }
+
+  /** Copia o retrato do momento do toque; só esse retrato passa a contar como copiado. */
+  async function copiarOpcionais(years: number) {
+    const retrato = opcionais[years] ?? {};
+    const texto = textoOpcionais(years, retrato, formatClinicalDateTime(new Date()));
+    const filename = `super-neuropad-opcionais-${years}-${localIsoDate(new Date())}`;
+    try {
+      await navigator.clipboard.writeText(texto);
+      toast({ title: "Registro dos opcionais copiado", description: "Texto na área de transferência." });
+    } catch {
+      downloadTextDocument(texto, `${safeTextFilename(filename)}.txt`);
+      toast({ title: "Opcionais baixados em TXT", description: "A área de transferência não estava disponível." });
+    }
+    setOpcionaisCopiados((current) => ({ ...current, [years]: retrato }));
+  }
+
   const summary = session ? summarize(session) : null;
+  const resumoBateria = summary ? resumoDaBateria(summary) : null;
   const wallSeconds = session ? sessionWallSeconds(session) : null;
   const patientRecord = session && screen === "results" ? buildPatientRecordItems(session) : [];
   const missedAnswers = session && screen === "results" ? session.answers.filter((answer) => answer.status !== "acerto") : [];
@@ -952,7 +1148,7 @@ export default function SuperNeuroPadGamePage() {
   const compact = screen !== "setup";
 
   return (
-    <div ref={rootRef} className="snp scroll-mt-4 space-y-5 pb-8" data-testid="super-neuropad-game" data-screen={screen}>
+    <div ref={rootRef} className="snp scroll-mt-4 space-y-5 pb-8" data-testid="super-neuropad-game" data-screen={screen} data-age-style={ageYears !== null && ageYears >= 13 ? "adolescente" : "infantil"}>
       <header className={`snp-panel snp-scanlines snp-sky-bg relative overflow-hidden ${compact ? "px-4 py-3" : "p-5 sm:p-6"}`}>
         {!compact && <Clouds />}
         <div className="relative flex items-center gap-3">
@@ -963,6 +1159,7 @@ export default function SuperNeuroPadGamePage() {
                 <span className="snp-chip">pré-consulta · aplicadora com a criança · {MIN_AGE_YEARS}–{MAX_AGE_YEARS} anos</span>
                 <span className="snp-chip">v{SUPER_NEUROPAD_VERSION}</span>
                 <span className="snp-chip">{PHASES.length} mundos · 3–6 desafios cada</span>
+                <span className="snp-chip">{DESAFIOS_DISPONIVEIS_POR_IDADE} disponíveis por idade com os opcionais</span>
                 <span className="snp-chip">até 20 min (12 min aos 2 anos, 15 min aos 3)</span>
                 <span className="snp-chip">sem câmera · sem material externo</span>
               </div>
@@ -980,7 +1177,7 @@ export default function SuperNeuroPadGamePage() {
       {screen === "setup" && (
         <section className="space-y-5">
           <div className="snp-panel snp-panel--soft flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-            <SetupSteps hasAge={Boolean(band)} hasHero={Boolean(character)} kitDone={band ? band.ambient.filter((entry) => kitChecked[entry]).length : 0} kitTotal={band?.ambient.length ?? 0} />
+            <SetupSteps hasAge={Boolean(band)} hasHero={Boolean(character)} kitDone={band ? band.ambient.filter((entry) => kitChecked[entry]).length : 0} kitTotal={band?.ambient.length ?? 0} circuito={circuito} />
             <span className="text-xs font-bold opacity-70">Três toques e começa: idade, herói e, se der, a conferência da sala.</span>
           </div>
           <div className="snp-panel p-5">
@@ -1027,6 +1224,8 @@ export default function SuperNeuroPadGamePage() {
               </div>
             )}
           </div>
+
+          {band && <CircuitoObrigatorioAviso circuito={circuito} />}
 
           <div className="snp-panel p-5">
             <h2 className="snp-pixel text-base">2 · Escolha o herói</h2>
@@ -1116,6 +1315,11 @@ export default function SuperNeuroPadGamePage() {
             </ArcadeButton>
             <p className={`snp-pixel text-xs ${ready ? "snp-blink" : "opacity-70"}`}>{!band ? "Escolha a idade." : !character ? "Escolha o herói." : "▶ Press start · vire o tablet para a criança"}</p>
           </div>
+
+          {band && (
+            <OpcionaisPanel key={band.min} years={band.min} registros={opcionais[band.min] ?? {}} copiados={opcionaisCopiados[band.min] ?? {}} seed={seed}
+              onRegistrar={(record) => registrarOpcionalDaIdade(band.min, record)} onCopiar={() => void copiarOpcionais(band.min)} />
+          )}
 
           <div className="grid gap-3 lg:grid-cols-2">
             <div className="snp-panel snp-panel--soft p-4 text-xs leading-relaxed">
@@ -1256,6 +1460,7 @@ export default function SuperNeuroPadGamePage() {
           <h2 className="snp-pixel text-2xl sm:text-3xl">Conquista: {phase.badge}!</h2>
           <p className="mt-1 text-base font-bold opacity-90">{character.name} {character.role} chegou ao mundo {phaseIndex + 2}.</p>
           <div className="mt-4"><SpeechBubble character={character} text={HERO_LINES[character.id]?.done ?? "Conquista no bolso!"} /></div>
+          <div className="mt-4 flex justify-center"><CircuitoObrigatorioAviso circuito={circuito} /></div>
           <ArcadeButton tone="sun" className="mt-5 px-6 py-3 text-base" onClick={nextPhase}>
             Próximo mundo: {phaseById(PHASE_ORDER[phaseIndex + 1], ageYears ?? undefined).emoji} {phaseById(PHASE_ORDER[phaseIndex + 1], ageYears ?? undefined).name}
           </ArcadeButton>
@@ -1276,6 +1481,8 @@ export default function SuperNeuroPadGamePage() {
               {(session.pausedSeconds ?? 0) > 0 ? ` (${formatDuration(session.pausedSeconds ?? 0)} em pausa)` : ""}
             </p>
           </div>
+
+          <div className="flex justify-center"><CircuitoObrigatorioAviso circuito={circuito} /></div>
 
           <div className="snp-panel snp-panel--soft p-5" data-testid="super-neuropad-incomplete">
             <div className="snp-pixel text-[11px] opacity-80">Registro de respostas · {summary.band.label} · {summary.complete ? "partida completa" : `partida incompleta (${session.answers.length} de ${summary.total} itens)`}</div>
@@ -1374,6 +1581,9 @@ export default function SuperNeuroPadGamePage() {
             </div>
           </div>
 
+          <OpcionaisPanel key={session.ageYears} years={session.ageYears} registros={opcionais[session.ageYears] ?? {}} copiados={opcionaisCopiados[session.ageYears] ?? {}} seed={seed}
+            onRegistrar={(record) => registrarOpcionalDaIdade(session.ageYears, record)} onCopiar={() => void copiarOpcionais(session.ageYears)} />
+
           {missedAnswers.length > 0 && (
             <div className="snp-panel p-5">
               <div className="snp-pixel text-xs">Itens registrados como não acertados · {missedAnswers.length}</div>
@@ -1416,6 +1626,9 @@ export default function SuperNeuroPadGamePage() {
           </p>
         </section>
       )}
+      {/* Circuito clínico obrigatório: fica montado e em memória durante o jogo e aparece na preparação,
+          entre os mundos e nos resultados. A troca de idade ou paciente descarta os registros via key. */}
+      <ClinicalCircuit key={ageYears ?? "sem-idade"} years={ageYears} visible={screen === "setup" || screen === "phase-done" || screen === "results"} bateria={resumoBateria} onProgresso={setCircuito} />
     </div>
   );
 }

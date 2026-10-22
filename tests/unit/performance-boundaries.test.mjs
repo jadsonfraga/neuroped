@@ -4,12 +4,11 @@ import test from "node:test";
 
 const root = new URL("../..", import.meta.url);
 const read = (path) => readFile(new URL(path, root), "utf8");
-const [home, metrics, layout, splash, mchat, filtroShell, filtroEngine, fluxograma, caa, genericScale] = await Promise.all([
+const [home, metrics, layout, splash, filtroShell, filtroEngine, fluxograma, caa, genericScale] = await Promise.all([
   read("client/src/pages/home.tsx"),
   read("client/src/data/appMetrics.ts"),
   read("client/src/components/Layout.tsx"),
   read("client/src/components/SplashScreen.tsx"),
-  read("client/src/pages/mchat.tsx"),
   read("client/src/pages/filtro.tsx"),
   read("client/src/pages/filtro-engine.tsx"),
   read("client/src/pages/fluxograma.tsx"),
@@ -26,8 +25,6 @@ test("performance boundaries keep heavy clinical data out of the critical shell"
   assert.match(layout, /renderedSections/);
   assert.match(splash, /src="\/dr-jadson-shield-logo\.svg"/);
   assert.doesNotMatch(splash, /drJadsonMasterShieldLogo/);
-  assert.match(mchat, /@\/data\/mchat/);
-  assert.doesNotMatch(mchat, /@\/data\/scales/);
   assert.doesNotMatch(filtroShell, /@\/data\/(?:scaleFilter|advancedFilterLogic)/);
   assert.match(filtroShell, /import\("@\/pages\/filtro-engine"\)/);
   assert.match(filtroEngine, /@\/data\/scaleFilter/);

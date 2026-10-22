@@ -3,17 +3,16 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 344
-- **Com fonte declarada:** 344 (100.0%)
+- **Total de instrumentos:** 340
+- **Com fonte declarada:** 340 (100.0%)
 - **Sem fonte declarada:** 0
-- **Aguardando validação psicométrica publicada:** 168 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
+- **Aguardando validação psicométrica publicada:** 174 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
 
 > As duas últimas linhas medem coisas diferentes e não se somam: um
 > instrumento pode ter fonte e ainda assim aguardar validação.
 
 | Instrumento | Nome | Fonte | Sem fonte | Aguarda validação |
 | --- | --- | --- | --- | --- |
-| `abc` | ABC | Aman MG et al., 1985 (Aberrant Behavior Checklist) | não | não |
 | `ace` | ACE | Felitti VJ et al., 1998 (Adverse Childhood Experiences) | não | não |
 | `adapta-18-sdg` | ADAPTA-18 SDG | github:jadsonfraga/neuroped@b7adca686b8dba657b4b1317583f485cede7a0c8:client/src/data/interactiveScaleItemsAuthorial20260910.ts | não | sim |
 | `afi12-sdg` | AFI-12 SDG | Base documental autoral: 01_AFI12_Atencao_Freio_Impacto_NeuroPed_SDG.pdf; integridade sha256:f2123c61e7f03c52e20a24348b444f5c66293457c76b87756c0800435221b74d. Revisão clínica/editorial aprovada pelo autor em 2026-09-08; conteúdo clínico, domínios e pontuação preservados. | não | sim |
@@ -24,7 +23,6 @@
 | `ari` | ARI | Stringaris A, Goodman R, Ferdinando S, Razdan V, Muhrer E, Leibenluft E, Brotman MA, 2012 (Affective Reactivity Index) — J Child Psychol Psychiatry 53(11):1109-17. PMID 22574736 · doi:10.1111/j.1469-7610.2012.02561.x | não | não |
 | `ashworth` | Ashworth Modificada | Bohannon RW, Smith MB, 1987 (Modified Ashworth Scale) | não | não |
 | `asq-suicide` | ASQ | Horowitz LM et al., 2012 (Ask Suicide-Screening Questions) | não | não |
-| `asq3` | ASQ-3 | Squires J & Bricker D, 2009 | não | não |
 | `atec` | ATEC | Rimland B & Edelson SM — Autism Research Institute (ATEC) | não | não |
 | `balanco-med-24-sdg` | BALANÇO-MED 24 | Base documental autoral: BALANCO_MED_24_v1.1_NeuroPed_SDG.pdf; integridade sha256:98326fc57f8a4ee19c3c37769fddaf067a9064fe52fd529d40d85300ad18ea74. Revisão clínica/editorial aprovada pelo autor em 2026-09-08; versão operacional 1.2-app introduz NO, âncoras predominantemente funcionais e suprime o total global, preserva | não | sim |
 | `ballard` | Ballard | Ballard JL et al., 1991 (New Ballard Score) | não | não |
@@ -47,14 +45,11 @@
 | `cheops` | CHEOPS | McGrath PJ et al., 1985 | não | não |
 | `comfort-b` | COMFORT-B | van Dijk M et al., 2005 (COMFORT-Behavioral Scale) | não | não |
 | `cpss-v` | CPSS-V | Foa EB et al., 2018 (CPSS-5) | não | não |
-| `crafft` | CRAFFT | Knight JR et al., 2002 (CRAFFT) | não | não |
 | `cries` | CRIES | Krechel SW & Bildner J, 1995 | não | não |
 | `cries13` | CRIES-13 | Perrin S et al., 2005 (Children's Revised Impact of Event Scale 13) | não | não |
-| `cshq` | CSHQ | Owens JA et al., 2000 | não | não |
 | `cssrs` | C-SSRS | Posner K et al., 2011 | não | não |
 | `cybocs` | CY-BOCS | Scahill L et al., 1997 (CY-BOCS) | não | não |
 | `cybocs-sr` | CY-BOCS-SR | Scahill L et al., 1997 (CY-BOCS) — versão autorrelato | não | não |
-| `denver` | Denver II | Frankenburg WK et al., 1992 | não | não |
 | `docs` | DOCS | Abramowitz JS et al., 2010 (Dimensional Obsessive-Compulsive Scale) | não | não |
 | `dvss` | DVSS | Farhat W et al., 2000 (Dysfunctional Voiding Symptom Score) | não | não |
 | `eaah` | EAAH-NEXUS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não | não |
@@ -207,7 +202,6 @@
 | `macs` | MACS | Eliasson AC et al., 2006 (MACS) | não | não |
 | `mapa-360` | MAPA-360 NeuroPed | 2026-07-03_ESCALA_AUTORAL_MAPA-360_NEUROPED_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1NwNXTRm2HNC1v1J_kiYRVaVY3_Uy-26dyInqHbC27tI/edit | não | sim |
 | `mapa-ri-18-sdg` | MAPA-RI 18 | Base documental autoral: MAPA_RI_18_v1.1_NeuroPed_SDG.pdf; integridade sha256:c1035675085d14a4f97a415abbc20dc577da7b99a59368b2bd4372b95dcde885. Revisão clínica/editorial aprovada pelo autor em 2026-09-08; versão 1.1-app confirmada como mapa clínico expandido. | não | sim |
-| `mchat` | M-CHAT-R/F | Robins DL et al., 2014 - Pediatrics | não | não |
 | `mcri-24-sdg` | MCRI-24 | Base documental autoral: MCRI_24_NeuroPed_SDG.pdf; integridade sha256:80d31ddc68467a6db8edc86b973665823c3bd9956cad518640046deee5016d6f. Revisão clínica/editorial aprovada pelo autor em 2026-09-08; preservado como histórico e retirado das recomendações automáticas, sem apagar ou reescrever a versão 1.0. | não | sim |
 | `mini-macs` | Mini-MACS | Eliasson AC, Ullenhag A, Wahlström U, Krumlinde-Sundholm L, 2017 (Mini-MACS) — Dev Med Child Neurol 59(1):72-78. PMID 27273427 · doi:10.1111/dmcn.13162 | não | não |
 | `mnp-psi-100` | MATRIX-NEUROPED PSI 100 | 2026-06-29_ESCALA_AUTORAL_MATRIX_NEUROPED_PSI_100_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://docs.google.com/document/d/1M5DH27_CCCZiwV2O7Xe43OIoYsznG8cV0HsgfE74rqU/edit | não | sim |
@@ -221,12 +215,14 @@
 | `mutismo-seletivo-seguranca-10` | Mutismo seletivo · Segurança 10 | Mutismo seletivo — pré-consulta qualitativa NeuroPed, v1.0, 2026-08-04. Dr. Jadson Fraga / NeuroPed SDG. | não | sim |
 | `mutismo-seletivo-sintese-50` | Mutismo seletivo · Síntese 50 | Mutismo seletivo — pré-consulta qualitativa NeuroPed, v1.0, 2026-08-04. Dr. Jadson Fraga / NeuroPed SDG. | não | sim |
 | `na-adesao-tratamento-pais` | Adesão ao tratamento (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de adesão a tratamento medicamentoso e terapêutico na infância e barreiras práticas; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
+| `na-ansiedade-autorrelato` | Ansiedade (criança e adolescente) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de sintomas de ansiedade relatados pela criança ou adolescente (preocupação, sintomas físicos e pânico, separação, ansiedade social, evitação escolar e medos específicos); itens originais em português do Brasil, sem reprodução de instrumento  | não | sim |
 | `na-ansiedade-seguimento-pais` | Seguimento de ansiedade (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de monitorização de ansiedade infantil (medos, preocupações, evitação, sintomas corporais); itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-apoio-rede-cuidador` | Apoio e rede do cuidador (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de apoio social percebido e acesso a serviços em famílias de crianças em acompanhamento; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-atencao-atividade-pais` | Atenção, atividade e autocontrole (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de desatenção, hiperatividade, impulsividade e organização no cotidiano, com impacto funcional por contexto; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-atencao-atividade-professor` | Atenção, atividade e autocontrole (professor) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de desatenção, hiperatividade, impulsividade e organização em sala, com impacto funcional por contexto; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-cefaleia-gatilhos-rotina` | Cefaleia: gatilhos e rotina (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de fatores desencadeantes e de manejo da cefaleia pediátrica; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-comportamento-adaptativo-pais` | Comportamento adaptativo (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de comportamento adaptativo e autonomia em crianças com suspeita de deficiência intelectual ou atraso global; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
+| `na-comportamento-tea-di-pais` | Comportamentos que preocupam em TEA e deficiência intelectual (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de problemas de comportamento em autismo e deficiência intelectual, separados por tipo e frequência, para acompanhar a resposta ao tratamento; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-comportamentos-repetitivos-pais` | Comportamentos repetitivos (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de comportamentos restritos e repetitivos em crianças com e sem autismo; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-coordenacao-motora-pais` | Coordenação motora (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de coordenação motora e planejamento motor em atividades cotidianas; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-efeitos-antiepilepticos-pais` | Efeitos dos antiepilépticos (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de monitorização de efeitos adversos cognitivos, comportamentais e físicos de antiepilépticos; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
@@ -247,15 +243,19 @@
 | `na-matematica-professor` | Matemática e raciocínio numérico (professor) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de dificuldades de senso numérico, cálculo e raciocínio matemático em escolares; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-mobilidade-funcional-pc` | Mobilidade funcional na PC (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de mobilidade funcional em diferentes ambientes na paralisia cerebral; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-observacao-clinica-tea` | Observação clínica de sinais do espectro autista (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de sinais observáveis de transtorno do espectro autista na consulta (comunicação e interação social; padrões restritos e repetitivos; respostas sensoriais); itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
+| `na-perfil-emocional-comportamental-adolescente` | Perfil emocional e comportamental (adolescente) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de problemas emocionais e de comportamento relatados pelo próprio adolescente (internalizantes, externalizantes, atenção e relações); itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-perfil-emocional-comportamental-pais` | Perfil emocional e comportamental (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de problemas emocionais e de comportamento na infância e adolescência (internalizantes, externalizantes, atenção e relações); itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-perfil-emocional-comportamental-professor` | Perfil emocional e comportamental (professor) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de problemas emocionais e de comportamento observáveis na escola (internalizantes, externalizantes, atenção e relações); itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
+| `na-qualidade-vida-autorrelato` | Qualidade de vida (criança e adolescente) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de qualidade de vida relacionada à saúde relatada pela própria criança ou adolescente (corpo e energia, sentimentos, convivência, escola e dia a dia); itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-qualidade-vida-epilepsia` | Qualidade de vida na epilepsia (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de qualidade de vida relacionada à saúde em crianças com epilepsia; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
+| `na-qualidade-vida-pais` | Qualidade de vida (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de qualidade de vida relacionada à saúde na infância e adolescência (corpo e energia, sentimentos, convivência, escola e dia a dia); itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-regulacao-emocional-pais` | Regulação emocional (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de regulação emocional e estratégias de autorregulação; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-saude-mental-pre-escolar-pais` | Saúde emocional do pré-escolar (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de saúde mental de crianças em idade pré-escolar (emoções, comportamento, vínculo, brincar); itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-selecao-alimentar-pais` | Seletividade e evitação alimentar (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de seletividade alimentar e transtorno alimentar evitativo/restritivo (aspectos funcionais); itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-sensorial-casa-pais` | Perfil sensorial em casa (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de modulação e processamento sensorial no cotidiano (hiper e hiporresposta); itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-sensorial-escola-professor` | Comportamento sensorial na escola (professor) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de modulação sensorial e impacto no ambiente escolar; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-sinais-iniciais-psicose-pais` | Sinais iniciais de psicose (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de pródromo e sinais iniciais de psicose observáveis pela família; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
+| `na-sinais-precoces-tea-pais` | Sinais precoces do espectro autista (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de sinais precoces de transtorno do espectro autista (atenção compartilhada, comunicação, brincar, padrões repetitivos, respostas sensoriais e perda de habilidades); itens originais em português do Brasil, sem reprodução de instrumento proteg | não | sim |
 | `na-sobrecarga-cuidador` | Sobrecarga do cuidador (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de sobrecarga de cuidado em famílias de crianças com condições crônicas; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-sono-crianca-pais` | Sono da criança (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de problemas de sono na infância (início, manutenção, despertares, sonolência diurna, respiração e movimentos); itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
 | `na-tiques-seguimento-pais` | Seguimento de tiques (pais) (autoral) | Instrumento autoral NeuroPed (Dr. Jadson Fraga, 2026). Inspirado no construto de monitorização de tiques: frequência, intensidade, impacto e vivência; itens originais em português do Brasil, sem reprodução de instrumento protegido. | não | sim |
@@ -285,7 +285,6 @@
 | `pant-v7-078` | Controle esfincteriano funcional | Ebook PANT — 100 Escalas Passivas (Obra-Prima v7, item por item) — Dr. Jadson Fraga | não | não |
 | `pdae` | PDAE | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não | não |
 | `pedmidas` | PedMIDAS | Hershey AD et al., 2001 — Neurology 57(11):2034-9 (© Cincinnati Children's, uso clínico livre) | não | não |
-| `pedsql` | PedsQL | Varni JW et al., 2001 | não | não |
 | `phq2` | PHQ-2 (breve) | Kroenke K, Spitzer RL, Williams JBW, 2003 (uso livre) | não | não |
 | `phq9-cuidador` | PHQ-9 do cuidador | Kroenke K, Spitzer RL, Williams JB, 2001 (domínio público) | não | não |
 | `phqa` | PHQ-A | Johnson JG et al., 2002 | não | não |
@@ -312,10 +311,8 @@
 | `rota-aut-18-sdg` | ROTA-AUT 18 SDG | ROTA_AUT_18_SDG_v1_0_11-09-2026.pdf · sha256:1bc9ce1fda6ae6b57012621e6a803917169f8f09928ca7db68d5345447161aca | não | sim |
 | `sarf12-sdg` | SARF-12 SDG | Base documental autoral: 03_SARF12_Seletividade_Alimentar_Repertorio_Funcional_NeuroPed_SDG.pdf; integridade sha256:d0c55e5b29718bdf7b0ccfdb869914ce4f81d69b9dc5c38586c8ffb60194d8e9. Revisão clínica/editorial aprovada pelo autor em 2026-09-08; conteúdo e pontuação preservados. | não | sim |
 | `sas` | Simpson-Angus | Simpson GM, Angus JW, 1970 (uso livre) | não | não |
-| `scared` | SCARED | Birmaher B et al., 1997 - University of Pittsburgh | não | não |
 | `scas` | SCAS | Spence SH, 1998 (Spence Children's Anxiety Scale) | não | não |
 | `scoff` | SCOFF | Morgan JF et al., 1999 - BMJ | não | não |
-| `sdq` | SDQ | Goodman R, 1997 - Cambridge University | não | não |
 | `sdrd12-sdg` | SDRD-12 SDG | Base documental autoral: 02_SDRD12_Sono_Despertares_Repercussao_Diurna_NeuroPed_SDG.pdf; integridade sha256:df63139cd65e52c46f99c772362b6ba36fcaad57794ab9616dbae7dce1c26225. Revisão clínica/editorial aprovada pelo autor em 2026-09-08; mantido como monitor breve, com VIGIA-SD 20 como opção ampliada. | não | sim |
 | `sinaf-neuroped` | SINAF-NeuroPed | 2026-07-02_ESCALA_AUTORAL_SINAF-NEUROPED_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1ohp0tqe_NfLBB32XLXRgE0NxpyHtxe5X6xhY8rRrjWc/edit | não | sim |
 | `sinapse-fi-60` | SINAPSE-FI 60 | 2026-06-20_ESCALA_AUTORAL_SINAPSE-FI_60_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/13F-krAjNvAUAtrGNoEibhuFt_2_f9l7kuM2PrMIuoXk/edit | não | sim |
@@ -348,7 +345,6 @@
 | `trilha-20-sdg` | TRILHA-20 SDG | TRILHA-20_SDG_Autogestao_Transicao_Cuidado_v1.0_2026-09-09.pdf · Google Drive fileId 1JBWGK19QmRy6GlySFrgjvX7TWGmzSLv_ · SHA-256 e7932a955ffeffe194e965671d4045ff3fcd00843bd8408d7d7bbc2ab1c7d1ab · fonte integral verificada em 09/09/2026. | não | sim |
 | `tsi` | TSI | NIH-supported research | não | não |
 | `uku` | UKU | Lingjaerde O et al., 1987 (UKU Side Effect Rating Scale) | não | não |
-| `vanderbilt` | Vanderbilt | Wolraich ML et al., 2003 (NICHQ Vanderbilt) | não | não |
 | `vas-pain` | VAS Pain | Scott J, Huskisson EC, 1976 (Visual Analogue Scale) — Pain 2(2):175-84. PMID 1026900 · RESSALVA: descrição original em adultos; em pediatria costuma ser ancorada por equivalência à FPS-R/NRS (von Baeyer 2009, PMID 19359097). | não | não |
 | `vigia-med-24` | VIGIA-MED 24 | VIGIA_MED_24_NeuroPed_SDG.pdf · v1.0 · 07/09/2026 · Google Drive fileId 165X23pVefUkvflIHOHLESMZ0y9XmQukK · SHA-256 154d7e0a0eacc4a37dde4ce4084455a6dcaf28edc09a83264cd2c3e087d22b4b. | não | sim |
 | `vigia-sd-20-sdg` | VIGIA-SD 20 | Base documental autoral: VIGIA_SD_20_v1.1_NeuroPed_SDG.pdf; integridade sha256:5c8603630b4071c27c95b397e145c06567e076f6d39a4d25772315f3efe3aeb2. Revisão clínica/editorial aprovada pelo autor em 2026-09-08; mantido como monitor ampliado, com SDRD-12 como opção breve manual. | não | sim |

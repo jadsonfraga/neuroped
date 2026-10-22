@@ -97,6 +97,12 @@ function obj(years: number, say: string): Draft<TouchItem> {
   const band = objectiveBand(years);
   const index = band.items.findIndex((entry) => entry.say === say);
   if (index < 0) throw new Error(`Item objetivo não encontrado (${band.id}): ${say}`);
+  return objAt(years, index);
+}
+
+/** Mesmo item objetivo, pela posição no banco (enunciados repetidos na faixa ficam distintos). */
+function objAt(years: number, index: number): Draft<TouchItem> {
+  const band = objectiveBand(years);
   const item: ObjectiveItem = band.items[index];
   const origin: OriginId = index % 2 === 0 ? "sonda10" : "obs10";
   const options = item.options.map((art) => opt(art));
@@ -862,3 +868,75 @@ function build(): Record<number, Record<PhaseId, Item[]>> {
 }
 
 export const INTEGRATED_BANK: Record<number, Record<PhaseId, Item[]>> = build();
+
+// ─────────────────────────────── extensão opcional (v2026-10-21.1) ───────────────────────────────
+// 50 desafios disponíveis por idade: a bateria principal acima, intacta, mais itens opcionais tirados dos
+// mesmos bancos de origem da idade (Avaliação Cognitiva Infantil e banco objetivo da Sonda 10/OBS-10) que
+// ainda não estão na bateria. Nenhum item novo é criado aqui. Os opcionais ficam fora da contagem, do tempo
+// e do XP da partida principal; a aplicadora escolhe quais aplicar.
+export const DESAFIOS_DISPONIVEIS_POR_IDADE = 50;
+
+export interface OptionalItem {
+  item: Item;
+  /** Mundo em que o item seria aplicado (só para agrupar no registro). */
+  phaseId: PhaseId;
+}
+
+const COGNITIVE_PHASE: Record<CognitiveDomain, PhaseId> = { visual: "olhos", leitura: "palavras", escrita: "palavras", aritmetica: "numeros" };
+const OBJECTIVE_PHASE: Record<ObjectiveItem["domain"], PhaseId> = { figuras: "olhos", letras: "palavras", leitura: "palavras", escrita: "palavras", numeros: "numeros" };
+
+function cogAt(years: number, domain: CognitiveDomain, index: number): AnyDraft {
+  const list = COGNITIVE_BANK[years][domain];
+  const occurrence = list.slice(0, index).filter((other) => other.prompt === list[index].prompt).length;
+  return cog(years, domain, list[index].prompt, occurrence);
+}
+
+const plain = (text: string) => text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/\s+/g, " ").trim();
+
+/**
+ * Mesma tarefa = mesmo tipo, enunciado e critério (o estímulo não diferencia: "2 + 1 = ?" com ou sem
+ * figuras é o mesmo cálculo). Evita repetir na extensão o que a bateria já aplica.
+ */
+function taskKey(draft: AnyDraft | Item): string {
+  if (draft.kind === "montar") return `montar:${plain(draft.word)}`;
+  const criterion = draft.kind === "toque" ? draft.answer : draft.expected;
+  return `${draft.kind}:${plain(draft.prompt)}:${plain(criterion)}`;
+}
+
+function buildOptional(): Record<number, OptionalItem[]> {
+  const out: Record<number, OptionalItem[]> = {};
+  for (const years of YEARS) {
+    const main = PHASE_ORDER.flatMap((phaseId) => INTEGRATED_BANK[years][phaseId]);
+    const need = DESAFIOS_DISPONIVEIS_POR_IDADE - main.length;
+    const usedRefs = main.map((entry) => entry.ref);
+    const usedKeys = new Set(main.map(taskKey));
+    const isUsed = (ref: string) => usedRefs.some((used) => used === ref || used.startsWith(`${ref} · `));
+    // Uma fila por domínio de cada banco; a seleção alterna entre as filas para espalhar os domínios.
+    const queues: Array<Array<{ draft: AnyDraft; phaseId: PhaseId }>> = [];
+    for (const domain of ["visual", "leitura", "escrita", "aritmetica"] as const) {
+      queues.push(COGNITIVE_BANK[years][domain].map((_, index) => ({ draft: cogAt(years, domain, index), phaseId: COGNITIVE_PHASE[domain] })));
+    }
+    const band = objectiveBand(years);
+    for (const domain of ["figuras", "letras", "leitura", "escrita", "numeros"] as const) {
+      queues.push(band.items.flatMap((entry, index) => (entry.domain === domain ? [{ draft: objAt(years, index) as AnyDraft, phaseId: OBJECTIVE_PHASE[domain] }] : [])));
+    }
+    const picked: Array<{ draft: AnyDraft; phaseId: PhaseId }> = [];
+    const pickedKeys = new Set<string>();
+    for (let round = 0; picked.length < need && queues.some((queue) => queue.length > round); round++) {
+      for (const queue of queues) {
+        const candidate = queue[round];
+        if (!candidate || picked.length >= need) continue;
+        const key = taskKey(candidate.draft);
+        if (isUsed(candidate.draft.ref) || usedKeys.has(key) || pickedKeys.has(key)) continue;
+        picked.push(candidate);
+        pickedKeys.add(key);
+      }
+    }
+    if (picked.length !== need) throw new Error(`Extensão opcional incompleta aos ${years} anos: ${picked.length} de ${need}`);
+    const ordered = PHASE_ORDER.flatMap((phaseId) => picked.filter((entry) => entry.phaseId === phaseId));
+    out[years] = ordered.map((entry, index) => ({ phaseId: entry.phaseId, item: { ...entry.draft, id: `${years}.opcional.${index + 1}` } as Item }));
+  }
+  return out;
+}
+
+export const OPTIONAL_BANK: Record<number, OptionalItem[]> = buildOptional();

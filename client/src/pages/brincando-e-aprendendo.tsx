@@ -18,7 +18,7 @@ import generalArt from "@assets/images/dr-fraga-kids/categoria-gerais.webp";
 import errorsArt from "@assets/images/dr-fraga-kids/categoria-erros.webp";
 
 type PhaseId = "3-5" | "6-8" | "9-12";
-type ArenaId = "intelectual" | "atencional" | "pedagogico" | "gerais" | "erros";
+type ArenaId = "intelectual" | "atencional" | "pedagogico" | "gerais" | "erros" | "sensorial";
 type ActivityView = "home" | "activity" | "complete";
 
 type Question = {
@@ -145,10 +145,29 @@ const arenas: Arena[] = [
       { id: "cena-2", label: "Diversão no parque", difficulty: "Fácil" },
     ],
   },
+  {
+    id: "sensorial",
+    title: "Mundo dos Sentidos",
+    tagline: "Texturas, sons, cores e tamanhos",
+    description: "Descubra as características do mundo ao seu redor!",
+    color: "var(--kids-coral)",
+    softColor: "var(--kids-peach)",
+    icon: "🖐️",
+    art: generalArt,
+    mascotLine: "O que você percebe nas figuras?",
+    actions: [{ id: "descobrir", label: "Descobrir" }],
+  },
 ];
 
 const questions: Record<PhaseId, Record<ArenaId, Question[]>> = {
   "3-5": {
+    sensorial: [
+      { question: "Qual é macio?", visual: ["🧸", "🪨", "🥄"], options: ["🧸", "🪨", "🥄"], answer: 0, explain: "O ursinho de pelúcia costuma ser macio ao toque!" },
+      { question: "Qual faz barulho?", visual: ["📘", "🥁", "🧸"], options: ["📘", "🥁", "🧸"], answer: 1, explain: "O tambor faz barulho quando tocamos nele!" },
+      { question: "Qual é molhado?", visual: ["☀️", "💧", "🏀"], options: ["☀️", "💧", "🏀"], answer: 1, explain: "A gotinha representa a água, que é líquida!" },
+      { question: "Qual é redondo e vermelho?", visual: ["🟡", "🟦", "🔴"], options: ["🟡", "🟦", "🔴"], answer: 2, explain: "O círculo vermelho é redondo e tem a cor vermelha!" },
+      { question: "Qual é grande?", visual: ["🐭", "🐘", "🐜"], options: ["🐭", "🐘", "🐜"], answer: 1, explain: "O elefante é grande quando comparado ao rato e à formiga!" },
+    ],
     intelectual: [
       { question: "Qual destes voa?", visual: ["🐟", "🦋", "🐢"], options: ["🐟", "🦋", "🐢"], answer: 1, explain: "A borboleta voa com suas asas coloridas!" },
       { question: "Qual é o maior?", visual: ["🐘", "🐭"], options: ["🐘", "🐭"], answer: 0, explain: "O elefante é bem maior que o ratinho." },
@@ -186,6 +205,7 @@ const questions: Record<PhaseId, Record<ArenaId, Question[]>> = {
     ],
   },
   "6-8": {
+    sensorial: [],
     intelectual: [
       { question: "Qual número completa a sequência 2, 4, 6, ...?", visual: ["7", "8", "9"], options: ["7", "8", "9"], answer: 1, explain: "A sequência aumenta de dois em dois." },
       { question: "Qual figura continua o padrão?", visual: ["🔵🔺", "🔺🔵", "🔵🔺"], options: ["🔵🔺", "🔺🔵", "🟡🟡"], answer: 1, explain: "O próximo cartão alterna para triângulo e círculo." },
@@ -223,6 +243,7 @@ const questions: Record<PhaseId, Record<ArenaId, Question[]>> = {
     ],
   },
   "9-12": {
+    sensorial: [],
     intelectual: [
       { question: "Qual número completa a sequência 3, 6, 12, ...?", visual: ["15", "18", "24"], options: ["15", "18", "24"], answer: 2, explain: "Cada número é o dobro do anterior." },
       { question: "Se A é maior que B e B é maior que C, quem é o menor?", visual: ["A", "B", "C"], options: ["A", "B", "C"], answer: 2, explain: "C está abaixo de B e A na comparação." },
@@ -302,11 +323,13 @@ function KidsButton({
       disabled={disabled}
       className="kids-button inline-flex items-center justify-center gap-2 rounded-full border-[3px] px-4 py-2 text-sm font-extrabold tracking-tight shadow-[3px_3px_0_var(--kids-ink)] transition-transform hover:-translate-y-0.5 active:translate-y-0 active:shadow-[1px_1px_0_var(--kids-ink)]"
       style={{
-        backgroundColor: variant === "solid" ? color : "var(--kids-white)",
+        // O coral padrão com texto escuro não atinge o contraste mínimo.
+        // Nos botões, usar o tom escuro da paleta; nas demais superfícies, manter coral.
+        backgroundColor: variant === "solid" ? (color === "var(--kids-coral)" ? "var(--kids-red)" : color) : "var(--kids-white)",
         borderColor: "var(--kids-ink)",
         color:
           variant === "solid" &&
-          (color === "var(--kids-blue)" || color === "var(--kids-purple)")
+          (color === "var(--kids-blue)" || color === "var(--kids-purple)" || color === "var(--kids-coral)")
             ? "var(--kids-white)"
             : "var(--kids-ink)",
       }}
@@ -370,6 +393,7 @@ export default function BrincandoAprendendoPage() {
   const answeredCorrectly = selectedAnswer === currentQuestion?.answer;
 
   const startActivity = (arenaId: ArenaId, actionId: string) => {
+    if (questions[phaseId][arenaId].length === 0) return;
     setSelectedArena(arenaId);
     setSelectedAction(actionId);
     setQuestionIndex(0);
@@ -571,7 +595,7 @@ export default function BrincandoAprendendoPage() {
         </div>
 
         <div className="kids-missions-grid grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {arenas.map((arena) => (
+          {arenas.filter((arena) => questions[phaseId][arena.id].length > 0).map((arena) => (
             <MissionCard key={arena.id} arena={arena} phase={phase} onStart={startActivity} />
           ))}
         </div>

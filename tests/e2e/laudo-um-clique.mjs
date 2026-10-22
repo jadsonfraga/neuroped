@@ -53,7 +53,9 @@ try {
   const escalasTxt = await page.getByTestId("luc-escalas").innerText();
   assert.match(escalasTxt, /escore 38/);
   assert.match(escalasTxt, /sem escore salvo/);
-  assert.match(escalasTxt, /derivada do corte oficial/);
+  // M-CHAT-R/F saiu do app (17/10/2026): o escore salvo aparece, sem classificação derivada.
+  assert.match(escalasTxt, /escore 3\b/);
+  assert.doesNotMatch(escalasTxt, /derivada do corte oficial/);
 
   // Gerar está disponível e, com conteúdo mínimo, entrega o laudo.
   await fill("luc-dataConsulta", "2026-10-15");

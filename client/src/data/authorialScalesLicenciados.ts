@@ -1,0 +1,133 @@
+// Instrumentos autorais NeuroPed que substituem instrumentos licenciados retirados do app em 17/10/2026
+// (M-CHAT-R/F, PedsQL, ABC, SCARED e o autorrelato do SDQ). Itens ORIGINAIS, escritos a partir dos
+// construtos clínicos (DSM-5-TR/CID-11) e da prática brasileira — não de itens, subescalas ou âncoras
+// dos instrumentos protegidos. Para ASQ-3 e Denver II a alternativa é o SWYC Marcos (livre, já no app).
+import { authorial } from "./authorialKit";
+import type { OpenScaleSpec } from "./openScaleKit";
+
+const ACONTECE3 = ["Não acontece", "Acontece às vezes", "Acontece muito"];
+const FREQ_SEMANA4 = ["Não aconteceu", "Algumas vezes na semana", "Quase todo dia", "Várias vezes ao dia"];
+const ANSIEDADE3 = ["Quase nunca", "Às vezes", "Muitas vezes"];
+
+export const licenciadosSpecs: OpenScaleSpec[] = [
+  authorial({
+    wave: 3, id: "na-sinais-precoces-tea-pais", name: "Sinais precoces do espectro autista (pais)",
+    fullName: "Sinais de alerta para autismo em crianças de 16 a 36 meses — relato dos pais",
+    construct: "sinais precoces de transtorno do espectro autista (atenção compartilhada, comunicação, brincar, padrões repetitivos, respostas sensoriais e perda de habilidades)",
+    ageMin: 16, ageMax: 36, queixas: ["tea", "social", "linguagem"], respondente: ["pais"],
+    applicationMode: "questionario_pais", assessmentUse: "triagem", tempo: "5–7 min", primaryDomain: "tea", overlapGroup: "na-sinais-precoces-tea",
+    labels: ACONTECE3,
+    signalTags: ["não responde ao nome", "pouco contato visual", "não aponta", "não imita", "fala atrasada", "estereotipias", "hipersensibilidade a sons", "perdeu palavras", "regressão"],
+    description: "Sinais de alerta para autismo em seis áreas, incluindo perda de habilidades, que pesa mais que qualquer outro sinal. Ajuda a decidir quem precisa de avaliação do desenvolvimento e da audição. Não diagnostica autismo.",
+    instruction: "Pense no jeito habitual da criança no último mês, em situações comuns de casa. Marque se cada situação não acontece, acontece às vezes ou acontece muito. Comportamento visto uma ou duas vezes só conta como \"às vezes\".",
+    blocks: [
+      { name: "Olhar e atenção compartilhada", items: ["Quase não olha nos seus olhos durante as brincadeiras ou a alimentação.", "Não se vira quando é chamado(a) pelo nome, mesmo sem barulho por perto.", "Não acompanha com o olhar quando você aponta para algo distante.", "Não procura o seu olhar para dividir algo que achou divertido."] },
+      { name: "Comunicação", items: ["Leva a sua mão até o que quer, em vez de apontar ou pedir.", "Fala menos palavras do que outras crianças da mesma idade.", "Repete palavras ou trechos de desenhos sem usar para se comunicar.", "Parece não entender pedidos simples do dia a dia."] },
+      { name: "Brincar e imitar", items: ["Não imita gestos simples, como dar tchau ou bater palmas, quando você faz.", "Brinca sempre do mesmo jeito, enfileirando, girando ou abrindo e fechando objetos.", "Não faz de conta, como dar comida para a boneca ou fingir falar ao telefone.", "Ignora outras crianças ou se afasta quando elas chegam perto."] },
+      { name: "Movimentos e interesses", items: ["Sacode as mãos, gira o corpo ou anda na ponta dos pés repetidamente.", "Fica muito tempo olhando objetos girando, luzes ou os próprios dedos.", "Fica muito irritado(a) com pequenas mudanças na rotina."] },
+      { name: "Sentidos", items: ["Tapa os ouvidos ou se assusta muito com sons comuns (liquidificador, secador).", "Recusa muitos alimentos pela textura, pelo cheiro ou pela cor.", "Parece não sentir dor ou frio como as outras crianças."] },
+      { name: "Perda de habilidades", items: ["Deixou de falar palavras que já falava.", "Deixou de olhar, sorrir ou brincar com as pessoas como fazia antes."] },
+    ],
+    extraInfo: "Perda de palavras ou de habilidades sociais, em qualquer idade, pede avaliação prioritária. Sinais frequentes ou em várias áreas pedem avaliação do desenvolvimento, teste de audição e consulta especializada. Para acompanhar a interação no dia a dia, use também Interação social precoce (pais).",
+  }),
+  authorial({
+    wave: 3, id: "na-qualidade-vida-pais", name: "Qualidade de vida (pais)",
+    fullName: "Como a saúde e as dificuldades pesam no dia a dia de crianças e adolescentes de 2 a 18 anos — relato dos pais",
+    construct: "qualidade de vida relacionada à saúde na infância e adolescência (corpo e energia, sentimentos, convivência, escola e dia a dia)",
+    ageMin: 24, ageMax: 216, queixas: ["funcionalidade", "evolucao"], respondente: ["pais"],
+    applicationMode: "questionario_pais", assessmentUse: "seguimento", prioridade: "monitorizacao", tempo: "5–7 min", primaryDomain: "funcionalidade", overlapGroup: "na-qualidade-vida",
+    signalTags: ["qualidade de vida", "cansaço", "dor que atrapalha", "tristeza", "isolamento", "faltas na escola", "peso do tratamento"],
+    description: "Quanto a saúde e as dificuldades pesam em cinco áreas da vida, para acompanhar o efeito do tratamento além dos sintomas. Forma paralela para a própria criança ou adolescente. Não diagnostica.",
+    instruction: "Pense nas últimas 4 semanas e marque com que frequência cada situação aconteceu. Na creche ou escola, considere o que você sabe pelos professores.",
+    blocks: [
+      { name: "Corpo e energia", items: ["Cansa-se com facilidade nas atividades do dia a dia.", "Sente dor ou mal-estar que atrapalha o que quer fazer.", "Tem dificuldade em atividades físicas que outras crianças da idade fazem.", "Precisa de ajuda para se cuidar (banho, roupa, comida) além do esperado para a idade."] },
+      { name: "Sentimentos", items: ["Fica triste ou para baixo.", "Fica com medo ou preocupado(a).", "Fica irritado(a) ou com raiva.", "Dorme mal por preocupação ou mal-estar."] },
+      { name: "Convivência", items: ["Tem dificuldade para brincar ou sair com outras crianças.", "Outras crianças evitam ficar perto dele(a).", "Os colegas provocam ou deixam de fora.", "Fica de fora de passeios, festas ou atividades da família por causa das dificuldades."] },
+      { name: "Escola e aprendizagem", items: ["Falta à escola ou à creche por estar doente, em consulta ou em terapia.", "Tem dificuldade para acompanhar as atividades da escola ou da creche.", "Esquece as coisas ou tem dificuldade de prestar atenção nas atividades.", "Sente-se diferente dos colegas na escola ou na creche."] },
+      { name: "Dia a dia e lazer", items: ["Deixa de fazer coisas de que gosta por causa da saúde ou das dificuldades.", "A rotina de tratamento (remédios, consultas, terapias) pesa no dia a dia.", "Depende de outras pessoas mais do que gostaria.", "Mostra pouca alegria nas atividades do dia a dia."] },
+    ],
+    extraInfo: "Forma paralela: Qualidade de vida (criança e adolescente), com os mesmos blocos e número de itens; diferença entre os dois relatos é informação clínica. Repetir no mesmo intervalo ajuda a acompanhar o tratamento.",
+  }),
+  authorial({
+    wave: 3, id: "na-qualidade-vida-autorrelato", name: "Qualidade de vida (criança e adolescente)",
+    fullName: "Como a saúde e as dificuldades pesam no meu dia a dia — autorrelato de 8 a 18 anos",
+    construct: "qualidade de vida relacionada à saúde relatada pela própria criança ou adolescente (corpo e energia, sentimentos, convivência, escola e dia a dia)",
+    ageMin: 96, ageMax: 216, queixas: ["funcionalidade", "evolucao"], respondente: ["autoaplicavel"],
+    applicationMode: "autoquestionario_crianca_adolescente", assessmentUse: "seguimento", prioridade: "monitorizacao", tempo: "5–7 min", primaryDomain: "funcionalidade", overlapGroup: "na-qualidade-vida-autorrelato",
+    verbalRequirement: "verbal",
+    signalTags: ["qualidade de vida", "cansaço", "dor que atrapalha", "tristeza", "solidão", "faltas na escola", "peso do tratamento"],
+    description: "A própria criança ou o adolescente conta quanto a saúde e as dificuldades pesam em cinco áreas da vida. O adulto pode ler em voz alta para quem ainda lê com dificuldade. Não diagnostica.",
+    instruction: "Pense nas últimas 4 semanas e marque com que frequência cada situação aconteceu com você. Não existe resposta certa ou errada.",
+    blocks: [
+      { name: "Corpo e energia", items: ["Eu me canso fácil nas atividades do dia a dia.", "Sinto dor ou mal-estar que atrapalha o que quero fazer.", "Tenho dificuldade em atividades físicas que meus colegas fazem.", "Preciso de ajuda para me cuidar (banho, roupa, comida) mais do que gostaria."] },
+      { name: "Sentimentos", items: ["Eu me sinto triste ou para baixo.", "Sinto medo ou fico preocupado(a).", "Fico irritado(a) ou com raiva.", "Durmo mal por preocupação ou mal-estar."] },
+      { name: "Convivência", items: ["Tenho dificuldade para sair ou me divertir com amigos.", "Sinto que os outros evitam ficar perto de mim.", "Os colegas me provocam ou me deixam de fora.", "Fico de fora de passeios, festas ou atividades da família por causa das minhas dificuldades."] },
+      { name: "Escola e aprendizagem", items: ["Falto à escola por estar doente, em consulta ou em terapia.", "Tenho dificuldade para acompanhar as aulas.", "Esqueço as coisas ou tenho dificuldade de prestar atenção na aula.", "Eu me sinto diferente dos colegas na escola."] },
+      { name: "Dia a dia e lazer", items: ["Deixo de fazer coisas de que gosto por causa da saúde ou das minhas dificuldades.", "A rotina de tratamento (remédios, consultas, terapias) pesa no meu dia a dia.", "Dependo dos outros mais do que gostaria.", "Sinto pouca alegria no dia a dia."] },
+    ],
+    extraInfo: "Forma paralela: Qualidade de vida (pais). Tristeza persistente pede os instrumentos de humor do app; se falar em morrer ou em se machucar, aplique o rastreio de risco de suicídio (ASQ) e siga o protocolo de segurança.",
+  }),
+  authorial({
+    wave: 3, id: "na-comportamento-tea-di-pais", name: "Comportamentos que preocupam em TEA e deficiência intelectual",
+    fullName: "Irritabilidade, autoagressão, agressão, retraimento, agitação e repetições em crianças e adolescentes com autismo ou deficiência intelectual — acompanhamento",
+    construct: "problemas de comportamento em autismo e deficiência intelectual, separados por tipo e frequência, para acompanhar a resposta ao tratamento",
+    ageMin: 36, ageMax: 216, queixas: ["comportamento", "tea", "funcionalidade"], respondente: ["pais", "clinico"],
+    applicationMode: "questionario_pais", assessmentUse: "seguimento", prioridade: "monitorizacao", tempo: "5–7 min", primaryDomain: "comportamento", overlapGroup: "na-comportamento-tea-di",
+    labels: FREQ_SEMANA4,
+    signalTags: ["irritabilidade", "crises de birra", "bate a cabeça", "agressividade", "retraimento", "agitação", "estereotipias", "deficiência intelectual"],
+    description: "Frequência de seis tipos de comportamento em autismo ou deficiência intelectual, com autoagressão e agressão separadas da irritabilidade. Feito para repetir no mesmo intervalo e ver a resposta a terapia ou medicação. Não diagnostica.",
+    instruction: "Pense nas últimas 2 semanas e marque com que frequência cada comportamento aconteceu. Ao repetir, use sempre o mesmo período, para comparar antes e depois de uma mudança de tratamento.",
+    blocks: [
+      { name: "Irritabilidade e crises", items: ["Tem crises de choro, gritos ou birra difíceis de interromper.", "Muda de humor de repente, sem motivo aparente.", "Fica agressivo(a) ou desorganizado(a) quando é contrariado(a) ou quando algo muda.", "Demora mais de 15 minutos para se acalmar depois de uma crise."] },
+      { name: "Autoagressão", items: ["Bate a cabeça em paredes, chão ou objetos.", "Morde, arranha ou bate no próprio corpo.", "Machuca a pele (cutuca feridas, arranca cabelo ou unhas)."] },
+      { name: "Agressão e destruição", items: ["Bate, morde, chuta ou empurra outras pessoas.", "Puxa cabelo ou belisca quem está perto.", "Joga, quebra ou estraga objetos."] },
+      { name: "Retraimento", items: ["Fica parado(a), sem iniciativa, por longos períodos.", "Ignora as pessoas mesmo quando elas tentam interagir.", "Mostra pouco interesse por atividades que antes chamavam sua atenção."] },
+      { name: "Agitação", items: ["Não consegue ficar sentado(a) nem em atividades de que gosta.", "Corre ou sai de perto sem perceber o perigo (rua, piscina, lugares altos).", "Mexe em tudo o tempo todo, sem conseguir parar."] },
+      { name: "Repetições", items: ["Repete movimentos do corpo por longos períodos (balançar, girar, sacudir as mãos).", "Repete sons, frases ou perguntas sem parar, mesmo depois de ter a resposta.", "Fala alto ou faz barulhos fora de hora, mesmo quando pedem silêncio."] },
+      { name: "Impacto", items: ["Por causa desses comportamentos, alguém se machucou ou quase se machucou.", "Esses comportamentos impediram a família de sair ou a criança de ir à escola ou à terapia."] },
+    ],
+    extraInfo: "Mudança súbita de comportamento em quem fala pouco pode ser dor (dente, ouvido, intestino, refluxo), sono ruim, crise epiléptica ou efeito de remédio: investigue causas clínicas antes de ajustar medicação. Autoagressão com lesão ou agressão grave pede plano de segurança com a família e a escola.",
+  }),
+  authorial({
+    wave: 3, id: "na-ansiedade-autorrelato", name: "Ansiedade (criança e adolescente)",
+    fullName: "Preocupações, medos e sintomas de ansiedade — autorrelato de 8 a 18 anos",
+    construct: "sintomas de ansiedade relatados pela criança ou adolescente (preocupação, sintomas físicos e pânico, separação, ansiedade social, evitação escolar e medos específicos)",
+    ageMin: 96, ageMax: 216, queixas: ["ansiedade"], respondente: ["autoaplicavel"],
+    applicationMode: "autoquestionario_crianca_adolescente", assessmentUse: "triagem", tempo: "4–6 min", primaryDomain: "ansiedade", overlapGroup: "na-ansiedade-autorrelato",
+    verbalRequirement: "verbal", labels: ANSIEDADE3,
+    signalTags: ["preocupação excessiva", "coração disparado", "medo de ficar longe dos pais", "vergonha", "medo de falar na aula", "não quer ir à escola", "fobia", "crise de pânico"],
+    description: "A própria criança ou o adolescente conta seus medos e preocupações em seis áreas, com o impacto separado dos sintomas. O adulto pode ler em voz alta. Não diagnostica transtorno de ansiedade.",
+    instruction: "Pense nas últimas 4 semanas. Para cada frase, marque se isso acontece com você quase nunca, às vezes ou muitas vezes. Não existe resposta certa ou errada.",
+    blocks: [
+      { name: "Preocupações", items: ["Fico pensando muito no que pode dar errado.", "Eu me preocupo com coisas que ainda vão acontecer, como provas ou viagens.", "Tenho dificuldade de parar de pensar em uma preocupação.", "Preciso que alguém me diga várias vezes que vai ficar tudo bem."] },
+      { name: "O corpo na ansiedade", items: ["Meu coração dispara quando fico nervoso(a).", "Sinto falta de ar, tremedeira ou suor quando fico com medo.", "Sinto dor de barriga ou enjoo antes de situações que me deixam nervoso(a).", "De repente, sem saber por quê, sinto um medo muito forte."] },
+      { name: "Longe de casa", items: ["Fico aflito(a) quando preciso ficar longe dos meus pais ou de quem cuida de mim.", "Tenho medo de que aconteça algo ruim com minha família quando não estou perto.", "Evito dormir fora de casa ou ficar sozinho(a)."] },
+      { name: "Com outras pessoas", items: ["Fico com vergonha ou nervoso(a) para falar com pessoas que não conheço bem.", "Tenho medo de passar vergonha na frente da turma.", "Evito apresentar trabalho, ler em voz alta ou responder na aula.", "Fico nervoso(a) em festas ou em lugares com muita gente."] },
+      { name: "Escola e evitação", items: ["Sinto vontade de faltar à escola por nervosismo ou medo.", "Deixo de fazer coisas de que gosto por causa do medo.", "Tenho medo forte de algo específico (bicho, escuro, altura, agulha) que atrapalha a minha vida."] },
+      { name: "Impacto", items: ["O medo ou a preocupação atrapalham meus estudos.", "O medo ou a preocupação atrapalham minhas amizades ou a vida em casa."] },
+    ],
+    extraInfo: "Relato da família: Ansiedade no seguimento (pais). Sintomas físicos frequentes pedem também avaliação clínica. Se falar em morrer ou em se machucar, aplique o rastreio de risco de suicídio do app (ASQ) e siga o protocolo de segurança.",
+  }),
+  authorial({
+    wave: 3, id: "na-perfil-emocional-comportamental-adolescente", name: "Perfil emocional e comportamental (adolescente)",
+    fullName: "Emoções, comportamento e relações de 11 a 18 anos — autorrelato",
+    construct: "problemas emocionais e de comportamento relatados pelo próprio adolescente (internalizantes, externalizantes, atenção e relações)",
+    ageMin: 132, ageMax: 216, queixas: ["comportamento", "ansiedade", "depressao", "tdah", "social"], respondente: ["autoaplicavel"],
+    applicationMode: "autoquestionario_crianca_adolescente", assessmentUse: "triagem", tempo: "6–8 min", primaryDomain: "comportamento", overlapGroup: "na-perfil-emocional-comportamental-adolescente",
+    verbalRequirement: "verbal",
+    signalTags: ["tristeza", "preocupação", "dor de barriga por nervoso", "desatenção", "raiva", "mentiras", "poucos amigos", "bullying", "isolamento"],
+    description: "O próprio adolescente conta como estão suas emoções, comportamento, atenção e relações, nos mesmos blocos das formas dos pais e do professor. Lido lado a lado com os outros relatos, mostra o que só ele vê. Não diagnostica.",
+    instruction: "Pense nas últimas 4 semanas e marque com que frequência cada situação aconteceu com você. Não existe resposta certa ou errada.",
+    blocks: [
+      { name: "Tristeza e desânimo", items: ["Passo boa parte do dia triste ou desanimado(a).", "Perdi o interesse por coisas de que eu gostava.", "Penso coisas ruins sobre mim (\"sou um fracasso\", \"ninguém gosta de mim\")."] },
+      { name: "Medos e preocupações", items: ["Fico muito tenso(a) antes de provas, viagens ou compromissos.", "Evito lugares, pessoas ou situações por medo, mesmo sabendo que não há perigo.", "Fico muito aflito(a) quando preciso me afastar da minha família."] },
+      { name: "Queixas no corpo", items: ["Tenho dor de barriga ou de cabeça em dias de aula ou antes de compromissos.", "Fico com enjoo, falta de ar ou coração acelerado quando estou nervoso(a)."] },
+      { name: "Atenção e agitação", items: ["Perco o foco no meio de conversas, aulas ou tarefas.", "Fico inquieto(a) quando preciso ficar parado(a) por muito tempo.", "Falo ou ajo antes de pensar."] },
+      { name: "Raiva e oposição", items: ["Fico com muita raiva por motivos pequenos.", "Discuto e me recuso a cumprir combinados com os adultos.", "Faço coisas para provocar ou irritar outras pessoas.", "Quebro coisas, bato ou ameaço quando estou com raiva."] },
+      { name: "Regras e convivência", items: ["Minto para escapar de problemas ou para conseguir algo.", "Pego coisas que não são minhas.", "Saio sem avisar ou volto muito depois do combinado."] },
+      { name: "Amizades e relações", items: ["Tenho poucos amigos ou nenhum amigo próximo.", "Sou deixado(a) de lado, provocado(a) ou alvo de apelidos.", "Prefiro ficar sozinho(a) mesmo quando me chamam para sair.", "Tenho dificuldade de entender ironias, piadas ou regras de convivência do grupo."] },
+      { name: "Impacto", items: ["Essas dificuldades atrapalham minha vida em casa.", "Essas dificuldades atrapalham meus estudos ou minhas amizades."] },
+    ],
+    extraInfo: "Formas paralelas: Perfil emocional e comportamental (pais) e (professor), com os mesmos blocos e número de itens. Se o adolescente falar em morrer ou em se machucar, aplique o rastreio de risco de suicídio do app (ASQ) e siga o protocolo de segurança. Álcool e outras drogas: Uso de substâncias (adolescente).",
+  }),
+];

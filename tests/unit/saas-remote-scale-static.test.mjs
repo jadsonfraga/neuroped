@@ -30,11 +30,13 @@ assert.match(migration, /trg_live_scale_response_matches_invitation/);
 
 // ── Catálogo: allowlist fechada, reaproveita dado real (não inventa) ──────
 assert.match(catalog, /getInteractiveScale/);
-assert.match(catalog, /mchatQuestions/);
+// M-CHAT-R saiu do envio remoto em 17/10/2026 (licenciado): sem texto do instrumento, histórico por número do item.
+assert.doesNotMatch(catalog, /mchatQuestions/);
+assert.match(catalog, /RETIRED_REMOTE_SCALES/);
 assert.doesNotMatch(catalog, /\bvalue:\s*option\.value\b/, "nunca expõe peso de pontuação à família");
 assert.doesNotMatch(catalog, /scale\.bands/, "descritor público nunca reaproveita a banda de interpretação da escala");
 assert.doesNotMatch(catalog, /^\s*bands:/m, "RemoteScaleDescriptor não pode declarar campo de interpretação");
-assert.match(catalog, /"mchat",\s*\n\s*"q-chat-10",\s*\n\s*"psc17",\s*\n\s*"ari",\s*\n\s*"gad7ped",\s*\n\s*"smfq",/);
+assert.match(catalog, /REMOTE_SCALE_IDS = \[\s*\n\s*"q-chat-10",\s*\n\s*"psc17",\s*\n\s*"ari",\s*\n\s*"gad7ped",\s*\n\s*"smfq",/);
 // Instrumentos clínico-administrados/observacionais nunca podem entrar na allowlist.
 for (const forbidden of ["viking-speech", "mini-macs", "bfmf", "cssrs"]) {
   assert.doesNotMatch(catalog, new RegExp(`"${forbidden}"`));

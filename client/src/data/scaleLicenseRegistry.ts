@@ -7,10 +7,11 @@ import { openScaleLicenseRecords } from "./openScalesIndex";
  * Regras (AGENTS.md · Verdade clínica):
  *  - `verified_official_source` exige `sourceUrl` e `verifiedOn` (página oficial do detentor);
  *  - `catalog_field_unverified` apenas repete o campo legado `licencaUso`; NÃO é verificação;
- *  - `owner_decision` registra instrumento licenciado MANTIDO no app por decisão do responsável
- *    clínico (15/10/2026). A decisão não equivale a licença: `softwareAllowed` fica "unverified"
- *    e nenhum pedido de licença é feito por este projeto. Em 17/10/2026 o responsável RETIROU os de
- *    ASEBA, MHS, PAR e WPS (`softwareAllowed: false`): ficam como ficha, com alternativa autoral;
+ *  - `owner_decision` registra decisão do responsável clínico sobre instrumento licenciado. Em 15/10/2026
+ *    alguns foram mantidos no app; em 17/10/2026 o responsável RETIROU todos (`softwareAllowed: false`):
+ *    primeiro os de ASEBA, MHS, PAR e WPS, depois ASQ-3, Denver II, PedsQL, CSHQ, ABC, M-CHAT-R/F,
+ *    CRAFFT, SDQ, SCARED, Vanderbilt e Vineland-3. Ficam como ficha, com alternativa no app (autoral
+ *    NeuroPed ou livre verificada). Nenhum pedido de licença é feito por este projeto;
  *  - escala nova (`wave` ≥ 1) só entra com fonte verificada, URL e data.
  */
 export type LicenseStatus =
@@ -44,44 +45,37 @@ export interface ScaleLicenseRecord {
 
 const V = "2026-10-15";
 
-/** Instrumentos licenciados que abrem no app e foram MANTIDOS por decisão do responsável (15/10/2026). */
-export const OWNER_RETAINED_LICENSED_IDS: readonly string[] = [
-  "asq3", "denver", "pedsql", "cshq", "abc",
-  "mchat", "world-mchat-rf", "crafft", "world-crafft-21", "sdq", "world-sdq",
-  "scared", "world-scared-child-parent", "vanderbilt", "world-vanderbilt-parent-teacher",
-] as const;
+/**
+ * Instrumentos licenciados que abrem no app MANTIDOS por decisão do responsável. Vazia desde 17/10/2026:
+ * os 15 ids mantidos em 15/10/2026 (ASQ-3, Denver II, PedsQL, CSHQ, ABC, M-CHAT-R/F, CRAFFT, SDQ, SCARED,
+ * Vanderbilt e aliases) foram retirados e viraram ficha de referência.
+ */
+export const OWNER_RETAINED_LICENSED_IDS: readonly string[] = [] as const;
 
-const retained = (id: string, status: LicenseStatus, note: string, extra: Partial<ScaleLicenseRecord> = {}): ScaleLicenseRecord => ({
-  id, status, basis: "owner_decision", softwareAllowed: "unverified", note, ...extra,
-});
-
-/** Proprietário retirado do app: só ficha de referência; aplicar exige o material licenciado do editor. */
-const removed = (id: string, instrument: string, alternative: string): ScaleLicenseRecord => ({
+/** Licenciado retirado do app: só ficha de referência; aplicar exige o material licenciado do editor. */
+const removed = (id: string, instrument: string, alternative: string, extra: Partial<ScaleLicenseRecord> = {}): ScaleLicenseRecord => ({
   id, status: "proprietary", basis: "owner_decision", softwareAllowed: false,
-  note: `${instrument}. Retirado do app por decisão do responsável (17/10/2026): ficha de referência, sem itens nem escore. Alternativa autoral no app: ${alternative}.`,
+  note: `${instrument}. Retirado do app por decisão do responsável (17/10/2026): ficha de referência, sem itens nem escore. Alternativa no app: ${alternative}.`,
+  ...extra,
 });
 
 export const SCALE_LICENSE_RECORDS: readonly ScaleLicenseRecord[] = [
-  // ---- Licenciados mantidos por decisão do responsável (sem licença verificada) ----
   // ---- Retirados do app por decisão do responsável (17/10/2026): ficha de referência, sem itens nem escore ----
   removed("cbcl", "CBCL (ASEBA, proprietário)", "Perfil emocional e comportamental (pais/professor)"),
   removed("conners", "Conners 3 (MHS, proprietário)", "Atenção, atividade e autocontrole (pais/professor)"),
   removed("brief2", "BRIEF-2 (PAR, proprietário)", "Funções executivas — versão ampliada (pais) e na escola (professor)"),
   removed("cdi2", "CDI-2 (MHS, proprietário)", "Como eu me sinto (criança) e Humor depressivo (adolescente)"),
   removed("cars", "CARS-2 (WPS, proprietário)", "Observação clínica de sinais do espectro autista"),
-  retained("asq3", "proprietary", "ASQ-3 (Brookes): reprodução eletrônica vedada pelo editor. Mantido por decisão do responsável.", { sourceUrl: "https://agesandstages.com", verifiedOn: V }),
-  retained("denver", "proprietary", "Denver II (proprietário). Mantido por decisão do responsável; sem licença verificada."),
-  retained("pedsql", "proprietary", "PedsQL (Mapi Research Trust). Mantido por decisão do responsável; sem licença verificada."),
-  retained("cshq", "restricted", "CSHQ (autora; uso sob permissão). Mantido por decisão do responsável; sem licença verificada."),
-  retained("abc", "proprietary", "Aberrant Behavior Checklist (comercial). Mantido por decisão do responsável; sem licença verificada."),
-  retained("mchat", "free_clinical_use", "M-CHAT-R/F: gratuito para uso clínico; embutir em software distribuído a terceiros exige licença (Robins). Mantido por decisão do responsável.", { canonicalId: "mchat", sourceUrl: "https://mchatscreen.com", verifiedOn: V, attribution: "© 2009 Robins, Fein & Barton" }),
-  retained("world-mchat-rf", "free_clinical_use", "Alias de `mchat`.", { canonicalId: "mchat", sourceUrl: "https://mchatscreen.com", verifiedOn: V }),
-  retained("sdq", "restricted", "SDQ: copyright; versão eletrônica só com licença da Youth in Mind. Mantido por decisão do responsável.", { canonicalId: "sdq", sourceUrl: "https://www.sdqinfo.org", verifiedOn: V, attribution: "© Robert Goodman" }),
-  retained("world-sdq", "restricted", "Alias de `sdq`.", { canonicalId: "sdq", sourceUrl: "https://www.sdqinfo.org", verifiedOn: V }),
-  retained("scared", "restricted", "SCARED: uso livre em clínica sem fins lucrativos; SaaS exige permissão da autora. Mantido por decisão do responsável.", { canonicalId: "scared", sourceUrl: "https://www.pediatricbipolar.pitt.edu/resources/instruments", verifiedOn: V }),
-  retained("world-scared-child-parent", "restricted", "Alias de `scared`.", { canonicalId: "scared", sourceUrl: "https://www.pediatricbipolar.pitt.edu/resources/instruments", verifiedOn: V }),
-  retained("vanderbilt", "restricted", "Vanderbilt: copyright AAP/NICHQ. Mantido por decisão do responsável.", { canonicalId: "vanderbilt", sourceUrl: "https://www.nichq.org", verifiedOn: V }),
-  retained("world-vanderbilt-parent-teacher", "restricted", "Alias de `vanderbilt`.", { canonicalId: "vanderbilt", sourceUrl: "https://www.nichq.org", verifiedOn: V }),
+  removed("asq3", "ASQ-3 (Brookes, proprietário; reprodução eletrônica vedada pelo editor)", "SWYC Marcos do desenvolvimento, formulário da idade (livre, Tufts)", { sourceUrl: "https://agesandstages.com", verifiedOn: V }),
+  removed("denver", "Denver II (Denver Developmental Materials, proprietário)", "SWYC Marcos do desenvolvimento, formulário da idade (livre, Tufts)"),
+  removed("pedsql", "PedsQL (Mapi Research Trust, licenciado)", "Qualidade de vida (pais) e (criança e adolescente)"),
+  removed("cshq", "CSHQ (autora; uso sob permissão)", "Sono da criança (pais)", { status: "restricted" }),
+  removed("abc", "Aberrant Behavior Checklist (Slosson, comercial)", "Comportamentos que preocupam em TEA e deficiência intelectual"),
+  removed("mchat", "M-CHAT-R/F (Robins, Fein & Barton): gratuito para uso clínico, mas embutir em software distribuído a terceiros exige licença", "Sinais precoces do espectro autista (pais) e Interação social precoce (pais)", { status: "free_clinical_use", canonicalId: "mchat", sourceUrl: "https://mchatscreen.com", verifiedOn: V, attribution: "© 2009 Robins, Fein & Barton" }),
+  removed("sdq", "SDQ (© Robert Goodman; versão eletrônica só com licença da Youth in Mind)", "Perfil emocional e comportamental (pais, professor e adolescente) e SWYC PPSC", { status: "restricted", canonicalId: "sdq", sourceUrl: "https://www.sdqinfo.org", verifiedOn: V, attribution: "© Robert Goodman" }),
+  removed("scared", "SCARED (uso livre em clínica sem fins lucrativos; software como serviço exige permissão da autora)", "Ansiedade (criança e adolescente) e Ansiedade no seguimento (pais)", { status: "restricted", canonicalId: "scared", sourceUrl: "https://www.pediatricbipolar.pitt.edu/resources/instruments", verifiedOn: V }),
+  removed("vanderbilt", "NICHQ Vanderbilt (© AAP/NICHQ)", "Atenção, atividade e autocontrole (pais/professor)", { status: "restricted", canonicalId: "vanderbilt", sourceUrl: "https://www.nichq.org", verifiedOn: V }),
+  removed("vineland", "Vineland-3 (Pearson, proprietário)", "Comportamento adaptativo (pais)"),
 
   // ---- Livres verificados nas fontes oficiais (diagnóstico de 15/10/2026) ----
   { id: "phqa", canonicalId: "phqa", status: "public_domain", basis: "verified_official_source", softwareAllowed: true, sourceUrl: "https://www.phqscreeners.com", verifiedOn: V, note: "PHQ-A/PHQ-9: domínio público (Pfizer)." },
@@ -96,8 +90,7 @@ export const SCALE_LICENSE_RECORDS: readonly ScaleLicenseRecord[] = [
   // ---- Duplicatas sem verificação oficial própria (conservador: o campo legado prevalece) ----
   { id: "ygtss", canonicalId: "ygtss", status: "open_free", basis: "catalog_field_unverified", softwareAllowed: "unverified" },
   { id: "world-ygtss", canonicalId: "ygtss", status: "open_free", basis: "catalog_field_unverified", softwareAllowed: "unverified", note: "Alias de `ygtss`." },
-  retained("crafft", "restricted", "CRAFFT: sem verificação oficial própria; mantida a classificação mais restritiva entre as duas entradas duplicadas (`world-crafft-21` = restrita). Mantido por decisão do responsável.", { canonicalId: "crafft" }),
-  retained("world-crafft-21", "restricted", "Alias de `crafft`.", { canonicalId: "crafft" }),
+  removed("crafft", "CRAFFT 2.1 (Boston Children's Hospital; uso em software sob permissão)", "Uso de substâncias (adolescente)", { status: "restricted", canonicalId: "crafft" }),
   { id: "bears", canonicalId: "bears", status: "open_free", basis: "catalog_field_unverified", softwareAllowed: "unverified" },
   { id: "world-bears", canonicalId: "bears", status: "open_free", basis: "catalog_field_unverified", softwareAllowed: "unverified", note: "Alias de `bears` (alias sem aplicação própria)." },
   { id: "asq-suicide", canonicalId: "asq-suicide", status: "public_domain", basis: "catalog_field_unverified", softwareAllowed: "unverified" },
@@ -116,16 +109,13 @@ export const SCALE_LICENSE_RECORDS: readonly ScaleLicenseRecord[] = [
  * Pares/grupos de ids que são o MESMO instrumento. A chave é o id canônico (o que o filtro mostra);
  * os demais ficam fora do catálogo filtrável (página e dados permanecem acessíveis).
  */
+// Os aliases world-* de M-CHAT-R/F, Vanderbilt, SDQ, SCARED e CRAFFT saíram com os originais (17/10/2026):
+// duplicavam a ficha de referência e se apresentavam como "sem custo".
 export const CANONICAL_ALIASES: Readonly<Record<string, readonly string[]>> = {
-  mchat: ["world-mchat-rf"],
   snap: ["world-snap-iv-26"],
-  vanderbilt: ["world-vanderbilt-parent-teacher"],
-  sdq: ["world-sdq"],
-  scared: ["world-scared-child-parent"],
   phqa: ["world-phq-a"],
   cssrs: ["world-c-ssrs"],
   ygtss: ["world-ygtss"],
-  crafft: ["world-crafft-21"],
   psc17: ["world-psc17"],
   bears: ["world-bears"],
   "asq-suicide": ["world-asq-suicide"],

@@ -72,7 +72,7 @@ export const DAILY_RESPONSE_MODE_LABEL: Record<
   DailyInventoryResponseMode,
   string
 > = {
-  frequencia_0_3: "Frequência / impacto",
+  frequencia_0_3: "Resposta ordinal — consultar as opções do registro",
   sim_nao: "Sim / não",
   presente_ausente: "Presença / ausência observada",
   descritivo: "Resposta descritiva",

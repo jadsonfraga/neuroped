@@ -9,6 +9,8 @@ on:
       - client/src/styles/tokens.css
       - tests/unit/super-neuropad-game.test.ts
       - tests/e2e/super-neuropad-game.mjs
+      - tests/unit/super-neuropad-extensao.test.ts
+      - tests/e2e/super-neuropad-opcionais.mjs
       - .github/workflows/super-neuropad.yml
 permissions:
   contents: read
@@ -36,6 +38,24 @@ jobs:
           VITE_OPEN_ACCESS: 'false'
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e:super-neuropad
+      - name: Prove age-adjusted clinical circuit and non-blocking documentary matrix
+        run: npm run test:e2e:super-neuropad-circuit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: super-neuropad-circuit-proof
+          path: /tmp/super-neuropad-circuit-sufficiency
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Prove optional extension (50 per age) keeps the main battery intact
+        run: npm run test:e2e:super-neuropad-opcionais
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: super-neuropad-opcionais-proof
+          path: /tmp/super-neuropad-opcionais
+          if-no-files-found: warn
+          retention-days: 7
       - uses: actions/upload-artifact@v4
         if: always()
         with:

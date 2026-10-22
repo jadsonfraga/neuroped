@@ -16,20 +16,34 @@
  * cobertura sobre o catálogo real.
  */
 
+// Denver II e ASQ-3 (retirados) → formulários SWYC Marcos (livres), um por idade.
+const SWYC_MARCOS_ALIASES = ["denver", "denver ii", "denver 2", "ddst", "denver developmental", "asq 3", "asq3", "ages and stages", "ages stages", "idades e estagios", "swyc", "marcos do desenvolvimento"];
+const swycMarcosAliases = Object.fromEntries(
+  ["2m", "4m", "6m", "9m", "12m", "15m", "18m", "24m", "30m", "36m", "48m", "60m"].map((m) => [`swyc-marcos-${m}`, SWYC_MARCOS_ALIASES]),
+);
+
 export const scaleSearchAliases: Readonly<Record<string, readonly string[]>> = {
-  // Proprietários retirados do app (17/10/2026: ASEBA, MHS, PAR, WPS). Exceção documentada à regra
-  // "apelido = nome do próprio instrumento": quem digita o nome do original chega à alternativa autoral
-  // que cobre o mesmo construto. Não é equivalência — a explicação do acerto mostra o termo digitado, a
-  // alternativa traz o aviso de autoral sem validação e a ficha do original segue em /generic-scale/<id>.
-  "na-perfil-emocional-comportamental-pais": ["cbcl", "achenbach", "aseba", "child behavior checklist"],
+  // Licenciados retirados do app (17/10/2026: ASEBA, MHS, PAR, WPS e depois os demais). Exceção documentada
+  // à regra "apelido = nome do próprio instrumento": quem digita o nome do original chega à alternativa
+  // aberta no app que cobre o mesmo construto. Não é equivalência — a explicação do acerto mostra o termo
+  // digitado, a alternativa autoral traz o aviso de sem validação e a ficha do original segue em
+  // /generic-scale/<id>.
+  "na-perfil-emocional-comportamental-pais": ["cbcl", "achenbach", "aseba", "child behavior checklist", "sdq", "goodman", "capacidades e dificuldades", "forcas e dificuldades", "strengths difficulties"],
   "na-perfil-emocional-comportamental-professor": ["trf", "teacher report form"],
   "na-atencao-atividade-pais": ["conners", "conners 3", "conners3", "conner", "connors"],
+  "na-atencao-atividade-professor": ["vanderbilt", "nichq", "nichq vanderbilt", "vanderbild"],
   "na-humor-crianca-autorrelato": ["cdi", "cdi 2", "cdi2", "cdi-2", "kovacs", "depressao infantil inventario"],
   "na-funcoes-executivas-ampliado-pais": ["brief", "brief 2", "brief2", "brief-2", "inventario funcoes executivas"],
   "na-observacao-clinica-tea": ["cars", "cars 2", "cars2", "childhood autism rating"],
+  "na-sinais-precoces-tea-pais": ["mchat", "m chat", "m-chat", "mchat r f", "m chat r/f", "mchatrf", "chat modificado", "checklist autismo toddlers", "triagem autismo bebe", "sinais precoces autismo"],
+  "na-comportamento-tea-di-pais": ["abc", "aberrant behavior", "comportamento aberrante", "autoagressao", "irritabilidade autismo"],
+  "na-ansiedade-autorrelato": ["scared", "scared ansiedade", "screen child anxiety"],
+  "na-sono-crianca-pais": ["cshq", "habitos de sono", "sleep habits", "questionario sono"],
+  "na-qualidade-vida-pais": ["pedsql", "peds ql", "qualidade de vida", "quality of life"],
+  "na-uso-substancias-adolescente": ["crafft", "uso de substancias", "alcool drogas adolescente"],
+  "na-comportamento-adaptativo-pais": ["vineland", "vineland 3", "vineland-3"],
+  ...swycMarcosAliases,
   // Desenvolvimento
-  denver: ["denver ii", "denver 2", "ddst", "denver developmental"],
-  asq3: ["asq 3", "ages and stages", "ages stages", "idades e estagios"],
   catclams: ["cat clams", "clams", "capute", "cat/clams"],
   pant: ["pant 100", "protocolo avaliacao neurodesenvolvimento tipico", "neurodesenvolvimento tipico"],
   emdi: ["escala medica desenvolvimento infantil"],
@@ -41,7 +55,6 @@ export const scaleSearchAliases: Readonly<Record<string, readonly string[]>> = {
   efdi: ["efdi v", "efdi nv", "escala funcional dr jadson", "deficiencia intelectual"],
 
   // TEA
-  mchat: ["mchat", "m chat", "m-chat", "mchat r f", "m chat r/f", "mchatrf", "chat modificado", "checklist autismo toddlers", "triagem autismo bebe"],
   atec: ["atec", "autism treatment evaluation"],
   "aq10-adolescente": ["autism quotient", "quociente autismo", "aq adolescente"],
   "q-chat-10": ["qchat", "q chat", "qchat10", "q-chat"],
@@ -61,7 +74,6 @@ export const scaleSearchAliases: Readonly<Record<string, readonly string[]>> = {
 
   // TDAH / funções executivas
   snap: ["snap", "snap iv", "snap-iv", "snap4", "snapiv", "swanson", "mta snap", "snap 4"],
-  vanderbilt: ["vanderbilt", "nichq", "nichq vanderbilt", "vanderbild"],
   "afi12-sdg": ["afi", "afi 12", "atencao freio impacto"],
   "ipn-tdah-fe-familia-48": ["ipn tdah", "ipn tdah familia", "ipn fe"],
   "ipn-tdah-fe-escola-32": ["ipn tdah escola"],
@@ -70,8 +82,6 @@ export const scaleSearchAliases: Readonly<Record<string, readonly string[]>> = {
   "ipn-tdah-fe-executivo-10": ["ipn tdah executivo", "perfil executivo"],
 
   // Comportamento / banda larga
-  sdq: ["sdq", "goodman", "capacidades e dificuldades", "forcas e dificuldades", "strengths difficulties"],
-  abc: ["abc", "aberrant behavior", "comportamento aberrante"],
   psc17: ["psc", "psc 17", "psc17", "psc-17", "pediatric symptom checklist", "sintomas pediatricos"],
   erc: ["erc", "regulacao emocional checklist", "emotion regulation"],
   ari: ["ari", "irritabilidade", "affective reactivity"],
@@ -82,7 +92,6 @@ export const scaleSearchAliases: Readonly<Record<string, readonly string[]>> = {
   "mcri-24-sdg": ["mcri", "mcri 24"],
 
   // Ansiedade / humor
-  scared: ["scared", "scared ansiedade", "screen child anxiety"],
   scas: ["scas", "spence", "spence ansiedade"],
   gad7: ["gad", "gad 7", "gad7", "gad-7", "ansiedade generalizada"],
   gad7ped: ["gad 7 pediatrico", "gad7 pediatrico", "gad pediatrico"],
@@ -141,7 +150,6 @@ export const scaleSearchAliases: Readonly<Record<string, readonly string[]>> = {
   "ipn-pc-fun-familia-50": ["ipn pc", "ipn pc fun", "ipn paralisia cerebral"],
 
   // Sono
-  cshq: ["cshq", "habitos de sono", "sleep habits", "questionario sono"],
   bisq: ["bisq", "sono lactente", "brief infant sleep"],
   "bisq-r": ["bisq r", "bisqr", "bisq revisado"],
   bears: ["bears", "bears sono", "triagem sono"],
@@ -175,7 +183,6 @@ export const scaleSearchAliases: Readonly<Record<string, readonly string[]>> = {
   "j26-146": ["autonomia alimentar"],
 
   // Funcionalidade / qualidade de vida / família
-  pedsql: ["pedsql", "peds ql", "qualidade de vida", "quality of life"],
   eaf: ["eaf", "adaptacao funcional"],
   "ead-np": ["ead", "comportamento adaptativo", "adaptativo"],
   "qec-np": ["qec", "estresse do cuidador", "sobrecarga cuidador"],
@@ -206,7 +213,6 @@ export const scaleSearchAliases: Readonly<Record<string, readonly string[]>> = {
   "vigia-med-24": ["vigia med", "tolerabilidade medicamentosa"],
   "balanco-med-24-sdg": ["balanco med", "beneficio tolerabilidade"],
   "j26-260": ["exames laboratoriais", "laboratorial medicacao"],
-  crafft: ["crafft", "uso de substancias", "alcool drogas adolescente"],
 
   // Banda larga autorais
   "ndi-360": ["ndi", "ndi 360", "ndi360"],

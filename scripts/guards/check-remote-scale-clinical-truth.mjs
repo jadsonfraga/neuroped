@@ -11,6 +11,8 @@
 import assert from "node:assert/strict";
 import {
   REMOTE_SCALE_IDS,
+  RETIRED_REMOTE_SCALES,
+  decodeRetiredRemoteAnswers,
   getRemoteScaleDescriptor,
 } from "../../shared/remoteScaleCatalog.ts";
 
@@ -27,8 +29,8 @@ function check(label, fn) {
 // editar esta lista de propósito, o que força a revisão do instrumento novo
 // (autorrelato/relato dos pais, sem item de risco de suicídio, sem exigir
 // examinador treinado) antes de chegar à família.
+// O M-CHAT-R saiu em 17/10/2026 (licenciado): só o histórico continua legível.
 const ALLOWLIST_REVISADA = [
-  "mchat",
   "q-chat-10",
   "psc17",
   "ari",
@@ -47,7 +49,6 @@ check("allowlist remota sob revisão clínica", () => {
 // Nº de itens que cada instrumento precisa ter para ser aquele instrumento.
 // Uma coleta truncada não é o instrumento: é um subconjunto sem escore válido.
 const ITENS_ESPERADOS = {
-  mchat: 20,
   "q-chat-10": 10,
   psc17: 17,
   ari: 6,
@@ -80,23 +81,16 @@ for (const id of REMOTE_SCALE_IDS) {
   });
 }
 
-// O app coleta só os 20 itens de triagem do M-CHAT-R. A entrevista de
-// seguimento (Follow-Up) exige entrevistador treinado percorrendo o branching,
-// então o descritor remoto não pode se apresentar como M-CHAT-R/F.
-check("M-CHAT remoto não se apresenta como R/F", () => {
-  const mchat = getRemoteScaleDescriptor("mchat");
-  assert.ok(mchat);
-  const texto = `${mchat.name} ${mchat.fullName}`;
-  assert.doesNotMatch(
-    texto,
-    /\bR\s*\/\s*F\b/,
-    "descritor remoto do M-CHAT voltou a se declarar R/F sem executar o Follow-Up",
-  );
-  assert.doesNotMatch(
-    texto,
-    /with\s+follow[-\s]?up/i,
-    "descritor remoto do M-CHAT voltou a alegar 'with Follow-Up' sem aplicar a entrevista",
-  );
+// Escala retirada (M-CHAT-R, licenciado): nenhum convite novo nem tela para a família,
+// e o histórico continua legível por número do item, sem o texto do instrumento.
+check("M-CHAT retirado do envio remoto, histórico legível", () => {
+  assert.equal(getRemoteScaleDescriptor("mchat"), null, "M-CHAT voltou ao envio remoto");
+  assert.ok(RETIRED_REMOTE_SCALES.mchat, "histórico do M-CHAT perdeu o decodificador");
+  const historico = decodeRetiredRemoteAnswers("mchat", [0, 1]);
+  assert.equal(historico.length, 20);
+  assert.deepEqual(historico[0], { label: "Item 1", value: "Sim" });
+  assert.deepEqual(historico[1], { label: "Item 2", value: "Não" });
+  assert.equal(historico[2].value, "—");
 });
 
 if (failures.length > 0) {
@@ -106,5 +100,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-  `✅ Verdade clínica remota: ${REMOTE_SCALE_IDS.length} instrumentos íntegros, sem alegação de Follow-Up não executado.`,
+  `✅ Verdade clínica remota: ${REMOTE_SCALE_IDS.length} instrumentos íntegros; M-CHAT retirado com histórico legível.`,
 );

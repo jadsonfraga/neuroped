@@ -5,7 +5,30 @@ run `36369651852` e o audit read-only `36370524799` (job `108765713935`).
 O código continua fail-closed e as regressões de provisionamento passaram; a
 produção clínica/LGPD permanece **NO-GO** até a prova remota ficar verde.
 
-## Evidência vigente em 28/09/2026
+## Atualização de 17/10/2026 — keyring clínico resolvido; resta o bucket R2
+
+Evidência sobre o HEAD `a2be6a76efcaf287a21d4ac5e4b9da609cb25e41` (deploy Cloudflare
+run `39065080910`, audit run `39067286705`, artefato
+`clinical-lgpd-readiness-39067286705`, metadata-only, sem valores de secret):
+
+- `cryptoDiagnostic`: `available=true`, `configured=true`, `code=null`.
+- `/api/health`: `clinicalCryptoConfigured=true`; o blocker `CLINICAL_CRYPTO_NOT_READY`
+  **não aparece mais** (Bloqueio 1 abaixo, resolvido pela custódia humana).
+- Continua aberto: `r2.apiPermission=denied`, `r2.bindingPresent=false`,
+  `lgpdExport.storageBindingPresent=false`, `lgpdExport.configured=false`. Blockers do
+  audit: `LGPD_BUCKET_NOT_CONFIGURED` e `LGPD_EXPORT_NOT_CONFIGURED`.
+- `ready=false`: o veredito segue **NO-GO** até o Bloqueio 2 fechar.
+
+Limite da evidência: `configured=true` prova que o keyring corrente é válido no runtime.
+Não prova que o ciphertext já gravado decifra com as chaves restauradas; isso é verificado
+pelo ensaio de backup/restore com cifra real (G4 em `docs/saas/gtm/PHASE3_GATE.md`).
+
+O que falta, e só o titular da conta Cloudflare pode fazer: acrescentar
+`Workers R2 Storage: Edit` ao token (atualizando o secret `CLOUDFLARE_API_TOKEN` do GitHub
+se o token for novo) e reexecutar o **Deploy Cloudflare Pages** do HEAD atual da `main`;
+os passos estão no Bloqueio 2.
+
+## Evidência vigente em 28/09/2026 (histórica)
 
 O artefato metadata-only `clinical-lgpd-readiness-36370524799` mostrou, sem
 ler valores de secret nem dados clínicos:
@@ -31,7 +54,7 @@ Esta atualização substitui a interpretação histórica de 26/09 de que os
 **nomes** dos secrets estavam ausentes. Hoje os nomes existem; o keyring
 corrente continua inválido no runtime.
 
-## Bloqueio 1 — keyring clínico (CLINICAL_CRYPTO_NOT_READY)
+## Bloqueio 1 — keyring clínico (CLINICAL_CRYPTO_NOT_READY) — RESOLVIDO em 17/10/2026
 
 Sistema: projeto Cloudflare Pages `neuroped`, secrets de produção.
 
