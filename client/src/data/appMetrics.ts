@@ -11,7 +11,10 @@ export const appMetrics = {
   filterableInstrumentCount: 269,
   supplementalFilterableCount: 21,
   directTestCount: 269,
+  /** Entradas da Farmacologia: o mesmo fármaco aparece em mais de uma indicação. */
   medicationCount: 142,
+  /** Fármacos distintos (nome sem acento e sem caixa). */
+  medicationDistinctCount: 94,
   medicationCategoryCount: 27,
   pageCount: 95,
   parentEducationCount: 33,

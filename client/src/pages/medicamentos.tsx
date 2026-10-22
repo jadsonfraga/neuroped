@@ -42,7 +42,7 @@ export default function MedicamentosPage() {
           </div>
           <div className="min-w-0 flex-1">
             <Badge className="mb-2 rounded-full bg-primary/10 text-primary hover:bg-primary/10">
-              {appMetrics.medicationCount} medicações · {appMetrics.medicationCategoryCount} categorias
+              {appMetrics.medicationDistinctCount} fármacos · {appMetrics.medicationCategoryCount} categorias
             </Badge>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">Medicamentos</h1>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">

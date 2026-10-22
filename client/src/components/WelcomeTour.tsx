@@ -7,7 +7,7 @@ import { softTap } from "@/lib/softSounds";
  * Tour guiado de boas-vindas.
  *
  * Ensina o **fluxo de trabalho**, não o inventário. A versão anterior abria com
- * "253 escalas, 269 itens filtráveis e 142 medicações": prova de amplitude que
+ * "253 escalas, 269 itens filtráveis e 94 fármacos": prova de amplitude que
  * não diz a ninguém como atender. Os números continuam presentes, mas como
  * apoio de um passo — a mensagem principal passou a ser a sequência real do
  * consultório: localizar paciente → escolher a tarefa → aplicar o instrumento →
