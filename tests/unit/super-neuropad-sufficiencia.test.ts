@@ -3,12 +3,12 @@ import test from "node:test";
 import { readFileSync } from "node:fs";
 import { circuitForAge, type CircuitRecords, type CircuitStatus } from "../../client/src/features/super-neuropad/clinicalCircuit";
 import {
-  linhasDeRevisao, pendenciasParaRevisao, matrizSuficiencia, REQUISITOS_LAUDO, resumoDaBateria, SUFICIENCIA_LABELS,
+  linhasDeRevisao, urgenciaAtiva, pendenciasParaRevisao, matrizSuficiencia, REQUISITOS_LAUDO, resumoDaBateria, SUFICIENCIA_LABELS,
   textoProntidao, type BateriaResumo, type LinhaSuficiencia, type SuficienciaStatus,
 } from "../../client/src/features/super-neuropad/sufficiencia";
 import type { GameSummary } from "../../client/src/features/super-neuropad/model";
 
-const records = (entries: Record<string, CircuitStatus>, source?: "examinador" | "cuidador" | "escola" | "outra"): CircuitRecords =>
+const records = (entries: Record<string, CircuitStatus>, source?: "examinador" | "auxiliar" | "cuidador" | "escola" | "outra"): CircuitRecords =>
   Object.fromEntries(Object.entries(entries).map(([id, status]) => [id, { status, note: "", ...(source ? { source } : {}) }]));
 
 const linha = (linhas: readonly LinhaSuficiencia[], id: string): LinhaSuficiencia => {
@@ -54,7 +54,7 @@ test("mesmo com todas as estações da faixa registradas, decisão médica e fon
   assert.ok(pendenciasParaRevisao(linhas) > 0, "ainda há pendências para revisão após o exame do jogo");
 });
 
-test("urgência: achado ou não realização em consciência, fundo de olho ou sinais meníngeos bloqueia a linha", () => {
+test("urgência: achado ou não realização em fundo de olho ou sinais meníngeos bloqueia a linha", () => {
   assert.equal(linha(matrizSuficiencia(7, records({ fundus: "achado" })), "urgencia").status, "a_esclarecer");
   assert.equal(linha(matrizSuficiencia(7, records({ consciencia: "observado", fundus: "observado", meningeal: "nao_realizado" })), "urgencia").status, "nao_obtido");
   assert.equal(linha(matrizSuficiencia(7, records({ consciencia: "observado", fundus: "observado" })), "urgencia").status, "pendente_execucao");
@@ -126,4 +126,9 @@ test("integridade estática: módulo puro, sem armazenamento, rede ou captura", 
   const source = readFileSync("client/src/features/super-neuropad/sufficiencia.ts", "utf8");
   assert.doesNotMatch(source, /(localStorage|sessionStorage|MediaRecorder|getUserMedia|fetch\(|XMLHttpRequest)/);
   assert.doesNotMatch(source, /https?:\/\//);
+});
+
+test("achado no acolhimento não dispara urgência; fonte da auxiliar não vale como exame direto do médico", () => {
+  assert.equal(urgenciaAtiva(matrizSuficiencia(7, records({ rapport: "achado" }, "auxiliar"))), false);
+  assert.notEqual(linha(matrizSuficiencia(9, records({ strength6: "observado" }, "auxiliar")), "forca").status, "examinado");
 });
