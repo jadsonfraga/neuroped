@@ -1,10 +1,20 @@
 import { useState } from "react";
-import { Baby, Move, Hand, MessageCircle, Users, AlertTriangle, AlertCircle } from "lucide-react";
+import { Baby, Move, Hand, MessageCircle, Users, AlertTriangle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 import { PageHero } from "@/components/PageHero";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
+import {
+  nextMarcoAnswer,
+  summarizeMarcos,
+  type MarcoAnswer,
+  type MarcosAnswers,
+} from "@/lib/marcosStatus";
+
+const RESPOSTAS: { value: MarcoAnswer; label: string }[] = [
+  { value: "sim", label: "Sim" },
+  { value: "ainda-nao", label: "Ainda não" },
+  { value: "nao-sei", label: "Não sei" },
+];
 
 interface Milestone {
   id: string;
@@ -579,120 +589,96 @@ const AGE_DATA: AgeData[] = [
   },
 ];
 
-function AgeTab({ data }: { data: AgeData }) {
-  // checked = milestone was observed/present (default: checked = done)
+function AgeTab({
+  data,
+  answers,
+  onAnswer,
+}: {
+  data: AgeData;
+  answers: MarcosAnswers;
+  onAnswer: (id: string, next: MarcoAnswer | undefined) => void;
+}) {
   const allIds = data.domains.flatMap((d) => d.milestones.map((m) => m.id));
-  const [checked, setChecked] = useState<Set<string>>(new Set(allIds)); // start all checked
-
-  function toggle(id: string) {
-    setChecked((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
-  const total = allIds.length;
-  const done = checked.size;
-  const missed = total - done;
-  const progress = Math.round((done / total) * 100);
-
-  // Per-domain missed count
-  const domainMissed = data.domains.map((d) => ({
-    name: d.name,
-    missed: d.milestones.filter((m) => !checked.has(m.id)).length,
-  }));
-  const maxDomainMissed = Math.max(...domainMissed.map((d) => d.missed));
-
-  const showDomainWarning = maxDomainMissed >= 2;
-  const showTotalWarning = missed >= 4;
+  const summary = summarizeMarcos(allIds, answers);
 
   return (
     <div className="space-y-4">
-      {/* Progress */}
-      <div className="space-y-1.5">
-        <div className="flex justify-between items-center text-xs text-muted-foreground">
-          <span>Marcos atingidos</span>
-          <span className={`font-semibold ${done === total ? "text-emerald-600" : done < total * 0.75 ? "text-amber-600" : "text-foreground"}`}>
-            {done}/{total}
-          </span>
-        </div>
-        <Progress value={progress} className="h-2" />
+      <div
+        className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground"
+        aria-live="polite"
+        data-testid="marcos-resumo"
+      >
+        <span>Sim: <strong className="text-foreground">{summary.sim}</strong></span>
+        <span>Ainda não: <strong className="text-foreground">{summary.aindaNao}</strong></span>
+        <span>Não sei: <strong className="text-foreground">{summary.naoSei}</strong></span>
+        <span>Sem resposta: <strong className="text-foreground">{summary.semResposta}</strong></span>
       </div>
 
-      {/* Alerts */}
-      {showTotalWarning && (
-        <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400">
-          <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+      {summary.aindaNao > 0 && (
+        <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300">
+          <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" aria-hidden="true" />
           <p className="text-xs font-medium">
-            {missed} ou mais marcos não atingidos — <strong>encaminhar para avaliação especializada</strong>.
-          </p>
-        </div>
-      )}
-      {!showTotalWarning && showDomainWarning && (
-        <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400">
-          <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-          <p className="text-xs font-medium">
-            Atenção — 2 ou mais marcos ausentes em um domínio. Considerar avaliação especializada.
+            Há marcos marcados como &quot;ainda não&quot;. Leve esta lista ao pediatra para conversar sobre eles.
           </p>
         </div>
       )}
 
-      {/* Domains */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {data.domains.map((domain) => {
-          const domainMissedCount = domain.milestones.filter((m) => !checked.has(m.id)).length;
-          return (
-            <div
-              key={domain.name}
-              className={`rounded-xl border p-4 space-y-3 ${
-                domainMissedCount >= 2
-                  ? "border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-950/20"
-                  : "border-border bg-card"
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <domain.icon className={`w-4 h-4 ${domain.color}`} />
-                <h3 className="text-xs font-semibold text-foreground">{domain.name}</h3>
-                {domainMissedCount >= 2 && (
-                  <Badge variant="outline" className="ml-auto text-[10px] border-amber-400 text-amber-700 dark:text-amber-400">
-                    Atenção
-                  </Badge>
-                )}
-              </div>
-              <div className="space-y-2">
-                {domain.milestones.map((milestone) => (
-                  <div key={milestone.id} className="flex items-start gap-2.5">
-                    <Checkbox
-                      id={milestone.id}
-                      checked={checked.has(milestone.id)}
-                      onCheckedChange={() => toggle(milestone.id)}
-                      data-testid={`checkbox-${milestone.id}`}
-                      className="mt-0.5 flex-shrink-0"
-                    />
-                    <label
-                      htmlFor={milestone.id}
-                      className={`text-xs cursor-pointer leading-snug ${
-                        checked.has(milestone.id)
-                          ? "text-foreground"
-                          : "text-muted-foreground line-through"
-                      }`}
-                    >
-                      {milestone.label}
-                    </label>
-                  </div>
-                ))}
-              </div>
+        {data.domains.map((domain) => (
+          <div key={domain.name} className="rounded-xl border border-border bg-card p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <domain.icon className={`w-4 h-4 ${domain.color}`} aria-hidden="true" />
+              <h3 className="text-xs font-semibold text-foreground">{domain.name}</h3>
             </div>
-          );
-        })}
+            <div className="space-y-3">
+              {domain.milestones.map((milestone) => {
+                const current = answers[milestone.id];
+                const labelId = `${milestone.id}-label`;
+                return (
+                  <div key={milestone.id} className="space-y-1.5">
+                    <p id={labelId} className="text-xs leading-snug text-foreground">
+                      {milestone.label}
+                    </p>
+                    <div role="group" aria-labelledby={labelId} className="flex flex-wrap gap-1.5">
+                      {RESPOSTAS.map((resposta) => (
+                        <Button
+                          key={resposta.value}
+                          type="button"
+                          variant={current === resposta.value ? "default" : "outline"}
+                          size="sm"
+                          aria-pressed={current === resposta.value}
+                          data-testid={`marco-${milestone.id}-${resposta.value}`}
+                          className="h-7 px-2.5 text-[11px]"
+                          onClick={() => onAnswer(milestone.id, nextMarcoAnswer(current, resposta.value))}
+                        >
+                          {resposta.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
 
 export default function MarcosDesenvolvimentoPage() {
+  // Estado na página: a aba de cada idade é desmontada ao trocar de idade.
+  const [answersByAge, setAnswersByAge] = useState<Record<string, MarcosAnswers>>({});
+
+  function handleAnswer(age: string, id: string, next: MarcoAnswer | undefined) {
+    setAnswersByAge((prev) => {
+      const ageAnswers = { ...(prev[age] ?? {}) };
+      if (next === undefined) delete ageAnswers[id];
+      else ageAnswers[id] = next;
+      return { ...prev, [age]: ageAnswers };
+    });
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -700,14 +686,14 @@ export default function MarcosDesenvolvimentoPage() {
         icon={Baby}
         eyebrow="desenvolvimento infantil"
         title="Marcos do Desenvolvimento"
-        subtitle="Checklist baseado nos marcos OMS/CDC. Desmarque os marcos não atingidos para avaliação."
+        subtitle="Checklist baseado nos marcos OMS/CDC. Responda marco por marco; não há pontuação."
         gradient="from-amber-500 to-orange-500"
       />
 
       <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2 flex items-start gap-2">
-        <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-amber-500" />
+        <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-amber-500" aria-hidden="true" />
         <span>
-          Por padrão todos os marcos estão marcados como atingidos. <strong>Desmarque</strong> os que a criança ainda não apresenta.
+          Deixar um marco em branco <strong>não</strong> significa que a criança já o atingiu. Escolha &quot;Sim&quot;, &quot;Ainda não&quot; ou &quot;Não sei&quot; para cada um.
         </span>
       </div>
 
@@ -725,13 +711,17 @@ export default function MarcosDesenvolvimentoPage() {
               <h2 className="text-base font-semibold text-foreground">Marcos dos {a.label}</h2>
               <span className="text-xs text-muted-foreground">(OMS / CDC)</span>
             </div>
-            <AgeTab data={a} />
+            <AgeTab
+              data={a}
+              answers={answersByAge[a.age] ?? {}}
+              onAnswer={(id, next) => handleAnswer(a.age, id, next)}
+            />
           </TabsContent>
         ))}
       </Tabs>
 
       <p className="text-xs text-muted-foreground border-t pt-4">
-        Fonte: WHO Child Growth Standards, CDC Developmental Milestones (domínio público). Este checklist não substitui avaliação clínica formal.
+        Fonte: WHO Child Growth Standards, CDC Developmental Milestones (domínio público). Este checklist não substitui avaliação clínica formal. As respostas ficam apenas nesta tela e não são salvas nem enviadas.
       </p>
     </div>
   );

@@ -99,6 +99,7 @@ const EscalasNeuropsiquiatriaPage = lazy(
 );
 const CaaPage = lazy(() => import("@/pages/caa"));
 const DiarioSonoPage = lazy(() => import("@/pages/diario-sono"));
+const HojePage = lazy(() => import("@/pages/hoje"));
 const DiarioAlimentarPage = lazy(() => import("@/pages/diario-alimentar"));
 const DiarioAderenciaPage = lazy(() => import("@/pages/diario-aderencia"));
 const DiarioDesregulacaoPage = lazy(() => import("@/pages/diario-desregulacao"));
@@ -347,6 +348,7 @@ function AppRouter() {
             />
             <Route path="/caa" component={CaaPage} />
             <Route path="/diario-sono" component={DiarioSonoPage} />
+            <Route path="/hoje" component={HojePage} />
             <Route path="/diario-alimentar" component={DiarioAlimentarPage} />
             <Route path="/diario-aderencia" component={DiarioAderenciaPage} />
             <Route path="/diario-desregulacao" component={DiarioDesregulacaoPage} />

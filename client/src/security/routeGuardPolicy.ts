@@ -39,6 +39,7 @@ export const SENSITIVE_ROUTES = [
   "/epilepsia",
   "/cefaleia",
   "/diario-sono",
+  "/hoje",
   "/diario-alimentar",
   "/diario-aderencia",
   "/diario-desregulacao",
