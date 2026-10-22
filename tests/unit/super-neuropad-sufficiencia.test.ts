@@ -66,7 +66,7 @@ test("urgência: exige achado do examinador; registros de auxiliar, familiares e
       const linhas = matrizSuficiencia(7, records({ [estacao]: "achado" }, source));
       assert.equal(linha(linhas, "urgencia").status, "pendente_execucao", `fonte ${source ?? "ausente"} na estação ${estacao}`);
       assert.equal(urgenciaAtiva(linhas), false, "achado sem exame direto não é alerta de urgência do examinador");
-      assert.doesNotMatch(textoProntidao(7, linhas).join("\\n"), /ATENÇÃO CLÍNICA:/);
+      assert.doesNotMatch(textoProntidao(7, linhas).join("\n"), /ATENÇÃO CLÍNICA:/);
     }
   }
   const exameMedico = matrizSuficiencia(7, records({ meningeal: "achado" }, "examinador"));
