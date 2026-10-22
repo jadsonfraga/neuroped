@@ -124,8 +124,10 @@ test("relatório: cobertura por domínio, fonte de cada registro, urgência e se
   assert.doesNotMatch(report, /diagnóstico: [A-Z]/i);
 });
 
-test("catálogo de fontes: quatro origens nomeadas, incluindo relato de cuidador e escola", () => {
-  assert.deepEqual(Object.keys(CIRCUIT_SOURCES).sort(), ["cuidador", "escola", "examinador", "outra"]);
+test("catálogo de fontes: distingue observação da assistente, do examinador e relatos externos", () => {
+  assert.deepEqual(Object.keys(CIRCUIT_SOURCES).sort(), ["assistente", "cuidador", "escola", "examinador", "outra"]);
+  assert.match(CIRCUIT_SOURCES.assistente, /assistente/);
+  assert.match(CIRCUIT_SOURCES.examinador, /examinador/);
 });
 
 test("demonstrações: apenas estações cadastradas, animações sem pessoa real, movimento reduzível", () => {
