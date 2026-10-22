@@ -8,6 +8,7 @@ import {
 } from "./clinicalCircuit";
 import { ClinicalDemo } from "./ClinicalDemo";
 import { MISSOES } from "./missoes";
+import { PRECONSULTA_MISSOES, tarefasDaAssistente } from "./preconsulta";
 import {
   CAMPO_LABELS, camposPendentes, detalheObrigatorio, linhaObrigatorio, resumoObrigatorio,
   type EstadoMissao, type ResumoObrigatorio,
@@ -63,6 +64,12 @@ import { ESTADO_ITEM_LABELS, estadoItem, guiasAplicaveis, type EstadoItem } from
 type CircuitTab = CircuitArea | "cobertura";
 
 /** Resultados em linguagem de jogo. Cada um corresponde a um estado clínico já existente. */
+const RESULTADOS_ASSISTENTE: readonly { status: CircuitStatus; label: string; dica: string }[] = [
+  { status: "observado", label: "⭐ Consegui observar", dica: "Marque o que realmente aconteceu" },
+  { status: "achado", label: "📝 Quero avisar o médico", dica: "Descreva o que viu ou ouviu" },
+  { status: "nao_colaborou", label: "🙅 Não quis agora", dica: "Sem insistir" },
+  { status: "nao_realizado", label: "⏭️ Não aconteceu", dica: "Não presumir resultado" },
+];
 const RESULTADOS: readonly { status: CircuitStatus; label: string; dica: string }[] = [
   { status: "observado", label: "⭐ Conseguiu", dica: "Registrado como realizado" },
   { status: "achado", label: "🤔 Teve dificuldade", dica: "Vai para revisão do médico" },
@@ -198,6 +205,7 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
   years: number | null; visible: boolean; bateria?: BateriaResumo | null; onProgresso?: (progresso: ProgressoCircuito | null) => void;
 }) {
   const [tab, setTab] = useState<CircuitTab>("neurologico");
+  const [perfilOperador, setPerfilOperador] = useState<"assistente" | "medico">("assistente");
   const [active, setActive] = useState(0);
   const [statuses, setStatuses] = useState<Record<string, CircuitStatus>>({});
   const [marks, setMarks] = useState<Record<string, string[]>>({});
@@ -209,15 +217,20 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
   const [orientacaoAberta, setOrientacaoAberta] = useState(false);
   const area: CircuitArea = tab === "mental" ? "mental" : "neurologico";
   const all = years === null ? [] : circuitForAge(years);
-  const tasks = years === null ? [] : circuitForAge(years, area);
+  const preparacao = years === null ? [] : tarefasDaAssistente(years);
+  const tasks = years === null ? [] : perfilOperador === "assistente" ? tarefasDaAssistente(years, area) : circuitForAge(years, area);
   const task = tasks[Math.min(active, tasks.length - 1)];
   const demo = task ? STATION_DEMO[task.id] : undefined;
   const estados: Record<string, EstadoMissao> = Object.fromEntries(all.map((entry) =>
     [entry.id, { status: statuses[entry.id], source: sources[entry.id], marcadores: marks[entry.id] ?? [], descricao: notes[entry.id] ?? "" }]));
   const resumo = years === null ? null : resumoObrigatorio(years, estados, generalNote);
   const faltamDe = (id: string) => camposPendentes(estados[id] ?? {});
+  const preparoConcluidas = preparacao.filter((entry) => faltamDe(entry.id).length === 0).length;
   const marcaDe = (id: string) => (faltamDe(id).length === 0 ? " ✓" : statuses[id] ? " ⚠" : "");
-  const countFor = (option: CircuitArea) => `${all.filter((entry) => entry.area === option && faltamDe(entry.id).length === 0).length}/${all.filter((entry) => entry.area === option).length}`;
+  const countFor = (option: CircuitArea) => {
+    const grupo = perfilOperador === "assistente" ? preparacao : all;
+    return `${grupo.filter((entry) => entry.area === option && faltamDe(entry.id).length === 0).length}/${grupo.filter((entry) => entry.area === option).length}`;
+  };
   const anotacaoDe = (id: string) => notaDeEstacao(statuses[id], marks[id] ?? [], notes[id] ?? "");
   const records: CircuitRecords = Object.fromEntries(all.filter((entry) => statuses[entry.id]).map((entry) =>
     [entry.id, { status: statuses[entry.id], note: anotacaoDe(entry.id), source: sources[entry.id], descricao: notes[entry.id] || "" }]));
@@ -234,6 +247,7 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
   const irParaMissao = (id: string) => {
     const alvo = all.find((entry) => entry.id === id);
     if (!alvo) return;
+    setPerfilOperador("medico");
     setTab(alvo.area);
     setActive(Math.max(0, circuitForAge(years, alvo.area).findIndex((entry) => entry.id === id)));
     setFeedback("");
@@ -265,7 +279,8 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
     if (!window.confirm("Apagar apenas as observações do circuito complementar desta criança? A bateria principal não será alterada.")) return;
     setStatuses({}); setMarks({}); setNotes({}); setSources({}); setGeneralNote(""); setActive(0); setTab("neurologico"); setFeedback("");
   };
-  const missao = task ? MISSOES[task.id] : undefined;
+  const missaoRapida = perfilOperador === "assistente" && task ? PRECONSULTA_MISSOES[task.id] : undefined;
+  const missao = missaoRapida ?? (task ? MISSOES[task.id] : undefined);
   const perfil = perfilAnual(years);
   const dicaEtaria = task ? dicaDeMissaoPorIdade(years, task) : null;
   const pistasMarcadas = task ? (marks[task.id] ?? []) : [];
@@ -275,16 +290,40 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
         <div>
           <h2 className="snp-pixel flex items-center gap-2 text-base"><Stethoscope className="h-5 w-5" /> Missões clínicas obrigatórias</h2>
           <p className="mt-2 max-w-3xl text-sm font-semibold">
-            Parte obrigatória da avaliação: exame neurológico e estado mental · v{CIRCUIT_VERSION} · {years} anos. Supervisão profissional.
+            {perfilOperador === "assistente" ? "Pré-consulta: observação durante o jogo e perguntas breves ao responsável." : "Revisão médica: exame neurológico e estado mental."} · v{CIRCUIT_VERSION} · {years} anos.
             Não altera os seis mundos, o tempo da partida, XP ou pontuação. Nenhuma tarefa isolada estabelece diagnóstico.
           </p>
         </div>
-        <span className="snp-chip bg-[var(--snp-sun-tint)]" aria-live="polite">{resumo.concluidas}/{resumo.total} missões concluídas</span>
+        <span className="snp-chip bg-[var(--snp-sun-tint)]" aria-live="polite">{perfilOperador === "assistente" ? `${preparoConcluidas}/${preparacao.length} observações` : `${resumo.concluidas}/${resumo.total} registros`}</span>
       </div>
+      <div className="grid gap-2 sm:grid-cols-2" role="group" aria-label="Quem está aplicando">
+        <button type="button" aria-pressed={perfilOperador === "assistente"}
+          className={`snp-option min-h-14 p-3 text-left text-sm font-black ${perfilOperador === "assistente" ? "bg-[var(--snp-grass-tint)]" : "bg-[var(--snp-paper-fixed)]"}`}
+          onClick={() => { setPerfilOperador("assistente"); setTab("neurologico"); setActive(0); setFeedback(""); }}>
+          🎮 Pré-consulta · assistente
+          <span className="block text-xs font-semibold">Observe enquanto a criança joga; não refaça testes.</span>
+        </button>
+        <button type="button" aria-pressed={perfilOperador === "medico"}
+          className={`snp-option min-h-14 p-3 text-left text-sm font-black ${perfilOperador === "medico" ? "bg-[var(--snp-sky-tint)]" : "bg-[var(--snp-paper-fixed)]"}`}
+          onClick={() => { setPerfilOperador("medico"); setTab("neurologico"); setActive(0); setFeedback(""); }}>
+          🩺 Avaliação médica
+          <span className="block text-xs font-semibold">Exame direto, entrevistas reservadas e revisão de lacunas.</span>
+        </button>
+      </div>
+      {perfilOperador === "assistente" && (
+        <div className="snp-panel snp-panel--soft space-y-2 p-3" role="note" data-testid="super-neuropad-preconsulta-help">
+          <p className="text-sm font-black">🏅 Trilha de observação · {preparoConcluidas} de {preparacao.length} medalhas de registro</p>
+          <div role="progressbar" aria-label="Progresso da pré-consulta" aria-valuemin={0} aria-valuemax={preparacao.length} aria-valuenow={preparoConcluidas}
+            className="h-3 w-full overflow-hidden rounded-full bg-white">
+            <div className="h-full rounded-full bg-[var(--snp-grass)]" style={{ width: `${preparacao.length ? (preparoConcluidas / preparacao.length) * 100 : 0}%` }} />
+          </div>
+          <p className="text-xs font-semibold">As medalhas representam somente registros preenchidos, nunca desempenho da criança. Faça as observações durante os seis mundos, sem repetir atividades. O exame médico permanece pendente e separado.</p>
+        </div>
+      )}
       <div className="snp-panel snp-panel--soft p-3 text-xs font-semibold" role="note">
         <ShieldAlert className="mr-1 inline-block h-4 w-4" />
-        Atividade lúdica de observação: avise o responsável antes de iniciar. Os toques registram o que foi percebido. Em cada missão são obrigatórios o resultado, quem informou e um marcador ou descrição (descrição do achado em “Teve dificuldade”), e nenhuma etapa trava a próxima.
-        Exame presencial é feito pelo profissional para inferir força, tônus, reflexos, pares cranianos ou sensibilidade. Vídeos e animações são demonstrações da técnica, nunca gravações da criança.
+        Avise o responsável antes de iniciar. Registre somente o que foi visto ou relatado: escolha o resultado, a fonte e um marcador ou descrição. Se precisar avisar o médico, descreva o fato; nenhuma etapa trava a próxima.
+        Exame de força, tônus, reflexos, pares cranianos, sensibilidade e entrevista reservada são exclusivos da avaliação médica; não são tarefas da assistente. As animações não gravam a criança.
       </div>
       <div className="snp-panel snp-panel--soft p-3 text-xs font-semibold" role="note" data-testid="super-neuropad-clinical-urgency">
         <ShieldAlert className="mr-1 inline-block h-4 w-4" />
@@ -302,10 +341,10 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
       )}
       <div className="flex flex-wrap gap-2" role="group" aria-label="Área clínica">
         {([
-          { key: "neurologico", label: `🧠 Exame neurológico · ${countFor("neurologico")}` },
-          { key: "mental", label: `💬 Estado mental · ${countFor("mental")}` },
+          { key: "neurologico", label: `${perfilOperador === "assistente" ? "👀 Observar no jogo" : "🧠 Exame neurológico"} · ${countFor("neurologico")}` },
+          { key: "mental", label: `${perfilOperador === "assistente" ? "💬 Conversar e acolher" : "💬 Estado mental"} · ${countFor("mental")}` },
           { key: "cobertura", label: "🧭 Cobertura e lacunas" },
-        ] as const).map((option) => (
+        ] as const).filter((option) => perfilOperador === "medico" || option.key !== "cobertura").map((option) => (
           <button key={option.key} type="button" aria-pressed={tab === option.key} onClick={() => { setTab(option.key); setActive(0); setFeedback(""); }}
             className={`snp-option min-h-11 px-4 py-2 text-sm font-black ${tab === option.key ? "bg-[var(--snp-sun)]" : "bg-[var(--snp-paper-fixed)]"}`}>
             {option.label}
@@ -327,13 +366,19 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
         <article className="snp-panel snp-panel--soft space-y-4 p-4" data-testid="super-neuropad-clinical-station">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="snp-chip">Missão {active + 1} de {tasks.length} · {task.domain}</span>
-            <span className="snp-chip">{CIRCUIT_METHODS[task.method]}</span>
+            <span className="snp-chip">{perfilOperador === "assistente" ? (task.id === "milestones" || task.id === "sleep" ? "Relato do responsável" : "Observação durante a aventura") : CIRCUIT_METHODS[task.method]}</span>
           </div>
           <h3 className="text-xl font-black">{task.emoji} {task.title}</h3>
-          {dicaEtaria && <p className="rounded-xl border-2 border-[var(--snp-ink-40)] bg-white p-3 text-sm font-semibold text-[var(--snp-ink-fixed)]"
+          {missaoRapida && (
+            <div className="rounded-xl border-2 border-[var(--snp-ink-40)] bg-white p-3 text-[var(--snp-ink-fixed)]">
+              <p className="text-lg font-black">{missaoRapida.convite}</p>
+              <p className="mt-2 text-xs font-semibold">🧰 {missaoRapida.material} · ⏱️ {missaoRapida.momento}</p>
+            </div>
+          )}
+          {perfilOperador === "medico" && dicaEtaria && <p className="rounded-xl border-2 border-[var(--snp-ink-40)] bg-white p-3 text-sm font-semibold text-[var(--snp-ink-fixed)]"
             data-testid="super-neuropad-age-station-guidance">{dicaEtaria}</p>}
           <div className="space-y-2">
-            <h4 className="text-sm font-black">{task.method === "presencial" ? "Passo a passo do examinador" : "Passo a passo da brincadeira"}</h4>
+            <h4 className="text-sm font-black">{perfilOperador === "assistente" ? "3 passos fáceis · durante a aventura" : task.method === "presencial" ? "Passo a passo do examinador" : "Passo a passo da brincadeira"}</h4>
             <ol className="space-y-2">
               {missao.passos.map((passo, index) => (
                 <li key={passo} className="flex gap-3 rounded-xl bg-white p-3 text-sm font-semibold text-[var(--snp-ink-fixed)]">
@@ -343,9 +388,9 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
               ))}
             </ol>
           </div>
-          {demo && <ClinicalDemo kind={demo} />}
+          {perfilOperador === "medico" && demo && <ClinicalDemo kind={demo} />}
           {task.safety && <div className="rounded-xl border-2 border-amber-700 bg-amber-50 p-3 text-sm font-semibold text-amber-950" role="alert">{task.safety}</div>}
-          {task.video && <a className="snp-chip inline-flex min-h-11 items-center gap-2 bg-[var(--snp-sky-tint)]"
+          {perfilOperador === "medico" && task.video && <a className="snp-chip inline-flex min-h-11 items-center gap-2 bg-[var(--snp-sky-tint)]"
             href={CIRCUIT_VIDEO_LINKS[task.video].url} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer">
             <ExternalLink className="h-4 w-4" /> Ver vídeo demonstrativo: {CIRCUIT_VIDEO_LINKS[task.video].label}
           </a>}
@@ -363,7 +408,7 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
           <fieldset className="space-y-2">
             <legend className="text-sm font-black">Como foi? (obrigatório)</legend>
             <div className="grid gap-2 sm:grid-cols-2">
-              {RESULTADOS.map((opcao) => (
+              {(perfilOperador === "assistente" ? RESULTADOS_ASSISTENTE : RESULTADOS).map((opcao) => (
                 <button key={opcao.status} type="button" aria-pressed={statuses[task.id] === opcao.status} onClick={() => escolherResultado(opcao.status)}
                   className={`snp-option flex min-h-14 flex-col items-start gap-1 px-3 py-2 text-left text-sm font-black ${statuses[task.id] === opcao.status ? (opcao.status === "achado" ? "bg-[var(--snp-berry-tint)]" : "bg-[var(--snp-grass-tint)]") : "bg-[var(--snp-paper-fixed)]"}`}>
                   <span>{opcao.label}</span>
@@ -376,7 +421,7 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
           <fieldset className="space-y-2">
             <legend className="text-sm font-black">Quem informou (obrigatório) — sem escolha, a missão não conta como concluída</legend>
             <div className="flex flex-wrap gap-2">
-              {(Object.entries(CIRCUIT_SOURCES) as [CircuitSource,string][]).map(([key,label]) =>
+              {(Object.entries(CIRCUIT_SOURCES) as [CircuitSource,string][]).filter(([key]) => perfilOperador === "medico" || key === "examinador" || key === "cuidador").map(([key,label]) =>
                 <button key={key} type="button" aria-pressed={sources[task.id] === key}
                   onClick={() => { setSources((prior) => ({...prior,[task.id]:key})); setFeedback(""); }}
                   className={`snp-option min-h-11 px-3 py-2 text-left text-xs font-semibold ${sources[task.id] === key ? "bg-[var(--snp-sky-tint)]" : "bg-[var(--snp-paper-fixed)]"}`}>
@@ -393,12 +438,12 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
                 placeholder="Fatos observados, condições, lateralidade e limitações. Evite identificadores pessoais." />
             )}
           </div>
-          <div className="space-y-2 text-sm">
+          {perfilOperador === "medico" && <div className="space-y-2 text-sm">
             <button type="button" aria-expanded={orientacaoAberta} onClick={() => setOrientacaoAberta((aberta) => !aberta)}
               className="snp-option min-h-11 px-4 py-2 text-left text-xs font-black bg-[var(--snp-paper-fixed)]">{orientacaoAberta ? "▾" : "▸"} Orientação clínica completa</button>
             {orientacaoAberta && <p className="font-semibold leading-relaxed">{task.guide}</p>}
-          </div>
-          <p className="text-xs font-semibold opacity-80"><strong>Documentar:</strong> {task.observe}</p>
+          </div>}
+          {perfilOperador === "medico" && <p className="text-xs font-semibold opacity-80"><strong>Documentar:</strong> {task.observe}</p>}
           <MissaoStatus faltam={faltamDe(task.id)} />
           <div className="flex flex-wrap items-center justify-between gap-2">
             <button type="button" onClick={previous}
@@ -461,11 +506,11 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
           </div>
         </article>
       )}
-      <label className="block text-sm font-black">Síntese final do examinador (obrigatória)
+      {perfilOperador === "medico" && <label className="block text-sm font-black">Síntese final do examinador (obrigatória)
         <textarea rows={2} maxLength={2000} value={generalNote} onChange={(event) => setGeneralNote(event.target.value)}
           className="mt-2 w-full rounded-xl border-2 border-[var(--snp-ink-fixed)] bg-white p-3 text-sm font-normal text-[var(--snp-ink-fixed)]"
           placeholder="Limitações, necessidade de exame dirigido ou informações de fonte distinta, com proveniência." />
-      </label>
+      </label>}
       <div className="flex flex-wrap gap-2">
         <button type="button" onClick={() => void copyReport()}
           className="snp-btn snp-btn--sun inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm"><ClipboardCopy className="h-4 w-4" /> Copiar registro clínico</button>
