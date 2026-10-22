@@ -79,3 +79,18 @@
 @media (prefers-reduced-motion: reduce) {
   .snp-btn, .snp-option, .snp-xp * { transition: none !important; animation: none !important; }
 }
+
+/* Melhorias isoladas: leitura dos comandos durante a aplicação, sem alterar o jogo. */
+.snp .snp-clinical-instruction { font-size: clamp(1rem, 1.4vw, 1.2rem); line-height: 1.55; overflow-wrap: anywhere; }
+.snp .snp-clinical-criterion { font-size: 1rem; line-height: 1.55; overflow-wrap: anywhere; }
+
+/* Quebra de linha em textos longos (opções, botões, contadores) para caber no celular. */
+.snp .snp-hearts { flex-wrap: wrap; max-width: 100%; }
+.snp .snp-option, .snp .snp-btn { overflow-wrap: anywhere; }
+.snp .snp-chip { white-space: normal; overflow-wrap: anywhere; }
+
+/* Apresentação mais sóbria a partir de 13 anos, sem alterar conteúdo nem desafios. */
+.snp[data-age-style="adolescente"] .snp-scanlines::after { background: none; }
+.snp[data-age-style="adolescente"] .snp-sprite { filter: none; }
+.snp[data-age-style="adolescente"] .snp-panel { border-radius: 14px; box-shadow: 2px 3px 0 var(--snp-shadow); }
+.snp[data-age-style="adolescente"] .snp-btn { border-radius: 10px; box-shadow: 0 3px 0 var(--snp-ink-fixed); }

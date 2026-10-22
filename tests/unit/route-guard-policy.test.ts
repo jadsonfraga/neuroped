@@ -125,6 +125,9 @@ const REQUIRED_SENSITIVE_ROUTES = [
   "/cefaleia",
   "/diario-sono",
   "/diario-alimentar",
+  "/diario-aderencia",
+  "/diario-desregulacao",
+  "/diario-dieta-sensorial",
   "/recepcao",
 ] as const;
 const sensitiveRouteSet = new Set<string>(SENSITIVE_ROUTES);

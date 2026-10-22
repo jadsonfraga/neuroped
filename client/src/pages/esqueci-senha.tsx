@@ -53,7 +53,7 @@ export default function ForgotPasswordPage() {
           <div className="flex items-center gap-3">
             <MailCheck className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
             <p className="text-sm leading-relaxed text-foreground">
-              Se existir uma conta ativa para <span className="font-semibold">{email.trim()}</span>, as instruções de redefinição chegarão em instantes.
+              Sua solicitação foi recebida. Se existir uma conta ativa para <span className="font-semibold">{email.trim()}</span>, o sistema tentará enviar instruções de redefinição. A entrega ainda não foi confirmada.
             </p>
           </div>
           <p className="text-xs leading-relaxed text-muted-foreground">

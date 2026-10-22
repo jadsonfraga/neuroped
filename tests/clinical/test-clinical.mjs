@@ -33,6 +33,7 @@ const PRIO = { triagem: 0, diagnostica: 1, monitorizacao: 2 };
 // Rotas de diário/monitorização e a queixa a que cada uma legitimamente pertence.
 const DIARY_ROUTES = new Set([
   "/diario-sono", "/diario-alimentar", "/diario-escola",
+  "/diario-aderencia", "/diario-desregulacao", "/diario-dieta-sensorial",
   "/epilepsia", "/cefaleia",
 ]);
 const DIARY_QUEIXAS = new Set(["epilepsia", "dor", "sono", "alimentacao"]);

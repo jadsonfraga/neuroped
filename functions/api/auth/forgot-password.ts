@@ -2,8 +2,10 @@
  * POST /api/auth/forgot-password — solicita redefinição de senha self-service.
  *
  * Invariantes de segurança:
- * - resposta SEMPRE 202 genérica (anti-enumeração de contas), inclusive quando
- *   o backend/entrega está indisponível ou o e-mail não existe;
+ * - resposta 202 genérica (anti-enumeração de contas) quando o e-mail não
+ *   existe, o rate limit estoura ou a entrega falha. O estado do PROVEDOR (sem
+ *   Resend configurado) é do produto, não da conta: 503 BLOCKED_EXTERNAL_RESEND
+ *   igual para qualquer e-mail, antes de qualquer consulta ao banco;
  * - rate limit persistente por bucket HMAC de IP (sobrevive a cold starts), com
  *   balde sentinela compartilhado quando o IP não é identificável — ausência de
  *   CF-Connecting-IP nunca libera a requisição;
@@ -30,7 +32,7 @@ function genericAccepted(): Response {
   return json(
     {
       ok: true,
-      message: "Se existir uma conta ativa para este e-mail, enviaremos instruções de redefinição.",
+      message: "Solicitação recebida. Se existir uma conta ativa para este e-mail, o envio será tentado.",
     },
     202,
   );
@@ -155,6 +157,17 @@ export const onRequestPost: PagesFunction<PasswordResetDeliveryEnv> = async (con
   const db = context.env.DB;
   const secret = context.env.NEUROPED_JWT_SECRET?.trim();
   if (!db || !secret || secret.length < 32) return genericAccepted();
+  if (!passwordResetDeliveryConfigured(context.env)) {
+    return json(
+      {
+        error:
+          "A recuperação por e-mail não está configurada nesta instalação. Nenhum e-mail foi enviado.",
+        code: "PASSWORD_RESET_NOT_CONFIGURED",
+        blockedExternal: "BLOCKED_EXTERNAL_RESEND",
+      },
+      503,
+    );
+  }
 
   try {
     const allowed = await consumeResetAttempt(db, secret, context.request);
@@ -176,8 +189,10 @@ export const onRequestPost: PagesFunction<PasswordResetDeliveryEnv> = async (con
 
   const email = normalizeEmail(parsed.email);
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return genericAccepted();
-  if (!passwordResetDeliveryConfigured(context.env)) return genericAccepted();
 
+  // Tudo o que depende de a conta existir sai da resposta (waitUntil no fim):
+  // conta existente e inexistente respondem no mesmo tempo.
+  const work = async (): Promise<void> => {
   // match_count na mesma consulta: um LIMIT 1 sozinho faria o SQLite entregar a
   // conta que o plano de execução escolher entre duas que só diferem na caixa
   // do e-mail, e o link de redefinição poderia chegar à conta errada. A 0022
@@ -191,16 +206,16 @@ export const onRequestPost: PagesFunction<PasswordResetDeliveryEnv> = async (con
     )
     .bind(email, email)
     .first<{ id: string; email: string; match_count: number }>();
-  if (!user) return genericAccepted();
+  if (!user) return;
   if (Number(user.match_count) > 1) {
     console.error("[auth/forgot-password] identidade de e-mail ambígua — reset não emitido", {
       matches: Number(user.match_count),
     });
-    return genericAccepted();
+    return;
   }
 
   const e2eEmail = context.env.NEUROPED_E2E_EMAIL?.trim().toLowerCase();
-  if (e2eEmail && user.email.trim().toLowerCase() === e2eEmail) return genericAccepted();
+  if (e2eEmail && user.email.trim().toLowerCase() === e2eEmail) return;
 
   const token = randomToken();
   const tokenHash = await sha256Hex(token);
@@ -239,7 +254,7 @@ export const onRequestPost: PagesFunction<PasswordResetDeliveryEnv> = async (con
         .bind(tokenId)
         .run();
       console.error("[auth/forgot-password] delivery failed");
-      return genericAccepted();
+      return;
     }
 
     await db
@@ -258,6 +273,20 @@ export const onRequestPost: PagesFunction<PasswordResetDeliveryEnv> = async (con
       .run();
   } catch (error) {
     console.error("[auth/forgot-password] recovery flow failed", error);
+  }
+
+  };
+
+  if (typeof context.waitUntil === "function") {
+    context.waitUntil(
+      work().catch((error) =>
+        console.error("[auth/forgot-password] fluxo falhou", error),
+      ),
+    );
+  } else {
+    await work().catch((error) =>
+      console.error("[auth/forgot-password] fluxo falhou", error),
+    );
   }
 
   return genericAccepted();

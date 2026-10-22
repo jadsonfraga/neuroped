@@ -51,6 +51,8 @@ export interface LoginResponse {
   refreshToken: string;
   expiresIn: number;
   user: AuthUser;
+  /** Só no cadastro: o servidor informa se o link de confirmação de e-mail saiu de fato. */
+  emailVerificationDelivery?: "sent" | "failed";
 }
 
 function configuredAuthMode(): AuthMode {
@@ -196,10 +198,12 @@ export async function signupRequest(
   });
   const data = await r.json().catch(() => ({}));
   if (!r.ok) {
-    const err = data as { error?: string; code?: string };
-    const error = new Error(err.error || `Cadastro falhou (${r.status})`);
-    (error as Error & { code?: string }).code = err.code;
-    throw error;
+    const err = data as { error?: string; code?: string; emailVerificationDelivery?: "sent" | "failed"; blockedExternal?: string };
+    throw Object.assign(new Error(err.error || `Cadastro falhou (${r.status})`), {
+      code: err.code,
+      emailVerificationDelivery: err.emailVerificationDelivery,
+      blockedExternal: err.blockedExternal,
+    });
   }
   replaceAuthSession(data as LoginResponse);
   return data as LoginResponse;
