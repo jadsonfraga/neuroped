@@ -119,7 +119,7 @@ test("relatório: cobertura por domínio, fonte de cada registro, urgência e se
   assert.match(report, /v2026-10-21\.1/);
   assert.match(report, /COBERTURA DO EXAME NEUROLÓGICO BÁSICO POR DOMÍNIO/);
   assert.match(report, /COBERTURA DAS SEÇÕES DO EXAME DO ESTADO MENTAL/);
-  assert.match(report, /Fonte: Observei diretamente/);
+  assert.match(report, /Fonte: Observação direta pelo examinador/);
   assert.match(report, /Fonte: Relato do cuidador/);
   assert.match(report, /Fonte: não informada/);
   assert.match(report, /• Reflexos: Registrado/);
@@ -130,8 +130,8 @@ test("relatório: cobertura por domínio, fonte de cada registro, urgência e se
   assert.doesNotMatch(report, /diagnóstico: [A-Z]/i);
 });
 
-test("catálogo de fontes: quatro origens nomeadas, incluindo relato de cuidador e escola", () => {
-  assert.deepEqual(Object.keys(CIRCUIT_SOURCES).sort(), ["cuidador", "escola", "examinador", "outra"]);
+test("catálogo de fontes: cinco origens nomeadas: auxiliar distinta do examinador, cuidador, escola e outra", () => {
+  assert.deepEqual(Object.keys(CIRCUIT_SOURCES).sort(), ["auxiliar", "cuidador", "escola", "examinador", "outra"]);
 });
 
 test("demonstrações: apenas estações cadastradas, animações sem pessoa real, movimento reduzível", () => {
