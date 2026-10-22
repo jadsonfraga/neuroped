@@ -49,7 +49,12 @@ import { decideRouteAccess, isRouteSensitive } from "../../client/src/security/r
 
 const ISSUER = { doctorName: "Profissional Sintético", specialty: "Neuropediatria", credentials: "CRM 00000", clinicName: "Clínica Sintética", motto: "" };
 const strip = (source: string) => source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
-const pageSource = () => strip(readFileSync("client/src/pages/super-neuropad-game.tsx", "utf8"));
+// A página compõe-se dos estímulos e do painel opcional extraídos; o contrato da tela é a soma dos três.
+const pageSource = () => [
+  "client/src/pages/super-neuropad-game.tsx",
+  "client/src/features/super-neuropad/estimulos.tsx",
+  "client/src/features/super-neuropad/OpcionaisPanel.tsx",
+].map((file) => strip(readFileSync(file, "utf8"))).join("\n");
 
 test("faixas etárias: um ano cada, de 2 a 17, sem lacuna; menores de 2 anos bloqueados com mensagem clara", () => {
   assert.equal(AGE_BANDS.length, MAX_AGE_YEARS - MIN_AGE_YEARS + 1);

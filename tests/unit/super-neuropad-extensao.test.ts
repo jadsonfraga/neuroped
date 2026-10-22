@@ -127,15 +127,14 @@ test("texto e tela: aos 2–3 anos o opcional leva o nome padrão do mundo, não
     assert.match(texto, /\[Montanha dos Números\]/);
     assert.doesNotMatch(texto, /Palavrinhas/);
   }
-  const page = readFileSync("client/src/pages/super-neuropad-game.tsx", "utf8");
-  const block = page.slice(page.indexOf("function OpcionaisPanel("), page.indexOf("function Clouds() {"));
+  const block = readFileSync("client/src/features/super-neuropad/OpcionaisPanel.tsx", "utf8");
   assert.doesNotMatch(block, /phaseById\([^)]*,\s*years\)/, "painel usa o nome padrão do mundo");
 });
 
 test("tela: painel opcional sem controle desabilitado e fora da partida", () => {
-  const page = readFileSync("client/src/pages/super-neuropad-game.tsx", "utf8");
-  const start = page.indexOf("function OpcionaisPanel(");
-  const block = page.slice(start, page.indexOf("function Clouds() {"));
+  const panel = readFileSync("client/src/features/super-neuropad/OpcionaisPanel.tsx", "utf8");
+  const start = panel.indexOf("function OpcionaisPanel(");
+  const block = panel.slice(start);
   assert.ok(start > 0, "painel presente");
   assert.doesNotMatch(block, /\bdisabled\b/, "nenhum controle do painel fica desabilitado");
   assert.match(block, /não é preciso aplicar todos/);
@@ -143,6 +142,7 @@ test("tela: painel opcional sem controle desabilitado e fora da partida", () => 
   assert.match(block, /Recolher opcionais/);
   assert.match(block, /Copiar registro dos opcionais/);
   // O painel aparece na preparação e nos resultados; não entra na partida.
+  const page = readFileSync("client/src/pages/super-neuropad-game.tsx", "utf8");
   assert.equal(page.match(/<OpcionaisPanel /g)?.length, 2);
   const source = readFileSync("client/src/features/super-neuropad/extensao.ts", "utf8");
   assert.doesNotMatch(source, /localStorage|sessionStorage|indexedDB|fetch\(/, "registro só em memória");
@@ -204,8 +204,7 @@ test("auditoria 21/10/2026: letra e numeral aos 2–3 anos levam aviso de idade;
 });
 
 test("auditoria 21/10/2026: o painel dos opcionais pausa ao trocar de aba, como a partida principal", () => {
-  const page = readFileSync("client/src/pages/super-neuropad-game.tsx", "utf8");
-  const block = page.slice(page.indexOf("function OpcionaisPanel("), page.indexOf("function Clouds() {"));
+  const block = readFileSync("client/src/features/super-neuropad/OpcionaisPanel.tsx", "utf8");
   assert.match(block, /visibilitychange/);
   assert.match(block, /document\.hidden\) setPausado\(true\)/);
   assert.match(block, /super-neuropad-optional-age-note/);

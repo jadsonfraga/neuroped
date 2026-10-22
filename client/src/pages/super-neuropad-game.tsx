@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, Ban, Check, ClipboardList, Copy, Delete, Download, Eraser, Eye, Flag, Hand, Music, Music2, Pause, Play, Repeat, RotateCcw, ShieldCheck, SkipForward, Smartphone, Sparkles, Undo2, Volume2, X } from "lucide-react";
+import { ArrowRight, Check, ClipboardList, Copy, Download, Eye, Flag, Music, Music2, Pause, Play, RotateCcw, ShieldCheck, SkipForward, Sparkles, Undo2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSondaExitGuard } from "@/hooks/useSondaExitGuard";
 import { acceptManualTap } from "@/components/jogo-facil/easyReport";
@@ -11,92 +11,17 @@ import { play1Up, playCoin, playFlagPole, playJump, playPowerUp } from "@/lib/so
 import { downloadTextDocument, safeTextFilename } from "@/lib/shareText";
 import { createChiptune, type Chiptune } from "@/features/super-neuropad/music";
 import { ClinicalCircuit, type ProgressoCircuito } from "@/features/super-neuropad/ClinicalCircuit.tsx";
-import { activeClockSeconds, emptyActiveClock, transitionActiveClock } from "@/features/super-neuropad/activeClock";
 import { VisualSearchBonusPanel } from "@/features/super-neuropad/VisualSearchBonusPanel";
 import { resumoDaBateria } from "@/features/super-neuropad/sufficiencia";
-import {
-  DESAFIOS_DISPONIVEIS_POR_IDADE,
-  disponiveisDaIdade,
-  estimativaOpcionaisSegundos,
-  opcionaisDaIdade,
-  pendentesDeCopia,
-  proximoPendente,
-  registrarOpcional,
-  avisoDeIdade,
-  textoOpcionais,
-  type RegistrosOpcionais,
-} from "@/features/super-neuropad/extensao";
+import { DESAFIOS_DISPONIVEIS_POR_IDADE, pendentesDeCopia, registrarOpcional, textoOpcionais, type RegistrosOpcionais } from "@/features/super-neuropad/extensao";
 import { buildGameDocSpec, issuerLines } from "@/features/super-neuropad/pdf";
 import { DESCRIPTIVE_NOTICE } from "@/lib/descriptiveNotice";
-import {
-  buildFamilyDocSpec,
-  buildFamilySummary,
-  snapshotCompletedFamilySession,
-  isValidFamilyEmail,
-  type FamilyContact,
-} from "@/features/super-neuropad/familyDelivery";
+import { buildFamilyDocSpec, buildFamilySummary, snapshotCompletedFamilySession, isValidFamilyEmail, type FamilyContact } from "@/features/super-neuropad/familyDelivery";
 import { formatPhoneNumber, isValidPhone } from "@/lib/phoneBr";
 import { openEmailDraft, shareWhatsAppDocument } from "@/lib/shareText";
-import { Stimulus as VrStimulus } from "@/features/visual-recognition/Stimulus";
-import {
-  CHARACTERS,
-  GESTURE_SHORTCUT,
-  KIND_LABELS,
-  MAX_AGE_YEARS,
-  MIN_AGE_YEARS,
-  OBSERVATION_CHIPS,
-  OBSERVATIONS_MAX,
-  ORIGIN_LABELS,
-  PHASE_ORDER,
-  PHASES,
-  SKIP_REASONS,
-  STATUS_LABELS,
-  ANSWER_TONE,
-  SUPER_NEUROPAD_NATURE,
-  SUPER_NEUROPAD_SOURCES,
-  SUPER_NEUROPAD_TITLE,
-  SUPER_NEUROPAD_VERSION,
-  UNDER_TWO_MESSAGE,
-  YEARS,
-  ageGate,
-  bandItemCount,
-  bandForYears,
-  buildGameBrief,
-  buildGameReport,
-  buildPatientRecordItems,
-  provenanceText,
-  timeMarginSeconds,
-  sessionStats,
-  statsLines,
-  estimateBandSeconds,
-  formatDuration,
-  itemsFor,
-  judgeShortcut,
-  phaseById,
-  sessionLimitSeconds,
-  phaseStatusText,
-  recordBuild,
-  recordJudged,
-  recordTouch,
-  sessionWallSeconds,
-  shuffle,
-  optionOrder,
-  touchOrdinal,
-  summarize,
-  undoLastAnswer,
-  type AnswerRecord,
-  type AnswerStatus,
-  type BuildItem,
-  type Character,
-  type GameSession,
-  type JudgedItem,
-  type Option,
-  type PhaseId,
-  type PhaseSummary,
-  type ShapeId,
-  type SkippedPhase,
-  type TouchItem,
-} from "@/features/super-neuropad/model";
+import { CHARACTERS, GESTURE_SHORTCUT, KIND_LABELS, MAX_AGE_YEARS, MIN_AGE_YEARS, OBSERVATION_CHIPS, OBSERVATIONS_MAX, ORIGIN_LABELS, PHASE_ORDER, PHASES, SKIP_REASONS, STATUS_LABELS, ANSWER_TONE, SUPER_NEUROPAD_NATURE, SUPER_NEUROPAD_SOURCES, SUPER_NEUROPAD_TITLE, SUPER_NEUROPAD_VERSION, UNDER_TWO_MESSAGE, YEARS, ageGate, bandItemCount, bandForYears, buildGameBrief, buildGameReport, buildPatientRecordItems, provenanceText, timeMarginSeconds, sessionStats, statsLines, estimateBandSeconds, formatDuration, itemsFor, judgeShortcut, phaseById, sessionLimitSeconds, phaseStatusText, recordBuild, recordJudged, recordTouch, sessionWallSeconds, optionOrder, touchOrdinal, summarize, undoLastAnswer, type AnswerRecord, type AnswerStatus, type Character, type GameSession, type PhaseId, type PhaseSummary, type SkippedPhase } from "@/features/super-neuropad/model";
+import { ArcadeButton, RepeatToggle, TurnCue, TouchStage, MissBar, JudgeStage, BuildStage } from "@/features/super-neuropad/estimulos";
+import { OpcionaisPanel } from "@/features/super-neuropad/OpcionaisPanel";
 import "@/styles/super-neuropad-arcade.css";
 
 // "Salvar em paciente" é o mesmo fluxo das demais escalas; carrega só na tela de resultado.
@@ -106,7 +31,6 @@ const LazySaveToPatient = lazy(() =>
 
 const XP_PER_ITEM = 10;
 const CHEERS = ["+10 XP!", "Anotado, próxima!", "Boa, vamos em frente!", "Mais um passo!", "Moeda coletada!"] as const;
-const PREVIEW_SECONDS = 5;
 /** Falas do herói: só ânimo, nunca certo/errado. */
 const HERO_LINES: Record<string, { intro: string; done: string }> = {
   raposa: { intro: "Olhos abertos, vamos farejar!", done: "Rápida como o vento!" },
@@ -128,8 +52,6 @@ const PHASE_TONE: Record<PhaseId, string> = {
   corpo: "snp-panel--berry",
 };
 
-const OPTION_TINTS = ["bg-[var(--snp-berry-tint)]", "bg-[var(--snp-sky-tint)]", "bg-[var(--snp-sun-tint)]", "bg-[var(--snp-grass-tint)]"];
-
 
 const STATUS_TONE: Record<AnswerStatus, string> = {
   acerto: "bg-emerald-600 text-white",
@@ -137,48 +59,6 @@ const STATUS_TONE: Record<AnswerStatus, string> = {
   sem_resposta: "bg-slate-600 text-white",
   recusa: "bg-amber-800 text-white",
 };
-
-type Tone = "sun" | "sky" | "grass" | "berry" | "lilac" | "paper" | "slate";
-
-function ArcadeButton({ tone = "sun", className = "", children, ...rest }: React.ButtonHTMLAttributes<HTMLButtonElement> & { tone?: Tone }) {
-  return (
-    <button type="button" className={`snp-btn snp-btn--${tone} inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm ${className}`} {...rest}>
-      {children}
-    </button>
-  );
-}
-
-function ShapeArt({ shape }: { shape: ShapeId }) {
-  const common = { fill: "none", stroke: "currentColor", strokeWidth: 6, strokeLinejoin: "round" as const, strokeLinecap: "round" as const };
-  return (
-    <svg viewBox="0 0 120 120" className="h-40 w-40 sm:h-52 sm:w-52" role="img" aria-label={`Figura para copiar: ${shape}`}>
-      {shape === "circulo" && <circle cx="60" cy="60" r="44" {...common} />}
-      {shape === "cruz" && (<><line x1="60" y1="14" x2="60" y2="106" {...common} /><line x1="14" y1="60" x2="106" y2="60" {...common} /></>)}
-      {shape === "quadrado" && <rect x="18" y="18" width="84" height="84" {...common} />}
-      {shape === "triangulo" && <polygon points="60,14 108,104 12,104" {...common} />}
-      {shape === "losango" && <polygon points="60,10 110,60 60,110 10,60" {...common} />}
-      {shape === "pentagono" && <polygon points="60,10 109,46 90,106 30,106 11,46" {...common} />}
-    </svg>
-  );
-}
-
-function VrFigure({ id, size = "md" }: { id: string; size?: "md" | "lg" }) {
-  // Figura do banco do Reconhecimento Visual, desenhada pelo componente de lá; `child` evita que o texto alternativo entregue a resposta.
-  return <span className={`snp-vr block ${size === "lg" ? "h-40 w-40 sm:h-52 sm:w-52" : "h-24 w-24 sm:h-32 sm:w-32"}`}><VrStimulus id={id} child /></span>;
-}
-
-function StimulusView({ item }: { item: JudgedItem }) {
-  if (item.kind === "fazer" && item.shape) return <ShapeArt shape={item.shape} />;
-  if (item.kind === "fala" && item.stimulusVr) return <VrFigure id={item.stimulusVr} size="lg" />;
-  const text = item.stimulus;
-  if (!text) return null;
-  const long = text.length > 12;
-  return (
-    <div className={`max-w-full break-words text-center font-black leading-tight ${long ? "text-2xl sm:text-4xl" : "text-6xl sm:text-8xl"}`} aria-label={`Estímulo: ${text}`}>
-      {text}
-    </div>
-  );
-}
 
 function XpBar({ answered, total }: { answered: number; total: number }) {
   return (
@@ -279,29 +159,6 @@ function Hud({ years, character, answered, total, phaseIndex, done, musicOn, pau
   );
 }
 
-function RepeatToggle({ repeated, onToggle }: { repeated: boolean; onToggle: () => void }) {
-  return (
-    <button
-      type="button"
-      aria-pressed={repeated}
-      onClick={() => { softTap(); onToggle(); }}
-      className={`snp-chip ${repeated ? "bg-[var(--snp-sun)]" : ""}`}
-      title="Marque se precisou repetir o comando (permitido uma vez). Fica no registro."
-    >
-      <Repeat className="h-3.5 w-3.5" /> {repeated ? "Comando repetido 1x" : "Repeti o comando"}
-    </button>
-  );
-}
-
-function TurnCue({ who }: { who: "crianca" | "aplicadora" }) {
-  const child = who === "crianca";
-  return (
-    <span className={`snp-chip ${child ? "bg-[var(--snp-grass-tint)]" : "bg-[var(--snp-sun-tint)]"}`}>
-      <Smartphone className="h-3.5 w-3.5" /> {child ? "Tela para a criança" : "Tela para você"}
-    </span>
-  );
-}
-
 function SpeechBubble({ character, text }: { character: Character; text: string }) {
   return (
     <div className="mx-auto flex max-w-md items-end justify-center gap-2">
@@ -352,362 +209,6 @@ function SetupSteps({ hasAge, hasHero, kitDone, kitTotal, circuito }: { hasAge: 
         </li>
       ))}
     </ol>
-  );
-}
-
-function TouchStage({ item, order, paused, onAnswer }: { item: TouchItem; order: Option[]; paused: boolean; onAnswer: (chosen: Option | null, event: React.MouseEvent) => void }) {
-  const [revealed, setRevealed] = useState(!item.preview);
-  const [left, setLeft] = useState(PREVIEW_SECONDS);
-  const options = order;
-  useEffect(() => {
-    if (paused || revealed || !item.preview) return;
-    // Exposição padronizada: esconde sozinho ao fim da contagem; a aplicadora pode esconder antes.
-    const timer = window.setInterval(() => setLeft((current) => current - 1), 1000);
-    return () => window.clearInterval(timer);
-  }, [paused, revealed, item.preview]);
-  useEffect(() => { if (left <= 0) setRevealed(true); }, [left]);
-  if (!revealed && item.preview) {
-    return (
-      <div className="flex flex-col items-center gap-6 py-6">
-        <p className="snp-pixel text-center text-sm opacity-80">Olhe bem para as figuras…</p>
-        <div className={`snp-float ${item.sequence ? "whitespace-nowrap text-3xl tracking-tight sm:text-6xl" : "text-7xl sm:text-8xl"}`} aria-label={`Figuras mostradas: ${item.preview}`}>{item.preview}</div>
-        <div className="snp-pixel flex h-14 w-14 items-center justify-center rounded-full border-[4px] border-[var(--snp-ink-fixed)] bg-[var(--snp-sun)] text-2xl text-[var(--snp-ink-fixed)]" role="timer" aria-label={`Esconde em ${left} segundos`}>{left}</div>
-        <ArcadeButton tone="sky" className="px-6 py-3 text-base" onClick={() => { softTap(); setRevealed(true); }}>
-          <Check className="h-5 w-5" /> Já olhou · esconder
-        </ArcadeButton>
-        <p className="text-xs font-bold opacity-70">Aplicadora: as figuras somem sozinhas em {PREVIEW_SECONDS} segundos; pode esconder antes.</p>
-      </div>
-    );
-  }
-  return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-center gap-2">
-        <span className="snp-chip"><Volume2 className="h-3.5 w-3.5" /> Leia em voz alta</span>
-        <TurnCue who="crianca" />
-      </div>
-      {item.context && <p className="snp-panel snp-panel--soft mx-auto max-w-2xl p-3 text-center text-sm font-bold text-[var(--snp-ink-fixed)]">Aplicadora, leia antes: “{item.context}”</p>}
-      <p className="text-center text-2xl font-black leading-snug sm:text-3xl">{item.context ? item.prompt.replace(`Leia: “${item.context}” Depois: `, "") : item.prompt}</p>
-      {item.stimulusVr && <div className="flex justify-center" aria-label="Modelo"><span className="rounded-2xl border-[3px] border-[var(--snp-ink-fixed)] bg-white p-2"><VrFigure id={item.stimulusVr} /></span></div>}
-      {item.stimulus && <p className={`mx-auto max-w-3xl whitespace-pre-line break-words text-center font-black leading-snug ${item.stimulus.length > 40 ? "text-lg sm:text-xl" : "text-4xl sm:text-5xl"}`} aria-label={`Estímulo: ${item.stimulus}`}>{item.stimulus}</p>}
-      <div className={`grid gap-4 ${item.sequence ? "grid-cols-1 sm:grid-cols-2" : options.length <= 2 ? "grid-cols-2" : options.length === 3 ? "grid-cols-3" : "grid-cols-2 sm:grid-cols-4"}`} role="group" aria-label="Opções">
-        {options.map((option, index) => (
-          <button
-            key={`${option.label}-${index}`}
-            type="button"
-            onClick={(event) => onAnswer(option, event)}
-            className={`snp-option flex min-h-32 items-center justify-center p-3 text-center font-black ${option.vr ? "bg-white" : OPTION_TINTS[index % OPTION_TINTS.length]} ${item.sequence ? "whitespace-nowrap text-2xl tracking-tight sm:text-4xl" : item.big ? (option.size === "lg" ? "text-8xl" : option.size === "sm" ? "text-4xl" : "text-6xl") : "text-xl sm:text-2xl"}`}
-            aria-label={option.vr ? `Opção ${index + 1}` : option.label}
-          >
-            {option.vr ? <VrFigure id={option.vr} /> : <span aria-hidden="true">{option.art}</span>}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/** Folha de desenho com o dedo: só na tela, nada é guardado nem exportado. */
-function DrawPad() {
-  const canvas = useRef<HTMLCanvasElement | null>(null);
-  const drawing = useRef(false);
-  const point = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    return { x: ((event.clientX - rect.left) / rect.width) * event.currentTarget.width, y: ((event.clientY - rect.top) / rect.height) * event.currentTarget.height };
-  };
-  const down = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    const context = event.currentTarget.getContext("2d");
-    if (!context) return;
-    event.currentTarget.setPointerCapture?.(event.pointerId);
-    drawing.current = true;
-    const { x, y } = point(event);
-    context.lineWidth = 10; context.lineCap = "round"; context.lineJoin = "round"; context.strokeStyle = getComputedStyle(event.currentTarget).color; // cor do token (--snp-ink-fixed) via CSS
-    context.beginPath(); context.moveTo(x, y); context.lineTo(x + 0.1, y + 0.1); context.stroke();
-  };
-  const move = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!drawing.current) return;
-    const context = event.currentTarget.getContext("2d");
-    if (!context) return;
-    const { x, y } = point(event);
-    context.lineTo(x, y); context.stroke();
-  };
-  const up = () => { drawing.current = false; };
-  const clear = () => { const element = canvas.current; element?.getContext("2d")?.clearRect(0, 0, element.width, element.height); };
-  return (
-    <div className="w-full space-y-2" data-testid="snp-drawpad">
-      <canvas
-        ref={canvas} width={720} height={420} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerLeave={up} onPointerCancel={up}
-        className="snp-drawpad block h-56 w-full touch-none rounded-2xl border-[3px] border-dashed border-[var(--snp-ink-fixed)] bg-white sm:h-72"
-        aria-label="Área para desenhar ou escrever com o dedo. Nada é guardado."
-      />
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-[11px] font-bold opacity-70">Desenhe com o dedo. Nada é salvo: a aplicadora confere na hora.</span>
-        <button type="button" className="snp-chip" onClick={() => { softTap(); clear(); }}><Eraser className="h-3.5 w-3.5" /> Limpar</button>
-      </div>
-    </div>
-  );
-}
-
-function MissBar({ onMiss }: { onMiss: (status: "sem_resposta" | "recusa", event: React.MouseEvent) => void }) {
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      <button type="button" className="snp-chip opacity-80 hover:opacity-100" onClick={(event) => onMiss("sem_resposta", event)}>
-        Aplicadora: não respondeu · pular
-      </button>
-      <button type="button" className="snp-chip opacity-80 hover:opacity-100" onClick={(event) => onMiss("recusa", event)}>
-        <Ban className="h-3.5 w-3.5" /> Recusou · pular
-      </button>
-    </div>
-  );
-}
-
-function JudgeStage({ item, onJudge }: { item: JudgedItem; onJudge: (status: AnswerStatus, event: React.MouseEvent, gesture?: boolean) => void }) {
-  const drawn = item.kind === "fazer" && item.draw;
-  return (
-    <div className="space-y-5">
-      {(drawn || item.stimulus || (item.kind === "fazer" && item.shape) || (item.kind === "fala" && item.stimulusVr)) && (
-        <div className={`snp-panel flex min-h-40 items-center justify-center gap-4 p-6 ${drawn ? "flex-col sm:flex-row" : ""}`}>
-          <StimulusView item={item} />
-          {drawn && <DrawPad />}
-        </div>
-      )}
-      <div className="snp-panel snp-panel--soft p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="snp-pixel text-[11px] opacity-80">Aplicadora · {KIND_LABELS[item.kind]} · {ORIGIN_LABELS[item.origin]}</div>
-          {item.informant === "cuidador" && <span className="snp-chip bg-[var(--snp-sun-tint)]" data-testid="super-neuropad-caregiver">Relato do cuidador</span>}
-          <TurnCue who="aplicadora" />
-        </div>
-        <p className="snp-clinical-instruction mt-1 font-black">{item.prompt}</p>
-        <p className="snp-clinical-criterion mt-2"><span className="font-black">Conta como acerto:</span> {item.expected}</p>
-        {item.gesture && <p className="mt-1 text-sm"><span className="font-black">Alternativa aceita:</span> {item.gesture}</p>}
-        <div className={`mt-4 grid gap-3 ${item.gesture ? "sm:grid-cols-5" : "sm:grid-cols-4"}`}>
-          <ArcadeButton tone="grass" className="min-h-14 text-base" aria-keyshortcuts="1" onClick={(event) => onJudge("acerto", event)}>
-            <Check className="h-5 w-5" /> Acertou
-          </ArcadeButton>
-          {item.gesture && (
-            <ArcadeButton tone="grass" className="min-h-14 text-base" aria-keyshortcuts={GESTURE_SHORTCUT} onClick={(event) => onJudge("acerto", event, true)}>
-              <Hand className="h-5 w-5" /> Acertou por gesto
-            </ArcadeButton>
-          )}
-          <ArcadeButton tone="berry" className="min-h-14 text-base" aria-keyshortcuts="2" onClick={(event) => onJudge("erro", event)}>
-            <X className="h-5 w-5" /> Errou
-          </ArcadeButton>
-          <ArcadeButton tone="slate" className="min-h-14 text-base" aria-keyshortcuts="3" onClick={(event) => onJudge("sem_resposta", event)}>
-            Não respondeu
-          </ArcadeButton>
-          <ArcadeButton tone="paper" className="min-h-14 text-base" aria-keyshortcuts="4" onClick={(event) => onJudge("recusa", event)}>
-            <Ban className="h-5 w-5" /> Recusou
-          </ArcadeButton>
-        </div>
-        <p className="mt-2 hidden text-[11px] font-bold opacity-70 sm:block">Teclado: 1 Acertou{item.gesture ? ` · ${GESTURE_SHORTCUT} Acertou por gesto` : ""} · 2 Errou · 3 Não respondeu · 4 Recusou · P Pausa</p>
-      </div>
-    </div>
-  );
-}
-
-/** Montar a palavra tocando nas letras na ordem (banco cognitivo). A tela confere sozinha. */
-function BuildStage({ item, seed, onDone }: { item: BuildItem; seed: number; onDone: (placed: string[], event: React.MouseEvent) => void }) {
-  const tiles = useMemo(() => shuffle(item.tiles.map((letter, index) => ({ letter, index })), seed), [item, seed]);
-  const [used, setUsed] = useState<number[]>([]);
-  const [showWord, setShowWord] = useState(false);
-  const placed = used.map((index) => item.tiles[index]);
-  return (
-    <div className="space-y-5" data-testid="snp-build">
-      <div className="flex flex-wrap items-center justify-center gap-2">
-        <span className="snp-chip"><Volume2 className="h-3.5 w-3.5" /> {item.show ? "Mostre a palavra" : "Dite a palavra"}</span>
-        <TurnCue who="crianca" />
-      </div>
-      <p className="text-center text-2xl font-black leading-snug sm:text-3xl">{item.prompt}</p>
-      {item.show ? (
-        <p className="text-center text-5xl font-black tracking-widest" aria-label={`Modelo: ${item.word}`}>{item.word}</p>
-      ) : (
-        <div className="flex justify-center">
-          <button type="button" className="snp-chip" aria-pressed={showWord} onClick={() => { softTap(); setShowWord((current) => !current); }}>
-            <Eye className="h-3.5 w-3.5" /> {showWord ? `Ditar: ${item.word}` : "Aplicadora: ver a palavra para ditar"}
-          </button>
-        </div>
-      )}
-      <div className="flex min-h-20 flex-wrap items-center justify-center gap-2 rounded-2xl border-[3px] border-dashed border-[var(--snp-ink-fixed)] bg-white p-3 text-[var(--snp-ink-fixed)]" aria-live="polite" aria-label="Palavra montada">
-        {placed.length === 0 ? <span className="text-sm font-bold opacity-60">Toque nas letras abaixo</span> : placed.map((letter, index) => <span key={index} className="snp-pixel text-3xl">{letter}</span>)}
-      </div>
-      <div className="flex flex-wrap justify-center gap-3" role="group" aria-label="Letras">
-        {tiles.map((tile) => {
-          const taken = used.includes(tile.index);
-          return (
-            <button key={tile.index} type="button" disabled={taken} onClick={() => { softTap(); setUsed((current) => [...current, tile.index]); }}
-              className={`snp-option flex h-16 w-16 items-center justify-center text-3xl font-black sm:h-20 sm:w-20 ${taken ? "opacity-30" : "bg-[var(--snp-sky-tint)]"}`}>
-              {tile.letter}
-            </button>
-          );
-        })}
-      </div>
-      <div className="flex flex-wrap justify-center gap-3">
-        <ArcadeButton tone="paper" disabled={used.length === 0} onClick={() => { softTap(); setUsed((current) => current.slice(0, -1)); }}>
-          <Delete className="h-5 w-5" /> Apagar letra
-        </ArcadeButton>
-        <ArcadeButton tone="grass" disabled={used.length === 0} onClick={(event) => onDone(placed, event)}>
-          <Check className="h-5 w-5" /> Pronto
-        </ArcadeButton>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Desafios opcionais: completam 50 por idade com itens dos mesmos bancos de origem. Ficam fora da contagem,
- * do tempo e do XP da partida; registro próprio, em memória e por idade (trocar a idade não apaga nada).
- * Nenhum controle fica desabilitado: aplicar, pular, pausar e recolher são sempre possíveis.
- */
-function OpcionaisPanel({ years, registros, copiados, seed, onRegistrar, onCopiar }: {
-  years: number;
-  registros: RegistrosOpcionais;
-  copiados: RegistrosOpcionais;
-  seed: number;
-  onRegistrar: (record: AnswerRecord) => void;
-  onCopiar: () => void;
-}) {
-  const lista = opcionaisDaIdade(years);
-  const disponivel = disponiveisDaIdade(years);
-  const [aberto, setAberto] = useState(false);
-  const [pausado, setPausado] = useState(false);
-  const [escolhido, setEscolhido] = useState<string | null>(null);
-  const [repetido, setRepetido] = useState(false);
-  const cronometro = useRef(emptyActiveClock());
-  const itemCronometrado = useRef<string | null>(null);
-  const ultimoToque = useRef(Number.NEGATIVE_INFINITY);
-  const atualId = escolhido ?? proximoPendente(years, registros) ?? lista[0]?.item.id;
-  const posicao = Math.max(0, lista.findIndex((entry) => entry.item.id === atualId));
-  const atual = lista[posicao];
-  const registrados = Object.keys(registros).length;
-  const pendentes = pendentesDeCopia(registros, copiados);
-  const ordem = useMemo(
-    () => (atual && atual.item.kind === "toque" ? optionOrder(atual.item, seed + posicao * 17, posicao) : []),
-    [atual, seed, posicao],
-  );
-  useEffect(() => {
-    const agora = performance.now();
-    if (itemCronometrado.current !== atualId) {
-      itemCronometrado.current = atualId;
-      cronometro.current = emptyActiveClock();
-      setRepetido(false);
-    }
-    cronometro.current = transitionActiveClock(cronometro.current, agora, aberto && !pausado);
-  }, [atualId, aberto, pausado]);
-  // Tela bloqueada ou troca de aba com um opcional aberto: pausa sozinho, como na partida principal,
-  // para o tempo do item não inflar. Retomar continua a contagem acumulada do item atual.
-  useEffect(() => {
-    if (!aberto || pausado) return;
-    const onVisibility = () => { if (document.hidden) setPausado(true); };
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => document.removeEventListener("visibilitychange", onVisibility);
-  }, [aberto, pausado]);
-  if (!atual) return null;
-  const segundos = () => activeClockSeconds(cronometro.current, performance.now());
-  const registrar = (record: AnswerRecord, event: { timeStamp: number }) => {
-    if (pausado || !acceptManualTap(ultimoToque.current, event.timeStamp)) return;
-    ultimoToque.current = event.timeStamp;
-    playCoin();
-    onRegistrar(record);
-    setEscolhido(proximoPendente(years, { ...registros, [record.itemId]: record }, record.itemId));
-  };
-  const ir = (delta: number) => { softTap(); setEscolhido(lista[(posicao + delta + lista.length) % lista.length].item.id); };
-  const item = atual.item;
-  const anterior = registros[item.id];
-  // Nome padrão do mundo (conteúdo do item); aos 2–3 anos os mundos da bateria levam nomes de domínio.
-  const mundo = phaseById(atual.phaseId);
-  return (
-    <section className="snp-panel p-5" data-testid="super-neuropad-optional" aria-labelledby="snp-optional-title">
-      <div className="space-y-3">
-        <div>
-          <h2 id="snp-optional-title" className="snp-pixel text-base">Desafios opcionais · {years} anos</h2>
-          <p className="mt-1 text-xs font-bold opacity-80">
-            {disponivel.total} disponíveis: {disponivel.principal} na bateria principal + {disponivel.opcionais} opcionais, dos mesmos bancos de origem. Escolha conforme a finalidade e a tolerância da criança; não é preciso aplicar todos.
-          </p>
-          <p className="mt-1 text-xs font-semibold opacity-70">
-            Fora da contagem, do tempo e do XP da partida principal. Estimativa de todos os opcionais: {formatDuration(estimativaOpcionaisSegundos(years))}, sem pausas nem adaptações. Interrompa diante de cansaço ou recusa.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="snp-chip" data-testid="super-neuropad-optional-count">{registrados} de {disponivel.opcionais} registrados</span>
-          {aberto && (
-            <ArcadeButton tone="paper" aria-pressed={pausado} onClick={() => { softTap(); setPausado((current) => !current); }}>
-              {pausado ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />} {pausado ? "Retomar opcionais" : "Pausar opcionais"}
-            </ArcadeButton>
-          )}
-          <ArcadeButton tone={aberto ? "slate" : "sky"} aria-expanded={aberto} onClick={() => { softTap(); setAberto((current) => !current); setPausado(false); }}>
-            {aberto ? "Recolher opcionais" : "Abrir opcionais"}
-          </ArcadeButton>
-        </div>
-      </div>
-
-      {aberto && (
-        <div className="mt-4 space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <label className="flex min-w-0 basis-full flex-col text-xs font-black sm:basis-auto sm:flex-1">
-              Ir para o desafio opcional
-              <select
-                className="snp-option mt-1 w-full bg-[var(--snp-paper-fixed)] px-2 py-2 text-sm font-semibold"
-                value={item.id}
-                onChange={(event) => { softTap(); setEscolhido(event.target.value); }}
-              >
-                {lista.map((entry, index) => (
-                  <option key={entry.item.id} value={entry.item.id}>
-                    {registros[entry.item.id] ? "✓" : "○"} {index + 1} · {phaseById(entry.phaseId).name} · {entry.item.prompt.slice(0, 70)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <ArcadeButton tone="paper" onClick={() => ir(-1)}>Anterior</ArcadeButton>
-            <ArcadeButton tone="paper" onClick={() => ir(1)}>Próximo</ArcadeButton>
-          </div>
-
-          {pausado ? (
-            <p className="snp-panel snp-panel--soft p-4 text-center text-sm font-bold" role="status">Opcionais em pausa: nada é registrado até retomar.</p>
-          ) : (
-            <div className="rounded-2xl bg-[var(--snp-stage)] p-3 text-[var(--snp-stage-text)] sm:p-4" data-testid="super-neuropad-optional-stage">
-              <p className="snp-pixel mb-2 text-[11px] opacity-80">
-                Opcional {posicao + 1} de {lista.length} · {mundo.emoji} {mundo.name} · {ORIGIN_LABELS[item.origin]} · {item.ref}
-              </p>
-              {anterior && <p className="snp-chip mb-2 bg-[var(--snp-sun-tint)]" role="status">Já registrado: {STATUS_LABELS[anterior.status]}. Registrar de novo substitui.</p>}
-              {avisoDeIdade(years, item) && <p className="snp-panel snp-panel--soft mb-2 p-2 text-xs font-bold normal-case" role="note" data-testid="super-neuropad-optional-age-note">{avisoDeIdade(years, item)}</p>}
-              {item.kind === "toque" ? (
-                <div className="space-y-4">
-                  <TouchStage key={item.id} item={item} paused={pausado} order={ordem}
-                    onAnswer={(chosen, event) => registrar(recordTouch(item, atual.phaseId, chosen, segundos(), repetido, false, ordem), event)} />
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <RepeatToggle repeated={repetido} onToggle={() => setRepetido((current) => !current)} />
-                    <MissBar onMiss={(status, event) => registrar(recordTouch(item, atual.phaseId, null, segundos(), repetido, status === "recusa", ordem), event)} />
-                  </div>
-                </div>
-              ) : item.kind === "montar" ? (
-                <div className="space-y-4">
-                  <BuildStage key={item.id} item={item} seed={seed + posicao * 17}
-                    onDone={(placed, event) => registrar(recordBuild(item, atual.phaseId, placed, segundos(), repetido), event)} />
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <RepeatToggle repeated={repetido} onToggle={() => setRepetido((current) => !current)} />
-                    <MissBar onMiss={(status, event) => registrar(recordBuild(item, atual.phaseId, null, segundos(), repetido, status === "recusa"), event)} />
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <JudgeStage key={item.id} item={item}
-                    onJudge={(status, event, gesture) => registrar(recordJudged(item, atual.phaseId, status, segundos(), repetido, gesture ? "gesto" : undefined), event)} />
-                  <RepeatToggle repeated={repetido} onToggle={() => setRepetido((current) => !current)} />
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      <div className="mt-3 flex flex-wrap items-center gap-3">
-        <ArcadeButton tone="paper" onClick={() => { softTap(); onCopiar(); }}>
-          <Copy className="h-4 w-4" /> Copiar registro dos opcionais
-        </ArcadeButton>
-        <p className="text-xs font-bold opacity-70" role="status" data-testid="super-neuropad-optional-status">
-          {registrados === 0 ? "Nenhum opcional registrado." : pendentes > 0 ? `${pendentes} registro(s) opcional(is) ainda não copiado(s).` : "Registro dos opcionais copiado."}
-        </p>
-      </div>
-    </section>
   );
 }
 
