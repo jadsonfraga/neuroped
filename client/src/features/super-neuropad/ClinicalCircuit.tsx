@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useClinic } from "@/contexts/ClinicContext";
 import { Check, ChevronLeft, ChevronRight, ClipboardCopy, Download, ExternalLink, RotateCcw, ShieldAlert, Stethoscope } from "lucide-react";
 import { downloadTextDocument } from "@/lib/shareText";
 import {
-  buildCircuitReport, circuitForAge, missoesPreConsulta, EXECUTOR_LABELS, CIRCUIT_VERSION, CIRCUIT_METHODS, CIRCUIT_SOURCES, CIRCUIT_STATUSES,
+  buildCircuitReport, circuitForAge, fontesDaTarefa, missoesPreConsulta, textoPreConsulta, EXECUTOR_LABELS, CIRCUIT_VERSION, CIRCUIT_METHODS, CIRCUIT_SOURCES, CIRCUIT_STATUSES,
   CIRCUIT_URGENCY_NOTE, CIRCUIT_VIDEO_LINKS, COVERAGE_LABELS, coverageStatus, notaDeEstacao, MSE_SECTIONS, NEURO_BASIC_DOMAINS,
   STATION_DEMO, type CircuitArea, type CircuitRecords, type CircuitSource, type CircuitStatus, type CoverageDomain, type CoverageStatus,
 } from "./clinicalCircuit";
@@ -54,6 +56,7 @@ function HipotesesPanel({ years, records }: { years: number; records: CircuitRec
   );
 }
 import { dicaDeMissaoPorIdade, perfilAnual } from "./ageAdaptation";
+import { podeVerModoMedico } from "./acessoMedico";
 import {
   linhasDeRevisao, matrizSuficiencia, pendenciasParaRevisao, SUFICIENCIA_LABELS, textoProntidao, URGENCIA_ALERTA, urgenciaAtiva,
   type BateriaResumo, type SuficienciaStatus,
@@ -194,10 +197,31 @@ function MatrizList({ years, records, bateria }: { years: number; records: Circu
  * Toda missão tem campos obrigatórios (ver obrigatorio.ts) e o circuito é declarado COMPLETO ou INCOMPLETO.
  * Obrigatório não trava a interface: nenhum controle é desabilitado e a navegação é livre.
  */
-export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }: {
+type CircuitoProps = {
   years: number | null; visible: boolean; bateria?: BateriaResumo | null; onProgresso?: (progresso: ProgressoCircuito | null) => void;
-}) {
-  const [tab, setTab] = useState<CircuitTab>("neurologico");
+};
+
+/**
+ * Entrada do circuito. A sessão decide o modo médico; trocar de sessão remonta o circuito, para que
+ * registros de um proprietário não permaneçam na tela depois do logout ou de outra conta.
+ */
+export function ClinicalCircuit(props: CircuitoProps) {
+  const { accessMode, isAuthenticated, user } = useAuth();
+  const { activeClinic } = useClinic();
+  const modoMedico = podeVerModoMedico({
+    accessMode,
+    isAuthenticated,
+    mustChangePassword: user?.mustChangePassword,
+    clinicRole: activeClinic?.role,
+    clinicStatus: activeClinic?.status,
+  });
+  return <CircuitoClinico key={modoMedico ? "modo-medico" : "pre-consulta"} {...props} modoMedico={modoMedico} />;
+}
+
+function CircuitoClinico({ years, visible, bateria = null, onProgresso, modoMedico }: CircuitoProps & { modoMedico: boolean }) {
+  const [tabEscolhida, setTab] = useState<CircuitTab>("neurologico");
+  // Sem o modo médico, abas do médico e cobertura não existem: a tela cai na pré-consulta.
+  const tab: CircuitTab = modoMedico || (tabEscolhida !== "medico" && tabEscolhida !== "cobertura") ? tabEscolhida : "neurologico";
   const [active, setActive] = useState(0);
   const [statuses, setStatuses] = useState<Record<string, CircuitStatus>>({});
   const [marks, setMarks] = useState<Record<string, string[]>>({});
@@ -210,7 +234,7 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
   const area: CircuitArea = tab === "mental" ? "mental" : "neurologico";
   const all = years === null ? [] : missoesPreConsulta(years);
   const todas = years === null ? [] : circuitForAge(years);
-  const doMedico = todas.filter((entry) => entry.executor === "medico");
+  const doMedico = modoMedico ? todas.filter((entry) => entry.executor === "medico") : [];
   const tasks = years === null ? [] : tab === "medico" ? doMedico : missoesPreConsulta(years, area);
   const task = tasks[Math.min(active, tasks.length - 1)];
   const demo = task ? STATION_DEMO[task.id] : undefined;
@@ -225,6 +249,7 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
     [entry.id, { status: statuses[entry.id], note: anotacaoDe(entry.id), source: sources[entry.id], descricao: notes[entry.id] || "" }]));
   const report = years === null || !resumo ? ""
     : `${buildCircuitReport(years, records, generalNote, new Date(), [linhaObrigatorio(resumo)])}\n\n${detalheObrigatorio(resumo).join("\n")}\n\n${textoProntidao(years, matrizSuficiencia(years, records, bateria)).join("\n")}`;
+  const relatorioPreConsulta = years === null ? "" : textoPreConsulta(years, records);
   const progressoConcluidas = resumo ? resumo.concluidas : null;
   const progressoTotal = resumo ? resumo.total : null;
   const progressoCompleto = resumo ? resumo.completo : null;
@@ -255,9 +280,9 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
     });
     setFeedback("");
   };
-  const copyReport = async () => {
+  const copyReport = async (texto: string) => {
     try {
-      await navigator.clipboard.writeText(report);
+      await navigator.clipboard.writeText(texto);
       setFeedback("Registro copiado. Revise antes de incorporar ao prontuário.");
     } catch {
       setFeedback("Área de transferência indisponível. Use Baixar TXT se desejar salvar o registro; nenhum arquivo foi criado automaticamente.");
@@ -311,8 +336,8 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
         {([
           { key: "neurologico", label: `🧠 Exame neurológico · ${countFor("neurologico")}` },
           { key: "mental", label: `💬 Estado mental · ${countFor("mental")}` },
-          ...(doMedico.length ? [{ key: "medico", label: `🩺 Exame do médico · ${doMedico.filter((entry) => statuses[entry.id]).length}/${doMedico.length}` } as const] : []),
-          { key: "cobertura", label: "🧭 Cobertura e lacunas" },
+          ...(modoMedico && doMedico.length ? [{ key: "medico", label: `🩺 Exame do médico · ${doMedico.filter((entry) => statuses[entry.id]).length}/${doMedico.length}` } as const] : []),
+          ...(modoMedico ? [{ key: "cobertura", label: "🧭 Cobertura e lacunas" } as const] : []),
         ] as const).map((option) => (
           <button key={option.key} type="button" aria-pressed={tab === option.key} onClick={() => { setTab(option.key); setActive(0); setFeedback(""); }}
             className={`snp-option min-h-11 px-4 py-2 text-sm font-black ${tab === option.key ? "bg-[var(--snp-sun)]" : "bg-[var(--snp-paper-fixed)]"}`}>
@@ -389,7 +414,7 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
           <fieldset className="space-y-2">
             <legend className="text-sm font-black">Quem informou (obrigatório) — sem escolha, a missão não conta como concluída</legend>
             <div className="flex flex-wrap gap-2">
-              {(Object.entries(CIRCUIT_SOURCES) as [CircuitSource,string][]).map(([key,label]) =>
+              {fontesDaTarefa(task).map((key) => [key, CIRCUIT_SOURCES[key]] as [CircuitSource,string]).map(([key,label]) =>
                 <button key={key} type="button" aria-pressed={sources[task.id] === key}
                   onClick={() => { setSources((prior) => ({...prior,[task.id]:key})); setFeedback(""); }}
                   className={`snp-option min-h-11 px-3 py-2 text-left text-xs font-semibold ${sources[task.id] === key ? "bg-[var(--snp-sky-tint)]" : "bg-[var(--snp-paper-fixed)]"}`}>
@@ -449,7 +474,7 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
           <fieldset className="space-y-2">
             <legend className="text-sm font-black">Fonte da informação deste registro</legend>
             <div className="flex flex-wrap gap-2">
-              {(Object.entries(CIRCUIT_SOURCES) as [CircuitSource,string][]).map(([key,label]) =>
+              {fontesDaTarefa(task).map((key) => [key, CIRCUIT_SOURCES[key]] as [CircuitSource,string]).map(([key,label]) =>
                 <button key={key} type="button" aria-pressed={sources[task.id] === key}
                   onClick={() => { setSources((prior) => ({...prior,[task.id]:key})); setFeedback(""); }}
                   className={`snp-option min-h-11 px-3 py-2 text-left text-xs font-semibold ${sources[task.id] === key ? "bg-[var(--snp-sky-tint)]" : "bg-[var(--snp-paper-fixed)]"}`}>
@@ -480,10 +505,21 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
           placeholder="Limitações, necessidade de exame dirigido ou informações de fonte distinta, com proveniência." />
       </label>
       <div className="flex flex-wrap gap-2">
-        <button type="button" onClick={() => void copyReport()}
-          className="snp-btn snp-btn--sun inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm"><ClipboardCopy className="h-4 w-4" /> Copiar registro clínico</button>
-        <button type="button" onClick={() => { downloadTextDocument(report, `super-neuropad-circuito-${years}a.txt`); setFeedback("TXT clínico salvo localmente: contém observações clínicas. Revise antes de incorporar ao prontuário e guarde conforme a política da clínica, sem enviar a terceiros."); }}
-          className="snp-btn snp-btn--paper inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm"><Download className="h-4 w-4" /> Baixar TXT</button>
+        {modoMedico && (tab === "medico" || tab === "cobertura") ? (
+          <>
+            <button type="button" onClick={() => void copyReport(report)}
+              className="snp-btn snp-btn--sun inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm"><ClipboardCopy className="h-4 w-4" /> Copiar registro clínico do médico</button>
+            <button type="button" onClick={() => { downloadTextDocument(report, `super-neuropad-circuito-${years}a.txt`); setFeedback("TXT clínico salvo localmente: contém observações clínicas e a síntese do médico. Revise antes de incorporar ao prontuário e guarde conforme a política da clínica, sem enviar a terceiros."); }}
+              className="snp-btn snp-btn--paper inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm"><Download className="h-4 w-4" /> Baixar TXT do médico</button>
+          </>
+        ) : (
+          <>
+            <button type="button" onClick={() => void copyReport(relatorioPreConsulta)}
+              className="snp-btn snp-btn--sun inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm"><ClipboardCopy className="h-4 w-4" /> Copiar registro da pré-consulta</button>
+            <button type="button" onClick={() => { downloadTextDocument(relatorioPreConsulta, `super-neuropad-pre-consulta-${years}a.txt`); setFeedback("TXT da pré-consulta salvo localmente: registro observacional de auxiliar e secretaria, sem exame do médico nem síntese. Não é laudo; revise antes de incorporar ao prontuário."); }}
+              className="snp-btn snp-btn--paper inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm"><Download className="h-4 w-4" /> Baixar TXT da pré-consulta</button>
+          </>
+        )}
         <button type="button" onClick={reset}
           className="snp-btn snp-btn--slate inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm"><RotateCcw className="h-4 w-4" /> Limpar circuito</button>
       </div>
