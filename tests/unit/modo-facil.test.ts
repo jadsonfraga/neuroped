@@ -59,8 +59,9 @@ test("Sonda 10: aba Modo Fácil usa o banco objetivo (1 a 19 anos), sem a trilha
   assert.match(sonda, /"sonda-easy-tab"/);
   assert.match(sonda, /buildObjectiveSteps\("sonda", easyYears, "sonda-easy"\)/);
   assert.match(sonda, /objectiveBandForYears\(easyYears\)/);
-  assert.match(sonda, /testid="sonda-easy"[\s\S]*?objective\n/);
-  const easyBlock = sonda.slice(sonda.indexOf("if (easy) {"), sonda.indexOf("  return (\n    <div\n      className=\"mx-auto w-full max-w-6xl space-y-5 pb-16\"", sonda.indexOf("if (easy) {")));
+  assert.match(sonda, /data-testid="sonda-easy-start"[\s\S]*?objective\s*\n/);
+  const easyBlock = sonda.match(/if \(easy\) \{([\s\S]*?)\r?\n[ ]{2}\}\r?\n[ ]{2}return \(/)?.[1] ?? "";
+  assert.ok(easyBlock, "ramo objetivo isolado da aplicação guiada");
   assert.doesNotMatch(easyBlock, /band\.missions|SondaDigitalActivity|s\.activity/);
   assert.doesNotMatch(sondaActivity, /jogo-facil|EasyGame|Acertou/);
 });
@@ -68,7 +69,7 @@ test("Sonda 10: aba Modo Fácil usa o banco objetivo (1 a 19 anos), sem a trilha
 test("OBS-10: aba Modo Fácil usa o banco objetivo, sem tarefas práticas, kit, câmera ou prono", () => {
   assert.match(obs10, /data-testid="obs10-easy-tab"/);
   assert.match(obs10, /buildObjectiveSteps\("obs10", easyYears, "obs10-easy"\)/);
-  assert.match(obs10, /testid="obs10-easy"[\s\S]*?objective\n/);
+  assert.match(obs10, /data-testid="obs10-easy-start"[\s\S]*?objective\s*\n/);
   const easyBlock = obs10.slice(obs10.indexOf("if (easy) {"), obs10.indexOf('data-testid="obs10-workspace">', obs10.indexOf("if (easy) {") + 200));
   assert.doesNotMatch(easyBlock, /PRACTICAL_TASKS|taskOmission|TaskPicture|proneAllowed|media\.start|getUserMedia|MediaRecorder/);
 });
