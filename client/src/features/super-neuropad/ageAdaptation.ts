@@ -61,12 +61,13 @@ function toleranciaPorFaixa(anos: number): string {
 }
 
 /** A entrevista de risco fica de fora: não acrescentar convites de jogo. */
-export function dicaDeMissaoPorIdade(anos: number, estacao: Pick<CircuitTask,"id"|"method">): string | null {
+export function dicaDeMissaoPorIdade(anos: number, estacao: Pick<CircuitTask,"id"|"method"|"executor">): string | null {
   if (estacao.id === "risk") return null;
   const perfil = perfilAnual(anos);
   if (!perfil) return null;
   const tecnica = TECNICA_DO_PROCEDIMENTO[estacao.id];
   if (tecnica) return `Adaptação para ${anos} anos — orientação ao examinador (procedimento do médico): ${tecnica} ${toleranciaPorFaixa(anos)} A execução pertence ao profissional; o auxiliar não realiza manobras.`;
+  if (estacao.executor === "secretaria") return `Adaptação para ${anos} anos — contato da secretaria: ${perfil.comunicacao} Respeitar a privacidade da família e confirmar a autorização antes de falar com a escola.`;
   const proposta = LINGUAGEM.has(estacao.id) ? perfil.comunicacao
     : MOTRICIDADE.has(estacao.id) ? perfil.motricidade
     : COGNICAO.has(estacao.id) ? perfil.cognicao

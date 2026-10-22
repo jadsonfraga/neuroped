@@ -25,14 +25,16 @@ test("cobertura: domínio com várias estações só fica registrado quando toda
   assert.equal(coverageStatus(sensibilidade, 5, records({ sensation: "observado" })), "parcial");
   assert.equal(coverageStatus(sensibilidade, 5, records({ sensation: "observado", stereognosis: "observado" }, "examinador")), "registrado");
   assert.equal(coverageStatus(sensibilidade, 5, records({ stereognosis: "achado" })), "esclarecer");
-  // Coordenação aos 6 anos: só há a versão lúdica (nariz do astronauta); ela registra o que foi visto, mas não vira exame direto.
+  // Coordenação aos 6 anos: o dedo-nariz é exame direto do médico; sem fonte do examinador fica parcial.
   const coordenacao = domain("coordenacao");
-  assert.equal(coverageStatus(coordenacao, 6, records({ finger6: "observado" })), "parcial");
-  assert.equal(coverageStatus(coordenacao, 6, records({ finger6: "achado" })), "esclarecer");
-  // Marcha: a estação lúdica de cada faixa registra o domínio (não presencial); fundir Romberg não deixa lacuna.
+  assert.equal(coverageStatus(coordenacao, 6, records({ finger6: "observado" }, "escola")), "parcial");
+  assert.equal(coverageStatus(coordenacao, 6, records({ finger6: "observado" }, "examinador")), "registrado");
+  assert.equal(coverageStatus(coordenacao, 6, records({ finger6: "achado" }, "examinador")), "esclarecer");
+  // Marcha: a brincadeira da auxiliar (até 5 anos) registra o domínio; a ponte de equilíbrio (6+) é exame direto do médico.
   const marcha = domain("marcha");
   assert.equal(coverageStatus(marcha, 4, records({ gait2: "observado" })), "registrado");
-  assert.equal(coverageStatus(marcha, 9, records({ gait6: "observado" })), "registrado");
+  assert.equal(coverageStatus(marcha, 9, records({ gait6: "observado" }, "escola")), "parcial");
+  assert.equal(coverageStatus(marcha, 9, records({ gait6: "observado" }, "examinador")), "registrado");
 });
 
 test("resultados recusados não exportam marcadores antigos e não atribuem relatos ao examinador", () => {
