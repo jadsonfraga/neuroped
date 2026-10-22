@@ -84,3 +84,19 @@ export function buildVisualSearchBoard(profile: VisualSearchProfile, seed: numbe
   }
   return board;
 }
+
+/**
+ * Uma seleção no limite ou depois dele conta como sem resposta, mesmo que
+ * setInterval esteja atrasado (ex.: aba lenta ou dispositivo com pouca RAM).
+ * Retorna índice de opção ou null, nunca uma classificação clínica.
+ */
+export function visualSearchChoice(
+  variant: ExplorerVariant,
+  elapsedSeconds: number,
+  limitSeconds: number,
+): 0 | 1 | null {
+  if (!Number.isFinite(elapsedSeconds) || elapsedSeconds < 0
+    || !Number.isFinite(limitSeconds) || limitSeconds <= 0
+    || elapsedSeconds >= limitSeconds) return null;
+  return variant === 0 ? 0 : 1;
+}

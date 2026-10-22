@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import type { Option, TouchItem } from "./items";
-import { buildVisualSearchBoard, visualSearchProfile, type ExplorerVariant } from "./visualSearch";
+import { buildVisualSearchBoard, visualSearchChoice, visualSearchProfile, type ExplorerVariant } from "./visualSearch";
 
 /** Ilustração vetorial autoral; os distratores diferem por cor e/ou forma. */
 function SearchExplorer({ variant, tier }: { variant: ExplorerVariant; tier: number }) {
@@ -69,6 +69,7 @@ export function VisualSearchStage({ item, years, seed, paused, onAnswer }: {
         : profile.columns === 5 ? "grid-cols-4 sm:grid-cols-5"
           : "grid-cols-5 sm:grid-cols-6";
   const [left, setLeft] = useState(profile.seconds);
+  const remainingPercent = Math.max(0, Math.min(100, (left / profile.seconds) * 100));
   const activeMs = useRef(0);
   const answered = useRef(false);
   const startedSegment = useRef<number | null>(null);
@@ -100,40 +101,51 @@ export function VisualSearchStage({ item, years, seed, paused, onAnswer }: {
     answered.current = true;
     const now = performance.now();
     const seconds = (activeMs.current + (startedSegment.current === null ? 0 : now - startedSegment.current)) / 1000;
-    onAnswer(item.options[variant === 0 ? 0 : 1], event, seconds);
+    const selectedIndex = visualSearchChoice(variant, seconds, profile.seconds);
+    onAnswer(selectedIndex === null ? null : item.options[selectedIndex], event,
+      Math.min(seconds, profile.seconds));
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-3" data-testid="visual-search-stage" data-age={years}>
+    <div className="mx-auto max-w-3xl space-y-4" data-testid="visual-search-stage" data-age={years}>
       <div className="flex flex-wrap items-center justify-center gap-3">
         <span className="snp-chip">Missão bônus · busca visual</span>
         <span className="snp-chip">{profile.cells} personagens</span>
-        <span className="snp-chip" role="timer" aria-label={"Tempo restante: " + left + " segundos"}>
-          Tempo: <strong className={left <= 10 ? "text-red-700" : ""}>{left}s</strong>
+        <span className="snp-chip bg-[var(--snp-paper-fixed)]" role="timer" aria-live="off"
+          aria-label={"Tempo restante: " + left + " segundos"}>
+          <span aria-hidden="true">⏱</span> Tempo: <strong className={left <= 10 ? "text-red-700" : ""}>{left}s</strong>
         </span>
       </div>
-      <div className="flex items-center justify-center gap-3 rounded-xl bg-white p-3 text-slate-900">
-        <div className="h-16 w-16 shrink-0" aria-hidden="true"><SearchExplorer variant={0} tier={profile.tier} /></div>
-        <div>
-          <p className="text-lg font-black">{profile.tier <= 1 ? "Toque no explorador igual ao modelo!" : "Ache a estrela cheia no CENTRO do boné."}</p>
-          <p className="text-xs">Encontre um só. Toque nele antes de acabar o tempo.</p>
+      <div className="overflow-hidden rounded-full bg-[var(--snp-paper-fixed)]"
+        aria-hidden="true" data-testid="visual-search-time-bar">
+        <div className="h-2.5 rounded-full bg-[var(--snp-grass)] motion-safe:transition-[width] motion-safe:duration-300"
+          style={{ width: remainingPercent + "%" }} />
+      </div>
+      <div className="flex items-center gap-3 rounded-2xl border-2 border-[var(--snp-ink-40)] bg-[var(--snp-sun-tint)] p-3 sm:gap-5 sm:p-4">
+        <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-xl border-2 border-[var(--snp-ink-fixed)] bg-white p-1 shadow-sm sm:h-28 sm:w-28" aria-hidden="true">
+          <SearchExplorer variant={0} tier={profile.tier} />
+        </div>
+        <div className="space-y-1 text-[var(--snp-ink-fixed)]">
+          <span className="text-xs font-bold uppercase tracking-wide">Encontre este explorador</span>
+          <p className="text-base font-black leading-snug sm:text-xl">{profile.tier <= 1 ? "Procure um igual ao modelo!" : "Estrela cheia e centralizada no boné."}</p>
+          <p className="text-xs font-semibold sm:text-sm">Aponte ou toque uma vez. Você pode pausar a busca.</p>
         </div>
       </div>
-      <div className={"grid gap-1.5 rounded-xl border-2 border-slate-500 bg-slate-100 p-2 " + layout}
-        role="group" aria-label="Cenário de busca visual">
+      <div className={"grid gap-2 rounded-2xl border-2 border-[var(--snp-ink-40)] bg-[var(--snp-sky-tint)] p-2 sm:gap-2.5 sm:p-3 " + layout}
+        role="group" aria-label={"Cenário de busca visual com " + profile.cells + " personagens"}>
         {board.map((variant, index) => (
           <button key={index} type="button"
-            className="flex min-h-[48px] items-center justify-center rounded-lg border border-slate-300 bg-white p-1 transition-colors hover:bg-sky-100 focus-visible:outline focus-visible:outline-4 focus-visible:outline-sky-600 disabled:opacity-70"
+            className="flex min-h-[48px] touch-manipulation items-center justify-center rounded-xl border-2 border-[var(--snp-ink-40)] bg-white p-1 shadow-sm transition-colors hover:border-[var(--snp-ink-fixed)] hover:bg-[var(--snp-sun-tint)] focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-1 focus-visible:outline-[var(--snp-ink-fixed)] disabled:opacity-70"
             style={{ minHeight: profile.minTileHeight }}
             disabled={paused || answered.current}
             aria-label={"Personagem " + (index + 1) + ": " + SEARCH_LABELS[variant]}
             onClick={(event) => choose(variant, event)}>
-            <span className="block h-full w-full max-w-[72px]"><SearchExplorer variant={variant} tier={profile.tier} /></span>
+            <span className="block aspect-[8/9] w-full max-w-[72px]" aria-hidden="true"><SearchExplorer variant={variant} tier={profile.tier} /></span>
           </button>
         ))}
       </div>
       <p className="text-center text-xs opacity-80">
-        Tempo de jogo ajustado à densidade e à semelhança das figuras, não é corte clínico. A pausa congela a contagem; um toque encerra a tentativa.
+        Um toque encerra a tentativa. A pausa interrompe o relógio. Tempo lúdico, sem valor de corte clínico.
       </p>
     </div>
   );
