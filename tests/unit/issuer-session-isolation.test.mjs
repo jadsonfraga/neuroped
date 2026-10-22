@@ -25,6 +25,7 @@ const bundled = await build({
     builder.onLoad({ filter: /.*/, namespace: "fixture" }, () => ({ contents: `
       export const getAccessToken = () => globalThis.__issuerTest.token;
       export const getAuthSessionEpoch = () => globalThis.__issuerTest.epoch;
+      export const isVisitorSession = () => false;
       export const authFetch = (url) => {
         globalThis.__issuerTest.requests.push(url);
         return globalThis.__issuerTest.fetch(url);

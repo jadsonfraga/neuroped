@@ -1,6 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { EMPTY_BRANDING, type ClinicBranding } from "@shared/clinic-branding";
-import { authFetch, getAccessToken, getAuthSessionEpoch } from "@/lib/authClient";
+import { authFetch, getAccessToken, getAuthSessionEpoch, isVisitorSession } from "@/lib/authClient";
 
 /**
  * Emissor de documentos clínicos — fonte única de identidade.
@@ -126,6 +126,9 @@ export async function loadIssuer(): Promise<DocumentIssuer> {
   // identidade a buscar: devolve o emissor vazio sem tocar a rede — um 401
   // esperado ainda apareceria como erro no console do navegador.
   if (!getAccessToken()) return { ...EMPTY_ISSUER };
+  // Visitante (somente escalas) não emite documento nem tem perfil: o servidor
+  // recusaria /api/me/profile, então nem pergunta.
+  if (isVisitorSession()) return { ...EMPTY_ISSUER };
 
   const key = activeClinicId();
   const scope = issuerScope();

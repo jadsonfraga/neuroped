@@ -10,6 +10,7 @@ import {
 } from "./_sessions";
 import { isPlainObject } from "../_request";
 import { AUTH_INPUT_LIMITS } from "./_limits";
+import { VISITOR_ROLE, visitorLoginEnabled } from "./_visitor";
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { env, request } = context;
@@ -50,6 +51,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const user = await getUserById(env.DB, payload.sub);
     if (!user || !user.is_active) {
       if (user) await revokeRefreshToken(env.DB, payload, token, "account_disabled");
+      return json({ error: "Sessão inválida.", code: "INVALID_SESSION" }, 401);
+    }
+
+    // Visitante: o interruptor é o segredo do ambiente. Sem ele a família de
+    // refresh é revogada em vez de rotacionada.
+    if (user.role === VISITOR_ROLE && !visitorLoginEnabled(env)) {
+      await revokeRefreshToken(env.DB, payload, token, "account_disabled");
       return json({ error: "Sessão inválida.", code: "INVALID_SESSION" }, 401);
     }
 

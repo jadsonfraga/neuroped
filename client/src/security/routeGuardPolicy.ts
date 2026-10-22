@@ -2,7 +2,7 @@ import { isClinicalRoute } from "@/security/accessPolicy";
 import { LEGACY_DIRECT_TEST_REDIRECTS } from "@/data/legacyInstrumentRoutes";
 
 export type RouteAccessMode = "checking" | "remote" | "local";
-export type RouteUserRole = "admin" | "professional" | "reader" | "operator";
+export type RouteUserRole = "admin" | "professional" | "reader" | "operator" | "visitor";
 export type RouteAccessDecision = "allow" | "checking" | "login" | "forbidden";
 
 export const SENSITIVE_ROUTES = [
@@ -138,6 +138,99 @@ export const READER_CLINICAL_ROUTES = [
   "/cbcl-interativo",
 ] as const;
 
+/**
+ * Login de visitante: abre SOMENTE as escalas. Lista exata e explícita (nada é
+ * derivado de READER_CLINICAL_ROUTES, para uma rota nova nunca vazar por
+ * herança). Vale também para rotas públicas: o visitante logado não navega por
+ * páginas de famílias, agenda, termos etc. O servidor nega tudo fora da
+ * allowlist de /api (auth/_visitor.ts), então isto é conveniência de UI, não a
+ * única barreira.
+ */
+export const VISITOR_HOME = "/biblioteca-instrumentos";
+export const VISITOR_ROUTES = [
+  // Catálogo e triagem de escalas
+  "/biblioteca-instrumentos",
+  "/instrumentos-padronizados",
+  "/filtro",
+  "/filtro-escalas",
+  "/escalas-neuropsiquiatria",
+  "/inventarios-auto",
+  // Superfície canônica de instrumento e origens dos redirects legados
+  "/generic-scale/:id",
+  "/wisc5",
+  "/bayley",
+  "/vineland",
+  "/vineland-completo",
+  "/leiter3",
+  "/raven",
+  "/wppsi",
+  "/nepsy2",
+  "/griffiths",
+  "/masc2",
+  "/rcads",
+  "/tde",
+  "/confias",
+  "/pedicat",
+  "/portage",
+  "/cbcl-interativo",
+  // Escalas e inventários com página própria
+  "/mchat",
+  "/cars",
+  "/snap",
+  "/denver",
+  "/sdq",
+  "/scared",
+  "/conners",
+  "/cdi2",
+  "/phqa",
+  "/cssrs",
+  "/crafft",
+  "/cbcl",
+  "/vanderbilt",
+  "/brief2",
+  "/abc",
+  "/asq3",
+  "/pedsql",
+  "/gmfcs",
+  "/cshq",
+  "/ygtss",
+  "/tea",
+  "/tea-comportamentos",
+  "/bateria-jadson",
+  "/emdi",
+  "/eaf",
+  "/ecsm",
+  "/ips",
+  "/ecar-si",
+  "/edi",
+  "/eai",
+  "/easi",
+  "/ems",
+  "/etare",
+  "/eaah",
+  "/pac",
+  "/ahsd-tea",
+  "/tde2",
+  "/psc17",
+  "/gad7",
+  "/aq10",
+  "/aq50",
+  "/ballard",
+  "/pdae",
+  "/eusm10",
+] as const;
+
+/** Telas de autenticação que o visitante ainda precisa alcançar (entrar e sair). */
+const VISITOR_AUTH_ROUTES = ["/login", "/sessao-expirada"] as const;
+
+export function isVisitorRoute(path: string): boolean {
+  const pathname = normalizePathname(path);
+  return (
+    VISITOR_AUTH_ROUTES.some((route) => pathname === route) ||
+    VISITOR_ROUTES.some((pattern) => matchesExactRoutePattern(pathname, pattern))
+  );
+}
+
 const DEFAULT_CLINICAL_ROLES: readonly RouteUserRole[] = ["admin", "professional"];
 const READER_CLINICAL_ROLES: readonly RouteUserRole[] = ["admin", "professional", "reader"];
 // A Sonda Dez foi desenhada para aplicação pela assistente. Ela não persiste
@@ -234,6 +327,10 @@ export function decideRouteAccess({
   localPinConfigured = false,
   localPinUnlocked = false,
 }: RouteAccessInput): RouteAccessDecision {
+  // O visitante autenticado só vê escalas, inclusive no lugar de rotas públicas.
+  if (accessMode === "remote" && isAuthenticated && userRole === "visitor") {
+    return isVisitorRoute(path) ? "allow" : "forbidden";
+  }
   if (!isClinicalRoute(path)) return "allow";
   if (accessMode === "checking" || isLoading) return "checking";
   if (accessMode === "local") {

@@ -23,6 +23,11 @@ export interface Env {
   NEUROPED_E2E_EMAIL?: string;
   NEUROPED_E2E_PASSWORD?: string;
   NEUROPED_E2E_NAME?: string;
+  /**
+   * Senha do login de visitante (somente escalas). Ausente = login desligado e
+   * sessões de visitante derrubadas. Nunca vai ao banco nem ao repositório.
+   */
+  NEUROPED_VISITOR_PASSWORD?: string;
   /** Cadastro self-service do SaaS; fechado por padrão ("true" habilita). */
   SAAS_SIGNUP_ENABLED?: string;
 }

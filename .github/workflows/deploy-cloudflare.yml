@@ -302,6 +302,7 @@ jobs:
           E2E_PW: ${{ secrets.NEUROPED_E2E_PASSWORD }}
           E2E_MAIL: ${{ secrets.NEUROPED_E2E_EMAIL }}
           E2E_NM: ${{ secrets.NEUROPED_E2E_NAME }}
+          VISITOR_PW: ${{ secrets.NEUROPED_VISITOR_PASSWORD }}
           OP_KEY: ${{ secrets.OPERATIONAL_DATA_KEY }}
           OP_KEY_ID: ${{ secrets.OPERATIONAL_DATA_KEY_ID }}
           CLIN_KEY: ${{ secrets.CLINICAL_DATA_KEY }}
@@ -319,6 +320,7 @@ jobs:
           e2e_pw="$E2E_PW"
           e2e_mail="$E2E_MAIL"
           e2e_name="$E2E_NM"
+          visitor_pw="$VISITOR_PW"
           op_key="$OP_KEY"
           op_key_id="$OP_KEY_ID"
           clin_key="$CLIN_KEY"
@@ -327,7 +329,7 @@ jobs:
           clin_prev="$CLIN_PREV"
           clin_prev_id="$CLIN_PREV_ID"
           import_key="$IMPORT_KEY"
-          unset JWT_SECRET ADMIN_PW ADMIN_MAIL ADMIN_NM E2E_PW E2E_MAIL E2E_NM OP_KEY OP_KEY_ID CLIN_KEY CLIN_KEY_ID CLIN_INDEX CLIN_PREV CLIN_PREV_ID IMPORT_KEY
+          unset JWT_SECRET ADMIN_PW ADMIN_MAIL ADMIN_NM E2E_PW E2E_MAIL E2E_NM VISITOR_PW OP_KEY OP_KEY_ID CLIN_KEY CLIN_KEY_ID CLIN_INDEX CLIN_PREV CLIN_PREV_ID IMPORT_KEY
           put_required() {
             [ -n "$2" ] || { echo "::error::$1 ausente"; exit 1; }
             printf '%s' "$2" | npx wrangler@4 pages secret put "$1" --project-name neuroped >/dev/null
@@ -349,6 +351,10 @@ jobs:
           put_optional NEUROPED_E2E_PASSWORD "$e2e_pw"
           put_optional NEUROPED_E2E_EMAIL "$e2e_mail"
           put_optional NEUROPED_E2E_NAME "$e2e_name"
+          # Login de visitante (somente escalas): sem este segredo o login não
+          # existe. Opcional; para desligar, remova o segredo no Cloudflare
+          # (docs/VISITOR_ACCESS.md).
+          put_optional NEUROPED_VISITOR_PASSWORD "$visitor_pw"
           # Agenda pública: sem chave operacional dedicada (>=32 chars) o POST
           # book responde 503 CRYPTO_NOT_CONFIGURED. Opcional para não quebrar o
           # deploy; a chave é do dono e precisa de backup (perda = dados ilegíveis).

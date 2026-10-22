@@ -29,9 +29,11 @@
  * (bootstrapE2EAccount, auth/_shared.ts — role fixo 'reader', nunca ganha
  * membership de clínica). Uma sentinela que faz login em todo smoke test
  * inflaria DAU sozinha; excluir por role evita depender de comparar e-mail
- * contra variável de ambiente dentro da métrica.
+ * contra variável de ambiente dentro da métrica. `visitor` é o login
+ * compartilhado de visitante (somente escalas, auth/_visitor.ts): também não é
+ * cliente nem conta de clínica.
  */
-const CUSTOMER_ROLE_EXCLUSION = `role NOT IN ('admin', 'reader')`;
+const CUSTOMER_ROLE_EXCLUSION = `role NOT IN ('admin', 'reader', 'visitor')`;
 
 export interface ActivityWindowCounts {
   activeAccounts: number;

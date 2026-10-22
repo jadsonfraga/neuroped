@@ -13,6 +13,7 @@ interface Env extends ApiMetricsEnv {
   DEMO_API_WRITES_ENABLED?: string;
   NEUROPED_JWT_SECRET?: string;
   NEUROPED_E2E_EMAIL?: string;
+  NEUROPED_VISITOR_PASSWORD?: string;
 }
 
 import { verifyJwt } from "./auth/_crypto";
@@ -24,6 +25,7 @@ import {
   type AuthContextData,
 } from "./auth/_authorization";
 import { resolveBillingClinicId } from "./billing/_guard";
+import { VISITOR_ROLE, visitorApiAllowed, visitorLoginEnabled } from "./auth/_visitor";
 import { getClinicMembership, membershipCanWriteClinical } from "./tenant/_core";
 
 const inMemoryRateMap = new Map<string, { count: number; resetAt: number }>();
@@ -255,6 +257,25 @@ async function authorizeClinicalApi(request: Request, env: Env): Promise<Authori
   }
 
   const user = publicUser(row);
+
+  // Visitante (somente escalas): deny-by-default, antes de qualquer outro gate.
+  // O segredo do ambiente é o interruptor: removido, as sessões já emitidas
+  // deixam de valer na próxima requisição. Fora da allowlist: 403, sem exceção
+  // para troca de senha, consentimento, perfil ou convite.
+  if (row.role === VISITOR_ROLE) {
+    if (!visitorLoginEnabled(env)) {
+      return { failure: apiError("Sessão inválida.", "INVALID_SESSION", 401), user: null };
+    }
+    const pathname = new URL(request.url).pathname;
+    if (!visitorApiAllowed(request.method, pathname)) {
+      return {
+        failure: apiError("Acesso de visitante restrito às escalas.", "VISITOR_RESTRICTED", 403),
+        user,
+      };
+    }
+    return { failure: null, user };
+  }
+
   const passwordFailure = passwordChangeFailure(request, user);
   if (passwordFailure) return { failure: passwordFailure, user };
   const tenantAuthorization = await tenantManagementAuthorization(env.DB, request, user);

@@ -20,6 +20,11 @@ import { createSessionTokens } from "./_sessions";
 import { isPlainObject } from "../_request";
 import { AUTH_INPUT_LIMITS } from "./_limits";
 import { enforceLoginAbuseLimit, registerLoginAbuseFailure } from "./_rateLimit";
+import {
+  ensureVisitorAccount,
+  isVisitorLoginName,
+  visitorPasswordMatches,
+} from "./_visitor";
 
 const INVALID = { error: "Credenciais inválidas.", code: "INVALID_CREDENTIALS" };
 
@@ -87,6 +92,33 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   } catch {
     // O lockout por conta continua disponível; falha do limitador auxiliar não
     // transforma indisponibilidade de telemetria em indisponibilidade de login.
+  }
+
+  // Login de visitante (somente escalas): autentica SÓ contra o segredo do
+  // ambiente, em tempo constante, e nunca passa pelo lockout por conta (uma
+  // conta compartilhada trancada por terceiros negaria acesso a todos; o teto
+  // distribuído por IP acima continua valendo). Sem o segredo: 401 genérico.
+  if (isVisitorLoginName(email)) {
+    if (!(await visitorPasswordMatches(env, password))) {
+      try {
+        await registerLoginAbuseFailure(env, request, secret);
+      } catch {
+        // Resposta externa permanece genérica mesmo se o bucket auxiliar falhar.
+      }
+      return json(INVALID, 401);
+    }
+    try {
+      const visitor = await ensureVisitorAccount(env.DB);
+      if (!visitor) return json(INVALID, 401);
+      const tokens = await createSessionTokens(env.DB, visitor, secret);
+      return json({ ...tokens, user: publicUser(visitor) }, 200);
+    } catch (error) {
+      console.error("[auth/login] visitante: sessão indisponível:", error);
+      return json(
+        { error: "Sessão de autenticação indisponível.", code: "AUTH_SESSION_UNAVAILABLE" },
+        503,
+      );
+    }
   }
 
   // Provisiona o admin inicial (idempotente) antes de buscar o usuário, somente
