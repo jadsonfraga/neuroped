@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Check, ChevronLeft, ChevronRight, ClipboardCopy, Download, ExternalLink, RotateCcw, ShieldAlert, Stethoscope } from "lucide-react";
 import { downloadTextDocument } from "@/lib/shareText";
 import {
-  buildCircuitReport, circuitForAge, missoesDaAuxiliar, CIRCUIT_VERSION, CIRCUIT_METHODS, CIRCUIT_SOURCES, CIRCUIT_STATUSES,
+  buildCircuitReport, circuitForAge, missoesPreConsulta, EXECUTOR_LABELS, CIRCUIT_VERSION, CIRCUIT_METHODS, CIRCUIT_SOURCES, CIRCUIT_STATUSES,
   CIRCUIT_URGENCY_NOTE, CIRCUIT_VIDEO_LINKS, COVERAGE_LABELS, coverageStatus, notaDeEstacao, MSE_SECTIONS, NEURO_BASIC_DOMAINS,
   STATION_DEMO, type CircuitArea, type CircuitRecords, type CircuitSource, type CircuitStatus, type CoverageDomain, type CoverageStatus,
 } from "./clinicalCircuit";
@@ -208,10 +208,10 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
   const [anotacaoAberta, setAnotacaoAberta] = useState(false);
   const [orientacaoAberta, setOrientacaoAberta] = useState(false);
   const area: CircuitArea = tab === "mental" ? "mental" : "neurologico";
-  const all = years === null ? [] : missoesDaAuxiliar(years);
+  const all = years === null ? [] : missoesPreConsulta(years);
   const todas = years === null ? [] : circuitForAge(years);
   const doMedico = todas.filter((entry) => entry.executor === "medico");
-  const tasks = years === null ? [] : tab === "medico" ? doMedico : missoesDaAuxiliar(years, area);
+  const tasks = years === null ? [] : tab === "medico" ? doMedico : missoesPreConsulta(years, area);
   const task = tasks[Math.min(active, tasks.length - 1)];
   const demo = task ? STATION_DEMO[task.id] : undefined;
   const estados: Record<string, EstadoMissao> = Object.fromEntries(todas.map((entry) =>
@@ -237,7 +237,7 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
     const alvo = all.find((entry) => entry.id === id);
     if (!alvo) return;
     setTab(alvo.area);
-    setActive(Math.max(0, missoesDaAuxiliar(years, alvo.area).findIndex((entry) => entry.id === id)));
+    setActive(Math.max(0, missoesPreConsulta(years, alvo.area).findIndex((entry) => entry.id === id)));
     setFeedback("");
   };
   const previous = () => { setActive((index) => Math.max(0, index - 1)); setFeedback(""); };
@@ -276,7 +276,7 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
     <section id="snp-clinical-circuit" className={visible ? "snp-panel space-y-4 p-4 sm:p-6" : "hidden"} aria-label="Circuito clínico complementar" data-testid="super-neuropad-clinical-circuit">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="snp-pixel flex items-center gap-2 text-base"><Stethoscope className="h-5 w-5" /> Missões da auxiliar · antes da consulta</h2>
+          <h2 className="snp-pixel flex items-center gap-2 text-base"><Stethoscope className="h-5 w-5" /> Missões da pré-consulta · auxiliar e secretaria</h2>
           <p className="mt-2 max-w-3xl text-sm font-semibold">
             {resumo.total} brincadeiras curtas para {years} anos, em cerca de {minutosTotal} min. Leia o convite em voz alta, observe e toque no que viu: não precisa saber de neurologia.
             Não altera os seis mundos, o XP ou a pontuação, e nenhuma missão conclui diagnóstico · v{CIRCUIT_VERSION}.
@@ -335,10 +335,10 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
         <article className="snp-panel snp-panel--soft space-y-4 p-4" data-testid="super-neuropad-clinical-station">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="snp-chip">Missão {active + 1} de {tasks.length} · {task.domain}</span>
-            <span className="snp-chip">{CIRCUIT_METHODS[task.method]}</span>
+            <span className="snp-chip" data-testid="super-neuropad-mission-executor">{EXECUTOR_LABELS[task.executor]}</span>
           </div>
           <h3 className="text-xl font-black">{task.emoji} {task.title}</h3>
-          <p className="rounded-xl border-2 border-[var(--snp-ink-fixed)] bg-[var(--snp-sun-tint)] p-3 text-base font-black" data-testid="super-neuropad-mission-invite">🗣️ Diga: “{missao.fala}”</p>
+          <p className="rounded-xl border-2 border-[var(--snp-ink-fixed)] bg-[var(--snp-sun-tint)] p-3 text-base font-black" data-testid="super-neuropad-mission-invite">{task.executor === "secretaria" ? "📞 Contato da secretaria:" : "🗣️ Diga:"} “{missao.fala}”</p>
           <div className="flex flex-wrap gap-2 text-xs font-semibold">
             <span className="snp-chip">🧰 {missao.material}</span>
             <span className="snp-chip">⏱ ~{missao.minutos} min</span>
@@ -346,9 +346,9 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
           {dicaEtaria && <p className="rounded-xl border-2 border-[var(--snp-ink-40)] bg-white p-3 text-sm font-semibold text-[var(--snp-ink-fixed)]"
             data-testid="super-neuropad-age-station-guidance">{dicaEtaria}</p>}
           <div className="space-y-2">
-            <h4 className="text-sm font-black">{task.method === "presencial" ? "Passo a passo do examinador" : "Passo a passo da brincadeira"}</h4>
+            <h4 className="text-sm font-black">{task.executor === "secretaria" ? "Roteiro do contato para esta idade" : task.method === "presencial" ? "Passo a passo do examinador" : "Passo a passo da brincadeira"}</h4>
             <ol className="space-y-2">
-              {missao.passos.map((passo, index) => (
+              {(missao.roteiroPorIdade?.[years] ?? missao.passos).map((passo, index) => (
                 <li key={passo} className="flex gap-3 rounded-xl bg-white p-3 text-sm font-semibold text-[var(--snp-ink-fixed)]">
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--snp-sun)] font-black">{index + 1}</span>
                   <span>{passo}</span>
@@ -430,7 +430,7 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
             <span className="snp-chip">Exame do médico {active + 1} de {tasks.length} · {task.domain}</span>
             <span className="snp-chip">{CIRCUIT_METHODS[task.method]}</span>
           </div>
-          <p className="text-xs font-semibold" data-testid="super-neuropad-medico-note">Exame físico e entrevista reservada: tarefa do médico na consulta. Não conta nas missões da auxiliar e pode ficar sem registro.</p>
+          <p className="text-xs font-semibold" data-testid="super-neuropad-medico-note">Exame físico e entrevista reservada: tarefa do médico na consulta. Não conta nas missões da pré-consulta e pode ficar sem registro.</p>
           <h3 className="text-xl font-black">{task.emoji} {task.title}</h3>
           <p className="text-sm font-semibold leading-relaxed">{task.guide}</p>
           <p className="text-sm"><strong>Descrever:</strong> {task.observe}</p>

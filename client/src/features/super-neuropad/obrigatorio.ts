@@ -9,7 +9,7 @@
  * COMPLETO ou INCOMPLETO no relatório e a pendência fica visível em todo o fluxo. Nenhum controle
  * é desabilitado e a navegação segue livre: o jogo não libera documento nem conclui diagnóstico.
  */
-import { missoesDaAuxiliar, type CircuitArea, type CircuitSource, type CircuitStatus } from "./clinicalCircuit";
+import { missoesPreConsulta, type CircuitArea, type CircuitSource, type CircuitStatus } from "./clinicalCircuit";
 
 /** Tamanho mínimo da descrição quando "teve dificuldade" é registrado só por texto, sem marcador. */
 export const DESCRICAO_ACHADO_MINIMA = 10;
@@ -58,7 +58,7 @@ export function camposPendentes(estado: EstadoMissao): CampoObrigatorio[] {
 }
 
 export function resumoObrigatorio(years: number, estados: Readonly<Record<string, EstadoMissao>>, sintese: string): ResumoObrigatorio {
-  const tarefas = missoesDaAuxiliar(years);
+  const tarefas = missoesPreConsulta(years);
   const pendencias: PendenciaMissao[] = [];
   for (const tarefa of tarefas) {
     const faltam = camposPendentes(estados[tarefa.id] ?? {});

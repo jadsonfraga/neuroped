@@ -23,6 +23,7 @@ test("refinamento ajustado à idade respeita método e entrevista clínica de ri
     for(const task of circuitForAge(age)){
       const hint=dicaDeMissaoPorIdade(age,task);
       if(task.id==="risk"){assert.equal(hint,null);continue;}
+      if(task.executor==="secretaria"){assert.match(hint,/contato da secretaria/);continue;}
       assert.ok(hint && hint.includes(age+" anos"),task.id);
       if(task.method==="presencial")assert.match(hint,/examinador.*auxiliar não realiza manobras/i);
       if(task.method==="entrevista")assert.match(hint,/entrevista profissional.*privacidade/i);

@@ -11,17 +11,17 @@ import {
 const PUBLISHED_STATIONS = [
   ["rapport", "mental", 2, 17, "observacao"], ["social2", "mental", 2, 5, "ludico"], 
   ["language2", "neurologico", 2, 5, "ludico"], ["language6", "neurologico", 6, 17, "ludico"], ["vision", "neurologico", 2, 17, "presencial"],
-  ["face", "neurologico", 2, 17, "ludico"], ["hearing", "neurologico", 2, 17, "ludico"], ["shoulders", "neurologico", 5, 17, "presencial"],
+  ["face", "neurologico", 2, 17, "presencial"], ["hearing", "neurologico", 2, 17, "presencial"], ["shoulders", "neurologico", 5, 17, "presencial"],
   ["posture", "neurologico", 2, 17, "presencial"], ["strength2", "neurologico", 2, 17, "ludico"], ["strength6", "neurologico", 6, 17, "presencial"],
   ["reflex", "neurologico", 2, 17, "presencial"], ["sensation", "neurologico", 4, 17, "presencial"], ["reach2", "neurologico", 2, 5, "ludico"],
-  ["finger6", "neurologico", 6, 17, "ludico"], ["gait2", "neurologico", 2, 5, "ludico"], ["gait6", "neurologico", 6, 17, "ludico"],
+  ["finger6", "neurologico", 6, 17, "presencial"], ["gait2", "neurologico", 2, 5, "ludico"], ["gait6", "neurologico", 6, 17, "presencial"],
   ["growth", "neurologico", 2, 17, "presencial"], ["attention2", "mental", 2, 5, "observacao"], ["attention6", "mental", 6, 17, "ludico"],
   ["memory6", "mental", 6, 17, "entrevista"], ["emotion2", "mental", 2, 5, "observacao"], ["emotion6", "mental", 6, 17, "entrevista"],
   ["thought6", "mental", 6, 17, "entrevista"], ["insight9", "mental", 9, 17, "entrevista"], ["risk", "mental", 8, 17, "entrevista"],
 ] as const;
 
 const NEW_STATIONS = [
-  "fundus", "meningeal", "involuntary", "praxis3", "praxis6", "copy6", "stereognosis", "milestones", "sleep",
+  "fundus", "meningeal", "involuntary", "praxis3", "praxis6", "copy6", "stereognosis", "milestones", "sleep", "escola",
 ];
 
 // Missões que repetiam outras e foram fundidas: o conteúdo segue na missão que as absorveu.

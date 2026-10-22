@@ -151,14 +151,14 @@ async function main() {
       assert.equal(await page.getByTestId("super-neuropad-mission-status").count(), 0, "exame do médico não mostra pendência obrigatória da auxiliar");
       // Missão da auxiliar recusada não exporta marcadores.
       await openTab(page, "Exame neurológico");
-      const selectFace = circuitOf(page).getByLabel("Ir para estação");
-      const indexFace = await selectFace.evaluate((el) => Array.from(el.options).findIndex((option) => option.text.includes("Careta do dragão")));
-      await selectFace.selectOption({ index: indexFace });
-      const faceStation = page.getByTestId("super-neuropad-clinical-station");
-      assert.match(await faceStation.getByTestId("super-neuropad-mission-invite").innerText(), /Diga:/, "convite em voz alta");
-      await faceStation.getByRole("group", { name: /Toque no que você percebeu/ }).getByRole("button").first().click();
-      await faceStation.getByRole("button", { name: /Não deu para fazer/ }).click();
-      assert.equal(await faceStation.getByRole("group", { name: /Toque no que você percebeu/ }).getByRole("button", { pressed: true }).count(), 0, "marcadores removidos após não realização");
+      const selectAux = circuitOf(page).getByLabel("Ir para estação");
+      const indexAux = await selectAux.evaluate((el) => Array.from(el.options).findIndex((option) => option.text.includes("Sequência secreta")));
+      await selectAux.selectOption({ index: indexAux });
+      const auxStation = page.getByTestId("super-neuropad-clinical-station");
+      assert.match(await auxStation.getByTestId("super-neuropad-mission-invite").innerText(), /Diga:/, "convite em voz alta");
+      await auxStation.getByRole("group", { name: /Toque no que você percebeu/ }).getByRole("button").first().click();
+      await auxStation.getByRole("button", { name: /Não deu para fazer/ }).click();
+      assert.equal(await auxStation.getByRole("group", { name: /Toque no que você percebeu/ }).getByRole("button", { pressed: true }).count(), 0, "marcadores removidos após não realização");
       const [refusalDownload] = await Promise.all([
         page.waitForEvent("download"),
         circuitOf(page).getByRole("button", { name: /Baixar TXT/ }).click(),
@@ -166,28 +166,28 @@ async function main() {
       const refusalPath = `${dir}/recusa-sem-marcadores.txt`;
       await refusalDownload.saveAs(refusalPath);
       const refusalText = await readFile(refusalPath, "utf8");
-      assert.match(refusalText, /Careta do dragão[^\n]*Não realizado/);
+      assert.match(refusalText, /Sequência secreta[^\n]*Não realizado/);
       assert.doesNotMatch(refusalText, /Marcado:/, "tarefa não executada não exporta marcadores");
-      await faceStation.getByRole("button", { name: OBSERVADO }).click();
-      await faceStation.getByRole("group", { name: /Toque no que você percebeu/ }).getByRole("button").first().click();
-      await faceStation.getByRole("button", { name: SOURCE_AUXILIAR, exact: true }).click();
+      await auxStation.getByRole("button", { name: OBSERVADO }).click();
+      await auxStation.getByRole("group", { name: /Toque no que você percebeu/ }).getByRole("button").first().click();
+      await auxStation.getByRole("button", { name: SOURCE_AUXILIAR, exact: true }).click();
       // Achado de urgência no exame do médico.
       await recordMedico(page, "Janela do fundo", /^Realizado — requer esclarecimento/, SOURCE_EXAMINADOR, "Achado sintético de teste descrito pelo médico em frase completa.");
       // Obrigatório: "Teve dificuldade" sem marcador nem descrição deixa a missão pendente, sem desabilitar nada.
-      await openTab(page, "Exame neurológico");
-      const selectEco = circuitOf(page).getByLabel("Ir para estação");
-      const indexEco = await selectEco.evaluate((el) => Array.from(el.options).findIndex((option) => option.text.includes("Eco das palavras")));
-      await selectEco.selectOption({ index: indexEco });
-      const ecoStation = page.getByTestId("super-neuropad-clinical-station");
-      await ecoStation.getByRole("button", { name: ACHADO }).click();
-      await ecoStation.getByRole("button", { name: SOURCE_AUXILIAR, exact: true }).click();
-      assert.match(await ecoStation.getByTestId("super-neuropad-mission-status").innerText(), /Obrigatório ainda pendente.*o que foi visto/);
+      await openTab(page, "Estado mental");
+      const selectEncontro = circuitOf(page).getByLabel("Ir para estação");
+      const indexEncontro = await selectEncontro.evaluate((el) => Array.from(el.options).findIndex((option) => option.text.includes("Portal do encontro")));
+      await selectEncontro.selectOption({ index: indexEncontro });
+      const encontroStation = page.getByTestId("super-neuropad-clinical-station");
+      await encontroStation.getByRole("button", { name: ACHADO }).click();
+      await encontroStation.getByRole("button", { name: SOURCE_AUXILIAR, exact: true }).click();
+      assert.match(await encontroStation.getByTestId("super-neuropad-mission-status").innerText(), /Obrigatório ainda pendente.*o que foi visto/);
       assert.equal(await circuitOf(page).locator("button:disabled").count(), 0, "pendência obrigatória não desabilita controles");
       const axeEstacao = await new AxeBuilder({ page }).include('[data-testid="super-neuropad-clinical-station"]').analyze();
       await writeFile(`${dir}/axe-estacao-pendente.json`, JSON.stringify(axeEstacao.violations, null, 2));
       assert.deepEqual(axeEstacao.violations.map((violation) => ({ id: violation.id, targets: violation.nodes.map((node) => node.target) })), [], "axe sem violações na missão com pendência obrigatória");
-      await ecoStation.getByRole("group", { name: /Toque no que você percebeu/ }).getByRole("button").first().click();
-      assert.match(await ecoStation.getByTestId("super-neuropad-mission-status").innerText(), /Missão concluída/);
+      await encontroStation.getByRole("group", { name: /Toque no que você percebeu/ }).getByRole("button").first().click();
+      assert.match(await encontroStation.getByTestId("super-neuropad-mission-status").innerText(), /Missão concluída/);
       await record(page, "Linha do tempo da aventura", OBSERVADO, SOURCE_ESCOLA, "Relatório da escola descreve leitura e escrita adequadas à série e atenção oscilante em atividades longas.");
       await openTab(page, "Cobertura e lacunas");
       const depois = unresolvedCount(await readiness.innerText());
