@@ -1,38 +1,86 @@
 /**
- * Busca visual autoral, inspirada em brincadeiras de localizar um personagem.
- * Tempo e densidade são parâmetros lúdicos de aplicação, NÃO normas clínicas.
- * Os elementos são vetoriais locais; não há dependência de sites nem imagens externas.
+ * Busca visual autoral — parâmetros de usabilidade, não curvas normativas.
+ * A dificuldade progride por quantidade, semelhança dos distratores e tamanho.
+ * O cronômetro compensa o aumento de carga; não é um tempo de corte clínico.
+ * Cenário determinístico por semente, sem rede ou imagens proprietárias.
  */
+export type VisualSearchTier = 0 | 1 | 2 | 3 | 4;
+export type ExplorerVariant = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
 export interface VisualSearchProfile {
   years: number;
   cells: number;
   columns: number;
   seconds: number;
+  tier: VisualSearchTier;
   similar: boolean;
+  minTileHeight: number;
+  nearDistractors: number;
 }
 
-const CELLS = [6, 8, 12, 12, 16, 20, 24, 24, 30, 30, 36, 36, 42, 42, 48, 48] as const;
-const COLUMNS = [2, 2, 3, 3, 4, 4, 4, 4, 5, 5, 6, 6, 6, 6, 6, 6] as const;
-const SECONDS = [50, 48, 45, 43, 42, 40, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29] as const;
+// 2-3: contraste forte, 6-8 alvos grandes e poucos distratores.
+// 4-5: mais objetos, mas sem quase iguais.
+// 6-9: busca com maior densidade e mesma cor de chapéu em parte da cena.
+// 10-13: formas parecidas (estrela vazada / quatro pontas).
+// 14-17: maior carga e estrelas fora do centro; mais tempo para compensar.
+const PROFILES: readonly Omit<VisualSearchProfile, "years" | "similar" | "nearDistractors">[] = [
+  { cells: 6,  columns: 2, seconds: 70, tier: 0, minTileHeight: 84 },
+  { cells: 8,  columns: 2, seconds: 70, tier: 0, minTileHeight: 80 },
+  { cells: 9,  columns: 3, seconds: 65, tier: 1, minTileHeight: 74 },
+  { cells: 12, columns: 3, seconds: 65, tier: 1, minTileHeight: 72 },
+  { cells: 12, columns: 3, seconds: 60, tier: 2, minTileHeight: 68 },
+  { cells: 16, columns: 4, seconds: 60, tier: 2, minTileHeight: 64 },
+  { cells: 20, columns: 4, seconds: 60, tier: 2, minTileHeight: 62 },
+  { cells: 24, columns: 4, seconds: 60, tier: 2, minTileHeight: 60 },
+  { cells: 24, columns: 4, seconds: 60, tier: 3, minTileHeight: 58 },
+  { cells: 30, columns: 5, seconds: 65, tier: 3, minTileHeight: 56 },
+  { cells: 30, columns: 5, seconds: 65, tier: 3, minTileHeight: 56 },
+  { cells: 36, columns: 6, seconds: 70, tier: 3, minTileHeight: 54 },
+  { cells: 36, columns: 6, seconds: 70, tier: 4, minTileHeight: 54 },
+  { cells: 42, columns: 6, seconds: 75, tier: 4, minTileHeight: 54 },
+  { cells: 42, columns: 6, seconds: 75, tier: 4, minTileHeight: 54 },
+  { cells: 48, columns: 6, seconds: 80, tier: 4, minTileHeight: 54 },
+] as const;
 
-/** Graduação pragmática por idade, ainda não padronizada/validada. */
 export function visualSearchProfile(years: number): VisualSearchProfile {
   if (!Number.isInteger(years) || years < 2 || years > 17) {
     throw new RangeError("Busca visual disponível de 2 a 17 anos");
   }
-  const index = years - 2;
-  return { years, cells: CELLS[index], columns: COLUMNS[index], seconds: SECONDS[index], similar: years >= 8 };
+  const base = PROFILES[years - 2];
+  const nearDistractors = base.tier === 3
+    ? Math.max(3, Math.floor((base.cells - 1) / 3))
+    : base.tier === 4
+      ? Math.max(5, Math.floor((base.cells - 1) / 2))
+      : 0;
+  return { years, ...base, similar: base.tier >= 2, nearDistractors };
 }
 
-export type ExplorerVariant = 0 | 1 | 2 | 3;
+function makePrng(seed: number) {
+  // O estado nunca é zero: garante sequência válida inclusive para seed=0.
+  let state = ((Number.isFinite(seed) ? Math.trunc(seed) : 0) ^ 0x9e3779b9) >>> 0;
+  if (state === 0) state = 0x6d2b79f5;
+  return () => {
+    state ^= state << 13;
+    state ^= state >>> 17;
+    state ^= state << 5;
+    return (state >>> 0) / 4294967296;
+  };
+}
 
-/** Exatamente um explorador-alvo; disposição reproduzível por partida. */
+/** Exatamente um alvo (0), sem padrão periódico óbvio nos distratores. */
 export function buildVisualSearchBoard(profile: VisualSearchProfile, seed: number): ExplorerVariant[] {
-  const n = profile.cells;
-  const normalized = Number.isFinite(seed) ? (Math.trunc(seed) >>> 0) : 0;
-  const target = ((Math.imul(normalized ^ 0x9e3779b9, 2654435761) >>> 0) % n);
-  return Array.from({ length: n }, (_, index): ExplorerVariant => {
-    if (index === target) return 0;
-    return (1 + ((normalized + index * 13) % 3)) as ExplorerVariant;
-  });
+  const rand = makePrng(seed);
+  const basic: readonly ExplorerVariant[] = [1, 2, 3];
+  const near: readonly ExplorerVariant[] = profile.tier === 4 ? [4, 5, 6] : [4, 5];
+  const board: ExplorerVariant[] = [0];
+  for (let i = 0; i < profile.cells - 1; i++) {
+    const pool = i < profile.nearDistractors ? near : basic;
+    board.push(pool[Math.floor(rand() * pool.length)]);
+  }
+  // Fisher-Yates evita alvos sistematicamente na mesma posição ou listras.
+  for (let i = board.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [board[i], board[j]] = [board[j], board[i]];
+  }
+  return board;
 }

@@ -13,7 +13,7 @@ export function VisualSearchBonusPanel({ years, visible }: { years: number; visi
     kind: "toque",
     origin: "visual",
     ref: "Busca visual autoral não padronizada: " + profile.cells + " figuras, limite " + profile.seconds + " segundos",
-    prompt: "Encontre o explorador com uma estrela dourada no boné.",
+    prompt: "Encontre o explorador com uma estrela preenchida no centro do boné.",
     answer: "Explorador com estrela dourada",
     seconds: profile.seconds,
     options: [
@@ -75,6 +75,7 @@ export function VisualSearchBonusPanel({ years, visible }: { years: number; visi
         <div>
           <h2 id="snp-search-title" className="snp-pixel text-base">Onde está o explorador?</h2>
           <p className="text-sm font-semibold">Busca visual por idade: {years} anos · {profile.cells} personagens · {profile.seconds} segundos.</p>
+          <p className="text-xs font-semibold opacity-80">Dificuldade: {["alto contraste e alvos grandes", "formas simples com algumas cores iguais", "mais personagens com cores semelhantes", "símbolos parecidos e maior densidade", "quase iguais, exigindo identificar forma e posição"][profile.tier]}.</p>
           <p className="text-xs opacity-80">
             Missão complementar independente, com personagens originais. Não altera os 50 desafios,
             o XP nem o resultado da bateria principal. Tempo operacional não validado como norma.
