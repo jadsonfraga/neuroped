@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 import { PRECONSULTA_IDS, PRECONSULTA_MISSOES, tarefasDaAssistente } from "../../client/src/features/super-neuropad/preconsulta";
+import { conceptKey, INTEGRATED_BANK, PHASE_ORDER } from "../../client/src/features/super-neuropad/bank";
+import { opcionaisDaIdade, opcionaisSemRedundancia, proximoPendenteNaLista } from "../../client/src/features/super-neuropad/extensao";
 
 const atosMedicos = new Set([
   "vision", "fundus", "face", "hearing", "shoulders", "meningeal", "posture",
@@ -50,4 +52,21 @@ test("pré-consulta: não duplica a bateria e não mascara exames clínicos", ()
   assert.match(code, /perfilOperador === "medico" && <label/);
   assert.match(code, /perfilOperador === "medico" && task\.video/);
   assert.doesNotMatch(code, /localStorage|sessionStorage|MediaRecorder|getUserMedia/);
+});
+
+test("opcionais: a seleção padrão não reapresenta conceitos da bateria nem repete os seus próprios", () => {
+  for (let age = 2; age <= 17; age++) {
+    const todos = opcionaisDaIdade(age);
+    const exibidos = opcionaisSemRedundancia(age);
+    assert.ok(exibidos.length > 0 && exibidos.length <= todos.length, `idade ${age}: seleção válida`);
+    const vistos = new Set(PHASE_ORDER.flatMap((phaseId) => INTEGRATED_BANK[age][phaseId]).map(conceptKey));
+    for (const { item } of exibidos) {
+      const chave = conceptKey(item);
+      assert.ok(!vistos.has(chave), `idade ${age}: conceito repetido: ${item.prompt}`);
+      vistos.add(chave);
+    }
+    assert.ok(exibidos.every((entry) => todos.some((other) => other.item.id === entry.item.id)));
+    assert.equal(proximoPendenteNaLista(exibidos, {}), exibidos[0].item.id);
+    assert.equal(proximoPendenteNaLista([], {}), null);
+  }
 });
