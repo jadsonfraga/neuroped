@@ -30,6 +30,7 @@ import { DESCRIPTIVE_NOTICE } from "@/lib/descriptiveNotice";
 import {
   buildFamilyDocSpec,
   buildFamilySummary,
+  snapshotCompletedFamilySession,
   isValidFamilyEmail,
   type FamilyContact,
 } from "@/features/super-neuropad/familyDelivery";
@@ -941,27 +942,31 @@ export default function SuperNeuroPadGamePage() {
     cheerTimer.current = window.setTimeout(() => setCheer(null), 900);
   }
 
-  function finishGame() {
+  function finishGame(finalAnswers: AnswerRecord[] = answers, finalSkipped: GameSession["skipped"] = skipped) {
     if (pausedAt.current !== null) { pausedMs.current += performance.now() - pausedAt.current; pausedAt.current = null; }
-    finishedAt.current = new Date().toISOString();
+    const closedAt = new Date().toISOString();
+    finishedAt.current = closedAt;
+    // A última resposta e o último mundo pulado ainda não chegaram ao render do React.
+    const deliverySnapshot = session ? snapshotCompletedFamilySession(
+      { ...session, pausedSeconds: Math.round(pausedMs.current / 1000) }, closedAt, finalAnswers, finalSkipped,
+    ) : null;
     playFlagPole();
     celebrate();
     music.current?.stop();
     setPaused(false);
     setScreen("results");
-    if (familyContact && familyDeliveryStatus === "ready") void deliverToFamily(familyContact);
+    if (familyContact && familyDeliveryStatus === "ready" && deliverySnapshot) void deliverToFamily(familyContact, deliverySnapshot);
   }
 
   /** Encaminhamento automático ao encerrar: PDF familiar baixa, WhatsApp abre com o resumo e o e-mail abre em rascunho.
    *  Nada é transmitido a servidor: o envio final é confirmado pela aplicadora no próprio cliente. */
-  async function deliverToFamily(contact: FamilyContact) {
-    if (!session) return;
-    const appliedAt = formatClinicalDateTime(new Date(session.finishedAt ?? session.startedAt));
-    const baseName = `super-neuropad-familia-${session.bandId}-${localIsoDate(new Date(session.startedAt))}`;
-    const summaryText = buildFamilySummary(session, contact);
+  async function deliverToFamily(contact: FamilyContact, deliveredSession: GameSession) {
+    const appliedAt = formatClinicalDateTime(new Date(deliveredSession.finishedAt ?? deliveredSession.startedAt));
+    const baseName = `super-neuropad-familia-${deliveredSession.bandId}-${localIsoDate(new Date(deliveredSession.startedAt))}`;
+    const summaryText = buildFamilySummary(deliveredSession, contact);
     try {
       const { buildDocumentPdf } = await import("@/lib/documentPdf");
-      const bytes = await buildDocumentPdf(buildFamilyDocSpec(session, issuerLines(issuer, issuerCredentials(issuer)), appliedAt));
+      const bytes = await buildDocumentPdf(buildFamilyDocSpec(deliveredSession, issuerLines(issuer, issuerCredentials(issuer)), appliedAt));
       const blob = new Blob([bytes as BlobPart], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
@@ -991,7 +996,7 @@ export default function SuperNeuroPadGamePage() {
         await new Promise((resolve) => window.setTimeout(resolve, 400));
         await openEmailDraft({
           to: contact.email,
-          subject: `${SUPER_NEUROPAD_TITLE} — resumo da aventura (${summary?.band.label ?? ""})`,
+          subject: `${SUPER_NEUROPAD_TITLE} — resumo da aventura (${summarize(deliveredSession).band.label})`,
           body: `${summaryText}\n\nO PDF com o relatório completo foi baixado neste dispositivo: anexe-o antes de enviar.`,
           filename: baseName,
         });
@@ -1031,7 +1036,7 @@ export default function SuperNeuroPadGamePage() {
       setScreen("phase-done");
       return;
     }
-    finishGame();
+    finishGame(next);
   }
 
   function undo() {
@@ -1098,14 +1103,15 @@ export default function SuperNeuroPadGamePage() {
   function skipPhase(reason: string) {
     softTap();
     setSkipOpen(false);
-    setSkipped((current) => [...current.filter((entry) => entry.phaseId !== phaseId), { phaseId, reason }]);
+    const nextSkipped = [...skipped.filter((entry) => entry.phaseId !== phaseId), { phaseId, reason }];
+    setSkipped(nextSkipped);
     if (phaseIndex + 1 < PHASE_ORDER.length) {
       setPhaseIndex(phaseIndex + 1);
       setItemIndex(0);
       setScreen("intro");
       return;
     }
-    finishGame();
+    finishGame(answers, nextSkipped);
   }
 
   async function exportPdf() {
