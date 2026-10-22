@@ -262,7 +262,7 @@ async function authorizeClinicalApi(request: Request, env: Env): Promise<Authori
   // O segredo do ambiente é o interruptor: removido, as sessões já emitidas
   // deixam de valer na próxima requisição. Fora da allowlist: 403, sem exceção
   // para troca de senha, consentimento, perfil ou convite.
-  if (row.role === VISITOR_ROLE) {
+  if (user.role === VISITOR_ROLE) {
     if (!visitorLoginEnabled(env)) {
       return { failure: apiError("Sessão inválida.", "INVALID_SESSION", 401), user: null };
     }

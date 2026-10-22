@@ -15,8 +15,11 @@ repositório nem no banco.
      `NEUROPED_VISITOR_PASSWORD` (efeito imediato, sem deploy).
 2. Na tela de login, usuário `visitante` e a senha escolhida.
 
-A conta `visitante` é criada no primeiro login correto (`role = visitor`, sem
-`password_hash`, sem clínica).
+A conta `visitante` é criada no primeiro login correto, sem `password_hash` e
+sem clínica. No banco ela tem o papel mínimo `reader` (a tabela `users` só
+aceita admin/professional/reader/operator) e o e-mail reservado `visitante`; a
+API expõe o papel `visitor`. O cadastro exige "@", então ninguém consegue criar
+essa identidade pelo site.
 
 ## Desligar
 
@@ -59,8 +62,8 @@ dock mostram só as escalas.
   API, não impede ler o JavaScript publicado.
 - Sem lockout por conta: uma conta compartilhada trancada por terceiros negaria
   acesso a todos. O limite distribuído de tentativas por IP continua valendo.
-- Sessões de visitante não entram nas métricas de clientes (`role = visitor`
-  excluído de `_productMetrics`).
+- Sessões de visitante não entram nas métricas de clientes (o papel `reader` do
+  banco já é excluído de `_productMetrics`).
 
 ## Verificação
 

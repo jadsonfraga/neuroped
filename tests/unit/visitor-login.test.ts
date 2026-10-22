@@ -26,6 +26,7 @@ import { onRequestPost as login } from "../../functions/api/auth/login";
 import { onRequestPost as refresh } from "../../functions/api/auth/refresh";
 import { getContextUser } from "../../functions/api/auth/_authorization";
 import { visitorApiAllowed } from "../../functions/api/auth/_visitor";
+import { publicUser, type UserRow } from "../../functions/api/auth/_shared";
 
 class StatementMock {
   constructor(
@@ -68,7 +69,7 @@ sqlite.exec(`
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     email TEXT UNIQUE,
-    role TEXT NOT NULL DEFAULT 'professional',
+    role TEXT NOT NULL DEFAULT 'professional' CHECK (role IN ('admin', 'professional', 'reader', 'operator')),
     is_active INTEGER NOT NULL DEFAULT 1,
     password_hash TEXT,
     must_change_password INTEGER NOT NULL DEFAULT 0,
@@ -137,7 +138,8 @@ assert.equal(session.user.mustChangePassword, false);
 {
   const rows = users();
   assert.equal(rows.length, 1);
-  assert.equal(rows[0].role, "visitor");
+  // O CHECK de produção (schema.d1.sql) só aceita admin/professional/reader/operator.
+  assert.equal(rows[0].role, "reader", "no banco o visitante é o papel mínimo reader");
   assert.equal(rows[0].password_hash, null, "a senha nunca é gravada no banco");
   assert.equal(
     (sqlite.prepare("SELECT COUNT(*) AS n FROM clinic_memberships WHERE user_id = ?").get(rows[0].id) as { n: number }).n,
@@ -223,6 +225,17 @@ async function callApi(method: string, path: string, token: string, env: Record<
   assert.equal(visitorApiAllowed("GET", "/api/auth/me/extra"), false);
   assert.equal(visitorApiAllowed("POST", "/api/auth/me"), false);
   assert.equal(visitorApiAllowed("GET", "/api/auth"), false);
+}
+
+// ── 6a) O papel exposto distingue o visitante do reader de clínica ─────────
+{
+  const row = (email: string, role: string) =>
+    ({ id: "u", name: "N", email, role, is_active: 1, password_hash: null, must_change_password: 0, failed_login_attempts: 0, locked_until: null }) as UserRow;
+  assert.equal(publicUser(row("visitante", "reader")).role, "visitor");
+  assert.equal(publicUser(row("  Visitante ", "reader")).role, "visitor");
+  assert.equal(publicUser(row("leitor@clinica.example", "reader")).role, "reader", "reader de clínica não vira visitante");
+  assert.equal(publicUser(row("visitante", "professional")).role, "professional", "outro papel nunca é rebaixado nem promovido por e-mail");
+  assert.equal(publicUser(row("visitante", "admin")).role, "admin");
 }
 
 // ── 6) Handlers de clínica recusam o papel por construção ──────────────────

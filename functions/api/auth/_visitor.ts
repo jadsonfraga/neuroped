@@ -9,8 +9,10 @@
  *   senha enviada com o segredo do ambiente em tempo constante, e a linha em
  *   `users` nasce sem `password_hash`. Nenhum outro caminho (login comum,
  *   recuperação de senha, troca de senha) consegue autenticá-la ou alterá-la;
- * - o papel global é `visitor`, ausente de `KNOWN_ROLES`: todo handler que usa
- *   `getContextUser` já responde 401 para ele. Além disso o middleware nega por
+ * - no banco a linha tem o papel mínimo `reader` (a tabela `users` só aceita
+ *   admin/professional/reader/operator) e a identidade reservada `visitante`; a
+ *   API expõe `visitor` (ver publicUser), ausente de `KNOWN_ROLES`: todo handler
+ *   que usa `getContextUser` já responde 401 para ele. Além disso o middleware nega por
  *   padrão: fora da allowlist abaixo, 403, inclusive escritas, troca de senha,
  *   consentimento, perfil e qualquer rota de clínica;
  * - nunca recebe `clinic_memberships`. Escalas rodam no navegador, sem gravar
@@ -22,10 +24,19 @@
  */
 
 import { sha256Hex } from "./_crypto";
-import { canonicalEmail, getUserByEmail, type Env, type UserRow } from "./_shared";
+import {
+  VISITOR_API_ROLE,
+  VISITOR_DB_ROLE,
+  VISITOR_LOGIN,
+  canonicalEmail,
+  getUserByEmail,
+  type Env,
+  type UserRow,
+} from "./_shared";
 
-export const VISITOR_LOGIN = "visitante";
-export const VISITOR_ROLE = "visitor";
+export { VISITOR_LOGIN };
+/** Papel exposto pela API (o banco guarda `reader`; ver publicUser). */
+export const VISITOR_ROLE = VISITOR_API_ROLE;
 const VISITOR_NAME = "Visitante";
 const VISITOR_PASSWORD_MIN_LENGTH = 8;
 
@@ -63,7 +74,8 @@ export async function visitorPasswordMatches(
 /**
  * Garante a linha do visitante, sem nunca reativar ou reescrever uma existente.
  * Desativar a conta (is_active = 0) é um segundo interruptor do operador.
- * Retorna null se a identidade estiver ocupada por outro papel ou desativada.
+ * Retorna null se a identidade estiver ocupada por outro papel ou desativada
+ * (nesse caso o login de `visitante` simplesmente não existe).
  */
 export async function ensureVisitorAccount(db: D1Database): Promise<UserRow | null> {
   const now = new Date().toISOString();
@@ -75,10 +87,10 @@ export async function ensureVisitorAccount(db: D1Database): Promise<UserRow | nu
        SELECT ?, ?, ?, NULL, 0, 0, ?, 1, ?, ?
         WHERE NOT EXISTS (SELECT 1 FROM users WHERE lower(email) = ?)`,
     )
-    .bind(crypto.randomUUID(), VISITOR_NAME, VISITOR_LOGIN, VISITOR_ROLE, now, now, VISITOR_LOGIN)
+    .bind(crypto.randomUUID(), VISITOR_NAME, VISITOR_LOGIN, VISITOR_DB_ROLE, now, now, VISITOR_LOGIN)
     .run();
   const user = await getUserByEmail(db, VISITOR_LOGIN);
-  if (!user || user.role !== VISITOR_ROLE || !user.is_active) return null;
+  if (!user || user.role !== VISITOR_DB_ROLE || !user.is_active) return null;
   return user;
 }
 
