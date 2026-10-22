@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useClinic } from "@/contexts/ClinicContext";
 import { Check, ChevronLeft, ChevronRight, ClipboardCopy, Download, ExternalLink, RotateCcw, ShieldAlert, Stethoscope } from "lucide-react";
 import { downloadTextDocument } from "@/lib/shareText";
 import {
@@ -54,6 +56,7 @@ function HipotesesPanel({ years, records }: { years: number; records: CircuitRec
   );
 }
 import { dicaDeMissaoPorIdade, perfilAnual } from "./ageAdaptation";
+import { podeVerModoMedico } from "./acessoMedico";
 import {
   linhasDeRevisao, matrizSuficiencia, pendenciasParaRevisao, SUFICIENCIA_LABELS, textoProntidao, URGENCIA_ALERTA, urgenciaAtiva,
   type BateriaResumo, type SuficienciaStatus,
@@ -194,10 +197,31 @@ function MatrizList({ years, records, bateria }: { years: number; records: Circu
  * Toda missão tem campos obrigatórios (ver obrigatorio.ts) e o circuito é declarado COMPLETO ou INCOMPLETO.
  * Obrigatório não trava a interface: nenhum controle é desabilitado e a navegação é livre.
  */
-export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }: {
+type CircuitoProps = {
   years: number | null; visible: boolean; bateria?: BateriaResumo | null; onProgresso?: (progresso: ProgressoCircuito | null) => void;
-}) {
-  const [tab, setTab] = useState<CircuitTab>("neurologico");
+};
+
+/**
+ * Entrada do circuito. A sessão decide o modo médico; trocar de sessão remonta o circuito, para que
+ * registros de um proprietário não permaneçam na tela depois do logout ou de outra conta.
+ */
+export function ClinicalCircuit(props: CircuitoProps) {
+  const { accessMode, isAuthenticated, user } = useAuth();
+  const { activeClinic } = useClinic();
+  const modoMedico = podeVerModoMedico({
+    accessMode,
+    isAuthenticated,
+    mustChangePassword: user?.mustChangePassword,
+    clinicRole: activeClinic?.role,
+    clinicStatus: activeClinic?.status,
+  });
+  return <CircuitoClinico key={modoMedico ? "modo-medico" : "pre-consulta"} {...props} modoMedico={modoMedico} />;
+}
+
+function CircuitoClinico({ years, visible, bateria = null, onProgresso, modoMedico }: CircuitoProps & { modoMedico: boolean }) {
+  const [tabEscolhida, setTab] = useState<CircuitTab>("neurologico");
+  // Sem o modo médico, abas do médico e cobertura não existem: a tela cai na pré-consulta.
+  const tab: CircuitTab = modoMedico || (tabEscolhida !== "medico" && tabEscolhida !== "cobertura") ? tabEscolhida : "neurologico";
   const [active, setActive] = useState(0);
   const [statuses, setStatuses] = useState<Record<string, CircuitStatus>>({});
   const [marks, setMarks] = useState<Record<string, string[]>>({});
@@ -210,7 +234,7 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
   const area: CircuitArea = tab === "mental" ? "mental" : "neurologico";
   const all = years === null ? [] : missoesPreConsulta(years);
   const todas = years === null ? [] : circuitForAge(years);
-  const doMedico = todas.filter((entry) => entry.executor === "medico");
+  const doMedico = modoMedico ? todas.filter((entry) => entry.executor === "medico") : [];
   const tasks = years === null ? [] : tab === "medico" ? doMedico : missoesPreConsulta(years, area);
   const task = tasks[Math.min(active, tasks.length - 1)];
   const demo = task ? STATION_DEMO[task.id] : undefined;
@@ -312,8 +336,8 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
         {([
           { key: "neurologico", label: `🧠 Exame neurológico · ${countFor("neurologico")}` },
           { key: "mental", label: `💬 Estado mental · ${countFor("mental")}` },
-          ...(doMedico.length ? [{ key: "medico", label: `🩺 Exame do médico · ${doMedico.filter((entry) => statuses[entry.id]).length}/${doMedico.length}` } as const] : []),
-          { key: "cobertura", label: "🧭 Cobertura e lacunas" },
+          ...(modoMedico && doMedico.length ? [{ key: "medico", label: `🩺 Exame do médico · ${doMedico.filter((entry) => statuses[entry.id]).length}/${doMedico.length}` } as const] : []),
+          ...(modoMedico ? [{ key: "cobertura", label: "🧭 Cobertura e lacunas" } as const] : []),
         ] as const).map((option) => (
           <button key={option.key} type="button" aria-pressed={tab === option.key} onClick={() => { setTab(option.key); setActive(0); setFeedback(""); }}
             className={`snp-option min-h-11 px-4 py-2 text-sm font-black ${tab === option.key ? "bg-[var(--snp-sun)]" : "bg-[var(--snp-paper-fixed)]"}`}>
@@ -481,7 +505,7 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
           placeholder="Limitações, necessidade de exame dirigido ou informações de fonte distinta, com proveniência." />
       </label>
       <div className="flex flex-wrap gap-2">
-        {tab === "medico" || tab === "cobertura" ? (
+        {modoMedico && (tab === "medico" || tab === "cobertura") ? (
           <>
             <button type="button" onClick={() => void copyReport(report)}
               className="snp-btn snp-btn--sun inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm"><ClipboardCopy className="h-4 w-4" /> Copiar registro clínico do médico</button>
