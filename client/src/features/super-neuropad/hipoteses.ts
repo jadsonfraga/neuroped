@@ -65,7 +65,7 @@ export const GUIAS_HIPOTESE: readonly GuiaHipotese[] = [
       { id: "humor_afeto", texto: "Humor, afeto e congruência com o relato", estacoes: ["emotion6"] },
       { id: "pensamento", texto: "Forma e conteúdo do pensamento em diálogo reservado", estacoes: ["thought6"] },
       { id: "sono_energia", texto: "Sono, energia e rotina", estacoes: ["sleep"] },
-      { id: "funcionamento_social", texto: "Relações e repercussões funcionais", estacoes: ["conversation6", "rapport"] },
+      { id: "funcionamento_social", texto: "Relações e repercussões funcionais", estacoes: ["language6", "rapport"] },
       { id: "seguranca", texto: "Avaliação de segurança em entrevista reservada, somente profissional", estacoes: ["risk"] },
       { id: "historia_longitudinal", texto: "História longitudinal com dois ou mais informantes", estacoes: [], fonteExterna: "prontuário e relatos de informantes" },
     ],

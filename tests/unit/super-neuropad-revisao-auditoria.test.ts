@@ -25,10 +25,14 @@ test("cobertura: domínio com várias estações só fica registrado quando toda
   assert.equal(coverageStatus(sensibilidade, 5, records({ sensation: "observado" })), "parcial");
   assert.equal(coverageStatus(sensibilidade, 5, records({ sensation: "observado", stereognosis: "observado" }, "examinador")), "registrado");
   assert.equal(coverageStatus(sensibilidade, 5, records({ stereognosis: "achado" })), "esclarecer");
-  // Marcha aos 4 anos: marcha em linha e Romberg são exigidas; a estação lúdica sozinha não completa o domínio.
+  // Coordenação aos 6 anos: só há a versão lúdica (nariz do astronauta); ela registra o que foi visto, mas não vira exame direto.
+  const coordenacao = domain("coordenacao");
+  assert.equal(coverageStatus(coordenacao, 6, records({ finger6: "observado" })), "parcial");
+  assert.equal(coverageStatus(coordenacao, 6, records({ finger6: "achado" })), "esclarecer");
+  // Marcha: a estação lúdica de cada faixa registra o domínio (não presencial); fundir Romberg não deixa lacuna.
   const marcha = domain("marcha");
-  assert.equal(coverageStatus(marcha, 4, records({ gait2: "observado" })), "parcial");
-  assert.equal(coverageStatus(marcha, 4, records({ gait2: "observado", romberg: "observado" }, "examinador")), "registrado");
+  assert.equal(coverageStatus(marcha, 4, records({ gait2: "observado" })), "registrado");
+  assert.equal(coverageStatus(marcha, 9, records({ gait6: "observado" })), "registrado");
 });
 
 test("resultados recusados não exportam marcadores antigos e não atribuem relatos ao examinador", () => {
@@ -52,9 +56,9 @@ test("urgência: achado de consciência, fundo de olho ou meninges aparece como 
   assert.equal(pendenciasParaRevisao(linhas), linhasDeRevisao(linhas).filter((linha) => linha.status !== "examinado").length);
   const texto = textoProntidao(7, linhas).join("\n");
   assert.match(texto, /ATENÇÃO CLÍNICA: achado a esclarecer em consciência, fundo de olho ou sinais meníngeos/);
-  assert.equal(urgenciaAtiva(matrizSuficiencia(7, records({ consciencia: "observado", fundus: "observado", meningeal: "observado" }))), false);
+  assert.equal(urgenciaAtiva(matrizSuficiencia(7, records({ rapport: "observado", fundus: "observado", meningeal: "observado" }))), false);
   // Item apenas pendente não é achado: não dispara alerta nem usa o texto de achado.
-  const pendente = matrizSuficiencia(7, records({ consciencia: "observado", fundus: "observado" }));
+  const pendente = matrizSuficiencia(7, records({ rapport: "observado", fundus: "observado" }));
   const urgenciaPendente = pendente.find((entry) => entry.id === "urgencia");
   assert.equal(urgenciaPendente?.status, "pendente_execucao");
   assert.match(urgenciaPendente?.detalhe ?? "", /ainda não registrados/);
@@ -91,7 +95,7 @@ test("adaptação de procedimentos: técnica específica por estação, sem conv
   assert.match(fundus, /examinador.*o auxiliar não realiza manobras/);
   assert.doesNotMatch(fundus, /convite/i);
   assert.match(dicaDeMissaoPorIdade(10, task("meningeal")) ?? "", /Febre, confusão ou convulsão associadas são urgência/);
-  assert.match(dicaDeMissaoPorIdade(3, task("consciencia")) ?? "", /observação contínua/);
+  assert.match(dicaDeMissaoPorIdade(3, task("rapport")) ?? "", /observação contínua/);
   assert.match(dicaDeMissaoPorIdade(15, task("growth")) ?? "", /perímetro cefálico/);
   assert.match(dicaDeMissaoPorIdade(3, task("fundus")) ?? "", /Tolerância curta/);
   assert.match(dicaDeMissaoPorIdade(10, task("fundus")) ?? "", /respeite a recusa/);
@@ -100,7 +104,7 @@ test("adaptação de procedimentos: técnica específica por estação, sem conv
 
 test("cada faixa etária tem composição de estações íntegra (2 a 17 anos)", () => {
   for (let age = 2; age <= 17; age++) {
-    assert.ok(circuitForAge(age).length >= 22, `idade ${age}`);
+    assert.ok(circuitForAge(age).length >= 19, `idade ${age}`);
   }
 });
 

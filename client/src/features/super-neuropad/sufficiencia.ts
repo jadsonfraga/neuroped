@@ -120,7 +120,7 @@ const DE_COBERTURA: Record<CoverageStatus, SuficienciaStatus> = {
   sem_estacao: "fora_do_jogo",
 };
 
-const URGENCIA = ["consciencia", "fundus", "meningeal"];
+const URGENCIA = ["rapport", "fundus", "meningeal"];
 
 function statusDeEstacao(id: string, years: number, records: CircuitRecords): SuficienciaStatus {
   if (!circuitForAge(years).some((task) => task.id === id)) return "fora_do_jogo";

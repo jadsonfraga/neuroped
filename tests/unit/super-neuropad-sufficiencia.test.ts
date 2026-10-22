@@ -62,7 +62,8 @@ test("urgência: achado ou não realização em consciência, fundo de olho ou s
 
 test("exame direto: lúdico não registra força presencial, e a estação presencial registra", () => {
   assert.equal(linha(matrizSuficiencia(3, records({ strength2: "observado" })), "forca").status, "falta_exame_direto");
-  assert.equal(linha(matrizSuficiencia(3, records({ strength2p: "observado" }, "examinador")), "forca").status, "examinado");
+  assert.equal(linha(matrizSuficiencia(3, records({ strength2: "observado" }, "examinador")), "forca").status, "falta_exame_direto", "aos 3 anos só há a versão lúdica: força graduada é do médico");
+  assert.equal(linha(matrizSuficiencia(9, records({ strength2: "observado", strength6: "observado" }, "examinador")), "forca").status, "examinado");
 });
 
 test("proveniência do exame físico: terceiros e fonte ausente nunca completam domínio", () => {
