@@ -10,7 +10,7 @@ import { ClinicalDemo } from "./ClinicalDemo";
 import { MISSOES } from "./missoes";
 import {
   CAMPO_LABELS, camposPendentes, detalheObrigatorio, linhaObrigatorio, resumoObrigatorio,
-  type EstadoMissao, type ResumoObrigatorio,
+  type CampoObrigatorio, type EstadoMissao, type ResumoObrigatorio,
 } from "./obrigatorio";
 
 /** Progresso da estrutura obrigatória, repassado à página para aparecer em todo o fluxo. */
@@ -103,7 +103,7 @@ function CoverageList({ title, domains, years, records }: { title: string; domai
 }
 
 /** Situação da missão atual: concluída ou com campos obrigatórios pendentes. Informa, não trava. */
-function MissaoStatus({ faltam }: { faltam: readonly (keyof typeof CAMPO_LABELS)[] }) {
+function MissaoStatus({ faltam }: { faltam: readonly CampoObrigatorio[] }) {
   const concluida = faltam.length === 0;
   return (
     <p role="status" data-testid="super-neuropad-mission-status"
