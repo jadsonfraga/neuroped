@@ -294,7 +294,7 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
             Não altera os seis mundos, o tempo da partida, XP ou pontuação. Nenhuma tarefa isolada estabelece diagnóstico.
           </p>
         </div>
-        <span className="snp-chip bg-[var(--snp-sun-tint)]" aria-live="polite">{perfilOperador === "assistente" ? `${preparoConcluidas}/${preparacao.length} observações` : `${resumo.concluidas}/${resumo.total} registros`}</span>
+        <span className="snp-chip bg-[var(--snp-sun-tint)]" aria-live="polite">{perfilOperador === "assistente" ? `${preparoConcluidas}/${preparacao.length} observações` : `${resumo.concluidas}/${resumo.total} missões concluídas`}</span>
       </div>
       <div className="grid gap-2 sm:grid-cols-2" role="group" aria-label="Quem está aplicando">
         <button type="button" aria-pressed={perfilOperador === "assistente"}
