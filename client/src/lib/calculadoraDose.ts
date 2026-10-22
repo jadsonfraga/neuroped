@@ -25,7 +25,8 @@ export const WEIGHT_MAX_KG = 150;
 
 export const medications: MedDose[] = [
   { name: "Risperidona", indication: "TEA, psicose, irritabilidade", dosePerKg: 0.02, maxDose: 6, frequency: "12/12h", liquid: { mgPer: 1, unit: "mL" }, form: "comprimido / solução oral (1mg/mL)", notes: "Iniciar com dose baixa. Monitorar prolactina e ganho de peso." },
-  { name: "Aripiprazol", indication: "TEA, TDAH, psicose", dosePerKg: 0.1, maxDose: 30, frequency: "1x/dia", form: "comprimido", notes: "Menor risco metabólico que outros antipsicóticos." },
+  // Teto definido pelo Dr. Jadson em 22/10/2026 (antes 30 mg; a Farmacologia já usava 15 mg).
+  { name: "Aripiprazol", indication: "TEA, TDAH, psicose", dosePerKg: 0.1, maxDose: 15, frequency: "1x/dia", form: "comprimido", notes: "Menor risco metabólico que outros antipsicóticos." },
   { name: "Metilfenidato", indication: "TDAH", dosePerKg: 1, maxDose: 60, frequency: "8/8h ou 12/12h", form: "comprimido / cápsula LP", notes: "Dar com alimentação. Monitorar PA e FC. Não usar em <6 anos." },
   { name: "Lisdexanfetamina", indication: "TDAH", dosePerKg: 0, maxDose: 70, frequency: "1x/dia", fixedDose: "30-70mg fixo (não por peso)", form: "cápsula", notes: "Iniciar com 30mg. Ajuste a cada 1-2 semanas conforme resposta." },
   { name: "Clonidina", indication: "TDAH, tiques, sono", dosePerKg: 0.004, maxDose: 0.4, frequency: "8/8h ou 12/12h", form: "comprimido", notes: "Cuidado com hipotensão. Não interromper abruptamente." },
@@ -46,7 +47,8 @@ export const medications: MedDose[] = [
   // volume sai em gotas. Calculado como mL, saía 25 vezes maior.
   { name: "Clonazepam", indication: "Epilepsia, ansiedade, sínd. de Lennox-Gastaut", dosePerKg: 0.05, maxDose: 6, frequency: "8/8h ou 12/12h", liquid: { mgPer: 0.1, unit: "gota" }, form: "comprimido / gotas (2,5mg/mL → diluir)", notes: "Cada gota ≈ 0,1mg. Tolerância pode se desenvolver. Retirada gradual." },
   { name: "Imipramina", indication: "Enurese, depressão, TDAH", dosePerKg: 1, maxDose: 200, frequency: "1x/dia (noite) ou 12/12h", form: "comprimido", notes: "Dose máxima 5mg/kg/dia (curto prazo). ECG antes de iniciar. Cuidado em cardiopatas." },
-  { name: "Amitriptilina", indication: "Dor neuropática, migrânea, depressão", dosePerKg: 0.5, maxDose: 150, frequency: "1x/dia (noite)", form: "comprimido", notes: "Dose máxima 3mg/kg/dia. Efeitos anticolinérgicos. ECG antes de iniciar." },
+  // Teto definido pelo Dr. Jadson em 22/10/2026 (antes 150 mg; a Farmacologia já usava 50 mg na enxaqueca).
+  { name: "Amitriptilina", indication: "Dor neuropática, migrânea, depressão", dosePerKg: 0.5, maxDose: 50, frequency: "1x/dia (noite)", form: "comprimido", notes: "Dose máxima 3mg/kg/dia. Efeitos anticolinérgicos. ECG antes de iniciar." },
   { name: "Olanzapina", indication: "Psicose, mania, TEA (grave)", dosePerKg: 0.1, maxDose: 20, frequency: "1x/dia", form: "comprimido", notes: "Alto risco de ganho de peso e síndrome metabólica. Monitorar glicemia e lipídios." },
   { name: "Quetiapina", indication: "Psicose, mania, insônia (baixa dose)", dosePerKg: 2, maxDose: 800, frequency: "12/12h ou 8/8h", form: "comprimido", notes: "Dose baixa (25-50mg) para sono. Dose alta para psicose. Sedação importante." },
   { name: "Haloperidol", indication: "Psicose, tiques, agitação", dosePerKg: 0.02, maxDose: 6, frequency: "12/12h", form: "comprimido", notes: "Risco de distonia aguda e efeitos extrapiramidais. Usar com cautela em crianças." },

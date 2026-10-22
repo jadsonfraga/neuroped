@@ -103,6 +103,15 @@ for (const m of medications) {
   assert.equal(r.cappedDailyDose, 3000);
 }
 assert.equal(calcResult(20, med("Melatonina")), null, "dose fixa não calcula por peso");
+// Tetos alinhados à Farmacologia por decisão do responsável clínico (22/10/2026).
+assert.equal(med("Aripiprazol").maxDose, 15);
+assert.equal(med("Amitriptilina").maxDose, 50);
+{
+  const r = calcResult(200, med("Aripiprazol"));
+  assert.ok(r && r.exceedsMax && r.cappedDailyDose === 15);
+  const a = calcResult(120, med("Amitriptilina"));
+  assert.ok(a && a.exceedsMax && a.cappedDailyDose === 50);
+}
 for (const m of medications) {
   if (!m.liquid) continue;
   assert.ok(m.liquid.mgPer > 0, m.name);
