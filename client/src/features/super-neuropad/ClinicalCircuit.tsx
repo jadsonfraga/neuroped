@@ -204,7 +204,7 @@ function MatrizList({ years, records, bateria }: { years: number; records: Circu
 export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }: {
   years: number | null; visible: boolean; bateria?: BateriaResumo | null; onProgresso?: (progresso: ProgressoCircuito | null) => void;
 }) {
-  const [tab, setTab] = useState<CircuitTab>("neurologico");
+  const [tab, setTab] = useState<CircuitTab>("mental");
   const [perfilOperador, setPerfilOperador] = useState<"assistente" | "medico">("assistente");
   const [active, setActive] = useState(0);
   const [statuses, setStatuses] = useState<Record<string, CircuitStatus>>({});
@@ -288,7 +288,7 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
     <section id="snp-clinical-circuit" className={visible ? "snp-panel space-y-4 p-4 sm:p-6" : "hidden"} aria-label="Circuito clínico complementar" data-testid="super-neuropad-clinical-circuit">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="snp-pixel flex items-center gap-2 text-base"><Stethoscope className="h-5 w-5" /> Missões clínicas obrigatórias</h2>
+          <h2 className="snp-pixel flex items-center gap-2 text-base"><Stethoscope className="h-5 w-5" /> {perfilOperador === "assistente" ? "Trilha da pré-consulta" : "Missões clínicas obrigatórias"}</h2>
           <p className="mt-2 max-w-3xl text-sm font-semibold">
             {perfilOperador === "assistente" ? "Pré-consulta: observação durante o jogo e perguntas breves ao responsável." : "Revisão médica: exame neurológico e estado mental."} · v{CIRCUIT_VERSION} · {years} anos.
             Não altera os seis mundos, o tempo da partida, XP ou pontuação. Nenhuma tarefa isolada estabelece diagnóstico.
@@ -299,7 +299,7 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
       <div className="grid gap-2 sm:grid-cols-2" role="group" aria-label="Quem está aplicando">
         <button type="button" aria-pressed={perfilOperador === "assistente"}
           className={`snp-option min-h-14 p-3 text-left text-sm font-black ${perfilOperador === "assistente" ? "bg-[var(--snp-grass-tint)]" : "bg-[var(--snp-paper-fixed)]"}`}
-          onClick={() => { setPerfilOperador("assistente"); setTab("neurologico"); setActive(0); setFeedback(""); }}>
+          onClick={() => { setPerfilOperador("assistente"); setTab("mental"); setActive(0); setFeedback(""); }}>
           🎮 Pré-consulta · assistente
           <span className="block text-xs font-semibold">Observe enquanto a criança joga; não refaça testes.</span>
         </button>
