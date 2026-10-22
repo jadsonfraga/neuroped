@@ -85,7 +85,11 @@ export default function FarmacologiaPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
-  const totalDrugs = pharmCategories.reduce((sum, c) => sum + c.drugs.length, 0);
+  const totalEntries = pharmCategories.reduce((sum, c) => sum + c.drugs.length, 0);
+  // O mesmo fármaco aparece em várias indicações: o total de entradas não é o de fármacos.
+  const distinctDrugs = new Set(
+    pharmCategories.flatMap(c => c.drugs.map(d => d.name.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""))),
+  ).size;
 
   const filteredCategories = useMemo(() => {
     const q = searchQuery.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -115,7 +119,7 @@ export default function FarmacologiaPage() {
           icon={Pill}
           eyebrow="farmacologia clínica"
           title="Farmacologia em Neuropediatria"
-          subtitle={`Doses práticas e comentários clínicos de ${totalDrugs} fármacos organizados por ${pharmCategories.length} indicações clínicas.`}
+          subtitle={`Doses práticas e comentários clínicos de ${distinctDrugs} fármacos, em ${totalEntries} entradas organizadas por ${pharmCategories.length} indicações clínicas.`}
           gradient="from-emerald-600 to-cyan-600"
         />
         <div className="flex flex-wrap items-center gap-2 pt-1" data-testid="text-page-title">
@@ -125,7 +129,7 @@ export default function FarmacologiaPage() {
           </Badge>
           <Badge variant="secondary" className="gap-1.5">
             <Pill className="w-3 h-3" />
-            {totalDrugs} Fármacos
+            {distinctDrugs} Fármacos
           </Badge>
         </div>
       </div>
@@ -143,8 +147,10 @@ export default function FarmacologiaPage() {
         />
         {searchQuery && (
           <button
+            type="button"
             onClick={() => setSearchQuery("")}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            aria-label="Limpar busca"
           >
             <X className="w-4 h-4" />
           </button>
@@ -161,7 +167,7 @@ export default function FarmacologiaPage() {
               : "bg-muted text-muted-foreground hover:bg-muted/80"
           }`}
         >
-          Todos ({totalDrugs})
+          Todos ({totalEntries})
         </button>
         {pharmCategories.map(cat => {
           const CatIcon = getIcon(cat.iconName);

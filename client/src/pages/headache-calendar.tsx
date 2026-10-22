@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { localIsoDate } from "@/lib/clinicalDate";
+import { sortClinicalDesc } from "@/lib/diaryOrder";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -99,7 +100,7 @@ export default function HeadacheCalendarPage() {
 
     setEntriesReady(false);
     void (async () => {
-      const restored = sanitizeEntries(await secureGet<HeadacheEntry[]>(STORAGE_KEY));
+      const restored = sortClinicalDesc(sanitizeEntries(await secureGet<HeadacheEntry[]>(STORAGE_KEY)));
       if (!active) return;
       setEntries(restored);
       setEntriesReady(true);
@@ -119,7 +120,7 @@ export default function HeadacheCalendarPage() {
 
   function saveEntry() {
     if (!localDraftEnabled || !current.type) return;
-    setEntries((previous) => [current, ...previous].slice(0, MAX_ENTRIES));
+    setEntries((previous) => sortClinicalDesc([current, ...previous]).slice(0, MAX_ENTRIES));
     setCurrent(newEntry());
     setAdding(false);
   }
@@ -129,7 +130,7 @@ export default function HeadacheCalendarPage() {
   }
 
   function exportCSV() {
-    const headers = ["Data", "Intensidade", "Tipo", "Localização", "Duração", "Aura", "Tipo Aura", "Triggers", "Sintomas", "Medicação", "Alívio", "Notas"];
+    const headers = ["Data", "Intensidade", "Tipo", "Localização", "Duração", "Aura", "Tipo Aura", "Desencadeantes", "Sintomas", "Medicação", "Alívio", "Notas"];
     const rows = entries.map(e => [
       e.date, e.intensity, e.type, e.location, e.duration,
       e.aura ? "Sim" : "Não", e.auraType,
@@ -248,10 +249,10 @@ export default function HeadacheCalendarPage() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs">Intensidade da Dor (EVA 0-10)</Label>
+              <Label id="headache-intensity-label" className="text-xs">Intensidade da Dor (EVA 0-10)</Label>
               <div className="flex items-center gap-4">
                 <span className="text-xs text-muted-foreground">0</span>
-                <Slider value={[current.intensity]} onValueChange={([v]) => setCurrent({ ...current, intensity: v })} max={10} step={1} className="flex-1" />
+                <Slider value={[current.intensity]} onValueChange={([v]) => setCurrent({ ...current, intensity: v })} max={10} step={1} className="flex-1" aria-labelledby="headache-intensity-label" />
                 <span className={`text-lg font-bold w-8 text-right ${intensityColor(current.intensity)}`}>{current.intensity}</span>
               </div>
               <div className="flex justify-between text-xs text-muted-foreground">
@@ -280,8 +281,8 @@ export default function HeadacheCalendarPage() {
 
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <Checkbox checked={current.aura} onCheckedChange={(checked) => setCurrent({ ...current, aura: !!checked, auraType: checked ? current.auraType : "" })} />
-                <Label className="text-xs">Presença de Aura</Label>
+                <Checkbox id="headache-aura" checked={current.aura} onCheckedChange={(checked) => setCurrent({ ...current, aura: !!checked, auraType: checked ? current.auraType : "" })} />
+                <Label htmlFor="headache-aura" className="text-xs">Presença de Aura</Label>
               </div>
               {current.aura && (
                 <select aria-label="Tipo de aura" value={current.auraType} onChange={(e) => setCurrent({ ...current, auraType: e.target.value })}
@@ -398,9 +399,10 @@ export default function HeadacheCalendarPage() {
                   </div>
                 )}
                 {e.triggers.length > 0 && (
-                  <p className="text-xs text-muted-foreground">Triggers: {e.triggers.join(", ")}</p>
+                  <p className="text-xs text-muted-foreground">Desencadeantes: {e.triggers.join(", ")}</p>
                 )}
-                {e.medication && <p className="text-xs text-muted-foreground">Medicação: {e.medication} — {e.relief}</p>}
+                {e.medication && <p className="text-xs text-muted-foreground">Medicação: {e.medication}{e.relief ? ` — ${e.relief}` : ""}</p>}
+                {e.notes && <p className="text-xs text-muted-foreground">Observações: {e.notes}</p>}
               </CardContent>
             </Card>
           ))}

@@ -54,7 +54,7 @@ const steps = [
         <div className="grid grid-cols-3 gap-3 max-w-xs mx-auto">
           {[
             { icon: ClipboardCheck, label: `${appMetrics.scaleCount} Escalas`, color: "from-blue-500 to-cyan-500" },
-            { icon: Pill, label: `${appMetrics.medicationCount} Medicações`, color: "from-emerald-500 to-teal-500" },
+            { icon: Pill, label: `${appMetrics.medicationDistinctCount} Fármacos`, color: "from-emerald-500 to-teal-500" },
             { icon: Filter, label: `${appMetrics.filterableInstrumentCount} Filtráveis`, color: "from-amber-500 to-orange-500" },
           ].map((item, i) => {
             const Icon = item.icon;

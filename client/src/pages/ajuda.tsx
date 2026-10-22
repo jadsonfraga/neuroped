@@ -18,7 +18,7 @@ const secoes = [
   { icon: Filter, title: "Itens Filtráveis", desc: `Escalas, questionários, inventários e ferramentas: ${appMetrics.filterableInstrumentCount} itens filtráveis.`, badge: String(appMetrics.filterableInstrumentCount) },
   { icon: GraduationCap, title: "Inventários Escolares", desc: "Questionários para professores e contexto pedagógico.", badge: "escola" },
   { icon: ClipboardCheck, title: "Autoavaliação", desc: "Inventários que criança/adolescente pode responder quando clinicamente adequado.", badge: "auto" },
-  { icon: Pill, title: "Farmacologia", desc: `${appMetrics.medicationCount} medicações cadastradas em ${appMetrics.medicationCategoryCount} categorias clínicas.`, badge: String(appMetrics.medicationCount) },
+  { icon: Pill, title: "Farmacologia", desc: `${appMetrics.medicationDistinctCount} fármacos em ${appMetrics.medicationCategoryCount} categorias clínicas (${appMetrics.medicationCount} entradas por indicação).`, badge: String(appMetrics.medicationDistinctCount) },
   { icon: BookOpen, title: "Guias Educativos", desc: "Conteúdo educativo e psicoeducativo separado das áreas clínicas.", badge: "pais" },
   { icon: FileText, title: "Bateria Dr. Jadson", desc: "Escalas autorais e instrumentos de apoio clínico.", badge: "Autoral" },
 ];

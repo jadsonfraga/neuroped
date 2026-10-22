@@ -49,6 +49,21 @@ export type FamilyContact = {
   phone: string;
 };
 
+/** Captura do encerramento antes que o React aplique a resposta ou o mundo pulado. */
+export function snapshotCompletedFamilySession(
+  session: GameSession,
+  finishedAt: string,
+  finalAnswers: GameSession["answers"] = session.answers,
+  finalSkipped: GameSession["skipped"] = session.skipped,
+): GameSession {
+  return {
+    ...session,
+    finishedAt,
+    answers: [...finalAnswers],
+    skipped: finalSkipped?.map((entry) => ({ ...entry })),
+  };
+}
+
 export function parseFamilyContact(raw: string | null | undefined): FamilyContact | null {
   if (!raw) return null;
   try {

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { localIsoDate } from "@/lib/clinicalDate";
+import { sortClinicalDesc } from "@/lib/diaryOrder";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -90,7 +91,7 @@ export default function EpilepsyDiaryPage() {
 
     setEntriesReady(false);
     void (async () => {
-      const restored = sanitizeEntries(await secureGet<EpilepsyEntry[]>(STORAGE_KEY));
+      const restored = sortClinicalDesc(sanitizeEntries(await secureGet<EpilepsyEntry[]>(STORAGE_KEY)));
       if (!active) return;
       setEntries(restored);
       setEntriesReady(true);
@@ -110,7 +111,7 @@ export default function EpilepsyDiaryPage() {
 
   function saveEntry() {
     if (!localDraftEnabled || !current.type || !current.duration) return;
-    setEntries((previous) => [current, ...previous].slice(0, MAX_ENTRIES));
+    setEntries((previous) => sortClinicalDesc([current, ...previous]).slice(0, MAX_ENTRIES));
     setCurrent(newEntry());
     setAdding(false);
   }
@@ -120,7 +121,7 @@ export default function EpilepsyDiaryPage() {
   }
 
   function exportCSV() {
-    const headers = ["Data", "Hora", "Tipo", "Duração", "Consciência", "Triggers", "Descrição", "Pós-ictal", "Medicação", "Notas"];
+    const headers = ["Data", "Hora", "Tipo", "Duração", "Consciência", "Desencadeantes", "Descrição", "Pós-ictal", "Medicação", "Notas"];
     const rows = entries.map(e => [
       e.date, e.time, e.type, e.duration, e.consciousness,
       e.triggers.join("; "), e.description, e.postIctal.join("; "),
@@ -370,6 +371,7 @@ export default function EpilepsyDiaryPage() {
                   <p className="text-xs text-muted-foreground">Pós-ictal: {e.postIctal.join(", ")}</p>
                 )}
                 {e.medication && <p className="text-xs text-muted-foreground">Medicação: {e.medication}</p>}
+                {e.notes && <p className="text-xs text-muted-foreground">Observações: {e.notes}</p>}
               </CardContent>
             </Card>
           ))}
