@@ -12,6 +12,7 @@
 //  • intervalo < 14 dias entre aplicações → aviso de comparabilidade.
 // Instrumentos fora do registro ficam "pendentes": só listagem, sem alerta.
 // ============================================================================
+import { formatIsoDateBr } from "../clinicalDate";
 import { faixasDe, instrumentoDe, rankDaFaixa, type InstrumentoEvolucao } from "./registro";
 
 export type NivelAlerta = "atencao" | "informativo";
@@ -76,8 +77,7 @@ function escoreDe(r: Record<string, unknown>): number | null {
 }
 
 function fmt(iso: string): string {
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? "data não registrada" : d.toISOString().slice(0, 10).split("-").reverse().join("/");
+  return formatIsoDateBr(iso) ?? "data não registrada";
 }
 const DIA = 86_400_000;
 

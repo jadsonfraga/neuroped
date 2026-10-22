@@ -24,7 +24,10 @@ assert.doesNotMatch(save, /appliedAt: new Date\(\)\.toISOString\(\)/);
 
 // A resposta exibida e a exportada precisam vir do MESMO snapshot literal.
 assert.match(generic, /const qaItems = allItems\.map/);
-assert.match(generic, /config\.labels\[answers\[item\.key\] \?\? -1\]/);
+// As opções vêm do próprio item (ou das da escala, via itemOptions), a mesma
+// fonte que a tela usa para exibir; o registro lê dessa lista resolvida.
+assert.match(generic, /options: itemOptions\(item, config\.labels\)/);
+assert.match(generic, /item\.options\[answers\[item\.key\] \?\? -1\]/);
 assert.match(generic, /items=\{qaItems\}/);
 assert.match(runner, /const reportItems = def\.items\.map/);
 assert.match(runner, /item\.options\[answers\[index\]\]\.label/);

@@ -136,7 +136,7 @@ async function getLegacySessionKey(): Promise<CryptoKey | null> {
   );
 }
 
-function b64(buf: ArrayBuffer): string {
+function b64(buf: ArrayBuffer | Uint8Array): string {
   const bytes = new Uint8Array(buf);
   let binary = "";
   // Espalhar buffers clínicos grandes como argumentos excede a pilha do V8.
