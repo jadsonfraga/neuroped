@@ -1,0 +1,34 @@
+/**
+ * Ordem clínica dos diários: data do evento (e hora, quando houver). A hora de
+ * cadastro só desempata — um registro retroativo entra no lugar da data em
+ * que o evento aconteceu, não no topo da lista.
+ */
+interface DatedEntry {
+  date?: unknown;
+  datetime?: unknown;
+  time?: unknown;
+  createdAt?: unknown;
+}
+
+function eventKey(entry: DatedEntry): string {
+  const date = typeof entry.date === "string" && entry.date
+    ? entry.date
+    : typeof entry.datetime === "string" ? entry.datetime : "";
+  const time = typeof entry.time === "string" ? entry.time : "";
+  return `${date}T${time}`;
+}
+
+export function compareClinicalDesc(a: DatedEntry, b: DatedEntry): number {
+  const ka = eventKey(a);
+  const kb = eventKey(b);
+  if (ka !== kb) return ka < kb ? 1 : -1;
+  return (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0);
+}
+
+export function sortClinicalDesc<T extends DatedEntry>(entries: readonly T[]): T[] {
+  return [...entries].sort(compareClinicalDesc);
+}
+
+export function sortClinicalAsc<T extends DatedEntry>(entries: readonly T[]): T[] {
+  return [...entries].sort((a, b) => compareClinicalDesc(b, a));
+}

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { localIsoDate } from "@/lib/clinicalDate";
+import { sortClinicalAsc, sortClinicalDesc } from "@/lib/diaryOrder";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
 } from "recharts";
@@ -191,15 +192,14 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
   const Icon = config.icon;
   const trendField = config.fields.find((f) => f.trend);
 
-  const sorted = useMemo(
-    () => [...entries].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)),
-    [entries],
-  );
+  // Ordem da data do evento, não do cadastro: registro retroativo entra no lugar certo.
+  const sorted = useMemo(() => sortClinicalDesc(entries), [entries]);
 
   const trendData = useMemo(() => {
     if (!trendField) return [];
-    return [...entries]
-      .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
+    return sortClinicalAsc(entries)
+      // Campo deixado em branco não é 0: Number("") entrava no gráfico abaixo da escala.
+      .filter((e) => e[trendField.key] !== undefined && String(e[trendField.key]).trim() !== "")
       .map((e) => ({ data: fmtDate(e), valor: Number(e[trendField.key]) }))
       .filter((d) => Number.isFinite(d.valor));
   }, [entries, trendField]);

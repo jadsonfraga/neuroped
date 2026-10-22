@@ -3,10 +3,16 @@ import fs from "node:fs";
 
 const read = (path) => fs.readFileSync(path, "utf8");
 
+// A frequência é lida na ordem em que aparece ("12/12h ou 8/8h" começa por 12/12h).
+// O parser saiu da página para client/src/lib/calculadoraDose.ts; o comportamento
+// está travado em tests/unit/medicamentos-lapidacao.test.ts.
 const dose = read("client/src/pages/calculadora-dose.tsx");
-assert.match(dose, /const idx8 = med\.frequency\.indexOf\("8\/8h"\)/);
-assert.match(dose, /const idx12 = med\.frequency\.indexOf\("12\/12h"\)/);
-assert.doesNotMatch(dose, /frequency\.includes\("8\/8h"\) \? 3 : med\.frequency\.includes\("12\/12h"\)/);
+const doseLib = read("client/src/lib/calculadoraDose.ts");
+assert.match(dose, /from "@\/lib\/calculadoraDose"/);
+assert.match(doseLib, /found\.sort\(\(a, b\) => a\.index - b\.index\)/, "esquemas na ordem de aparição");
+for (const source of [dose, doseLib]) {
+  assert.doesNotMatch(source, /frequency\.includes\("8\/8h"\) \? 3 : med\.frequency\.includes\("12\/12h"\)/);
+}
 
 const scales = read("client/src/pages/escalas-neuropsiquiatria.tsx");
 assert.match(scales, /\(\?:a\|-\|–\|—\)/, "parser deve reconhecer ranges com a, hífen e travessões");
