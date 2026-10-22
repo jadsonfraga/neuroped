@@ -55,9 +55,30 @@ test("mesmo com todas as estações da faixa registradas, decisão médica e fon
 });
 
 test("urgência: achado ou não realização em fundo de olho ou sinais meníngeos bloqueia a linha", () => {
-  assert.equal(linha(matrizSuficiencia(7, records({ fundus: "achado" })), "urgencia").status, "a_esclarecer");
+  assert.equal(linha(matrizSuficiencia(7, records({ fundus: "achado" }, "examinador")), "urgencia").status, "a_esclarecer");
   assert.equal(linha(matrizSuficiencia(7, records({ consciencia: "observado", fundus: "observado", meningeal: "nao_realizado" })), "urgencia").status, "nao_obtido");
   assert.equal(linha(matrizSuficiencia(7, records({ consciencia: "observado", fundus: "observado" })), "urgencia").status, "pendente_execucao");
+});
+
+test("urgência: exige achado do examinador; registros de auxiliar, familiares e fonte ausente não disparam aviso imediato", () => {
+  for (const source of [undefined, "auxiliar", "cuidador", "escola", "outra"] as const) {
+    for (const estacao of ["fundus", "meningeal"] as const) {
+      const linhas = matrizSuficiencia(7, records({ [estacao]: "achado" }, source));
+      assert.equal(linha(linhas, "urgencia").status, "pendente_execucao", `fonte ${source ?? "ausente"} na estação ${estacao}`);
+      assert.equal(urgenciaAtiva(linhas), false, "achado sem exame direto não é alerta de urgência do examinador");
+      assert.doesNotMatch(textoProntidao(7, linhas).join("\\n"), /ATENÇÃO CLÍNICA:/);
+    }
+  }
+  const exameMedico = matrizSuficiencia(7, records({ meningeal: "achado" }, "examinador"));
+  assert.equal(linha(exameMedico, "urgencia").status, "a_esclarecer");
+  assert.equal(urgenciaAtiva(exameMedico), true);
+  const misto: CircuitRecords = {
+    fundus: { status: "achado", source: "auxiliar", note: "Achado sintético relatado pela auxiliar" },
+    meningeal: { status: "observado", source: "examinador", note: "Exame sintético direto" },
+  };
+  assert.equal(urgenciaAtiva(matrizSuficiencia(7, misto)), false);
+  misto.meningeal = { status: "achado", source: "examinador", note: "Achado sintético no exame médico" };
+  assert.equal(urgenciaAtiva(matrizSuficiencia(7, misto)), true);
 });
 
 test("exame direto: lúdico não registra força presencial, e a estação presencial registra", () => {
