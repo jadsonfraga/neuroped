@@ -156,9 +156,10 @@ export function trailSteps(): SoundStep[] {
   return TRAIL.map((step) => ({ ...step, options: step.options.map((option) => ({ ...option })) }));
 }
 
+const MEMORY_COUNT: Record<AgeBandId, number> = { "5-6": 2, "7-8": 3, "9-11": 4 };
+
 export function memoryPieces(band: AgeBandId): MemoryPiece[] {
-  const count = band === "5-6" ? 2 : band === "7-8" ? 3 : 4;
-  return MEMORY.slice(0, count).map((piece) => ({ ...piece }));
+  return MEMORY.slice(0, MEMORY_COUNT[band]).map((piece) => ({ ...piece }));
 }
 
 export function boltSequence(): BoltKind[] {

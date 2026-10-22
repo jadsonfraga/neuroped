@@ -31,6 +31,7 @@ export const ARENA_ROUTE = "/neuropad-arena";
 export const ARENA_STORAGE_KEY = "neuroped.arena.ficha.v1";
 export const ARENA_VERSION = 1;
 export const BOLT_WINDOW_MS = 4000;
+export const CONSTELLATION_STARS = 5;
 export const GAME_ORDER: readonly GameId[] = ["constelacao", "ditado", "trilha", "bau", "relampago"];
 
 export const GAME_LABEL: Record<GameId, string> = {
@@ -164,10 +165,13 @@ export function emptyFicha(band: AgeBandId = "5-6"): Ficha {
   };
 }
 
+/** Aos 9–11 anos o acento é exigido; antes disso, a grafia é comparada sem acento. */
+function accentFold(upper: string, band: AgeBandId): string {
+  return band === "9-11" ? upper : upper.normalize("NFD").replace(/\p{M}/gu, "");
+}
+
 export function matchKey(letter: string, band: AgeBandId): string {
-  const upper = letter.trim().toLocaleUpperCase("pt-BR");
-  if (band === "9-11") return upper;
-  return upper.normalize("NFD").replace(/\p{M}/gu, "");
+  return accentFold(letter.trim().toLocaleUpperCase("pt-BR"), band);
 }
 
 function lettersOf(word: string): string[] {
@@ -178,7 +182,7 @@ function isLetter(char: string): boolean {
   return /\p{L}/u.test(char);
 }
 
-export function startConstellation(word: string, itemId = "ceu", stars = 5): ConstellationPlay {
+export function startConstellation(word: string, itemId = "ceu", stars = CONSTELLATION_STARS): ConstellationPlay {
   return {
     game: "constelacao",
     itemId,
@@ -235,12 +239,10 @@ export function lanternConstellation(play: ConstellationPlay, band: AgeBandId): 
 }
 
 function settleConstellation(play: ConstellationPlay, acerto: boolean): ConstellationPlay {
-  const syllables = play.syllables.length > 0 ? play.syllables : syllableParts(play.word);
-  const lost = Math.max(0, 5 - play.stars);
+  const lost = Math.max(0, CONSTELLATION_STARS - play.stars);
   const starNote = !acerto || lost === 0 ? "" : lost === 1 ? " Uma estrela se apagou no caminho." : ` ${lost} estrelas se apagaram no caminho.`;
   return {
     ...play,
-    syllables,
     settled: {
       acerto,
       detalhe: acerto
@@ -252,10 +254,6 @@ function settleConstellation(play: ConstellationPlay, acerto: boolean): Constell
 
 export function syllableLine(syllables: readonly string[]): string {
   return syllables.join(" · ");
-}
-
-function syllableParts(word: string): string[] {
-  return [word];
 }
 
 export function dictationMode(band: AgeBandId): DictationMode {
@@ -282,9 +280,7 @@ export function gradePhrase(written: string, target: string, band: AgeBandId): b
 }
 
 function foldText(text: string, band: AgeBandId): string {
-  const upper = text.trim().replace(/\s+/g, " ").toLocaleUpperCase("pt-BR");
-  if (band === "9-11") return upper;
-  return upper.normalize("NFD").replace(/\p{M}/gu, "");
+  return accentFold(text.trim().replace(/\s+/g, " ").toLocaleUpperCase("pt-BR"), band);
 }
 
 export function gradeSound(picked: string, answer: string): boolean {
@@ -384,9 +380,13 @@ export interface SkyStar {
   acesa: boolean;
 }
 
+/** Jogos da rodada: a fila planejada ou, sem fila, os que já tiveram tentativa. */
+function roundGames(queue: readonly GameId[], trials: readonly Trial[]): readonly GameId[] {
+  return queue.length > 0 ? queue : GAME_ORDER.filter((game) => trials.some((trial) => trial.game === game));
+}
+
 export function skyOf(queue: readonly GameId[], trials: readonly Trial[]): SkyStar[] {
-  const games = queue.length > 0 ? queue : GAME_ORDER.filter((game) => trials.some((trial) => trial.game === game));
-  return games.map((id) => ({
+  return roundGames(queue, trials).map((id) => ({
     id,
     acesa: trials.some((trial) => trial.game === id && isIndependent(trial)),
   }));
@@ -400,8 +400,7 @@ export interface MapRow {
 }
 
 export function roundMap(queue: readonly GameId[], trials: readonly Trial[]): MapRow[] {
-  const games = queue.length > 0 ? queue : GAME_ORDER.filter((game) => trials.some((trial) => trial.game === game));
-  return games.map((game) => {
+  return roundGames(queue, trials).map((game) => {
     const mine = trials.filter((trial) => trial.game === game);
     const segundos = mine.reduce((sum, trial) => sum + trial.segundos, 0);
     const ajudas = mine.reduce((sum, trial) => sum + trial.ajuda, 0);
@@ -538,7 +537,7 @@ export function beginRound(band: AgeBandId, mode: MissionMode, startedAt: string
 }
 
 export function pauseOnHide(ficha: Ficha): Ficha {
-  if (!ficha.play || ficha.paused) return ficha.play ? { ...ficha } : ficha;
+  if (!ficha.play || ficha.paused) return ficha;
   return { ...ficha, paused: true };
 }
 
@@ -715,6 +714,21 @@ export function lanternBolt(play: BoltPlay): BoltPlay {
   return { ...play, hint: true, ajuda: play.ajuda + 1 };
 }
 
+/** A lanterna age sobre o jogo aberto; cada jogo decide o que a pista revela. */
+export function lantern(ficha: Ficha): Ficha {
+  const play = ficha.play;
+  if (!play || ficha.paused || play.settled) return ficha;
+  if (play.game === "constelacao") return { ...ficha, play: lanternConstellation(play, ficha.band) };
+  if (play.game === "ditado") {
+    if (play.mode === "figura") return { ...ficha, play: revealDictation(play) };
+    if (play.mode === "letras") return { ...ficha, play: lanternLetters(play, ficha.band) };
+    return { ...ficha, play: lanternPhrase(play) };
+  }
+  if (play.game === "trilha") return { ...ficha, play: lanternTrail(play) };
+  if (play.game === "bau") return { ...ficha, play: showMemoryAgain(play) };
+  return { ...ficha, play: lanternBolt(play) };
+}
+
 export function actBolt(play: BoltPlay, action: "pegar" | "deixar"): BoltPlay {
   if (play.settled) return play;
   const kind = play.sequence[play.index];
@@ -833,6 +847,10 @@ function sanitizeFicha(value: unknown): Ficha | null {
   };
 }
 
+function isMemoryMark(value: unknown): value is MemoryMark {
+  return value === "acerto" || value === "troca" || value === "esqueceu";
+}
+
 function trialOk(value: unknown): value is Trial {
   if (!value || typeof value !== "object") return false;
   const trial = value as Trial;
@@ -840,8 +858,7 @@ function trialOk(value: unknown): value is Trial {
   if (typeof trial.itemId !== "string" || typeof trial.detalhe !== "string") return false;
   if (typeof trial.acerto !== "boolean") return false;
   if (!whole(trial.ajuda) || !whole(trial.segundos)) return false;
-  if (trial.memoria != null && trial.memoria !== "acerto" && trial.memoria !== "troca" && trial.memoria !== "esqueceu") return false;
-  return true;
+  return trial.memoria == null || isMemoryMark(trial.memoria);
 }
 
 function cloneTrial(trial: Trial): Trial {
@@ -865,20 +882,29 @@ function settledOk(value: unknown): value is Settled | null {
   if (!value || typeof value !== "object") return false;
   const settled = value as Settled;
   if (typeof settled.acerto !== "boolean" || typeof settled.detalhe !== "string") return false;
-  if (settled.memoria != null && settled.memoria !== "acerto" && settled.memoria !== "troca" && settled.memoria !== "esqueceu") return false;
-  return true;
+  return settled.memoria == null || isMemoryMark(settled.memoria);
 }
 
+/** Copia a jogada validada: nenhuma lista ou objeto interno fica compartilhado com o JSON de origem. */
 function sanitizePlay(value: unknown): Play | null {
   if (!value || typeof value !== "object") return null;
   const play = value as Play;
   if (!settledOk(play.settled) || typeof play.itemId !== "string" || !whole(play.ajuda) || !whole(play.elapsedMs)) return null;
-  if (play.game === "constelacao") return constellationOk(play) ? { ...play, revealed: [...play.revealed], tried: [...play.tried], syllables: [...play.syllables], settled: play.settled ? { ...play.settled } : null } : null;
-  if (play.game === "ditado") return dictationOk(play) ? { ...play, options: play.options.map((option) => ({ ...option })), letters: [...play.letters], assembled: [...play.assembled], settled: play.settled ? { ...play.settled } : null } : null;
-  if (play.game === "trilha") return trailOk(play) ? { ...play, steps: play.steps.map((step) => ({ ...step, options: step.options.map((option) => ({ ...option })) })), settled: play.settled ? { ...play.settled } : null } : null;
-  if (play.game === "bau") return memoryOk(play) ? { ...play, sequence: play.sequence.map((piece) => ({ ...piece })), given: [...play.given], settled: play.settled ? { ...play.settled } : null } : null;
-  if (play.game === "relampago") return boltOk(play) ? { ...play, sequence: [...play.sequence], settled: play.settled ? { ...play.settled } : null } : null;
-  return null;
+  const settled = play.settled ? { ...play.settled } : null;
+  switch (play.game) {
+    case "constelacao":
+      return constellationOk(play) ? { ...play, revealed: [...play.revealed], tried: [...play.tried], syllables: [...play.syllables], settled } : null;
+    case "ditado":
+      return dictationOk(play) ? { ...play, options: play.options.map((option) => ({ ...option })), letters: [...play.letters], assembled: [...play.assembled], settled } : null;
+    case "trilha":
+      return trailOk(play) ? { ...play, steps: play.steps.map((step) => ({ ...step, options: step.options.map((option) => ({ ...option })) })), settled } : null;
+    case "bau":
+      return memoryOk(play) ? { ...play, sequence: play.sequence.map((piece) => ({ ...piece })), given: [...play.given], settled } : null;
+    case "relampago":
+      return boltOk(play) ? { ...play, sequence: [...play.sequence], settled } : null;
+    default:
+      return null;
+  }
 }
 
 function constellationOk(play: ConstellationPlay): boolean {

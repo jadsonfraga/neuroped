@@ -5,7 +5,9 @@ import {
   ARENA_STORAGE_KEY,
   BANDS,
   BOLT_WINDOW_MS,
+  CONSTELLATION_STARS,
   GAME_LABEL,
+  GAME_ORDER,
   actBolt,
   advanceClock,
   beginRound,
@@ -21,11 +23,7 @@ import {
   hearDictation,
   hideMemory,
   homeIdeas,
-  lanternBolt,
-  lanternConstellation,
-  lanternLetters,
-  lanternPhrase,
-  lanternTrail,
+  lantern,
   loadFicha,
   openTab,
   pauseOnHide,
@@ -34,7 +32,6 @@ import {
   readingDocument,
   readingName,
   resumeRound,
-  revealDictation,
   roundMap,
   saveFicha,
   showMemoryAgain,
@@ -68,12 +65,21 @@ const EFFECT_TEXT: Record<GuessEffect, string> = {
   ignorada: "",
 };
 
+const GAME_CHOICES: readonly { id: GameId; label: string }[] = GAME_ORDER.map((id) => ({ id, label: GAME_LABEL[id] }));
+
 function storage(): Storage | null {
   try {
     return window.localStorage;
   } catch {
     return null;
   }
+}
+
+/** Aplica a mudança somente se a jogada aberta ainda for do tipo esperado; qualquer outra tela fica intacta. */
+function updatePlay<G extends Play["game"]>(game: G, change: (play: Extract<Play, { game: G }>) => Play) {
+  return (current: Ficha): Ficha => (current.play?.game === game
+    ? { ...current, play: change(current.play as Extract<Play, { game: G }>) }
+    : current);
 }
 
 export default function NeuroPadArenaPage() {
@@ -132,7 +138,7 @@ export default function NeuroPadArenaPage() {
   const familia = familyPresentation(nome);
   const ideias = homeIdeas();
   const mapa = roundMap(ficha.queue, ficha.trials);
-  const estrelas = skyOf(ficha.queue.length ? ficha.queue : ["constelacao", "ditado", "trilha", "bau", "relampago"], ficha.trials);
+  const estrelas = skyOf(ficha.queue.length ? ficha.queue : GAME_ORDER, ficha.trials);
   const finished = ficha.queue.length > 0 && !play && ficha.cursor >= ficha.queue.length;
 
   function start(mode: MissionMode) {
@@ -142,17 +148,13 @@ export default function NeuroPadArenaPage() {
 
   function setBand(band: AgeBandId) {
     if (play) return;
-    setFicha({ ...ficha, band });
+    setFicha((current) => ({ ...current, band }));
   }
 
   function guess(letter: string) {
     if (ficha.paused || play?.game !== "constelacao" || play.settled) return;
-    const result = guessLetter(play, letter, ficha.band);
-    setStatus(EFFECT_TEXT[result.effect]);
-    setFicha((current) => {
-      if (current.paused || current.play?.game !== "constelacao" || current.play.settled) return current;
-      return { ...current, play: guessLetter(current.play, letter, current.band).play };
-    });
+    setStatus(EFFECT_TEXT[guessLetter(play, letter, ficha.band).effect]);
+    setFicha((current) => (current.paused ? current : updatePlay("constelacao", (constelacao) => guessLetter(constelacao, letter, current.band).play)(current)));
   }
 
   async function copyReading() {
@@ -244,25 +246,25 @@ export default function NeuroPadArenaPage() {
                   ficha={ficha}
                   paused={ficha.paused}
                   onGuess={guess}
-                  onLantern={() => setFicha((current) => withLantern(current))}
+                  onLantern={() => setFicha(lantern)}
                   onHear={() => {
                     if (ficha.play?.game !== "ditado") return;
                     speak(ficha.play.spoken);
-                    setFicha((current) => current.play?.game === "ditado" ? { ...current, play: hearDictation(current.play) } : current);
+                    setFicha(updatePlay("ditado", hearDictation));
                   }}
-                  onFigure={(id) => setFicha((current) => current.play?.game === "ditado" ? { ...current, play: pickFigure(current.play, id) } : current)}
-                  onLetter={(letter) => setFicha((current) => current.play?.game === "ditado" ? { ...current, play: toggleLetter(current.play, letter) } : current)}
-                  onUndoLetter={() => setFicha((current) => current.play?.game === "ditado" ? { ...current, play: undoLetter(current.play) } : current)}
-                  onSubmitLetters={() => setFicha((current) => current.play?.game === "ditado" ? { ...current, play: submitLetters(current.play, current.band) } : current)}
-                  onWrite={(written) => setFicha((current) => current.play?.game === "ditado" ? { ...current, play: writePhrase(current.play, written) } : current)}
-                  onSubmitPhrase={() => setFicha((current) => current.play?.game === "ditado" ? { ...current, play: submitPhrase(current.play, current.band) } : current)}
-                  onSound={(id) => setFicha((current) => current.play?.game === "trilha" ? { ...current, play: pickSound(current.play, id) } : current)}
-                  onHideMemory={() => setFicha((current) => current.play?.game === "bau" ? { ...current, play: hideMemory(current.play) } : current)}
-                  onShowMemory={() => setFicha((current) => current.play?.game === "bau" ? { ...current, play: showMemoryAgain(current.play) } : current)}
-                  onGive={(id) => setFicha((current) => current.play?.game === "bau" ? { ...current, play: giveMemory(current.play, id) } : current)}
-                  onUndoMemory={() => setFicha((current) => current.play?.game === "bau" ? { ...current, play: undoMemory(current.play) } : current)}
-                  onSubmitMemory={() => setFicha((current) => current.play?.game === "bau" ? { ...current, play: submitMemory(current.play) } : current)}
-                  onBolt={(action) => setFicha((current) => current.play?.game === "relampago" ? { ...current, play: actBolt(current.play, action) } : current)}
+                  onFigure={(id) => setFicha(updatePlay("ditado", (dictation) => pickFigure(dictation, id)))}
+                  onLetter={(letter) => setFicha(updatePlay("ditado", (dictation) => toggleLetter(dictation, letter)))}
+                  onUndoLetter={() => setFicha(updatePlay("ditado", undoLetter))}
+                  onSubmitLetters={() => setFicha((current) => updatePlay("ditado", (dictation) => submitLetters(dictation, current.band))(current))}
+                  onWrite={(written) => setFicha(updatePlay("ditado", (dictation) => writePhrase(dictation, written)))}
+                  onSubmitPhrase={() => setFicha((current) => updatePlay("ditado", (dictation) => submitPhrase(dictation, current.band))(current))}
+                  onSound={(id) => setFicha(updatePlay("trilha", (trail) => pickSound(trail, id)))}
+                  onHideMemory={() => setFicha(updatePlay("bau", hideMemory))}
+                  onShowMemory={() => setFicha(updatePlay("bau", showMemoryAgain))}
+                  onGive={(id) => setFicha(updatePlay("bau", (memory) => giveMemory(memory, id)))}
+                  onUndoMemory={() => setFicha(updatePlay("bau", undoMemory))}
+                  onSubmitMemory={() => setFicha(updatePlay("bau", submitMemory))}
+                  onBolt={(action) => setFicha(updatePlay("relampago", (bolt) => actBolt(bolt, action)))}
                 />
               )}
             </div>
@@ -306,27 +308,7 @@ export default function NeuroPadArenaPage() {
   );
 }
 
-function withLantern(ficha: Ficha): Ficha {
-  const play = ficha.play;
-  if (!play || ficha.paused || play.settled) return ficha;
-  if (play.game === "constelacao") return { ...ficha, play: lanternConstellation(play, ficha.band) };
-  if (play.game === "ditado" && play.mode === "figura") return { ...ficha, play: revealDictation(play) };
-  if (play.game === "ditado" && play.mode === "letras") return { ...ficha, play: lanternLetters(play, ficha.band) };
-  if (play.game === "ditado" && play.mode === "frase") return { ...ficha, play: lanternPhrase(play) };
-  if (play.game === "trilha") return { ...ficha, play: lanternTrail(play) };
-  if (play.game === "bau") return { ...ficha, play: showMemoryAgain(play) };
-  if (play.game === "relampago") return { ...ficha, play: lanternBolt(play) };
-  return ficha;
-}
-
 function Lobby({ band, onBand, onStart }: { band: AgeBandId; onBand: (band: AgeBandId) => void; onStart: (mode: MissionMode) => void }) {
-  const games: { id: GameId; label: string }[] = [
-    { id: "constelacao", label: "Constelação" },
-    { id: "ditado", label: "Ditado do Raio" },
-    { id: "trilha", label: "Trilha dos sons" },
-    { id: "bau", label: "Baú da memória" },
-    { id: "relampago", label: "Relâmpago" },
-  ];
   return (
     <div className="arena-panel" data-testid="arena-lobby">
       <p className="arena-label">Faixa da criança</p>
@@ -340,7 +322,7 @@ function Lobby({ band, onBand, onStart }: { band: AgeBandId; onBand: (band: AgeB
       </div>
       <p className="arena-label">Ou uma brincadeira</p>
       <div className="arena-games">
-        {games.map((game) => (
+        {GAME_CHOICES.map((game) => (
           <button key={game.id} type="button" className="arena-choice" data-testid={`jogar-${game.id}`} onClick={() => onStart(game.id)}>{game.label}</button>
         ))}
       </div>
@@ -384,7 +366,7 @@ function PlayField(props: {
     const letters = props.ficha.band === "9-11" ? [...ALPHABET, ...ACCENTS] : ALPHABET;
     return (
       <div>
-        <div className="arena-stars" data-testid="constelacao-estrelas" aria-label={`${play.stars} estrelas no céu`}>{"★".repeat(play.stars)}{"☆".repeat(Math.max(0, 5 - play.stars))}</div>
+        <div className="arena-stars" data-testid="constelacao-estrelas" aria-label={`${play.stars} estrelas no céu`}>{"★".repeat(play.stars)}{"☆".repeat(Math.max(0, CONSTELLATION_STARS - play.stars))}</div>
         <div className="arena-word" aria-label="Palavra">
           {[...play.word].map((char, index) => <span key={`${char}-${index}`} className="arena-slot" data-testid={`slot-${index}`}>{play.revealed[index] ? char : "·"}</span>)}
         </div>
