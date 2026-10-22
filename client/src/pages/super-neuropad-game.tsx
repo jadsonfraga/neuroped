@@ -12,6 +12,7 @@ import { downloadTextDocument, safeTextFilename } from "@/lib/shareText";
 import { createChiptune, type Chiptune } from "@/features/super-neuropad/music";
 import { ClinicalCircuit, type ProgressoCircuito } from "@/features/super-neuropad/ClinicalCircuit.tsx";
 import { activeClockSeconds, emptyActiveClock, transitionActiveClock } from "@/features/super-neuropad/activeClock";
+import { VisualSearchBonusPanel } from "@/features/super-neuropad/VisualSearchBonusPanel";
 import { resumoDaBateria } from "@/features/super-neuropad/sufficiencia";
 import {
   DESAFIOS_DISPONIVEIS_POR_IDADE,
@@ -1655,6 +1656,10 @@ export default function SuperNeuroPadGamePage() {
       )}
       {/* Circuito clínico obrigatório: fica montado e em memória durante o jogo e aparece na preparação,
           entre os mundos e nos resultados. A troca de idade ou paciente descarta os registros via key. */}
+      {ageYears !== null && (
+        <VisualSearchBonusPanel key={ageYears} years={ageYears}
+          visible={screen === "setup" || screen === "phase-done" || screen === "results"} />
+      )}
       <ClinicalCircuit key={ageYears ?? "sem-idade"} years={ageYears} visible={screen === "setup" || screen === "phase-done" || screen === "results"} bateria={resumoBateria} onProgresso={setCircuito} />
     </div>
   );
