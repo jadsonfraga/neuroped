@@ -6,30 +6,34 @@ import {
   coverageStatus, MSE_SECTIONS, NEURO_BASIC_DOMAINS, STATION_DEMO, type CircuitRecords, type CoverageDomain,
 } from "../../client/src/features/super-neuropad/clinicalCircuit";
 
-// Estações já publicadas (PR #1191). A expansão só pode acrescentar: id, área, faixa e método preservados.
+// Estações publicadas (PR #1191) que permanecem. Missões repetidas foram fundidas (ver FUNDIDAS) e as que a
+// auxiliar consegue fazer como brincadeira passaram de "presencial" para "ludico": id e área preservados.
 const PUBLISHED_STATIONS = [
-  ["rapport", "mental", 2, 17, "observacao"], ["social2", "mental", 2, 5, "ludico"], ["conversation6", "mental", 6, 17, "entrevista"],
+  ["rapport", "mental", 2, 17, "observacao"], ["social2", "mental", 2, 5, "ludico"], 
   ["language2", "neurologico", 2, 5, "ludico"], ["language6", "neurologico", 6, 17, "ludico"], ["vision", "neurologico", 2, 17, "presencial"],
-  ["face", "neurologico", 2, 17, "presencial"], ["hearing", "neurologico", 2, 17, "presencial"], ["shoulders", "neurologico", 5, 17, "presencial"],
-  ["posture", "neurologico", 2, 17, "presencial"], ["strength2", "neurologico", 2, 5, "ludico"], ["strength6", "neurologico", 6, 17, "presencial"],
+  ["face", "neurologico", 2, 17, "ludico"], ["hearing", "neurologico", 2, 17, "ludico"], ["shoulders", "neurologico", 5, 17, "presencial"],
+  ["posture", "neurologico", 2, 17, "presencial"], ["strength2", "neurologico", 2, 17, "ludico"], ["strength6", "neurologico", 6, 17, "presencial"],
   ["reflex", "neurologico", 2, 17, "presencial"], ["sensation", "neurologico", 4, 17, "presencial"], ["reach2", "neurologico", 2, 5, "ludico"],
-  ["finger6", "neurologico", 6, 17, "presencial"], ["gait2", "neurologico", 2, 5, "ludico"], ["gait6", "neurologico", 6, 17, "presencial"],
+  ["finger6", "neurologico", 6, 17, "ludico"], ["gait2", "neurologico", 2, 5, "ludico"], ["gait6", "neurologico", 6, 17, "ludico"],
   ["growth", "neurologico", 2, 17, "presencial"], ["attention2", "mental", 2, 5, "observacao"], ["attention6", "mental", 6, 17, "ludico"],
   ["memory6", "mental", 6, 17, "entrevista"], ["emotion2", "mental", 2, 5, "observacao"], ["emotion6", "mental", 6, 17, "entrevista"],
   ["thought6", "mental", 6, 17, "entrevista"], ["insight9", "mental", 9, 17, "entrevista"], ["risk", "mental", 8, 17, "entrevista"],
 ] as const;
 
 const NEW_STATIONS = [
-  "consciencia", "fundus", "meningeal", "romberg", "involuntary", "praxis3", "praxis6", "copy6", "hand",
-  "stereognosis", "strength2p", "dismetria2", "milestones", "sleep",
+  "fundus", "meningeal", "involuntary", "praxis3", "praxis6", "copy6", "stereognosis", "milestones", "sleep",
 ];
+
+// Missões que repetiam outras e foram fundidas: o conteúdo segue na missão que as absorveu.
+const FUNDIDAS = ["consciencia", "conversation6", "strength2p", "dismetria2", "romberg", "hand"];
 
 // Domínios com estação em todas as idades 2–17 (sem depender de faixa mais restrita).
 const ALWAYS_COVERED = [
   "alerta", "par2", "oculomotores", "par5_7", "pares8_12", "meninges", "linguagem", "tonus", "forca",
   "reflexos", "coordenacao", "marcha", "involuntarios", "lateralidade", "crescimento", "desenvolvimento",
 ];
-const PRESENCIAL_DOMAINS = ["par2", "oculomotores", "par5_7", "pares8_12", "meninges", "tonus", "forca", "reflexos", "coordenacao", "crescimento"];
+// Domínios com exame direto cadastrado em toda a faixa (a cargo do médico); os demais domínios presenciais têm só a versão lúdica.
+const PRESENCIAL_DOMAINS = ["par2", "oculomotores", "meninges", "tonus", "reflexos", "crescimento"];
 
 const domain = (id: string): CoverageDomain => {
   const found = [...NEURO_BASIC_DOMAINS, ...MSE_SECTIONS].find((entry) => entry.id === id);
@@ -39,8 +43,9 @@ const domain = (id: string): CoverageDomain => {
 const records = (entries: Record<string, CircuitRecords[string]["status"]>, note = ""): CircuitRecords =>
   Object.fromEntries(Object.entries(entries).map(([id, status]) => [id, { status, note, source: "examinador" }]));
 
-test("não regride as 27 estações publicadas: id, área, faixa e método idênticos", () => {
-  assert.equal(PUBLISHED_STATIONS.length, 27);
+test("estações publicadas: id e área preservados, repetidas fundidas e faixa/método conforme o desenho atual", () => {
+  assert.equal(PUBLISHED_STATIONS.length, 26);
+  for (const id of FUNDIDAS) assert.ok(!CIRCUIT_TASKS.some((entry) => entry.id === id), `${id} é repetida e foi fundida`);
   for (const [id, area, min, max, method] of PUBLISHED_STATIONS) {
     const task = CIRCUIT_TASKS.find((entry) => entry.id === id);
     assert.ok(task, `estação ${id} removida`);
@@ -54,7 +59,7 @@ test("não regride as 27 estações publicadas: id, área, faixa e método idên
 test("expansão íntegra: IDs únicos, faixas válidas, texto suficiente e urgências com alerta", () => {
   const ids = CIRCUIT_TASKS.map((task) => task.id);
   assert.equal(new Set(ids).size, ids.length);
-  assert.ok(CIRCUIT_TASKS.length >= 41);
+  assert.ok(CIRCUIT_TASKS.length >= 35);
   for (const id of NEW_STATIONS) assert.ok(ids.includes(id), `nova estação ${id}`);
   for (const task of CIRCUIT_TASKS) {
     assert.ok(task.min >= 2 && task.max <= 17 && task.min <= task.max, task.id);
@@ -87,9 +92,10 @@ test("cobertura: lúdico não substitui exame direto em domínios presenciais; r
   const forca = domain("forca");
   assert.equal(coverageStatus(forca, 3, {}), "pendente");
   assert.equal(coverageStatus(forca, 3, records({ strength2: "observado" })), "parcial");
-  assert.equal(coverageStatus(forca, 3, records({ strength2p: "observado" })), "registrado");
-  assert.equal(coverageStatus(forca, 3, records({ strength2p: "achado" })), "esclarecer");
-  assert.equal(coverageStatus(forca, 3, records({ strength2p: "nao_realizado" })), "nao_obtido");
+  assert.equal(coverageStatus(forca, 3, records({ strength2: "achado" })), "esclarecer");
+  assert.equal(coverageStatus(forca, 3, records({ strength2: "nao_realizado" })), "nao_obtido");
+  assert.equal(coverageStatus(forca, 9, records({ strength2: "observado", strength6: "observado" })), "registrado");
+  assert.equal(coverageStatus(forca, 9, records({ strength2: "observado" })), "parcial");
   assert.equal(coverageStatus(domain("par11"), 3, {}), "sem_estacao");
   assert.equal(coverageStatus(domain("marcha"), 3, records({ gait2: "observado" })), "registrado");
   assert.equal(coverageStatus(domain("reflexos"), 9, records({ reflex: "nao_colaborou" })), "nao_obtido");
@@ -108,12 +114,12 @@ test("relatório: cobertura por domínio, fonte de cada registro, urgência e se
   const report = buildCircuitReport(7, {
     reflex: { status: "observado", note: "Reflexos patelares simétricos.", source: "examinador" },
     milestones: { status: "achado", note: "Perda de palavras relatada pelo cuidador.", source: "cuidador" },
-    romberg: { status: "observado", note: "" },
+    gait6: { status: "observado", note: "" },
   }, "", new Date("2026-10-20T12:00:00.000Z"));
   assert.match(report, /v2026-10-21\.1/);
   assert.match(report, /COBERTURA DO EXAME NEUROLÓGICO BÁSICO POR DOMÍNIO/);
   assert.match(report, /COBERTURA DAS SEÇÕES DO EXAME DO ESTADO MENTAL/);
-  assert.match(report, /Fonte: Observação direta pelo examinador/);
+  assert.match(report, /Fonte: Observei diretamente/);
   assert.match(report, /Fonte: Relato do cuidador/);
   assert.match(report, /Fonte: não informada/);
   assert.match(report, /• Reflexos: Registrado/);
@@ -130,7 +136,7 @@ test("catálogo de fontes: quatro origens nomeadas, incluindo relato de cuidador
 
 test("demonstrações: apenas estações cadastradas, animações sem pessoa real, movimento reduzível", () => {
   for (const id of Object.keys(STATION_DEMO)) assert.ok(CIRCUIT_TASKS.some((task) => task.id === id), id);
-  assert.deepEqual([...new Set(Object.values(STATION_DEMO))].sort(), ["dedo-nariz", "romberg", "seguimento", "tandem"]);
+  assert.deepEqual([...new Set(Object.values(STATION_DEMO))].sort(), ["dedo-nariz", "seguimento", "tandem"]);
   const demoSource = readFileSync("client/src/features/super-neuropad/ClinicalDemo.tsx", "utf8");
   assert.match(demoSource, /prefers-reduced-motion: reduce/);
   assert.doesNotMatch(demoSource, /https?:\/\/|<video|<img|\bsrc=/);

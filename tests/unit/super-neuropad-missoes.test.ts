@@ -6,14 +6,14 @@ import { ESTACOES_SEM_MISSAO, MISSOES } from "../../client/src/features/super-ne
 
 const ESTADO_PROIBIDO = /sinais de alerta|dentro do esperado|esperado para a|\bnormal\b|normalidade|escore|diagnóstic|ponto de corte|percentil/i;
 
-test("cobertura: toda estação do circuito tem missão, exceto a entrevista reservada de risco", () => {
+test("cobertura: toda missão da auxiliar tem brincadeira; exame físico e entrevista reservada ficam sem missão", () => {
   const ids = CIRCUIT_TASKS.map((task) => task.id);
-  for (const id of ids) {
-    if (id === "risk") continue;
-    assert.ok(MISSOES[id], `missão ausente para ${id}`);
+  for (const task of CIRCUIT_TASKS) {
+    if (task.executor === "auxiliar") assert.ok(MISSOES[task.id], `missão ausente para ${task.id}`);
+    else assert.equal(MISSOES[task.id], undefined, `${task.id} é do médico e não vira missão da auxiliar`);
   }
   for (const id of Object.keys(MISSOES)) assert.ok(ids.includes(id), `missão órfã ${id}`);
-  assert.deepEqual([...ESTACOES_SEM_MISSAO], ["risk"]);
+  assert.deepEqual([...ESTACOES_SEM_MISSAO].sort(), CIRCUIT_TASKS.filter((task) => task.executor === "medico").map((task) => task.id).sort());
   assert.equal(MISSOES.risk, undefined, "a entrevista de risco não é gamificada");
 });
 
@@ -64,4 +64,43 @@ test("risco continua fora da gamificação: entrevista profissional sem passos d
   assert.ok(risk);
   assert.equal(risk.method, "entrevista");
   assert.match(risk.safety ?? "", /NÃO é um jogo/);
+});
+
+test("prática: convite em voz alta, material e tempo em toda missão; sem termo técnico para a auxiliar", () => {
+  const TECNICO = /dismetria|disdiadococinesia|Romberg|tandem|pronação|oftalmoscóp|anisocoria|nistagmo|estereognosia|hipotonia|espasticidade|fotorreação|ataxia|coreia|distonia/i;
+  for (const [id, missao] of Object.entries(MISSOES)) {
+    assert.ok(missao.fala.length >= 20 && missao.fala.length <= 140, `${id}: convite`);
+    assert.ok(missao.material.length >= 3, `${id}: material`);
+    assert.ok(missao.minutos >= 2 && missao.minutos <= 5, `${id}: minutos`);
+    for (const texto of [missao.fala, missao.material, ...missao.passos, ...missao.pistas]) assert.doesNotMatch(texto, TECNICO, `${id}: ${texto}`);
+  }
+});
+
+test("sem repetição: nenhuma missão da auxiliar repete passo ou marcador de outra no mesmo ciclo etário", () => {
+  const norm = (texto: string) => texto.toLowerCase().replace(/[^a-zà-ÿ ]/g, "").trim();
+  const quase = (a: string, b: string) => {
+    const wa = new Set(norm(a).split(/\s+/)), wb = new Set(norm(b).split(/\s+/));
+    const comuns = [...wa].filter((w) => wb.has(w)).length;
+    return comuns / Math.min(wa.size, wb.size) >= 0.8;
+  };
+  for (let age = 2; age <= 17; age++) {
+    const passos: [string, string][] = [];
+    for (const task of CIRCUIT_TASKS.filter((entry) => entry.executor === "auxiliar" && age >= entry.min && age <= entry.max)) {
+      for (const passo of MISSOES[task.id].passos) passos.push([task.id, passo]);
+    }
+    for (let i = 0; i < passos.length; i++) {
+      for (let j = i + 1; j < passos.length; j++) {
+        if (passos[i][0] !== passos[j][0]) assert.ok(!quase(passos[i][1], passos[j][1]), `idade ${age}: ${passos[i][0]} repete ${passos[j][0]}: "${passos[i][1]}"`);
+      }
+    }
+  }
+});
+
+test("quantidade prática: de 13 a 16 missões da auxiliar por idade, bem abaixo do circuito completo", () => {
+  for (let age = 2; age <= 17; age++) {
+    const auxiliar = CIRCUIT_TASKS.filter((task) => task.executor === "auxiliar" && age >= task.min && age <= task.max);
+    assert.ok(auxiliar.length >= 13 && auxiliar.length <= 16, `idade ${age}: ${auxiliar.length}`);
+    const minutos = auxiliar.reduce((soma, task) => soma + MISSOES[task.id].minutos, 0);
+    assert.ok(minutos <= 50, `idade ${age}: ${minutos} min`);
+  }
 });

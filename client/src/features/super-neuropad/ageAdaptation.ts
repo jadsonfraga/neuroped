@@ -41,14 +41,14 @@ export function perfilAnual(anos: number): PerfilAnual | undefined {
   if (!Number.isInteger(anos) || anos < 2 || anos > 17) return undefined;
   return PERFIS_ANUAIS.find((p) => p.idade === anos);
 }
-const LINGUAGEM = new Set(["language2","language6","conversation6","hearing","sleep"]);
-const MOTRICIDADE = new Set(["posture","strength2","strength2p","strength6","reflex","sensation","stereognosis","reach2","dismetria2","finger6","gait2","gait6","romberg","praxis3","praxis6","copy6","hand","involuntary","shoulders","face"]);
+const LINGUAGEM = new Set(["language2","language6","hearing","sleep"]);
+const MOTRICIDADE = new Set(["posture","strength2","strength6","reflex","sensation","stereognosis","reach2","finger6","gait2","gait6","praxis3","praxis6","copy6","involuntary","shoulders","face"]);
 const COGNICAO = new Set(["attention2","attention6","memory6","insight9","vision","milestones"]);
 const INTERACAO = new Set(["rapport","social2","emotion2","emotion6","thought6"]);
 
 /** Procedimentos: a técnica não muda com a idade; muda a tolerância e a forma de pedir colaboração. */
 const TECNICA_DO_PROCEDIMENTO: Readonly<Record<string, string>> = {
-  consciencia: "observação contínua sem estímulo doloroso; registre alerta, sonolência e responsividade.",
+  rapport: "observação contínua sem estímulo doloroso; registre alerta, sonolência e responsividade.",
   fundus: "oftalmoscopia direta em ambiente de pouca luz, com fixação em alvo; registre o disco óptico ou a não tolerância.",
   meningeal: "flexão cervical passiva suave, sem forçar; registre resistência e dor. Febre, confusão ou convulsão associadas são urgência.",
   growth: "perímetro cefálico medido com fita; registre apenas o que foi medido ou observado.",

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
-import { buildCircuitReport, circuitForAge, type CircuitStatus } from "../../client/src/features/super-neuropad/clinicalCircuit";
+import { buildCircuitReport, circuitForAge, missoesDaAuxiliar, type CircuitStatus } from "../../client/src/features/super-neuropad/clinicalCircuit";
 import {
   camposPendentes, CAMPO_LABELS, DESCRICAO_ACHADO_MINIMA, detalheObrigatorio, linhaObrigatorio, resumoObrigatorio,
   type EstadoMissao,
@@ -15,13 +15,14 @@ test("missão: resultado e quem informou são sempre obrigatórios", () => {
   assert.deepEqual(camposPendentes({ source: "cuidador" }), ["resultado"]);
 });
 
-test("missão realizada exige marcador ou descrição; achado exige descrição do achado", () => {
+test("missão realizada exige marcador ou descrição; achado exige marcador ou descrição do achado", () => {
   assert.deepEqual(camposPendentes({ status: "observado", source: "examinador" }), ["marcador_ou_descricao"]);
   assert.deepEqual(camposPendentes({ status: "observado", source: "examinador", marcadores: ["x"] }), []);
   assert.deepEqual(camposPendentes({ status: "observado", source: "examinador", descricao: "  texto  " }), []);
   assert.deepEqual(camposPendentes({ status: "observado", source: "examinador", descricao: "   " }), ["marcador_ou_descricao"]);
-  // Achado: marcador sozinho não basta; a descrição precisa ter o mínimo de caracteres.
-  assert.deepEqual(camposPendentes({ status: "achado", source: "examinador", marcadores: ["x"] }), ["descricao_do_achado"]);
+  // Achado: um marcador tocado basta; sem marcador, a descrição precisa ter o mínimo de caracteres.
+  assert.deepEqual(camposPendentes({ status: "achado", source: "examinador", marcadores: ["x"] }), []);
+  assert.deepEqual(camposPendentes({ status: "achado", source: "examinador" }), ["descricao_do_achado"]);
   assert.deepEqual(camposPendentes({ status: "achado", source: "examinador", descricao: "curto" }), ["descricao_do_achado"]);
   assert.deepEqual(camposPendentes({ status: "achado", source: "examinador", descricao: "x".repeat(DESCRICAO_ACHADO_MINIMA) }), []);
 });
@@ -32,9 +33,11 @@ test("tarefa não realizada ou sem colaboração conclui com resultado e quem in
   }
 });
 
-test("resumo: todas as estações da faixa são obrigatórias, de 2 a 17 anos, e a síntese também", () => {
+test("resumo: todas as missões da auxiliar na faixa são obrigatórias, de 2 a 17 anos, e a síntese também; exame do médico fica fora", () => {
   for (let age = 2; age <= 17; age++) {
-    const tarefas = circuitForAge(age);
+    const tarefas = missoesDaAuxiliar(age);
+    assert.ok(tarefas.length >= 12 && tarefas.length <= 17, `idade ${age}: ${tarefas.length} missões é prático para a auxiliar`);
+    assert.ok(tarefas.length < circuitForAge(age).length, `idade ${age}: exame do médico não entra na conta`);
     const vazio = resumoObrigatorio(age, {}, "");
     assert.equal(vazio.total, tarefas.length, `idade ${age}`);
     assert.equal(vazio.concluidas, 0, `idade ${age}: nada começa concluído`);
@@ -49,10 +52,10 @@ test("resumo: todas as estações da faixa são obrigatórias, de 2 a 17 anos, e
 });
 
 test("resumo: uma pendência isolada derruba o circuito para incompleto e é nomeada", () => {
-  const tarefas = circuitForAge(9);
+  const tarefas = missoesDaAuxiliar(9);
   const estados = Object.fromEntries(tarefas.map((tarefa) => [tarefa.id, completa()]));
   const alvo = tarefas[3];
-  estados[alvo.id] = { ...completa("achado"), descricao: "curto" };
+  estados[alvo.id] = { ...completa("achado"), marcadores: [], descricao: "curto" };
   const resumo = resumoObrigatorio(9, estados, "Síntese.");
   assert.equal(resumo.completo, false);
   assert.equal(resumo.concluidas, tarefas.length - 1);
@@ -60,7 +63,7 @@ test("resumo: uma pendência isolada derruba o circuito para incompleto e é nom
 });
 
 test("texto: declara COMPLETO ou INCOMPLETO, lista as pendências e afirma que não trava nem libera documento", () => {
-  const tarefas = circuitForAge(7);
+  const tarefas = missoesDaAuxiliar(7);
   const incompleto = resumoObrigatorio(7, { [tarefas[0].id]: completa() }, "");
   const linha = linhaObrigatorio(incompleto);
   assert.match(linha, new RegExp(`^CIRCUITO CLÍNICO OBRIGATÓRIO: INCOMPLETO — 1 de ${tarefas.length} missões concluídas; síntese do examinador pendente\\.$`));
@@ -85,7 +88,7 @@ test("obrigatório sem bloqueio: nenhum controle desabilitado e nada apresentado
   const pagina = readFileSync("client/src/pages/super-neuropad-game.tsx", "utf8");
   assert.doesNotMatch(componente, /\bdisabled\b|\baria-disabled\b/);
   assert.doesNotMatch(componente, /\(opcional\)|Circuito opcional|Missões clínicas extras/);
-  assert.match(componente, /Missões clínicas obrigatórias/);
+  assert.match(componente, /Missões da auxiliar · antes da consulta/);
   assert.match(componente, /nenhuma etapa trava a próxima/);
   assert.match(componente, /MissaoStatus/);
   assert.match(componente, /ObrigatoriosPanel/);

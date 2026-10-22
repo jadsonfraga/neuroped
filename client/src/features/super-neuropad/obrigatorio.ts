@@ -1,16 +1,17 @@
 /**
  * Estrutura obrigatória do circuito clínico.
  *
- * Toda missão da faixa etária exige: resultado ("Como foi?"), quem informou e,
- * quando a tarefa foi realizada, ao menos um marcador ou uma descrição. "Teve dificuldade"
- * (achado) exige descrição do achado. A síntese final do examinador também é obrigatória.
+ * Toda missão da auxiliar na faixa etária exige: resultado ("Como foi?"), quem informou e, quando a
+ * tarefa foi realizada ou teve dificuldade, ao menos um marcador ou uma descrição. O exame físico e a
+ * entrevista reservada ficam com o médico e não entram na conta. A síntese final também é obrigatória.
  *
  * Obrigatório significa: a missão só conta como concluída com esses campos, o circuito é declarado
  * COMPLETO ou INCOMPLETO no relatório e a pendência fica visível em todo o fluxo. Nenhum controle
  * é desabilitado e a navegação segue livre: o jogo não libera documento nem conclui diagnóstico.
  */
-import { circuitForAge, type CircuitArea, type CircuitSource, type CircuitStatus } from "./clinicalCircuit";
+import { missoesDaAuxiliar, type CircuitArea, type CircuitSource, type CircuitStatus } from "./clinicalCircuit";
 
+/** Tamanho mínimo da descrição quando "teve dificuldade" é registrado só por texto, sem marcador. */
 export const DESCRICAO_ACHADO_MINIMA = 10;
 
 export type CampoObrigatorio = "resultado" | "fonte" | "marcador_ou_descricao" | "descricao_do_achado";
@@ -19,7 +20,7 @@ export const CAMPO_LABELS: Record<CampoObrigatorio, string> = {
   resultado: "resultado (Como foi?)",
   fonte: "quem informou",
   marcador_ou_descricao: "ao menos um marcador ou uma descrição",
-  descricao_do_achado: `descrição do achado (mínimo de ${DESCRICAO_ACHADO_MINIMA} caracteres)`,
+  descricao_do_achado: `o que foi visto (um marcador ou descrição de ${DESCRICAO_ACHADO_MINIMA}+ caracteres)`,
 };
 
 /** O que o auxiliar informou numa missão. Tudo é opcional no estado e obrigatório para concluir. */
@@ -52,12 +53,12 @@ export function camposPendentes(estado: EstadoMissao): CampoObrigatorio[] {
   if (!estado.source) faltam.push("fonte");
   const descricao = (estado.descricao ?? "").trim();
   if (estado.status === "observado" && !(estado.marcadores?.length) && !descricao) faltam.push("marcador_ou_descricao");
-  if (estado.status === "achado" && descricao.length < DESCRICAO_ACHADO_MINIMA) faltam.push("descricao_do_achado");
+  if (estado.status === "achado" && !(estado.marcadores?.length) && descricao.length < DESCRICAO_ACHADO_MINIMA) faltam.push("descricao_do_achado");
   return faltam;
 }
 
 export function resumoObrigatorio(years: number, estados: Readonly<Record<string, EstadoMissao>>, sintese: string): ResumoObrigatorio {
-  const tarefas = circuitForAge(years);
+  const tarefas = missoesDaAuxiliar(years);
   const pendencias: PendenciaMissao[] = [];
   for (const tarefa of tarefas) {
     const faltam = camposPendentes(estados[tarefa.id] ?? {});
