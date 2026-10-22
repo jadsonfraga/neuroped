@@ -10,12 +10,13 @@ interface DatedEntry {
   createdAt?: unknown;
 }
 
+/** Chave comparável do instante do evento: `date` + `time`, ou `datetime` quando já traz a hora. */
 function eventKey(entry: DatedEntry): string {
-  const date = typeof entry.date === "string" && entry.date
-    ? entry.date
-    : typeof entry.datetime === "string" ? entry.datetime : "";
-  const time = typeof entry.time === "string" ? entry.time : "";
-  return `${date}T${time}`;
+  if (typeof entry.date === "string" && entry.date) {
+    const time = typeof entry.time === "string" ? entry.time : "";
+    return `${entry.date}T${time}`;
+  }
+  return typeof entry.datetime === "string" ? entry.datetime : "";
 }
 
 export function compareClinicalDesc(a: DatedEntry, b: DatedEntry): number {

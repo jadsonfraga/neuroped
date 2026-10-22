@@ -24,7 +24,7 @@ import {
   medications,
   parseWeight,
 } from "../../client/src/lib/calculadoraDose";
-import { sortClinicalAsc, sortClinicalDesc } from "../../client/src/lib/diaryOrder";
+import { compareClinicalDesc, sortClinicalAsc, sortClinicalDesc } from "../../client/src/lib/diaryOrder";
 import { pharmCategories } from "../../client/src/data/farmacologia";
 import { appMetrics } from "../../client/src/data/appMetrics";
 
@@ -129,6 +129,17 @@ for (const m of medications) {
   ];
   assert.deepEqual(sortClinicalDesc(entries).map((e) => e.id), ["e", "d", "a", "c", "b"]);
   assert.deepEqual(sortClinicalAsc(entries).map((e) => e.id), ["b", "c", "a", "d", "e"]);
+}
+
+// Data-hora completa (sem `date`) não ganha sufixo: mesmo instante empata e desempata pelo cadastro.
+{
+  const entries = [
+    { id: "x", datetime: "2026-10-12T09:00", createdAt: 1 },
+    { id: "y", date: "2026-10-12", time: "09:00", createdAt: 2 },
+    { id: "z", datetime: "2026-10-12T20:00", createdAt: 3 },
+  ];
+  assert.deepEqual(sortClinicalDesc(entries).map((e) => e.id), ["z", "y", "x"]);
+  assert.equal(compareClinicalDesc({ datetime: "2026-10-12T09:00" }, { date: "2026-10-12", time: "09:00" }), 0);
 }
 
 // ── Contagem da Farmacologia ────────────────────────────────────────────────
