@@ -40,7 +40,7 @@ test("Sonda Dez: modo direto pula preparar e ensaiar, exige só a idade e declar
   assert.match(sonda, /const ready = direct\s*\?\s*Boolean\(band\)/, "no modo direto só a idade libera o início");
   assert.ok(sonda.includes('{phase === "learn" && !direct && ('), "fase de ensaio nunca renderiza no modo direto");
   assert.ok(sonda.includes('{!direct && (phase === "prepare" || phase === "learn" || phase === "run") && ('), "guia da primeira aplicação oculto no modo direto");
-  assert.ok(sonda.includes('{!direct && <section className={panel}>\n            <h2 className="text-xl font-bold">Conferir antes de começar</h2>'), "checklist e conferência de som só no modo guiado");
+  assert.match(sonda, /\{\s*!direct\s*&&\s*<section className=\{panel\}>\s*<h2 className="text-xl font-bold">Conferir antes de começar<\/h2>/, "checklist e conferência de som só no modo guiado");
   assert.ok(sonda.includes('disabled={phase !== "prepare" || easyProgress > 0}'), "a aba só troca antes de iniciar a aplicação (guiada, direta ou joguinho)");
   assert.ok(sonda.includes('.concat(direct ? [DIRECT_TRACK_NOTE] : [])'), "registro recebe a nota do modo direto");
   assert.ok(sonda.includes('soundEnabled={direct ? sound !== "visual" : sound === "heard"}'), "som segue a escolha explícita do modo direto");

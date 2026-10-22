@@ -11,8 +11,9 @@ import { OBSERVATION_CHIPS as SUPER_CHIPS, OBSERVATIONS_MAX } from "../../client
 import { icedObservations } from "../../client/src/features/dyslexia-risk/report";
 
 test("inventários em docs/instrumentos estão em sincronia com o código", () => {
-  assert.equal(readFileSync("docs/instrumentos/inventario-itens-super-neuropad.csv", "utf8"), inventarioSuper(), "regenere: node --import tsx tests/tools/inventario-itens.ts");
-  assert.equal(readFileSync("docs/instrumentos/inventario-itens-jogo-letras-numeros.csv", "utf8"), inventarioJogo(), "regenere: node --import tsx tests/tools/inventario-itens.ts");
+  const normalizeNewlines = (text: string) => text.replace(/\r\n/g, "\n");
+  assert.equal(normalizeNewlines(readFileSync("docs/instrumentos/inventario-itens-super-neuropad.csv", "utf8")), inventarioSuper(), "regenere: node --import tsx tests/tools/inventario-itens.ts");
+  assert.equal(normalizeNewlines(readFileSync("docs/instrumentos/inventario-itens-jogo-letras-numeros.csv", "utf8")), inventarioJogo(), "regenere: node --import tsx tests/tools/inventario-itens.ts");
 });
 
 test("planilhas de coleta vêm vazias (sem dados inventados) e com os cabeçalhos que a análise espera", () => {

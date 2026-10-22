@@ -10,7 +10,8 @@ import { softTap } from "@/lib/softSounds";
 import { play1Up, playCoin, playFlagPole, playJump, playPowerUp } from "@/lib/sounds";
 import { downloadTextDocument, safeTextFilename } from "@/lib/shareText";
 import { createChiptune, type Chiptune } from "@/features/super-neuropad/music";
-import { ClinicalCircuit, type ProgressoCircuito } from "@/features/super-neuropad/ClinicalCircuit";
+import { ClinicalCircuit, type ProgressoCircuito } from "@/features/super-neuropad/ClinicalCircuit.tsx";
+import { activeClockSeconds, emptyActiveClock, transitionActiveClock } from "@/features/super-neuropad/activeClock";
 import { resumoDaBateria } from "@/features/super-neuropad/sufficiencia";
 import {
   DESAFIOS_DISPONIVEIS_POR_IDADE,
@@ -568,7 +569,8 @@ function OpcionaisPanel({ years, registros, copiados, seed, onRegistrar, onCopia
   const [pausado, setPausado] = useState(false);
   const [escolhido, setEscolhido] = useState<string | null>(null);
   const [repetido, setRepetido] = useState(false);
-  const inicio = useRef(0);
+  const cronometro = useRef(emptyActiveClock());
+  const itemCronometrado = useRef<string | null>(null);
   const ultimoToque = useRef(Number.NEGATIVE_INFINITY);
   const atualId = escolhido ?? proximoPendente(years, registros) ?? lista[0]?.item.id;
   const posicao = Math.max(0, lista.findIndex((entry) => entry.item.id === atualId));
@@ -579,9 +581,17 @@ function OpcionaisPanel({ years, registros, copiados, seed, onRegistrar, onCopia
     () => (atual && atual.item.kind === "toque" ? optionOrder(atual.item, seed + posicao * 17, posicao) : []),
     [atual, seed, posicao],
   );
-  useEffect(() => { inicio.current = performance.now(); setRepetido(false); }, [atualId, aberto, pausado]);
+  useEffect(() => {
+    const agora = performance.now();
+    if (itemCronometrado.current !== atualId) {
+      itemCronometrado.current = atualId;
+      cronometro.current = emptyActiveClock();
+      setRepetido(false);
+    }
+    cronometro.current = transitionActiveClock(cronometro.current, agora, aberto && !pausado);
+  }, [atualId, aberto, pausado]);
   // Tela bloqueada ou troca de aba com um opcional aberto: pausa sozinho, como na partida principal,
-  // para o tempo do item não inflar. Retomar reinicia a contagem do item atual.
+  // para o tempo do item não inflar. Retomar continua a contagem acumulada do item atual.
   useEffect(() => {
     if (!aberto || pausado) return;
     const onVisibility = () => { if (document.hidden) setPausado(true); };
@@ -589,7 +599,7 @@ function OpcionaisPanel({ years, registros, copiados, seed, onRegistrar, onCopia
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, [aberto, pausado]);
   if (!atual) return null;
-  const segundos = () => (performance.now() - inicio.current) / 1000;
+  const segundos = () => activeClockSeconds(cronometro.current, performance.now());
   const registrar = (record: AnswerRecord, event: { timeStamp: number }) => {
     if (pausado || !acceptManualTap(ultimoToque.current, event.timeStamp)) return;
     ultimoToque.current = event.timeStamp;
@@ -1165,7 +1175,7 @@ export default function SuperNeuroPadGamePage() {
   const compact = screen !== "setup";
 
   return (
-    <div ref={rootRef} className="snp scroll-mt-20 space-y-5 pb-8 lg:scroll-mt-4" data-testid="super-neuropad-game" data-screen={screen} data-age-style={ageYears !== null && ageYears >= 13 ? "adolescente" : "infantil"}>
+    <div ref={rootRef} className="snp scroll-mt-20 space-y-5 pb-8 lg:scroll-mt-4" data-testid="super-neuropad-game" data-screen={screen} data-age-style={ageYears !== null && ageYears >= 13 ? "adolescente" : "infantil"} data-age-theme={ageYears === null ? "neutro" : ageYears <= 3 ? "primeiros-passos" : ageYears <= 7 ? "exploracao" : ageYears <= 12 ? "estrategia" : "autonomia"}>
       <header className={`snp-panel snp-scanlines snp-sky-bg relative overflow-hidden ${compact ? "px-4 py-3" : "p-5 sm:p-6"}`}>
         {!compact && <Clouds />}
         <div className="relative flex items-center gap-3">

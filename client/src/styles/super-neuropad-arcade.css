@@ -94,3 +94,25 @@
 .snp[data-age-style="adolescente"] .snp-sprite { filter: none; }
 .snp[data-age-style="adolescente"] .snp-panel { border-radius: 14px; box-shadow: 2px 3px 0 var(--snp-shadow); }
 .snp[data-age-style="adolescente"] .snp-btn { border-radius: 10px; box-shadow: 0 3px 0 var(--snp-ink-fixed); }
+
+/* Leitura clara durante a aplicação; o título conserva a identidade arcade. */
+.snp { min-width: 0; overflow-wrap: anywhere; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.snp .snp-pixel:not(.snp-title), .snp .snp-btn, .snp .snp-chip {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  letter-spacing: 0.015em;
+  text-transform: none;
+}
+.snp .text-xs, .snp [class*="text-[11px]"], .snp .snp-chip { font-size: 0.875rem; line-height: 1.5; }
+.snp .snp-btn { min-height: 48px; padding-block: 0.65rem; font-size: 1rem; line-height: 1.4; }
+.snp p, .snp label { line-height: 1.6; }
+.snp .snp-chip { max-width: 100%; white-space: normal; }
+.snp .snp-option { min-width: 0; }
+.snp[data-age-theme="primeiros-passos"] .snp-option { min-height: 88px; border-radius: 24px; }
+.snp[data-age-theme="estrategia"] .snp-panel { border-radius: 14px; box-shadow: 3px 3px 0 var(--snp-shadow); }
+.snp[data-age-theme="autonomia"] .snp-panel { border-width: 2px; border-radius: 12px; box-shadow: 0 2px 6px var(--snp-shadow); }
+.snp[data-age-theme="autonomia"] header { background: var(--snp-slate-deep); }
+.snp[data-age-theme="autonomia"] .snp-title { text-shadow: none; letter-spacing: 0.01em; }
+.snp[data-age-theme="autonomia"] .snp-btn, .snp[data-age-theme="autonomia"] .snp-option { border-width: 2px; border-radius: 10px; box-shadow: 0 2px 0 var(--snp-ink-fixed); }
+.snp[data-age-theme="autonomia"] .snp-scanlines::after { display: none; }
+.snp[data-age-theme="autonomia"] .snp-sprite { filter: none; }
+.snp[data-age-theme="autonomia"] .snp-bounce, .snp[data-age-theme="autonomia"] .snp-float { animation: none; }
