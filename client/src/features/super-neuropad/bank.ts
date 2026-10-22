@@ -903,13 +903,35 @@ function taskKey(draft: AnyDraft | Item): string {
   return `${draft.kind}:${plain(draft.prompt)}:${plain(criterion)}`;
 }
 
+const CONCEPT_FILLER = new Set(["toque", "toca", "no", "na", "nos", "nas", "o", "a", "os", "as", "um", "uma", "de", "do", "da", "cor", "numero", "letra", "onde", "esta", "este", "isto", "e", "qual"]);
+
+/**
+ * Mesmo conceito = mesma resposta pedida com o enunciado reduzido ao que o distingue: "Toque na cor VERMELHA" e
+ * "Toque no vermelho" pedem a mesma coisa, assim como "Quantas maçãs? Toque no número." e "Quantas maçãs? 🍎🍎".
+ * A extensão usa esta chave para não oferecer duas vezes o mesmo conceito (auditoria de 21/10/2026).
+ */
+export function conceptKey(draft: AnyDraft | Item): string {
+  if (draft.kind === "montar") return `montar:${plain(draft.word)}`;
+  const criterion = draft.kind === "toque" ? draft.answer : draft.expected;
+  const stem = (word: string) => {
+    const bare = word.length > 3 ? word.replace(/s$/, "") : word;
+    return bare.length > 3 ? bare.replace(/[ao]$/, "") : bare;
+  };
+  const words = plain(draft.prompt)
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .split(/\s+/)
+    .filter((word) => word && !CONCEPT_FILLER.has(word))
+    .map(stem);
+  return `${draft.kind}:${words.join(" ")}:${plain(criterion)}`;
+}
+
 function buildOptional(): Record<number, OptionalItem[]> {
   const out: Record<number, OptionalItem[]> = {};
   for (const years of YEARS) {
     const main = PHASE_ORDER.flatMap((phaseId) => INTEGRATED_BANK[years][phaseId]);
     const need = DESAFIOS_DISPONIVEIS_POR_IDADE - main.length;
     const usedRefs = main.map((entry) => entry.ref);
-    const usedKeys = new Set(main.map(taskKey));
+    const usedKeys = new Set(main.flatMap((entry) => [taskKey(entry), conceptKey(entry)]));
     const isUsed = (ref: string) => usedRefs.some((used) => used === ref || used.startsWith(`${ref} · `));
     // Uma fila por domínio de cada banco; a seleção alterna entre as filas para espalhar os domínios.
     const queues: Array<Array<{ draft: AnyDraft; phaseId: PhaseId }>> = [];
@@ -922,14 +944,22 @@ function buildOptional(): Record<number, OptionalItem[]> {
     }
     const picked: Array<{ draft: AnyDraft; phaseId: PhaseId }> = [];
     const pickedKeys = new Set<string>();
-    for (let round = 0; picked.length < need && queues.some((queue) => queue.length > round); round++) {
-      for (const queue of queues) {
-        const candidate = queue[round];
-        if (!candidate || picked.length >= need) continue;
-        const key = taskKey(candidate.draft);
-        if (isUsed(candidate.draft.ref) || usedKeys.has(key) || pickedKeys.has(key)) continue;
-        picked.push(candidate);
-        pickedKeys.add(key);
+    const pickedIds = new Set<AnyDraft>();
+    // Primeira passada: só conceitos distintos entre si e da bateria. Segunda: se o banco da idade não tem
+    // conceitos distintos suficientes para chegar a 50, completa com a mesma tarefa em outra redação
+    // (nunca a mesma tarefa idêntica); `conceitosRepetidosNosOpcionais` informa quantos casos restam.
+    for (const strict of [true, false]) {
+      for (let round = 0; picked.length < need && queues.some((queue) => queue.length > round); round++) {
+        for (const queue of queues) {
+          const candidate = queue[round];
+          if (!candidate || picked.length >= need || pickedIds.has(candidate.draft)) continue;
+          const keys = [taskKey(candidate.draft), conceptKey(candidate.draft)];
+          const blocked = strict ? keys : keys.slice(0, 1);
+          if (isUsed(candidate.draft.ref) || blocked.some((key) => usedKeys.has(key) || pickedKeys.has(key))) continue;
+          picked.push(candidate);
+          pickedIds.add(candidate.draft);
+          keys.forEach((key) => pickedKeys.add(key));
+        }
       }
     }
     if (picked.length !== need) throw new Error(`Extensão opcional incompleta aos ${years} anos: ${picked.length} de ${need}`);

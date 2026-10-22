@@ -25,6 +25,12 @@ body.np-legal-gate-open {
     bottom: calc(4.6rem + env(safe-area-inset-bottom)) !important;
   }
 
+  /* Jogo em andamento: a barra do app e o botão de ajuda não cobrem os controles de resposta. */
+  body.np-task-running [data-testid="mobile-primary-dock"],
+  body.np-task-running [data-testid="button-floating-help"] {
+    display: none !important;
+  }
+
   body.np-mobile-dock-active [data-radix-toast-viewport] {
     top: auto !important;
     bottom: calc(4.55rem + env(safe-area-inset-bottom)) !important;
