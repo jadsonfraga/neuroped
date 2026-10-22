@@ -69,6 +69,7 @@ async function main() {
     try {
       await openGame(page, server.origin);
       assert.match(await page.getByTestId("super-neuropad-game").innerText(), /50 disponíveis por idade com os opcionais/i);
+      assert.equal(await page.locator('[data-testid="page-mascot-decor"] .np-mascot-nino').count(), 0, "mascote global fora da trilha do jogo");
 
       // 1. As 16 idades: 50 disponíveis; a bateria principal continua com a contagem de antes.
       for (let age = 2; age <= 17; age++) {
@@ -101,6 +102,26 @@ async function main() {
       await panel.getByRole("button", { name: "Retomar opcionais" }).click();
       await stage.waitFor();
 
+      // 2b. Auditoria 21/10/2026: aviso de idade só no item de letra aos 2 anos; troca de aba pausa os opcionais.
+      await goTo(page, (text) => /Toque na LETRA/.test(text), "letra aos 2 anos");
+      const note = stage.getByTestId("super-neuropad-optional-age-note");
+      await note.waitFor();
+      assert.match(await note.innerText(), /Aviso de idade: reconhecer letras ou números não é marco universal aos 2 anos/);
+      assert.equal(await panel.locator("button:disabled, select:disabled").count(), 0, "aviso não desabilita nada");
+      await goTo(page, (text) => /Toque no cachorro|Toque no olho|Toque no sapato/.test(text) && text.startsWith("○"), "figura sem aviso");
+      assert.equal(await stage.getByTestId("super-neuropad-optional-age-note").count(), 0, "item de figura não leva aviso");
+      await page.evaluate(() => {
+        Object.defineProperty(document, "hidden", { configurable: true, get: () => true });
+        document.dispatchEvent(new Event("visibilitychange"));
+      });
+      await panel.getByText(/Opcionais em pausa/).waitFor();
+      assert.equal(await panel.getByTestId("super-neuropad-optional-stage").count(), 0, "troca de aba pausa os opcionais");
+      await page.evaluate(() => { Object.defineProperty(document, "hidden", { configurable: true, get: () => false }); });
+      await panel.getByRole("button", { name: "Retomar opcionais" }).click();
+      await stage.waitFor();
+      observations.avisoDeIdadeAos2Anos = true;
+      observations.pausaPorTrocaDeAba = true;
+
       await goTo(page, (text) => text.startsWith("○") && /O que é isto|Como|nome|Diga|Fale/i.test(text), "fala pendente");
       const judged = stage.getByRole("button", { name: "Acertou", exact: true });
       if (await judged.count()) {
@@ -115,6 +136,16 @@ async function main() {
       await writeFile(`${dir}/axe-opcionais.json`, JSON.stringify(axe.violations, null, 2));
       assert.deepEqual(axe.violations.map((violation) => ({ id: violation.id, targets: violation.nodes.map((node) => node.target) })), [], "axe sem violações no painel aberto");
       await page.screenshot({ path: `${dir}/opcionais-2-anos.png`, fullPage: true });
+
+      // 2c. Aos 3 anos "cor vermelha" e "vermelho" não aparecem as duas vezes no seletor.
+      await setAge(page, 3);
+      await panelOf(page).getByRole("button", { name: "Abrir opcionais" }).click();
+      const textos3 = await panelOf(page).getByLabel("Ir para o desafio opcional").evaluate((element) => Array.from(element.options).map((option) => option.text));
+      assert.ok(!(textos3.some((text) => /Toque na cor VERMELHA/.test(text)) && textos3.some((text) => /Toque no vermelho/.test(text))), "3 anos: cor repetida");
+      assert.equal(textos3.length, 26, "3 anos: continuam 26 opcionais (24 + 26 = 50)");
+      await setAge(page, 2);
+      await panelOf(page).getByRole("button", { name: "Abrir opcionais" }).click(); // o painel é recriado por idade
+      await stage.waitFor();
 
       // 3. Cópia: o texto traz os 2 registros e o status passa a copiado; um registro novo volta a ficar pendente.
       await panel.getByRole("button", { name: "Copiar registro dos opcionais" }).click();
@@ -172,6 +203,35 @@ async function main() {
       await context.close();
     }
 
+    // Regressão: a pausa exclui apenas o intervalo pausado e conserva a marca de comando repetido.
+    const timed = await newPage(browser, { width: 1180, height: 900 }, collected);
+    try {
+      await openGame(timed.page, server.origin);
+      await setAge(timed.page, 9);
+      const timedPanel = panelOf(timed.page);
+      await timedPanel.getByRole("button", { name: "Abrir opcionais" }).click();
+      const timedStage = timedPanel.getByTestId("super-neuropad-optional-stage");
+      await goTo(timed.page, (text) => text.startsWith("○") && /Mostre:/.test(text), "opcional visual cronometrado");
+      await timedStage.getByRole("button", { name: "Repeti o comando" }).click();
+      await timed.page.waitForTimeout(550);
+      await timedPanel.getByRole("button", { name: "Pausar opcionais" }).click();
+      await timed.page.waitForTimeout(1200);
+      await timedPanel.getByRole("button", { name: "Retomar opcionais" }).click();
+      await timedStage.waitFor();
+      await timedStage.getByRole("button", { name: "Comando repetido 1x" }).waitFor();
+      await timed.page.waitForTimeout(550);
+      await timedStage.getByRole("group", { name: "Opções" }).getByRole("button").first().click();
+      await timedPanel.getByTestId("super-neuropad-optional-status").getByText(/1 registro\(s\) opcional\(is\) ainda não copiado/).waitFor();
+      await timedPanel.getByRole("button", { name: "Copiar registro dos opcionais" }).click();
+      const timedCopy = await timed.page.evaluate(() => navigator.clipboard.readText());
+      const measured = Number(timedCopy.match(/· (\d+) s(?: ·|\r?\n)/)?.[1]);
+      assert.ok(measured >= 1, `tempo ativo do item registrado (${measured}s)`);
+      assert.match(timedCopy, /comando repetido 1x/, "marca de repetição mantida após pausa");
+      observations.pausaPreservaSinalDeRepeticao = { segundosRegistrados: measured, intervaloPausadoMs: 1200 };
+    } finally {
+      await timed.context.close();
+    }
+
     // 7. Celular: o painel aberto cabe em 390 px sem rolagem horizontal.
     const mobile = await newPage(browser, { width: 390, height: 844 }, collected);
     try {
@@ -184,7 +244,38 @@ async function main() {
       observations.paginaInteiraEmCelularExcessoPx = await mobile.page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       assert.ok(observations.paginaInteiraEmCelularExcessoPx <= 1, "página sem rolagem horizontal em 390 px");
       assert.equal(await mobile.page.getByTestId("super-neuropad-game").getAttribute("data-age-style"), "adolescente", "apresentação sóbria a partir de 13 anos");
+      assert.equal(await mobile.page.getByTestId("super-neuropad-game").getAttribute("data-age-theme"), "autonomia", "tema de autonomia para adolescentes");
       await mobile.page.screenshot({ path: `${dir}/opcionais-celular.png`, fullPage: true });
+
+      // 7b. Auditoria 21/10/2026: durante a partida no celular a barra do app e o botão de ajuda saem do caminho e
+      // os botões de resposta ficam livres; fora da partida a barra volta.
+      mobile.page.on("dialog", (dialog) => dialog.accept());
+      const dock = mobile.page.getByTestId("mobile-primary-dock");
+      await dock.waitFor();
+      await mobile.page.getByRole("group", { name: "Personagens" }).getByRole("button", { name: /Robô Guerreiro/ }).click();
+      await mobile.page.getByRole("button", { name: "Começar a aventura", exact: true }).click();
+      await mobile.page.getByRole("button", { name: /Entrar na fase/ }).click();
+      await mobile.page.getByText(/Desafio 1 de/).waitFor();
+      assert.equal(await dock.isVisible(), false, "barra inferior escondida durante a partida");
+      assert.equal(await mobile.page.getByTestId("button-floating-help").isVisible(), false, "botão de ajuda escondido durante a partida");
+      const answer = mobile.page.locator('[data-testid="super-neuropad-game"] button:has-text("Acertou"), [data-testid="super-neuropad-game"] [role="group"][aria-label="Opções"] button').first();
+      await answer.scrollIntoViewIfNeeded();
+      const covered = await answer.evaluate((element) => {
+        const box = element.getBoundingClientRect();
+        const top = document.elementFromPoint(box.left + box.width / 2, Math.min(box.top + box.height / 2, window.innerHeight - 2));
+        return !(top && (top === element || element.contains(top)));
+      });
+      assert.equal(covered, false, "nenhum elemento fixo cobre o botão de resposta");
+      await mobile.page.screenshot({ path: `${dir}/partida-celular-14-anos.png` });
+      await mobile.page.waitForTimeout(MANUAL_TAP_GAP_MS);
+      const skip = mobile.page.getByRole("button", { name: "Não respondeu", exact: true });
+      if (await skip.count()) await skip.click();
+      else await mobile.page.getByRole("button", { name: "Aplicadora: não respondeu · pular", exact: true }).click();
+      await mobile.page.getByRole("button", { name: "Encerrar", exact: true }).click();
+      await mobile.page.locator('[data-testid="super-neuropad-game"][data-screen="results"]').waitFor();
+      await dock.waitFor();
+      assert.equal(await dock.isVisible(), true, "barra inferior volta fora da partida");
+      observations.barraEscondidaNaPartidaNoCelular = true;
     } finally {
       await mobile.context.close();
     }

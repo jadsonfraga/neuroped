@@ -7,6 +7,7 @@ export type RouteAccessDecision = "allow" | "checking" | "login" | "forbidden";
 
 export const SENSITIVE_ROUTES = [
   "/super-neuropad-game",
+  "/neuropad-arena",
   "/dyslexia-risk",
   "/avaliacao-pre-consulta-faixa-etaria",
   "/pant",
@@ -251,6 +252,7 @@ const CLINICAL_ROLE_OVERRIDES: ReadonlyArray<{
   // A secretária opera a agenda administrativa sem receber acesso ao prontuário.
   { route: "/agenda", roles: ["admin", "professional", "operator"] },
   { route: "/super-neuropad-game", roles: DIRECT_TEST_ROLES },
+  { route: "/neuropad-arena", roles: DIRECT_TEST_ROLES },
   { route: "/testes-diretos", roles: DIRECT_TEST_ROLES },
   { route: "/testes-reconhecimento", roles: DIRECT_TEST_ROLES },
   { route: "/testes-cognitivos", roles: DIRECT_TEST_ROLES },

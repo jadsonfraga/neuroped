@@ -571,3 +571,29 @@
   --snp-stage: rgba(33, 28, 69, 0.85);
   --snp-stage-text: #f4f0ff;
 }
+
+/* NeuroPad Arena palette: isolated semantic tokens. */
+:root {
+  --arena-raw-0: #f6f1e4;
+  --arena-raw-1: #c9d4ea;
+  --arena-raw-2: #10284a;
+  --arena-raw-3: #ffd56a;
+  --arena-raw-4: #e2a93b;
+  --arena-raw-5: #7eb6ff;
+  --arena-raw-6: rgba(255, 213, 106, 0.22);
+  --arena-raw-7: rgba(126, 182, 255, 0.24);
+  --arena-raw-8: #1a3e72;
+  --arena-raw-9: #09182f;
+  --arena-raw-10: rgba(9, 24, 47, 0.28);
+  --arena-raw-11: rgba(255, 255, 255, 0.08);
+  --arena-raw-12: rgba(255, 255, 255, 0.16);
+  --arena-raw-13: #1b1404;
+  --arena-raw-14: #ffd0d0;
+  --arena-raw-15: rgba(255, 180, 180, 0.45);
+  --arena-raw-16: rgba(6, 16, 34, 0.38);
+  --arena-raw-17: rgba(255, 255, 255, 0.12);
+  --arena-raw-18: rgba(255, 213, 106, 0.16);
+  --arena-raw-19: rgba(255, 255, 255, 0.2);
+  --arena-raw-20: rgba(255, 255, 255, 0.1);
+  --arena-raw-21: rgba(255, 213, 106, 0.18);
+}

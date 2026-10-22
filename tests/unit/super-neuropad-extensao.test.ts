@@ -1,15 +1,16 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
-import { INTEGRATED_BANK, PHASE_ORDER, YEARS } from "../../client/src/features/super-neuropad/bank";
+import { conceptKey, INTEGRATED_BANK, PHASE_ORDER, YEARS } from "../../client/src/features/super-neuropad/bank";
 import {
-  DESAFIOS_DISPONIVEIS_POR_IDADE, disponiveisDaIdade, estimativaOpcionaisSegundos, opcionaisDaIdade, pendentesDeCopia, proximoPendente,
+  avisoDeIdade, DESAFIOS_DISPONIVEIS_POR_IDADE, disponiveisDaIdade, estimativaOpcionaisSegundos, opcionaisDaIdade, pendentesDeCopia, proximoPendente,
   registradosNaOrdem, registrarOpcional, apagarOpcional, textoOpcionais, type RegistrosOpcionais,
 } from "../../client/src/features/super-neuropad/extensao";
 import {
   bandItemCount, estimateBandSeconds, isJudged, itemProvenance, recordBuild, recordJudged, recordTouch, sessionLimitSeconds,
   type AnswerRecord, type Item, type PhaseId,
 } from "../../client/src/features/super-neuropad/model";
+import { activeClockSeconds, emptyActiveClock, transitionActiveClock } from "../../client/src/features/super-neuropad/activeClock";
 
 const plain = (text: string) => text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/\s+/g, " ").trim();
 const criterion = (item: Item) => (item.kind === "montar" ? item.word : item.kind === "toque" ? item.answer : item.expected);
@@ -52,8 +53,8 @@ test("extensão: opcionais vêm dos bancos de origem da idade, sem itens criados
     const seen = new Set<string>();
     for (const { item, phaseId } of opcionaisDaIdade(years)) {
       assert.equal(itemProvenance(item), "banco_de_origem", `${item.id}: sem item autoral`);
-      assert.match(item.ref, new RegExp(`^(Cognitivos ${years} anos · |Sonda 10 · banco objetivo |OBS-10 · banco objetivo )`), `${item.id}: referência do banco de origem da idade`);
-      assert.ok(["cognitivo", "sonda10", "obs10"].includes(item.origin), `${item.id}: origem`);
+      assert.match(item.ref, new RegExp(`^(Cognitivos ${years} anos · |Sonda 10 · banco objetivo |OBS-10 · banco objetivo |Reconhecimento visual · reconhecer · )`), `${item.id}: referência do banco de origem da idade`);
+      assert.ok(["cognitivo", "sonda10", "obs10", "visual"].includes(item.origin), `${item.id}: origem`);
       assert.ok(PHASE_ORDER.includes(phaseId), `${item.id}: mundo de agrupamento`);
       assert.ok(!mainTasks.has(sameTask(item)), `${item.id}: não repete tarefa da bateria (${item.prompt})`);
       assert.ok(!main.some((entry) => entry.ref === item.ref || entry.ref.startsWith(`${item.ref} · `)), `${item.id}: referência já usada na bateria`);
@@ -61,6 +62,7 @@ test("extensão: opcionais vêm dos bancos de origem da idade, sem itens criados
       seen.add(sameTask(item));
       if (item.kind === "toque") assert.ok(item.options.some((option) => option.label === item.answer), `${item.id}: resposta entre as opções`);
     }
+    assert.ok(opcionaisDaIdade(years).some(({ item }) => item.origin === "visual"), `${years}: inclui tarefa visual elegível para a idade`);
   }
 });
 
@@ -144,4 +146,67 @@ test("tela: painel opcional sem controle desabilitado e fora da partida", () => 
   assert.equal(page.match(/<OpcionaisPanel /g)?.length, 2);
   const source = readFileSync("client/src/features/super-neuropad/extensao.ts", "utf8");
   assert.doesNotMatch(source, /localStorage|sessionStorage|indexedDB|fetch\(/, "registro só em memória");
+});
+
+test("auditoria 21/10/2026: opcionais não repetem conceito entre si nem com a bateria", () => {
+  // Aos 3 anos "Toque na cor VERMELHA" e "Toque no vermelho" pedem a mesma coisa; só um fica.
+  const tres = opcionaisDaIdade(3).map((entry) => entry.item.prompt);
+  assert.ok(!(tres.includes("Toque na cor VERMELHA.") && tres.includes("Toque no vermelho.")), "3 anos: cor vermelha não aparece duas vezes");
+  assert.ok(!(tres.includes("Toque na cor AZUL.") && tres.includes("Toque no azul.")), "3 anos: cor azul não aparece duas vezes");
+  // Itens visuais elegíveis completam o banco de 5 anos sem repetir conceito.
+  const EXCECOES: Record<number, number> = {};
+  for (const years of YEARS) {
+    const main = new Set(PHASE_ORDER.flatMap((phaseId) => INTEGRATED_BANK[years][phaseId]).map(conceptKey));
+    const seen = new Set<string>();
+    let repetidos = 0;
+    for (const { item } of opcionaisDaIdade(years)) {
+      const key = conceptKey(item);
+      if (main.has(key) || seen.has(key)) repetidos++;
+      seen.add(key);
+    }
+    assert.equal(repetidos, EXCECOES[years] ?? 0, `${years} anos: conceitos repetidos nos opcionais`);
+    assert.equal(opcionaisDaIdade(years).length + bandItemCount(String(years)), 50, `${years} anos: continuam 50 disponíveis`);
+  }
+});
+
+test("auditoria 21/10/2026: referência visual informa o número real de alternativas", () => {
+  for (const years of YEARS) {
+    for (const { item } of opcionaisDaIdade(years)) {
+      if (item.kind !== "toque" || item.origin !== "visual") continue;
+      assert.match(item.ref, new RegExp(`\\(${item.options.length} opções,`), `${years} anos · ${item.prompt}`);
+    }
+  }
+});
+
+test("auditoria 21/10/2026: pausas excluem o intervalo e retomam o tempo ativo do mesmo item", () => {
+  let clock = transitionActiveClock(emptyActiveClock(), 1000, true);
+  assert.equal(activeClockSeconds(clock, 21_000), 20);
+  clock = transitionActiveClock(clock, 21_000, false);
+  assert.equal(activeClockSeconds(clock, 51_000), 20, "30 segundos pausados não entram no tempo");
+  clock = transitionActiveClock(clock, 51_000, true);
+  assert.equal(activeClockSeconds(clock, 56_000), 25, "5 segundos ativos são somados após retomar");
+});
+
+test("auditoria 21/10/2026: letra e numeral aos 2–3 anos levam aviso de idade; o item continua disponível", () => {
+  const letra = opcionaisDaIdade(2).find((entry) => /Toque na LETRA/.test(entry.item.prompt));
+  assert.ok(letra, "2 anos: o item de letra segue disponível");
+  assert.match(avisoDeIdade(2, letra.item) ?? "", /não é marco universal aos 2 anos/);
+  const cachorro = opcionaisDaIdade(2).find((entry) => entry.item.prompt === "Toque no cachorro.");
+  assert.equal(avisoDeIdade(2, cachorro!.item), null, "item de figura não leva aviso");
+  const numeral = opcionaisDaIdade(3).find((entry) => /Quantas maçãs\? Toque no número/.test(entry.item.prompt));
+  assert.ok(avisoDeIdade(3, numeral!.item), "3 anos: numeral leva aviso");
+  for (const years of YEARS.filter((value) => value > 3)) {
+    assert.ok(opcionaisDaIdade(years).every((entry) => avisoDeIdade(years, entry.item) === null), `${years} anos: sem aviso de letramento`);
+  }
+  const texto = textoOpcionais(2, registrarOpcional({}, record(letra.item, letra.phaseId)), "21/10/2026 10:00");
+  assert.match(texto, /Aviso de idade: reconhecer letras ou números não é marco universal aos 2 anos/);
+  assert.doesNotMatch(texto, /\bnível|\bcortes?\b|percentil|escore|pontuação|alerta|triagem|esperado para|limiar|normativ|\bobservar\b|dentro do esperado/i);
+});
+
+test("auditoria 21/10/2026: o painel dos opcionais pausa ao trocar de aba, como a partida principal", () => {
+  const page = readFileSync("client/src/pages/super-neuropad-game.tsx", "utf8");
+  const block = page.slice(page.indexOf("function OpcionaisPanel("), page.indexOf("function Clouds() {"));
+  assert.match(block, /visibilitychange/);
+  assert.match(block, /document\.hidden\) setPausado\(true\)/);
+  assert.match(block, /super-neuropad-optional-age-note/);
 });

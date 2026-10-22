@@ -1,0 +1,258 @@
+.arena {
+  --arena-ink: var(--arena-raw-0);
+  --arena-muted: var(--arena-raw-1);
+  --arena-night: var(--arena-raw-2);
+  --arena-gold: var(--arena-raw-3);
+  --arena-gold-deep: var(--arena-raw-4);
+  --arena-sea: var(--arena-raw-5);
+  color: var(--arena-ink);
+  background:
+    radial-gradient(circle at 12% 8%, var(--arena-raw-6), transparent 26%),
+    radial-gradient(circle at 88% 0%, var(--arena-raw-7), transparent 32%),
+    linear-gradient(180deg, var(--arena-raw-8) 0%, var(--arena-raw-2) 46%, var(--arena-raw-9) 100%);
+  border-radius: 28px;
+  padding: 1.25rem;
+  box-shadow: 0 18px 50px var(--arena-raw-10);
+}
+
+.arena-kicker,
+.arena-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--arena-gold);
+  font-weight: 800;
+}
+
+.arena h1 {
+  margin: 0.2rem 0 0.4rem;
+  font-size: clamp(2rem, 6vw, 3.2rem);
+  line-height: 0.95;
+}
+
+.arena-lead,
+.arena-note,
+.arena-map p,
+.arena-limits {
+  color: var(--arena-muted);
+}
+
+.arena-lead {
+  max-width: 38rem;
+  margin: 0;
+}
+
+.arena-tabs,
+.arena-bands,
+.arena-actions,
+.arena-games {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.arena-tabs {
+  margin: 1rem 0;
+}
+
+.arena button {
+  min-height: 48px;
+  border-radius: 14px;
+  border: 2px solid transparent;
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.arena button:focus-visible {
+  outline: 3px solid var(--arena-gold);
+  outline-offset: 3px;
+}
+
+.arena button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.arena-tab,
+.arena-band,
+.arena-choice,
+.arena-key,
+.arena-figure,
+.arena-piece,
+.arena-quiet {
+  background: var(--arena-raw-11);
+  color: var(--arena-ink);
+  border-color: var(--arena-raw-12);
+}
+
+.arena-tab[aria-selected="true"],
+.arena-band[aria-pressed="true"],
+.arena-choice[aria-pressed="true"] {
+  background: var(--arena-gold);
+  color: var(--arena-raw-13);
+  border-color: var(--arena-gold);
+}
+
+.arena-primary {
+  background: var(--arena-gold);
+  color: var(--arena-raw-13);
+}
+
+.arena-danger {
+  background: transparent;
+  color: var(--arena-raw-14);
+  border-color: var(--arena-raw-15);
+}
+
+.arena-panel {
+  background: var(--arena-raw-16);
+  border: 1px solid var(--arena-raw-17);
+  border-radius: 22px;
+  padding: 1rem;
+}
+
+.arena-pause {
+  margin-bottom: 0.8rem;
+  background: var(--arena-raw-18);
+}
+
+.arena-stars {
+  display: flex;
+  gap: 0.35rem;
+  font-size: 1.6rem;
+  letter-spacing: 0.08em;
+}
+
+.arena-stars span[data-acesa="false"] {
+  opacity: 0.35;
+}
+
+.arena-word {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  min-height: 3.2rem;
+  margin: 0.8rem 0;
+}
+
+.arena-slot {
+  min-width: 2.2rem;
+  height: 3rem;
+  display: grid;
+  place-items: center;
+  border-bottom: 3px solid var(--arena-gold);
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.arena-keys,
+.arena-figures,
+.arena-pieces {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.arena-keys {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.arena-figures,
+.arena-pieces {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.arena-figure,
+.arena-piece {
+  min-height: 88px;
+  font-size: 2rem;
+}
+
+.arena-key[data-hint="true"],
+.arena-choice[data-hint="true"] {
+  box-shadow: inset 0 0 0 3px var(--arena-gold);
+}
+
+.arena-syllables {
+  font-size: clamp(1.6rem, 5vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.arena-bolt {
+  font-size: 4.5rem;
+  margin: 0.4rem 0;
+}
+
+.arena-meter {
+  height: 12px;
+  border-radius: 999px;
+  background: var(--arena-raw-17);
+  overflow: hidden;
+}
+
+.arena-meter > i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--arena-sea), var(--arena-gold));
+}
+
+.arena-phrase {
+  width: 100%;
+  min-height: 3.2rem;
+  border-radius: 14px;
+  border: 2px solid var(--arena-raw-19);
+  background: var(--arena-raw-11);
+  color: var(--arena-ink);
+  font: inherit;
+  font-size: 1.2rem;
+  padding: 0.7rem 0.8rem;
+}
+
+.arena-map {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.arena-map article {
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid var(--arena-raw-20);
+}
+
+.arena-rotulo {
+  display: inline-block;
+  margin: 0.35rem 0;
+  padding: 0.15rem 0.7rem;
+  border-radius: 999px;
+  background: var(--arena-raw-21);
+  color: var(--arena-gold);
+  font-weight: 800;
+}
+
+.arena-status {
+  min-height: 1.4rem;
+}
+
+@media (max-width: 640px) {
+  .arena {
+    padding: 0.9rem;
+    border-radius: 18px;
+  }
+
+  .arena-keys {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .arena-actions > button,
+  .arena-games > button,
+  .arena-tabs > button {
+    flex: 1 1 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arena button {
+    transition: none;
+  }
+}
