@@ -19,8 +19,9 @@ import {
   disponiveisDaIdade,
   estimativaOpcionaisSegundos,
   opcionaisDaIdade,
+  opcionaisSemRedundancia,
   pendentesDeCopia,
-  proximoPendente,
+  proximoPendenteNaLista,
   registrarOpcional,
   avisoDeIdade,
   textoOpcionais,
@@ -565,7 +566,9 @@ function OpcionaisPanel({ years, registros, copiados, seed, onRegistrar, onCopia
   onRegistrar: (record: AnswerRecord) => void;
   onCopiar: () => void;
 }) {
-  const lista = opcionaisDaIdade(years);
+  const [mostrarVariacoes, setMostrarVariacoes] = useState(false);
+  const lista = mostrarVariacoes ? opcionaisDaIdade(years) : opcionaisSemRedundancia(years);
+  const quantidadeSemRepetir = opcionaisSemRedundancia(years).length;
   const disponivel = disponiveisDaIdade(years);
   const [aberto, setAberto] = useState(false);
   const [pausado, setPausado] = useState(false);
@@ -574,7 +577,8 @@ function OpcionaisPanel({ years, registros, copiados, seed, onRegistrar, onCopia
   const cronometro = useRef(emptyActiveClock());
   const itemCronometrado = useRef<string | null>(null);
   const ultimoToque = useRef(Number.NEGATIVE_INFINITY);
-  const atualId = escolhido ?? proximoPendente(years, registros) ?? lista[0]?.item.id;
+  const escolhidoVisivel = escolhido && lista.some((entry) => entry.item.id === escolhido) ? escolhido : null;
+  const atualId = escolhidoVisivel ?? proximoPendenteNaLista(lista, registros) ?? lista[0]?.item.id;
   const posicao = Math.max(0, lista.findIndex((entry) => entry.item.id === atualId));
   const atual = lista[posicao];
   const registrados = Object.keys(registros).length;
@@ -607,7 +611,7 @@ function OpcionaisPanel({ years, registros, copiados, seed, onRegistrar, onCopia
     ultimoToque.current = event.timeStamp;
     playCoin();
     onRegistrar(record);
-    setEscolhido(proximoPendente(years, { ...registros, [record.itemId]: record }, record.itemId));
+    setEscolhido(proximoPendenteNaLista(lista, { ...registros, [record.itemId]: record }, record.itemId));
   };
   const ir = (delta: number) => { softTap(); setEscolhido(lista[(posicao + delta + lista.length) % lista.length].item.id); };
   const item = atual.item;
@@ -620,7 +624,7 @@ function OpcionaisPanel({ years, registros, copiados, seed, onRegistrar, onCopia
         <div>
           <h2 id="snp-optional-title" className="snp-pixel text-base">Desafios opcionais · {years} anos</h2>
           <p className="mt-1 text-xs font-bold opacity-80">
-            {disponivel.total} disponíveis: {disponivel.principal} na bateria principal + {disponivel.opcionais} opcionais, dos mesmos bancos de origem. Escolha conforme a finalidade e a tolerância da criança; não é preciso aplicar todos.
+            {disponivel.total} disponíveis: {disponivel.principal} na bateria principal + {disponivel.opcionais} opcionais, dos mesmos bancos de origem. A seleção padrão mostra {quantidadeSemRepetir} tarefas sem repetir o conceito da bateria. Não é preciso aplicar todos.
           </p>
           <p className="mt-1 text-xs font-semibold opacity-70">
             Fora da contagem, do tempo e do XP da partida principal. Estimativa de todos os opcionais: {formatDuration(estimativaOpcionaisSegundos(years))}, sem pausas nem adaptações. Interrompa diante de cansaço ou recusa.
@@ -628,6 +632,10 @@ function OpcionaisPanel({ years, registros, copiados, seed, onRegistrar, onCopia
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <span className="snp-chip" data-testid="super-neuropad-optional-count">{registrados} de {disponivel.opcionais} registrados</span>
+          <button type="button" className="snp-option min-h-11 px-3 py-2 text-xs font-black bg-[var(--snp-paper-fixed)]"
+            aria-pressed={mostrarVariacoes} onClick={() => { setMostrarVariacoes((value) => !value); setEscolhido(null); softTap(); }}>
+            {mostrarVariacoes ? "✓ Todas as variações (inclui conceitos repetidos)" : `🧩 Sem repetição · ${quantidadeSemRepetir} tarefas`}
+          </button>
           {aberto && (
             <ArcadeButton tone="paper" aria-pressed={pausado} onClick={() => { softTap(); setPausado((current) => !current); }}>
               {pausado ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />} {pausado ? "Retomar opcionais" : "Pausar opcionais"}
@@ -665,8 +673,9 @@ function OpcionaisPanel({ years, registros, copiados, seed, onRegistrar, onCopia
           ) : (
             <div className="rounded-2xl bg-[var(--snp-stage)] p-3 text-[var(--snp-stage-text)] sm:p-4" data-testid="super-neuropad-optional-stage">
               <p className="snp-pixel mb-2 text-[11px] opacity-80">
-                Opcional {posicao + 1} de {lista.length} · {mundo.emoji} {mundo.name} · {ORIGIN_LABELS[item.origin]} · {item.ref}
+                Opcional {posicao + 1} de {disponivel.opcionais} · {mundo.emoji} {mundo.name} · {ORIGIN_LABELS[item.origin]} · {item.ref}
               </p>
+              {!mostrarVariacoes && <p className="snp-chip mb-2 bg-[var(--snp-grass-tint)]" role="note">Exibição sem repetição de conceito: {posicao + 1} de {quantidadeSemRepetir} selecionados. Variações repetidas ficam ocultas, não foram apagadas.</p>}
               {anterior && <p className="snp-chip mb-2 bg-[var(--snp-sun-tint)]" role="status">Já registrado: {STATUS_LABELS[anterior.status]}. Registrar de novo substitui.</p>}
               {avisoDeIdade(years, item) && <p className="snp-panel snp-panel--soft mb-2 p-2 text-xs font-bold normal-case" role="note" data-testid="super-neuropad-optional-age-note">{avisoDeIdade(years, item)}</p>}
               {item.kind === "toque" ? (
