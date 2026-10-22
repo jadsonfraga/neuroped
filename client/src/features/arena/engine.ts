@@ -375,7 +375,7 @@ export function homeIdeas(): [string, string] {
 
 export const ROUND_LIMITS = [
   "Esta leitura descreve só esta rodada.",
-  "Não fecha diagnóstico, não gera percentil e não substitui a consulta.",
+  "Não fecha diagnóstico, não compara com outras crianças e não substitui a consulta.",
   "Não é escala pronta nem instrumento com norma.",
 ] as const;
 
