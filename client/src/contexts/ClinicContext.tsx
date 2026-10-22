@@ -87,7 +87,9 @@ export function ClinicProvider({ children }: { children: ReactNode }) {
 
     const generation = ++requestGeneration.current;
     requestController.current?.abort();
-    if (accessMode !== "remote" || !isAuthenticated || user?.mustChangePassword) {
+    // Visitante (somente escalas) não tem clínica: não consulta /api/tenants,
+    // que o servidor recusaria, e o contexto fica vazio e estável.
+    if (accessMode !== "remote" || !isAuthenticated || user?.mustChangePassword || user?.role === "visitor") {
       setIsLoading(false);
       setLoadedScope(authScope);
       setError(null);
@@ -146,7 +148,7 @@ export function ClinicProvider({ children }: { children: ReactNode }) {
         setIsLoading(false);
       }
     }
-  }, [accessMode, isAuthenticated, isAuthLoading, user?.mustChangePassword, authScope]);
+  }, [accessMode, isAuthenticated, isAuthLoading, user?.mustChangePassword, user?.role, authScope]);
 
   useEffect(() => {
     void reloadClinics();
@@ -189,7 +191,7 @@ export function ClinicProvider({ children }: { children: ReactNode }) {
   // "sem clínica" no primeiro render, antes de o efeito de bootstrap começar.
   const contextCurrent = loadedScope === authScope;
   const contextLoading = accessMode === "checking" || isAuthLoading || (
-    accessMode === "remote" && isAuthenticated && !user?.mustChangePassword
+    accessMode === "remote" && isAuthenticated && !user?.mustChangePassword && user?.role !== "visitor"
     && (!contextCurrent || isLoading)
   );
   const activeClinic = contextCurrent && !contextLoading

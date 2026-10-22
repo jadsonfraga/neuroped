@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { PUBLIC_HOME } from "@/lib/publicRoutes";
 import { MEDICAL_URL } from "@/lib/zone";
+import { VISITOR_HOME } from "@/security/routeGuardPolicy";
 
 /**
  * Destino pós-login pedido pelo RouteGuard (`/login?next=...`).
@@ -46,7 +47,7 @@ function readableLoginError(error: unknown): string {
 
 export default function LoginPage() {
   const [, setLocation] = useLocation();
-  const { login, isLoading, isAuthenticated, remoteConfigured } = useAuth();
+  const { login, isLoading, isAuthenticated, remoteConfigured, user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -61,10 +62,11 @@ export default function LoginPage() {
   // corrida em qualquer ordem de commit.
   useEffect(() => {
     if (!isAuthenticated) return;
-    const destination = safeNextRoute() ?? "/";
+    // O visitante só tem as escalas: cai direto no catálogo, ignorando `next`.
+    const destination = user?.role === "visitor" ? VISITOR_HOME : (safeNextRoute() ?? "/");
     clearNextParam();
     setLocation(destination);
-  }, [isAuthenticated, setLocation]);
+  }, [isAuthenticated, user?.role, setLocation]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -113,10 +115,10 @@ export default function LoginPage() {
 
       <form onSubmit={handleSubmit} className="np-signature-login__form mt-6 w-full max-w-sm space-y-4 rounded-3xl border border-primary/15 bg-card p-5 text-left shadow-xl shadow-primary/5 sm:p-6" data-testid="login-form">
         <div className="space-y-2">
-          <Label htmlFor="login-email">E-mail profissional</Label>
+          <Label htmlFor="login-email">E-mail profissional ou usuário</Label>
           <div className="relative">
             <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-            <Input id="login-email" name="email" type="email" autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} className="pl-9" placeholder="nome@dominio.com" />
+            <Input id="login-email" name="email" type="text" inputMode="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} className="pl-9" placeholder="nome@dominio.com ou usuário" />
           </div>
         </div>
         <div className="space-y-2">

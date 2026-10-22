@@ -5,6 +5,7 @@ import {
   decideRouteAccess,
   isRouteSensitive,
   SENSITIVE_ROUTES,
+  VISITOR_HOME,
 } from "@/security/routeGuardPolicy";
 import {
   hasConfiguredMasterPin,
@@ -17,7 +18,7 @@ import { ClinicRouteBoundary } from "@/components/ClinicRouteBoundary";
 
 export { isRouteSensitive, SENSITIVE_ROUTES };
 
-type RouteRole = "admin" | "professional" | "reader" | "operator";
+type RouteRole = "admin" | "professional" | "reader" | "operator" | "visitor";
 
 /** Caminho + consulta da navegação atual, para retomar o destino após o login. */
 function currentHashTarget(path: string): string {
@@ -84,6 +85,11 @@ export function RouteGuard({ children, roles }: { children: ReactNode; roles?: R
     // `#/prontuario?patientId=abc` voltaria depois do login como um prontuário
     // em branco, sem o paciente que motivou o acesso.
     return <Redirect to={`/login?next=${encodeURIComponent(currentHashTarget(location))}`} />;
+  }
+
+  if (decision === "forbidden" && user?.role === "visitor") {
+    // Visitante fora das escalas: volta ao catálogo em vez de ver "não autorizado".
+    return <Redirect to={VISITOR_HOME} replace />;
   }
 
   if (decision === "forbidden") {

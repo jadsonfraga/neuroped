@@ -267,6 +267,7 @@ const sessionRoleLabels: Record<string, string> = {
   professional: "Profissional",
   reader: "Leitura",
   operator: "Operacional",
+  visitor: "Visitante · escalas",
 };
 
 function sessionInitials(name: string): string {
@@ -279,6 +280,8 @@ function sessionInitials(name: string): string {
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { accessMode, isAuthenticated, isLoading, logout, user } = useAuth();
+  // Login de visitante: só escalas. Sem clínica, sem páginas institucionais.
+  const isVisitor = user?.role === "visitor";
   const { soundOn, toggleSound } = useUiPreferences();
   const [dark, setDark] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -863,7 +866,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Contexto SaaS: o servidor continua sendo a autoridade de autorização. */}
-        <ClinicSwitcher collapsed={collapsed} />
+        {!isVisitor && <ClinicSwitcher collapsed={collapsed} />}
 
         {/* Aplicativo externo: mesma política das conexões, sem dados na URL. */}
         {!isLoading && !IS_PUBLIC_ZONE && canRenderNavItem("/conecta") && (
@@ -1058,16 +1061,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   {sessionRoleLabels[user.role] ?? user.role}
                 </span>
               </span>
-              <a
-                href="#/configuracoes"
-                className="np-side-session__exit inline-flex h-8 items-center justify-center rounded-md px-2 hover:bg-sidebar-accent"
-                data-testid="link-session-settings"
-                aria-label="Configurações da conta e da clínica"
-                title="Configurações"
-              >
-                <Settings2 className="w-4 h-4" />
-                <span className="sr-only">Configurações</span>
-              </a>
+              {user.role !== "visitor" && (
+                <a
+                  href="#/configuracoes"
+                  className="np-side-session__exit inline-flex h-8 items-center justify-center rounded-md px-2 hover:bg-sidebar-accent"
+                  data-testid="link-session-settings"
+                  aria-label="Configurações da conta e da clínica"
+                  title="Configurações"
+                >
+                  <Settings2 className="w-4 h-4" />
+                  <span className="sr-only">Configurações</span>
+                </a>
+              )}
               <Button
                 variant="ghost"
                 size="sm"
@@ -1262,13 +1267,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 e não substitui consulta, avaliação ou conduta de profissional
                 habilitado. Em caso de dúvida, sintoma ou urgência, procure um
                 médico ou serviço de saúde.{" "}
-                <Link
-                  href="/termos"
-                  className="font-bold underline underline-offset-2 hover:opacity-80"
-                >
-                  Termos de Uso e Aviso Legal
-                </Link>
-                .
+                {isVisitor ? null : (
+                  <>
+                    <Link
+                      href="/termos"
+                      className="font-bold underline underline-offset-2 hover:opacity-80"
+                    >
+                      Termos de Uso e Aviso Legal
+                    </Link>
+                    .
+                  </>
+                )}
               </div>
             </details>
           </aside>
@@ -1288,10 +1297,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
               className="h-4 w-4 shrink-0 rounded-[0.3rem] object-cover opacity-80"
             />
             <span>NeuroPed é um projeto autoral de</span>
-            {/* prettier-ignore */}
-            <Link href="/sobre" className="font-bold text-foreground underline decoration-primary/40 underline-offset-2 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-              Dr. Jadson Fraga
-            </Link>
+            {isVisitor ? (
+              <span className="font-bold text-foreground">Dr. Jadson Fraga</span>
+            ) : (
+              // prettier-ignore
+              <Link href="/sobre" className="font-bold text-foreground underline decoration-primary/40 underline-offset-2 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                Dr. Jadson Fraga
+              </Link>
+            )}
             <span>· Conteúdo educativo e proprietário.</span>
           </p>
         </div>

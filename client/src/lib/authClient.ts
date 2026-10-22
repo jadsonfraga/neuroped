@@ -42,7 +42,7 @@ export interface AuthUser {
   id: string;
   email: string;
   name: string;
-  role: "admin" | "professional" | "reader" | "operator";
+  role: "admin" | "professional" | "reader" | "operator" | "visitor";
   mustChangePassword?: boolean;
 }
 
@@ -100,6 +100,14 @@ export function getStoredUser(): AuthUser | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * Sessão do login de visitante (somente escalas). O servidor é a autoridade e
+ * nega tudo fora da allowlist; isto só evita chamadas que ele recusaria.
+ */
+export function isVisitorSession(): boolean {
+  return getStoredUser()?.role === "visitor";
 }
 
 export function clearAuth(): void {

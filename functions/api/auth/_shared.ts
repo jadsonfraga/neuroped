@@ -23,6 +23,11 @@ export interface Env {
   NEUROPED_E2E_EMAIL?: string;
   NEUROPED_E2E_PASSWORD?: string;
   NEUROPED_E2E_NAME?: string;
+  /**
+   * Senha do login de visitante (somente escalas). Ausente = login desligado e
+   * sessões de visitante derrubadas. Nunca vai ao banco nem ao repositório.
+   */
+  NEUROPED_VISITOR_PASSWORD?: string;
   /** Cadastro self-service do SaaS; fechado por padrão ("true" habilita). */
   SAAS_SIGNUP_ENABLED?: string;
 }
@@ -57,12 +62,29 @@ const LOCK_MINUTES = 15;
 
 export { json } from "../_request";
 
+/**
+ * Login de visitante (somente escalas, auth/_visitor.ts). A tabela `users` só
+ * aceita admin/professional/reader/operator (CHECK em schema.d1.sql), então a
+ * linha do visitante fica com o papel mínimo `reader` e a identidade reservada
+ * `guest2027`. Como o cadastro exige e-mail com "@", só o provisionamento do
+ * próprio login cria essa identidade.
+ */
+export const VISITOR_LOGIN = "guest2027";
+export const VISITOR_DB_ROLE = "reader";
+export const VISITOR_API_ROLE = "visitor";
+
+export function isVisitorIdentity(u: { email: string | null | undefined; role: string }): boolean {
+  return canonicalEmail(u.email) === VISITOR_LOGIN && u.role === VISITOR_DB_ROLE;
+}
+
 export function publicUser(u: UserRow): PublicUser {
   return {
     id: u.id,
     email: u.email,
     name: u.name,
-    role: u.role,
+    // O papel exposto distingue o visitante do `reader` de clínica: todo handler
+    // que usa getContextUser recusa "visitor" por construção (fail-closed).
+    role: isVisitorIdentity(u) ? VISITOR_API_ROLE : u.role,
     mustChangePassword: !!u.must_change_password,
   };
 }
