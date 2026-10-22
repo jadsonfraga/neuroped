@@ -1,8 +1,10 @@
 /**
- * Check-in diário "Hoje": três perguntas por dia, um registro por data.
+ * Check-in diário "Hoje": três perguntas por dia.
  *
- * Fica no aparelho (cofre local cifrado). Não pontua, não interpreta e não
- * infere tendência: apenas guarda o que a família observou.
+ * Fica no aparelho, em uma chave cifrada por dia. Salvar um dia não toca nos
+ * outros, então uma leitura falha não apaga o histórico. A tela mostra e
+ * mantém só a janela dos últimos 7 dias. Não pontua, não interpreta e não
+ * infere tendência.
  */
 
 export const HOJE_SONO = ["bem", "regular", "mal"] as const;
@@ -26,10 +28,17 @@ export interface DiaDaJanela {
   registro?: CheckinHoje;
 }
 
-export const HOJE_MAX_ENTRIES = 400;
+export const HOJE_JANELA_DIAS = 7;
+/** Ao abrir a tela, dias mais antigos que este limite são apagados do aparelho. */
+export const HOJE_LIMPEZA_DIAS = 30;
 export const HOJE_MAX_OCORRENCIA = 280;
 
+const HOJE_CHAVE_PREFIXO = "diario:hoje:v1:";
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+export function chaveDoDia(iso: string): string {
+  return `${HOJE_CHAVE_PREFIXO}${iso}`;
+}
 
 export function isIsoDate(value: unknown): value is string {
   if (typeof value !== "string" || !ISO_DATE.test(value)) return false;
@@ -51,39 +60,25 @@ function truncateByCodePoint(text: string, limit: number): string {
   return Array.from(text).slice(0, limit).join("");
 }
 
-/**
- * Normaliza o conteúdo lido do cofre: descarta o que não é um registro válido,
- * mantém um registro por data (o último) e limita o tamanho.
- */
-export function sanitizeCheckins(value: unknown): CheckinHoje[] {
-  if (!Array.isArray(value)) return [];
-  const byDate = new Map<string, CheckinHoje>();
-  for (const candidate of value) {
-    if (!candidate || typeof candidate !== "object") continue;
-    const source = candidate as Record<string, unknown>;
-    if (!isIsoDate(source.data)) continue;
+/** Normaliza um registro lido do cofre. Devolve null quando não é um registro válido. */
+export function sanitizeCheckin(value: unknown): CheckinHoje | null {
+  if (!value || typeof value !== "object") return null;
+  const source = value as Record<string, unknown>;
+  if (!isIsoDate(source.data)) return null;
 
-    const entry: CheckinHoje = {
-      data: source.data,
-      ocorrencia: typeof source.ocorrencia === "string"
-        ? truncateByCodePoint(source.ocorrencia.trim(), HOJE_MAX_OCORRENCIA)
-        : "",
-    };
-    const sono = pickOption(HOJE_SONO, source.sono);
-    const humor = pickOption(HOJE_HUMOR, source.humor);
-    const medicacao = pickOption(HOJE_MEDICACAO, source.medicacao);
-    if (sono) entry.sono = sono;
-    if (humor) entry.humor = humor;
-    if (medicacao) entry.medicacao = medicacao;
-    byDate.set(entry.data, entry);
-  }
-  return [...byDate.values()]
-    .sort((a, b) => a.data.localeCompare(b.data))
-    .slice(-HOJE_MAX_ENTRIES);
-}
-
-export function upsertCheckin(entries: readonly CheckinHoje[], checkin: CheckinHoje): CheckinHoje[] {
-  return sanitizeCheckins([...entries.filter((entry) => entry.data !== checkin.data), checkin]);
+  const entry: CheckinHoje = {
+    data: source.data,
+    ocorrencia: typeof source.ocorrencia === "string"
+      ? truncateByCodePoint(source.ocorrencia.trim(), HOJE_MAX_OCORRENCIA)
+      : "",
+  };
+  const sono = pickOption(HOJE_SONO, source.sono);
+  const humor = pickOption(HOJE_HUMOR, source.humor);
+  const medicacao = pickOption(HOJE_MEDICACAO, source.medicacao);
+  if (sono) entry.sono = sono;
+  if (humor) entry.humor = humor;
+  if (medicacao) entry.medicacao = medicacao;
+  return entry;
 }
 
 /** Tocar na opção já escolhida desfaz a escolha; tocar em outra troca. */
@@ -91,18 +86,23 @@ export function alternarOpcao<T extends string>(current: T | undefined, pressed:
   return current === pressed ? undefined : pressed;
 }
 
+/** Datas da janela, do dia mais antigo ao atual. */
+export function datasDaJanela(hojeIso: string, quantidade = HOJE_JANELA_DIAS): string[] {
+  return Array.from({ length: quantidade }, (_, index) => shiftIsoDate(hojeIso, index - (quantidade - 1)));
+}
+
+/** Datas que podem ter registro no aparelho: hoje e os dias anteriores até o limite de limpeza. */
+export function datasParaLimpar(hojeIso: string): string[] {
+  return Array.from({ length: HOJE_LIMPEZA_DIAS + 1 }, (_, index) => shiftIsoDate(hojeIso, -index));
+}
+
 /**
- * Janela dos últimos `quantidade` dias até `hojeIso` (inclusive), em ordem crescente.
+ * Janela dos últimos 7 dias até `hojeIso`, em ordem crescente.
  * Dias sem registro vêm sem `registro`; nunca são preenchidos com valor padrão.
  */
-export function ultimosDias(
-  entries: readonly CheckinHoje[],
-  hojeIso: string,
-  quantidade = 7,
-): DiaDaJanela[] {
+export function ultimosDias(entries: readonly CheckinHoje[], hojeIso: string): DiaDaJanela[] {
   const byDate = new Map(entries.map((entry) => [entry.data, entry]));
-  return Array.from({ length: quantidade }, (_, index) => {
-    const data = shiftIsoDate(hojeIso, index - (quantidade - 1));
+  return datasDaJanela(hojeIso).map((data) => {
     const registro = byDate.get(data);
     return registro ? { data, registro } : { data };
   });

@@ -614,14 +614,9 @@ function AgeTab({
         <span>Sem resposta: <strong className="text-foreground">{summary.semResposta}</strong></span>
       </div>
 
-      {summary.aindaNao > 0 && (
-        <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300">
-          <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" aria-hidden="true" />
-          <p className="text-xs font-medium">
-            Há marcos marcados como &quot;ainda não&quot;. Leve esta lista ao pediatra para conversar sobre eles.
-          </p>
-        </div>
-      )}
+      <p className="text-xs text-muted-foreground">
+        Se tiver dúvida sobre algum marco, converse com o pediatra.
+      </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {data.domains.map((domain) => (

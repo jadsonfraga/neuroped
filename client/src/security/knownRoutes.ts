@@ -60,6 +60,7 @@ export const KNOWN_ROUTE_PATTERNS: readonly string[] = [
   "/diario-dieta-sensorial",
   "/diario-escola",
   "/diario-sono",
+  "/hoje",
   "/documentos",
   "/dyslexia-risk",
   "/eaah",

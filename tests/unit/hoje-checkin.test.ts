@@ -4,14 +4,19 @@ import { resolve } from "node:path";
 import test from "node:test";
 import { isPublicRoute } from "../../client/src/lib/publicRoutes";
 import { decideRouteAccess } from "../../client/src/security/routeGuardPolicy";
+import { isKnownRoute } from "../../client/src/security/knownRoutes";
 import {
+  HOJE_JANELA_DIAS,
+  HOJE_LIMPEZA_DIAS,
   HOJE_MAX_OCORRENCIA,
   alternarOpcao,
+  chaveDoDia,
+  datasDaJanela,
+  datasParaLimpar,
   isIsoDate,
-  sanitizeCheckins,
+  sanitizeCheckin,
   shiftIsoDate,
   ultimosDias,
-  upsertCheckin,
   type CheckinHoje,
 } from "../../client/src/lib/hojeCheckin";
 
@@ -25,42 +30,27 @@ test("datas ISO inválidas são rejeitadas, inclusive as que não existem", () =
   assert.equal(isIsoDate(undefined), false);
 });
 
-test("sanitização descarta registros com datas ou opções inválidas", () => {
-  const out = sanitizeCheckins([
-    { data: "2026-10-20", sono: "ótimo", humor: "alegre", ocorrencia: " ok " },
-    { data: "2026-02-30", sono: "bem" },
-    { sono: "bem" },
-    null,
-    "lixo",
-  ]);
-  assert.deepEqual(out, [{ data: "2026-10-20", humor: "alegre", ocorrencia: "ok" }]);
-});
-
-test("sanitização mantém um registro por data, o último, e ordena por data", () => {
-  const out = sanitizeCheckins([
-    { data: "2026-10-22", sono: "mal", ocorrencia: "" },
-    { data: "2026-10-20", sono: "bem", ocorrencia: "" },
-    { data: "2026-10-22", sono: "bem", ocorrencia: "" },
-  ]);
-  assert.deepEqual(out.map((entry) => entry.data), ["2026-10-20", "2026-10-22"]);
-  assert.equal(out[1].sono, "bem");
+test("sanitização descarta registros com data ou opções inválidas", () => {
+  assert.equal(sanitizeCheckin({ data: "2026-02-30", sono: "bem" }), null);
+  assert.equal(sanitizeCheckin({ sono: "bem" }), null);
+  assert.equal(sanitizeCheckin(null), null);
+  assert.equal(sanitizeCheckin("lixo"), null);
+  assert.deepEqual(
+    sanitizeCheckin({ data: "2026-10-20", sono: "ótimo", humor: "alegre", ocorrencia: " ok " }),
+    { data: "2026-10-20", humor: "alegre", ocorrencia: "ok" },
+  );
 });
 
 test("ocorrência é limitada por caractere, sem partir emoji", () => {
   const longo = "🙂".repeat(HOJE_MAX_OCORRENCIA + 50);
-  const [entry] = sanitizeCheckins([{ data: "2026-10-22", ocorrencia: longo }]);
+  const entry = sanitizeCheckin({ data: "2026-10-22", ocorrencia: longo });
+  assert.ok(entry);
   assert.equal(Array.from(entry.ocorrencia).length, HOJE_MAX_OCORRENCIA);
 });
 
-test("upsert substitui o registro do mesmo dia e preserva os demais", () => {
-  const base: CheckinHoje[] = [
-    { data: "2026-10-21", sono: "regular", ocorrencia: "" },
-    { data: "2026-10-22", sono: "mal", ocorrencia: "" },
-  ];
-  const out = upsertCheckin(base, { data: "2026-10-22", sono: "bem", ocorrencia: "" });
-  assert.equal(out.length, 2);
-  assert.equal(out[1].sono, "bem");
-  assert.equal(out[0].sono, "regular");
+test("cada dia tem a própria chave, com prefixo persistente do cofre", () => {
+  assert.equal(chaveDoDia("2026-10-22"), "diario:hoje:v1:2026-10-22");
+  assert.notEqual(chaveDoDia("2026-10-21"), chaveDoDia("2026-10-22"));
 });
 
 test("alternarOpcao desfaz a escolha ao tocar de novo", () => {
@@ -86,25 +76,38 @@ test("janela de 7 dias termina em hoje, em ordem crescente, sem preencher dias v
   assert.equal("registro" in janela[0], false);
 });
 
-test("o check-in continua fora das rotas públicas, atrás do gate", () => {
-  assert.equal(isPublicRoute("/hoje"), false);
+test("a limpeza cobre hoje e os 30 dias anteriores; a janela é um subconjunto dela", () => {
+  const limpar = datasParaLimpar("2026-10-22");
+  assert.equal(limpar.length, HOJE_LIMPEZA_DIAS + 1);
+  assert.equal(limpar[0], "2026-10-22");
+  assert.equal(limpar[limpar.length - 1], "2026-09-22");
+  const janela = datasDaJanela("2026-10-22");
+  assert.equal(janela.length, HOJE_JANELA_DIAS);
+  assert.ok(janela.every((data) => limpar.includes(data)));
 });
 
-test("sem sessão remota, o check-in exige login, como os diários", () => {
+test("o check-in continua fora das rotas públicas e exige login sem sessão remota", () => {
+  assert.equal(isPublicRoute("/hoje"), false);
   assert.equal(
     decideRouteAccess({ path: "/hoje", accessMode: "remote", isAuthenticated: false, isLoading: false, userRole: null }),
     "login",
   );
-  assert.equal(
-    decideRouteAccess({ path: "/diario-sono", accessMode: "remote", isAuthenticated: false, isLoading: false, userRole: null }),
-    "login",
-  );
+});
+
+test("o check-in é rota conhecida: sem isso o RouteGuard libera a tela sem login", () => {
+  assert.equal(isKnownRoute("/hoje"), true);
 });
 
 test("a página do check-in não faz rede nem registra conteúdo no console", () => {
   const source = read("client/src/pages/hoje.tsx");
   assert.doesNotMatch(source, /\bfetch\(|apiRequest|XMLHttpRequest|sendBeacon|WebSocket/);
   assert.doesNotMatch(source, /console\./);
+});
+
+test("a página do check-in grava só a chave do dia e não reescreve o cofre inteiro", () => {
+  const source = read("client/src/pages/hoje.tsx");
+  assert.match(source, /secureSet\(chaveDoDia\(hojeIso\), registro\)/);
+  assert.doesNotMatch(source, /secureSet\(STORAGE_KEY/);
 });
 
 test("a rota e o item de navegação do check-in estão registrados", () => {

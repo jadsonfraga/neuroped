@@ -7,24 +7,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { localIsoDate } from "@/lib/clinicalDate";
-import { secureGet, secureSet } from "@/lib/secureStorage";
+import { secureClear, secureGet, secureSet } from "@/lib/secureStorage";
 import {
   HOJE_HUMOR,
+  HOJE_JANELA_DIAS,
   HOJE_MAX_OCORRENCIA,
   HOJE_MEDICACAO,
   HOJE_SONO,
   alternarOpcao,
-  sanitizeCheckins,
+  chaveDoDia,
+  datasDaJanela,
+  datasParaLimpar,
+  sanitizeCheckin,
   ultimosDias,
-  upsertCheckin,
   type CheckinHoje,
   type HojeHumor,
   type HojeMedicacao,
   type HojeSono,
 } from "@/lib/hojeCheckin";
-
-// Prefixo "diario:" faz o cofre cifrado persistir no IndexedDB do aparelho.
-const STORAGE_KEY = "diario:hoje:v1";
 
 function OpcoesGrupo<T extends string>({
   legenda,
@@ -61,6 +61,28 @@ function OpcoesGrupo<T extends string>({
   );
 }
 
+/** Lê só os dias da janela. Falha de leitura de um dia não afeta os demais. */
+async function lerJanela(hojeIso: string): Promise<CheckinHoje[]> {
+  const lidos = await Promise.all(
+    datasDaJanela(hojeIso).map(async (data) => {
+      try {
+        return sanitizeCheckin(await secureGet<unknown>(chaveDoDia(data)));
+      } catch {
+        return null;
+      }
+    }),
+  );
+  return lidos.filter((registro): registro is CheckinHoje => registro !== null);
+}
+
+/** Devolve true só se todas as chaves forem apagadas. */
+async function apagarDatas(datas: string[]): Promise<boolean> {
+  const resultados = await Promise.all(
+    datas.map((data) => secureClear(chaveDoDia(data)).then(() => true, () => false)),
+  );
+  return resultados.every(Boolean);
+}
+
 export default function HojePage() {
   const { toast } = useToast();
   const { accessMode, isAuthenticated } = useAuth();
@@ -71,6 +93,7 @@ export default function HojePage() {
   const [entries, setEntries] = useState<CheckinHoje[]>([]);
   const [pronto, setPronto] = useState(false);
   const [erroAoSalvar, setErroAoSalvar] = useState(false);
+  const [confirmandoApagar, setConfirmandoApagar] = useState(false);
   const [sono, setSono] = useState<HojeSono | undefined>();
   const [humor, setHumor] = useState<HojeHumor | undefined>();
   const [medicacao, setMedicacao] = useState<HojeMedicacao | undefined>();
@@ -83,21 +106,17 @@ export default function HojePage() {
     }
     let ativo = true;
     void (async () => {
-      let restaurado: CheckinHoje[];
-      try {
-        restaurado = sanitizeCheckins(await secureGet<unknown>(STORAGE_KEY));
-      } catch {
-        restaurado = [];
-      }
+      const janela = await lerJanela(hojeIso);
+      // Dias fora da janela saem do aparelho ao abrir a tela.
+      void apagarDatas(datasParaLimpar(hojeIso).slice(HOJE_JANELA_DIAS));
       if (!ativo) return;
-      setEntries(restaurado);
-      const deHoje = restaurado.find((entry) => entry.data === hojeIso);
-      if (deHoje) {
-        setSono(deHoje.sono);
-        setHumor(deHoje.humor);
-        setMedicacao(deHoje.medicacao);
-        setOcorrencia(deHoje.ocorrencia);
-      }
+      setEntries(janela);
+      // Sempre recarrega o formulário, inclusive quando o dia virou e não há registro.
+      const deHoje = janela.find((entry) => entry.data === hojeIso);
+      setSono(deHoje?.sono);
+      setHumor(deHoje?.humor);
+      setMedicacao(deHoje?.medicacao);
+      setOcorrencia(deHoje?.ocorrencia ?? "");
       setPronto(true);
     })();
     return () => {
@@ -114,8 +133,8 @@ export default function HojePage() {
     if (sono) registro.sono = sono;
     if (humor) registro.humor = humor;
     if (medicacao) registro.medicacao = medicacao;
-    const proximo = upsertCheckin(entries, registro);
-    const gravado = await secureSet(STORAGE_KEY, proximo);
+    // Grava só a chave deste dia: os demais dias não são reescritos.
+    const gravado = await secureSet(chaveDoDia(hojeIso), registro);
     setErroAoSalvar(!gravado);
     if (!gravado) {
       toast({
@@ -125,8 +144,28 @@ export default function HojePage() {
       });
       return;
     }
-    setEntries(proximo);
+    setEntries((atuais) => [...atuais.filter((entry) => entry.data !== hojeIso), registro]);
     toast({ title: "Registro de hoje salvo", description: "Ele fica neste aparelho." });
+  }
+
+  async function apagarTudo() {
+    const apagou = await apagarDatas(datasParaLimpar(hojeIso));
+    if (!apagou) {
+      toast({
+        title: "Não foi possível apagar tudo",
+        description: "Tente de novo. Nada foi apagado parcialmente sem aviso.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setEntries([]);
+    setSono(undefined);
+    setHumor(undefined);
+    setMedicacao(undefined);
+    setOcorrencia("");
+    setErroAoSalvar(false);
+    setConfirmandoApagar(false);
+    toast({ title: "Registros apagados deste aparelho" });
   }
 
   if (!persistenciaLocal) {
@@ -159,7 +198,7 @@ export default function HojePage() {
       />
 
       <p className="text-xs leading-5 text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
-        Este registro fica <strong>neste aparelho</strong>, cifrado. Ainda não é enviado à clínica. Se trocar de aparelho ou limpar os dados do navegador, ele se perde.
+        Este registro fica <strong>neste aparelho</strong>, cifrado, e a tela guarda só os últimos 7 dias. Ainda não é enviado à clínica. Se trocar de aparelho ou limpar os dados do navegador, ele se perde.
       </p>
 
       {erroAoSalvar && (
@@ -232,6 +271,41 @@ export default function HojePage() {
             );
           })}
         </ol>
+      </section>
+
+      <section aria-labelledby="hoje-apagar-titulo" className="space-y-2 border-t pt-4">
+        <h2 id="hoje-apagar-titulo" className="text-sm font-semibold text-foreground">
+          Apagar do aparelho
+        </h2>
+        {!confirmandoApagar ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setConfirmandoApagar(true)}
+            data-testid="hoje-apagar"
+          >
+            Apagar registros deste aparelho
+          </Button>
+        ) : (
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-xs text-muted-foreground">
+              Isto apaga os registros de hoje e dos últimos 30 dias, neste aparelho.
+            </p>
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              onClick={() => void apagarTudo()}
+              data-testid="hoje-apagar-confirmar"
+            >
+              Confirmar exclusão
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => setConfirmandoApagar(false)}>
+              Cancelar
+            </Button>
+          </div>
+        )}
       </section>
     </div>
   );
