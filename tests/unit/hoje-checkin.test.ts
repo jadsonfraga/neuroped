@@ -6,14 +6,16 @@ import { isPublicRoute } from "../../client/src/lib/publicRoutes";
 import { decideRouteAccess } from "../../client/src/security/routeGuardPolicy";
 import { isKnownRoute } from "../../client/src/security/knownRoutes";
 import {
+  HOJE_INDICE_CHAVE,
   HOJE_JANELA_DIAS,
-  HOJE_LIMPEZA_DIAS,
   HOJE_MAX_OCORRENCIA,
   alternarOpcao,
   chaveDoDia,
+  datasAntigas,
   datasDaJanela,
-  datasParaLimpar,
+  indiceComData,
   isIsoDate,
+  normalizarIndice,
   sanitizeCheckin,
   shiftIsoDate,
   ultimosDias,
@@ -76,14 +78,32 @@ test("janela de 7 dias termina em hoje, em ordem crescente, sem preencher dias v
   assert.equal("registro" in janela[0], false);
 });
 
-test("a limpeza cobre hoje e os 30 dias anteriores; a janela é um subconjunto dela", () => {
-  const limpar = datasParaLimpar("2026-10-22");
-  assert.equal(limpar.length, HOJE_LIMPEZA_DIAS + 1);
-  assert.equal(limpar[0], "2026-10-22");
-  assert.equal(limpar[limpar.length - 1], "2026-09-22");
-  const janela = datasDaJanela("2026-10-22");
-  assert.equal(janela.length, HOJE_JANELA_DIAS);
-  assert.ok(janela.every((data) => limpar.includes(data)));
+test("retenção é a janela: datas do índice fora dos 7 dias são as que saem", () => {
+  const indice = ["2026-10-10", "2026-10-16", "2026-10-17", "2026-10-22"];
+  // Janela de hoje (22/10): 16/10 a 22/10. Só 10/10 sai, mesmo que o app fique fechado por semanas.
+  assert.deepEqual(datasAntigas(indice, "2026-10-22"), ["2026-10-10"]);
+});
+
+test("registros de dias antigos são apagados mesmo com mais de 30 dias sem abrir a tela", () => {
+  const indice = ["2026-10-10"];
+  assert.deepEqual(datasAntigas(indice, "2026-11-10"), ["2026-10-10"]);
+});
+
+test("índice inválido vira lista vazia; datas repetidas são removidas e a ordem é cronológica", () => {
+  assert.deepEqual(normalizarIndice("lixo"), []);
+  assert.deepEqual(normalizarIndice(null), []);
+  assert.deepEqual(normalizarIndice(["2026-10-22", "2026-02-30", "2026-10-20", "2026-10-22"]), ["2026-10-20", "2026-10-22"]);
+});
+
+test("indiceComData acrescenta a data uma única vez", () => {
+  assert.deepEqual(indiceComData(["2026-10-20"], "2026-10-22"), ["2026-10-20", "2026-10-22"]);
+  assert.deepEqual(indiceComData(["2026-10-22"], "2026-10-22"), ["2026-10-22"]);
+});
+
+test("a chave do índice fica no mesmo prefixo persistente dos registros", () => {
+  assert.ok(HOJE_INDICE_CHAVE.startsWith("diario:"));
+  assert.notEqual(HOJE_INDICE_CHAVE, chaveDoDia("2026-10-22"));
+  assert.equal(datasDaJanela("2026-10-22").length, HOJE_JANELA_DIAS);
 });
 
 test("o check-in continua fora das rotas públicas e exige login sem sessão remota", () => {

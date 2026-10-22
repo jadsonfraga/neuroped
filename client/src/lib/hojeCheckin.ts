@@ -28,12 +28,13 @@ export interface DiaDaJanela {
   registro?: CheckinHoje;
 }
 
+/** Retenção e janela são a mesma coisa: só o que a tela mostra fica no aparelho. */
 export const HOJE_JANELA_DIAS = 7;
-/** Ao abrir a tela, dias mais antigos que este limite são apagados do aparelho. */
-export const HOJE_LIMPEZA_DIAS = 30;
 export const HOJE_MAX_OCORRENCIA = 280;
 
 const HOJE_CHAVE_PREFIXO = "diario:hoje:v1:";
+/** Índice das datas gravadas. Permite apagar dias antigos sem depender de listar chaves. */
+export const HOJE_INDICE_CHAVE = "diario:hoje:v1:indice";
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 export function chaveDoDia(iso: string): string {
@@ -91,9 +92,20 @@ export function datasDaJanela(hojeIso: string, quantidade = HOJE_JANELA_DIAS): s
   return Array.from({ length: quantidade }, (_, index) => shiftIsoDate(hojeIso, index - (quantidade - 1)));
 }
 
-/** Datas que podem ter registro no aparelho: hoje e os dias anteriores até o limite de limpeza. */
-export function datasParaLimpar(hojeIso: string): string[] {
-  return Array.from({ length: HOJE_LIMPEZA_DIAS + 1 }, (_, index) => shiftIsoDate(hojeIso, -index));
+/** Índice válido: datas ISO únicas, em ordem crescente. Qualquer outro valor vira lista vazia. */
+export function normalizarIndice(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value.filter(isIsoDate))].sort();
+}
+
+/** Datas do índice que saíram da janela e devem ser apagadas. */
+export function datasAntigas(indice: readonly string[], hojeIso: string): string[] {
+  const inicio = shiftIsoDate(hojeIso, -(HOJE_JANELA_DIAS - 1));
+  return indice.filter((data) => data < inicio);
+}
+
+export function indiceComData(indice: readonly string[], data: string): string[] {
+  return normalizarIndice([...indice, data]);
 }
 
 /**

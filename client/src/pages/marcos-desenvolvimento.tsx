@@ -605,7 +605,6 @@ function AgeTab({
     <div className="space-y-4">
       <div
         className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground"
-        aria-live="polite"
         data-testid="marcos-resumo"
       >
         <span>Sim: <strong className="text-foreground">{summary.sim}</strong></span>
