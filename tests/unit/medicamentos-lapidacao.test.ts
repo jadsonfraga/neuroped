@@ -23,6 +23,7 @@ import {
   liquidUnitLabel,
   medications,
   parseWeight,
+  weightMessage,
 } from "../../client/src/lib/calculadoraDose";
 import { compareClinicalDesc, sortClinicalAsc, sortClinicalDesc } from "../../client/src/lib/diaryOrder";
 import { pharmCategories } from "../../client/src/data/farmacologia";
@@ -129,6 +130,14 @@ for (const m of medications) {
   ];
   assert.deepEqual(sortClinicalDesc(entries).map((e) => e.id), ["e", "d", "a", "c", "b"]);
   assert.deepEqual(sortClinicalAsc(entries).map((e) => e.id), ["b", "c", "a", "d", "e"]);
+}
+
+// Mensagem do campo de peso: vazio e peso aceito não mostram erro; fora da faixa e inválido mostram o motivo.
+{
+  assert.equal(weightMessage(parseWeight("")), null);
+  assert.equal(weightMessage(parseWeight("70,5")), null);
+  assert.match(weightMessage(parseWeight("151")) ?? "", /^Peso acima de 150 kg\./);
+  assert.match(weightMessage(parseWeight("abc")) ?? "", /^Informe o peso em kg/);
 }
 
 // Data-hora completa (sem `date`) não ganha sufixo: mesmo instante empata e desempata pelo cadastro.

@@ -170,3 +170,10 @@ export function parseWeight(raw: string): WeightInput {
   if (kg > WEIGHT_MAX_KG) return { ok: false, reason: "fora_da_faixa" };
   return { ok: true, kg };
 }
+
+/** Texto de erro do campo de peso; `null` quando o peso é aceito ou o campo ainda está vazio. */
+export function weightMessage(input: WeightInput): string | null {
+  if (input.ok || input.reason === "vazio") return null;
+  if (input.reason === "fora_da_faixa") return `Peso acima de ${WEIGHT_MAX_KG} kg. Confira o valor digitado.`;
+  return "Informe o peso em kg, com vírgula ou ponto para a parte decimal.";
+}

@@ -5,12 +5,12 @@ import { PageHero } from "@/components/PageHero";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-  WEIGHT_MAX_KG,
   calcResult,
   formatDose,
   liquidUnitLabel,
   medications,
   parseWeight,
+  weightMessage,
 } from "@/lib/calculadoraDose";
 
 export default function CalculadoraDosePage() {
@@ -25,11 +25,7 @@ export default function CalculadoraDosePage() {
     if (!med || !weightInput.ok) return null;
     return calcResult(weightInput.kg, med);
   }, [med, weightInput]);
-  const weightError = !weightInput.ok && weightInput.reason !== "vazio"
-    ? weightInput.reason === "fora_da_faixa"
-      ? `Peso acima de ${WEIGHT_MAX_KG} kg. Confira o valor digitado.`
-      : "Informe o peso em kg, com vírgula ou ponto para a parte decimal."
-    : null;
+  const weightError = weightMessage(weightInput);
 
   const filteredMeds = useMemo(() => {
     const q = search.toLowerCase();
