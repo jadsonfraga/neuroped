@@ -85,6 +85,9 @@ async function main() {
       await setAge(page, 2);
       const panel = panelOf(page);
       assert.equal(await panel.getByTestId("super-neuropad-optional-stage").count(), 0, "recolhido por padrão");
+      assert.match(await panel.getByRole("button", { name: /Sem repetição/ }).innerText(), /Sem repetição/);
+      // Verifica o filtro padrão e abre o catálogo completo para manter a prova legada de 50.
+      await panel.getByRole("button", { name: /Sem repetição/ }).click();
       await panel.getByRole("button", { name: "Abrir opcionais" }).click();
       const stage = panel.getByTestId("super-neuropad-optional-stage");
       await stage.waitFor();
@@ -139,6 +142,7 @@ async function main() {
 
       // 2c. Aos 3 anos "cor vermelha" e "vermelho" não aparecem as duas vezes no seletor.
       await setAge(page, 3);
+      await panelOf(page).getByRole("button", { name: /Sem repetição/ }).click();
       await panelOf(page).getByRole("button", { name: "Abrir opcionais" }).click();
       const textos3 = await panelOf(page).getByLabel("Ir para o desafio opcional").evaluate((element) => Array.from(element.options).map((option) => option.text));
       assert.ok(!(textos3.some((text) => /Toque na cor VERMELHA/.test(text)) && textos3.some((text) => /Toque no vermelho/.test(text))), "3 anos: cor repetida");
