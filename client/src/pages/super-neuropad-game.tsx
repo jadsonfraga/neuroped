@@ -20,6 +20,7 @@ import {
   pendentesDeCopia,
   proximoPendente,
   registrarOpcional,
+  avisoDeIdade,
   textoOpcionais,
   type RegistrosOpcionais,
 } from "@/features/super-neuropad/extensao";
@@ -579,6 +580,14 @@ function OpcionaisPanel({ years, registros, copiados, seed, onRegistrar, onCopia
     [atual, seed, posicao],
   );
   useEffect(() => { inicio.current = performance.now(); setRepetido(false); }, [atualId, aberto, pausado]);
+  // Tela bloqueada ou troca de aba com um opcional aberto: pausa sozinho, como na partida principal,
+  // para o tempo do item não inflar. Retomar reinicia a contagem do item atual.
+  useEffect(() => {
+    if (!aberto || pausado) return;
+    const onVisibility = () => { if (document.hidden) setPausado(true); };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [aberto, pausado]);
   if (!atual) return null;
   const segundos = () => (performance.now() - inicio.current) / 1000;
   const registrar = (record: AnswerRecord, event: { timeStamp: number }) => {
@@ -647,6 +656,7 @@ function OpcionaisPanel({ years, registros, copiados, seed, onRegistrar, onCopia
                 Opcional {posicao + 1} de {lista.length} · {mundo.emoji} {mundo.name} · {ORIGIN_LABELS[item.origin]} · {item.ref}
               </p>
               {anterior && <p className="snp-chip mb-2 bg-[var(--snp-sun-tint)]" role="status">Já registrado: {STATUS_LABELS[anterior.status]}. Registrar de novo substitui.</p>}
+              {avisoDeIdade(years, item) && <p className="snp-panel snp-panel--soft mb-2 p-2 text-xs font-bold normal-case" role="note" data-testid="super-neuropad-optional-age-note">{avisoDeIdade(years, item)}</p>}
               {item.kind === "toque" ? (
                 <div className="space-y-4">
                   <TouchStage key={item.id} item={item} paused={pausado} order={ordem}
@@ -800,6 +810,13 @@ export default function SuperNeuroPadGamePage() {
   }, []);
 
   useEffect(() => () => { music.current?.stop(); if (cheerTimer.current) window.clearTimeout(cheerTimer.current); }, []);
+
+  // Durante a partida a barra inferior do app e o botão de ajuda cobriam "Acertou/Errou" no celular.
+  // O CSS (flow-os.css) esconde os dois enquanto esta classe estiver no <body>; fora da partida voltam.
+  useEffect(() => {
+    document.body.classList.toggle("np-task-running", screen === "play");
+    return () => document.body.classList.remove("np-task-running");
+  }, [screen]);
 
   useEffect(() => {
     if (screen === "play") { itemStart.current = performance.now(); activeItemMs.current = 0; }
@@ -1148,7 +1165,7 @@ export default function SuperNeuroPadGamePage() {
   const compact = screen !== "setup";
 
   return (
-    <div ref={rootRef} className="snp scroll-mt-4 space-y-5 pb-8" data-testid="super-neuropad-game" data-screen={screen} data-age-style={ageYears !== null && ageYears >= 13 ? "adolescente" : "infantil"}>
+    <div ref={rootRef} className="snp scroll-mt-20 space-y-5 pb-8 lg:scroll-mt-4" data-testid="super-neuropad-game" data-screen={screen} data-age-style={ageYears !== null && ageYears >= 13 ? "adolescente" : "infantil"}>
       <header className={`snp-panel snp-scanlines snp-sky-bg relative overflow-hidden ${compact ? "px-4 py-3" : "p-5 sm:p-6"}`}>
         {!compact && <Clouds />}
         <div className="relative flex items-center gap-3">

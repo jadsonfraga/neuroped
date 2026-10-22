@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
-import { INTEGRATED_BANK, PHASE_ORDER, YEARS } from "../../client/src/features/super-neuropad/bank";
+import { conceptKey, INTEGRATED_BANK, PHASE_ORDER, YEARS } from "../../client/src/features/super-neuropad/bank";
 import {
-  DESAFIOS_DISPONIVEIS_POR_IDADE, disponiveisDaIdade, estimativaOpcionaisSegundos, opcionaisDaIdade, pendentesDeCopia, proximoPendente,
+  avisoDeIdade, DESAFIOS_DISPONIVEIS_POR_IDADE, disponiveisDaIdade, estimativaOpcionaisSegundos, opcionaisDaIdade, pendentesDeCopia, proximoPendente,
   registradosNaOrdem, registrarOpcional, apagarOpcional, textoOpcionais, type RegistrosOpcionais,
 } from "../../client/src/features/super-neuropad/extensao";
 import {
@@ -144,4 +144,49 @@ test("tela: painel opcional sem controle desabilitado e fora da partida", () => 
   assert.equal(page.match(/<OpcionaisPanel /g)?.length, 2);
   const source = readFileSync("client/src/features/super-neuropad/extensao.ts", "utf8");
   assert.doesNotMatch(source, /localStorage|sessionStorage|indexedDB|fetch\(/, "registro só em memória");
+});
+
+test("auditoria 21/10/2026: opcionais não repetem conceito entre si nem com a bateria (exceção única documentada)", () => {
+  // Aos 3 anos "Toque na cor VERMELHA" e "Toque no vermelho" pedem a mesma coisa; só um fica.
+  const tres = opcionaisDaIdade(3).map((entry) => entry.item.prompt);
+  assert.ok(!(tres.includes("Toque na cor VERMELHA.") && tres.includes("Toque no vermelho.")), "3 anos: cor vermelha não aparece duas vezes");
+  assert.ok(!(tres.includes("Toque na cor AZUL.") && tres.includes("Toque no azul.")), "3 anos: cor azul não aparece duas vezes");
+  // O banco de 5 anos não tem conceitos distintos suficientes para chegar a 50: a única repetição que sobra.
+  const EXCECOES: Record<number, number> = { 5: 1 };
+  for (const years of YEARS) {
+    const main = new Set(PHASE_ORDER.flatMap((phaseId) => INTEGRATED_BANK[years][phaseId]).map(conceptKey));
+    const seen = new Set<string>();
+    let repetidos = 0;
+    for (const { item } of opcionaisDaIdade(years)) {
+      const key = conceptKey(item);
+      if (main.has(key) || seen.has(key)) repetidos++;
+      seen.add(key);
+    }
+    assert.equal(repetidos, EXCECOES[years] ?? 0, `${years} anos: conceitos repetidos nos opcionais`);
+    assert.equal(opcionaisDaIdade(years).length + bandItemCount(String(years)), 50, `${years} anos: continuam 50 disponíveis`);
+  }
+});
+
+test("auditoria 21/10/2026: letra e numeral aos 2–3 anos levam aviso de idade; o item continua disponível", () => {
+  const letra = opcionaisDaIdade(2).find((entry) => /Toque na LETRA/.test(entry.item.prompt));
+  assert.ok(letra, "2 anos: o item de letra segue disponível");
+  assert.match(avisoDeIdade(2, letra.item) ?? "", /não é marco universal aos 2 anos/);
+  const cachorro = opcionaisDaIdade(2).find((entry) => entry.item.prompt === "Toque no cachorro.");
+  assert.equal(avisoDeIdade(2, cachorro!.item), null, "item de figura não leva aviso");
+  const numeral = opcionaisDaIdade(3).find((entry) => /Quantas maçãs\? Toque no número/.test(entry.item.prompt));
+  assert.ok(avisoDeIdade(3, numeral!.item), "3 anos: numeral leva aviso");
+  for (const years of YEARS.filter((value) => value > 3)) {
+    assert.ok(opcionaisDaIdade(years).every((entry) => avisoDeIdade(years, entry.item) === null), `${years} anos: sem aviso de letramento`);
+  }
+  const texto = textoOpcionais(2, registrarOpcional({}, record(letra.item, letra.phaseId)), "21/10/2026 10:00");
+  assert.match(texto, /Aviso de idade: reconhecer letras ou números não é marco universal aos 2 anos/);
+  assert.doesNotMatch(texto, /\bnível|\bcortes?\b|percentil|escore|pontuação|alerta|triagem|esperado para|limiar|normativ|\bobservar\b|dentro do esperado/i);
+});
+
+test("auditoria 21/10/2026: o painel dos opcionais pausa ao trocar de aba, como a partida principal", () => {
+  const page = readFileSync("client/src/pages/super-neuropad-game.tsx", "utf8");
+  const block = page.slice(page.indexOf("function OpcionaisPanel("), page.indexOf("function Clouds() {"));
+  assert.match(block, /visibilitychange/);
+  assert.match(block, /document\.hidden\) setPausado\(true\)/);
+  assert.match(block, /super-neuropad-optional-age-note/);
 });
