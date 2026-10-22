@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   buildVisualSearchBoard,
   visualSearchProfile,
+  visualSearchChoice,
   type ExplorerVariant,
 } from "../../client/src/features/super-neuropad/visualSearch";
 import { bandItemCount, recordTouch, type TouchItem } from "../../client/src/features/super-neuropad/model";
@@ -90,4 +91,15 @@ test("busca visual: rejeita idades inválidas e semente não finita tem resultad
   }
   const profile = visualSearchProfile(17);
   assert.deepEqual(buildVisualSearchBoard(profile, NaN), buildVisualSearchBoard(profile, NaN));
+});
+
+test("busca visual: toque após o limite não pode ser registrado como acerto", () => {
+  assert.equal(visualSearchChoice(0, 0, 70), 0);
+  assert.equal(visualSearchChoice(2, 15.4, 70), 1);
+  assert.equal(visualSearchChoice(0, 69.999, 70), 0);
+  assert.equal(visualSearchChoice(0, 70, 70), null);
+  assert.equal(visualSearchChoice(0, 70.001, 70), null);
+  assert.equal(visualSearchChoice(1, Number.NaN, 70), null);
+  assert.equal(visualSearchChoice(1, -1, 70), null);
+  assert.equal(visualSearchChoice(1, 10, 0), null);
 });
