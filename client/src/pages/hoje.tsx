@@ -121,6 +121,8 @@ export default function HojePage() {
       return;
     }
     let ativo = true;
+    // Desabilita o formulário até a nova carga: na virada do dia, as respostas de ontem não podem ser salvas como de hoje.
+    setPronto(false);
     void (async () => {
       const indiceLido = normalizarIndice(await lerChave<unknown>(HOJE_INDICE_CHAVE));
       // Retenção: só a janela de 7 dias fica no aparelho. O que saiu dela é apagado ao abrir.
