@@ -25,7 +25,7 @@ import {
   type AuthContextData,
 } from "./auth/_authorization";
 import { resolveBillingClinicId } from "./billing/_guard";
-import { VISITOR_ROLE, visitorApiAllowed, visitorLoginEnabled } from "./auth/_visitor";
+import { VISITOR_ROLE, visitorApiAllowed, visitorSessionCurrent } from "./auth/_visitor";
 import { getClinicMembership, membershipCanWriteClinical } from "./tenant/_core";
 
 const inMemoryRateMap = new Map<string, { count: number; resetAt: number }>();
@@ -263,7 +263,16 @@ async function authorizeClinicalApi(request: Request, env: Env): Promise<Authori
   // deixam de valer na próxima requisição. Fora da allowlist: 403, sem exceção
   // para troca de senha, consentimento, perfil ou convite.
   if (user.role === VISITOR_ROLE) {
-    if (!visitorLoginEnabled(env)) {
+    // Segredo removido ou trocado desde que a sessão foi emitida: revoga a
+    // família na hora (não depende de a aba chamar refresh) e nega.
+    if (!(await visitorSessionCurrent(env, row.password_hash))) {
+      if (payload.sid) {
+        try {
+          await revokeSessionFamily(env.DB, payload.sid, row.id, "account_disabled");
+        } catch {
+          // A negação não depende da revogação ter sido gravada.
+        }
+      }
       return { failure: apiError("Sessão inválida.", "INVALID_SESSION", 401), user: null };
     }
     const pathname = new URL(request.url).pathname;

@@ -23,6 +23,7 @@ import { enforceLoginAbuseLimit, registerLoginAbuseFailure } from "./_rateLimit"
 import {
   ensureVisitorAccount,
   isVisitorLoginName,
+  visitorFingerprint,
   visitorPasswordMatches,
 } from "./_visitor";
 
@@ -108,7 +109,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       return json(INVALID, 401);
     }
     try {
-      const visitor = await ensureVisitorAccount(env.DB);
+      const fingerprint = await visitorFingerprint(env);
+      const visitor = fingerprint ? await ensureVisitorAccount(env.DB, fingerprint) : null;
       if (!visitor) return json(INVALID, 401);
       const tokens = await createSessionTokens(env.DB, visitor, secret);
       return json({ ...tokens, user: publicUser(visitor) }, 200);

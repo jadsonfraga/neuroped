@@ -140,7 +140,10 @@ assert.equal(session.user.mustChangePassword, false);
   assert.equal(rows.length, 1);
   // O CHECK de produção (schema.d1.sql) só aceita admin/professional/reader/operator.
   assert.equal(rows[0].role, "reader", "no banco o visitante é o papel mínimo reader");
-  assert.equal(rows[0].password_hash, null, "a senha nunca é gravada no banco");
+  const stored = String(rows[0].password_hash);
+  assert.match(stored, /^visitor-fp:[0-9a-f]{32}$/, "o banco guarda só a impressão digital do segredo vigente");
+  assert.ok(!stored.includes(visitorPw), "a senha nunca é gravada no banco");
+  assert.ok(!stored.startsWith("pbkdf2"), "não é um hash de senha verificável pelo login comum");
   assert.equal(
     (sqlite.prepare("SELECT COUNT(*) AS n FROM clinic_memberships WHERE user_id = ?").get(rows[0].id) as { n: number }).n,
     0,
@@ -271,6 +274,35 @@ async function callRefresh(refreshToken: string, env: Record<string, unknown>) {
   assert.equal(((await me.json()) as { code: string }).code, "INVALID_SESSION");
   const refreshed = await callRefresh(session.refreshToken, off);
   assert.equal(refreshed.status, 401, "refresh também é recusado sem o segredo");
+  // A família foi revogada: recolocar o MESMO segredo não ressuscita a sessão.
+  const back = await callApi("GET", "/api/auth/me", session.accessToken, baseEnv);
+  assert.equal(back.status, 401, "sessão revogada na remoção do segredo não volta com o segredo de volta");
+}
+
+// ── 5b2) Rotação: trocar o segredo derruba as sessões antigas na hora ──────
+{
+  const old = (await (await login(loginContext("visitante", visitorPw, baseEnv))).json()) as typeof session;
+  assert.equal((await callApi("GET", "/api/auth/me", old.accessToken, baseEnv)).status, 200);
+
+  const rotatedPw = ["visitor", "fixture", "rotated"].join("-");
+  const rot = { ...baseEnv, NEUROPED_VISITOR_PASSWORD: rotatedPw };
+  // Antes de qualquer login novo: o segredo vigente já não é o da sessão.
+  assert.equal((await callApi("GET", "/api/auth/me", old.accessToken, rot)).status, 401, "sessão antiga morre no primeiro uso após a rotação");
+  assert.equal((await callRefresh(old.refreshToken, rot)).status, 401, "refresh antigo também");
+  assert.equal((await login(loginContext("visitante", visitorPw, rot))).status, 401, "senha antiga não loga");
+
+  // Dois logins simultâneos com o segredo novo: ambos valem (o perdedor da corrida não revoga o outro).
+  const [a, b] = await Promise.all([
+    login(loginContext("visitante", rotatedPw, rot)),
+    login(loginContext("visitante", rotatedPw, rot)),
+  ]);
+  assert.equal(a.status, 200);
+  assert.equal(b.status, 200);
+  const [sa, sb] = (await Promise.all([a.json(), b.json()])) as Array<typeof session>;
+  assert.equal((await callApi("GET", "/api/auth/me", sa.accessToken, rot)).status, 200);
+  assert.equal((await callApi("GET", "/api/auth/me", sb.accessToken, rot)).status, 200);
+  // A sessão antiga continua morta mesmo depois de o segredo novo ter feito login.
+  assert.equal((await callApi("GET", "/api/auth/me", old.accessToken, rot)).status, 401);
 }
 
 // ── 5c) Segundo interruptor: desativar a conta ─────────────────────────────

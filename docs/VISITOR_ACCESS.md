@@ -10,28 +10,34 @@ repositório nem no banco.
    destes lugares:
    - **GitHub** → Settings → Secrets → Actions → `NEUROPED_VISITOR_PASSWORD`.
      O próximo deploy da `main` o grava no Cloudflare Pages
-     (`deploy-cloudflare.yml`, passo "Configurar secrets/vars de auth").
+     (`deploy-cloudflare.yml`, passo "Configurar secrets/vars de auth"). Se a
+     senha tiver menos de 8 caracteres o deploy avisa e não a grava.
    - **Cloudflare** → Pages → neuroped → Settings → Variables and Secrets →
-     `NEUROPED_VISITOR_PASSWORD` (efeito imediato, sem deploy).
+     `NEUROPED_VISITOR_PASSWORD`. Segredos do Pages valem a partir do **próximo
+     deploy** (rode o workflow de deploy ou "Retry deployment").
 2. Na tela de login, usuário `visitante` e a senha escolhida.
 
-A conta `visitante` é criada no primeiro login correto, sem `password_hash` e
-sem clínica. No banco ela tem o papel mínimo `reader` (a tabela `users` só
-aceita admin/professional/reader/operator) e o e-mail reservado `visitante`; a
-API expõe o papel `visitor`. O cadastro exige "@", então ninguém consegue criar
-essa identidade pelo site.
+A conta `visitante` é criada no primeiro login correto e sem clínica. No banco
+ela tem o papel mínimo `reader` (a tabela `users` só aceita
+admin/professional/reader/operator) e o e-mail reservado `visitante`; a API
+expõe o papel `visitor`. O cadastro exige "@", então ninguém consegue criar essa
+identidade pelo site. A coluna `password_hash` guarda só uma impressão digital
+do segredo vigente (`visitor-fp:...`), nunca a senha nem um hash verificável.
 
-## Desligar
+## Desligar ou trocar a senha
 
-- **Remover o segredo no Cloudflare** desliga o login e derruba as sessões já
-  emitidas na próxima chamada de API (o middleware e o refresh reavaliam o
-  segredo a cada requisição).
+- **Trocar ou remover o segredo e fazer novo deploy** invalida as sessões
+  emitidas sob o segredo anterior na próxima chamada de API delas (o middleware
+  e o refresh comparam a impressão digital e revogam a família). Isso vale
+  também para "remover e recolocar": sessões revogadas não voltam. Se o mesmo
+  segredo for restaurado sem que nenhuma sessão tenha feito chamada no
+  intervalo, ela continua válida (é o mesmo segredo).
 - Se o segredo também existir no GitHub, **apague-o lá**: senão o próximo
   deploy o recoloca.
-- Interruptor extra, sem mexer em segredo: `UPDATE users SET is_active = 0
-  WHERE lower(email) = 'visitante';` (o login não reativa a conta).
-- Trocar a senha = trocar o valor do segredo. Sessões abertas continuam até
-  expirarem; para cortá-las agora, remova o segredo e recoloque o novo.
+- **Corte imediato, sem deploy:** `UPDATE users SET is_active = 0 WHERE
+  lower(email) = 'visitante';` no D1. O login não reativa a conta.
+- Abas já abertas continuam navegando nas páginas de escala (que não chamam a
+  API) até recarregar; o corte vale para a API e para o próximo carregamento.
 
 ## O que o visitante pode
 

@@ -11,7 +11,7 @@ import {
 import { isPlainObject } from "../_request";
 import { AUTH_INPUT_LIMITS } from "./_limits";
 import { isVisitorIdentity } from "./_shared";
-import { visitorLoginEnabled } from "./_visitor";
+import { visitorSessionCurrent } from "./_visitor";
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { env, request } = context;
@@ -57,7 +57,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     // Visitante: o interruptor é o segredo do ambiente. Sem ele a família de
     // refresh é revogada em vez de rotacionada.
-    if (isVisitorIdentity(user) && !visitorLoginEnabled(env)) {
+    if (isVisitorIdentity(user) && !(await visitorSessionCurrent(env, user.password_hash))) {
       await revokeRefreshToken(env.DB, payload, token, "account_disabled");
       return json({ error: "Sessão inválida.", code: "INVALID_SESSION" }, 401);
     }

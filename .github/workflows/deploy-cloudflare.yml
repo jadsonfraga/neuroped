@@ -354,7 +354,11 @@ jobs:
           # Login de visitante (somente escalas): sem este segredo o login não
           # existe. Opcional; para desligar, remova o segredo no Cloudflare
           # (docs/VISITOR_ACCESS.md).
-          put_optional NEUROPED_VISITOR_PASSWORD "$visitor_pw"
+          if [ -n "$visitor_pw" ] && [ "${#visitor_pw}" -lt 8 ]; then
+            echo "::warning::NEUROPED_VISITOR_PASSWORD tem menos de 8 caracteres: o login de visitante fica desligado e o segredo não foi gravado"
+          else
+            put_optional NEUROPED_VISITOR_PASSWORD "$visitor_pw"
+          fi
           # Agenda pública: sem chave operacional dedicada (>=32 chars) o POST
           # book responde 503 CRYPTO_NOT_CONFIGURED. Opcional para não quebrar o
           # deploy; a chave é do dono e precisa de backup (perda = dados ilegíveis).
