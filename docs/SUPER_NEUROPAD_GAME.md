@@ -254,6 +254,12 @@ equivalente ou diagnóstico, exibida na tela de resultado, no relatório em text
   glossário para PDF.
 - `client/src/features/super-neuropad/music.ts` — trilha chiptune.
 - `client/src/features/super-neuropad/pdf.ts` — especificação do PDF detalhado.
+- `client/src/features/super-neuropad/estimulos.tsx` — estímulos compartilhados pela bateria e pelos opcionais (toque, montagem, julgamento, lanterna).
+- `client/src/features/super-neuropad/OpcionaisPanel.tsx` — painel dos desafios opcionais (registro em memória, por idade).
+- `client/src/features/super-neuropad/extensao.ts` — extensão opcional: registro, pendências de cópia, aviso de idade e texto.
+- `client/src/features/super-neuropad/obrigatorio.ts` — campos obrigatórios do circuito clínico e status COMPLETO/INCOMPLETO.
+- `client/src/features/super-neuropad/visualSearch.ts`, `VisualSearchStage.tsx`, `VisualSearchBonusPanel.tsx` — busca visual autoral por idade.
+- `client/src/features/super-neuropad/activeClock.ts` — relógio de tempo ativo (sem contar pausas).
 - `client/src/pages/super-neuropad-game.tsx` — página.
 - `client/src/styles/super-neuropad-arcade.css` — acabamento arcade (somente estilo).
 
@@ -662,7 +668,7 @@ Desenho aprovado pelo responsável clínico em 21/10/2026: **50 desafios dispon�
 
 **Apresentação por idade.** A partir de 13 anos a tela fica mais sóbria (`data-age-style="adolescente"`: sem linhas de varredura, sombras menores), sem mudar conteúdo nem desafios. Textos longos em opções, botões e contadores quebram linha no celular.
 
-**Código.** `bank.ts` (`OPTIONAL_BANK`, `DESAFIOS_DISPONIVEIS_POR_IDADE`; `objAt` só reorganiza a conversão do item objetivo, sem mudar a bateria), `extensao.ts` (registro, pendências de cópia e texto), painel `OpcionaisPanel` em `super-neuropad-game.tsx`, CSS em `super-neuropad-arcade.css`.
+**Código.** `bank.ts` (`OPTIONAL_BANK`, `DESAFIOS_DISPONIVEIS_POR_IDADE`; `objAt` só reorganiza a conversão do item objetivo, sem mudar a bateria), `extensao.ts` (registro, pendências de cópia e texto), painel `OpcionaisPanel` em `features/super-neuropad/OpcionaisPanel.tsx`, CSS em `super-neuropad-arcade.css`.
 
 **Verificação.** `tests/unit/super-neuropad-extensao.test.ts`: 50 por idade; bateria principal, limites e estimativas inalterados; procedência só dos bancos de origem; nenhuma tarefa ou conceito repetido; registro, pendências de cópia e texto sem classificação; painel sem controle desabilitado. `npm run test:e2e:super-neuropad-opcionais` confere as 16 idades, registro por toque e por fala, pausa, cópia, troca de idade, painel nos resultados, aviso da "Nova partida", axe e celular a 390 px. A bateria principal foi comparada byte a byte (JSON do banco, estimativas e limites) antes e depois da mudança.
 
