@@ -1,11 +1,14 @@
 import { getImplementationStatus, scaleCoversSelectedSignalExactly, type RefinedScaleMatch } from "./advancedFilterLogic";
 
 /**
- * Âncora funcional existente: EFDI-V/NV (instrumento autoral experimental).
+ * Âncoras funcionais existentes: EAF-NEXUS (preferida ≥2a) e EFDI-V/NV (alternativa precoce).
  * Seu conteúdo contempla atividades realizadas sem ajuda E solicitação espontânea
  * de ajuda por fala, gestos ou comunicação alternativa. Não equivale a diagnóstico.
  */
 export const FUNCTIONAL_AUTONOMY_ANCHOR_ID = "efdi";
+export const FUNCTIONAL_AUTONOMY_ANCHOR_IDS = ["eaf", "efdi"] as const;
+const functionalAnchorIds = new Set<string>(FUNCTIONAL_AUTONOMY_ANCHOR_IDS);
+const isFunctionalAnchor = (id: string) => functionalAnchorIds.has(id);
 
 type Medal = RefinedScaleMatch | undefined;
 export type MedalTrio = { ouro: Medal; prata: Medal; bronze: Medal };
@@ -31,6 +34,7 @@ function deduplicate(matches: RefinedScaleMatch[]): RefinedScaleMatch[] {
 /** Grupo explicitamente curado prevalece; domínio + tags exigem corroborar afinidade. */
 export function sameClinicalConstruct(a: RefinedScaleMatch, b: RefinedScaleMatch): boolean {
   if (a.scale.id === b.scale.id) return true;
+  if (isFunctionalAnchor(a.scale.id) && isFunctionalAnchor(b.scale.id)) return true;
   if (a.scale.overlapGroup && a.scale.overlapGroup === b.scale.overlapGroup) return true;
   if (!a.scale.primaryDomain || a.scale.primaryDomain !== b.scale.primaryDomain) return false;
   if (a.applicationMode !== b.applicationMode) return false;
@@ -66,9 +70,11 @@ export function refineFunctionalComplementarity({
   };
   // A âncora jamais é criada do nada, nem contorna um filtro clínico: deve
   // constar dos candidatos já aprovados pelo motor de idade/risco/respondente.
-  const anchor = candidates.find((m) => m.scale.id === FUNCTIONAL_AUTONOMY_ANCHOR_ID && valid(m));
+  const anchor = FUNCTIONAL_AUTONOMY_ANCHOR_IDS
+    .map((id) => candidates.find((m) => m.scale.id === id && valid(m)))
+    .find((m): m is RefinedScaleMatch => Boolean(m));
   const currentIds = new Set(original.map((m) => m.scale.id));
-  const currentlyHasAnchor = currentIds.has(FUNCTIONAL_AUTONOMY_ANCHOR_ID);
+  const currentlyHasAnchor = original.some((m) => isFunctionalAnchor(m.scale.id));
 
   const signalCtx = { queixas: selectedQueixas, selectedSignals };
   const signalHit = (m: RefinedScaleMatch) =>
@@ -106,7 +112,7 @@ export function refineFunctionalComplementarity({
     // usado quando sobra vaga. Incluí-lo pode exigir substituir uma medalha.
     chosen = [anchor];
     bestRank = rank(chosen);
-    const others = pool.filter((m) => m.scale.id !== anchor.scale.id);
+    const others = pool.filter((m) => !isFunctionalAnchor(m.scale.id));
     const consider = (arr: RefinedScaleMatch[]) => {
       if (burden(arr) > questionCap) return;
       const score = rank(arr);
@@ -134,7 +140,7 @@ export function refineFunctionalComplementarity({
     let improvedRank = rank(chosen);
     for (let index = chosen.length - 1; index >= 0; index--) {
       const current = chosen[index];
-      if (current.scale.id === FUNCTIONAL_AUTONOMY_ANCHOR_ID) continue;
+      if (isFunctionalAnchor(current.scale.id)) continue;
       for (const candidate of pool) {
         if (chosen.some((m) => m.scale.id === candidate.scale.id)) continue;
         if (candidate.relevanceScore < current.relevanceScore - 20) continue;
