@@ -1129,11 +1129,39 @@ export function filterScalesWithClinicalRescue(
   // Respondente é um vínculo clínico obrigatório, não uma preferência de
   // ranking. Se não houver opção compatível, falha fechado: nunca repete a
   // busca sem o respondente nem completa o pódio com fallback de outro perfil.
-  if (ctx.respondente) return primary;
+  const results = ctx.respondente ? primary : fillPodiumWithBroadband(primary, scales, ctx);
 
-  // Sem respondente explícito, contextos não agudos podem ser completados com
-  // rastreadores amplos apropriados à idade e aos demais bloqueios duros.
-  return fillPodiumWithBroadband(primary, scales, ctx);
+  // Complemento funcional transversal, mesmo quando já existem três escalas
+  // para sintomas: autonomia prática + PEDIDO ESPONTÂNEO de ajuda verbal/não
+  // verbal. O EFDI-V/NV existente contempla ambos. A expansão de domínio é
+  // exclusivamente para a âncora, sem relaxar idade, respondente, risco ou
+  // status real de implementação e sem chamar esse instrumento de diagnóstico.
+  if (ctx.ageInputInvalid || results.some((m) => m.scale.id === "efdi")) return results;
+  const efdi = scales.find((scale) => scale.id === "efdi");
+  const functionalContext: FilterContext = {
+    ...ctx,
+    queixas: ["funcionalidade"],
+    selectedSignals: [],
+  };
+  if (
+    !efdi ||
+    !ageCovers(efdi, ctx) ||
+    !passesMandatoryFilters(efdi, functionalContext) ||
+    clinicalHardBlock(efdi, ctx) !== null ||
+    getImplementationStatus(efdi) !== "complete"
+  ) {
+    return results;
+  }
+  const functional = calculateRefinedScore(efdi, functionalContext);
+  return [
+    ...results,
+    {
+      ...functional,
+      clinicalReason:
+        "Complemento funcional: atividades que realiza sozinho e comunicação espontânea para pedir ajuda; instrumento autoral experimental, sem diagnóstico isolado.",
+      isBroadbandFallback: true,
+    },
+  ];
 }
 
 // ============ FALLBACK DE TRIAGEM AMPLA ============
