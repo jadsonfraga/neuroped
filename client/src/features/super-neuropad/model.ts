@@ -25,7 +25,7 @@
 
 import { DESCRIPTIVE_NOTICE } from "../../lib/descriptiveNotice";
 import { formatClinicalDate, formatClinicalDateTime } from "../../lib/clinicalDate";
-import { EMOJI_NAMES, INTEGRATED_BANK, itemsPerPhase, MAX_AGE_YEARS, MIN_AGE_YEARS, PHASE_ORDER, YEARS, type PhaseId } from "./bank";
+import { EMOJI_NAMES, GAME_BANK, INTEGRATED_BANK, itemsPerPhase, MAX_AGE_YEARS, MIN_AGE_YEARS, PHASE_ORDER, YEARS, type PhaseId } from "./bank";
 import {
   buildMatches,
   isJudged,
@@ -64,16 +64,16 @@ export const SUPER_NEUROPAD_SOURCES = [
   "Teste de Reconhecimento Visual (reconhecer, parear e nomear figuras, cores e conceitos por idade)",
   "Avaliação Cognitiva Infantil · Testes Cognitivos por Faixa Etária (visual, fala/leitura, letras/escrita e números)",
 ] as const;
-/** Teto da sessão inteira, em segundos (20 minutos). */
-export const SESSION_LIMIT_SECONDS = 20 * 60;
+/** Teto amplo da sessão inteira; os 50 desafios obrigatórios precisam caber sem punição. */
+export const SESSION_LIMIT_SECONDS = 45 * 60;
 /** Faixas com bateria dedicada (2 e 3 anos): mundos por domínio, tetos menores. */
 export function isToddlerYears(years: number): boolean {
   return years === 2 || years === 3;
 }
-/** Teto por idade: 12 min aos 2 anos, 15 min aos 3 anos, 20 min nas demais. */
+/** Teto por idade, dimensionado para a bateria obrigatória de 50 desafios. */
 export function sessionLimitSeconds(years: number): number {
-  if (years === 2) return 12 * 60;
-  if (years === 3) return 15 * 60;
+  if (years === 2) return 30 * 60;
+  if (years === 3) return 35 * 60;
   return SESSION_LIMIT_SECONDS;
 }
 
@@ -90,6 +90,20 @@ export interface AgeBand {
   perPhase: number;
   /** O que o ambiente da sala precisa ter (nada é levado: tudo mais está no aplicativo). */
   ambient: string[];
+}
+
+/** Direção lúdica da faixa: ajusta a linguagem da aventura sem alterar o item clínico. */
+export interface AgeGameProfile {
+  label: string;
+  promise: string;
+  cue: string;
+}
+
+export function ageGameProfile(years: number): AgeGameProfile {
+  if (years <= 3) return { label: "descoberta", promise: "uma expedição curtinha por vez", cue: "apontar, brincar e contar já vale" };
+  if (years <= 5) return { label: "exploração", promise: "missões coloridas com escolhas simples", cue: "vamos tentar juntos, sem pressa" };
+  if (years <= 7) return { label: "aventura", promise: "desafios em sequência para conquistar", cue: "cada acerto libera o próximo mundo" };
+  return { label: "desafio", promise: "uma campanha com estratégia e autonomia", cue: "você escolhe o ritmo e acompanha sua missão" };
 }
 
 function iconFor(years: number): string {
@@ -252,6 +266,15 @@ export function itemsFor(bandId: BandId, phaseId: PhaseId): Item[] {
   return ITEM_BANK[bandId]?.[phaseId] ?? [];
 }
 
+/** Itens efetivamente obrigatórios na partida: 50 desafios não médicos por idade. */
+export function gameItemsFor(bandId: BandId, phaseId: PhaseId): Item[] {
+  return GAME_BANK[Number(bandId)]?.[phaseId] ?? [];
+}
+
+export function gameBandItemCount(bandId: BandId): number {
+  return PHASE_ORDER.reduce((sum, phaseId) => sum + gameItemsFor(bandId, phaseId).length, 0);
+}
+
 export function bandItemCount(bandId: BandId): number {
   return PHASE_ORDER.reduce((sum, phaseId) => sum + itemsFor(bandId, phaseId).length, 0);
 }
@@ -301,7 +324,7 @@ export function itemProvenance(item: Pick<Item, "ref">): ItemProvenance {
 
 /** Quantos itens da idade vêm dos bancos de origem e quantos foram criados para o jogo. */
 export function provenanceCounts(years: number): { autoral: number; origem: number; total: number } {
-  const items = PHASE_ORDER.flatMap((phaseId) => itemsFor(String(years), phaseId));
+  const items = PHASE_ORDER.flatMap((phaseId) => gameItemsFor(String(years), phaseId));
   const autoral = items.filter((item) => itemProvenance(item) === "autoral").length;
   return { autoral, origem: items.length - autoral, total: items.length };
 }
@@ -325,7 +348,7 @@ export interface BandEstimate {
 /**
  * Tempo estimado da sessão inteira: preparação + apresentação de cada mundo +
  * itens (com fator para crianças pequenas) + folga de 10% para repetições +
- * pausa planejada até 5 anos. Travado em ≤ 20 minutos por teste unitário.
+ * pausa planejada até 5 anos. Dimensionado para a bateria obrigatória de 50 itens.
  */
 export function estimateBandSeconds(years: number): BandEstimate {
   const bandId = String(years);
@@ -333,7 +356,7 @@ export function estimateBandSeconds(years: number): BandEstimate {
   const byPhase = {} as Record<PhaseId, number>;
   let itemTotal = 0;
   for (const phaseId of PHASE_ORDER) {
-    const seconds = itemsFor(bandId, phaseId).reduce((sum, item) => sum + itemSeconds(item) * factor, 0);
+    const seconds = gameItemsFor(bandId, phaseId).reduce((sum, item) => sum + itemSeconds(item) * factor, 0);
     byPhase[phaseId] = Math.round(seconds);
     itemTotal += seconds;
   }
@@ -341,7 +364,7 @@ export function estimateBandSeconds(years: number): BandEstimate {
   const overhead = SETUP_SECONDS + INTRO_SECONDS * PHASE_ORDER.length + plannedBreakSeconds(years);
   const total = Math.round(withRepeats + overhead);
   return {
-    years, items: bandItemCount(bandId), perPhase: itemsPerPhase(years), itemSeconds: Math.round(withRepeats), overheadSeconds: overhead,
+    years, items: gameBandItemCount(bandId), perPhase: Math.round(gameBandItemCount(bandId) / PHASE_ORDER.length), itemSeconds: Math.round(withRepeats), overheadSeconds: overhead,
     totalSeconds: total, minutes: Math.round((total / 60) * 10) / 10, byPhase,
   };
 }
@@ -649,7 +672,7 @@ export function summarize(session: GameSession): GameSummary {
   const band = bandForYears(session.ageYears) ?? AGE_BANDS[0];
   const character = CHARACTERS.find((entry) => entry.id === session.characterId) ?? CHARACTERS[0];
   const skipped = new Map((session.skipped ?? []).map((entry) => [entry.phaseId, entry.reason]));
-  const planned = PHASE_ORDER.flatMap((phaseId) => itemsFor(band.id, phaseId).map((item) => ({ item, phaseId })));
+  const planned = PHASE_ORDER.flatMap((phaseId) => gameItemsFor(band.id, phaseId).map((item) => ({ item, phaseId })));
   // Partida completa = todos os itens previstos registrados uma única vez e nenhum mundo pulado.
   // É informação de como a aplicação transcorreu; não gera classificação.
   const complete = bandForYears(session.ageYears)?.id === session.bandId
@@ -659,7 +682,7 @@ export function summarize(session: GameSession): GameSummary {
   const phases: PhaseSummary[] = PHASE_ORDER.map((phaseId) => {
     const phase = phaseById(phaseId, band.min);
     const answers = session.answers.filter((answer) => answer.phaseId === phaseId);
-    const total = itemsFor(band.id, phaseId).length;
+    const total = gameItemsFor(band.id, phaseId).length;
     const count = (status: AnswerStatus) => answers.filter((answer) => answer.status === status).length;
     const seconds = Math.round(answers.reduce((sum, answer) => sum + answer.seconds, 0));
     return {
