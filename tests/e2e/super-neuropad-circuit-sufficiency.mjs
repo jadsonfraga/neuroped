@@ -27,8 +27,6 @@ async function newPage(browser, viewport, collected) {
   const context = await browser.newContext({ viewport, acceptDownloads: true });
   await context.addInitScript((storage) => { for (const [key, value] of Object.entries(storage)) localStorage.setItem(key, value); }, ACCEPTED_FIRST_VISIT_STORAGE);
   const page = await context.newPage();
-  // Esta jornada troca de caso deliberadamente; a recusa de descarte tem prova própria em draft-guard.
-  page.on("dialog", (dialog) => dialog.accept());
   page.on("pageerror", (error) => collected.pageErrors.push(error.message));
   page.on("console", (message) => { if (message.type() === "error") collected.consoleErrors.push(message.text()); });
   return { context, page };
@@ -104,9 +102,9 @@ async function concluirMissao(page, aba, indice) {
     await station.getByRole("button", { name: /^Realizado — registrar descrição/ }).click();
     await station.locator("textarea").fill("Descrição sintética de teste da entrevista profissional.");
   }
-  const executor = await station.getByTestId("super-neuropad-mission-executor").innerText();
-  const source = /Secretaria:/i.test(executor) ? SOURCE_CUIDADOR : SOURCE_AUXILIAR;
-  await station.getByRole("button", { name: source, exact: true }).click();
+  // Secretaria registra relato (cuidador); a auxiliar registra observação direta. Escolher a fonte errada não pode concluir a missão.
+  const secretaria = await station.getByText("Roteiro do contato para esta idade").count();
+  await station.getByRole("button", { name: secretaria ? SOURCE_CUIDADOR : SOURCE_AUXILIAR, exact: true }).click();
   assert.match(await station.getByTestId("super-neuropad-mission-status").innerText(), /Missão concluída/, `missão ${indice} da aba "${aba}" concluída`);
 }
 
@@ -131,7 +129,7 @@ async function main() {
       const unexpectedDownloads = [];
       page.on("download", (download) => unexpectedDownloads.push(download));
       await page.evaluate(() => Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async () => { throw new Error("permission denied"); } } }));
-      await circuitOf(page).getByRole("button", { name: /Copiar registro clínico/ }).click();
+      await circuitOf(page).getByRole("button", { name: /Copiar registro da pré-consulta/ }).click();
       await circuitOf(page).getByText(/nenhum arquivo foi criado automaticamente/i).waitFor();
       assert.equal(unexpectedDownloads.length, 0, "falha ao copiar não deve baixar arquivo sem pedido");
       const idade7 = circuitOf(page).getByTestId("super-neuropad-age-profile");
@@ -204,7 +202,7 @@ async function main() {
       observations.itensNaoResolvidosComRegistro = depois;
       const chipConcluidas = (await circuitOf(page).innerText()).match(/(\d+)\/(\d+) missões concluídas/i);
       assert.ok(chipConcluidas, "contador de missões concluídas exibido");
-      assert.equal(chipConcluidas[1], "3", `sequência, portal e marcos concluídos; as demais seguem pendentes (exibido ${chipConcluidas[0]})`);
+      assert.equal(chipConcluidas[1], "3", `careta, eco e marcos concluídos; as demais seguem pendentes (exibido ${chipConcluidas[0]})`);
 
       // 3. Exportação: o TXT carrega a matriz e a declaração de não emissão automática.
       const downloads = [];

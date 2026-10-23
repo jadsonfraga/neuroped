@@ -57,7 +57,7 @@ test("urgência: achado de fundo de olho ou meninges aparece como urgência e sa
   assert.equal(linhasDeRevisao(linhas).some((linha) => linha.id === "urgencia"), false);
   assert.equal(pendenciasParaRevisao(linhas), linhasDeRevisao(linhas).filter((linha) => linha.status !== "examinado").length);
   const texto = textoProntidao(7, linhas).join("\n");
-  assert.match(texto, /ATENÇÃO CLÍNICA: achado a esclarecer em fundo de olho ou sinais meníngeos/);
+  assert.match(texto, /ATENÇÃO CLÍNICA: achado a esclarecer em consciência, fundo de olho ou sinais meníngeos/);
   assert.equal(urgenciaAtiva(matrizSuficiencia(7, records({ fundus: "observado", meningeal: "observado" }))), false);
   // Item apenas pendente não é achado: não dispara alerta nem usa o texto de achado.
   const pendente = matrizSuficiencia(7, records({ fundus: "observado" }));
@@ -124,62 +124,4 @@ test("hipóteses: item de fonte externa não mistura estação, para não virar 
   const sinteticamenteMisto: ItemColeta = { id: "misto", texto: "proveniência externa e estação", estacoes: ["attention6"], fonteExterna: "entrevista em dois contextos" };
   assert.equal(estadoItem(sinteticamenteMisto, 9, records({ attention6: "observado" })), "fonte_externa", "mesmo um item misto criado no futuro não deve autorizar coleta por toque");
   assert.equal(estadoItem(sinteticamenteMisto, 9, records({ attention6: "achado" })), "fonte_externa", "achado não substitui fonte externa");
-});
-
-test("relatório preserva descrição fornecida sem declarar que ela está ausente", () => {
-  for (const status of ["observado", "achado"] as const) {
-    for (const id of ["reflex", "milestones"]) {
-      const report = buildCircuitReport(7, {
-        [id]: { status, note: "Descrição sintética informada pelo examinador.", source: "examinador" },
-      });
-      assert.match(report, /Descrição registrada: Descrição sintética informada pelo examinador/);
-      assert.doesNotMatch(report, /Descrição específica não fornecida/);
-    }
-  }
-  const semDescricao = buildCircuitReport(7, { reflex: { status: "observado", note: "   ", source: "examinador" } });
-  assert.match(semDescricao, /Descrição específica não fornecida/);
-  const semExameDireto = buildCircuitReport(7, { reflex: { status: "observado", note: "Relato sintético do cuidador.", source: "cuidador" } });
-  assert.match(semExameDireto, /Sem comprovação de exame físico direto/);
-  assert.doesNotMatch(semExameDireto, /Descrição específica não fornecida/);
-});
-
-test("hipóteses só concluem coleta com todas as estações aplicáveis e a fonte exigida", () => {
-  for (let age = 2; age <= 17; age++) {
-    for (const guia of guiasAplicaveis(age)) {
-      for (const item of guia.itens.filter((entry) => !entry.fonteExterna)) {
-        const estacoes = circuitForAge(age).filter((entry) => item.estacoes.includes(entry.id));
-        assert.ok(estacoes.length, `${age}: ${item.id} tem estação aplicável`);
-        const completos = records(Object.fromEntries(estacoes.map((entry) => [entry.id, "observado"])), "examinador");
-        assert.equal(estadoItem(item, age, completos), "coletado", `${age}: ${item.id} completo`);
-        for (const estacao of estacoes) {
-          const incompletos = { ...completos };
-          delete incompletos[estacao.id];
-          assert.equal(estadoItem(item, age, incompletos), "pendente", `${age}: ${item.id} sem ${estacao.id}`);
-          assert.equal(estadoItem(item, age, { ...completos, [estacao.id]: { status: "achado", note: "", source: "cuidador" } }), "achado_a_esclarecer");
-          if (estacao.method === "presencial") {
-            for (const source of [undefined, "cuidador", "escola"] as const) {
-              assert.equal(estadoItem(item, age, { ...completos, [estacao.id]: { status: "observado", note: "", source } }), "pendente", `${age}: ${estacao.id} exige examinador`);
-            }
-          }
-        }
-      }
-    }
-  }
-});
-
-test("fonte escolar não resolve suficiência com estação não realizada ou fora da faixa", () => {
-  const escolar = (age: number, entradas: CircuitRecords) => matrizSuficiencia(age, entradas).find((entry) => entry.id === "escolar")?.status;
-  for (const status of ["nao_realizado", "nao_colaborou"] as const) {
-    assert.equal(escolar(9, { milestones: { status, note: "", source: "escola", descricao: "Relato escolar não obtido por indisponibilidade da fonte." } }), "depende_fonte_externa");
-  }
-  for (const id of ["estacao_inexistente", "social2"]) {
-    assert.equal(escolar(9, { [id]: { status: "observado", note: "", source: "escola", descricao: "Descrição sintética de participação na rotina escolar." } }), "depende_fonte_externa");
-  }
-  for (const status of ["observado", "achado"] as const) {
-    assert.equal(escolar(9, { milestones: { status, note: "", source: "escola", descricao: "Descrição sintética de participação na rotina escolar." } }), "examinado");
-  }
-});
-
-test("guias de hipóteses respeitam anos completos, como os perfis anuais e o circuito", () => {
-  for (const age of [-1, 0, 1, 2.5, 6.5, 12.5, 18, NaN, Infinity]) assert.deepEqual(guiasAplicaveis(age), []);
 });

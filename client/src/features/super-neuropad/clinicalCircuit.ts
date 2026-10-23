@@ -113,6 +113,43 @@ export const CIRCUIT_TASKS: readonly CircuitTask[] = [
 export function missoesPreConsulta(years: number, area?: CircuitArea): CircuitTask[] {
   return circuitForAge(years, area).filter((task) => task.executor !== "medico");
 }
+/**
+ * Fontes que cada executor pode registrar. A auxiliar observa, a secretaria relata (família ou escola) e só
+ * o médico registra exame direto. Restringir aqui impede que um relato vire "observação direta" ou que a
+ * pré-consulta complete um domínio de exame físico.
+ */
+export const FONTES_POR_EXECUTOR: Readonly<Record<CircuitExecutor, readonly CircuitSource[]>> = {
+  auxiliar: ["auxiliar", "outra"],
+  secretaria: ["cuidador", "escola", "outra"],
+  medico: ["examinador", "outra"],
+};
+export function fontesDaTarefa(task: CircuitTask): readonly CircuitSource[] {
+  return FONTES_POR_EXECUTOR[task.executor];
+}
+/**
+ * Registro observacional da pré-consulta (auxiliar e secretaria). Não inclui exame do médico, matriz de
+ * suficiência nem síntese: é insumo para a consulta, não laudo.
+ */
+export function textoPreConsulta(years: number, records: CircuitRecords, at = new Date()): string {
+  const tarefas = missoesPreConsulta(years);
+  const registradas = tarefas.filter((task) => records[task.id]?.status);
+  const linhas = [
+    `SUPER NEUROPAD GAME — REGISTRO OBSERVACIONAL DA PRÉ-CONSULTA v${CIRCUIT_VERSION}`,
+    "Registro de auxiliar e secretaria, antes da consulta. NÃO é laudo, NÃO é síntese médica e NÃO contém exame do médico.",
+    `Idade informada: ${years} anos | Emissão local: ${at.toLocaleString("pt-BR")}`,
+    `Missões registradas: ${registradas.length}/${tarefas.length}. As demais NÃO foram realizadas.`,
+    "",
+  ];
+  if (!registradas.length) linhas.push("Nenhum registro de pré-consulta.");
+  for (const task of registradas) {
+    const record = records[task.id];
+    linhas.push(`• ${task.domain} — ${task.title} [${EXECUTOR_LABELS[task.executor]}]: ${CIRCUIT_STATUSES[record.status]}.`);
+    linhas.push(`  Fonte: ${record.source ? CIRCUIT_SOURCES[record.source] : "não informada — registrar antes de incorporar ao prontuário"}.`);
+    if (record.note.trim()) linhas.push(`  Descrição registrada: ${record.note.trim()}`);
+  }
+  linhas.push("", "Sem escore, norma ou conclusão diagnóstica. Revisão clínica obrigatória antes de incorporar ao prontuário.");
+  return linhas.join("\n");
+}
 export function circuitForAge(years: number, area?: CircuitArea): CircuitTask[] {
   if (!Number.isInteger(years) || years < 2 || years > 17) return [];
   return CIRCUIT_TASKS.filter((task) => years >= task.min && years <= task.max && (!area || task.area === area));

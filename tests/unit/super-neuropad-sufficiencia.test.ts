@@ -128,7 +128,35 @@ test("integridade estática: módulo puro, sem armazenamento, rede ou captura", 
   assert.doesNotMatch(source, /https?:\/\//);
 });
 
-test("achado no acolhimento não dispara urgência; fonte da auxiliar não vale como exame direto do médico", () => {
+const acolhimento = (status: CircuitStatus, note: string): CircuitRecords => ({ rapport: { status, note, source: "auxiliar" } });
+
+test("achado no acolhimento sem marcador de consciência não dispara urgência; fonte da auxiliar não vale como exame direto do médico", () => {
   assert.equal(urgenciaAtiva(matrizSuficiencia(7, records({ rapport: "achado" }, "auxiliar"))), false);
+  assert.equal(urgenciaAtiva(matrizSuficiencia(7, acolhimento("achado", "Marcado: Agitada ou inquieta; Contato reduzido."))), false);
+  assert.equal(urgenciaAtiva(matrizSuficiencia(7, acolhimento("achado", "Marcado: Alerta e atenta; Procura o adulto."))), false);
   assert.notEqual(linha(matrizSuficiencia(9, records({ strength6: "observado" }, "auxiliar")), "forca").status, "examinado");
+});
+
+test("consciência alterada no acolhimento dispara ATENÇÃO CLÍNICA, em achado ou em observado com o marcador", () => {
+  for (const nota of ["Marcado: Sonolenta.", "Marcado: Responde com demora; Sonolenta.", "Marcado: Responde com demora.", "Marcado: Sonolenta. Relato sintético."]) {
+    assert.equal(urgenciaAtiva(matrizSuficiencia(7, acolhimento("achado", nota))), true, `achado: ${nota}`);
+    assert.equal(urgenciaAtiva(matrizSuficiencia(7, acolhimento("observado", nota))), true, `observado: ${nota}`);
+  }
+  // Texto livre digitado pela auxiliar também conta: o alerta prefere falso positivo a urgência não sinalizada.
+  assert.equal(urgenciaAtiva(matrizSuficiencia(7, acolhimento("achado", "Sonolenta ao chegar, sem marcador tocado."))), true);
+});
+
+test("consciência: sem estação realizada, sem registro ou com recusa, o alerta não é emitido", () => {
+  assert.equal(urgenciaAtiva(matrizSuficiencia(7, acolhimento("nao_realizado", "Marcado: Sonolenta."))), false);
+  assert.equal(urgenciaAtiva(matrizSuficiencia(7, acolhimento("nao_colaborou", "Marcado: Sonolenta."))), false);
+  assert.equal(urgenciaAtiva(matrizSuficiencia(7, {})), false);
+});
+
+test("alerta de urgência menciona consciência, fundo de olho e sinais meníngeos", () => {
+  const linhas = matrizSuficiencia(7, acolhimento("achado", "Marcado: Sonolenta."));
+  const alerta = linhas.find((linha) => linha.urgencia && linha.status === "a_esclarecer");
+  assert.ok(alerta, "linha de urgência a esclarecer");
+  assert.match(alerta.label, /consciência/);
+  assert.match(alerta.detalhe, /Achado a esclarecer/);
+  assert.match(readFileSync("client/src/features/super-neuropad/sufficiencia.ts", "utf8"), /ATENÇÃO CLÍNICA: achado a esclarecer em consciência, fundo de olho ou sinais meníngeos/);
 });

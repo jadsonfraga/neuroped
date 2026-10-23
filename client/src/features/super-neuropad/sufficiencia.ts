@@ -76,7 +76,7 @@ export const REQUISITOS_LAUDO: readonly RequisitoLaudo[] = [
   { id: "gestacao", secao: S3, label: "Gestação, parto, puerpério e história familiar", origem: { tipo: "externa", fonte: "anamnese" } },
   { id: "escolar", secao: S3, label: "Relato escolar ou de creche, quando frequenta", origem: { tipo: "escola" } },
   { id: "sono", secao: S3, label: "Sono e funções neurovegetativas (relato)", origem: { tipo: "estacao", estacao: "sleep" } },
-  { id: "urgencia", secao: S4, label: "Sinais de urgência: fundo de olho e sinais meníngeos", origem: { tipo: "urgencia" } },
+  { id: "urgencia", secao: S4, label: "Sinais de urgência: consciência, fundo de olho e sinais meníngeos", origem: { tipo: "urgencia" } },
   { id: "cabeca", secao: S4, label: "Cabeça e perímetro cefálico", origem: { tipo: "dominio", dominio: "crescimento" } },
   { id: "par3_4_6", secao: S4, label: "Pares III, IV e VI: movimentos oculares e pupilas", origem: { tipo: "dominio", dominio: "oculomotores" } },
   { id: "par5_7", secao: S4, label: "Pares V e VII: sensibilidade e mímica facial", origem: { tipo: "dominio", dominio: "par5_7" } },
@@ -120,8 +120,19 @@ const DE_COBERTURA: Record<CoverageStatus, SuficienciaStatus> = {
   sem_estacao: "fora_do_jogo",
 };
 
-// Urgência depende de exame físico do médico; o alerta observado no acolhimento fica na cobertura, sem disparar aviso por qualquer achado.
+// Urgência: exame físico do médico (fundo de olho e sinais meníngeos) e alteração aguda de consciência no acolhimento.
 const URGENCIA = ["fundus", "meningeal"];
+/** Estação de acolhimento e marcadores que indicam sonolência ou resposta lenta. Outros achados do acolhimento não disparam aviso. */
+const ACOLHIMENTO = "rapport";
+const SINAIS_CONSCIENCIA = ["sonolenta", "responde com demora"];
+
+/** Consciência alterada só quando o acolhimento foi realizado e um desses marcadores ficou registrado. */
+export function consciencaAlterada(records: CircuitRecords): boolean {
+  const entrada = records[ACOLHIMENTO];
+  if (!entrada || (entrada.status !== "observado" && entrada.status !== "achado")) return false;
+  const texto = entrada.note.toLowerCase();
+  return SINAIS_CONSCIENCIA.some((sinal) => texto.includes(sinal));
+}
 
 function statusDeEstacao(id: string, years: number, records: CircuitRecords): SuficienciaStatus {
   if (!circuitForAge(years).some((task) => task.id === id)) return "fora_do_jogo";
@@ -142,12 +153,12 @@ const DETALHE_URGENCIA: Record<StatusUrgencia, string> = {
   a_esclarecer: "Achado a esclarecer: o profissional deve avaliar a gravidade imediatamente; seguir protocolo de urgência quando houver sinais clínicos agudos",
   nao_obtido: "Exame não realizado ou sem colaboração: registrar limitação e avaliar indicação clínica; ausência de exame isolada não caracteriza urgência",
   examinado: "Estações registradas; o preenchimento não exclui situações de urgência nem substitui a interpretação profissional",
-  pendente_execucao: "Fundo de olho e sinais meníngeos ainda não registrados",
+  pendente_execucao: "Consciência, fundo de olho e sinais meníngeos ainda não registrados",
 };
 
 function statusUrgencia(records: CircuitRecords): StatusUrgencia {
   const estados = URGENCIA.map((id) => records[id]?.status);
-  if (estados.includes("achado")) return "a_esclarecer";
+  if (consciencaAlterada(records) || estados.includes("achado")) return "a_esclarecer";
   if (estados.some((status) => status === "nao_realizado" || status === "nao_colaborou")) return "nao_obtido";
   if (estados.every((status) => status === "observado")
     && URGENCIA.every((id) => CIRCUIT_TASKS.find((task) => task.id === id)?.method !== "presencial" || records[id]?.source === "examinador"))
@@ -184,8 +195,7 @@ function resolver(origem: Origem, years: number, records: CircuitRecords, bateri
     return { status, detalhe: DETALHE_URGENCIA[status] };
   }
   if (origem.tipo === "escola") {
-    const relatos = circuitForAge(years).map((task) => records[task.id]).filter((entry) => entry?.source === "escola"
-      && (entry.status === "observado" || entry.status === "achado"));
+    const relatos = Object.values(records).filter((entry) => entry.source === "escola");
     if (relatos.some((entry) => (entry.descricao ?? "").trim().length >= DESCRICAO_ESCOLAR_MINIMA)) {
       return { status: "examinado", detalhe: "Relato escolar com descrição do funcionamento registrado no circuito" };
     }
@@ -232,7 +242,7 @@ export function pendenciasParaRevisao(linhas: readonly LinhaSuficiencia[]): numb
 }
 
 /** Texto único do alerta de urgência, usado pela matriz e pelo componente. */
-export const URGENCIA_ALERTA = "ATENÇÃO CLÍNICA: achado a esclarecer em fundo de olho ou sinais meníngeos. O profissional deve avaliar a gravidade sem demora; havendo sinais agudos de urgência, interromper o jogo e seguir o protocolo assistencial. Não é pendência de checklist.";
+export const URGENCIA_ALERTA = "ATENÇÃO CLÍNICA: achado a esclarecer em consciência, fundo de olho ou sinais meníngeos. O profissional deve avaliar a gravidade sem demora; havendo sinais agudos de urgência, interromper o jogo e seguir o protocolo assistencial. Não é pendência de checklist.";
 
 /** Apenas achado a esclarecer ativa atenção clínica; ausência ou recusa do exame não prova emergência. */
 export function urgenciaAtiva(linhas: readonly LinhaSuficiencia[]): boolean {
