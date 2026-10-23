@@ -90,7 +90,15 @@ try {
   assert.match(await underTwo.innerText(), /menos de 2 anos/i);
   assert.equal(await button("Começar a aventura").isDisabled(), true, "menor de 2 anos bloqueado");
   await screen("00-menor-de-2");
-  await page.getByRole("group", { name: "Idade em anos" }).getByRole("button", { name: "7", exact: true }).click();
+  // Matriz de UX por idade: os 16 anos precisam de uma jornada concreta, não de um fallback.
+  const ageChoices = page.getByRole("group", { name: "Idade em anos" });
+  for (let anos = 2; anos <= 17; anos++) {
+    await ageChoices.getByRole("button", { name: String(anos), exact: true }).click();
+    const jornada = await page.getByTestId("super-neuropad-jornada-anual").innerText();
+    assert.match(jornada, new RegExp(`Aventura de ${anos} anos`), `jornada anual visível: ${anos}`);
+    assert.match(jornada, /Como facilitar:|Pausa e acolhimento:/, `mediação prática: ${anos}`);
+  }
+  await ageChoices.getByRole("button", { name: "7", exact: true }).click();
   assert.equal(await underTwo.count(), 0, "escolher a idade tira o bloqueio");
   const estimate = page.getByTestId("super-neuropad-estimate");
   const minutes = Number((await estimate.innerText()).match(/cerca de (\d+) minutos/)?.[1]);
@@ -114,6 +122,8 @@ try {
   for (let phase = 1; phase <= WORLDS; phase++) {
     await waitScreen("intro");
     await page.getByText(`Mundo ${phase} de ${WORLDS}`).waitFor();
+    const enredoDoMundo = page.getByTestId("super-neuropad-mundo-anual");
+    assert.match(await enredoDoMundo.innerText(), /7 anos/, "microenredo anual aparece em cada mundo");
     if (phase === 1) {
       await screen("02-intro");
       assert.equal(await button("Desfazer último").isDisabled(), true, "nada a desfazer antes do primeiro registro");
@@ -393,6 +403,7 @@ try {
   await page.getByRole("group", { name: "Idade em anos" }).getByRole("button", { name: "3", exact: true }).click();
   await page.getByRole("group", { name: "Personagens" }).getByRole("button", { name: /Robô Guerreiro/ }).click();
   assert.match(await page.getByTestId("super-neuropad-estimate").innerText(), /24 desafios/);
+  assert.match(await page.getByTestId("super-neuropad-jornada-anual").innerText(), /3 anos · Brincadeira que ganha vida/, "a idade nova não herda a narrativa anterior");
   await button("Começar a aventura").click();
   await page.getByRole("button", { name: /Entrar na fase/ }).click();
   await challengeIndicator(1, 4).waitFor();
