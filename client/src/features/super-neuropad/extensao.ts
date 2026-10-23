@@ -10,7 +10,7 @@
  * Nada é interpretado: o texto relata o que foi aplicado e como a criança respondeu.
  */
 import { DESCRIPTIVE_NOTICE } from "../../lib/descriptiveNotice";
-import { conceptKey, DESAFIOS_DISPONIVEIS_POR_IDADE, INTEGRATED_BANK, OPTIONAL_BANK, PHASE_ORDER, type OptionalItem } from "./bank";
+import { conceptKey, DESAFIOS_DISPONIVEIS_POR_IDADE, MAIN_INTEGRATED_BANK, OPTIONAL_BANK, PHASE_ORDER, type OptionalItem } from "./bank";
 import { bandItemCount, formatDuration, itemSeconds, KIND_LABELS, ORIGIN_LABELS, phaseById, STATUS_LABELS, youngFactor, type AnswerRecord, type Item } from "./model";
 
 export const EXTENSAO_VERSAO = "2026-10-21.1";
@@ -30,7 +30,7 @@ export function opcionaisDaIdade(years: number): readonly OptionalItem[] {
  * preservado e variações podem ser abertas explicitamente para revisão médica.
  */
 export function opcionaisSemRedundancia(years: number): readonly OptionalItem[] {
-  const principal = PHASE_ORDER.flatMap((phaseId) => INTEGRATED_BANK[years]?.[phaseId] ?? []);
+  const principal = PHASE_ORDER.flatMap((phaseId) => MAIN_INTEGRATED_BANK[years]?.[phaseId] ?? []);
   const vistos = new Set(principal.map(conceptKey));
   return opcionaisDaIdade(years).filter(({ item }) => {
     const chave = conceptKey(item);

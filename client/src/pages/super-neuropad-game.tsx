@@ -60,7 +60,7 @@ import {
   UNDER_TWO_MESSAGE,
   YEARS,
   ageGate,
-  bandItemCount,
+  gameBandItemCount,
   bandForYears,
   buildGameBrief,
   buildGameReport,
@@ -72,6 +72,7 @@ import {
   estimateBandSeconds,
   formatDuration,
   itemsFor,
+  gameItemsFor,
   judgeShortcut,
   phaseById,
   sessionLimitSeconds,
@@ -793,14 +794,14 @@ export default function SuperNeuroPadGamePage() {
   const band = ageYears === null ? undefined : bandForYears(ageYears);
   const phaseId = PHASE_ORDER[phaseIndex];
   const phase = phaseById(phaseId, ageYears ?? undefined);
-  const items = band ? itemsFor(band.id, phaseId) : [];
+  const items = band ? gameItemsFor(band.id, phaseId) : [];
   const item = items[itemIndex];
   const touchOrder = useMemo(
     () => (band && item && item.kind === "toque" ? optionOrder(item, seed + itemIndex * 17 + phaseIndex * 101, touchOrdinal(band.id, phaseId, item.id)) : []),
     [band, item, seed, itemIndex, phaseIndex, phaseId],
   );
-  const done = PHASE_ORDER.map((id) => band ? answers.filter((answer) => answer.phaseId === id).length >= itemsFor(band.id, id).length : false);
-  const totalItems = band ? bandItemCount(band.id) : 0;
+  const done = PHASE_ORDER.map((id) => band ? answers.filter((answer) => answer.phaseId === id).length >= gameItemsFor(band.id, id).length : false);
+  const totalItems = band ? gameBandItemCount(band.id) : 0;
   const estimate = band ? estimateBandSeconds(band.min) : null;
   const dirty = answers.length > 0 || opcionaisPendentes > 0 || circuitoDirty;
   useSondaExitGuard(dirty, "Sair apaga os registros desta partida. Copie ou baixe o resultado antes de sair. Deseja sair mesmo assim?");
@@ -1219,7 +1220,7 @@ export default function SuperNeuroPadGamePage() {
                 <span className="snp-chip">pré-consulta · aplicadora com a criança · {MIN_AGE_YEARS}–{MAX_AGE_YEARS} anos</span>
                 <span className="snp-chip">v{SUPER_NEUROPAD_VERSION}</span>
                 <span className="snp-chip">{PHASES.length} mundos · 3–6 desafios cada</span>
-                <span className="snp-chip">{DESAFIOS_DISPONIVEIS_POR_IDADE} disponíveis por idade com os opcionais</span>
+                <span className="snp-chip">{DESAFIOS_DISPONIVEIS_POR_IDADE} desafios obrigatórios por idade</span>
                 <span className="snp-chip">até 20 min (12 min aos 2 anos, 15 min aos 3)</span>
                 <span className="snp-chip">sem câmera · sem material externo</span>
               </div>
@@ -1377,8 +1378,13 @@ export default function SuperNeuroPadGamePage() {
           </div>
 
           {band && (
-            <OpcionaisPanel key={band.min} years={band.min} registros={opcionais[band.min] ?? {}} copiados={opcionaisCopiados[band.min] ?? {}} seed={seed}
-              onRegistrar={(record) => registrarOpcionalDaIdade(band.min, record)} onCopiar={() => void copiarOpcionais(band.min)} />
+            <section className="snp-panel snp-panel--soft p-5" data-testid="super-neuropad-mandatory-catalog">
+              <div className="snp-pixel text-base">Catálogo completo integrado</div>
+              <p className="mt-2 text-sm font-bold leading-relaxed">
+                Os 50 desafios não médicos desta faixa etária já estão na aventura obrigatória e entram na contagem, no tempo e no resultado.
+                O circuito médico permanece separado, com revisão clínica própria.
+              </p>
+            </section>
           )}
 
           <div className="grid gap-3 lg:grid-cols-2">
@@ -1641,9 +1647,6 @@ export default function SuperNeuroPadGamePage() {
               </Suspense>
             </div>
           </div>
-
-          <OpcionaisPanel key={session.ageYears} years={session.ageYears} registros={opcionais[session.ageYears] ?? {}} copiados={opcionaisCopiados[session.ageYears] ?? {}} seed={seed}
-            onRegistrar={(record) => registrarOpcionalDaIdade(session.ageYears, record)} onCopiar={() => void copiarOpcionais(session.ageYears)} />
 
           {missedAnswers.length > 0 && (
             <div className="snp-panel p-5">
