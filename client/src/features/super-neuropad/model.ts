@@ -334,7 +334,7 @@ export interface BandEstimate {
 /**
  * Tempo estimado da sessão inteira: preparação + apresentação de cada mundo +
  * itens (com fator para crianças pequenas) + folga de 10% para repetições +
- * pausa planejada até 5 anos. Travado em ≤ 20 minutos por teste unitário.
+ * pausa planejada até 5 anos. Dimensionado para a bateria obrigatória de 50 itens.
  */
 export function estimateBandSeconds(years: number): BandEstimate {
   const bandId = String(years);

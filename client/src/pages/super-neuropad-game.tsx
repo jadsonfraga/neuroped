@@ -1221,7 +1221,7 @@ export default function SuperNeuroPadGamePage() {
                 <span className="snp-chip">v{SUPER_NEUROPAD_VERSION}</span>
                 <span className="snp-chip">{PHASES.length} mundos · 3–6 desafios cada</span>
                 <span className="snp-chip">{DESAFIOS_DISPONIVEIS_POR_IDADE} desafios obrigatórios por idade</span>
-                <span className="snp-chip">até 20 min (12 min aos 2 anos, 15 min aos 3)</span>
+                <span className="snp-chip">até 45 min (30 min aos 2 anos, 35 min aos 3)</span>
                 <span className="snp-chip">sem câmera · sem material externo</span>
               </div>
             )}
