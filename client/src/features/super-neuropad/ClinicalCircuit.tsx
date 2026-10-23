@@ -219,7 +219,7 @@ export function ClinicalCircuit(props: CircuitoProps) {
   return <CircuitoClinico key={modoMedico ? "modo-medico" : "pre-consulta"} {...props} modoMedico={modoMedico} />;
 }
 
-function CircuitoClinico({ years, visible, bateria = null, onProgresso, modoMedico }: CircuitoProps & { modoMedico: boolean }) {
+function CircuitoClinico({ years, visible, bateria = null, onProgresso, onDirtyChange, modoMedico }: CircuitoProps & { modoMedico: boolean }) {
   const [tabEscolhida, setTab] = useState<CircuitTab>("neurologico");
   // Sem o modo médico, abas do médico e cobertura não existem: a tela cai na pré-consulta.
   const tab: CircuitTab = modoMedico || (tabEscolhida !== "medico" && tabEscolhida !== "cobertura") ? tabEscolhida : "neurologico";
@@ -254,10 +254,18 @@ function CircuitoClinico({ years, visible, bateria = null, onProgresso, modoMedi
   const progressoConcluidas = resumo ? resumo.concluidas : null;
   const progressoTotal = resumo ? resumo.total : null;
   const progressoCompleto = resumo ? resumo.completo : null;
+  const dirty = Object.keys(statuses).length > 0
+    || Object.keys(marks).length > 0
+    || Object.keys(notes).length > 0
+    || Object.keys(sources).length > 0
+    || generalNote.trim().length > 0;
   useEffect(() => {
     onProgresso?.(progressoConcluidas === null || progressoTotal === null || progressoCompleto === null
       ? null : { concluidas: progressoConcluidas, total: progressoTotal, completo: progressoCompleto });
   }, [onProgresso, progressoConcluidas, progressoTotal, progressoCompleto]);
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+  }, [dirty, onDirtyChange]);
   if (years === null || !all.length || !resumo) return null;
   const irParaMissao = (id: string) => {
     const alvo = all.find((entry) => entry.id === id);
