@@ -57,6 +57,7 @@ import {
   SUPER_NEUROPAD_SOURCES,
   SUPER_NEUROPAD_TITLE,
   SUPER_NEUROPAD_VERSION,
+  ageGameProfile,
   UNDER_TWO_MESSAGE,
   YEARS,
   ageGate,
@@ -792,6 +793,7 @@ export default function SuperNeuroPadGamePage() {
   const lastAnswerAt = useRef(Number.NEGATIVE_INFINITY);
 
   const band = ageYears === null ? undefined : bandForYears(ageYears);
+  const gameProfile = band ? ageGameProfile(band.min) : null;
   const phaseId = PHASE_ORDER[phaseIndex];
   const phase = phaseById(phaseId, ageYears ?? undefined);
   const items = band ? gameItemsFor(band.id, phaseId) : [];
@@ -1220,7 +1222,7 @@ export default function SuperNeuroPadGamePage() {
                 <span className="snp-chip">pré-consulta · aplicadora com a criança · {MIN_AGE_YEARS}–{MAX_AGE_YEARS} anos</span>
                 <span className="snp-chip">v{SUPER_NEUROPAD_VERSION}</span>
                 <span className="snp-chip">{PHASES.length} mundos · 3–6 desafios cada</span>
-                <span className="snp-chip">{DESAFIOS_DISPONIVEIS_POR_IDADE} desafios obrigatórios por idade</span>
+                <span className="snp-chip">{DESAFIOS_DISPONIVEIS_POR_IDADE} desafios obrigatórios · modo {gameProfile?.label ?? "aventura"}</span>
                 <span className="snp-chip">até 45 min (30 min aos 2 anos, 35 min aos 3)</span>
                 <span className="snp-chip">sem câmera · sem material externo</span>
               </div>
@@ -1228,7 +1230,7 @@ export default function SuperNeuroPadGamePage() {
             <h1 className={`snp-pixel snp-title text-[var(--snp-paper-fixed)] ${compact ? "text-lg sm:text-xl" : "text-2xl sm:text-3xl"}`}>{SUPER_NEUROPAD_TITLE}</h1>
             {!compact && (
               <p className="mt-2 max-w-3xl text-sm font-semibold leading-relaxed">
-                Avaliação única de pré-consulta: seis mundos que integram Sonda 10, Observa 10 (OBS-10), Reconhecimento Visual e Avaliação Cognitiva Infantil, com desafios para cada ano de idade. Cada desafio tem certo e errado; a criança só vê XP, moedas e conquistas. Ao final, contagem bruta por mundo, respostas item a item e PDF detalhado. Registro descritivo; sem classificação. Interpretação a cargo do profissional.
+                Avaliação única de pré-consulta: seis mundos que integram Sonda 10, Observa 10 (OBS-10), Reconhecimento Visual e Avaliação Cognitiva Infantil, com desafios para cada ano de idade. {gameProfile ? `${gameProfile.promise}; ${gameProfile.cue}.` : "A aventura muda de ritmo conforme a idade."} Cada desafio tem certo e errado; a criança só vê XP, moedas e conquistas. Ao final, contagem bruta por mundo, respostas item a item e PDF detalhado. Registro descritivo; sem classificação. Interpretação a cargo do profissional.
               </p>
             )}
           </div>

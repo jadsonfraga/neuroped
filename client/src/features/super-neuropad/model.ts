@@ -92,6 +92,20 @@ export interface AgeBand {
   ambient: string[];
 }
 
+/** Direção lúdica da faixa: ajusta a linguagem da aventura sem alterar o item clínico. */
+export interface AgeGameProfile {
+  label: string;
+  promise: string;
+  cue: string;
+}
+
+export function ageGameProfile(years: number): AgeGameProfile {
+  if (years <= 3) return { label: "descoberta", promise: "uma expedição curtinha por vez", cue: "apontar, brincar e contar já vale" };
+  if (years <= 5) return { label: "exploração", promise: "missões coloridas com escolhas simples", cue: "vamos tentar juntos, sem pressa" };
+  if (years <= 7) return { label: "aventura", promise: "desafios em sequência para conquistar", cue: "cada acerto libera o próximo mundo" };
+  return { label: "desafio", promise: "uma campanha com estratégia e autonomia", cue: "você escolhe o ritmo e acompanha sua missão" };
+}
+
 function iconFor(years: number): string {
   if (years <= 3) return "🌱";
   if (years <= 5) return "🌿";
