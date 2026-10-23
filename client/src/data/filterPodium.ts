@@ -15,6 +15,9 @@ export const PODIUM_QUESTION_CAP = 100;
 export function estimatedQuestionCount(scale: RefinedScaleMatch["scale"]): number {
   const interactive = getDeliveredInteractiveItemCount(scale.id);
   if (interactive > 0) return interactive;
+  // A EAF usa a página dedicada (/eaf), fora do registro de itens interativos:
+  // 6 domínios × 4 itens = 24 perguntas reais, não o fallback de 20.
+  if (scale.id === "eaf") return 24;
   const txt = `${scale.description ?? ""} ${scale.scoringCutoff ?? ""}`;
   const m = txt.match(/(\d{1,3})\s*(perguntas|itens|quest|quesitos|afirma|sim\/n)/i);
   if (m) {
