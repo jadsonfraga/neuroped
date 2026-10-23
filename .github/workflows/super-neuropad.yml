@@ -9,6 +9,9 @@ on:
       - client/src/styles/tokens.css
       - tests/unit/super-neuropad-game.test.ts
       - tests/e2e/super-neuropad-game.mjs
+      - tests/e2e/super-neuropad-draft-guard.mjs
+      - tests/unit/super-neuropad-completion.test.ts
+      - tests/unit/super-neuropad-revisao-auditoria.test.ts
       - tests/unit/super-neuropad-extensao.test.ts
       - tests/e2e/super-neuropad-opcionais.mjs
       - .github/workflows/super-neuropad.yml
@@ -38,6 +41,8 @@ jobs:
           VITE_OPEN_ACCESS: 'false'
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e:super-neuropad
+      - name: Protect partial clinical drafts before age changes and leaving
+        run: npm run test:e2e:super-neuropad-draft
       - name: Prove age-adjusted clinical circuit and non-blocking documentary matrix
         run: npm run test:e2e:super-neuropad-circuit
       - uses: actions/upload-artifact@v4

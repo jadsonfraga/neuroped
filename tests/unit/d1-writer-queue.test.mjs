@@ -7,7 +7,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { blockingRuns, D1_MIGRATION_WORKFLOWS, PAGES_PUBLISHER_WORKFLOWS } from "../../scripts/ci/wait-d1-writers.mjs";
 import { deployCheck } from "../../scripts/ci/write-deploy-check.mjs";
 
-const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
+const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8").replace(/\r\n/g, "\n");
 const conecta = ".github/workflows/conecta-d1-migration.yml";
 const billing = ".github/workflows/saas-billing-d1-migration.yml";
 const run = (id, path, extra = {}) => ({ id, path, event: "push", head_branch: "main", status: "in_progress", ...extra });
@@ -63,7 +63,7 @@ for (const path of D1_MIGRATION_WORKFLOWS) {
   assert.ok(workflows.includes(path), `${path} listado na fila, mas inexistente`);
   const yml = read(path);
   assert.doesNotMatch(yml, /group: cloudflare-pages\s*$/m, `${path}: migração não pode disputar o slot do deploy`);
-  assert.match(yml, /^concurrency:\n(?:\s*#.*\n)*\s*group: [^\n]*\$\{\{ github\.ref \}\}/m, `${path}: grupo precisa incluir a ref (PR não cancela main)`);
+  assert.match(yml, /^concurrency:\r?\n(?:\s*#.*\r?\n)*\s*group: [^\r\n]*\$\{\{ github\.ref \}\}/m, `${path}: grupo precisa incluir a ref (PR não cancela main)`);
   assert.match(yml, /^\s+actions: read$/m, `${path}: a fila precisa de actions: read`);
   const lock = yml.indexOf("MODE: migration");
   const firstWrite = yml.search(/d1 execute neuroped-db --remote --yes/);

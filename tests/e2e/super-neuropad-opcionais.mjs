@@ -85,6 +85,9 @@ async function main() {
       await setAge(page, 2);
       const panel = panelOf(page);
       assert.equal(await panel.getByTestId("super-neuropad-optional-stage").count(), 0, "recolhido por padrão");
+      assert.match(await panel.getByRole("button", { name: /Sem repetição/ }).innerText(), /Sem repetição/);
+      // Verifica o filtro padrão e abre o catálogo completo para manter a prova legada de 50.
+      await panel.getByRole("button", { name: /Sem repetição/ }).click();
       await panel.getByRole("button", { name: "Abrir opcionais" }).click();
       const stage = panel.getByTestId("super-neuropad-optional-stage");
       await stage.waitFor();
@@ -139,6 +142,7 @@ async function main() {
 
       // 2c. Aos 3 anos "cor vermelha" e "vermelho" não aparecem as duas vezes no seletor.
       await setAge(page, 3);
+      await panelOf(page).getByRole("button", { name: /Sem repetição/ }).click();
       await panelOf(page).getByRole("button", { name: "Abrir opcionais" }).click();
       const textos3 = await panelOf(page).getByLabel("Ir para o desafio opcional").evaluate((element) => Array.from(element.options).map((option) => option.text));
       assert.ok(!(textos3.some((text) => /Toque na cor VERMELHA/.test(text)) && textos3.some((text) => /Toque no vermelho/.test(text))), "3 anos: cor repetida");
@@ -175,7 +179,7 @@ async function main() {
       await page.getByRole("button", { name: "Começar a aventura", exact: true }).click();
       await page.getByRole("button", { name: /Entrar na fase/ }).click();
       assert.equal(await panelOf(page).count(), 0, "painel opcional fora da partida");
-      await page.getByText("Desafio 1 de 3").waitFor();
+      await page.locator(".snp-pixel").filter({ hasText: "Desafio 1 de 3" }).waitFor();
       await page.waitForTimeout(MANUAL_TAP_GAP_MS);
       const mainTouch = page.getByRole("group", { name: "Opções" });
       if (await mainTouch.count()) await page.getByRole("button", { name: "Aplicadora: não respondeu · pular", exact: true }).click();
@@ -255,7 +259,7 @@ async function main() {
       await mobile.page.getByRole("group", { name: "Personagens" }).getByRole("button", { name: /Robô Guerreiro/ }).click();
       await mobile.page.getByRole("button", { name: "Começar a aventura", exact: true }).click();
       await mobile.page.getByRole("button", { name: /Entrar na fase/ }).click();
-      await mobile.page.getByText(/Desafio 1 de/).waitFor();
+      await mobile.page.locator('span.snp-pixel[aria-live="polite"]').filter({ hasText: /Desafio 1 de/ }).waitFor();
       assert.equal(await dock.isVisible(), false, "barra inferior escondida durante a partida");
       assert.equal(await mobile.page.getByTestId("button-floating-help").isVisible(), false, "botão de ajuda escondido durante a partida");
       const answer = mobile.page.locator('[data-testid="super-neuropad-game"] button:has-text("Acertou"), [data-testid="super-neuropad-game"] [role="group"][aria-label="Opções"] button').first();

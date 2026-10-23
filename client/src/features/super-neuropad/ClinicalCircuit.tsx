@@ -194,8 +194,9 @@ function MatrizList({ years, records, bateria }: { years: number; records: Circu
  * Toda missão tem campos obrigatórios (ver obrigatorio.ts) e o circuito é declarado COMPLETO ou INCOMPLETO.
  * Obrigatório não trava a interface: nenhum controle é desabilitado e a navegação é livre.
  */
-export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }: {
+export function ClinicalCircuit({ years, visible, bateria = null, onProgresso, onDirtyChange }: {
   years: number | null; visible: boolean; bateria?: BateriaResumo | null; onProgresso?: (progresso: ProgressoCircuito | null) => void;
+  onDirtyChange?: (dirty: boolean) => void;
 }) {
   const [tab, setTab] = useState<CircuitTab>("neurologico");
   const [active, setActive] = useState(0);
@@ -204,6 +205,11 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [sources, setSources] = useState<Record<string, CircuitSource>>({});
   const [generalNote, setGeneralNote] = useState("");
+  // Inclui rascunhos sem resultado escolhido: ainda não aparecem em `records`.
+  const dirty = Object.keys(statuses).length > 0 || Object.keys(sources).length > 0
+    || Object.values(marks).some((entries) => entries.length > 0)
+    || Object.values(notes).some((note) => note.trim().length > 0) || generalNote.trim().length > 0;
+  useEffect(() => { onDirtyChange?.(dirty); }, [dirty, onDirtyChange]);
   const [feedback, setFeedback] = useState("");
   const [anotacaoAberta, setAnotacaoAberta] = useState(false);
   const [orientacaoAberta, setOrientacaoAberta] = useState(false);
@@ -214,7 +220,7 @@ export function ClinicalCircuit({ years, visible, bateria = null, onProgresso }:
   const tasks = years === null ? [] : tab === "medico" ? doMedico : missoesPreConsulta(years, area);
   const task = tasks[Math.min(active, tasks.length - 1)];
   const demo = task ? STATION_DEMO[task.id] : undefined;
-  const estados: Record<string, EstadoMissao> = Object.fromEntries(all.map((entry) =>
+  const estados: Record<string, EstadoMissao> = Object.fromEntries(todas.map((entry) =>
     [entry.id, { status: statuses[entry.id], source: sources[entry.id], marcadores: marks[entry.id] ?? [], descricao: notes[entry.id] ?? "" }]));
   const resumo = years === null ? null : resumoObrigatorio(years, estados, generalNote);
   const faltamDe = (id: string) => camposPendentes(estados[id] ?? {});

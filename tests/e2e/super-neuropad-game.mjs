@@ -39,6 +39,7 @@ page.on("dialog", (dialog) => {
 });
 const root = page.getByTestId("super-neuropad-game");
 const button = (name) => page.getByRole("button", { name, exact: true });
+const challengeIndicator = (item, total) => page.locator('span.snp-pixel[aria-live="polite"]').filter({ hasText: `Desafio ${item} de ${total}` });
 async function screen(name) {
   const axe = await new AxeBuilder({ page }).include('[data-testid="super-neuropad-game"]').analyze();
   await writeFile(`${dir}/${name}-axe.json`, JSON.stringify(axe.violations, null, 2));
@@ -120,7 +121,7 @@ try {
     await page.getByRole("button", { name: /Entrar na fase/ }).click();
     for (let item = 1; item <= PER_WORLD; item++) {
       await waitScreen("play");
-      await page.getByText(`Desafio ${item} de ${PER_WORLD}`).waitFor();
+      await challengeIndicator(item, PER_WORLD).waitFor();
       if (phase === 2 && item === 1 && !pausedOnce) {
         // Pausa congela o desafio: nenhuma opção fica disponível até continuar.
         await button("Pausa").click();
@@ -191,7 +192,7 @@ try {
         if (phase === 5 && !refused) await screen("04-play-fazer");
         if (phase === WORLDS && item === 1) {
           // Atalho da aplicadora em item julgado: tecla 1 = Acertou (mesma guarda de toque duplo).
-          assert.equal(await page.getByText(`Desafio 1 de ${PER_WORLD}`).count(), 1);
+          assert.equal(await challengeIndicator(1, PER_WORLD).count(), 1);
           await page.keyboard.press("1");
         } else if (phase >= 2 && !refused) {
           // Criança que diz não/empurra: "Recusou" fica separado de "Errou" e de "Não respondeu".
@@ -204,9 +205,9 @@ try {
       registered += 1;
       if (phase === 1 && item === 3 && !undone) {
         // Toque errado da aplicadora: desfazer volta exatamente ao mesmo desafio e apaga o registro.
-        await page.getByText(`Desafio 4 de ${PER_WORLD}`).waitFor();
+        await challengeIndicator(4, PER_WORLD).waitFor();
         await button("Desfazer último").click();
-        await page.getByText(`Desafio 3 de ${PER_WORLD}`).waitFor();
+        await challengeIndicator(3, PER_WORLD).waitFor();
         registered -= 1;
         undone = true;
         item -= 1;
@@ -394,11 +395,11 @@ try {
   assert.match(await page.getByTestId("super-neuropad-estimate").innerText(), /24 desafios/);
   await button("Começar a aventura").click();
   await page.getByRole("button", { name: /Entrar na fase/ }).click();
-  await page.getByText("Desafio 1 de 4").waitFor();
+  await challengeIndicator(1, 4).waitFor();
   await page.getByTestId("super-neuropad-caregiver").first().waitFor();
   await screen("09-tres-anos-relato-cuidador");
   await skipCurrent();
-  await page.getByText("Desafio 2 de 4").waitFor();
+  await challengeIndicator(2, 4).waitFor();
   await button("Encerrar").click();
   await waitScreen("results");
   await page.getByTestId("super-neuropad-toddler-domains").waitFor();

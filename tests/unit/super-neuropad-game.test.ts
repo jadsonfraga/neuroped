@@ -555,7 +555,8 @@ test("página: menores de 2 anos bloqueados, estimativa de tempo, ambiente sem m
   assert.match(page, /Menos de 2 anos/);
   assert.match(page, /data-testid="super-neuropad-under-two"/);
   assert.match(page, /\{UNDER_TWO_MESSAGE\}/);
-  assert.match(page, /setUnderTwo\(true\); setAgeYears\(null\);/, "menor de 2 anos nunca tem faixa selecionada");
+  assert.match(page, /onClick=\{\(\) => chooseAge\(null\)\}/, "menor de 2 anos usa a troca protegida sem faixa");
+  assert.match(page, /setUnderTwo\(years === null\);\s*setAgeYears\(years\);/, "menor de 2 anos nunca tem faixa selecionada");
   assert.match(page, /estimateBandSeconds\(band\.min\)/);
   assert.match(page, /\(máximo \{Math\.round\(sessionLimitSeconds\(band\.min\) \/ 60\)\}\)/);
   assert.match(page, /band\.ambient/);

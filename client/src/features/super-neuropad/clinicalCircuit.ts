@@ -25,11 +25,12 @@ export interface CircuitTask {
   video?: "utah" | "stanford";
   safety?: string;
 }
-export type CircuitSource = "examinador" | "cuidador" | "escola" | "outra";
+export type CircuitSource = "examinador" | "auxiliar" | "cuidador" | "escola" | "outra";
 /** `note` reúne marcadores e descrição para o relatório; `descricao` é só o texto livre digitado pelo auxiliar. */
 export interface CircuitEntry { status: CircuitStatus; note: string; source?: CircuitSource; descricao?: string }
 export const CIRCUIT_SOURCES: Record<CircuitSource,string> = {
-  examinador: "Observei diretamente (auxiliar ou examinador)",
+  examinador: "Observação direta pelo examinador",
+  auxiliar: "Observei diretamente (auxiliar)",
   cuidador: "Relato do cuidador",
   escola: "Relato escolar",
   outra: "Outra fonte (identificar a proveniência na nota)",
@@ -214,7 +215,7 @@ export function buildCircuitReport(years: number, records: CircuitRecords, gener
       if (record.note.trim()) text.push(`  Descrição registrada: ${record.note.trim()}`);
       if (task.method === "presencial" && record.source !== "examinador" && (record.status === "observado" || record.status === "achado"))
         text.push("  Sem comprovação de exame físico direto: requer fonte do examinador e revisão profissional.");
-      else if (record.status === "observado" || record.status === "achado") text.push("  Descrição específica não fornecida; não inferir normalidade ou alteração.");
+      if (!record.note.trim() && (record.status === "observado" || record.status === "achado")) text.push("  Descrição específica não fornecida; não inferir normalidade ou alteração.");
     }
     if (!entries.some((entry) => entry.area === area)) text.push("Não registrado.");
     text.push("");

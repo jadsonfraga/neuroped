@@ -36,9 +36,11 @@ const exceptions = ALLOWLIST.filter((entry) => entry.expiresOn >= today);
 
 let raw = "";
 try {
-  raw = execFileSync("npm", ["audit", "--json", "--audit-level=high"], {
+  const isWindows = process.platform === "win32";
+  raw = execFileSync(isWindows ? "npm.cmd" : "npm", ["audit", "--json", "--audit-level=high"], {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
+    shell: isWindows,
   });
 } catch (error) {
   // npm audit sai com 1 quando encontra vulnerabilidades: o JSON vem no stdout.

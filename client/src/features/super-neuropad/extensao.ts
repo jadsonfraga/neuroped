@@ -10,7 +10,7 @@
  * Nada é interpretado: o texto relata o que foi aplicado e como a criança respondeu.
  */
 import { DESCRIPTIVE_NOTICE } from "../../lib/descriptiveNotice";
-import { DESAFIOS_DISPONIVEIS_POR_IDADE, OPTIONAL_BANK, type OptionalItem } from "./bank";
+import { conceptKey, DESAFIOS_DISPONIVEIS_POR_IDADE, INTEGRATED_BANK, OPTIONAL_BANK, PHASE_ORDER, type OptionalItem } from "./bank";
 import { bandItemCount, formatDuration, itemSeconds, KIND_LABELS, ORIGIN_LABELS, phaseById, STATUS_LABELS, youngFactor, type AnswerRecord, type Item } from "./model";
 
 export const EXTENSAO_VERSAO = "2026-10-21.1";
@@ -22,6 +22,33 @@ export type RegistrosOpcionais = Readonly<Record<string, AnswerRecord>>;
 
 export function opcionaisDaIdade(years: number): readonly OptionalItem[] {
   return OPTIONAL_BANK[years] ?? [];
+}
+
+/**
+ * Exibição padrão para a assistente: um único desafio por conceito na idade,
+ * inclusive quando já existe na bateria principal. O catálogo de até 50 fica
+ * preservado e variações podem ser abertas explicitamente para revisão médica.
+ */
+export function opcionaisSemRedundancia(years: number): readonly OptionalItem[] {
+  const principal = PHASE_ORDER.flatMap((phaseId) => INTEGRATED_BANK[years]?.[phaseId] ?? []);
+  const vistos = new Set(principal.map(conceptKey));
+  return opcionaisDaIdade(years).filter(({ item }) => {
+    const chave = conceptKey(item);
+    if (vistos.has(chave)) return false;
+    vistos.add(chave);
+    return true;
+  });
+}
+
+export function proximoPendenteNaLista(lista: readonly OptionalItem[], registros: RegistrosOpcionais, depoisDe?: string): string | null {
+  if (!lista.length) return null;
+  const index = depoisDe ? lista.findIndex((entry) => entry.item.id === depoisDe) : -1;
+  const start = index < 0 ? 0 : index + 1;
+  for (let step = 0; step < lista.length; step++) {
+    const entry = lista[(start + step) % lista.length];
+    if (!registros[entry.item.id]) return entry.item.id;
+  }
+  return null;
 }
 
 /** Idades em que letras e numerais ainda não são marco universal; o item continua disponível, com aviso. */
@@ -62,13 +89,7 @@ export function apagarOpcional(registros: RegistrosOpcionais, itemId: string): R
 
 /** Próximo opcional ainda sem registro depois de `depoisDe` (volta ao início); `null` quando todos têm registro. */
 export function proximoPendente(years: number, registros: RegistrosOpcionais, depoisDe?: string): string | null {
-  const lista = opcionaisDaIdade(years);
-  const start = depoisDe ? lista.findIndex((entry) => entry.item.id === depoisDe) + 1 : 0;
-  for (let step = 0; step < lista.length; step++) {
-    const entry = lista[(start + step) % lista.length];
-    if (!registros[entry.item.id]) return entry.item.id;
-  }
-  return null;
+  return proximoPendenteNaLista(opcionaisDaIdade(years), registros, depoisDe);
 }
 
 /**
