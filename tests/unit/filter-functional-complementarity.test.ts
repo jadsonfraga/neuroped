@@ -79,19 +79,25 @@ const total = (p: ReturnType<typeof selectPodium>) =>
   const catalog = mergeFilterableCatalog(allScales);
   const base = { queixas: ["sono"], ageMonths: 72, ageBand: null, respondente: "pais" as const };
   const matches = filterScalesWithClinicalRescue(catalog, base);
-  const functional = matches.find((m) => m.scale.id === FUNCTIONAL_AUTONOMY_ANCHOR_ID);
-  assert.ok(functional, "pais + 6 anos + sono deve ter candidato funcional");
+  const functional = matches.find((m) => m.scale.id === "eaf");
+  assert.ok(functional, "pais + 6 anos + sono deve ter EAF como candidato funcional");
   assert.equal(functional?.implementationStatus, "complete");
   assert.match(functional?.clinicalReason ?? "", /ajuda|funcional/i);
+  const realPodium = selectPodium(matches, null, { selectedQueixas: ["sono"], ageMonths: 72 });
+  assert.ok(ids(realPodium).includes("eaf"), "a composição real deve reservar uma medalha funcional");
+  assert.ok(total(realPodium) <= PODIUM_QUESTION_CAP);
 
+  const infant = filterScalesWithClinicalRescue(catalog, { ...base, ageMonths: 12 });
+  assert.ok(infant.some((m) => m.scale.id === FUNCTIONAL_AUTONOMY_ANCHOR_ID), "lactentes têm alternativa EFDI");
+  const isFunctional = (id: string) => id === "eaf" || id === FUNCTIONAL_AUTONOMY_ANCHOR_ID;
   const teacher = filterScalesWithClinicalRescue(catalog, { ...base, respondente: "professor" });
-  assert.equal(teacher.some((m) => m.scale.id === FUNCTIONAL_AUTONOMY_ANCHOR_ID), false);
+  assert.equal(teacher.some((m) => isFunctional(m.scale.id)), false);
   const direct = filterScalesWithClinicalRescue(catalog, { ...base, respondente: "teste_direto_crianca" });
-  assert.equal(direct.some((m) => m.scale.id === FUNCTIONAL_AUTONOMY_ANCHOR_ID), false);
+  assert.equal(direct.some((m) => isFunctional(m.scale.id)), false);
   const acute = filterScalesWithClinicalRescue(catalog, { ...base, queixas: ["suicidio"], ageMonths: 168 });
-  assert.equal(acute.some((m) => m.scale.id === FUNCTIONAL_AUTONOMY_ANCHOR_ID), false);
+  assert.equal(acute.some((m) => isFunctional(m.scale.id)), false);
   const invalidAge = filterScalesWithClinicalRescue(catalog, { ...base, ageInputInvalid: true });
-  assert.equal(invalidAge.some((m) => m.scale.id === FUNCTIONAL_AUTONOMY_ANCHOR_ID), false);
+  assert.equal(invalidAge.some((m) => isFunctional(m.scale.id)), false);
 }
 
 console.log("[filter-functional-complementarity] OK: autonomia/ajuda, não redundância, idade/respondente/risco e teto");
