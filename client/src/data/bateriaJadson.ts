@@ -116,7 +116,7 @@ export const eafDomains = [
       "Expressa necessidades básicas de modo compreensível.",
       "Compreende orientações do cotidiano.",
       "Consegue relatar fatos simples do dia.",
-      "Faz perguntas, pede esclarecimentos ou solicita ajuda por iniciativa própria quando não consegue realizar algo (por fala, gesto, olhar ou comunicação alternativa).",
+      "Faz perguntas ou pede esclarecimentos quando necessário.",
     ],
   },
   {
