@@ -1248,8 +1248,8 @@ export default function SuperNeuroPadGamePage() {
                 className={`snp-option min-h-12 px-1 text-xs font-black leading-tight ${underTwo ? "bg-[var(--snp-berry-tint)]" : "bg-[var(--snp-paper-fixed)] hover:bg-[var(--snp-paper-2-fixed)]"}`}>
                 Menos de 2 anos
               </button>
-              <button type="button" aria-pressed={false} onClick={() => { softTap(); setUnderTwo(false); setAgeYears(null); }}
-                className="snp-option min-h-12 px-2 text-sm font-black bg-[var(--snp-paper-fixed)]"
+              <button type="button" disabled aria-describedby="super-neuropad-adultos-aviso"
+                className="snp-option min-h-12 px-2 text-sm font-black bg-[var(--snp-paper-fixed)] opacity-70 cursor-not-allowed"
                 data-testid="super-neuropad-adultos-18plus">
                 18+ · Adultos
               </button>
@@ -1260,7 +1260,7 @@ export default function SuperNeuroPadGamePage() {
                 </button>
               ))}
             </div>
-            <p className="text-xs font-semibold" data-testid="super-neuropad-adultos-aviso">18+ · Adultos de qualquer idade: bateria específica em desenvolvimento. Não utilizar a bateria pediátrica de 17 anos como avaliação adulta; nenhuma pontuação ou resultado adulto será gerado até homologação.</p>
+            <p className="text-xs font-semibold" id="super-neuropad-adultos-aviso" data-testid="super-neuropad-adultos-aviso">18+ · Adultos de qualquer idade: bateria específica em desenvolvimento. Não utilizar a bateria pediátrica de 17 anos como avaliação adulta; nenhuma pontuação ou resultado adulto será gerado até homologação.</p>
             {underTwo && (() => {
               const gate = ageGate(1);
               return (
