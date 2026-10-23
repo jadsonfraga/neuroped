@@ -199,6 +199,7 @@ function MatrizList({ years, records, bateria }: { years: number; records: Circu
  */
 type CircuitoProps = {
   years: number | null; visible: boolean; bateria?: BateriaResumo | null; onProgresso?: (progresso: ProgressoCircuito | null) => void;
+  onDirtyChange?: (dirty: boolean) => void;
 };
 
 /**
