@@ -2,6 +2,7 @@ import { getApplicationMode, getImplementationStatus, scaleCoversSelectedSignalE
 import { getClinicalTiers, type ClinicalTierRule } from "./clinicalRanking";
 import { getDeliveredInteractiveItemCount, type Respondente } from "./scaleFilter";
 import { enforcePodiumHardCap } from "./podiumHardCap";
+import { refineFunctionalComplementarity } from "./filterPodiumComplementarity";
 
 // Limite total do pódio: a soma ESTIMADA de perguntas de Ouro + Prata + Bronze
 // nunca deve ultrapassar este teto (não sobrecarregar a família/o clínico).
@@ -699,6 +700,27 @@ export function selectPodium(
       if (!cand || !containsAge(cand) || !isApplicable(cand) || cand.relevanceScore < 45) continue;
       if (tryUptake(cand)) break;
     }
+  }
+
+  // Último passe: se houver EFDI aplicável entre os candidatos seguros,
+  // um dos três selos deve cobrir autonomia REAL e solicitação de ajuda.
+  // O mesmo passe evita pares de construto redundante quando a troca preserva
+  // queixas, sinais, idade, aplicabilidade e teto de perguntas.
+  const complementary = refineFunctionalComplementarity({
+    ouro, prata, bronze,
+    candidates: sorted,
+    selectedQueixas,
+    selectedSignals,
+    ageMonths: exactAge,
+    questionCap: PODIUM_QUESTION_CAP,
+    countQuestions: (match) => estimatedQuestionCount(match.scale),
+  });
+  ouro = complementary.ouro;
+  prata = complementary.prata;
+  bronze = complementary.bronze;
+  used.clear();
+  for (const medal of [ouro, prata, bronze]) {
+    if (medal) used.add(medal.scale.id);
   }
 
   // Direct and school also join the used set to prevent deduplication with medals.
