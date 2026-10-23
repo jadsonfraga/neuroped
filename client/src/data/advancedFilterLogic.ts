@@ -1134,34 +1134,36 @@ export function filterScalesWithClinicalRescue(
   // uma escala funcional isolada não deve parecer resposta a outra suspeita.
   if (ctx.respondente && primary.length === 0) return results;
 
-  // Complemento funcional transversal, mesmo quando já existem três escalas
-  // para sintomas: autonomia prática + PEDIDO ESPONTÂNEO de ajuda verbal/não
-  // verbal. O EFDI-V/NV existente contempla ambos. A expansão de domínio é
-  // exclusivamente para a âncora, sem relaxar idade, respondente, risco ou
-  // status real de implementação e sem chamar esse instrumento de diagnóstico.
-  if (ctx.ageInputInvalid || results.some((m) => m.scale.id === "efdi")) return results;
-  const efdi = scales.find((scale) => scale.id === "efdi");
+  // Âncora funcional transversal. EAF-NEXUS (2–18a) mede independência e
+  // solicitação de auxílio, sem utilizar uma escala de suspeita de deficiência
+  // intelectual para toda queixa. Abaixo de 2 anos, EFDI-V/NV é alternativa
+  // funcional disponível no acervo. Ambos são instrumentos autorais, não
+  // psicometria confirmatória. Idade, respondente, risco agudo e aplicação
+  // continuam bloqueios inegociáveis.
+  const functionalIds = ["eaf", "efdi"] as const;
+  if (ctx.ageInputInvalid || results.some((m) => functionalIds.some((id) => id === m.scale.id))) return results;
   const functionalContext: FilterContext = {
     ...ctx,
     queixas: ["funcionalidade"],
     selectedSignals: [],
   };
-  if (
-    !efdi ||
-    !ageCovers(efdi, ctx) ||
-    !passesMandatoryFilters(efdi, functionalContext) ||
-    clinicalHardBlock(efdi, ctx) !== null ||
-    getImplementationStatus(efdi) !== "complete"
-  ) {
-    return results;
-  }
-  const functional = calculateRefinedScore(efdi, functionalContext);
+  const functionalScale = functionalIds
+    .map((id) => scales.find((scale) => scale.id === id))
+    .find((scale) =>
+      scale &&
+      ageCovers(scale, ctx) &&
+      passesMandatoryFilters(scale, functionalContext) &&
+      clinicalHardBlock(scale, ctx) === null &&
+      getImplementationStatus(scale) === "complete"
+    );
+  if (!functionalScale) return results;
+  const functional = calculateRefinedScore(functionalScale, functionalContext);
   return [
     ...results,
     {
       ...functional,
       clinicalReason:
-        "Complemento funcional: atividades que realiza sozinho e comunicação espontânea para pedir ajuda; instrumento autoral experimental, sem diagnóstico isolado.",
+        "Complemento funcional: o que realiza sozinho e como pede ajuda espontaneamente; instrumento autoral de registro clínico, sem diagnóstico isolado.",
       isBroadbandFallback: true,
     },
   ];
