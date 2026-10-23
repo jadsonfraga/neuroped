@@ -1130,6 +1130,9 @@ export function filterScalesWithClinicalRescue(
   // ranking. Se não houver opção compatível, falha fechado: nunca repete a
   // busca sem o respondente nem completa o pódio com fallback de outro perfil.
   const results = ctx.respondente ? primary : fillPodiumWithBroadband(primary, scales, ctx);
+  // Sem instrumento relacionado à queixa para o respondente obrigatório,
+  // uma escala funcional isolada não deve parecer resposta a outra suspeita.
+  if (ctx.respondente && primary.length === 0) return results;
 
   // Complemento funcional transversal, mesmo quando já existem três escalas
   // para sintomas: autonomia prática + PEDIDO ESPONTÂNEO de ajuda verbal/não
