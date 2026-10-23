@@ -252,7 +252,7 @@ export function buildCircuitReport(years: number, records: CircuitRecords, gener
       if (record.note.trim()) text.push(`  Descrição registrada: ${record.note.trim()}`);
       if (task.method === "presencial" && record.source !== "examinador" && (record.status === "observado" || record.status === "achado"))
         text.push("  Sem comprovação de exame físico direto: requer fonte do examinador e revisão profissional.");
-      else if (record.status === "observado" || record.status === "achado") text.push("  Descrição específica não fornecida; não inferir normalidade ou alteração.");
+      if (!record.note.trim() && (record.status === "observado" || record.status === "achado")) text.push("  Descrição específica não fornecida; não inferir normalidade ou alteração.");
     }
     if (!entries.some((entry) => entry.area === area)) text.push("Não registrado.");
     text.push("");

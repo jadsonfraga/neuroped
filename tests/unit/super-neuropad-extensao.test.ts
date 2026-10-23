@@ -3,7 +3,7 @@ import test from "node:test";
 import { readFileSync } from "node:fs";
 import { conceptKey, INTEGRATED_BANK, PHASE_ORDER, YEARS } from "../../client/src/features/super-neuropad/bank";
 import {
-  avisoDeIdade, DESAFIOS_DISPONIVEIS_POR_IDADE, disponiveisDaIdade, estimativaOpcionaisSegundos, opcionaisDaIdade, pendentesDeCopia, proximoPendente,
+  avisoDeIdade, DESAFIOS_DISPONIVEIS_POR_IDADE, disponiveisDaIdade, estimativaOpcionaisSegundos, opcionaisDaIdade, opcionaisSemRedundancia, pendentesDeCopia, proximoPendente, proximoPendenteNaLista,
   registradosNaOrdem, registrarOpcional, apagarOpcional, textoOpcionais, type RegistrosOpcionais,
 } from "../../client/src/features/super-neuropad/extensao";
 import {
@@ -166,6 +166,20 @@ test("auditoria 21/10/2026: opcionais não repetem conceito entre si nem com a b
     }
     assert.equal(repetidos, EXCECOES[years] ?? 0, `${years} anos: conceitos repetidos nos opcionais`);
     assert.equal(opcionaisDaIdade(years).length + bandItemCount(String(years)), 50, `${years} anos: continuam 50 disponíveis`);
+  }
+});
+
+test("seleção padrão dos opcionais oculta redundâncias sem apagar o catálogo de 50", () => {
+  for (const years of YEARS) {
+    const principal = new Set(PHASE_ORDER.flatMap((phaseId) => INTEGRATED_BANK[years][phaseId]).map(conceptKey));
+    const exibidos = opcionaisSemRedundancia(years);
+    assert.ok(exibidos.length > 0 && exibidos.length <= opcionaisDaIdade(years).length, `${years}: seleção válida`);
+    for (const { item } of exibidos) {
+      const conceito = conceptKey(item);
+      assert.ok(!principal.has(conceito), `${years}: não repete a bateria (${item.id})`);
+      principal.add(conceito);
+    }
+    assert.equal(proximoPendenteNaLista(exibidos, {}), exibidos[0].item.id, `${years}: inicia pela lista filtrada`);
   }
 });
 

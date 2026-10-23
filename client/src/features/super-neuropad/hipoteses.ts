@@ -83,6 +83,7 @@ export const ESTADO_ITEM_LABELS: Record<EstadoItem, string> = {
 
 /** Guias cuja faixa inclui a idade informada. */
 export function guiasAplicaveis(years: number): GuiaHipotese[] {
+  if (!Number.isInteger(years)) return [];
   return GUIAS_HIPOTESE.filter((guia) => years >= guia.min && years <= guia.max);
 }
 
@@ -91,9 +92,9 @@ export function estadoItem(item: ItemColeta, years: number, records: CircuitReco
   // Invariante defensiva: fonte externa nunca se torna "coletado" por um toque,
   // mesmo se uma revisão futura acidentalmente misturar estação e fonte no item.
   if (item.fonteExterna) return "fonte_externa";
-  const presentes = circuitForAge(years).map((task) => task.id);
-  const aplicaveis = item.estacoes.filter((id) => presentes.includes(id));
-  if (aplicaveis.some((id) => records[id]?.status === "achado")) return "achado_a_esclarecer";
-  if (aplicaveis.some((id) => records[id]?.status === "observado")) return "coletado";
+  const aplicaveis = circuitForAge(years).filter((task) => item.estacoes.includes(task.id));
+  if (aplicaveis.some((task) => records[task.id]?.status === "achado")) return "achado_a_esclarecer";
+  if (aplicaveis.length > 0 && aplicaveis.every((task) => records[task.id]?.status === "observado"
+    && (task.method !== "presencial" || records[task.id]?.source === "examinador"))) return "coletado";
   return "pendente";
 }
