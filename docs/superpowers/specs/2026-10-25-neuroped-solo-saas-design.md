@@ -1,7 +1,7 @@
 # NeuroPed Solo — desenho do primeiro SaaS vendável
 
 **Data:** 2026-10-25  
-**Estado:** aguardando aprovação do proprietário  
+**Estado:** aprovado pelo proprietário em 2026-10-25
 **Decisão de produto:** Solo primeiro; Clínicas depois.
 
 ## Intenção
