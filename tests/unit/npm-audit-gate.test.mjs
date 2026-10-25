@@ -23,6 +23,21 @@ test("gate: excecao braces cobre a cadeia tailwindcss e expira sozinha", () => {
   const source = readFileSync(GATE, "utf8");
   assert.match(source, /GHSA-vfj7-8cjw-p6xm/, "advisory braces documentado no fonte");
   assert.match(source, /expiresOn: "2026-11-04"/, "prazo curto da excecao documentado");
+  // Uma exceção não deve exigir que a vulnerabilidade continue presente:
+  // quando o lockfile é corrigido, o teste de expiração de braces deixa de
+  // ser aplicável. A expiração de node-forge segue exercitada no teste abaixo.
+  const isWindows = process.platform === "win32";
+  let auditJson;
+  try {
+    auditJson = execFileSync(isWindows ? "npm.cmd" : "npm", ["audit", "--json", "--audit-level=high"], {
+      encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], shell: isWindows,
+    });
+  } catch (error) {
+    auditJson = String(error.stdout ?? "");
+  }
+  const report = JSON.parse(auditJson);
+  if (!report.vulnerabilities?.braces) return;
+
   const expired = source.replace('expiresOn: "2026-11-04"', 'expiresOn: "2020-01-01"');
   const tmp = `${process.env.RUNNER_TEMP ?? "/tmp"}/npm-audit-gate-braces-expired.mjs`;
   writeFileSync(tmp, expired);
