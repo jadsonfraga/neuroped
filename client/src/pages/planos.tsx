@@ -9,12 +9,12 @@ import {
   ListChecks,
   Mail,
   ShieldCheck,
-  Users,
   XCircle,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
+  CANONICAL_PLAN_DISPLAY_NAME,
   CANONICAL_PRICE_CENTS,
   CANONICAL_TRIAL_DAYS,
   POST_CANCEL_RETENTION_DAYS,
@@ -74,12 +74,6 @@ const INCLUDED = [
       "Cada clínica tem seu próprio ambiente separado. Pacientes, documentos e escalas de uma clínica não são alcançáveis por outra — o isolamento é decidido no servidor, a partir do vínculo do usuário, e não do que o navegador envia.",
   },
   {
-    icon: Users,
-    title: "Equipe com papéis e assentos",
-    body:
-      "Convide profissionais por e-mail, defina o papel de cada um, revogue o convite ou remova o acesso. A mesma recepção pode atender mais de um profissional da clínica, escolhendo de qual agenda opera, e cada ação fica na agenda escolhida. O teto de assentos da assinatura é aplicado no servidor, não na tela.",
-  },
-  {
     icon: Mail,
     title: "Escalas respondidas pela família",
     body:
@@ -93,9 +87,9 @@ const INCLUDED = [
   },
   {
     icon: ShieldCheck,
-    title: "LGPD executável, não declarativa",
+    title: "Privacidade verificada no ambiente",
     body:
-      "Consentimentos versionados, trilha de auditoria das operações e pedidos de exportação e de eliminação atendidos pelo próprio sistema — com retenção e bloqueio legal respeitados.",
+      "Consentimentos versionados, autorização por consultório e trilha de auditoria fazem parte do produto. Exportação, cifra clínica e integrações só são anunciadas como disponíveis depois da validação do ambiente publicado.",
   },
   {
     icon: LifeBuoy,
@@ -118,17 +112,16 @@ export default function PlanosPage() {
     <div className="space-y-6 pb-12">
       <header className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/15 via-chart-2/10 to-transparent p-6">
         <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          NeuroPed para clínicas
+          {CANONICAL_PLAN_DISPLAY_NAME}
         </span>
         <h1 className="mt-2 text-2xl font-bold text-foreground">
           O acompanhamento do neurodesenvolvimento organizado em um lugar só
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          Para pediatras, neuropediatras e equipes multiprofissionais que hoje
-          espalham escalas em papel, planilhas e mensagens soltas. O NeuroPed
-          reúne a escolha do instrumento, a coleta com a família, o registro
-          cifrado e o documento assinado no mesmo fluxo — com a clínica isolada
-          e a trilha de auditoria que a LGPD exige.
+          Para o neuropediatra que conduz o próprio consultório e hoje espalha
+          escalas em papel, planilhas e mensagens soltas. O NeuroPed reúne a
+          escolha do instrumento, a coleta com a família e o acompanhamento
+          clínico em um fluxo organizado para um profissional.
         </p>
       </header>
 
@@ -137,20 +130,20 @@ export default function PlanosPage() {
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                Plano profissional
+                {CANONICAL_PLAN_DISPLAY_NAME}
               </h2>
               <p className="mt-1 flex flex-wrap items-baseline gap-2">
                 <span className="text-3xl font-bold text-foreground" data-testid="plan-price">
                   {MONTHLY_PRICE}
                 </span>
                 <span className="text-sm text-muted-foreground">
-                  por profissional, por mês
+                  por mês, para um profissional
                 </span>
               </p>
               <p className="mt-2 text-sm text-muted-foreground">
                 {CANONICAL_TRIAL_DAYS} dias de avaliação antes da primeira
-                cobrança. Você paga pelos assentos que usar; adicionar ou
-                remover profissionais muda o valor do ciclo seguinte.
+                cobrança. A assinatura Solo cobre um profissional; a oferta
+                para clínicas com equipe fica para uma etapa posterior.
               </p>
             </div>
             <div className="flex flex-col gap-2">
@@ -170,6 +163,14 @@ export default function PlanosPage() {
             O cadastro direto pelo site pode estar temporariamente fechado. Se
             for o caso, a tela de cadastro avisa na hora e o acesso continua
             possível por convite da clínica.
+          </p>
+          <p
+            className="mt-3 text-xs leading-relaxed text-muted-foreground"
+            data-testid="solo-availability-note"
+          >
+            Recursos clínicos e integrações só são liberados quando o ambiente
+            publicado conclui as validações de segurança, privacidade, e-mail e
+            cobrança.
           </p>
         </CardContent>
       </Card>

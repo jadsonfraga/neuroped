@@ -30,8 +30,8 @@ const app = read("client/src/App.tsx");
 // 1) O preço vem do domínio.
 assert.match(
   page,
-  /import\s*\{[^}]*CANONICAL_PRICE_CENTS[^}]*\}\s*from\s*"@shared\/billing"/s,
-  "a página de planos precisa importar o preço canônico de @shared/billing",
+  /import\s*\{[^}]*CANONICAL_PLAN_DISPLAY_NAME[^}]*CANONICAL_PRICE_CENTS[^}]*\}\s*from\s*"@shared\/billing"/s,
+  "a página de planos precisa importar nome e preço canônicos de @shared/billing",
 );
 assert.match(
   page,
@@ -86,10 +86,14 @@ assert.match(
 assert.match(page, /Agenda própria e agendamento online/, "a vitrine precisa listar a agenda que já existe");
 assert.match(page, /Não envia WhatsApp, SMS nem lembretes/, "a vitrine precisa negar WhatsApp, SMS e lembretes D-1");
 
-// 4c) A recepção atende mais de um profissional (issue #1064): a vitrine descreve a
-// escolha da agenda e não pode voltar à limitação antiga ("um só profissional").
-assert.match(page, /atender mais de um profissional da clínica, escolhendo de qual agenda opera/, "a vitrine precisa descrever a recepção com vários profissionais");
-assert.doesNotMatch(page, /ao qual está vinculada/, "a limitação de um só profissional saiu da vitrine");
+// 4c) O lançamento é Solo. A capacidade multiusuário continua no backend para
+// tenants existentes, mas não integra a primeira oferta comercial pública.
+assert.match(page, /CANONICAL_PLAN_DISPLAY_NAME/, "a vitrine precisa usar o nome canônico NeuroPed Solo");
+assert.match(page, /consultório/i, "a vitrine precisa falar com quem opera o próprio consultório");
+assert.match(page, /um profissional/i, "a oferta inicial precisa declarar um profissional");
+assert.match(page, /CANONICAL_TRIAL_DAYS[\s\S]*dias/, "o trial exibido precisa vir do domínio canônico");
+assert.doesNotMatch(page, /Equipe com papéis e assentos/, "equipe não integra a oferta Solo");
+assert.doesNotMatch(page, /LGPD executável, não declarativa/, "a vitrine não pode antecipar validação externa de LGPD");
 
 // 5) Verdade clínica na vitrine: a página não pode prometer diagnóstico.
 assert.match(
