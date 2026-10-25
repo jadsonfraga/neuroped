@@ -15,7 +15,7 @@ const smoke = {
   onboarding: { completed: 10, total: 10 },
   steps: [
     "api_health", "signup_gate", "billing_webhook_gate", "owner_login",
-    "clinic", "email_verified", "plan", "billing", "patient",
+    "clinic", "email_verified", "plan", "billing", "membership", "first_member", "patient",
     "consultation", "document", "audit", "export", "onboarding_server", "closure",
   ].map(id => ({ id, status: "VERIFIED" })),
 };
