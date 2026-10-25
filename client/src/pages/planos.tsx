@@ -101,7 +101,7 @@ const INCLUDED = [
     icon: LifeBuoy,
     title: "Encerramento sem refém",
     body:
-      `Cancele a assinatura e solicite o encerramento pelo painel. Há uma janela para desistir, e os dados permanecem recuperáveis por ${POST_CANCEL_RETENTION_DAYS} dias antes da eliminação definitiva.`,
+      `Cancele a assinatura e solicite exportação ou encerramento pelo painel. A janela técnica de ${POST_CANCEL_RETENTION_DAYS} dias não elimina obrigações legais de guarda: a execução de qualquer eliminação depende da análise de retenção, ausência de bloqueios e confirmação pelo servidor.`,
   },
 ];
 
@@ -226,8 +226,8 @@ export default function PlanosPage() {
               nos metadados.
             </li>
             <li>
-              • Direitos do titular (exportação e eliminação) atendidos pelo
-              próprio sistema, com evidência de execução.
+              • Pedidos de exportação e eliminação acompanhados por fluxos auditáveis.
+              O atendimento efetivo exige configuração operacional, verificação da execução e observância da retenção legal.
             </li>
           </ul>
           <p className="mt-3 text-xs text-muted-foreground">
