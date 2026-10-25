@@ -87,15 +87,15 @@ const INCLUDED = [
   },
   {
     icon: FileLock2,
-    title: "Documentos e prontuário cifrados",
+    title: "Proteção do prontuário clínico",
     body:
-      "O conteúdo clínico do NeuroPed LIVE é cifrado no servidor e emitido em documentos PDF com identificação da clínica. O navegador não guarda dado clínico identificável.",
+      "O domínio clínico LIVE exige criptografia no servidor e falha fechado sem chaves válidas. O uso clínico depende de configuração, revisão profissional e validação de produção.",
   },
   {
     icon: ShieldCheck,
-    title: "LGPD executável, não declarativa",
+    title: "Ferramentas de governança de dados",
     body:
-      "Consentimentos versionados, trilha de auditoria das operações e pedidos de exportação e de eliminação atendidos pelo próprio sistema — com retenção e bloqueio legal respeitados.",
+      "O software oferece aceite versionado, auditoria, exportação e fluxos de eliminação. O uso efetivo exige configuração, contratos com provedores e revisão jurídica antes da venda.",
   },
   {
     icon: LifeBuoy,
@@ -108,6 +108,7 @@ const INCLUDED = [
 /** O que o produto NÃO faz — a mesma honestidade das telas clínicas. */
 const NOT_INCLUDED = [
   "Não emite diagnóstico. Nenhuma escala do NeuroPed conclui um quadro clínico.",
+  "Não toma decisões clínicas nem assina documentos automaticamente: a emissão exige revisão e aceite do profissional habilitado.",
   "Não substitui o julgamento profissional: instrumentos incompletos ou de aplicação assistida são rotulados como tal, e não se apresentam como versão oficial.",
   "Não vende consultoria, implantação ou treinamento — a assinatura é só o software.",
   "Não envia WhatsApp, SMS nem lembretes automáticos na véspera da consulta. As mensagens da agenda saem por e-mail ou ficam para envio manual.",
@@ -127,7 +128,7 @@ export default function PlanosPage() {
           Para pediatras, neuropediatras e equipes multiprofissionais que hoje
           espalham escalas em papel, planilhas e mensagens soltas. O NeuroPed
           reúne a escolha do instrumento, a coleta com a família, o registro
-          cifrado e o documento assinado no mesmo fluxo — com a clínica isolada
+          cifrado e o documento preparado para revisão e eventual assinatura pelo profissional — com a clínica isolada
           e a trilha de auditoria que a LGPD exige.
         </p>
       </header>

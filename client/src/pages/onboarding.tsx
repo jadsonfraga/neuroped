@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/authClient";
+import { CANONICAL_TRIAL_DAYS } from "@shared/billing";
 
 interface ClinicSummary {
   id: string;
@@ -24,7 +25,7 @@ export default function OnboardingPage() {
   const [legalName, setLegalName] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [credentials, setCredentials] = useState("");
-  const [specialty, setSpecialty] = useState("Neuropediatria");
+  const [specialty, setSpecialty] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [needsVerification, setNeedsVerification] = useState(false);
@@ -73,10 +74,10 @@ export default function OnboardingPage() {
         if ((clinic as { code?: string }).code === "EMAIL_VERIFICATION_REQUIRED") setNeedsVerification(true);
         throw new Error((clinic as { error?: string }).error || `Não foi possível criar a clínica (${created.status}).`);
       }
-      // Identidade profissional para os documentos — melhor esforço: o perfil
-      // pode ser completado depois em Configurações.
-      if (displayName.trim()) {
-        await authFetch("/api/me/profile", {
+      // Nunca ocultar falha de perfil nem repetir criação de clínica após erro.
+      const createdId = (clinic as { id: string }).id;
+      try {
+        const profile = await authFetch("/api/me/profile", {
           method: "PUT",
           body: JSON.stringify({
             displayName: displayName.trim(),
@@ -84,9 +85,18 @@ export default function OnboardingPage() {
             specialty: specialty.trim(),
             documentEmail: user?.email ?? "",
           }),
-        }).catch(() => undefined);
+        });
+        if (!profile.ok) throw new Error("PROFILE_UPDATE_FAILED");
+      } catch {
+        setExisting((clinics) => [
+          ...(clinics ?? []).filter((entry) => entry.id !== createdId),
+          { id: createdId, name: clinicName.trim(), role: "owner" },
+        ]);
+        setError("Clínica criada, mas não foi possível salvar a identidade profissional. Entre na clínica acima, revise o perfil em Configurações e não emita documentos antes de confirmar seus dados.");
+        setSubmitting(false);
+        return;
       }
-      enterApp((clinic as { id: string }).id);
+      enterApp(createdId);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Falha ao criar a clínica.");
       setSubmitting(false);
@@ -119,7 +129,7 @@ export default function OnboardingPage() {
         </div>
         <h1 className="text-xl font-bold text-foreground">Configurar sua clínica</h1>
         <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
-          Sua clínica é o espaço isolado dos seus pacientes e da sua equipe. Você entra como proprietário(a), com 14 dias de avaliação e 2 assentos.
+          Sua clínica é o espaço isolado dos seus pacientes e da sua equipe. Você entra como proprietário(a), com {CANONICAL_TRIAL_DAYS} dias de avaliação. Os assentos e as condições são confirmados no painel do plano.
         </p>
       </div>
 
@@ -162,7 +172,7 @@ export default function OnboardingPage() {
             <p className="text-[11px] leading-4 text-muted-foreground">Aparece nos laudos e receitas. Sem registro informado, os documentos indicam que a identidade não foi configurada — nunca inventamos credenciais.</p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="onb-specialty">Especialidade</Label>
+            <Label htmlFor="onb-specialty">Especialidade (somente habilitação real)</Label>
             <Input id="onb-specialty" maxLength={120} value={specialty} onChange={(event) => setSpecialty(event.target.value)} />
           </div>
         </fieldset>
