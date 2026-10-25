@@ -20,7 +20,7 @@ export function evaluateReleaseGate(input: {
 }) {
   const now = input.now ?? new Date();
   const blockers: string[] = [];
-  let target = "";
+  let target: string;
   try {
     const url = new URL(input.origin);
     if (url.protocol !== "https:" || url.username || url.password ||
