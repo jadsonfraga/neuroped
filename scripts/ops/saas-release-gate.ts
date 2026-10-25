@@ -46,7 +46,7 @@ export function evaluateReleaseGate(input: {
   const onboard = obj(smoke.onboarding);
   const requiredSteps = [
     "api_health", "signup_gate", "billing_webhook_gate",
-    "owner_login", "clinic", "email_verified", "plan", "billing",
+    "owner_login", "clinic", "email_verified", "plan", "billing", "membership", "first_member",
     "patient", "consultation", "document", "audit", "export",
     "onboarding_server", "closure",
   ];
