@@ -159,7 +159,7 @@ const NOME = "Responsável Sintético";
 //    proteção. O TypeScript já obriga, mas a trava aqui é contra alguém
 //    reintroduzir uma sobrecarga opcional.
 {
-  const modulo = readFileSync("functions/api/operations/_core.ts", "utf8");
+  const modulo = readFileSync("functions/api/operations/_core.ts", "utf8").replace(/\r\n/g, "\n");
   assert.match(modulo, /field: string,\n\): Promise<string \| null> \{/);
   assert.doesNotMatch(modulo, /field\?: string/, "o rótulo do campo não pode ser opcional");
 }
