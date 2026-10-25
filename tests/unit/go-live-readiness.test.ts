@@ -198,6 +198,15 @@ type Diagnostico = {
   pendencias: string[];
   ordemInvertida: boolean;
   nota: string;
+  decisaoVenda: "NAO_ATESTADA";
+  configuracaoPilotoClinico: {
+    presente: boolean;
+    clinicoHabilitado: boolean;
+    criptoClinica: boolean;
+    exportacaoPrivada: boolean;
+    bloqueios: string[];
+  };
+  provasObrigatorias: string[];
 };
 
 async function diagnostico(env: Record<string, unknown>): Promise<Diagnostico> {
