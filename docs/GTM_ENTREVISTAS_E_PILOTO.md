@@ -1,25 +1,25 @@
 # GTM — entrevistas e piloto pago (Fase 4)
 
 Artefato de preparação da prova de demanda. Objetivo: sair deste documento com
-**10 entrevistas feitas** e **3+ pilotos pagos** (pago ≠ beta — R$ 1/mês conta,
-grátis não).
+**10 entrevistas Solo feitas** e **3+ pilotos pagos** a R$ 99/mês; gratuito
+não conta como prova de pagamento.
 
 ## Proposta de valor (hipótese a validar, não verdade)
 
-> "O acompanhamento do neurodesenvolvimento do seu paciente — da escolha da
-> escala ao laudo assinado — em um fluxo só, cifrado e auditável, em vez de
-> papel, planilhas e WhatsApp."
+> "Para o neuropediatra que conduz o próprio consultório, o NeuroPed organiza
+> agenda, escalas com a família e documentação clínica em um fluxo único, sem
+> concluir diagnóstico pelo profissional."
 
-## Segmentos em disputa (o copy atual fala com clínicas; o caso de uso
-validado é individual)
+## ICP decidido
 
-| Segmento | Hipótese de dor | Canal de acesso | Risco |
-|---|---|---|---|
-| A — Neuropediatra individual | Tempo perdido montando laudo; escalas soltas | indicação direta, grupos médicos | ticket baixo, churn alto |
-| B — Clínica multidisciplinar infantil | Padronização entre profissionais; auditoria LGPD | sociedades, congressos | ciclo de venda consultivo |
+**NeuroPed Solo:** neuropediatra que opera o próprio consultório, com uma
+assinatura para um profissional. A hipótese de dor é o tempo perdido entre
+agenda, escalas, registro e documentação. Os canais iniciais são indicação
+direta, sociedades médicas e grupos profissionais.
 
-Regra de desempate: 10 entrevistas (5A + 5B). O segmento com mais dor
-espontânea (mencionada antes de você perguntar) vence o posicionamento.
+As 10 entrevistas são com neuropediatras de atuação independente. **Clínicas
+de 2+ profissionais ficam para Later**; a capacidade técnica existente não é
+evidência de que esse seja o primeiro mercado.
 
 ## Roteiro de entrevista (30 min, Mom Test — fale pouco, escute muito)
 
@@ -33,7 +33,7 @@ espontânea (mencionada antes de você perguntar) vence o posicionamento.
    mencionar o produto? (Se não, a dor não é forte o bastante.)
 7. Só agora mencione o NeuroPed — em uma frase. "Isso resolveria o caso que
    você me contou?"
-8. **Teste de preço:** "Custaria R$ 99/mês por profissional. Você pagaria
+8. **Teste de preço:** "Custaria R$ 99/mês para um profissional. Você pagaria
    hoje, se estivesse pronto?" (resposta não-comprometida não conta;
    registrou só se aceitou o piloto pago)
 9. **Pedido de piloto:** "Posso te colocar como piloto pagante na próxima
@@ -46,29 +46,37 @@ espontânea (mencionada antes de você perguntar) vence o posicionamento.
 
 ## Oferta de piloto pago (pronta para uso)
 
-- **Preço:** R$ 99/mês por profissional (preço canônico `shared/billing.ts`).
+- **Preço:** R$ 99/mês para um profissional (preço canônico `shared/billing.ts`).
   Sem desconto de fundador — desconto na primeira entrevista define âncora
   errada para sempre.
 - **Trial:** 14 dias sem cartão (já implementado: `CANONICAL_TRIAL_DAYS`).
 - **Compromisso do piloto:** 3 pacientes reais no primeiro mês, 1 reunião de
-  20 min no dia 15 para feedback, cancelamento a qualquer momento (webhook
-  Asaas já trata).
+  20 min no dia 15 para feedback, cancelamento a qualquer momento (o contrato
+  do webhook Asaas contempla cancelamento, mas o ambiente ainda exige validação).
 - **Critério de sucesso do piloto:** ≥2 laudos emitidos pelo próprio médico
   sem ajuda do criador + pagamento da 2ª fatura.
 - **LGPD:** termo de tratamento de dados assinado antes do primeiro paciente
   real; zero dado de paciente em logs/demos (fixtures sintéticas).
+
+### Hard gates antes de paciente real ou cobrança real
+
+Piloto aceito pode ser registrado como intenção comercial, mas só começa com
+Asaas e Resend validados, exportação R2/LGPD operacional, revisão jurídica
+formal concluída, legado associado de forma autorizada e smoke publicado
+aprovado. Enquanto qualquer item estiver `BLOCKED_EXTERNAL`, entrevistas e
+demonstrações usam apenas dados sintéticos e nenhuma receita é presumida.
 
 ## Métricas do processo (alimenta METRICS.md)
 
 | Etapa | Alvo | Registro |
 |---|---|---|
 | Convites enviados | 25 | lista no seu CRM pessoal |
-| Entrevistas feitas | 10 (5A+5B) | este doc, tabela abaixo |
+| Entrevistas Solo feitas | 10 neuropediatras independentes | este doc, tabela abaixo |
 | Sinal de dor espontâneo | ≥6/10 | coluna "dor" |
 | Pilotos pagos aceitos | 3 | coluna "piloto" |
 | 2ª fatura paga | 2 | `charge_paid` em produção |
 
-| # | Nome | Segmento | Data | Dor espontânea (sim/não) | Aceitou piloto pago (sim/não) | Nota |
+| # | Nome | Consultório próprio (sim/não) | Data | Dor espontânea (sim/não) | Aceitou piloto pago (sim/não) | Nota |
 |---|---|---|---|---|---|---|
 | 1 | | | | | | |
 | 2 | | | | | | |

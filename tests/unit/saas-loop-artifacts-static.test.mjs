@@ -30,6 +30,7 @@ test("ROADMAP registra o ciclo 0 concluído e os bloqueios externos de billing/e
   assert.match(roadmap, /✅.*Ciclo 0.*[Aa]uditoria/);
   assert.match(roadmap, /Asaas/i);
   assert.match(roadmap, /Resend/i);
+  assert.match(roadmap, /ICP Solo decidido/i);
   assert.match(roadmap, /\[ \]/, "backlog precisa de itens abertos priorizados");
 });
 
@@ -39,6 +40,7 @@ test("DECISIONS registra o ciclo 0 no formato contexto → decisão → consequ�
   for (const field of ["Contexto", "Decisão", "Consequência"]) {
     assert.match(decisions, new RegExp(`\\*\\*${field}:`), `falta o campo ${field}`);
   }
+  assert.match(decisions, /Solo primeiro; Clínicas depois/);
 });
 
 test("METRICS declara o funil mínimo com alvos e fontes canônicas", () => {
@@ -48,6 +50,7 @@ test("METRICS declara o funil mínimo com alvos e fontes canônicas", () => {
   }
   assert.match(metrics, /charge_paid/);
   assert.match(metrics, /saas_audit_log/);
+  assert.match(metrics, /10 entrevistas Solo/);
 });
 
 test("contrato canônico de pricing permanece R$ 99/assento/mês com trial de 14 dias", () => {
@@ -55,4 +58,6 @@ test("contrato canônico de pricing permanece R$ 99/assento/mês com trial de 14
   assert.match(billing, /CANONICAL_PRICE_CENTS = 9900/);
   assert.match(billing, /CANONICAL_TRIAL_DAYS = 14/);
   assert.match(billing, /CANONICAL_PLAN_ID = "saas-professional"/);
+  assert.match(billing, /CANONICAL_PLAN_DISPLAY_NAME = "NeuroPed Solo"/);
+  assert.match(billing, /CANONICAL_PRIMARY_SEATS = 1/);
 });
