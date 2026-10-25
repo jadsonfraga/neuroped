@@ -22,11 +22,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useClinic } from "@/contexts/ClinicContext";
 import { authFetch } from "@/lib/authClient";
 import { invalidateIssuerCache } from "@/lib/issuer";
+import { checkoutSeatsForSolo, isMultiSeatTenant } from "@/lib/soloBilling";
 import { OutcomesSection } from "@/components/settings/OutcomesSection";
 import { PrivacySection } from "@/components/settings/PrivacySection";
 import { BrandingSection } from "@/components/settings/BrandingSection";
 import { RolePermissionsCard } from "@/components/settings/RolePermissionsCard";
 import { ROLE_LABELS } from "@shared/clinic-roles";
+import { CANONICAL_PLAN_DISPLAY_NAME } from "@shared/billing";
 import type { ClinicBranding } from "@shared/clinic-branding";
 import { useToast } from "@/hooks/use-toast";
 import TenantMetricsPanel from "@/components/TenantMetricsPanel";
@@ -615,7 +617,7 @@ function PlanoSection({ clinicId }: { clinicId: string }) {
     if (!snapshot) return;
     setCheckoutBusy(true);
     setCheckoutError(null);
-    const seats = Math.max(snapshot.seats.contracted ?? 2, snapshot.seats.activeMembers ?? 1);
+    const seats = checkoutSeatsForSolo(snapshot.seats);
     try {
       const body = await readJson<{ url?: string }>(
         await authFetch("/api/billing/checkout", { method: "POST", body: JSON.stringify({ clinicId, seats }) }),
@@ -640,6 +642,7 @@ function PlanoSection({ clinicId }: { clinicId: string }) {
   if (!snapshot) return <p className="text-sm text-muted-foreground" role="status">Carregando plano…</p>;
 
   const { entitlement, seats } = snapshot;
+  const multiSeatTenant = isMultiSeatTenant(seats);
   const statusLabel = entitlement.trialActive
     ? `Avaliação — ${entitlement.trialDaysRemaining} dia(s) restante(s)`
     : entitlement.subscriptionStatus === "active"
@@ -659,7 +662,9 @@ function PlanoSection({ clinicId }: { clinicId: string }) {
         </div>
         <div className="rounded-2xl border border-border p-4">
           <p className="text-xs text-muted-foreground">Plano</p>
-          <p className="mt-1 text-sm font-bold text-foreground">{entitlement.planId ?? "—"}</p>
+          <p className="mt-1 text-sm font-bold text-foreground">
+            {entitlement.planId ? CANONICAL_PLAN_DISPLAY_NAME : "—"}
+          </p>
         </div>
         <div className="rounded-2xl border border-border p-4">
           <p className="text-xs text-muted-foreground">Assentos</p>
@@ -675,7 +680,11 @@ function PlanoSection({ clinicId }: { clinicId: string }) {
       )}
       <Button onClick={() => void startCheckout()} disabled={checkoutBusy} className="gap-2">
         {checkoutBusy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <CreditCard className="h-4 w-4" aria-hidden="true" />}
-        {entitlement.subscriptionStatus === "active" ? "Gerenciar assentos" : "Assinar / regularizar"}
+        {entitlement.subscriptionStatus === "active"
+          ? multiSeatTenant
+            ? "Gerenciar assentos"
+            : "Gerenciar assinatura"
+          : "Assinar / regularizar"}
       </Button>
       {checkoutError && <p role="alert" className="rounded-xl border border-destructive/25 bg-destructive/5 p-3 text-xs text-destructive">{checkoutError}</p>}
     </SectionCard>
