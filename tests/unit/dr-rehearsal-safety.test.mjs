@@ -118,11 +118,15 @@ assert.match(
 
   const extrair = (texto) => {
     const arquivo = join(tmpdir(), `dr-bookmark-${randomUUID()}.txt`);
+    const arquivoBash = process.platform === "win32"
+      ? arquivo.replace(/^([A-Za-z]):\\/, (_, drive) => `/${drive.toLowerCase()}/`).replace(/\\/g, "/")
+      : arquivo;
+    const arquivoQuoted = `'${arquivoBash.replace(/'/g, `'\\''`)}'`;
     writeFileSync(arquivo, `${texto}\n`);
     try {
       return execFileSync(
         "bash",
-        ["-c", `${linhaExtracao.trim().replace("/tmp/b1.txt", arquivo)}\nprintf '%s' "$BOOKMARK"`],
+        ["-c", `${linhaExtracao.trim().replace("/tmp/b1.txt", arquivoQuoted)}\nprintf '%s' "$BOOKMARK"`],
         { encoding: "utf8" },
       );
     } finally {
