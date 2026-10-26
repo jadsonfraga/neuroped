@@ -64,8 +64,10 @@ export interface BillingPlan {
 }
 
 export const CANONICAL_PLAN_ID = "saas-professional";
+export const CANONICAL_PLAN_DISPLAY_NAME = "NeuroPed Solo";
 export const CANONICAL_PRICE_CENTS = 9900;
 export const CANONICAL_TRIAL_DAYS = 14;
+export const CANONICAL_PRIMARY_SEATS = 1;
 export const PAST_DUE_GRACE_DAYS = 7;
 export const POST_CANCEL_RETENTION_DAYS = 30;
 

@@ -70,7 +70,7 @@ export function registerAuthRoutes(app: Express): void {
       });
     } catch (e: any) {
       if (e instanceof z.ZodError) {
-        return res.status(400).json({ error: "Dados invalidos", details: e.errors });
+        return res.status(400).json({ error: "Dados invalidos", details: e.issues });
       }
       return res.status(500).json({ error: "Erro interno", code: "INTERNAL_ERROR" });
     }
@@ -208,7 +208,7 @@ export function registerAuthRoutes(app: Express): void {
       });
     } catch (e: any) {
       if (e instanceof z.ZodError) {
-        return res.status(400).json({ error: "Dados invalidos", details: e.errors });
+        return res.status(400).json({ error: "Dados invalidos", details: e.issues });
       }
       console.error("[auth.login] error:", e);
       return res.status(500).json({ error: "Erro interno", code: "INTERNAL_ERROR" });
@@ -342,7 +342,7 @@ export function registerAuthRoutes(app: Express): void {
       });
     } catch (e: any) {
       if (e instanceof z.ZodError) {
-        return res.status(400).json({ error: "Dados invalidos", details: e.errors });
+        return res.status(400).json({ error: "Dados invalidos", details: e.issues });
       }
       return res.status(500).json({ error: "Erro interno", code: "INTERNAL_ERROR" });
     }
@@ -487,7 +487,7 @@ export function registerAuthRoutes(app: Express): void {
       if (e instanceof z.ZodError) {
         return res.status(400).json({
           error: "Senha nova nao atende aos requisitos",
-          details: e.errors,
+          details: e.issues,
         });
       }
       return res.status(500).json({ error: "Erro interno" });

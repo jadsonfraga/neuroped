@@ -84,6 +84,10 @@ criarUsuario("clinica-a-prof", "professional");
 criarUsuario("clinica-b-owner", "professional");
 criarClinica("clinica-a");
 criarClinica("clinica-b");
+raw.prepare(
+  `UPDATE billing_subscriptions SET seats = 2
+    WHERE customer_id = (SELECT id FROM billing_customers WHERE clinic_id = ?)`,
+).run("clinica-a");
 criarMembership("clinica-a", "clinica-a-owner", "owner");
 criarMembership("clinica-a", "clinica-a-prof", "professional");
 criarMembership("clinica-b", "clinica-b-owner", "owner");

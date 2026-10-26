@@ -87,6 +87,10 @@ for (const id of [GESTOR_A, GESTOR_B]) {
 }
 raw.prepare("INSERT INTO clinics (id, slug, name, created_by_user_id) VALUES (?, ?, ?, ?)")
   .run(CLINIC, CLINIC, "Clínica Quatro Olhos", GESTOR_A);
+raw.prepare(
+  `UPDATE billing_subscriptions SET seats = 2
+    WHERE customer_id = (SELECT id FROM billing_customers WHERE clinic_id = ?)`,
+).run(CLINIC);
 raw.prepare("INSERT INTO clinic_memberships (clinic_id, user_id, role) VALUES (?, ?, 'owner')").run(CLINIC, GESTOR_A);
 raw.prepare("INSERT INTO clinic_memberships (clinic_id, user_id, role) VALUES (?, ?, 'clinic_admin')").run(CLINIC, GESTOR_B);
 raw.prepare(

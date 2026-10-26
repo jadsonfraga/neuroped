@@ -8,15 +8,16 @@ Legenda: ✅ feito · 🔒 bloqueio externo (ação do proprietário) · ⏳ em 
 
 ## Now
 - ✅ Ciclo 1 / Fase 0: auditoria de prontidão (ver METRICS.md e DECISIONS.md D-001).
-- ✅ ICP provisório A decidido (D-002) e proposta de valor v1 escrita (`VALUE_PROPOSITION.md`).
+- ✅ ICP Solo decidido (D-011): neuropediatra que opera o próprio consultório; proposta de valor alinhada (`VALUE_PROPOSITION.md`).
 - ✅ Ciclo 3: kit de convites + roteiro de demo fictícia (`INVITE_AND_DEMO_KIT.md`).
-- ⏳ Ciclo 2/3 (ação do proprietário): realizar as 3 primeiras entrevistas com o roteiro (`INTERVIEW_PLAYBOOK.md`) e registrar em `INTERVIEW_LOG.md`.
+- ⏳ Realizar 10 entrevistas Solo com neuropediatras independentes e registrar em `INTERVIEW_LOG.md`.
 - ✅ `CLINICAL_CRYPTO_NOT_READY` fechado (G1, 17/10/2026).
 - 🔒 Fechar P0 LGPD em produção: `LGPD_BUCKET_NOT_CONFIGURED` (token sem `Workers R2 Storage: Edit`;
   `docs/audits/BLOCKED_EXTERNAL_CLINICAL_LGPD_PROVISIONING_2026-09-26.md`).
 - ⏳ G4 (ensaio de backup/restore com cifra real) está desbloqueado por G1 e ainda não foi executado.
 - 🔒 S9 (P0): associação legítima de dados clínicos legados a clínica
   (`docs/saas/spiral/BACKLOG.md`, `BLOCKED_EXTERNAL_LEGACY_TENANT_CENSUS_2026-09-26.md`).
+- 🔒 Validar Asaas, Resend, R2/LGPD, revisão jurídica e smoke publicado antes de piloto real.
 
 - ✅ Ciclo 4 / Fase 3: gate de confiabilidade G1–G7 (`PHASE3_GATE.md`).
 
@@ -32,10 +33,11 @@ Legenda: ✅ feito · 🔒 bloqueio externo (ação do proprietário) · ⏳ em 
 - Cliente Zero em LIVE: a própria clínica do proprietário rodando 14 dias no fluxo
   multi-tenant real, com o checklist de onboarding (`shared/onboarding.ts`).
 - 🔒 S4: integração sandbox Asaas exercitada (credencial sandbox do proprietário).
-- Roteiro de 10 entrevistas com o ICP + 3 pilotos pagos (Fase 4 antecipada em paralelo).
-- Página pública de planos/valor revisada para o ICP (existem `planos.tsx`, `sobre.tsx`).
+- Roteiro de 10 entrevistas Solo + 3 pilotos pagos + 2 segundas faturas (Fase 4 em paralelo).
+- Página pública de planos/valor Solo implementada; validar linguagem nas entrevistas.
 
 ## Later
 - Tiers além de `saas-professional` (catálogo em `shared/entitlements.ts`).
+- Oferta Clínica com 2+ profissionais, papéis e múltiplos assentos.
 - Chave por clínica / crypto-shredding por tenant (achado SAAS_TENANCY_AUDIT).
 - GTM com sociedades de neuropediatria, conteúdo ético, indicação.
