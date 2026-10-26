@@ -118,11 +118,9 @@ export function safePrevisitRecommendations(catalog: ScaleEntry[], input: Input,
         .sort((a, b) => (previsitUpperMinutes(a) ?? 99) - (previsitUpperMinutes(b) ?? 99) || a.id.localeCompare(b.id));
       ladder.push(["tempo-maior", () => near(role, 30)]);
       ladder.push(["dominio-proximo", () => closest(role, 30)]);
-      if (role !== "pais") {
-        ladder.push(["respondente-alternativo", () => near("pais", 15)]);
-        ladder.push(["respondente-alternativo", () => near("pais", 30)]);
-        ladder.push(["respondente-alternativo", () => closest("pais", 30)]);
-      }
+      // Nunca substituir resposta escolar/autoaplicável por formulário dos pais
+      // sem seleção explícita de outro informante. Um pódio incompleto é mais
+      // seguro que atribuir a resposta ao respondente errado.
     }
     const picked: Array<{ scale: ScaleEntry; tier: Tier }> = [];
     const families = new Set<string>();

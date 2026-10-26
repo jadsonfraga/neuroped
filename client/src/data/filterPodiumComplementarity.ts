@@ -17,6 +17,7 @@ interface ComplementaryPodiumInput extends MedalTrio {
   candidates: RefinedScaleMatch[];
   selectedQueixas: string[];
   selectedSignals: string[];
+  curatedScaleIds?: string[];
   ageMonths: number | null;
   questionCap: number;
   countQuestions: (match: RefinedScaleMatch) => number;
@@ -58,7 +59,7 @@ function repeatPairs(items: RefinedScaleMatch[]): number {
 
 export function refineFunctionalComplementarity({
   ouro, prata, bronze, candidates, selectedQueixas, selectedSignals,
-  ageMonths, questionCap, countQuestions,
+  curatedScaleIds = [], ageMonths, questionCap, countQuestions,
 }: ComplementaryPodiumInput): MedalTrio {
   const original = [ouro, prata, bronze].filter((m): m is RefinedScaleMatch => Boolean(m));
   if (original.length === 0) return { ouro, prata, bronze };
@@ -106,11 +107,12 @@ export function refineFunctionalComplementarity({
     const keepOuro = ouro && arr.some((m) => m.scale.id === ouro.scale.id) ? 1 : 0;
     const complaintCount = coverage(arr);
     const signalCount = coveredSignals(arr).length;
-    return (selectedQueixas.length > 0 && complaintCount === selectedQueixas.length ? 200_000 : 0) +
-      (selectedSignals.length > 0 && signalCount === selectedSignals.length ? 200_000 : 0) +
-      complaintCount * 150_000 +
+    return (selectedQueixas.length > 0 && complaintCount === selectedQueixas.length ? 300_000 : 0) +
+      (selectedSignals.length > 0 && signalCount === selectedSignals.length ? 150_000 : 0) +
+      complaintCount * 300_000 +
       signalCount * 160_000 +
       arr.length * 16_000 +
+      arr.filter((m) => curatedScaleIds.includes(m.scale.id)).length * 12_000 +
       keepOuro * 5_000 +
       currentRetained * 2_000 -
       repeatPairs(arr) * 12_000 +
@@ -149,13 +151,21 @@ export function refineFunctionalComplementarity({
   // sinal coberto por candidatos seguros. Comparar os pares disponíveis antes
   // de aceitar a composição inicial; nunca perder coberturas já presentes.
   if (anchor && currentlyHasAnchor &&
-      (coveredSignals(chosen).length < selectedSignals.length || coverage(chosen) < selectedQueixas.length)) {
+      (chosen.length < 3 || coveredSignals(chosen).length < selectedSignals.length || coverage(chosen) < selectedQueixas.length ||
+        (curatedScaleIds.some((id) => pool.some((m) => m.scale.id === id)) && !chosen.some((m) => curatedScaleIds.includes(m.scale.id))))) {
     let best = chosen;
     let bestScore = rank(chosen);
     const others = pool.filter((m) => !isFunctionalAnchor(m.scale.id));
     const consider = (arr: RefinedScaleMatch[]) => {
-      if (burden(arr) > questionCap || !preservesCoverage(original, arr)) return;
-      const score = rank(arr);
+      if (burden(arr) > questionCap) return;
+      // Se três vagas só cabem sacrificando uma queixa não viável nesse teto,
+      // a completude obrigatória prevalece sobre o pódio incompleto.
+      if (coverage(arr) < coverage(original) && arr.length <= original.length) return;
+      const originalSignals = coveredSignals(original).length;
+      const nextSignals = coveredSignals(arr).length;
+      if (nextSignals < originalSignals && coverage(arr) === coverage(original) && arr.length <= original.length) return;
+      if (originalSignals > 0 && nextSignals === 0) return;
+      const score = rank(arr) + (arr.length === 3 && original.length < 3 ? 1_500_000 : 0);
       if (score > bestScore) {
         best = arr;
         bestScore = score;
@@ -180,6 +190,48 @@ export function refineFunctionalComplementarity({
         .filter((m) => burden([...chosen, m]) <= questionCap && preservesCoverage(chosen, [...chosen, m]))
         .sort((a, b) => rank([...chosen, b]) - rank([...chosen, a]));
       if (replacements[0]) chosen.push(replacements[0]);
+    }
+  }
+
+  // Exceção de carga: primeiro procurar trio COM âncora. Se uma bateria longa
+  // a tornar impossível, completar com três instrumentos sem a âncora, sempre
+  // respeitando 100 itens, idade, respondente e sinais clinicamente cobertos.
+  if (anchor && chosen.length < 3) {
+    const otherCandidates = pool.filter((m) => !isFunctionalAnchor(m.scale.id));
+    let bestWithAnchor: RefinedScaleMatch[] | null = null;
+    let bestWithAnchorScore = -Infinity;
+    for (let i = 0; i < otherCandidates.length; i++) {
+      for (let j = i + 1; j < otherCandidates.length; j++) {
+        const trio = [otherCandidates[i], otherCandidates[j], anchor];
+        if (burden(trio) > questionCap) continue;
+        if (coveredSignals(original).length > 0 && coveredSignals(trio).length === 0) continue;
+        const score = rank(trio);
+        if (score > bestWithAnchorScore) {
+          bestWithAnchor = trio;
+          bestWithAnchorScore = score;
+        }
+      }
+    }
+    if (bestWithAnchor) {
+      chosen = bestWithAnchor;
+    } else {
+      let bestTriple: RefinedScaleMatch[] | null = null;
+      let bestTripleScore = -Infinity;
+      for (let i = 0; i < otherCandidates.length; i++) {
+        for (let j = i + 1; j < otherCandidates.length; j++) {
+          for (let k = j + 1; k < otherCandidates.length; k++) {
+            const trio = [otherCandidates[i], otherCandidates[j], otherCandidates[k]];
+            if (burden(trio) > questionCap) continue;
+            if (coveredSignals(original).length > 0 && coveredSignals(trio).length === 0) continue;
+            const score = rank(trio);
+            if (score > bestTripleScore) {
+              bestTriple = trio;
+              bestTripleScore = score;
+            }
+          }
+        }
+      }
+      if (bestTriple) chosen = bestTriple;
     }
   }
 

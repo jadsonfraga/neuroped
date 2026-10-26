@@ -714,6 +714,7 @@ export function selectPodium(
     candidates: sorted,
     selectedQueixas,
     selectedSignals,
+    curatedScaleIds: [curatedTiers?.ouro, curatedTiers?.prata, curatedTiers?.bronze].filter((id): id is string => Boolean(id)),
     ageMonths: exactAge,
     questionCap: PODIUM_QUESTION_CAP,
     countQuestions: (match) => estimatedQuestionCount(match.scale),
