@@ -100,4 +100,50 @@ const total = (p: ReturnType<typeof selectPodium>) =>
   assert.equal(invalidAge.some((m) => isFunctional(m.scale.id)), false);
 }
 
+// 5. Dois sinais selecionados devem ser preservados individualmente, não por "algum sinal".
+{
+  const inattentive = match("atencao-especifica", 88, 24, "desatencao");
+  inattentive.scale.signalTags = ["desatencao"];
+  const impulsive = match("impulso-especifico", 87, 24, "impulsividade");
+  impulsive.scale.signalTags = ["impulsividade"];
+  const broad = match("generico-alto", 100, 20, "inespecifico");
+  const functional = match("efdi", 65, 30, "funcionalidade", ["funcionalidade"]);
+  const p = selectPodium([broad, inattentive, impulsive, functional], null, {
+    selectedQueixas: ["tdah"], selectedSignals: ["desatencao", "impulsividade"], ageMonths: 120,
+  });
+  assert.ok(ids(p).includes("efdi"), "âncora elegível deve permanecer");
+  assert.ok(ids(p).includes("atencao-especifica"), "desatenção não pode desaparecer");
+  assert.ok(ids(p).includes("impulso-especifico"), "impulsividade não pode desaparecer");
+  assert.ok(total(p) <= PODIUM_QUESTION_CAP);
+}
+
+// 6. As duas âncoras funcionais não devem disputar duas das três medalhas.
+{
+  const eaf = match("eaf", 89, 24, "autonomia", ["funcionalidade"]);
+  const efdi = match("efdi", 88, 30, "autonomia", ["funcionalidade"]);
+  const core = match("principal", 94, 22, "tdah");
+  const context = match("contextual", 80, 20, "contexto");
+  const p = selectPodium([core, eaf, efdi, context], null, {
+    selectedQueixas: ["tdah"], ageMonths: 120,
+  });
+  assert.equal(ids(p).filter((id) => id === "eaf" || id === "efdi").length, 1);
+  assert.ok(ids(p).includes("principal"));
+  assert.ok(total(p) <= PODIUM_QUESTION_CAP);
+}
+
+// 7. Queixas distintas precisam manter cobertura quando cabe a âncora e duas específicas.
+{
+  const a = match("tdah-relevante", 91, 25, "tdah", ["tdah"]);
+  const b = match("sono-relevante", 90, 25, "sono", ["sono"]);
+  const c = match("funcional-relevante", 62, 24, "funcional", ["funcionalidade"]);
+  c.scale.id = "eaf";
+  const p = selectPodium([a, b, c], null, {
+    selectedQueixas: ["tdah", "sono"], ageMonths: 120,
+  });
+  assert.ok(ids(p).includes("tdah-relevante"));
+  assert.ok(ids(p).includes("sono-relevante"));
+  assert.ok(ids(p).includes("eaf"));
+  assert.ok(total(p) <= PODIUM_QUESTION_CAP);
+}
+
 console.log("[filter-functional-complementarity] OK: autonomia/ajuda, não redundância, idade/respondente/risco e teto");

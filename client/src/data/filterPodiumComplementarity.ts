@@ -76,12 +76,20 @@ export function refineFunctionalComplementarity({
   const currentIds = new Set(original.map((m) => m.scale.id));
   const currentlyHasAnchor = original.some((m) => isFunctionalAnchor(m.scale.id));
 
-  const signalCtx = { queixas: selectedQueixas, selectedSignals };
-  const signalHit = (m: RefinedScaleMatch) =>
-    selectedSignals.length > 0 && scaleCoversSelectedSignalExactly(m.scale, signalCtx);
-  const coverage = (arr: RefinedScaleMatch[]) =>
-    selectedQueixas.filter((q) => arr.some((m) => m.scale.queixas.includes(q))).length;
-  const signalCovered = (arr: RefinedScaleMatch[]) => arr.some(signalHit);
+  // O conjunto de sinais é preservado individualmente, não como um booleano.
+  const coversSignal = (match: RefinedScaleMatch, signal: string) =>
+    scaleCoversSelectedSignalExactly(match.scale, { queixas: selectedQueixas, selectedSignals: [signal] });
+  const coveredSignals = (arr: RefinedScaleMatch[]) =>
+    selectedSignals.filter((signal) => arr.some((m) => coversSignal(m, signal)));
+  const coveredQueixas = (arr: RefinedScaleMatch[]) =>
+    selectedQueixas.filter((q) => arr.some((m) => m.scale.queixas.includes(q)));
+  const coverage = (arr: RefinedScaleMatch[]) => coveredQueixas(arr).length;
+  const preservesCoverage = (before: RefinedScaleMatch[], after: RefinedScaleMatch[]) => {
+    const complaints = new Set(coveredQueixas(after));
+    const signals = new Set(coveredSignals(after));
+    return coveredQueixas(before).every((q) => complaints.has(q)) &&
+      coveredSignals(before).every((signal) => signals.has(signal));
+  };
   const burden = (arr: RefinedScaleMatch[]) => arr.reduce((n, m) => n + countQuestions(m), 0);
 
   // Composição por ganho clínico marginal: preserva o primeiro instrumento e as
@@ -91,13 +99,17 @@ export function refineFunctionalComplementarity({
     ...original,
     ...candidates.filter(valid).slice(0, 24),
     ...selectedQueixas.flatMap((q) => candidates.filter((m) => valid(m) && m.scale.queixas.includes(q)).slice(0, 5)),
-    ...candidates.filter((m) => valid(m) && signalHit(m)).slice(0, 6),
+    ...selectedSignals.flatMap((signal) => candidates.filter((m) => valid(m) && coversSignal(m, signal)).slice(0, 6)),
   ]).filter(valid);
   const rank = (arr: RefinedScaleMatch[]) => {
     const currentRetained = arr.filter((m) => currentIds.has(m.scale.id)).length;
     const keepOuro = ouro && arr.some((m) => m.scale.id === ouro.scale.id) ? 1 : 0;
-    return (selectedSignals.length && signalCovered(arr) ? 120_000 : 0) +
-      coverage(arr) * 70_000 +
+    const complaintCount = coverage(arr);
+    const signalCount = coveredSignals(arr).length;
+    return (selectedQueixas.length > 0 && complaintCount === selectedQueixas.length ? 200_000 : 0) +
+      (selectedSignals.length > 0 && signalCount === selectedSignals.length ? 200_000 : 0) +
+      complaintCount * 150_000 +
+      signalCount * 160_000 +
       arr.length * 16_000 +
       keepOuro * 5_000 +
       currentRetained * 2_000 -
@@ -133,6 +145,44 @@ export function refineFunctionalComplementarity({
     chosen = [...original];
   }
 
+  // O pódio pode já conter a âncora e mesmo assim omitir uma queixa ou um
+  // sinal coberto por candidatos seguros. Comparar os pares disponíveis antes
+  // de aceitar a composição inicial; nunca perder coberturas já presentes.
+  if (anchor && currentlyHasAnchor &&
+      (coveredSignals(chosen).length < selectedSignals.length || coverage(chosen) < selectedQueixas.length)) {
+    let best = chosen;
+    let bestScore = rank(chosen);
+    const others = pool.filter((m) => !isFunctionalAnchor(m.scale.id));
+    const consider = (arr: RefinedScaleMatch[]) => {
+      if (burden(arr) > questionCap || !preservesCoverage(original, arr)) return;
+      const score = rank(arr);
+      if (score > bestScore) {
+        best = arr;
+        bestScore = score;
+      }
+    };
+    for (let i = 0; i < others.length; i++) {
+      consider([others[i], anchor]);
+      for (let j = i + 1; j < others.length; j++) {
+        consider([others[i], others[j], anchor]);
+      }
+    }
+    chosen = best;
+  }
+
+  // EAF e EFDI são duas alternativas para o mesmo objetivo: apenas uma pode medalhar.
+  if (chosen.filter((m) => isFunctionalAnchor(m.scale.id)).length > 1) {
+    const preferredId = anchor?.scale.id ?? chosen.find((m) => isFunctionalAnchor(m.scale.id))!.scale.id;
+    chosen = chosen.filter((m) => !isFunctionalAnchor(m.scale.id) || m.scale.id === preferredId);
+    if (chosen.length < 3) {
+      const replacements = pool
+        .filter((m) => !isFunctionalAnchor(m.scale.id) && !chosen.some((c) => c.scale.id === m.scale.id))
+        .filter((m) => burden([...chosen, m]) <= questionCap && preservesCoverage(chosen, [...chosen, m]))
+        .sort((a, b) => rank([...chosen, b]) - rank([...chosen, a]));
+      if (replacements[0]) chosen.push(replacements[0]);
+    }
+  }
+
   // Se ainda houver construtos repetidos, procurar troca útil e segura
   // preservando todos os domínios de queixa e sinais presentes no trio.
   for (let pass = 0; pass < 2 && repeatPairs(chosen) > 0; pass++) {
@@ -147,8 +197,7 @@ export function refineFunctionalComplementarity({
         const attempt = [...chosen];
         attempt[index] = candidate;
         if (burden(attempt) > questionCap) continue;
-        if (coverage(attempt) < coverage(chosen)) continue;
-        if (signalCovered(chosen) && !signalCovered(attempt)) continue;
+        if (!preservesCoverage(chosen, attempt)) continue;
         if (repeatPairs(attempt) >= repeatPairs(chosen)) continue;
         const score = rank(attempt);
         if (score > improvedRank) {
