@@ -2,7 +2,7 @@
 // contagem por faixa, ids e conteúdos sem duplicata, origem rastreável nas
 // quatro abas (Sonda 10, OBS-10, Reconhecimento Visual, Avaliação Cognitiva),
 // calibração por idade, adaptações para 2–3 anos, nada fora do aplicativo e
-// sessão estimada em até 20 minutos em todas as faixas.
+// sessão estimada dentro do teto etário da bateria obrigatória de 50 desafios.
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -18,6 +18,8 @@ import {
   YEARS,
   bandItemCount,
   estimateBandSeconds,
+  gameBandItemCount,
+  gameItemsFor,
   itemSeconds,
   itemsFor,
   itemsPerPhase,
@@ -226,17 +228,17 @@ test("tudo sobrevive ao PDF: enunciados, critérios, rótulos e referências sem
   assert.throws(() => labelForArt("🦖"), /sem nome/);
 });
 
-test("tempo estimado: sessão inteira em até 20 minutos em toda faixa, com mais tempo por item para 2–5 anos e pausa planejada", () => {
+test("tempo estimado: bateria obrigatória de 50 itens dentro do teto, com mais tempo por item para 2–5 anos e pausa planejada", () => {
   const table: string[] = [];
   for (const years of YEARS) {
     const estimate = estimateBandSeconds(years);
-    assert.ok(estimate.totalSeconds <= sessionLimitSeconds(years), `${years} anos: ${estimate.totalSeconds}s > 20 min`);
+    assert.ok(estimate.totalSeconds <= sessionLimitSeconds(years), `${years} anos: ${estimate.totalSeconds}s acima do teto`);
     assert.ok(estimate.totalSeconds >= 8 * 60, `${years} anos: estimativa plausível (${estimate.totalSeconds}s)`);
-    assert.equal(estimate.items, bandItemCount(String(years)));
+    assert.equal(estimate.items, gameBandItemCount(String(years)));
     assert.deepEqual(Object.keys(estimate.byPhase), [...PHASE_ORDER]);
     table.push(`${years}:${estimate.minutes}`);
   }
-  const itemOnly = (years: number) => allItems(years).reduce((sum, item) => sum + itemSeconds(item), 0);
+  const itemOnly = (years: number) => PHASE_ORDER.flatMap((phaseId) => gameItemsFor(String(years), phaseId)).reduce((sum, item) => sum + itemSeconds(item), 0);
   assert.ok(estimateBandSeconds(2).itemSeconds > itemOnly(2) * 1.4, "2 anos: fator de criança pequena aplicado");
   assert.ok(estimateBandSeconds(2).overheadSeconds > estimateBandSeconds(8).overheadSeconds, "até 5 anos: pausa planejada");
   assert.equal(AGE_BANDS.length, YEARS.length);
@@ -287,10 +289,10 @@ test("ampliação dos 8 a 17 anos: um desafio autoral a mais por mundo, declarad
 test("documentação: a tabela de calibração por idade confere com o banco (itens e tempo estimado)", () => {
   const doc = readFileSync("docs/SUPER_NEUROPAD_GAME.md", "utf8");
   for (const years of YEARS) {
-    const row = doc.match(new RegExp(`^\\| ${years} anos \\| (\\d+) \\((\\d+)\\)[^\\n]*\\| ([\\d.]+) min \\|$`, "m"));
+    const row = doc.match(new RegExp(`^\\| ${years} anos \\| (\\d+) \\(([\\d/]+)\\)[^\\n]*\\| ([\\d.]+) min \\|$`, "m"));
     assert.ok(row, `${years} anos: linha na tabela do doc`);
-    assert.equal(Number(row[1]), bandItemCount(String(years)), `${years} anos: itens no doc`);
-    assert.equal(Number(row[2]), itemsPerPhase(years), `${years} anos: itens por mundo no doc`);
+    assert.equal(Number(row[1]), gameBandItemCount(String(years)), `${years} anos: itens no doc`);
+    assert.equal(row[2], PHASE_ORDER.map((phaseId) => gameItemsFor(String(years), phaseId).length).join("/"), `${years} anos: distribuição por mundo no doc`);
     assert.equal(row[3], estimateBandSeconds(years).minutes.toFixed(1), `${years} anos: tempo no doc`);
   }
 });

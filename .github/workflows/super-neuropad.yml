@@ -13,7 +13,6 @@ on:
       - tests/unit/super-neuropad-completion.test.ts
       - tests/unit/super-neuropad-revisao-auditoria.test.ts
       - tests/unit/super-neuropad-extensao.test.ts
-      - tests/e2e/super-neuropad-opcionais.mjs
       - .github/workflows/super-neuropad.yml
 permissions:
   contents: read
@@ -50,15 +49,6 @@ jobs:
         with:
           name: super-neuropad-circuit-proof
           path: /tmp/super-neuropad-circuit-sufficiency
-          if-no-files-found: warn
-          retention-days: 7
-      - name: Prove optional extension (50 per age) keeps the main battery intact
-        run: npm run test:e2e:super-neuropad-opcionais
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: super-neuropad-opcionais-proof
-          path: /tmp/super-neuropad-opcionais
           if-no-files-found: warn
           retention-days: 7
       - uses: actions/upload-artifact@v4

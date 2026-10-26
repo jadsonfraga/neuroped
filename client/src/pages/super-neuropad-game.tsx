@@ -72,7 +72,6 @@ import {
   statsLines,
   estimateBandSeconds,
   formatDuration,
-  itemsFor,
   gameItemsFor,
   judgeShortcut,
   phaseById,
@@ -558,8 +557,9 @@ function BuildStage({ item, seed, onDone }: { item: BuildItem; seed: number; onD
 /**
  * Desafios opcionais: completam 50 por idade com itens dos mesmos bancos de origem. Ficam fora da contagem,
  * do tempo e do XP da partida; registro próprio, em memória e por idade (trocar a idade não apaga nada).
- * Nenhum controle fica desabilitado: aplicar, pular, pausar e recolher são sempre possíveis.
+ * Mantido apenas para compatibilidade da migração; a rota aplica os 50 itens pelo fluxo obrigatório.
  */
+// eslint-disable-next-line unused-imports/no-unused-vars
 function OpcionaisPanel({ years, registros, copiados, seed, onRegistrar, onCopiar }: {
   years: number;
   registros: RegistrosOpcionais;
@@ -1182,12 +1182,12 @@ export default function SuperNeuroPadGamePage() {
     }
   }
 
-  function registrarOpcionalDaIdade(years: number, record: AnswerRecord) {
+  function _registrarOpcionalDaIdade(years: number, record: AnswerRecord) {
     setOpcionais((current) => ({ ...current, [years]: registrarOpcional(current[years] ?? {}, record) }));
   }
 
   /** Copia o retrato do momento do toque; só esse retrato passa a contar como copiado. */
-  async function copiarOpcionais(years: number) {
+  async function _copiarOpcionais(years: number) {
     const retrato = opcionais[years] ?? {};
     const texto = textoOpcionais(years, retrato, formatClinicalDateTime(new Date()));
     const filename = `super-neuropad-opcionais-${years}-${localIsoDate(new Date())}`;

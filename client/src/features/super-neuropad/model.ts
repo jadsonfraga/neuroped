@@ -563,10 +563,10 @@ export function optionOrder(item: TouchItem, seed: number, ordinal: number): Opt
 /** Quantos itens de toque com o mesmo número de opções precedem o item na partida (ordem fixa dos mundos). */
 export function touchOrdinal(bandId: BandId, phaseId: PhaseId, itemId: string): number {
   let count = 0;
-  const target = itemsFor(bandId, phaseId).find((entry) => entry.id === itemId);
+  const target = gameItemsFor(bandId, phaseId).find((entry) => entry.id === itemId);
   if (!target || target.kind !== "toque") return 0;
   for (const id of PHASE_ORDER) {
-    for (const entry of itemsFor(bandId, id)) {
+    for (const entry of gameItemsFor(bandId, id)) {
       if (id === phaseId && entry.id === itemId) return count;
       if (entry.kind === "toque" && entry.options.length === target.options.length) count++;
     }

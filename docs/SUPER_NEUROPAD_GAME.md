@@ -1,15 +1,15 @@
 # Super NeuroPad Game
 
 Aba em destaque (`/super-neuropad-game`): **avaliação única de pré-consulta**, aplicada pela
-aplicadora junto com a criança, sem câmera e sem instrumento externo, em no máximo 20 minutos.
+aplicadora junto com a criança, sem câmera e sem instrumento externo, com teto de 30 a 45 minutos conforme a idade.
 Integra os elementos da Sonda 10, da Observa 10 (OBS-10), do Reconhecimento Visual e da
 Avaliação Cognitiva Infantil. As quatro abas continuam existindo, com os seus bancos
 intactos; o jogo **lê** os bancos delas e não os modifica.
 
-Desde v2026-10-21.1, cada idade de 2 a 17 anos tem **50 desafios disponíveis**:
-o núcleo de 18/24/30/36 itens permanece intacto, e os demais são opcionais,
-fora do limite da sessão principal e com registro separado. Não é obrigatório
-aplicar todos. Consulte [catálogo de 50, segurança e QA](audits/SUPER_NEUROPAD_CATALOGO_50_2026-10-21.md).
+Cada idade de 2 a 17 anos tem **50 desafios obrigatórios** na partida. O núcleo autoral
+de 18/24/30/36 itens permanece intacto como banco de origem, e os itens antes catalogados
+como extensão agora integram o mesmo fluxo, contagem, tempo, resultado e PDF. Consulte
+[catálogo de 50, segurança e QA](audits/SUPER_NEUROPAD_CATALOGO_50_2026-10-21.md).
 
 ## O que é
 
@@ -18,7 +18,7 @@ aplicar todos. Consulte [catálogo de 50, segurança e QA](audits/SUPER_NEUROPAD
   Memória e Torre do Corpo.
 - Faixas **anuais** de 2 a 17 anos (o banco objetivo e o cognitivo já são anuais). Menos de 2
   anos: o jogo não é aplicado; a tela bloqueia e encaminha para OBS-10 (0–23 meses) e Sonda 10.
-- 4 desafios por mundo até 5 anos (24 na partida); 5 por mundo aos 6–7 anos (30); 6 por mundo a partir de 8 anos (36).
+- 50 desafios por idade, distribuídos entre os seis mundos conforme a tabela de calibração.
 - Efeitos sonoros 8-bit compartilhados do app (moeda ao registrar, power-up ao fechar fase,
   pulo ao trocar de mundo, bandeira ao concluir).
 - Todo item tem certo e errado explícitos. Toque e montagem de palavra são conferidos pelo jogo;
@@ -58,32 +58,32 @@ cognitivos e objetivos são os mesmos das abas de origem.
 
 ### Tabela de calibração por idade
 
-Contagens geradas do banco (`INTEGRATED_BANK`); tempo por `estimateBandSeconds`.
+Contagens geradas do banco efetivo (`GAME_BANK`); tempo por `estimateBandSeconds`.
 
 | Idade | Itens (por mundo) | Sonda 10 | OBS-10 | Rec. visual | Cognitiva | Tipos (toque/fala/ação/montar) | Com gesto | Tempo estimado |
 |---|---|---|---|---|---|---|---|---|
-| 2 anos | 18 (3) | 12 | 4 | 1 | 1 | 1/6/11/0 | 1 | 11.3 min |
-| 3 anos | 24 (4) | 16 | 6 | 1 | 1 | 2/8/14/0 | 1 | 14.3 min |
-| 4 anos | 24 (4) | 8 | 7 | 3 | 6 | 9/11/4/0 | 0 | 14.8 min |
-| 5 anos | 24 (4) | 8 | 7 | 3 | 6 | 12/7/5/0 | 0 | 15.2 min |
-| 6 anos | 30 (5) | 11 | 10 | 2 | 7 | 14/11/5/0 | 0 | 13.9 min |
-| 7 anos | 30 (5) | 8 | 12 | 2 | 8 | 14/11/4/1 | 0 | 13.7 min |
-| 8 anos | 36 (6) | 14 | 11 | 1 | 10 | 15/15/5/1 | 0 | 17.8 min |
-| 9 anos | 36 (6) | 11 | 14 | 1 | 10 | 15/15/5/1 | 0 | 17.9 min |
-| 10 anos | 36 (6) | 15 | 10 | 1 | 10 | 15/15/5/1 | 0 | 18.2 min |
-| 11 anos | 36 (6) | 13 | 12 | 1 | 10 | 15/15/5/1 | 0 | 18.1 min |
-| 12 anos | 36 (6) | 15 | 10 | 1 | 10 | 15/15/5/1 | 0 | 18.6 min |
-| 13 anos | 36 (6) | 11 | 14 | 1 | 10 | 15/15/5/1 | 0 | 18.6 min |
-| 14 anos | 36 (6) | 15 | 10 | 1 | 10 | 15/15/5/1 | 0 | 18.8 min |
-| 15 anos | 36 (6) | 11 | 14 | 1 | 10 | 15/15/5/1 | 0 | 18.9 min |
-| 16 anos | 36 (6) | 15 | 10 | 1 | 10 | 15/15/5/1 | 0 | 19.1 min |
-| 17 anos | 36 (6) | 11 | 14 | 1 | 10 | 15/15/5/1 | 0 | 19.1 min |
+| 2 anos | 50 (3/20/10/11/3/3) | 18 | 9 | 7 | 16 | 30/9/11/0 | 1 | 23.2 min |
+| 3 anos | 50 (4/14/13/11/4/4) | 20 | 10 | 4 | 16 | 24/12/14/0 | 1 | 24.2 min |
+| 4 anos | 50 (4/16/14/8/4/4) | 13 | 13 | 8 | 16 | 31/15/4/0 | 0 | 23.1 min |
+| 5 anos | 50 (4/11/19/8/4/4) | 14 | 13 | 7 | 16 | 36/8/5/1 | 0 | 23.6 min |
+| 6 anos | 50 (5/9/18/8/5/5) | 16 | 14 | 5 | 15 | 31/12/5/2 | 0 | 19.6 min |
+| 7 anos | 50 (5/10/16/9/5/5) | 13 | 15 | 6 | 16 | 32/12/4/2 | 0 | 19.1 min |
+| 8 anos | 50 (6/9/15/8/6/6) | 18 | 14 | 4 | 14 | 29/15/5/1 | 0 | 21.4 min |
+| 9 anos | 50 (6/9/14/9/6/6) | 16 | 16 | 4 | 14 | 29/15/5/1 | 0 | 21.5 min |
+| 10 anos | 50 (6/9/15/8/6/6) | 19 | 13 | 4 | 14 | 29/15/5/1 | 0 | 21.9 min |
+| 11 anos | 50 (6/9/14/9/6/6) | 18 | 14 | 4 | 14 | 29/15/5/1 | 0 | 21.9 min |
+| 12 anos | 50 (6/8/16/8/6/6) | 18 | 13 | 3 | 16 | 27/16/5/2 | 0 | 23.2 min |
+| 13 anos | 50 (6/8/17/7/6/6) | 16 | 16 | 3 | 15 | 27/16/5/2 | 0 | 23.4 min |
+| 14 anos | 50 (6/8/16/8/6/6) | 18 | 13 | 3 | 16 | 27/16/5/2 | 0 | 23.7 min |
+| 15 anos | 50 (6/8/16/8/6/6) | 15 | 16 | 3 | 16 | 27/16/5/2 | 0 | 23.7 min |
+| 16 anos | 50 (6/8/16/8/6/6) | 18 | 13 | 3 | 16 | 27/16/5/2 | 0 | 23.7 min |
+| 17 anos | 50 (6/8/16/8/6/6) | 15 | 16 | 3 | 16 | 27/16/5/2 | 0 | 23.7 min |
 
 **Tempo estimado**: toque 12 s (+1 s a cada 25 caracteres de leitura, máx. +25 s), fala 20 s,
 ação 25 s, montar 30 s + 2 s por letra (ou o tempo próprio do item); fator de criança pequena
 ×1,5 até 3 anos e ×1,25 até 5; 10 % de folga para repetições; preparação 60 s, 15 s de
 apresentação por mundo, 5 s por exposição de memória e pausa planejada de 90 s até 5 anos.
-O teste exige a estimativa dentro do teto da idade (12 min aos 2 anos, 15 min aos 3 anos, 20 min nas demais);
+O teste exige a estimativa dentro do teto da idade (30 min aos 2 anos, 35 min aos 3 anos, 45 min nas demais);
 a tela de preparação mostra a estimativa. Outro teste confere esta tabela contra o banco, para ela não defasar.
 
 **Ampliação dos 8 a 17 anos (2026-10-12).** A partir dos 8 anos entra um sexto desafio em cada
@@ -96,7 +96,7 @@ semântica (animais em 60 s, com piso autoral crescente de 8 a 13), cálculo men
 (equilíbrio sem visão, saltos em um pé, polichinelo, dupla tarefa). As semelhanças de 12–17 também
 passaram a subir de abstração com a idade (transporte → medida → obra de arte). Os pisos de
 fluência e os critérios são **conservadores e autorais, para déficit grosseiro**: não são norma, e a
-leitura final continua sendo do médico. O teto de 20 minutos segue travado por teste (máx. 19,1 min).
+leitura final continua sendo do médico. O teto por idade segue travado por teste (estimativa máxima atual: 23,7 min).
 
 **Critérios de calibração** (sem norma, sem inflar escore, sem mudar corte):
 
@@ -338,8 +338,8 @@ resposta ao nome, imitação, interesse por crianças, perda de habilidades).
 | 🔦 Caverna da Espera | Atenção, impulsividade e atividade | atenção sustentada 10 s, espera o sinal, nível de atividade (observação) | atenção sustentada 20 s, espera o sinal, estátua 5 s, nível de atividade (observação) |
 | 🏠 Casinha do Faz de Conta | Brincar simbólico | dar comida ao bebê, telefone de mentira, interesse por crianças (relato ⚠, conta em interação social) | cuidar do bebê, sequência de faz de conta, objeto como outro, faz de conta com papéis (relato ⚠) |
 
-- **Contagem e tempo:** 2 anos = 18 itens (3 por mundo), estimativa ≈ 11,3 min (teto 12 min);
-  3 anos = 24 itens (4 por mundo), ≈ 14,3 min (teto 15 min). Cada mundo fica abaixo de 3 min. Pausa planejada mantida.
+- **Contagem e tempo do núcleo:** 2 anos = 18 itens e 3 anos = 24 itens no banco dedicado.
+  Na partida efetiva, ambos recebem 50 desafios; estimativas de 23,2 e 24,2 min, com tetos de 30 e 35 min. Pausa planejada mantida.
 - **Registro:** o mesmo modelo binário do jogo (Cumpre / Não cumpre, mais "não respondeu" e
   "recusou" à parte) e o campo de observações da sessão. Itens de **relato do cuidador** começam
   com "Relato do cuidador — pergunte:" e o critério termina em "(relato do cuidador)".
@@ -643,11 +643,11 @@ A **síntese final do examinador** também é obrigatória para o circuito ficar
 
 **Verificação.** `npm run test:super-neuropad` (inclui `super-neuropad-obrigatorio.test.ts`); E2E do circuito conclui as 31 missões de 9 anos pela interface, inclusive a entrevista de segurança, e confere COMPLETO só com a síntese final; E2E do jogo confere o aviso entre os mundos.
 
-## Extensão opcional: 50 desafios disponíveis por idade (v2026-10-21.1)
+## Migração da extensão para 50 desafios obrigatórios
 
-Desenho aprovado pelo responsável clínico em 21/10/2026: **50 desafios disponíveis em cada idade de 2 a 17 anos**, sem alongar a sessão principal. A bateria principal continua a mesma (18 aos 2 anos; 24 dos 3 aos 5; 30 aos 6 e 7; 36 dos 8 aos 17), com os mesmos limites de tempo (12, 15 e 20 minutos), XP, contagem, PDF, prontuário e envio à família. Os desafios que faltam para 50 ficam como **extensão opcional**.
+O catálogo de 50 por idade foi integrado à partida efetiva. O núcleo autoral continua rastreável e sem alteração, mas os desafios complementares agora entram no fluxo obrigatório, no tempo, no XP, no resultado, no PDF, no prontuário e no resumo à família.
 
-| Idade | Bateria principal | Opcionais | Disponíveis |
+| Idade | Núcleo preservado | Complementares integrados | Total obrigatório |
 | --- | --- | --- | --- |
 | 2 anos | 18 | 32 | 50 |
 | 3 a 5 anos | 24 | 26 | 50 |
@@ -658,14 +658,14 @@ Desenho aprovado pelo responsável clínico em 21/10/2026: **50 desafios dispon�
 
 **Na tela.** O painel "Desafios opcionais · N anos" aparece na preparação e nos resultados, recolhido por padrão. Não aparece durante a partida. Ele informa "50 disponíveis: X na bateria principal + Y opcionais", a estimativa de tempo dos opcionais (sem pausas nem adaptações) e a orientação de interromper diante de cansaço ou recusa. Usa os mesmos componentes da partida (toque, fala ou ação, montar palavra), com "Repeti o comando", "Não respondeu" e "Recusou". Também tem seletor do desafio, anterior/próximo, "Pausar opcionais" e "Recolher opcionais". Nenhum controle do painel fica desabilitado.
 
-**Registro.** É separado da partida, fica em memória e é guardado por idade: trocar a idade não apaga os opcionais já registrados. Registrar de novo um item substitui o registro anterior. "Copiar registro dos opcionais" copia o texto (ou baixa TXT se a área de transferência falhar). Só o retrato copiado conta como copiado: uma resposta dada enquanto a cópia está pendente continua marcada como não copiada. "Nova partida" pergunta antes de apagar opcionais não copiados, e a saída da página também avisa. Os opcionais não entram na contagem, no tempo, no XP nem no PDF da partida principal.
+**Compatibilidade.** O módulo legado de registro separado permanece no código para rastreabilidade da migração, mas o painel não é renderizado na rota. A interface aplica os 50 itens pelo fluxo único da partida.
 
 **Apresentação por idade.** A partir de 13 anos a tela fica mais sóbria (`data-age-style="adolescente"`: sem linhas de varredura, sombras menores), sem mudar conteúdo nem desafios. Textos longos em opções, botões e contadores quebram linha no celular.
 
-**Código.** `bank.ts` (`OPTIONAL_BANK`, `DESAFIOS_DISPONIVEIS_POR_IDADE`; `objAt` só reorganiza a conversão do item objetivo, sem mudar a bateria), `extensao.ts` (registro, pendências de cópia e texto), painel `OpcionaisPanel` em `super-neuropad-game.tsx`, CSS em `super-neuropad-arcade.css`.
+**Código.** `bank.ts` mantém `INTEGRATED_BANK`, `OPTIONAL_BANK` e compõe `GAME_BANK`; `gameItemsFor` é a fonte da partida, estimativas, relatórios e verificações. `extensao.ts` e `OpcionaisPanel` permanecem apenas como compatibilidade não renderizada.
 
-**Verificação.** `tests/unit/super-neuropad-extensao.test.ts`: 50 por idade; bateria principal, limites e estimativas inalterados; procedência só dos bancos de origem; nenhuma tarefa ou conceito repetido; registro, pendências de cópia e texto sem classificação; painel sem controle desabilitado. `npm run test:e2e:super-neuropad-opcionais` confere as 16 idades, registro por toque e por fala, pausa, cópia, troca de idade, painel nos resultados, aviso da "Nova partida", axe e celular a 390 px. A bateria principal foi comparada byte a byte (JSON do banco, estimativas e limites) antes e depois da mudança.
+**Verificação.** `tests/unit/super-neuropad-extensao.test.ts` preserva o núcleo e a procedência; `tests/unit/super-neuropad-game.test.ts` valida os 50 itens no fluxo, relatórios e prontuário; o E2E principal conclui os 50 desafios e cobre acessibilidade e responsividade.
 
-**Pendente.** Revisão médica item a item dos opcionais para cada idade (a seleção é mecânica, por banco de origem), teste manual em tablet e decisão sobre levar os opcionais ao PDF e ao prontuário.
+**Pendente externo.** Revisão médica item a item dos desafios complementares e teste manual em tablet antes de produção ampla.
 
 **Reversão.** Reverter o commit. Sem migração, sem dependência nova e sem dado persistido.
