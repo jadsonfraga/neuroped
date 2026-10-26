@@ -94,6 +94,21 @@ assert.match(page, /um profissional/i, "a oferta inicial precisa declarar um pro
 assert.match(page, /CANONICAL_TRIAL_DAYS[\s\S]*dias/, "o trial exibido precisa vir do domínio canônico");
 assert.doesNotMatch(page, /Equipe com papéis e assentos/, "equipe não integra a oferta Solo");
 assert.doesNotMatch(page, /LGPD executável, não declarativa/, "a vitrine não pode antecipar validação externa de LGPD");
+assert.doesNotMatch(
+  page,
+  /Documentos e prontuário cifrados/,
+  "a vitrine não pode apresentar cifra como disponível antes da validação publicada",
+);
+assert.match(
+  page,
+  /Cifra clínica após validação do ambiente/,
+  "a capacidade de cifra deve declarar o gate no próprio título comercial",
+);
+assert.match(
+  page,
+  /só são liberadas depois da validação do ambiente publicado/,
+  "a descrição da cifra deve permanecer condicionada à prova no ambiente publicado",
+);
 
 // 5) Verdade clínica na vitrine: a página não pode prometer diagnóstico.
 assert.match(

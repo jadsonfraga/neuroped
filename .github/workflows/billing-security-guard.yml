@@ -14,7 +14,14 @@ on:
       - "db/migrations/0012_saas_billing_onboarding.sql"
       - "db/migrations/0013_saas_billing_provider.sql"
       - "db/migrations/0015_saas_billing_trial_seats_hardening.sql"
+      - "db/migrations/0038_neuroped_solo_default_seat.sql"
+      - "client/src/lib/soloBilling.ts"
+      - "client/src/lib/soloOnboarding.ts"
+      - "client/src/components/OnboardingProgressCard.tsx"
+      - "client/src/pages/configuracoes.tsx"
       - "tests/unit/saas-billing*.test.ts"
+      - "tests/unit/saas-solo*.test.ts"
+      - "tests/unit/solo-*.test.ts"
       - ".github/workflows/billing-security-guard.yml"
   push:
     branches:
@@ -29,7 +36,14 @@ on:
       - "db/migrations/0012_saas_billing_onboarding.sql"
       - "db/migrations/0013_saas_billing_provider.sql"
       - "db/migrations/0015_saas_billing_trial_seats_hardening.sql"
+      - "db/migrations/0038_neuroped_solo_default_seat.sql"
+      - "client/src/lib/soloBilling.ts"
+      - "client/src/lib/soloOnboarding.ts"
+      - "client/src/components/OnboardingProgressCard.tsx"
+      - "client/src/pages/configuracoes.tsx"
       - "tests/unit/saas-billing*.test.ts"
+      - "tests/unit/saas-solo*.test.ts"
+      - "tests/unit/solo-*.test.ts"
       - ".github/workflows/billing-security-guard.yml"
 
 permissions:
@@ -65,6 +79,9 @@ jobs:
 
       - name: Provider and D1 trigger contract
         run: node --import tsx tests/unit/saas-billing-provider.test.ts
+
+      - name: Solo default, compatibility and onboarding projection
+        run: node --import tsx --test tests/unit/saas-solo-billing-foundation.test.ts tests/unit/solo-billing-ui.test.ts tests/unit/solo-onboarding-projection.test.ts
 
       - name: Adversarial webhook and seat attacks
         run: node --import tsx tests/unit/saas-billing-adversarial.test.ts

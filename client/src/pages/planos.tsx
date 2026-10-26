@@ -81,9 +81,9 @@ const INCLUDED = [
   },
   {
     icon: FileLock2,
-    title: "Documentos e prontuário cifrados",
+    title: "Cifra clínica após validação do ambiente",
     body:
-      "O conteúdo clínico do NeuroPed LIVE é cifrado no servidor e emitido em documentos PDF com identificação da clínica. O navegador não guarda dado clínico identificável.",
+      "A cifra no servidor e a emissão de PDFs identificados fazem parte do produto, mas só são liberadas depois da validação do ambiente publicado. Até essa prova, o acesso clínico permanece bloqueado e configuração local não é apresentada como disponibilidade.",
   },
   {
     icon: ShieldCheck,

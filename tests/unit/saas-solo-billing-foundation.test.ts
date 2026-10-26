@@ -71,6 +71,19 @@ test("novos trials Solo usam um assento sem converter subscriptions existentes",
   );
   db.exec(soloMigration);
 
+  const physicalTrigger = db.prepare(
+    `SELECT CASE
+       WHEN instr(
+         replace(replace(replace(sql, char(10), ''), char(13), ''), ' ', ''),
+         '''saas-professional'',1,''trial'''
+       ) > 0 THEN 'SOLO_TRIGGER_OK'
+       ELSE 'SOLO_TRIGGER_INVALID'
+     END AS status
+     FROM sqlite_master
+     WHERE type = 'trigger' AND name = 'trg_clinic_create_billing_trial'`,
+  ).get() as { status: string };
+  assert.equal(physicalTrigger.status, "SOLO_TRIGGER_OK");
+
   assert.equal(
     subscription(db, "clinic-legacy").seats,
     2,
@@ -81,5 +94,19 @@ test("novos trials Solo usam um assento sem converter subscriptions existentes",
   const solo = subscription(db, "clinic-solo");
   assert.equal(solo.plan_id, CANONICAL_PLAN_ID);
   assert.equal(solo.seats, 1);
-});
 
+  const capacity = db.prepare(
+    `SELECT CASE WHEN COUNT(*) = 0
+       THEN 'SOLO_TRIAL_POLICY_OK'
+       ELSE 'SOLO_TRIAL_POLICY_VIOLATION'
+     END AS status
+     FROM billing_subscriptions bs
+     JOIN billing_customers bc ON bc.id = bs.customer_id
+     WHERE bs.status = 'trial'
+       AND COALESCE(bs.seats, 0) < (
+         SELECT COUNT(*) FROM clinic_memberships cm
+         WHERE cm.clinic_id = bc.clinic_id AND cm.active = 1
+       )`,
+  ).get() as { status: string };
+  assert.equal(capacity.status, "SOLO_TRIAL_POLICY_OK");
+});
