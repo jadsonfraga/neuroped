@@ -27,6 +27,17 @@ assert.match(
   "a referência PubMed precisa continuar externa e explícita",
 );
 
+for (const label of [
+  "Direto — respondente: criança (teste direto preenchível)",
+  "Fala — comunicação: criança verbal",
+  "Pré-Alfab. — alfabetização: criança pré-alfabetizada",
+]) {
+  assert.ok(
+    source.includes(`aria-label="${label}"`),
+    `o nome acessível precisa começar pelo texto visível: ${label}`,
+  );
+}
+
 console.log(
-  "✓ filtro: cards do pódio não aninham links e preservam aplicação + PubMed",
+  "✓ filtro: DOM preserva aplicação, PubMed e nomes acessíveis visíveis",
 );
