@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import {
-  ArrowDown, ArrowRight, BookOpen, BrainCircuit, CheckCircle2, ChevronRight,
+  ArrowRight, BookOpen, BrainCircuit, ChevronRight,
   CircleAlert, Clock3, FileText, Layers3, Lightbulb, LockKeyhole,
-  Microscope, Search, ShieldCheck, Sparkles, Stethoscope,
+  Microscope, Search, ShieldCheck, Sparkles,
 } from "lucide-react";
 import {
   clinicalConditions, clinicalLibraryChapters, nextClinicalTopics,
