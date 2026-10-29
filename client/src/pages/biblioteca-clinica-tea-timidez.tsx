@@ -1,4 +1,4 @@
-import { ArrowDown, AlertTriangle, BookOpen, CheckCircle2, Clock3, ShieldCheck } from "lucide-react";
+import { ArrowDown, AlertTriangle, BookOpen, Clock3, ShieldCheck } from "lucide-react";
 
 const alerts = [
   "Perda de fala, gestos, brincadeiras ou habilidades motoras já adquiridas: priorizar avaliação e investigar causas.",
@@ -110,7 +110,7 @@ export default function TeaTimidezChapter() {
 
       <section>
         <Heading number="08" title="Três erros frequentes" />
-        <ol className="grid gap-3 md:grid-cols-3"><li className="rounded-2xl border border-slate-200 p-4 text-sm leading-7 dark:border-slate-700"><strong className="block text-rose-700 dark:text-rose-300">01 · “Olha nos olhos, então não é TEA.”</strong>Contato visual e fala preservados não excluem diferenças qualitativas de reciprocidade.</li><li className="rounded-2xl border border-slate-200 p-4 text-sm leading-7 dark:border-slate-700"><strong className="block text-rose-700 dark:text-rose-300">02 · “Não falou comigo, então é TEA.”</strong>Um consultório desconhecido não representa toda a comunicação social.</li><li className="rounded-2xl border border-slate-200 p-4 text-sm leading-7 dark:border-slate-700"><strong className="block text-rose-700 dark:text-rose-300">03 · “Aguardar laudo para apoiar.”</strong>Atrasos funcionais merecem intervenção antes da conclusão diagnóstica.</li></ol>
+        <ol className="grid gap-3 md:grid-cols-3"><li className="rounded-2xl border border-slate-200 p-4 text-sm leading-7 dark:border-slate-700"><strong className="block text-rose-700 dark:text-rose-300">01 · “Olha nos olhos, então não é TEA.”</strong> Contato visual e fala preservados não excluem diferenças qualitativas de reciprocidade.</li><li className="rounded-2xl border border-slate-200 p-4 text-sm leading-7 dark:border-slate-700"><strong className="block text-rose-700 dark:text-rose-300">02 · “Não falou comigo, então é TEA.”</strong> Um consultório desconhecido não representa toda a comunicação social.</li><li className="rounded-2xl border border-slate-200 p-4 text-sm leading-7 dark:border-slate-700"><strong className="block text-rose-700 dark:text-rose-300">03 · “Aguardar laudo para apoiar.”</strong> Atrasos funcionais merecem intervenção antes da conclusão diagnóstica.</li></ol>
       </section>
 
       <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-900 dark:bg-amber-950/30">
