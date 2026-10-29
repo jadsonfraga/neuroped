@@ -218,7 +218,7 @@ export default function BibliotecaClinicaPage() {
         </div>
         <div className="grid gap-3">
           {entries.length === 0 && <p className="rounded-2xl border border-slate-200 p-6 text-sm text-slate-500">Nenhum capítulo encontrado.</p>}
-          {entries.map((item, index) => (
+          {entries.map((item) => (
             <a key={item.slug} href={`#/${"biblioteca-clinica"}?capitulo=${item.slug}`} onClick={(event) => { event.preventDefault(); window.history.replaceState(null, "", "#/biblioteca-clinica?capitulo=" + encodeURIComponent(item.slug)); document.getElementById(item.day === 1 ? "capitulo-tea-timidez" : "capitulo-wisc")?.scrollIntoView({ behavior: "smooth" }); }}
               className="group flex flex-col gap-4 rounded-[1.4rem] border border-slate-200 bg-white p-5 text-left shadow-sm hover:border-teal-500 hover:shadow-md sm:flex-row sm:items-center dark:border-slate-700 dark:bg-slate-900">
               <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-2xl font-black text-teal-800 dark:bg-teal-950 dark:text-teal-200">{item.day ? String(item.day).padStart(2, "0") : "PRÉVIO"}</div>
