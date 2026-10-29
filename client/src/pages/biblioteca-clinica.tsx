@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import TeaTimidezChapter from "./biblioteca-clinica-tea-timidez";
+import TeaTimidezChapter from "@/components/biblioteca-clinica-tea-timidez";
 import {
   ArrowRight, BookOpen, BrainCircuit, ChevronRight,
   CircleAlert, Clock3, FileText, Layers3, Lightbulb, LockKeyhole,
