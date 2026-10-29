@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 
 const data = readFileSync("client/src/data/clinicalLibrary.ts", "utf8");
 const page = readFileSync("client/src/pages/biblioteca-clinica.tsx", "utf8");
-const day = readFileSync("client/src/pages/biblioteca-clinica-tea-timidez.tsx", "utf8");
+const day = readFileSync("client/src/components/biblioteca-clinica-tea-timidez.tsx", "utf8");
 const workflow = readFileSync(".github/workflows/biblioteca-clinica-pauta-diaria.yml", "utf8");
 
 const title = "Como distinguir sinais de TEA de timidez na primeira infância?";
