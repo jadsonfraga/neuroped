@@ -6,10 +6,12 @@ on:
     paths:
       - "client/src/data/clinicalLibrary.ts"
       - "client/src/pages/biblioteca-clinica.tsx"
+      - "client/src/pages/biblioteca-clinica-tea-timidez.tsx"
       - "client/src/App.tsx"
       - "client/src/data/navigation.ts"
       - "client/src/security/knownRoutes.ts"
       - "tests/unit/clinical-library-static.test.mjs"
+      - "tests/unit/clinical-library-day001.test.mjs"
       - ".github/workflows/biblioteca-clinica-*.yml"
       - "docs/biblioteca-clinica/**"
 
@@ -26,6 +28,6 @@ jobs:
         with:
           node-version: "24"
       - name: Verificar capítulo, índice, bibliografia, aceite e pauta
-        run: node tests/unit/clinical-library-static.test.mjs
+        run: node tests/unit/clinical-library-static.test.mjs && node tests/unit/clinical-library-day001.test.mjs
       - name: Verificar sincronismo de rotas protegidas
         run: node tests/unit/known-routes-sync.test.mjs
