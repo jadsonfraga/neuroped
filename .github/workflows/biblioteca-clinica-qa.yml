@@ -6,7 +6,7 @@ on:
     paths:
       - "client/src/data/clinicalLibrary.ts"
       - "client/src/pages/biblioteca-clinica.tsx"
-      - "client/src/pages/biblioteca-clinica-tea-timidez.tsx"
+      - "client/src/components/biblioteca-clinica-tea-timidez.tsx"
       - "client/src/App.tsx"
       - "client/src/data/navigation.ts"
       - "client/src/security/knownRoutes.ts"
