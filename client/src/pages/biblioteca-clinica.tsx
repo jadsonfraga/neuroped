@@ -25,7 +25,7 @@ function Kicker({ children }: { children: React.ReactNode }) {
 function SectionTitle({ id, number, title, summary }: { id: string; number: string; title: string; summary: string }) {
   return (
     <div id={id} className="scroll-mt-28 mb-6">
-      <Kicker>CAPÍTULO 01 <span aria-hidden="true">/</span> {number}</Kicker>
+      <Kicker>ESTUDO WISC-IV <span aria-hidden="true">/</span> {number}</Kicker>
       <h2 className="mt-2 font-serif text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-slate-50">{title}</h2>
       <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-600 dark:text-slate-300">{summary}</p>
     </div>
@@ -221,7 +221,7 @@ export default function BibliotecaClinicaPage() {
           {entries.map((item, index) => (
             <a key={item.slug} href={`#/${"biblioteca-clinica"}?capitulo=${item.slug}`} onClick={(event) => { event.preventDefault(); window.history.replaceState(null, "", "#/biblioteca-clinica?capitulo=" + encodeURIComponent(item.slug)); document.getElementById(item.day === 1 ? "capitulo-tea-timidez" : "capitulo-wisc")?.scrollIntoView({ behavior: "smooth" }); }}
               className="group flex flex-col gap-4 rounded-[1.4rem] border border-slate-200 bg-white p-5 text-left shadow-sm hover:border-teal-500 hover:shadow-md sm:flex-row sm:items-center dark:border-slate-700 dark:bg-slate-900">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-2xl font-black text-teal-800 dark:bg-teal-950 dark:text-teal-200">{String(item.day ?? index + 1).padStart(2, "0")}</div>
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-2xl font-black text-teal-800 dark:bg-teal-950 dark:text-teal-200">{item.day ? String(item.day).padStart(2, "0") : "PRÉVIO"}</div>
               <div className="flex-1"><span className="text-[10px] font-black uppercase tracking-[.14em] text-teal-700 dark:text-teal-300">{item.category} · {item.date.split("-").reverse().join("/")}</span><h3 className="mt-1 text-lg font-bold text-slate-900 dark:text-slate-100">{item.title}</h3><p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{item.subtitle}</p><div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400"><Clock3 className="h-3.5 w-3.5" /> {item.minutes} min de leitura <span aria-hidden="true">·</span> <span className="font-semibold text-amber-700 dark:text-amber-200">Revisão médica pendente</span></div></div>
               <ArrowRight className="hidden h-5 w-5 text-teal-700 sm:block" aria-hidden="true" />
             </a>
@@ -238,7 +238,7 @@ export default function BibliotecaClinicaPage() {
         </header>
 
         <div className="max-w-4xl">
-          <Kicker>Capítulo 01 · Neuropsicologia · {chapter.date.split("-").reverse().join("/")}</Kicker>
+          <Kicker>Estudo pré-existente · Neuropsicologia · {chapter.date.split("-").reverse().join("/")}</Kicker>
           <h2 id="wisc-title" className="mt-3 font-serif text-3xl font-bold leading-tight text-slate-950 sm:text-4xl dark:text-white">{chapter.title}</h2>
           <p className="mt-3 text-base leading-8 text-slate-600 dark:text-slate-300">{chapter.subtitle}. Um roteiro para interpretar um relatório sem transformar índices em diagnósticos.</p>
         </div>
