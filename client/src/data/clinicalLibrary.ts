@@ -56,7 +56,6 @@ export const clinicalLibraryChapters: ClinicalLibraryChapter[] = [
   },
   {
     slug: "wisc-iv-interpretacao-neuropediatria",
-    day: 9,
     title: "Como interpretar o WISC-IV na neuropediatria",
     subtitle: "Os quatro índices, o QI Total e o raciocínio clínico por trás dos resultados",
     category: "Neuropsicologia",
