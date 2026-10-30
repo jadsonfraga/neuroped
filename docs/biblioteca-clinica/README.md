@@ -1,29 +1,28 @@
-# Biblioteca Clínica NeuroPed — capítulo 01
+# Biblioteca Clínica NeuroPed — trilha canônica 365
 
-**Rota:** `/#/biblioteca-clinica` · **Data:** 28/10/2026 · **Público:** médicos e equipe clínica · **Estado:** `revisao_medica`.
+**Índice-mestre:** `Biblioteca_Clinica_NeuroPed_365_Indice_Mestre.xlsx` (Drive ID `1uZ-Lr_ztbnWTue5fuVZsbJ72Ilc_s9NX`, aba `Trilha 365`, 365 entradas). **Pasta canônica:** `1D6HYj6AZ0m7fwd-tbnmXbbA-6nFYm0oy`.
 
-## Entrega inicial
-- Página responsiva independente da Biblioteca de instrumentos, integrada no menu **REFERÊNCIA**;
-- Diagrama dos quatro índices WISC-IV, explorador por domínio, relação QIT/IAG/IPC;
-- Discussão de TDAH, TEA, dificuldades de aprendizagem, linguagem, deficiência intelectual e altas habilidades;
-- Três casos inteiramente fictícios, sem cálculo de QIT ou atribuição de diagnóstico;
-- Checklist educativo de interpretação e sete referências rastreáveis.
+## Capítulo do Dia 01/365 — 29/10/2026
+**Pergunta exata:** Como distinguir sinais de TEA de timidez na primeira infância?
+**Rota:** `/#/biblioteca-clinica?capitulo=tea-timidez-primeira-infancia`.
+**Estado clínico:** `revisao_medica` — material educacional provisório, sem aceite ou assinatura médica.
+**Documento editável no Drive:** https://docs.google.com/document/d/1rMf_yvKbLRfDy5zbyKC45nLdRt8O347pcLoddRoxIIY/edit
 
-## Método e proveniência
-Foi tentada uma investigação no Consensus em 28/10/2026, mas a cota de 500 pesquisas mensais estava esgotada. A pesquisa **não ocorreu** na plataforma. As referências foram conferidas por consulta às fontes públicas e são exibidas com URLs. A metanálise de TEA de 2026 inclui várias versões Wechsler; não extrapolar diretamente seus resultados para uma única versão do teste.
+- Página mobile-first com fluxograma, matriz achado/interpretação/ação, roteiro em cinco etapas, red flags, decisões investigar/observar, família/escola, caso fictício, três erros, incertezas e oito referências auditáveis.
+- Fontes: Ministério da Saúde (APS e linha de cuidado), AAP (2020, reafirmada 2025), NICE CG128, metanálise M-CHAT(-R/F) 2023 (DOI 10.1001/jamapediatrics.2022.5975), CDC e revisão de intervenção precoce 2023.
+- Proveniência: dispositivo Windows PCDRJADSON **offline** em 29/10/2026. Conector Consensus oficial tentou investigação Pro, mas retornou cota de 500 pesquisas mensais esgotada (reinício anunciado para 01/11/2026). Não houve pesquisa Consensus; fontes públicas foram verificadas diretamente. O capítulo permanece provisório.
+- Não contém dados reais de pacientes, escores inventados ou itens protegidos de testes.
 
-## Fluxo diário
-O workflow `.github/workflows/biblioteca-clinica-pauta-diaria.yml`, programado diariamente às 08:00 de Recife, cria uma **issue de pauta**, sem conteúdo clínico publicado, com rotação de dez temas. É idempotente por data.
-Um capítulo novo requer pesquisa real verificável, elaboração ilustrada, testes, revisão clínica, aceite médico explícito e PR próprio. O agendamento por si só NÃO publica um capítulo por dia. Não utilizar autor de IA como médico revisor.
+## Reconciliação inicial
+Em 29/10/2026 o XLSX apresentava as 365 entradas da `Trilha 365` como `Pendente`. O app já tinha um capítulo WISC-IV, entregue via PR #1231 (merge 28/10/2026), mas seu título não é a pergunta exata do Dia 09 e não havia revisão médica. Por isso a presença desse capítulo não autoriza declarar o Dia 09 concluído no índice. A sequência atual inicia pelo menor Dia sem capítulo canônico concluído: Dia 01.
 
-## Governança
-- Nunca reproduzir itens, pranchas, protocolos ou tabelas normativas protegidas do WISC-IV.
-- Não calcular escores pela interface, não inferir diagnósticos, não coletar nem persistir dados de pacientes.
-- Status `revisao_medica` visível; promover para `publicado` apenas mediante aceite real e registrado em PR.
-- Versionar cada capítulo com data, revisão e fontes, em `client/src/data/clinicalLibrary.ts`. Novos temas ganham componentes ou layouts próprios; sem sobreposição com `/biblioteca-instrumentos`.
-- Testes: `node tests/unit/clinical-library-static.test.mjs`, `npm run test:known-routes`, `npm run check`, `npm run lint` e `npm run build:client`.
-- Produção canônica Cloudflare Pages via merge de PR na `main` e `deploy-cloudflare.yml`; Vercel permanece espelho; sem deploy manual divergente.
-- Rollback: reverter o merge do PR; não há alteração de schema/D1 nem migração.
+## Governança da pauta
+O workflow `.github/workflows/biblioteca-clinica-pauta-diaria.yml` **não gera mais pautas por rotação independente**: foi tornado fail-closed, porque o CI não dispõe de leitura autenticada do XLSX canônico. Não cria issues, não escolhe temas e não publica capítulos. O processo externo lê o índice real antes de cada produção e mantém manifesto incremental no Drive quando não é possível atualizar o XLSX original com segurança.
 
-## Gate clínico pendente
-O conteúdo do primeiro capítulo é material educativo identificado como **rascunho para revisão médica**. O deploy do módulo não constitui aceite do conteúdo pelo médico.
+A visualização de conteúdo `revisao_medica` não equivale a validação clínica. Somente aceite explícito do médico permite alterar o estado para `publicado`. Merge/deploy do material educacional não representa assinatura médica.
+
+## Gates técnicos
+`node tests/unit/clinical-library-static.test.mjs`, `node tests/unit/clinical-library-day001.test.mjs`, `npm run test:known-routes`, `npm run check`, `npm run lint`, `npm run build:client`; revisão de diff e checks obrigatórios do HEAD exato. Merge apenas via PR protegido, depois validação do deploy Cloudflare e navegação em produção.
+
+## Retomada e idempotência
+Verificar o mesmo Dia no XLSX, no manifesto, no app/main e em PRs antes de qualquer nova criação. Se falhar um gate ou deploy, retomar a PR/rascunho do mesmo Dia; não avançar arbitrariamente ao Dia 02. Não alterar a numeração nem a pergunta canônica.

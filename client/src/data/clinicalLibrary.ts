@@ -36,10 +36,24 @@ export interface ClinicalLibraryChapter {
   updated: string;
   status: ClinicalLibraryStatus;
   minutes: number;
+  day?: number;
   review: string;
   sources: string[];
 }
 export const clinicalLibraryChapters: ClinicalLibraryChapter[] = [
+  {
+    slug: "tea-timidez-primeira-infancia",
+    day: 1,
+    title: "Como distinguir sinais de TEA de timidez na primeira infância?",
+    subtitle: "Atenção compartilhada, reciprocidade, red flags e decisões de consultório",
+    category: "TEA",
+    date: "2026-10-29",
+    updated: "2026-10-29",
+    status: "revisao_medica",
+    minutes: 6,
+    review: "Síntese provisória baseada em fontes públicas; Consensus indisponível por cota. Sem aceite médico.",
+    sources: ["ms-tea-aps", "ms-tea-2025", "aap-2020", "nice-cg128", "mchat-meta-2023", "cdc-18m", "mcglade-2023"],
+  },
   {
     slug: "wisc-iv-interpretacao-neuropediatria",
     title: "Como interpretar o WISC-IV na neuropediatria",
@@ -180,14 +194,10 @@ export const wiscReferences: ClinicalLibraryReference[] = [
 ];
 
 export const nextClinicalTopics = [
-  "TDAH: avaliação diagnóstica sem atalhos",
-  "TEA: comunicação social, repetição e diferenciais",
-  "Dislexia: da suspeita escolar à investigação",
-  "Transtorno do desenvolvimento da linguagem",
-  "Epilepsia: distinguir crises de eventos paroxísticos",
-  "Altas habilidades e dupla excepcionalidade",
-  "Deficiência intelectual e comportamento adaptativo",
-  "Sono infantil e impacto sobre o neurodesenvolvimento",
-  "Funções executivas: conceito, testes e limites",
-  "EEG em neuropediatria: quando solicitar e como interpretar",
+  "Como diferenciar desatenção de imaturidade etária?",
+  "Primeira crise convulsiva afebril: qual a abordagem inicial?",
+  "Como diferenciar dificuldade de alfabetização de dislexia?",
+  "Quando o atraso de fala exige avaliação global?",
+  "Como reconhecer ansiedade de separação que ultrapassa o esperado?",
+  "Quando a criança que não fala precisa de avaliação auditiva urgente?",
 ];
