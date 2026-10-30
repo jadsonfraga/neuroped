@@ -104,6 +104,7 @@ export const READER_CLINICAL_ROUTES = [
   "/aq50",
   "/classificacao/:id",
   "/ballard",
+  "/biblioteca-clinica",
   "/biblioteca-instrumentos",
   "/espasticidade",
   "/classificacoes",

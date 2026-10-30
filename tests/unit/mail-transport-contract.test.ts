@@ -28,7 +28,7 @@ const CONFIGURADO = {
     for (const entrada of readdirSync(dir, { withFileTypes: true })) {
       const caminho = join(dir, entrada.name);
       if (entrada.isDirectory()) varrer(caminho);
-      else if (entrada.name.endsWith(".ts")) arquivos.push(caminho);
+      else if (entrada.name.endsWith(".ts")) arquivos.push(caminho.replaceAll("\\", "/"));
     }
   };
   varrer("functions");

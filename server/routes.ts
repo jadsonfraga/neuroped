@@ -158,7 +158,7 @@ export async function registerRoutes(
         if (e instanceof z.ZodError)
           return res
             .status(400)
-            .json({ error: "Dados invalidos", details: e.errors });
+            .json({ error: "Dados invalidos", details: e.issues });
         console.error("[patients.create]", e);
         return res.status(500).json({ error: "Erro interno" });
       }
@@ -267,7 +267,7 @@ export async function registerRoutes(
         if (e instanceof z.ZodError)
           return res
             .status(400)
-            .json({ error: "Dados invalidos", details: e.errors });
+            .json({ error: "Dados invalidos", details: e.issues });
         console.error("[patients.update]", e);
         return res.status(500).json({ error: "Erro interno" });
       }
@@ -359,7 +359,7 @@ export async function registerRoutes(
       if (e instanceof z.ZodError)
         return res
           .status(400)
-          .json({ error: "Dados invalidos", details: e.errors });
+          .json({ error: "Dados invalidos", details: e.issues });
       return res.status(500).json({ error: "Erro interno" });
     }
   });
@@ -474,7 +474,7 @@ export async function registerRoutes(
       .strict()
       .safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Dados invalidos", details: parsed.error.errors });
+      return res.status(400).json({ error: "Dados invalidos", details: parsed.error.issues });
     }
     if (parsed.data.patientId) {
       const patient = db
@@ -525,7 +525,7 @@ export async function registerRoutes(
       .strict()
       .safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Dados invalidos", details: parsed.error.errors });
+      return res.status(400).json({ error: "Dados invalidos", details: parsed.error.issues });
     }
     if (parsed.data.patientId) {
       const patient = db
@@ -632,7 +632,7 @@ export async function registerRoutes(
         if (e instanceof z.ZodError)
           return res
             .status(400)
-            .json({ error: "Dados invalidos", details: e.errors });
+            .json({ error: "Dados invalidos", details: e.issues });
         console.error("[send-report] error:", e);
         return res.status(500).json({
           error: "Falha ao enviar email",

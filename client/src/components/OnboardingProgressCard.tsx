@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClinic } from "@/contexts/ClinicContext";
 import { authFetch } from "@/lib/authClient";
+import { projectSoloOnboarding } from "@/lib/soloOnboarding";
 import {
   onboardingMilestoneDefinitions,
   type OnboardingMilestone,
@@ -249,7 +250,9 @@ export function OnboardingProgressSummary({
 }: {
   onboarding: TenantOnboardingSnapshot;
 }) {
-  const isComplete = onboarding.progress.completed === onboarding.progress.total;
+  const soloOnboarding = projectSoloOnboarding(onboarding);
+  const isComplete =
+    soloOnboarding.progress.completed === soloOnboarding.progress.total;
 
   return (
     <section
@@ -277,11 +280,11 @@ export function OnboardingProgressSummary({
               >
                 {isComplete
                   ? "Configuração inicial concluída"
-                  : "Prepare sua clínica para operar"}
+                  : "Prepare seu consultório para operar"}
               </h2>
               <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
                 Progresso calculado pelo servidor a partir de registros reais da
-                clínica ativa.
+                clínica ativa; a tela resume os cinco passos do Solo.
               </p>
             </div>
           </div>
@@ -289,25 +292,25 @@ export function OnboardingProgressSummary({
             className="rounded-full border border-primary/20 bg-background/75 px-3 py-1 text-[12px] font-semibold tabular-nums text-foreground"
             data-testid="onboarding-progress-summary"
           >
-            {onboarding.progress.completed} de {onboarding.progress.total}
+            {soloOnboarding.progress.completed} de {soloOnboarding.progress.total}
           </p>
         </div>
 
         <div className="mt-4 flex items-center gap-3">
           <Progress
-            value={onboarding.progress.percent}
-            aria-label={`Progresso do onboarding: ${onboarding.progress.percent}%`}
+            value={soloOnboarding.progress.percent}
+            aria-label={`Progresso do onboarding: ${soloOnboarding.progress.percent}%`}
             className="h-2.5"
             data-testid="onboarding-progress-bar"
           />
           <span className="w-11 shrink-0 text-right text-[12px] font-semibold tabular-nums text-muted-foreground">
-            {onboarding.progress.percent}%
+            {soloOnboarding.progress.percent}%
           </span>
         </div>
       </div>
 
       <ol className="grid gap-px bg-border/50 sm:grid-cols-2">
-        {onboarding.milestones.map((milestone) => {
+        {soloOnboarding.milestones.map((milestone) => {
           const action = milestoneActions[milestone.key];
           return (
             <li
@@ -349,6 +352,14 @@ export function OnboardingProgressSummary({
             ? "aguardando evento confirmado do provedor. "
             : "bloqueada por dependência externa. "}
         {onboarding.billingEvidence.limitation}
+        {onboarding.billingEvidence.status !== "SERVER_CONFIRMED" && (
+          <a
+            href="#/configuracoes?secao=plano"
+            className="ml-1 font-semibold text-primary underline underline-offset-2"
+          >
+            Revisar plano e cobrança
+          </a>
+        )}
       </div>
     </section>
   );

@@ -868,6 +868,12 @@ function build(): Record<number, Record<PhaseId, Item[]>> {
 }
 
 export const INTEGRATED_BANK: Record<number, Record<PhaseId, Item[]>> = build();
+/** Snapshot da bateria anterior à integração dos 50 desafios obrigatórios. */
+export const MAIN_INTEGRATED_BANK: Record<number, Record<PhaseId, Item[]>> = Object.fromEntries(
+  Object.entries(INTEGRATED_BANK).map(([years, phases]) => [years, Object.fromEntries(
+    Object.entries(phases).map(([phaseId, items]) => [phaseId, [...items]]),
+  )]),
+) as Record<number, Record<PhaseId, Item[]>>;
 
 // ─────────────────────────────── extensão opcional (v2026-10-21.1) ───────────────────────────────
 // 50 desafios disponíveis por idade: a bateria principal acima, intacta, mais itens opcionais tirados dos
@@ -980,3 +986,14 @@ function buildOptional(): Record<number, OptionalItem[]> {
 }
 
 export const OPTIONAL_BANK: Record<number, OptionalItem[]> = buildOptional();
+
+/**
+ * Banco efetivo do jogo: os 50 desafios não médicos entram na sequência principal.
+ * A parte médica continua isolada no circuito clínico e nunca é convertida em jogo.
+ */
+export const GAME_BANK: Record<number, Record<PhaseId, Item[]>> = Object.fromEntries(
+  YEARS.map((years) => [years, Object.fromEntries(PHASE_ORDER.map((phaseId) => [
+    phaseId,
+    [...MAIN_INTEGRATED_BANK[years][phaseId], ...OPTIONAL_BANK[years].filter((entry) => entry.phaseId === phaseId).map((entry) => entry.item)],
+  ]))]),
+) as Record<number, Record<PhaseId, Item[]>>;

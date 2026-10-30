@@ -3,13 +3,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  ITEM_BANK, PHASE_ORDER, YEARS, buildGameReport, buildStructuredLines, itemsFor, latencyStats, optionOrder, recordJudged, recordTouch,
+  ITEM_BANK, PHASE_ORDER, YEARS, buildGameReport, buildStructuredLines, gameItemsFor, latencyStats, optionOrder, recordJudged, recordTouch,
   responseProfile, responseProfileLines, touchOrdinal, type AnswerRecord, type GameSession, type TouchItem,
 } from "../../client/src/features/super-neuropad/model";
 
 function touchItems(years: number) {
   const out: { item: TouchItem; phaseId: (typeof PHASE_ORDER)[number]; ordinal: number }[] = [];
-  for (const phaseId of PHASE_ORDER) for (const item of itemsFor(String(years), phaseId)) if (item.kind === "toque") out.push({ item, phaseId, ordinal: touchOrdinal(String(years), phaseId, item.id) });
+  for (const phaseId of PHASE_ORDER) for (const item of gameItemsFor(String(years), phaseId)) if (item.kind === "toque") out.push({ item, phaseId, ordinal: touchOrdinal(String(years), phaseId, item.id) });
   return out;
 }
 
@@ -38,7 +38,12 @@ test("optionOrder: mesmas opções, determinístico, resposta certa em posição
 test("touchOrdinal conta os toques de mesmo número de opções na ordem da partida", () => {
   const list = touchItems(9);
   assert.equal(list[0].ordinal, 0);
-  assert.deepEqual(list.map((entry) => entry.ordinal), list.map((_, index) => index), "aos 9 anos todos os toques têm 4 opções");
+  const counts = new Map<number, number>();
+  for (const entry of list) {
+    const expected = counts.get(entry.item.options.length) ?? 0;
+    assert.equal(entry.ordinal, expected, `${entry.item.id}: ordinal entre itens com ${entry.item.options.length} opções`);
+    counts.set(entry.item.options.length, expected + 1);
+  }
 });
 
 test("recordTouch guarda posição escolhida e da certa; sem a ordem exibida mantém o formato antigo", () => {

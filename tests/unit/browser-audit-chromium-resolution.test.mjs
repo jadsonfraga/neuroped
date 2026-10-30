@@ -84,7 +84,7 @@ try {
   assert.equal(resolveAuditChromiumPath(), ghost, "configuração explícita errada não pode ser mascarada");
 
   // --- o gate de contraste não pode passar sem medir -------------------------
-  const contrast = read("scripts/guards/audit-surface-contrast.mjs");
+  const contrast = read("scripts/guards/audit-surface-contrast.mjs").replace(/\r\n/g, "\n");
   const missingBrowserBranch = contrast.slice(contrast.indexOf("isMissingBrowserError(error)"));
   assert.ok(
     /process\.exit\(1\)/.test(missingBrowserBranch.slice(0, 600)),

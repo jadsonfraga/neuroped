@@ -1,16 +1,13 @@
 /**
  * Extensão opcional do Super NeuroPad Game (v2026-10-21.1): 50 desafios disponíveis por idade.
  *
- * A bateria principal (18, 24, 30 ou 36 desafios, conforme a idade) não muda: limites de tempo, XP,
- * contagem, PDF e prontuário continuam os mesmos. Os opcionais completam 50 com itens dos mesmos bancos
- * de origem da idade (`OPTIONAL_BANK`), sem itens criados para a extensão. A aplicadora escolhe quais
- * aplicar conforme a finalidade e a tolerância da criança; não aplicar nenhum é uma opção válida.
- *
- * O registro dos opcionais é separado do registro da partida e fica só em memória, por idade.
+ * Catálogo de compatibilidade para registros legados. A partida atual usa os 50 desafios integrados
+ * diretamente no banco do jogo; estas funções não participam da contagem, tempo ou XP da partida.
+ * O registro legado permanece separado e apenas em memória, por idade.
  * Nada é interpretado: o texto relata o que foi aplicado e como a criança respondeu.
  */
 import { DESCRIPTIVE_NOTICE } from "../../lib/descriptiveNotice";
-import { conceptKey, DESAFIOS_DISPONIVEIS_POR_IDADE, INTEGRATED_BANK, OPTIONAL_BANK, PHASE_ORDER, type OptionalItem } from "./bank";
+import { conceptKey, DESAFIOS_DISPONIVEIS_POR_IDADE, MAIN_INTEGRATED_BANK, OPTIONAL_BANK, PHASE_ORDER, type OptionalItem } from "./bank";
 import { bandItemCount, formatDuration, itemSeconds, KIND_LABELS, ORIGIN_LABELS, phaseById, STATUS_LABELS, youngFactor, type AnswerRecord, type Item } from "./model";
 
 export const EXTENSAO_VERSAO = "2026-10-21.1";
@@ -30,7 +27,7 @@ export function opcionaisDaIdade(years: number): readonly OptionalItem[] {
  * preservado e variações podem ser abertas explicitamente para revisão médica.
  */
 export function opcionaisSemRedundancia(years: number): readonly OptionalItem[] {
-  const principal = PHASE_ORDER.flatMap((phaseId) => INTEGRATED_BANK[years]?.[phaseId] ?? []);
+  const principal = PHASE_ORDER.flatMap((phaseId) => MAIN_INTEGRATED_BANK[years]?.[phaseId] ?? []);
   const vistos = new Set(principal.map(conceptKey));
   return opcionaisDaIdade(years).filter(({ item }) => {
     const chave = conceptKey(item);

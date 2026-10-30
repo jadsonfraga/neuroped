@@ -33,6 +33,7 @@ export const KNOWN_ROUTE_PATTERNS: readonly string[] = [
   "/ballard",
   "/bateria-jadson",
   "/biblioteca-instrumentos",
+  "/biblioteca-clinica",
   "/billing/retorno",
   "/brief2",
   "/brincando-e-aprendendo",

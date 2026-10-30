@@ -108,6 +108,7 @@ const now = () => new Date().toISOString();
 raw.prepare(`INSERT INTO users (id,name,email,role,is_active,created_at,updated_at) VALUES ('prof-a','Profissional Alfa','prof-a@example.test','professional',1,?,?)`).run(now(), now());
 raw.prepare(`INSERT INTO users (id,name,email,role,is_active,created_at,updated_at) VALUES ('sec-a','Secretária Alfa','sec-a@example.test','operator',1,?,?)`).run(now(), now());
 raw.prepare(`INSERT INTO clinics (id,slug,name,status,created_by_user_id,created_at,updated_at) VALUES ('clinic-alfa','clinica-alfa','Clínica Alfa','active','prof-a',?,?)`).run(now(), now());
+raw.prepare(`UPDATE billing_subscriptions SET seats=2 WHERE customer_id=(SELECT id FROM billing_customers WHERE clinic_id='clinic-alfa')`).run();
 raw.prepare(`INSERT INTO clinic_memberships (clinic_id,user_id,role,active,created_at,updated_at) VALUES ('clinic-alfa','prof-a','owner',1,?,?)`).run(now(), now());
 raw.prepare(`INSERT INTO clinic_memberships (clinic_id,user_id,role,active,created_at,updated_at) VALUES ('clinic-alfa','sec-a','assistant',1,?,?)`).run(now(), now());
 raw.prepare(`INSERT INTO booking_staff_links (provider_user_id,staff_user_id,active,created_by_user_id,created_at,updated_at) VALUES ('prof-a','sec-a',1,'prof-a',?,?)`).run(now(), now());

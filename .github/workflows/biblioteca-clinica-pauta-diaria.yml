@@ -1,0 +1,33 @@
+name: Biblioteca Clínica — pauta editorial diária
+
+on:
+  schedule:
+    # 08:00 em Petrolina/Recife (UTC-3), sem horário de verão.
+    - cron: "0 11 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: biblioteca-clinica-pauta-diaria
+  cancel-in-progress: false
+
+jobs:
+  pauta:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Propor tópico com revisão humana obrigatória
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Índice canônico externo: Biblioteca_Clinica_NeuroPed_365_Indice_Mestre.xlsx
+            // Drive file ID: 1uZ-Lr_ztbnWTue5fuVZsbJ72Ilc_s9NX
+            // A execução agendada NÃO escolhe tópicos, NÃO cria issues e NÃO publica capítulos.
+            // A rotação antiga de dez assuntos divergentes foi desativada para impedir
+            // duplicações ou divergência da trilha fechada de 365 perguntas.
+            // O processo autorizado consulta o XLSX real e registra manifesto incremental.
+            // Revisão clínica e aceite explícito permanecem obrigatórios.
+            // Nenhum conteúdo clínico é promovido sem revisão humana.
+            core.notice("Pauta automática suspensa: índice canônico no Drive não está autenticado neste workflow. Nenhuma issue foi criada.");
