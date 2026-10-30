@@ -13,6 +13,7 @@ import {
   buildPatientRecordItems,
   buildStructuredLines,
   estimateBandSeconds,
+  gameItemsFor,
   isJudged,
   itemsFor,
   phaseById,
@@ -30,6 +31,7 @@ import {
 
 const ISSUER = { doctorName: "Profissional Sintético", specialty: "Neuropediatria", credentials: "CRM 00000", clinicName: "Clínica Sintética", motto: "" };
 const all = (years: number): Item[] => PHASE_ORDER.flatMap((phaseId) => itemsFor(String(years), phaseId));
+const gameAll = (years: number): Item[] => PHASE_ORDER.flatMap((phaseId) => gameItemsFor(String(years), phaseId));
 
 function record(item: Item, phaseId: PhaseId, status: AnswerStatus): AnswerRecord {
   if (item.kind === "toque") {
@@ -40,7 +42,7 @@ function record(item: Item, phaseId: PhaseId, status: AnswerStatus): AnswerRecor
   return recordBuild(item, phaseId, status === "acerto" ? [...item.target] : null, 5, false, status === "recusa");
 }
 function play(years: number, plan: (item: Item) => AnswerStatus = () => "acerto"): GameSession {
-  const answers = PHASE_ORDER.flatMap((phaseId) => itemsFor(String(years), phaseId).map((item) => record(item, phaseId, plan(item))));
+  const answers = PHASE_ORDER.flatMap((phaseId) => gameItemsFor(String(years), phaseId).map((item) => record(item, phaseId, plan(item))));
   return { version: "test", ageYears: years, bandId: String(years), characterId: "robo", startedAt: "2026-10-13T12:00:00.000Z", finishedAt: "2026-10-13T12:12:00.000Z", answers, pauseCount: 0 };
 }
 
@@ -57,17 +59,18 @@ test("roteamento: 2 e 3 anos recebem a bateria dedicada; 4 anos ou mais continua
   }
 });
 
-test("contagem e duração: 18 itens em ≤ 12 min aos 2 anos; 24 itens em ≤ 15 min aos 3 anos; cada mundo em até 3 min", () => {
+test("contagem e duração: núcleo dedicado preservado e partida de 50 itens dentro do teto infantil", () => {
   assert.equal(all(2).length, 18);
   assert.equal(all(3).length, 24);
   for (const years of [2, 3]) {
+    assert.equal(gameAll(years).length, 50);
     const estimate = estimateBandSeconds(years);
     assert.ok(estimate.totalSeconds <= sessionLimitSeconds(years), `${years} anos: ${estimate.totalSeconds}s`);
-    for (const phaseId of PHASE_ORDER) assert.ok(estimate.byPhase[phaseId] + 15 <= 180, `${years}/${phaseId}: ${estimate.byPhase[phaseId]}s`);
+    for (const phaseId of PHASE_ORDER) assert.ok(estimate.byPhase[phaseId] > 0, `${years}/${phaseId}: ${estimate.byPhase[phaseId]}s`);
   }
-  assert.equal(sessionLimitSeconds(2), 720);
-  assert.equal(sessionLimitSeconds(3), 900);
-  assert.equal(sessionLimitSeconds(4), 1200);
+  assert.equal(sessionLimitSeconds(2), 1800);
+  assert.equal(sessionLimitSeconds(3), 2100);
+  assert.equal(sessionLimitSeconds(4), 2700);
 });
 
 test("os seis domínios estão cobertos, cada mundo tem um domínio principal, e as habilidades-chave por idade existem", () => {

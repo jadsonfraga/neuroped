@@ -7,7 +7,7 @@ import {
   registradosNaOrdem, registrarOpcional, apagarOpcional, textoOpcionais, type RegistrosOpcionais,
 } from "../../client/src/features/super-neuropad/extensao";
 import {
-  bandItemCount, estimateBandSeconds, isJudged, itemProvenance, recordBuild, recordJudged, recordTouch, sessionLimitSeconds,
+  bandItemCount, estimateBandSeconds, gameBandItemCount, isJudged, itemProvenance, recordBuild, recordJudged, recordTouch, sessionLimitSeconds,
   type AnswerRecord, type Item, type PhaseId,
 } from "../../client/src/features/super-neuropad/model";
 import { activeClockSeconds, emptyActiveClock, transitionActiveClock } from "../../client/src/features/super-neuropad/activeClock";
@@ -34,15 +34,16 @@ test("extensão: 50 desafios disponíveis em cada idade de 2 a 17 anos, bateria 
   }
 });
 
-test("extensão: a bateria principal não muda (contagem, tempo e limite por idade)", () => {
-  const principal = YEARS.map((years) => bandItemCount(String(years)));
-  assert.deepEqual(principal, [18, 24, 24, 24, 30, 30, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36]);
+test("migração: núcleo autoral preservado e os 50 desafios integram a partida obrigatória", () => {
+  const nucleos = YEARS.map((years) => bandItemCount(String(years)));
+  assert.deepEqual(nucleos, [18, 24, 24, 24, 30, 30, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36]);
   for (const years of YEARS) {
-    const limite = years === 2 ? 12 * 60 : years === 3 ? 15 * 60 : 20 * 60;
-    assert.equal(sessionLimitSeconds(years), limite, `${years} anos: limite da sessão principal inalterado`);
-    assert.ok(estimateBandSeconds(years).totalSeconds <= limite, `${years} anos: estimativa principal dentro do limite`);
+    const limite = years === 2 ? 30 * 60 : years === 3 ? 35 * 60 : 45 * 60;
+    assert.equal(gameBandItemCount(String(years)), 50, `${years} anos: partida obrigatória completa`);
+    assert.equal(sessionLimitSeconds(years), limite, `${years} anos: limite da sessão ampliada`);
+    assert.ok(estimateBandSeconds(years).totalSeconds <= limite, `${years} anos: estimativa dentro do limite`);
     const mainIds = PHASE_ORDER.flatMap((phaseId) => INTEGRATED_BANK[years][phaseId].map((item) => item.id));
-    assert.ok(mainIds.every((id) => !id.includes("opcional")), `${years} anos: nenhum opcional entrou na bateria`);
+    assert.ok(mainIds.every((id) => !id.includes("opcional")), `${years} anos: núcleo canônico preserva os ids`);
   }
 });
 
@@ -66,11 +67,11 @@ test("extensão: opcionais vêm dos bancos de origem da idade, sem itens criados
   }
 });
 
-test("extensão: estimativa de tempo dos opcionais é informada e não soma ao limite principal", () => {
+test("compatibilidade: catálogo legado mantém estimativa e a sessão contabiliza os 50 obrigatórios", () => {
   for (const years of YEARS) {
     const segundos = estimativaOpcionaisSegundos(years);
     assert.ok(segundos > 0, `${years} anos: estimativa positiva`);
-    assert.equal(estimateBandSeconds(years).items, bandItemCount(String(years)), `${years} anos: estimativa principal só com a bateria`);
+    assert.equal(estimateBandSeconds(years).items, 50, `${years} anos: estimativa cobre toda a partida`);
   }
 });
 
@@ -132,7 +133,7 @@ test("texto e tela: aos 2–3 anos o opcional leva o nome padrão do mundo, não
   assert.doesNotMatch(block, /phaseById\([^)]*,\s*years\)/, "painel usa o nome padrão do mundo");
 });
 
-test("tela: painel opcional sem controle desabilitado e fora da partida", () => {
+test("tela: painel opcional legado permanece fora da rota da partida obrigatória", () => {
   const page = readFileSync("client/src/pages/super-neuropad-game.tsx", "utf8");
   const start = page.indexOf("function OpcionaisPanel(");
   const block = page.slice(start, page.indexOf("function Clouds() {"));
@@ -142,8 +143,7 @@ test("tela: painel opcional sem controle desabilitado e fora da partida", () => 
   assert.match(block, /Pausar opcionais/);
   assert.match(block, /Recolher opcionais/);
   assert.match(block, /Copiar registro dos opcionais/);
-  // O painel aparece na preparação e nos resultados; não entra na partida.
-  assert.equal(page.match(/<OpcionaisPanel /g)?.length, 2);
+  assert.equal(page.match(/<OpcionaisPanel /g)?.length ?? 0, 0, "painel legado não é renderizado");
   const source = readFileSync("client/src/features/super-neuropad/extensao.ts", "utf8");
   assert.doesNotMatch(source, /localStorage|sessionStorage|indexedDB|fetch\(/, "registro só em memória");
 });

@@ -99,15 +99,33 @@ test("o resumo distingue concluído, pendente e bloqueio externo sem presumir co
     }),
   );
 
-  assert.match(html, /4 de 10/);
-  assert.match(html, /Progresso do onboarding: 40%/);
+  assert.match(html, /3 de 5/);
+  assert.match(html, /Progresso do onboarding: 60%/);
   assert.match(html, /data-status="completed"/);
   assert.match(html, /data-status="pending"/);
-  assert.match(html, /data-status="blocked_external"/);
-  assert.match(html, /Validação externa pendente/);
+  assert.match(html, /onboarding-milestone-account_created/);
+  assert.match(html, /onboarding-milestone-email_verified/);
+  assert.match(html, /onboarding-milestone-clinic_created/);
+  assert.match(html, /onboarding-milestone-first_patient/);
+  assert.match(html, /onboarding-milestone-first_document/);
+  assert.doesNotMatch(html, /onboarding-milestone-first_member/);
+  assert.doesNotMatch(html, /onboarding-milestone-billing_configured/);
   assert.match(html, /bloqueada por dependência externa/);
   assert.match(html, /nenhuma cobrança foi presumida/);
+  assert.match(html, /href="#\/configuracoes\?secao=plano"/);
   assert.doesNotMatch(html, /Cobrança: confirmada/);
+});
+
+test("a criação inicial usa linguagem Solo sem mudar o payload do tenant", () => {
+  const page = readFileSync("client/src/pages/onboarding.tsx", "utf8");
+
+  assert.match(page, /Configurar seu consultório/);
+  assert.match(page, /Nome do consultório/);
+  assert.match(page, /Criar consultório e entrar/);
+  assert.match(page, /14 dias/);
+  assert.doesNotMatch(page, /2 assentos/);
+  assert.match(page, /JSON\.stringify\(\{ name: clinicName\.trim\(\), legalName:/);
+  assert.match(page, /authFetch\("\/api\/tenants"/);
 });
 
 test("o card é alcançável na home e consulta o tenant com cache isolado e cancelável", () => {

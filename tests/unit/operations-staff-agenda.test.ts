@@ -94,6 +94,7 @@ insertUser("prof-b", "Profissional Beta", "professional");
 insertUser("sec-a", "Secretária Alfa", "operator");
 insertClinic("clinic-alfa", "clinica-alfa", "prof-a");
 insertClinic("clinic-beta", "clinica-beta", "prof-b");
+raw.prepare(`UPDATE billing_subscriptions SET seats=2 WHERE customer_id=(SELECT id FROM billing_customers WHERE clinic_id='clinic-alfa')`).run();
 insertMembership("clinic-alfa", "prof-a", "owner");
 insertMembership("clinic-beta", "prof-b", "owner");
 insertMembership("clinic-alfa", "sec-a", "assistant");

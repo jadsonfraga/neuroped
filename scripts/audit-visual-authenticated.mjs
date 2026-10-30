@@ -123,10 +123,32 @@ const CASES = [
     forbid: [LOGIN_FORM],
   },
 
+  // ── 1b. Oferta e ativação Solo ─────────────────────────────────────────
+  {
+    id: "planos-desktop-light", group: "Comercial", anonymous: true,
+    route: "/planos", viewport: "desktop", theme: "light",
+    expect: ['[data-testid="plan-price"]', '[data-testid="solo-availability-note"]'],
+  },
+  {
+    id: "planos-mobile-dark", group: "Comercial", anonymous: true,
+    route: "/planos", viewport: "mobile", theme: "dark",
+    expect: ['[data-testid="plan-price"]', '[data-testid="link-signup"]'],
+  },
+  {
+    id: "onboarding-desktop-light", group: "Ativação Solo",
+    route: "/onboarding", viewport: "desktop", theme: "light",
+    expect: ["#onb-clinic-name", "#onb-display-name"], forbid: [LOGIN_FORM],
+  },
+  {
+    id: "onboarding-mobile-dark", group: "Ativação Solo",
+    route: "/onboarding", viewport: "mobile", theme: "dark",
+    expect: ["#onb-clinic-name", "#onb-display-name"], forbid: [LOGIN_FORM],
+  },
+
   // ── 2. Home / cockpit ───────────────────────────────────────────────────
   {
     id: "home-desktop-light", group: "Cockpit", route: "/", viewport: "desktop", theme: "light",
-    expect: ['[data-testid="text-page-title"]', '[data-testid="cockpit-context"]'], forbid: [LOGIN_FORM],
+    expect: ['[data-testid="text-page-title"]', '[data-testid="cockpit-context"]', '[data-testid="onboarding-progress-card"]'], forbid: [LOGIN_FORM],
   },
   {
     id: "home-desktop-dark", group: "Cockpit", route: "/", viewport: "desktop", theme: "dark",
@@ -138,7 +160,7 @@ const CASES = [
   },
   {
     id: "home-mobile-light", group: "Cockpit", route: "/", viewport: "mobile", theme: "light",
-    expect: ['[data-testid="cockpit-context"]'], forbid: [LOGIN_FORM],
+    expect: ['[data-testid="cockpit-context"]', '[data-testid="onboarding-progress-card"]'], forbid: [LOGIN_FORM],
   },
   {
     id: "home-mobile-small-dark", group: "Cockpit", route: "/", viewport: "mobileSmall", theme: "dark",
@@ -429,6 +451,16 @@ const CASES = [
     expect: ['[data-testid="configuracoes-shell"]'], forbid: [LOGIN_FORM],
   },
   {
+    id: "configuracoes-plano-desktop-light", group: "Operação",
+    route: "/configuracoes?secao=plano", viewport: "desktop", theme: "light",
+    expect: ['[data-testid="configuracoes-shell"]'], expectText: "NeuroPed Solo", forbid: [LOGIN_FORM],
+  },
+  {
+    id: "configuracoes-plano-mobile-dark", group: "Operação",
+    route: "/configuracoes?secao=plano", viewport: "mobile", theme: "dark",
+    expect: ['[data-testid="configuracoes-shell"]'], expectText: "NeuroPed Solo", forbid: [LOGIN_FORM],
+  },
+  {
     id: "clinica-multipla-desktop", group: "Operação", scenario: "multiTenant",
     route: "/", viewport: "desktop", theme: "light",
     expect: ['[data-testid="cockpit-context"]'], forbid: [LOGIN_FORM],
@@ -653,7 +685,9 @@ async function main() {
         await settle(page, 400);
 
         for (const selector of testCase.expect ?? []) {
-          const visible = await page.locator(selector).first().isVisible().catch(() => false);
+          const visible = await page.locator(selector).first().waitFor({ state: "visible", timeout: 10_000 })
+            .then(() => true)
+            .catch(() => false);
           if (!visible) failures.push(`estado-ausente:${selector}`);
         }
         for (const selector of testCase.forbid ?? []) {
