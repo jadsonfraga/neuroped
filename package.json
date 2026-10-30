@@ -248,7 +248,7 @@
     "cross-env": "^7.0.3",
     "drizzle-kit": "^0.31.8",
     "esbuild": "^0.28.1",
-    "eslint": "^10.8.0",
+    "eslint": "^10.13.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-unused-imports": "^4.4.1",
     "globals": "^17.8.0",
