@@ -104,6 +104,7 @@ export const READER_CLINICAL_ROUTES = [
   "/aq50",
   "/classificacao/:id",
   "/ballard",
+  "/biblioteca",
   "/biblioteca-instrumentos",
   "/espasticidade",
   "/classificacoes",
@@ -150,6 +151,7 @@ export const READER_CLINICAL_ROUTES = [
 export const VISITOR_HOME = "/biblioteca-instrumentos";
 export const VISITOR_ROUTES = [
   // Catálogo e triagem de escalas
+  "/biblioteca",
   "/biblioteca-instrumentos",
   "/instrumentos-padronizados",
   "/filtro",

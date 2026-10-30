@@ -32,6 +32,7 @@ export const KNOWN_ROUTE_PATTERNS: readonly string[] = [
   "/avaliacao-pre-consulta-faixa-etaria",
   "/ballard",
   "/bateria-jadson",
+  "/biblioteca",
   "/biblioteca-instrumentos",
   "/billing/retorno",
   "/brief2",

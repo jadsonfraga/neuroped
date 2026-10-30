@@ -132,6 +132,7 @@ const Aq10Page = lazy(() => import("@/pages/aq10"));
 const Aq50Page = lazy(() => import("@/pages/aq50"));
 const ClassificacaoPage = lazy(() => import("@/pages/classificacao"));
 const BallardPage = lazy(() => import("@/pages/ballard"));
+const BibliotecaPage = lazy(() => import("@/pages/biblioteca"));
 const BibliotecaInstrumentosPage = lazy(
   () => import("@/pages/biblioteca-instrumentos"),
 );
@@ -385,6 +386,7 @@ function AppRouter() {
             <Route path="/aq50" component={Aq50Page} />
             <Route path="/classificacao/:id" component={ClassificacaoPage} />
             <Route path="/ballard" component={BallardPage} />
+            <Route path="/biblioteca" component={BibliotecaPage} />
             <Route
               path="/biblioteca-instrumentos"
               component={BibliotecaInstrumentosPage}

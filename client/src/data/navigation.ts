@@ -304,6 +304,12 @@ export const navSections: NavSection[] = [
   {
     title: "REFERÊNCIA",
     items: [
+      {
+        href: "/biblioteca",
+        label: "Biblioteca",
+        icon: BookOpen,
+        description: "Capítulos ultradidáticos de Neurologia Infantil",
+      },
       { href: "/instrumentos-padronizados", label: "Instrumentos padronizados", icon: BookOpen },
       { href: "/biblioteca-instrumentos", label: "Biblioteca de instrumentos", icon: ListChecks },
       { href: "/fluxogramas", label: "Fluxogramas", icon: Brain },
