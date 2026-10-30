@@ -40,6 +40,13 @@ on:
       - "docs/SMOKE_CLIENTE_ZERO.md"
       - "functions/api/auth/_mailTransport.ts"
       - "ROADMAP.md"
+      - "client/src/components/ui/VisualStates.tsx"
+      - "client/src/lib/connectivityProbe.ts"
+      - "client/src/pages/sobre.tsx"
+      - "tests/unit/connectivity-probe.test.ts"
+      - "tests/unit/institutional-contact-ui.test.mjs"
+      - "scripts/ops/saas-release-gate.ts"
+      - "tests/unit/saas-release-gate.test.ts"
       - "DECISIONS.md"
       - "METRICS.md"
       - ".github/workflows/saas-self-service-guard.yml"
@@ -82,6 +89,13 @@ on:
       - "docs/SMOKE_CLIENTE_ZERO.md"
       - "functions/api/auth/_mailTransport.ts"
       - "ROADMAP.md"
+      - "client/src/components/ui/VisualStates.tsx"
+      - "client/src/lib/connectivityProbe.ts"
+      - "client/src/pages/sobre.tsx"
+      - "tests/unit/connectivity-probe.test.ts"
+      - "tests/unit/institutional-contact-ui.test.mjs"
+      - "scripts/ops/saas-release-gate.ts"
+      - "tests/unit/saas-release-gate.test.ts"
       - "DECISIONS.md"
       - "METRICS.md"
       - ".github/workflows/saas-self-service-guard.yml"
@@ -125,6 +139,12 @@ jobs:
 
       - name: Owner race behavior and tenant management authorization
         run: node --import tsx --test tests/unit/tenant-management-authorization.test.ts
+
+      - name: Verify commercial release is fail-closed
+        run: node --import tsx tests/unit/saas-release-gate.test.ts
+
+      - name: Browser connectivity and public identity contracts
+        run: node --import tsx tests/unit/connectivity-probe.test.ts && node tests/unit/institutional-contact-ui.test.mjs
 
       - name: Persistent zero-to-value onboarding projection
         run: node --import tsx tests/unit/saas-onboarding-progress.test.ts
