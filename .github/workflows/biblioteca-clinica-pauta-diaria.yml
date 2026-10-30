@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Propor tópico com revisão humana obrigatória
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             // Índice canônico externo: Biblioteca_Clinica_NeuroPed_365_Indice_Mestre.xlsx
