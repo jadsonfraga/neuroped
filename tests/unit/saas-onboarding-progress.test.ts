@@ -95,6 +95,16 @@ assert.equal(
 );
 assert.equal(semProvider.billingEvidence.status, "BLOCKED_EXTERNAL");
 
+// A oferta nova nasce Solo. Este fixture sobe explicitamente para dois
+// assentos porque o contrato canônico de dez marcos ainda prova first_member.
+sqlite.prepare(
+  `UPDATE billing_subscriptions
+      SET seats = 2
+    WHERE customer_id IN (
+      SELECT id FROM billing_customers WHERE clinic_id = 'clinic-a'
+    )`,
+).run();
+
 insertUser("member-a");
 sqlite.prepare(
   `INSERT INTO clinic_memberships

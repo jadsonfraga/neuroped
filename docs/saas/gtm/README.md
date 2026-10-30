@@ -15,20 +15,22 @@ fonte é a raiz; replique aqui apenas o que for específico destes arquivos.
 | `PLANOS_COPY_D004.md` | rascunho de `/planos` sem promessa que a produção não cumpre |
 | `LEGAL_BRIEFING.md` | 11 perguntas para o advogado (detalha o B7 de `LGPD_PRE_GO_LIVE.md`) |
 | `CLIENTE_ZERO_14D.md` | 14 dias em LIVE com dados reais; complementa o smoke sandbox da raiz |
-| `VALUE_PROPOSITION.md`, `INTERVIEW_*`, `INVITE_AND_DEMO_KIT.md` | variante para o ICP provisório A; ver divergências |
+| `VALUE_PROPOSITION.md`, `INTERVIEW_*`, `INVITE_AND_DEMO_KIT.md` | apoio operacional do ICP Solo; a raiz prevalece |
 
-## Divergências a decidir pelo proprietário (não resolvidas aqui)
-1. **ICP:** a raiz deixa "indefinido" (individual × clínica); aqui há uma suposição provisória
-   (clínica pequena, D-002). A raiz prevalece até haver decisão ou entrevistas.
-2. **Piloto:** a raiz oferece R$ 99/mês sem desconto; `INTERVIEW_PLAYBOOK.md` sugere R$ 1/mês
-   como compromisso mínimo. A raiz prevalece; R$ 1 só como alternativa de teste.
+## Reconciliação vigente
+1. **ICP decidido:** NeuroPed Solo atende primeiro o neuropediatra que opera o próprio
+   consultório. A oferta Clínica fica para Later. D-002 foi superada por D-011.
+2. **Piloto pago:** vale a oferta canônica de R$ 99/mês para um profissional. A sugestão
+   histórica de R$ 1/mês em `INTERVIEW_PLAYBOOK.md` não define a oferta vigente.
 3. **"Comprovado em código" não é "pronto em produção":** `LGPD_PRE_GO_LIVE.md` marca A4/A5
    (exportação, cifra) como ✅ por teste/código. A produção, em 17/10/2026, está com
    `clinicalCryptoConfigured=true`, mas exportação LGPD ainda sem R2 (audit Clinical/LGPD,
    `ready=false`). Não usar esses ✅ como autorização para paciente real: vale o gate G1–G7.
 4. **Smoke da raiz (`go-live`):** `pronto: true` atesta configuração presente, não cifra clínica;
    não substitui G1/G4/G3.
+5. **Bloqueios externos preservados:** Asaas, Resend, R2/LGPD, revisão jurídica, legado e
+   smoke publicado precisam de evidência própria antes de piloto real.
 
 ## Duplicação aceita
-Roteiro de entrevistas (raiz × `INTERVIEW_PLAYBOOK.md`) e piloto pago têm sobreposição. Se o
-proprietário preferir uma só versão, manter a da raiz e arquivar a daqui.
+Roteiro de entrevistas (raiz × `INTERVIEW_PLAYBOOK.md`) tem sobreposição. Para metas, preço e
+ICP, usar `docs/GTM_ENTREVISTAS_E_PILOTO.md`; arquivos antigos daqui são apoio histórico.

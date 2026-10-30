@@ -35,7 +35,7 @@ const createDocumentSchema = z
     certificateSerial: z.string().trim().max(200).nullable().optional(),
     certificateValidUntil: z.string().datetime().nullable().optional(),
     sha256: sha256Schema.nullable().optional(),
-    metadata: z.record(z.unknown()).optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
   })
   .strict();
 
@@ -169,7 +169,7 @@ export function registerDocumentRoutes(app: Express): void {
 
         return res.status(201).json({ document: presentDocument(created) });
       } catch (error) {
-        if (error instanceof z.ZodError) return res.status(400).json({ error: "Dados invalidos", details: error.errors });
+        if (error instanceof z.ZodError) return res.status(400).json({ error: "Dados invalidos", details: error.issues });
         console.error("[documents.create]", error);
         return res.status(500).json({ error: "Erro interno" });
       }

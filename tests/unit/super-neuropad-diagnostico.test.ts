@@ -6,8 +6,8 @@ import {
   PHASE_ORDER,
   SUPER_NEUROPAD_VERSION,
   buildGameReport,
+  gameItemsFor,
   isJudged,
-  itemsFor,
   recordBuild,
   recordJudged,
   recordTouch,
@@ -30,14 +30,14 @@ function record(item: Item, phaseId: PhaseId, status: AnswerStatus): AnswerRecor
   return recordBuild(item, phaseId, status === "acerto" ? [...item.target] : null, 5, false, status === "recusa");
 }
 function play(years: number, plan: (item: Item, phaseId: PhaseId) => AnswerStatus = () => "acerto"): GameSession {
-  const answers = PHASE_ORDER.flatMap((phaseId) => itemsFor(String(years), phaseId).map((item) => record(item, phaseId, plan(item, phaseId))));
+  const answers = PHASE_ORDER.flatMap((phaseId) => gameItemsFor(String(years), phaseId).map((item) => record(item, phaseId, plan(item, phaseId))));
   return { version: "test", ageYears: years, bandId: String(years), characterId: "robo", startedAt: "2026-10-15T12:00:00.000Z", finishedAt: "2026-10-15T12:15:00.000Z", answers };
 }
 
 test("o relatório e o resumo da família descrevem contagens e não trazem leitura do jogo", () => {
   const session = play(8, (_item, phaseId) => (phaseId === "memoria" ? "erro" : "acerto"));
   const summary = summarize(session);
-  assert.equal(summary.hits, 30);
+  assert.equal(summary.hits, 44);
   assert.equal(summary.phases.find((phase) => phase.phase.id === "memoria")!.errors, 6);
   assert.equal("familyReading" in familyDelivery, false);
   const text = buildFamilySummary(session, { email: "familia@exemplo.com", phone: "" });

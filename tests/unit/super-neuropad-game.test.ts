@@ -30,12 +30,14 @@ import {
   sessionStats,
   statsLines,
   describeArt,
+  gameItemsFor,
   itemsFor,
   recordBuild,
   recordJudged,
   recordTouch,
   shuffle,
   summarize,
+  touchOrdinal,
   undoLastAnswer,
   type AnswerRecord,
   type GameSession,
@@ -192,7 +194,7 @@ function play(years: number, plan: Plan = () => "acerto"): GameSession {
   const answers: AnswerRecord[] = [];
   let index = 0;
   for (const phaseId of PHASE_ORDER) {
-    for (const item of itemsFor(String(years), phaseId)) {
+    for (const item of gameItemsFor(String(years), phaseId)) {
       answers.push(answer(item, phaseId, plan(index++, item), item.kind === "toque" || item.kind === "montar" ? 3 : 5));
     }
   }
@@ -201,18 +203,24 @@ function play(years: number, plan: Plan = () => "acerto"): GameSession {
 
 test("resumo conta acertos por mundo e no total, com completude", () => {
   const perfect = summarize(play(8));
-  assert.equal(perfect.hits, 36);
-  assert.equal(perfect.total, 36);
+  assert.equal(perfect.hits, 50);
+  assert.equal(perfect.total, 50);
   assert.equal(perfect.complete, true);
-  assert.deepEqual(perfect.phases.map((phase) => phase.hits), [6, 6, 6, 6, 6, 6]);
+  assert.deepEqual(perfect.phases.map((phase) => phase.hits), [6, 9, 15, 8, 6, 6]);
 
   const young = summarize(play(4));
-  assert.equal(young.total, 24);
-  assert.ok(young.phases.every((phase) => phase.total === 4));
+  assert.equal(young.total, 50);
+  assert.deepEqual(young.phases.map((phase) => phase.total), [4, 16, 14, 8, 4, 4]);
 
   const mixed = summarize(play(6, (index) => (index % 5 === 0 ? "erro" : index % 5 === 1 ? "sem_resposta" : index % 5 === 2 ? "recusa" : "acerto")));
-  assert.equal(mixed.hits, 12);
-  assert.deepEqual(mixed.phases.map((phase) => [phase.hits, phase.errors, phase.noResponse, phase.refused]), Array(6).fill([2, 1, 1, 1]));
+  assert.deepEqual(
+    mixed.phases.reduce(
+      (totals, phase) => [totals[0] + phase.hits, totals[1] + phase.errors, totals[2] + phase.noResponse, totals[3] + phase.refused],
+      [0, 0, 0, 0],
+    ),
+    [20, 10, 10, 10],
+  );
+  assert.deepEqual(mixed.phases.map((phase) => phase.total), [5, 9, 18, 8, 5, 5]);
 
   const partial = play(2);
   partial.answers = partial.answers.slice(0, 7);
@@ -223,7 +231,7 @@ test("resumo conta acertos por mundo e no total, com completude", () => {
 
   const origins = summarize(play(7)).origins;
   assert.deepEqual(origins.map((origin) => origin.origin), ["sonda10", "obs10", "visual", "cognitivo"]);
-  assert.equal(origins.reduce((sum, origin) => sum + origin.planned, 0), 30);
+  assert.equal(origins.reduce((sum, origin) => sum + origin.planned, 0), 50);
   assert.ok(origins.every((origin) => origin.planned > 0 && origin.applied === origin.planned && origin.hits === origin.planned));
 });
 
@@ -236,7 +244,7 @@ test("mundo pulado: aparece como não aplicado com motivo; partida fica incomple
   const corpo = summary.phases.find((phase) => phase.phase.id === "corpo")!;
   assert.equal(corpo.applied, false);
   assert.equal(corpo.skipReason, "Criança cansada ou sem colaboração");
-  assert.equal(summary.hits, 20, "os mundos aplicados continuam contados");
+  assert.equal(summary.hits, 46, "os mundos aplicados continuam contados");
   for (const output of [buildGameBrief(session), buildGameReport(session), JSON.stringify(buildGameDocSpec(session, ISSUER, "30/09/2026 14:00"))]) {
     assert.match(output, /não aplicado — Criança cansada|Não aplicado - motivo: Criança cansada|não aplicado — Criança cansada/i);
     assert.match(output, /sem classificação/i);
@@ -313,7 +321,7 @@ test("relatório e PDF: metadados, o que foi testado por instrumento, contagem b
   const session: GameSession = { ...play(7, (index) => (index === 3 ? "erro" : index === 9 ? "sem_resposta" : index === 12 ? "recusa" : "acerto")), pauseCount: 2, pausedSeconds: 95, undoCount: 1, observations: "Tímida no início, soltou depois." };
   session.answers[5] = { ...session.answers[5], repeated: true };
   const report = buildGameReport(session, new Date("2026-09-30T17:05:00Z"));
-  assert.match(report, /Total: 27 acertos em 30 itens previstos \(30 registrados\)\./);
+  assert.match(report, /Total: 47 acertos em 50 itens previstos \(50 registrados\)\./);
   assert.match(report, /Data e hora \(local\): 30\/09\/2026/);
   assert.match(report, /O QUE FOI APLICADO POR INSTRUMENTO DE ORIGEM/);
   for (const label of ["Sonda 10", "Observa 10 (OBS-10)", "Reconhecimento visual", "Avaliação cognitiva infantil"]) assert.ok(report.includes(`- ${label}: `), label);
@@ -340,12 +348,12 @@ test("relatório e PDF: metadados, o que foi testado por instrumento, contagem b
   assert.match(identification, /Idade informada: 7 anos \(faixa anual de 7 anos\)/);
   assert.match(identification, /Data e hora da aplicação \(horário local, America\/Sao_Paulo\): 30\/09\/2026 14:05/);
   assert.match(identification, /Duração da sessão \(relógio\): 15 min 00 s/);
-  assert.match(identification, /tempo estimado para a idade: \d+ min \d\d s \(máximo 20 min\)/);
+  assert.match(identification, /tempo estimado para a idade: \d+ min \d\d s \(máximo 45 min\)/);
   assert.match(identification, /Pausas: 2 \(1 min 35 s em pausa\)/);
   assert.match(identification, /Mundos não aplicados: nenhum/);
   assert.match(spec.sections[1].body, /Sonda 10 \(\/testes-diretos\): \d+ item\(ns\) previstos para 7 anos/);
   assert.match(spec.sections[1].body, /Reconhecimento visual \(\/testes-reconhecimento\)/);
-  assert.match(spec.sections[2].body, /TOTAL: 27 acertos em 30 itens previstos \(30 registrados\)\./);
+  assert.match(spec.sections[2].body, /TOTAL: 47 acertos em 50 itens previstos \(50 registrados\)\./);
   assert.match(spec.sections[2].body, /Mundo 1 - Vila da Conversa \(Interação e comunicação\): \d\/5 acertos, \d erros, \d sem resposta, \d recusa\(s\)/);
   assert.match(spec.sections[3].body, /Itens registrados como não acertados \(3\)/);
   const bodies = spec.sections.map((section) => section.body).join("\n");
@@ -358,12 +366,12 @@ test("relatório e PDF: metadados, o que foi testado por instrumento, contagem b
   assert.match(bodies, /Resultado: Recusou - tempo: \d s - repetições do comando: 0/);
   assert.match(bodies, /repetições do comando: 1/);
   assert.match(spec.sections.at(-4)!.body, /Tímida no início/);
-  assert.match(spec.sections.at(-3)!.body, /Procedência dos itens: \d+ de 30 dos bancos de origem do NeuroPed; \d+ criados para o jogo\./);
+  assert.match(spec.sections.at(-3)!.body, /Procedência dos itens: \d+ de 50 dos bancos de origem do NeuroPed; \d+ criados para o jogo\./);
   const structured = spec.sections.at(-2)!.body.split("\n");
   assert.equal(structured.filter((line) => line.startsWith("SESSAO ")).length, 1);
   assert.equal(structured.filter((line) => line.startsWith("DOMINIO ")).length, 6);
   assert.equal(structured.filter((line) => line.startsWith("ORIGEM ")).length, 4);
-  assert.equal(structured.filter((line) => line.startsWith("ITEM ")).length, 30);
+  assert.equal(structured.filter((line) => line.startsWith("ITEM ")).length, 50);
   assert.equal(structured.filter((line) => line.startsWith("OBSERVACOES ")).length, 1);
   for (const line of structured.filter((entry) => /^[A-Z]+ \{/.test(entry))) {
     const parsed = JSON.parse(line.slice(line.indexOf(" ") + 1));
@@ -391,28 +399,30 @@ test("relatório e PDF: metadados, o que foi testado por instrumento, contagem b
 test("desfazer último registro devolve mundo e índice exatos do desafio a refazer", () => {
   assert.equal(undoLastAnswer([]), null);
   const session = play(3);
-  const inWorld3 = session.answers.slice(0, 10); // 4 + 4 + 2 itens
+  const firstWorld = gameItemsFor("3", "vila").length;
+  const secondWorld = gameItemsFor("3", "olhos").length;
+  const inWorld3 = session.answers.slice(0, firstWorld + secondWorld + 2);
   const undone = undoLastAnswer(inWorld3)!;
-  assert.equal(undone.answers.length, 9);
+  assert.equal(undone.answers.length, inWorld3.length - 1);
   assert.equal(undone.phaseId, "palavras");
   assert.equal(undone.itemIndex, 1);
-  const worldEnd = undoLastAnswer(session.answers.slice(0, 8))!;
+  const worldEnd = undoLastAnswer(session.answers.slice(0, firstWorld + secondWorld))!;
   assert.equal(worldEnd.phaseId, "olhos");
-  assert.equal(worldEnd.itemIndex, 3);
-  assert.equal(inWorld3.length, 10, "entrada não é mutada");
+  assert.equal(worldEnd.itemIndex, secondWorld - 1);
+  assert.equal(inWorld3.length, firstWorld + secondWorld + 2, "entrada não é mutada");
 });
 
 test("estatísticas descritivas: contagens, tipos de resposta, gesto, repetição, tempos e eventos — sem prioridade, padrão ou roteiro", () => {
   const perfect = sessionStats(play(8));
-  assert.deepEqual([perfect.registered, perfect.hits, perfect.errors, perfect.noResponse, perfect.refused], [36, 36, 0, 0, 0]);
+  assert.deepEqual([perfect.registered, perfect.hits, perfect.errors, perfect.noResponse, perfect.refused], [50, 50, 0, 0, 0]);
 
   const mixed = sessionStats(play(6, (index) => (index >= 20 && index < 25 ? "recusa" : index === 10 || index === 11 ? "erro" : "acerto")));
   assert.deepEqual([mixed.errors, mixed.noResponse, mixed.refused], [2, 0, 5]);
-  assert.equal(mixed.hits, 23);
+  assert.equal(mixed.hits, 43);
 
   const gestures = play(2);
   gestures.answers = gestures.answers.map((entry) => {
-    const item = itemsFor("2", entry.phaseId).find((candidate) => candidate.id === entry.itemId)!;
+    const item = gameItemsFor("2", entry.phaseId).find((candidate) => candidate.id === entry.itemId)!;
     return (item.kind === "fala" || item.kind === "fazer") && item.gesture ? recordJudged(item, entry.phaseId, "acerto", 5, false, "gesto") : entry;
   });
   assert.ok(sessionStats(gestures).gestures >= 1);
@@ -444,8 +454,8 @@ test("estatísticas descritivas: contagens, tipos de resposta, gesto, repetiçã
 test("resumo para o prontuário é prosa curta com idade, contagem, mundos, itens não acertados, observações e a nota descritiva", () => {
   const session = { ...play(6, (index) => (index === 1 ? "erro" : index === 13 ? "sem_resposta" : "acerto")), observations: "Colaborou bem" };
   const brief = buildGameBrief(session, new Date("2026-09-30T12:00:00Z"));
-  assert.match(brief, /^Registro lúdico de pré-consulta \(Super NeuroPad Game, 6 anos\) em 30\/09\/2026: partida completa, 30 de 30 itens registrados; 28 acertos, 1 erros, 1 sem resposta, 0 recusas\./);
-  assert.match(brief, /Por mundo: Vila da Conversa 4\/5, Floresta dos Olhos 5\/5, Ilha das Palavras 4\/5, Montanha dos Números 5\/5, Caverna da Memória 5\/5, Torre do Corpo 5\/5\./);
+  assert.match(brief, /^Registro lúdico de pré-consulta \(Super NeuroPad Game, 6 anos\) em 30\/09\/2026: partida completa, 50 de 50 itens registrados; 48 acertos, 1 erros, 1 sem resposta, 0 recusas\./);
+  assert.match(brief, /Por mundo: Vila da Conversa 4\/5, Floresta dos Olhos 8\/9, Ilha das Palavras 18\/18, Montanha dos Números 8\/8, Caverna da Memória 5\/5, Torre do Corpo 5\/5\./);
   assert.match(brief, /Itens não acertados: .*\(errou; .*\); .*\(não respondeu; .*\)\./);
   assert.match(brief, /Observações da aplicadora: Colaborou bem\./);
   assert.match(brief, /Registro descritivo; sem classificação\. Interpretação a cargo do profissional\.$/);
@@ -494,7 +504,7 @@ test("salvar no prontuário: resumo, partida, instrumentos, observações e cada
   const rows = buildPatientRecordItems(full);
   assert.equal(rows.length, full.answers.length + 4);
   assert.deepEqual(rows[0], { question: "Resumo para o prontuário", answer: buildGameBrief(full) });
-  assert.match(rows[1].answer, /Idade informada: 8 anos \(faixa anual\) · 36 de 36 itens registrados \(completa\)/);
+  assert.match(rows[1].answer, /Idade informada: 8 anos \(faixa anual\) · 50 de 50 itens registrados \(completa\)/);
   assert.match(rows[1].answer, /duração da sessão 15 min/);
   assert.match(rows[1].answer, /2 pausa\(s\) · 1 desfeito\(s\)/);
   assert.equal(rows[2].question, "O que foi testado por instrumento");
@@ -643,5 +653,19 @@ test("banco: toque tem uma opção certa e a posição dela varia (sem gabarito 
     }
     const touches = PHASE_ORDER.flatMap((phaseId) => itemsFor(band.id, phaseId)).filter((item) => item.kind === "toque").length;
     if (touches >= 2) assert.ok(positions.size >= 2, `${band.id}: correta em ${positions.size} posições distintas (o jogo ainda embaralha a cada partida)`);
+  }
+});
+
+test("ordem de alternativas considera os 50 desafios obrigatórios, inclusive itens antes opcionais", () => {
+  for (const band of AGE_BANDS) {
+    let expected = new Map<number, number>();
+    for (const phaseId of PHASE_ORDER) {
+      for (const item of gameItemsFor(band.id, phaseId)) {
+        if (item.kind !== "toque") continue;
+        const count = expected.get(item.options.length) ?? 0;
+        assert.equal(touchOrdinal(band.id, phaseId, item.id), count, item.id);
+        expected.set(item.options.length, count + 1);
+      }
+    }
   }
 });

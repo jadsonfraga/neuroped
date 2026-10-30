@@ -49,8 +49,21 @@ async function openGame(page, origin, age) {
   await setAge(page, age);
 }
 
-async function setAge(page, age) {
-  await page.getByRole("group", { name: "Idade em anos" }).getByRole("button", { name: String(age), exact: true }).click();
+async function setAge(page, age, { confirmDiscard = false } = {}) {
+  const ageButton = page.getByRole("group", { name: "Idade em anos" }).getByRole("button", { name: String(age), exact: true });
+  if (confirmDiscard) {
+    let message = "";
+    await Promise.all([
+      page.waitForEvent("dialog").then(async (dialog) => {
+        message = dialog.message();
+        await dialog.accept();
+      }),
+      ageButton.click(),
+    ]);
+    assert.match(message, /Trocar a idade apaga os registros e rascunhos do circuito clínico/);
+  } else {
+    await ageButton.click();
+  }
   await circuitOf(page).waitFor();
 }
 
@@ -227,7 +240,7 @@ async function main() {
 
       // 3b. Estrutura obrigatória de ponta a ponta (9 anos, só as missões da auxiliar; o exame do médico fica fora da conta):
       // só fica COMPLETO com todas as missões concluídas e a síntese final; nenhum controle é desabilitado.
-      await openGame(page, server.origin, 9);
+      await setAge(page, 9, { confirmDiscard: true });
       const aviso = page.getByTestId("super-neuropad-circuit-required");
       // A troca de idade remonta o circuito e zera os registros; aguarda o contador refletir isso antes de afirmar.
       await page.waitForFunction(() => /0\/\d+ missões concluídas/i.test(document.querySelector('[data-testid="super-neuropad-circuit-required"]')?.textContent ?? ""));
@@ -262,7 +275,16 @@ async function main() {
 
       // 4. Cola no laudo: sem download ou impressão automática; liberação segue manual.
       const downloadsAntes = downloads.length;
-      await page.goto(`${server.origin}/#/laudo-super`);
+      let exitPrompt = "";
+      await Promise.all([
+        page.waitForEvent("dialog").then(async (dialog) => {
+          exitPrompt = dialog.message();
+          await dialog.accept();
+        }),
+        page.evaluate(() => { window.location.hash = "#/laudo-super"; }),
+      ]);
+      assert.match(exitPrompt, /Sair apaga os registros desta partida/);
+      await page.waitForURL(/#\/laudo-super$/);
       await login(page);
       const integra = page.getByTestId("textarea-laudo-integra");
       await integra.waitFor({ timeout: 20000 });

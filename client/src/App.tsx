@@ -132,6 +132,7 @@ const Aq10Page = lazy(() => import("@/pages/aq10"));
 const Aq50Page = lazy(() => import("@/pages/aq50"));
 const ClassificacaoPage = lazy(() => import("@/pages/classificacao"));
 const BallardPage = lazy(() => import("@/pages/ballard"));
+const BibliotecaClinicaPage = lazy(() => import("@/pages/biblioteca-clinica"));
 const BibliotecaInstrumentosPage = lazy(
   () => import("@/pages/biblioteca-instrumentos"),
 );
@@ -389,6 +390,7 @@ function AppRouter() {
               path="/biblioteca-instrumentos"
               component={BibliotecaInstrumentosPage}
             />
+            <Route path="/biblioteca-clinica" component={BibliotecaClinicaPage} />
             <Route path="/espasticidade" component={EspasticidadePage} />
             <Route path="/classificacoes" component={ClassificacoesPage} />
             <Route path="/fluxogramas" component={FluxogramasPage} />

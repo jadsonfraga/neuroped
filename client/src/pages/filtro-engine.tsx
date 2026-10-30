@@ -2439,7 +2439,7 @@ export default function FiltroPage() {
                   key="crianca"
                   type="button"
                   aria-pressed={selectedRespondente === "teste_direto_crianca"}
-                  aria-label="Respondente: criança (teste direto preenchível)"
+                  aria-label="Direto — respondente: criança (teste direto preenchível)"
                   onMouseEnter={() => softHover()}
                   onClick={() =>
                     setSelectedRespondente((v) =>
@@ -2517,7 +2517,7 @@ export default function FiltroPage() {
                   key="verbal"
                   type="button"
                   aria-pressed={selectedCommunication === "verbal"}
-                  aria-label="Comunicação: criança verbal (fala)"
+                  aria-label="Fala — comunicação: criança verbal"
                   onMouseEnter={() => softHover()}
                   onClick={() =>
                     setSelectedCommunication((v) =>
@@ -2576,7 +2576,7 @@ export default function FiltroPage() {
                   key="preliterate"
                   type="button"
                   aria-pressed={selectedLiteracy === "preliterate"}
-                  aria-label="Alfabetização: criança pré-alfabetizada"
+                  aria-label="Pré-Alfab. — alfabetização: criança pré-alfabetizada"
                   onMouseEnter={() => softHover()}
                   onClick={() =>
                     setSelectedLiteracy((v) =>

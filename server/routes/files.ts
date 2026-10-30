@@ -183,7 +183,7 @@ export function registerFileRoutes(app: Express): void {
       });
     } catch (e: any) {
       if (e instanceof z.ZodError) {
-        return res.status(400).json({ error: "Dados invalidos", details: e.errors });
+        return res.status(400).json({ error: "Dados invalidos", details: e.issues });
       }
       if (e instanceof CloudStorageConfigError) {
         return res.status(503).json({ error: "Storage nao configurado", code: "STORAGE_NOT_CONFIGURED" });

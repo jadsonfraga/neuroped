@@ -57,10 +57,11 @@ import {
   SUPER_NEUROPAD_SOURCES,
   SUPER_NEUROPAD_TITLE,
   SUPER_NEUROPAD_VERSION,
+  ageGameProfile,
   UNDER_TWO_MESSAGE,
   YEARS,
   ageGate,
-  bandItemCount,
+  gameBandItemCount,
   bandForYears,
   buildGameBrief,
   buildGameReport,
@@ -71,7 +72,7 @@ import {
   statsLines,
   estimateBandSeconds,
   formatDuration,
-  itemsFor,
+  gameItemsFor,
   judgeShortcut,
   phaseById,
   sessionLimitSeconds,
@@ -556,8 +557,9 @@ function BuildStage({ item, seed, onDone }: { item: BuildItem; seed: number; onD
 /**
  * Desafios opcionais: completam 50 por idade com itens dos mesmos bancos de origem. Ficam fora da contagem,
  * do tempo e do XP da partida; registro próprio, em memória e por idade (trocar a idade não apaga nada).
- * Nenhum controle fica desabilitado: aplicar, pular, pausar e recolher são sempre possíveis.
+ * Mantido apenas para compatibilidade da migração; a rota aplica os 50 itens pelo fluxo obrigatório.
  */
+// eslint-disable-next-line unused-imports/no-unused-vars
 function OpcionaisPanel({ years, registros, copiados, seed, onRegistrar, onCopiar }: {
   years: number;
   registros: RegistrosOpcionais;
@@ -791,16 +793,17 @@ export default function SuperNeuroPadGamePage() {
   const lastAnswerAt = useRef(Number.NEGATIVE_INFINITY);
 
   const band = ageYears === null ? undefined : bandForYears(ageYears);
+  const gameProfile = band ? ageGameProfile(band.min) : null;
   const phaseId = PHASE_ORDER[phaseIndex];
   const phase = phaseById(phaseId, ageYears ?? undefined);
-  const items = band ? itemsFor(band.id, phaseId) : [];
+  const items = band ? gameItemsFor(band.id, phaseId) : [];
   const item = items[itemIndex];
   const touchOrder = useMemo(
     () => (band && item && item.kind === "toque" ? optionOrder(item, seed + itemIndex * 17 + phaseIndex * 101, touchOrdinal(band.id, phaseId, item.id)) : []),
     [band, item, seed, itemIndex, phaseIndex, phaseId],
   );
-  const done = PHASE_ORDER.map((id) => band ? answers.filter((answer) => answer.phaseId === id).length >= itemsFor(band.id, id).length : false);
-  const totalItems = band ? bandItemCount(band.id) : 0;
+  const done = PHASE_ORDER.map((id) => band ? answers.filter((answer) => answer.phaseId === id).length >= gameItemsFor(band.id, id).length : false);
+  const totalItems = band ? gameBandItemCount(band.id) : 0;
   const estimate = band ? estimateBandSeconds(band.min) : null;
   const dirty = answers.length > 0 || opcionaisPendentes > 0 || circuitoDirty;
   useSondaExitGuard(dirty, "Sair apaga os registros desta partida. Copie ou baixe o resultado antes de sair. Deseja sair mesmo assim?");
@@ -1179,12 +1182,12 @@ export default function SuperNeuroPadGamePage() {
     }
   }
 
-  function registrarOpcionalDaIdade(years: number, record: AnswerRecord) {
+  function _registrarOpcionalDaIdade(years: number, record: AnswerRecord) {
     setOpcionais((current) => ({ ...current, [years]: registrarOpcional(current[years] ?? {}, record) }));
   }
 
   /** Copia o retrato do momento do toque; só esse retrato passa a contar como copiado. */
-  async function copiarOpcionais(years: number) {
+  async function _copiarOpcionais(years: number) {
     const retrato = opcionais[years] ?? {};
     const texto = textoOpcionais(years, retrato, formatClinicalDateTime(new Date()));
     const filename = `super-neuropad-opcionais-${years}-${localIsoDate(new Date())}`;
@@ -1218,16 +1221,16 @@ export default function SuperNeuroPadGamePage() {
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <span className="snp-chip">pré-consulta · aplicadora com a criança · {MIN_AGE_YEARS}–{MAX_AGE_YEARS} anos</span>
                 <span className="snp-chip">v{SUPER_NEUROPAD_VERSION}</span>
-                <span className="snp-chip">{PHASES.length} mundos · 3–6 desafios cada</span>
-                <span className="snp-chip">{DESAFIOS_DISPONIVEIS_POR_IDADE} disponíveis por idade com os opcionais</span>
-                <span className="snp-chip">até 20 min (12 min aos 2 anos, 15 min aos 3)</span>
+                <span className="snp-chip">{PHASES.length} mundos · 50 desafios distribuídos por idade</span>
+                <span className="snp-chip">{DESAFIOS_DISPONIVEIS_POR_IDADE} desafios obrigatórios · modo {gameProfile?.label ?? "aventura"}</span>
+                <span className="snp-chip">até 45 min (30 min aos 2 anos, 35 min aos 3)</span>
                 <span className="snp-chip">sem câmera · sem material externo</span>
               </div>
             )}
             <h1 className={`snp-pixel snp-title text-[var(--snp-paper-fixed)] ${compact ? "text-lg sm:text-xl" : "text-2xl sm:text-3xl"}`}>{SUPER_NEUROPAD_TITLE}</h1>
             {!compact && (
               <p className="mt-2 max-w-3xl text-sm font-semibold leading-relaxed">
-                Avaliação única de pré-consulta: seis mundos que integram Sonda 10, Observa 10 (OBS-10), Reconhecimento Visual e Avaliação Cognitiva Infantil, com desafios para cada ano de idade. Cada desafio tem certo e errado; a criança só vê XP, moedas e conquistas. Ao final, contagem bruta por mundo, respostas item a item e PDF detalhado. Registro descritivo; sem classificação. Interpretação a cargo do profissional.
+                Avaliação única de pré-consulta: seis mundos que integram Sonda 10, Observa 10 (OBS-10), Reconhecimento Visual e Avaliação Cognitiva Infantil, com desafios para cada ano de idade. {gameProfile ? `${gameProfile.promise}; ${gameProfile.cue}.` : "A aventura muda de ritmo conforme a idade."} Cada desafio tem certo e errado; a criança só vê XP, moedas e conquistas. Ao final, contagem bruta por mundo, respostas item a item e PDF detalhado. Registro descritivo; sem classificação. Interpretação a cargo do profissional.
               </p>
             )}
           </div>
@@ -1377,8 +1380,13 @@ export default function SuperNeuroPadGamePage() {
           </div>
 
           {band && (
-            <OpcionaisPanel key={band.min} years={band.min} registros={opcionais[band.min] ?? {}} copiados={opcionaisCopiados[band.min] ?? {}} seed={seed}
-              onRegistrar={(record) => registrarOpcionalDaIdade(band.min, record)} onCopiar={() => void copiarOpcionais(band.min)} />
+            <section className="snp-panel snp-panel--soft p-5" data-testid="super-neuropad-mandatory-catalog">
+              <div className="snp-pixel text-base">Catálogo completo integrado</div>
+              <p className="mt-2 text-sm font-bold leading-relaxed">
+                Os 50 desafios não médicos desta faixa etária já estão na aventura obrigatória e entram na contagem, no tempo e no resultado.
+                O circuito médico permanece separado, com revisão clínica própria.
+              </p>
+            </section>
           )}
 
           <div className="grid gap-3 lg:grid-cols-2">
@@ -1641,9 +1649,6 @@ export default function SuperNeuroPadGamePage() {
               </Suspense>
             </div>
           </div>
-
-          <OpcionaisPanel key={session.ageYears} years={session.ageYears} registros={opcionais[session.ageYears] ?? {}} copiados={opcionaisCopiados[session.ageYears] ?? {}} seed={seed}
-            onRegistrar={(record) => registrarOpcionalDaIdade(session.ageYears, record)} onCopiar={() => void copiarOpcionais(session.ageYears)} />
 
           {missedAnswers.length > 0 && (
             <div className="snp-panel p-5">

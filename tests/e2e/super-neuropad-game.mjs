@@ -49,9 +49,9 @@ async function screen(name) {
 async function waitScreen(value) {
   await page.locator(`[data-testid="super-neuropad-game"][data-screen="${value}"]`).waitFor({ timeout: 15000 });
 }
-const PER_WORLD = 5; // 6 anos ou mais: 5 desafios por mundo (jornada principal aos 7 anos, que inclui montar palavra)
+const ITEMS_BY_WORLD = [5, 10, 16, 9, 5, 5]; // idade 7: catálogo obrigatório completo
 const WORLDS = 6;
-const TOTAL = PER_WORLD * WORLDS;
+const TOTAL = ITEMS_BY_WORLD.reduce((sum, count) => sum + count, 0);
 /** Tipo do desafio visível: toque (opções), montar (letras) ou julgado (fala/ação). */
 async function currentKind() {
   if (await page.getByRole("group", { name: "Opções" }).count()) return "toque";
@@ -94,8 +94,8 @@ try {
   assert.equal(await underTwo.count(), 0, "escolher a idade tira o bloqueio");
   const estimate = page.getByTestId("super-neuropad-estimate");
   const minutes = Number((await estimate.innerText()).match(/cerca de (\d+) minutos/)?.[1]);
-  assert.ok(minutes > 0 && minutes <= 20, `tempo estimado dentro de 20 min (${minutes})`);
-  assert.match(await estimate.innerText(), /30 desafios/);
+  assert.ok(minutes > 0 && minutes <= 45, `tempo estimado dentro do teto (${minutes})`);
+  assert.match(await estimate.innerText(), /50 desafios/);
   await button("Música ligada").click(); // silencia no headless
   const steps = page.getByRole("list", { name: "Passos da preparação" });
   await steps.getByText(/Idade, concluído/).waitFor(); // idade 7 já escolhida
@@ -119,9 +119,10 @@ try {
       assert.equal(await button("Desfazer último").isDisabled(), true, "nada a desfazer antes do primeiro registro");
     }
     await page.getByRole("button", { name: /Entrar na fase/ }).click();
-    for (let item = 1; item <= PER_WORLD; item++) {
+    const perWorld = ITEMS_BY_WORLD[phase - 1];
+    for (let item = 1; item <= perWorld; item++) {
       await waitScreen("play");
-      await challengeIndicator(item, PER_WORLD).waitFor();
+      await challengeIndicator(item, perWorld).waitFor();
       if (phase === 2 && item === 1 && !pausedOnce) {
         // Pausa congela o desafio: nenhuma opção fica disponível até continuar.
         await button("Pausa").click();
@@ -192,7 +193,7 @@ try {
         if (phase === 5 && !refused) await screen("04-play-fazer");
         if (phase === WORLDS && item === 1) {
           // Atalho da aplicadora em item julgado: tecla 1 = Acertou (mesma guarda de toque duplo).
-          assert.equal(await challengeIndicator(1, PER_WORLD).count(), 1);
+          assert.equal(await challengeIndicator(1, perWorld).count(), 1);
           await page.keyboard.press("1");
         } else if (phase >= 2 && !refused) {
           // Criança que diz não/empurra: "Recusou" fica separado de "Errou" e de "Não respondeu".
@@ -205,9 +206,9 @@ try {
       registered += 1;
       if (phase === 1 && item === 3 && !undone) {
         // Toque errado da aplicadora: desfazer volta exatamente ao mesmo desafio e apaga o registro.
-        await challengeIndicator(4, PER_WORLD).waitFor();
+        await challengeIndicator(4, perWorld).waitFor();
         await button("Desfazer último").click();
-        await challengeIndicator(3, PER_WORLD).waitFor();
+        await challengeIndicator(3, perWorld).waitFor();
         registered -= 1;
         undone = true;
         item -= 1;
@@ -392,7 +393,7 @@ try {
   await waitScreen("setup");
   await page.getByRole("group", { name: "Idade em anos" }).getByRole("button", { name: "3", exact: true }).click();
   await page.getByRole("group", { name: "Personagens" }).getByRole("button", { name: /Robô Guerreiro/ }).click();
-  assert.match(await page.getByTestId("super-neuropad-estimate").innerText(), /24 desafios/);
+  assert.match(await page.getByTestId("super-neuropad-estimate").innerText(), /50 desafios/);
   await button("Começar a aventura").click();
   await page.getByRole("button", { name: /Entrar na fase/ }).click();
   await challengeIndicator(1, 4).waitFor();

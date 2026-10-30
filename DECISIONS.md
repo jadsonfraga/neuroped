@@ -17,10 +17,10 @@ Formato: contexto → decisão → consequência. Uma entrada por ciclo.
 - **Decisão:** criar `docs/SMOKE_CLIENTE_ZERO.md` com fases A–D (diagnóstico go-live → jornada clique a clique de 12 passos → critérios de aceite objetivos, incluindo `charge_paid` persistido e time-to-first-value < 30 min → registro em METRICS/audits), em vez de escrever mais código de verificação — o verificador já existe e está coberto por `tests/unit/go-live-readiness.test.ts`.
 - **Consequência:** "deploy validado" passa a ter definição operacional verificável; nenhuma abertura de cadastro self-service sem smoke sandbox verde; a medição do time-to-first-value real alimenta a METRICS na primeira execução.
 
-## Ciclo 3 — Kit GTM: entrevistas + piloto pago (Fase 4)
+## Ciclo 3 — Kit GTM: entrevistas + piloto pago (Fase 4) [SUPERADO NO POSICIONAMENTO PELO CICLO 7]
 - **Contexto:** achado da auditoria do copy: `client/src/pages/planos.tsx` posiciona o produto para clínicas multiprofissionais, enquanto o caso de uso validado é do médico individual — ICP indefinido com contradição interna; a Fase 4 (prova de demanda) é a mais demorada e não dependia de código.
 - **Decisão:** criar `docs/GTM_ENTREVISTAS_E_PILOTO.md` com roteiro Mom Test (9 perguntas, sinal de dor antes do pitch, teste de preço não-comprometido), oferta de piloto pago a R$ 99/mês sem desconto de fundador (trial 14 dias já implementado), e regra de desempate de segmento por dor espontânea em 10 entrevistas (5 individuais + 5 clínicas).
-- **Consequência:** Fase 4 pode começar em paralelo ao desbloqueio operacional do billing; decisão de ICP e reposicionamento do copy saem de evidência de entrevistas, não de opinião; regra de parada explícita (<4 dores espontâneas em 10 = revisar proposta de valor antes de mais código).
+- **Consequência:** o kit de entrevista e a regra de parada continuam úteis, mas a amostra 5+5 deixou de ser a estratégia vigente após a decisão Solo do Ciclo 7; as 10 entrevistas agora são todas com o ICP Solo.
 
 ## Ciclo 4 — Checklist LGPD pré-go-live (Fase 3)
 - **Contexto:** `LGPD.md` é tecnicamente sólido (base legal art. 11 II "f", direitos art. 18 implementados e testados), mas contém lacunas de processo: tabela de fornecedores com `__DEFINIR__`, DPAs pendentes, backup "a configurar no provedor", RTO `DESCONHECIDO`, e revisão jurídica formal declarada pendente em `docs/COMPLIANCE_LGPD.md`.
@@ -36,3 +36,8 @@ Formato: contexto → decisão → consequência. Uma entrada por ciclo.
 - **Contexto:** verificação de conta e convite já falhavam fechado sem transporte, mas a resposta não declarava `BLOCKED_EXTERNAL` e não havia runbook executável. Marcar `email_verified_at` sem token consumido seria bypass.
 - **Decisão:** cadastro e convite sem Resend devolvem o código que já existia mais `blockedExternal: BLOCKED_EXTERNAL_RESEND`, sem criar conta e sem emitir bearer. `scripts/ops/resend-operational-contract.ts` inspeciona a configuração sem imprimir segredo e, com `--probe`, só faz `GET /domains`.
 - **Consequência:** instalação sem provedor declara o bloqueio e não verifica e-mail por atalho. Probe aceito não é entrega, convite recebido nem conta confirmada. `email_verified_at` continua exclusivo do token `self_service_token`.
+
+## Ciclo 7 — ICP e embalagem inicial NeuroPed Solo (2026-10-25)
+- **Contexto:** o produto já suporta tenants e múltiplos assentos, mas lançar a oferta para clínicas aumentaria onboarding, suporte e ciclo comercial antes da primeira prova de demanda. A decisão explícita do proprietário foi começar pelo caminho mais simples, sem regressão dos contratos legados.
+- **Decisão:** **Solo primeiro; Clínicas depois**. O ICP decidido é o neuropediatra que opera o próprio consultório. A oferta inicial é NeuroPed Solo por R$ 99/mês, 14 dias de avaliação e um profissional; a capacidade multiassento permanece disponível para tenants existentes, mas não integra o posicionamento inicial.
+- **Consequência:** vitrine, onboarding, checkout e GTM usam a mesma história Solo. A validação exige 10 entrevistas Solo, 3 pilotos pagos e 2 segundas faturas. Clínica entra em Later. Asaas, Resend, R2/LGPD, revisão jurídica, legado e smoke publicado continuam bloqueios externos; esta decisão não declara produção pronta.

@@ -626,13 +626,20 @@ export function createSyntheticClinicalApi(scenario = {}) {
     if (pathname === "/api/billing/me") {
       send(response, 200, {
         entitlement: {
+          planId: "saas-professional",
+          subscriptionStatus: "active",
           trialActive: false,
+          trialEndsAt: null,
           trialDaysRemaining: 0,
           isActive: true,
           isPastDue: false,
+          isSuspended: false,
+          deniedReason: null,
         },
-        planId: "sintetico",
-        subscriptionSeats: 1,
+        seats: {
+          contracted: 1,
+          activeMembers: 1,
+        },
         clinicStatus: "active",
       });
       return true;
