@@ -18,8 +18,11 @@
  */
 import { getContextUser, isAdmin } from "../auth/_authorization";
 import { mailTransportConfigured } from "../auth/_mailTransport";
+import { clinicalLiveEnabled, type TenantEnv } from "../tenant/_core";
+import { clinicalCryptoReady } from "../tenant/_crypto";
+import { resolvePrivateArtifactStore, type ArtifactStoreEnv } from "../live/governance/_artifactStore";
 
-interface Env {
+interface Env extends TenantEnv, ArtifactStoreEnv {
   DB?: D1Database;
   NEUROPED_JWT_SECRET?: string;
   SAAS_SIGNUP_ENABLED?: string;
@@ -78,6 +81,16 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     );
 
   const cadastroAberto = env.SAAS_SIGNUP_ENABLED === "true";
+  // Prontidão clínica é INDEPENDENTE da configuração de e-mail e cobrança.
+  // Usar os mesmos guardas do runtime impede sinal verde de configuração falsa.
+  const clinicoHabilitado = clinicalLiveEnabled(env);
+  const criptoClinica = clinicalCryptoReady(env);
+  const exportacaoPrivada = resolvePrivateArtifactStore(env) !== null;
+  const bloqueiosClinicos = [
+    ...(!clinicoHabilitado ? ["CLINICAL_LIVE_DISABLED"] : []),
+    ...(!criptoClinica ? ["CLINICAL_CRYPTO_NOT_READY"] : []),
+    ...(!exportacaoPrivada ? ["LGPD_BUCKET_NOT_CONFIGURED"] : []),
+  ];
 
   const gates = {
     banco: Boolean(env.DB),
@@ -135,6 +148,24 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       ordemInvertida,
       gates,
       pendencias,
+      configuracaoPilotoClinico: {
+        presente: bloqueiosClinicos.length === 0,
+        clinicoHabilitado,
+        criptoClinica,
+        exportacaoPrivada,
+        bloqueios: bloqueiosClinicos,
+      },
+      decisaoVenda: "NAO_ATESTADA",
+      provasObrigatorias: [
+        "HEALTH_PUBLICADO_SEM_BLOQUEIOS",
+        "EMAIL_REAL_ENTREGUE",
+        "ASAAS_PRODUCAO_WEBHOOK_E_PAGAMENTO",
+        "SMOKE_CLIENTE_ZERO_PUBLICADO",
+        "RESTAURACAO_BACKUP_TESTADA",
+        "REVISAO_LGPD_CONTRATOS",
+        "REVISAO_MEDICO_REGULATORIA",
+        "ACEITE_MEDICO_E_COMERCIAL",
+      ],
       nota:
         "Booleanos e códigos apenas. Esta rota nunca devolve valor de segredo. " +
         "Provisione a entrega de e-mail ANTES de abrir o cadastro. " +

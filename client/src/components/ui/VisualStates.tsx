@@ -18,6 +18,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { WifiOff, AlertCircle, CheckCircle2, RefreshCw, Loader2, Inbox } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Mascote, type MascoteContexto } from "@/components/Mascote";
+import { probePublicApiConnectivity, type ConnectivityStatus } from "@/lib/connectivityProbe";
 
 // ====================================================
 // LOADING STATE
@@ -283,20 +284,44 @@ export function SavingButton({
 // ====================================================
 
 export function OfflineBanner() {
-  const [offline, setOffline] = useState(!navigator.onLine);
+  // navigator.onLine pode acusar offline mesmo com o backend alcançável.
+  // A sonda usa apenas o endpoint público e não envia sessão nem dados clínicos.
+  const [connectivity, setConnectivity] = useState<ConnectivityStatus>(
+    () => typeof navigator !== "undefined" && !navigator.onLine ? "unreachable" : "reachable",
+  );
 
   useEffect(() => {
-    function onOnline() { setOffline(false); }
-    function onOffline() { setOffline(true); }
-    window.addEventListener("online", onOnline);
-    window.addEventListener("offline", onOffline);
+    let disposed = false;
+    let activeProbe: AbortController | null = null;
+
+    function inspect() {
+      activeProbe?.abort();
+      activeProbe = null;
+      if (navigator.onLine) {
+        setConnectivity("reachable");
+        return;
+      }
+      // Conservador durante a verificação: nunca presumir que a API funciona.
+      setConnectivity("unreachable");
+      const controller = new AbortController();
+      activeProbe = controller;
+      void probePublicApiConnectivity(fetch, controller.signal).then((status) => {
+        if (!disposed && activeProbe === controller) setConnectivity(status);
+      });
+    }
+
+    window.addEventListener("online", inspect);
+    window.addEventListener("offline", inspect);
+    inspect();
     return () => {
-      window.removeEventListener("online", onOnline);
-      window.removeEventListener("offline", onOffline);
+      disposed = true;
+      activeProbe?.abort();
+      window.removeEventListener("online", inspect);
+      window.removeEventListener("offline", inspect);
     };
   }, []);
 
-  if (!offline) return null;
+  if (connectivity === "reachable") return null;
 
   return (
     <div
@@ -305,7 +330,9 @@ export function OfflineBanner() {
       aria-live="assertive"
     >
       <WifiOff className="w-4 h-4 shrink-0" aria-hidden="true" />
-      <span>Modo offline — algumas funcionalidades podem estar indisponíveis</span>
+      <span>{connectivity === "server_unavailable"
+        ? "Servidor online com funções indisponíveis — alguns serviços clínicos podem falhar"
+        : "Sem conexão confirmada com o servidor — funções online podem estar indisponíveis"}</span>
     </div>
   );
 }
