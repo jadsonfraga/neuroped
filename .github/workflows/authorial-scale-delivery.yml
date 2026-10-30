@@ -81,7 +81,7 @@ jobs:
           .venv-scale-mail/bin/pip install --retries 3 --timeout 30 -r scripts/requirements-authorial-mail.txt
       - name: Ler somente JSON do artefato do gerador autorizado
         if: github.event_name == 'workflow_run'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           github-token: ${{ github.token }}
           run-id: ${{ github.event.workflow_run.id }}
