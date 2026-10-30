@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import TeaTimidezChapter from "@/components/biblioteca-clinica-tea-timidez";
 import {
   ArrowRight, BookOpen, BrainCircuit, ChevronRight,
   CircleAlert, Clock3, FileText, Layers3, Lightbulb, LockKeyhole,
@@ -24,7 +25,7 @@ function Kicker({ children }: { children: React.ReactNode }) {
 function SectionTitle({ id, number, title, summary }: { id: string; number: string; title: string; summary: string }) {
   return (
     <div id={id} className="scroll-mt-28 mb-6">
-      <Kicker>CAPÍTULO 01 <span aria-hidden="true">/</span> {number}</Kicker>
+      <Kicker>ESTUDO WISC-IV <span aria-hidden="true">/</span> {number}</Kicker>
       <h2 className="mt-2 font-serif text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-slate-50">{title}</h2>
       <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-600 dark:text-slate-300">{summary}</p>
     </div>
@@ -182,7 +183,17 @@ function ReviewChecklist() {
 export default function BibliotecaClinicaPage() {
   const [query, setQuery] = useState("");
   const entries = useMemo(() => clinicalLibraryChapters.filter(ch => (ch.title + " " + ch.subtitle + " " + ch.category).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(query.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase())), [query]);
-  const chapter = clinicalLibraryChapters[0];
+  const chapter = clinicalLibraryChapters.find(item => item.slug === "wisc-iv-interpretacao-neuropediatria") ?? clinicalLibraryChapters[0];
+  useEffect(() => {
+    const scrollToSelected = () => {
+      const slug = new URLSearchParams(window.location.hash.split("?")[1] ?? "").get("capitulo");
+      const target = slug === "tea-timidez-primeira-infancia" ? "capitulo-tea-timidez" : slug === "wisc-iv-interpretacao-neuropediatria" ? "capitulo-wisc" : null;
+      if (target) requestAnimationFrame(() => document.getElementById(target)?.scrollIntoView({ block: "start" }));
+    };
+    scrollToSelected();
+    window.addEventListener("hashchange", scrollToSelected);
+    return () => window.removeEventListener("hashchange", scrollToSelected);
+  }, []);
 
   return (
     <div className="mx-auto max-w-6xl space-y-10 px-3 pb-16 pt-3 sm:px-6 sm:pt-6">
@@ -207,16 +218,18 @@ export default function BibliotecaClinicaPage() {
         </div>
         <div className="grid gap-3">
           {entries.length === 0 && <p className="rounded-2xl border border-slate-200 p-6 text-sm text-slate-500">Nenhum capítulo encontrado.</p>}
-          {entries.map((item, index) => (
-            <a key={item.slug} href={`#/${"biblioteca-clinica"}?capitulo=${item.slug}`} onClick={(event) => { event.preventDefault(); document.getElementById("capitulo-wisc")?.scrollIntoView({ behavior: "smooth" }); }}
+          {entries.map((item) => (
+            <a key={item.slug} href={`#/${"biblioteca-clinica"}?capitulo=${item.slug}`} onClick={(event) => { event.preventDefault(); window.history.replaceState(null, "", "#/biblioteca-clinica?capitulo=" + encodeURIComponent(item.slug)); document.getElementById(item.day === 1 ? "capitulo-tea-timidez" : "capitulo-wisc")?.scrollIntoView({ behavior: "smooth" }); }}
               className="group flex flex-col gap-4 rounded-[1.4rem] border border-slate-200 bg-white p-5 text-left shadow-sm hover:border-teal-500 hover:shadow-md sm:flex-row sm:items-center dark:border-slate-700 dark:bg-slate-900">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-2xl font-black text-teal-800 dark:bg-teal-950 dark:text-teal-200">{String(index + 1).padStart(2, "0")}</div>
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-2xl font-black text-teal-800 dark:bg-teal-950 dark:text-teal-200">{item.day ? String(item.day).padStart(2, "0") : "PRÉVIO"}</div>
               <div className="flex-1"><span className="text-[10px] font-black uppercase tracking-[.14em] text-teal-700 dark:text-teal-300">{item.category} · {item.date.split("-").reverse().join("/")}</span><h3 className="mt-1 text-lg font-bold text-slate-900 dark:text-slate-100">{item.title}</h3><p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{item.subtitle}</p><div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400"><Clock3 className="h-3.5 w-3.5" /> {item.minutes} min de leitura <span aria-hidden="true">·</span> <span className="font-semibold text-amber-700 dark:text-amber-200">Revisão médica pendente</span></div></div>
               <ArrowRight className="hidden h-5 w-5 text-teal-700 sm:block" aria-hidden="true" />
             </a>
           ))}
         </div>
       </section>
+
+      <TeaTimidezChapter />
 
       <article id="capitulo-wisc" aria-labelledby="wisc-title" className="scroll-mt-20 space-y-12">
         <header className="rounded-[1.5rem] border-l-4 border-amber-500 bg-amber-50 p-5 dark:bg-amber-950/30">
@@ -225,7 +238,7 @@ export default function BibliotecaClinicaPage() {
         </header>
 
         <div className="max-w-4xl">
-          <Kicker>Capítulo 01 · Neuropsicologia · {chapter.date.split("-").reverse().join("/")}</Kicker>
+          <Kicker>Estudo pré-existente · Neuropsicologia · {chapter.date.split("-").reverse().join("/")}</Kicker>
           <h2 id="wisc-title" className="mt-3 font-serif text-3xl font-bold leading-tight text-slate-950 sm:text-4xl dark:text-white">{chapter.title}</h2>
           <p className="mt-3 text-base leading-8 text-slate-600 dark:text-slate-300">{chapter.subtitle}. Um roteiro para interpretar um relatório sem transformar índices em diagnósticos.</p>
         </div>
@@ -301,10 +314,10 @@ export default function BibliotecaClinicaPage() {
 
       <section aria-labelledby="future-topics" className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 dark:border-slate-700 dark:bg-slate-900">
         <div className="flex items-center gap-2"><FileText className="h-5 w-5 text-teal-700 dark:text-teal-300" /><h2 id="future-topics" className="font-serif text-xl font-bold text-slate-900 dark:text-white">Próximos temas na pauta editorial</h2></div>
-        <p className="mt-2 text-sm leading-7 text-slate-600 dark:text-slate-300">Há uma pauta diária de produção; novos capítulos só aparecem após checagem de referências e aceite médico. Nenhum conteúdo clínico é publicado automaticamente sem revisão.</p>
+        <p className="mt-2 text-sm leading-7 text-slate-600 dark:text-slate-300">A sequência abaixo segue o índice canônico de 365 perguntas. Conteúdos educacionais podem ser exibidos como material em revisão médica; somente o aceite médico explícito autoriza classificá-los como validados clinicamente.</p>
         <div className="mt-4 grid gap-2 sm:grid-cols-2">{nextClinicalTopics.slice(0, 6).map((topic, i) => <div key={topic} className="flex items-start gap-3 rounded-xl bg-white p-3 dark:bg-slate-800"><span className="text-xs font-bold text-teal-700 dark:text-teal-300">{String(i + 2).padStart(2, "0")}</span><span className="text-sm text-slate-800 dark:text-slate-200">{topic}</span></div>)}</div>
       </section>
-      <p className="text-center text-xs text-slate-500">Biblioteca clínica NeuroPed · Conteúdo autoral educacional sujeito à revisão médica · 28/10/2026</p>
+      <p className="text-center text-xs text-slate-500">Biblioteca clínica NeuroPed · Conteúdo educacional sujeito à revisão médica · 29/10/2026</p>
     </div>
   );
 }
