@@ -108,7 +108,7 @@ jobs:
           cat dist/github-pages/deploy-check.json
 
       - name: Configurar GitHub Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v6
 
       - name: Upload artefato para Pages
         uses: actions/upload-pages-artifact@v3
