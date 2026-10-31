@@ -579,9 +579,9 @@ como `LEGAL_REVIEW_REQUIRED` em
 Uma recepção pode atender mais de um profissional. A migração 0032 (#1065), a
 seleção validada no servidor e a UI (#1067), a exigência de membership `assistant`
 a cada requisição (#1068) e a visão unificada do dia (#1069) estão na `main`.
-A etapa D adicionou um endpoint de visão diária agrupada por profissional,
-reaproveitando o contexto validado por vínculo e clínica, com teste unitário
-sobre schema real e fixtures sintéticas. A visão preserva a redação de dados
+A etapa D é só front, sem endpoint novo: combina no navegador os painéis que a
+etapa C já busca (um pedido por profissional, validado no servidor por vínculo e
+clínica), com teste unitário e fixtures sintéticas. A visão preserva a redação de dados
 para a recepção, não cria autoridade a partir do cliente e não mistura clínicas.
 
 A evidência de implementação e rollback continua em

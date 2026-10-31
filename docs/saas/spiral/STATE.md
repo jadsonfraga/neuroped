@@ -356,7 +356,7 @@ como aberta em BACKLOG.md, já havia sido entregue e mesclada na PR #1069 em
 2026-10-01. A PR adicionou `AgendaUnifiedDay`, `agendaUnifiedDay.ts`, reforços
 no E2E e o teste unitário `tests/unit/agenda-unified-day.test.ts`; os 21 checks
 da PR ficaram verdes. A etapa D junta e ordena agendas por data/horário,
-redige canceladas e faltas, evita colisão de IDs entre profissionais, falha
+exclui canceladas e faltas, evita colisão de IDs entre profissionais, falha
 fechado quando a resposta vem com dono incorreto ou contrato quebrado e mantém
 o restante útil quando uma fonte carrega ou falha. Fixtures são sintéticas,
 sem PHI.
