@@ -2,6 +2,7 @@ import { getApplicationMode, getImplementationStatus, scaleCoversSelectedSignalE
 import { getClinicalTiers, type ClinicalTierRule } from "./clinicalRanking";
 import { getDeliveredInteractiveItemCount, type Respondente } from "./scaleFilter";
 import { enforcePodiumHardCap } from "./podiumHardCap";
+import { refineFunctionalComplementarity } from "./filterPodiumComplementarity";
 
 // Limite total do pódio: a soma ESTIMADA de perguntas de Ouro + Prata + Bronze
 // nunca deve ultrapassar este teto (não sobrecarregar a família/o clínico).
@@ -14,6 +15,9 @@ export const PODIUM_QUESTION_CAP = 100;
 export function estimatedQuestionCount(scale: RefinedScaleMatch["scale"]): number {
   const interactive = getDeliveredInteractiveItemCount(scale.id);
   if (interactive > 0) return interactive;
+  // A EAF usa a página dedicada (/eaf), fora do registro de itens interativos:
+  // 6 domínios × 4 itens = 24 perguntas reais, não o fallback de 20.
+  if (scale.id === "eaf") return 24;
   const txt = `${scale.description ?? ""} ${scale.scoringCutoff ?? ""}`;
   const m = txt.match(/(\d{1,3})\s*(perguntas|itens|quest|quesitos|afirma|sim\/n)/i);
   if (m) {
@@ -699,6 +703,28 @@ export function selectPodium(
       if (!cand || !containsAge(cand) || !isApplicable(cand) || cand.relevanceScore < 45) continue;
       if (tryUptake(cand)) break;
     }
+  }
+
+  // Último passe: se houver EFDI aplicável entre os candidatos seguros,
+  // um dos três selos deve cobrir autonomia REAL e solicitação de ajuda.
+  // O mesmo passe evita pares de construto redundante quando a troca preserva
+  // queixas, sinais, idade, aplicabilidade e teto de perguntas.
+  const complementary = refineFunctionalComplementarity({
+    ouro, prata, bronze,
+    candidates: sorted,
+    selectedQueixas,
+    selectedSignals,
+    curatedScaleIds: [curatedTiers?.ouro, curatedTiers?.prata, curatedTiers?.bronze].filter((id): id is string => Boolean(id)),
+    ageMonths: exactAge,
+    questionCap: PODIUM_QUESTION_CAP,
+    countQuestions: (match) => estimatedQuestionCount(match.scale),
+  });
+  ouro = complementary.ouro;
+  prata = complementary.prata;
+  bronze = complementary.bronze;
+  used.clear();
+  for (const medal of [ouro, prata, bronze]) {
+    if (medal) used.add(medal.scale.id);
   }
 
   // Direct and school also join the used set to prevent deduplication with medals.

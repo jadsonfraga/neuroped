@@ -1129,11 +1129,44 @@ export function filterScalesWithClinicalRescue(
   // Respondente é um vínculo clínico obrigatório, não uma preferência de
   // ranking. Se não houver opção compatível, falha fechado: nunca repete a
   // busca sem o respondente nem completa o pódio com fallback de outro perfil.
-  if (ctx.respondente) return primary;
+  const results = ctx.respondente ? primary : fillPodiumWithBroadband(primary, scales, ctx);
+  // Sem instrumento relacionado à queixa para o respondente obrigatório,
+  // uma escala funcional isolada não deve parecer resposta a outra suspeita.
+  if (ctx.respondente && primary.length === 0) return results;
 
-  // Sem respondente explícito, contextos não agudos podem ser completados com
-  // rastreadores amplos apropriados à idade e aos demais bloqueios duros.
-  return fillPodiumWithBroadband(primary, scales, ctx);
+  // Âncora funcional transversal. EAF-NEXUS (2–18a) mede independência e
+  // solicitação de auxílio, sem utilizar uma escala de suspeita de deficiência
+  // intelectual para toda queixa. Abaixo de 2 anos, EFDI-V/NV é alternativa
+  // funcional disponível no acervo. Ambos são instrumentos autorais, não
+  // psicometria confirmatória. Idade, respondente, risco agudo e aplicação
+  // continuam bloqueios inegociáveis.
+  const functionalIds = ["eaf", "efdi"] as const;
+  if (ctx.ageInputInvalid || results.some((m) => functionalIds.some((id) => id === m.scale.id))) return results;
+  const functionalContext: FilterContext = {
+    ...ctx,
+    queixas: ["funcionalidade"],
+    selectedSignals: [],
+  };
+  const functionalScale = functionalIds
+    .map((id) => scales.find((scale) => scale.id === id))
+    .find((scale) =>
+      scale &&
+      ageCovers(scale, ctx) &&
+      passesMandatoryFilters(scale, functionalContext) &&
+      clinicalHardBlock(scale, ctx) === null &&
+      getImplementationStatus(scale) === "complete"
+    );
+  if (!functionalScale) return results;
+  const functional = calculateRefinedScore(functionalScale, functionalContext);
+  return [
+    ...results,
+    {
+      ...functional,
+      clinicalReason:
+        "Complemento funcional: o que realiza sozinho e como pede ajuda espontaneamente; instrumento autoral de registro clínico, sem diagnóstico isolado.",
+      isBroadbandFallback: true,
+    },
+  ];
 }
 
 // ============ FALLBACK DE TRIAGEM AMPLA ============
