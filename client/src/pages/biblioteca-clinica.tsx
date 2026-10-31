@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import TeaTimidezChapter from "@/components/biblioteca-clinica-tea-timidez";
+import DesatencaoImaturidadeChapter from "@/components/biblioteca-clinica-desatencao-imaturidade";
 import {
   ArrowRight, BookOpen, BrainCircuit, ChevronRight,
   CircleAlert, Clock3, FileText, Layers3, Lightbulb, LockKeyhole,
@@ -187,7 +188,7 @@ export default function BibliotecaClinicaPage() {
   useEffect(() => {
     const scrollToSelected = () => {
       const slug = new URLSearchParams(window.location.hash.split("?")[1] ?? "").get("capitulo");
-      const target = slug === "tea-timidez-primeira-infancia" ? "capitulo-tea-timidez" : slug === "wisc-iv-interpretacao-neuropediatria" ? "capitulo-wisc" : null;
+      const target = slug === "tea-timidez-primeira-infancia" ? "capitulo-tea-timidez" : slug === "desatencao-imaturidade-etaria" ? "capitulo-desatencao-imaturidade" : slug === "wisc-iv-interpretacao-neuropediatria" ? "capitulo-wisc" : null;
       if (target) requestAnimationFrame(() => document.getElementById(target)?.scrollIntoView({ block: "start" }));
     };
     scrollToSelected();
@@ -219,7 +220,7 @@ export default function BibliotecaClinicaPage() {
         <div className="grid gap-3">
           {entries.length === 0 && <p className="rounded-2xl border border-slate-200 p-6 text-sm text-slate-500">Nenhum capítulo encontrado.</p>}
           {entries.map((item) => (
-            <a key={item.slug} href={`#/${"biblioteca-clinica"}?capitulo=${item.slug}`} onClick={(event) => { event.preventDefault(); window.history.replaceState(null, "", "#/biblioteca-clinica?capitulo=" + encodeURIComponent(item.slug)); document.getElementById(item.day === 1 ? "capitulo-tea-timidez" : "capitulo-wisc")?.scrollIntoView({ behavior: "smooth" }); }}
+            <a key={item.slug} href={`#/${"biblioteca-clinica"}?capitulo=${item.slug}`} onClick={(event) => { event.preventDefault(); window.history.replaceState(null, "", "#/biblioteca-clinica?capitulo=" + encodeURIComponent(item.slug)); document.getElementById(item.day === 1 ? "capitulo-tea-timidez" : item.day === 2 ? "capitulo-desatencao-imaturidade" : "capitulo-wisc")?.scrollIntoView({ behavior: "smooth" }); }}
               className="group flex flex-col gap-4 rounded-[1.4rem] border border-slate-200 bg-white p-5 text-left shadow-sm hover:border-teal-500 hover:shadow-md sm:flex-row sm:items-center dark:border-slate-700 dark:bg-slate-900">
               <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-2xl font-black text-teal-800 dark:bg-teal-950 dark:text-teal-200">{item.day ? String(item.day).padStart(2, "0") : "PRÉVIO"}</div>
               <div className="flex-1"><span className="text-[10px] font-black uppercase tracking-[.14em] text-teal-700 dark:text-teal-300">{item.category} · {item.date.split("-").reverse().join("/")}</span><h3 className="mt-1 text-lg font-bold text-slate-900 dark:text-slate-100">{item.title}</h3><p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{item.subtitle}</p><div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400"><Clock3 className="h-3.5 w-3.5" /> {item.minutes} min de leitura <span aria-hidden="true">·</span> <span className="font-semibold text-amber-700 dark:text-amber-200">Revisão médica pendente</span></div></div>
@@ -230,6 +231,7 @@ export default function BibliotecaClinicaPage() {
       </section>
 
       <TeaTimidezChapter />
+      <DesatencaoImaturidadeChapter />
 
       <article id="capitulo-wisc" aria-labelledby="wisc-title" className="scroll-mt-20 space-y-12">
         <header className="rounded-[1.5rem] border-l-4 border-amber-500 bg-amber-50 p-5 dark:bg-amber-950/30">
