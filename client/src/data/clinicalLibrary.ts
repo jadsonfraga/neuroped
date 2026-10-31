@@ -42,6 +42,19 @@ export interface ClinicalLibraryChapter {
 }
 export const clinicalLibraryChapters: ClinicalLibraryChapter[] = [
   {
+    slug: "desatencao-imaturidade-etaria",
+    day: 2,
+    title: "Como diferenciar desatenção de imaturidade etária?",
+    subtitle: "Idade relativa, prejuízo em múltiplos contextos e decisão clínica",
+    category: "TDAH",
+    date: "2026-10-31",
+    updated: "2026-10-31",
+    status: "revisao_medica",
+    minutes: 6,
+    review: "Síntese provisória de fontes públicas. Consensus indisponível por cota; sem aceite médico.",
+    sources: ["ms-pcdt-tdah", "aap-adhd-2019", "nice-ng87", "frisira-2025", "sayal-2018"],
+  },
+  {
     slug: "tea-timidez-primeira-infancia",
     day: 1,
     title: "Como distinguir sinais de TEA de timidez na primeira infância?",
@@ -194,7 +207,6 @@ export const wiscReferences: ClinicalLibraryReference[] = [
 ];
 
 export const nextClinicalTopics = [
-  "Como diferenciar desatenção de imaturidade etária?",
   "Primeira crise convulsiva afebril: qual a abordagem inicial?",
   "Como diferenciar dificuldade de alfabetização de dislexia?",
   "Quando o atraso de fala exige avaliação global?",
