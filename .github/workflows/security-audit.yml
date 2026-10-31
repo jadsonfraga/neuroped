@@ -92,7 +92,7 @@ jobs:
           echo "Produção (--omit=dev) — críticas: $production_critical; altas: $production_high; moderadas: $production_moderate; baixas: $production_low"
 
       - name: Sincronizar alerta de vulnerabilidades high/critical
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           ALL_HIGH: ${{ steps.audit.outputs.all_high }}
           ALL_CRITICAL: ${{ steps.audit.outputs.all_critical }}

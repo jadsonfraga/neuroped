@@ -122,7 +122,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.sha || github.event_name == 'push' && github.sha || github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || 'main' }}
           persist-credentials: false
       - name: Abrir ou atualizar incidente sem expor logs ou credenciais
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           TEST_RESULT: ${{ needs.test.result }}
           DELIVERY_RESULT: ${{ needs.deliver.result }}
