@@ -12,6 +12,7 @@ import { downloadTextDocument, safeTextFilename } from "@/lib/shareText";
 import { createChiptune, type Chiptune } from "@/features/super-neuropad/music";
 import { ClinicalCircuit, type ProgressoCircuito } from "@/features/super-neuropad/ClinicalCircuit.tsx";
 import { activeClockSeconds, emptyActiveClock, transitionActiveClock } from "@/features/super-neuropad/activeClock";
+import { jornadaAnual } from "@/features/super-neuropad/jornadaAnual";
 import { VisualSearchBonusPanel } from "@/features/super-neuropad/VisualSearchBonusPanel";
 import { resumoDaBateria } from "@/features/super-neuropad/sufficiencia";
 import {
@@ -794,6 +795,7 @@ export default function SuperNeuroPadGamePage() {
 
   const band = ageYears === null ? undefined : bandForYears(ageYears);
   const gameProfile = band ? ageGameProfile(band.min) : null;
+  const jornada = ageYears === null ? undefined : jornadaAnual(ageYears);
   const phaseId = PHASE_ORDER[phaseIndex];
   const phase = phaseById(phaseId, ageYears ?? undefined);
   const items = band ? gameItemsFor(band.id, phaseId) : [];
@@ -1294,6 +1296,16 @@ export default function SuperNeuroPadGamePage() {
             )}
           </div>
 
+          {jornada && (
+            <div className="snp-panel snp-panel--soft p-4 sm:p-5" data-testid="super-neuropad-jornada-anual">
+              <div className="snp-pixel text-xs">Aventura de {jornada.idade} anos · {jornada.titulo}</div>
+              <p className="mt-2 text-sm font-semibold">Convite para a criança: “{jornada.convite}”</p>
+              <p className="mt-2 text-xs font-semibold"><strong>Como facilitar:</strong> {jornada.apoio}</p>
+              <p className="mt-1 text-xs font-semibold"><strong>Pausa e acolhimento:</strong> {jornada.pausa}</p>
+              <p className="mt-2 text-[11px] font-semibold opacity-70">Enredo e apoio são opcionais, não são novos desafios. Não substituem nem antecipam os comandos e critérios de cada item. Nenhuma recompensa significa acerto ou diagnóstico.</p>
+            </div>
+          )}
+
           {band && <CircuitoObrigatorioAviso circuito={circuito} />}
 
           <div className="snp-panel p-5">
@@ -1446,13 +1458,20 @@ export default function SuperNeuroPadGamePage() {
           <div className="snp-pixel mt-2 text-xs opacity-80">Mundo {phase.order} de {PHASES.length}</div>
           <h2 ref={screenTitleRef} tabIndex={-1} className="snp-pixel text-2xl sm:text-3xl">{phase.name}</h2>
           <p className="mt-1 text-base font-bold opacity-90">{phase.tagline}</p>
-          <div className="mt-4"><SpeechBubble character={character} text={HERO_LINES[character.id]?.intro ?? "Vamos lá!"} /></div>
+          <div className="mt-4"><SpeechBubble character={character} text={jornada?.convite ?? HERO_LINES[character.id]?.intro ?? "Vamos lá!"} /></div>
           <div className="snp-panel mx-auto mt-5 max-w-2xl p-4 text-left text-sm">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="snp-pixel text-[11px] opacity-80">Aplicadora · {phase.domain}</div>
               <TurnCue who="aplicadora" />
             </div>
             <p className="mt-1 font-semibold leading-relaxed">{phase.operator}</p>
+            {jornada && (
+              <div className="mt-3 rounded-xl border border-[var(--snp-ink-40)] bg-[var(--snp-paper-fixed)] p-3" data-testid="super-neuropad-mundo-anual">
+                <p className="font-black">Enredo do mundo · {jornada.idade} anos</p>
+                <p className="mt-1 font-semibold">{jornada.mundos[phaseId]}</p>
+                <p className="mt-1 text-xs font-semibold opacity-80">Diga somente antes de começar, se a criança desejar. Durante os itens, mantenha os comandos exatos na tela, sem pistas adicionais.</p>
+              </div>
+            )}
             <p className="mt-2 flex flex-wrap gap-1.5 text-xs font-bold">
               <span className="opacity-70">Traz elementos de:</span>
               {[...new Set(items.map((entry) => entry.origin))].map((origin) => <span key={origin} className="snp-chip">{ORIGIN_LABELS[origin]}</span>)}
@@ -1534,7 +1553,7 @@ export default function SuperNeuroPadGamePage() {
           <div className="snp-pixel mt-2 text-xs opacity-80">Mundo {phase.order} completo</div>
           <h2 ref={screenTitleRef} tabIndex={-1} className="snp-pixel text-2xl sm:text-3xl">Conquista: {phase.badge}!</h2>
           <p className="mt-1 text-base font-bold opacity-90">{character.name} {character.role} chegou ao mundo {phaseIndex + 2}.</p>
-          <div className="mt-4"><SpeechBubble character={character} text={HERO_LINES[character.id]?.done ?? "Conquista no bolso!"} /></div>
+          <div className="mt-4"><SpeechBubble character={character} text={jornada?.fecho ?? HERO_LINES[character.id]?.done ?? "Mundo registrado!"} /></div>
           <div className="mt-4 flex justify-center"><CircuitoObrigatorioAviso circuito={circuito} /></div>
           <ArcadeButton tone="sun" className="mt-5 px-6 py-3 text-base" onClick={nextPhase}>
             Próximo mundo: {phaseById(PHASE_ORDER[phaseIndex + 1], ageYears ?? undefined).emoji} {phaseById(PHASE_ORDER[phaseIndex + 1], ageYears ?? undefined).name}
