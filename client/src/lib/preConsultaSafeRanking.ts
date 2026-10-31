@@ -30,11 +30,13 @@ export function previsitFamily(scale: ScaleEntry): string {
   return scale.name.split(/\s+[·—–-]\s+/)[0].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "");
 }
 
-type Tier = "direta" | "seguimento" | "coocorrencia" | "banda-larga" | "tempo-maior" | "respondente-alternativo" | "dominio-proximo";
+type Tier = "direta" | "seguimento" | "coocorrencia" | "banda-larga" | "tempo-maior" | "respondente-alternativo" | "dominio-proximo" | "funcional" | "funcional-tempo-maior";
 const TIER_REASON: Record<Tier, string> = {
   direta: "Compatível com idade exata, queixa, respondente e finalidade; a curadoria clínica só ordena depois desses critérios.",
   seguimento: "Sem instrumento de seguimento compatível para esta queixa: reaplicar este instrumento de triagem para comparar com a aplicação anterior.",
   coocorrencia: "Complementar — menor aderência à queixa: cobre um domínio que costuma acompanhar esta queixa.",
+  funcional: "Complementar — registro descritivo da autonomia e de pedido espontâneo de ajuda; instrumento autoral, sem diagnóstico isolado.",
+  "funcional-tempo-maior": "Complementar — registro funcional de autonomia e pedido espontâneo de ajuda, acima de 15 min (até 30 min no catálogo); instrumento autoral sem diagnóstico isolado.",
   "banda-larga": "Complementar — menor aderência à queixa: rastreio amplo apropriado à idade e ao respondente.",
   "tempo-maior": "Complementar — instrumento relevante mais próximo, com tempo acima de 15 min (até 30 min informados no catálogo): não há alternativa mais curta compatível.",
   "dominio-proximo": "Complementar — domínio mais próximo disponível: não há instrumento aberto para esta queixa nesta idade; rastreio de desenvolvimento/comportamento apropriado à idade.",
@@ -116,6 +118,8 @@ export function safePrevisitRecommendations(catalog: ScaleEntry[], input: Input,
         .sort((a, b) => (previsitUpperMinutes(a) ?? 99) - (previsitUpperMinutes(b) ?? 99) || a.id.localeCompare(b.id));
       ladder.push(["tempo-maior", () => near(role, 30)]);
       ladder.push(["dominio-proximo", () => closest(role, 30)]);
+      // Alternativa EXPLÍCITA, rotulada como respondente diferente. Não
+      // atribuir o relato dos pais à escola ou ao adolescente.
       if (role !== "pais") {
         ladder.push(["respondente-alternativo", () => near("pais", 15)]);
         ladder.push(["respondente-alternativo", () => near("pais", 30)]);
@@ -131,7 +135,9 @@ export function safePrevisitRecommendations(catalog: ScaleEntry[], input: Input,
         const family = previsitFamily(scale);
         if (exclude.has(scale.id) || picked.some((p) => p.scale.id === scale.id) || families.has(family)) continue;
         families.add(family);
-        picked.push({ scale, tier });
+        const functionalOutsideComplaint = (scale.id === "eaf" || scale.id === "efdi") && !scale.queixas.some((q) => queixas.includes(q));
+        const functionalTier: Tier = (previsitUpperMinutes(scale) ?? 99) > 15 ? "funcional-tempo-maior" : "funcional";
+        picked.push({ scale, tier: tier === "respondente-alternativo" ? tier : functionalOutsideComplaint ? functionalTier : tier });
       }
     }
     return picked;

@@ -9,10 +9,10 @@ export default function EafPage() {
       subtitle: "Escala de Adaptação Funcional (2–18 anos)",
       icon: Users,
       gradient: "from-blue-500 to-cyan-600",
-      instruction: "Para cada item, indique o nível de independência funcional que a criança/adolescente demonstra atualmente.",
+      instruction: "Para cada item, diferencie o que faz sozinho, o que pede ajuda espontaneamente (fala, gesto, olhar ou comunicação alternativa) e o que só realiza após o adulto oferecer auxílio. Considere a idade e o contexto.",
       labels: eafLabels,
       domains: eafDomains,
-      infoBox: "EAFNEXUS: 24 itens, 6 domínios, máximo 72 pontos. Pontuações mais altas indicam maior autonomia funcional. Instrumento autoral — Dr. Jadson Fraga, 2026.",
+      infoBox: "EAF-NEXUS: 24 itens, 6 domínios, máximo 72 pontos. Resultado descritivo, sem normas ou pontos de corte diagnósticos validados. Pedido espontâneo de ajuda é observação clínica complementar, sem subescala própria e não inferível do total. Instrumento autoral — Dr. Jadson Fraga, 2026.",
       onCalculate: (answers) => {
         const domainResults = eafDomains.map((domain, di) => {
           const score = domain.items.reduce((sum, _, ii) => sum + (answers[`${di}-${ii}`] || 0), 0);

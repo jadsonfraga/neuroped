@@ -486,7 +486,7 @@ export const driveImport2026Items: Record<string, InteractiveScaleDef> = {
         { text: "Expressa necessidades básicas: fome, dor, banheiro, querer algo, recusar.", emoji: "🙋", example: "Ex.: mostra ou fala quando está com fome ou quer ir ao banheiro." },
         { text: "Compreende comandos simples compatíveis com a idade.", emoji: "👂", example: "Ex.: você pede 'pega a bola' e ela pega." },
         { text: "Responde sim/não claro por fala, gesto, olhar, escolha visual ou comportamento.", emoji: "✅", example: "Ex.: balança a cabeça ou aponta para dizer sim ou não." },
-        { text: "Usa comunicação para pedir ajuda ou resolver problema.", emoji: "🆘", example: "Ex.: chama ou puxa você quando não consegue abrir algo." },
+        { text: "Usa comunicação para pedir ajuda ou resolver problema.", emoji: "🆘", example: "Ex.: quando não consegue abrir algo, pede ajuda POR INICIATIVA PRÓPRIA — falando, apontando, gesticulando, pelo olhar ou por comunicação alternativa; distinguir de ajuda oferecida antes de pedir." },
         { text: "Consegue escolher entre opções apresentadas.", emoji: "🤲", example: "Ex.: você oferece dois brinquedos e ela escolhe um." },
         { text: "Comunica algo além da necessidade imediata: mostrar, compartilhar, comentar ou indicar interesse.", emoji: "👉", example: "Ex.: aponta para o avião no céu só para te mostrar." },
       ] },
