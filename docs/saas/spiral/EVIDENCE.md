@@ -1044,3 +1044,14 @@ reaplica código e teste sobre main, preserva S2–S22 e requer nova CI.
   completo (0 `not ok`).
 - Fixtures 100% sintéticas (nomes de teste, sem PHI).
 - Rollback: reverter o commit; sem migração, sem efeito em dado persistido.
+
+
+## OPS-03-D (ciclo 9, 2026-10-01) — visão unificada do dia para recepção multiprofissional
+
+- **Entrega reconciliada:** a PR [#1069](https://github.com/jadsonfraga/neuroped/pull/1069), merge commit `738180a995dbd8bfcefcebf30abe5d37f49ac71f`, concluiu a etapa D da issue [#1064](https://github.com/jadsonfraga/neuroped/issues/1064). A PR passou em **21 checks**, incluindo TypeScript, build, lint, contratos de navegação, persistência no browser, isolamento LIVE e os testes específicos da agenda.
+- **Escopo:** `client/src/components/AgendaUnifiedDay.tsx`, `client/src/lib/agendaUnifiedDay.ts`, alterações isoladas em `client/src/pages/agenda.tsx`, `tests/unit/agenda-unified-day.test.ts`, reforços no E2E `tests/e2e/agenda-multi-provider.mjs` e no contrato estático. Não houve migração nova nem mudança no modelo de autorização da etapa A/B/C.
+- **Contrato funcional provado:** `buildUnifiedDay` reúne as agendas escolhidas para a mesma data, ordena por horário e nome do profissional, descarta cancelamentos e faltas, preserva fusos distintos como aviso, mantém chaves sem colisão quando dois profissionais têm o mesmo ID de consulta e limita a quantidade de profissionais exibidos.
+- **Fail-closed provado:** a função não rotula uma resposta pertencente ao profissional A como se fosse do profissional B; descarta consultas intrusas, marca fonte com `access` ausente ou proprietário divergente como erro, e mantém os dados dos demais profissionais quando uma fonte está carregando ou falha.
+- **Fixtures e privacidade:** o teste usa nomes e IDs sintéticos, `patientId: null` e nenhum dado de paciente real. A recepção continua recebendo DTO redigido; a etapa D apenas compõe no cliente as respostas já filtradas pelo contexto servidor/profissional validado nas etapas anteriores.
+- **Limites remanescentes:** ainda faltam censo pós-deploy no D1 de produção, teste manual com dois vínculos reais, teste em dispositivo móvel e validação de leitor de tela. Esses itens permanecem explicitamente fora da prova automatizada; não são declarados como concluídos por esta evidência.
+- **Rollback:** reverter a PR #1069 remove a visão unificada do dia e retorna à agenda por profissional, sem migração adicional. As etapas A/B/C continuam independentes e não devem ser revertidas junto.
