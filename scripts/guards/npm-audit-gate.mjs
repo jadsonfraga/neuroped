@@ -8,22 +8,13 @@
 //   - reason: por que a exceção existe (exposição analisada)
 //   - expiresOn: data de validade (AAAA-MM-DD); vencida, o gate volta a falhar
 //
-// GHSA-86w9-cpqp-85rv (node-forge <= 1.4.0, publicada em 2026-10-02) não tem
-// versão corrigida upstream. Chega ao projeto apenas via @signpdf/signer-p12,
-// que usa node-forge para decodificar PKCS#12 — não para verificar assinaturas
-// RSA PKCS#1 v1.5, que é o vetor do advisory. Re-check: remover a exceção
-// assim que existir release corrigida do node-forge.
+// Sem exceções ativas. A última (GHSA-86w9-cpqp-85rv, node-forge <= 1.4.0) foi
+// removida em 2026-10-31 com a atualização para node-forge 1.4.2, versão em que
+// o npm audit deixa de apontar advisories para o pacote.
 
 import { execFileSync } from "node:child_process";
 
-const ALLOWLIST = [
-  {
-    ghsa: "GHSA-86w9-cpqp-85rv",
-    packageName: "node-forge",
-    reason: "sem versao corrigida upstream; uso limitado a decodificar PKCS#12 em @signpdf/signer-p12, fora do vetor do advisory",
-    expiresOn: "2026-11-02",
-  },
-];
+const ALLOWLIST = [];
 
 const today = new Date().toISOString().slice(0, 10);
 const exceptions = ALLOWLIST.filter((entry) => entry.expiresOn >= today);

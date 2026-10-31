@@ -1,11 +1,11 @@
 // Trava anti-regressão do gate de auditoria de dependências
 // (`scripts/guards/npm-audit-gate.mjs`).
 //
-// O advisory GHSA-86w9-cpqp-85rv (node-forge <= 1.4.0, sem correção upstream)
-// derrubava todos os pipelines com `npm audit`. O gate substitui as chamadas
-// diretas nos workflows e mantém o comportamento original — falhar por
-// qualquer high/critical — com UMA exceção rastreável: id exato do advisory,
-// pacote afetado, motivo e data de validade. Vencida a data, volta a bloquear.
+// O gate substitui as chamadas diretas de `npm audit` nos workflows e mantém o
+// comportamento original — falhar por qualquer high/critical — admitindo apenas
+// exceções rastreáveis: id exato do advisory, pacote afetado, motivo e data de
+// validade. Vencida a data, volta a bloquear. A exceção de node-forge
+// (GHSA-86w9-cpqp-85rv) foi removida com node-forge 1.4.2.
 import assert from "node:assert/strict";
 import { readFileSync, writeFileSync, unlinkSync, readdirSync } from "node:fs";
 import test from "node:test";
@@ -16,7 +16,16 @@ const GATE = "scripts/guards/npm-audit-gate.mjs";
 test("gate: nenhuma high/critical fora da allowlist ativa no grafo atual", () => {
   const stdout = execFileSync("node", [GATE], { encoding: "utf8" });
   assert.match(stdout, /nenhuma vulnerabilidade high\/critical fora da allowlist ativa/);
-  assert.match(stdout, /GHSA-86w9-cpqp-85rv/);
+  assert.doesNotMatch(stdout, /excecao ativa/, "allowlist vazia: nenhuma exceção pode estar ativa");
+});
+
+test("gate: excecao obsoleta de node-forge foi removida e a versao corrigida esta travada", () => {
+  const source = readFileSync(GATE, "utf8");
+  assert.doesNotMatch(source, /ghsa: "GHSA-86w9-cpqp-85rv"/);
+  assert.doesNotMatch(source, /packageName: "node-forge"/);
+  const lock = JSON.parse(readFileSync("package-lock.json", "utf8"));
+  const [major, minor, patch] = lock.packages["node_modules/node-forge"].version.split(".").map(Number);
+  assert.ok(major > 1 || (major === 1 && (minor > 4 || (minor === 4 && patch >= 2))), "node-forge >= 1.4.2");
 });
 
 test("gate: excecao obsoleta de braces foi removida", () => {
@@ -25,20 +34,47 @@ test("gate: excecao obsoleta de braces foi removida", () => {
   assert.doesNotMatch(source, /packageName: "braces"/);
 });
 
-test("gate: exceção vencida volta a bloquear a esteira", () => {
+// Sem vulnerabilidade real no grafo, a regra de validade é exercitada numa cópia
+// temporária do gate que lê um relatório sintético no lugar do `npm audit`.
+// A cópia só existe dentro do teste; o gate publicado não ganha entrada extra.
+function runGateWithSyntheticAudit(expiresOn) {
   const source = readFileSync(GATE, "utf8");
-  assert.match(source, /expiresOn: "2026-11-02"/, "prazo da exceção documentado no fonte");
-  const expired = source.replace('expiresOn: "2026-11-02"', 'expiresOn: "2020-01-01"');
-  const tmp = `${process.env.RUNNER_TEMP ?? "/tmp"}/npm-audit-gate-expired.mjs`;
-  writeFileSync(tmp, expired);
+  const allowlist = "const ALLOWLIST = [];";
+  assert.equal(source.split(allowlist).length, 2, "allowlist localizada uma única vez");
+  const npmCall = /raw = execFileSync\(isWindows \? "npm\.cmd" : "npm", \["audit"[\s\S]*?\}\);/;
+  assert.match(source, npmCall, "chamada do npm audit localizada");
+  const report = {
+    vulnerabilities: {
+      "pacote-sintetico": {
+        severity: "high",
+        via: [{ title: "Advisory sintético", url: "https://github.com/advisories/GHSA-test-0000-0000" }],
+      },
+    },
+  };
+  const patched = source
+    .replace(allowlist, `const ALLOWLIST = [{ ghsa: "GHSA-test-0000-0000", packageName: "pacote-sintetico", reason: "teste", expiresOn: "${expiresOn}" }];`)
+    .replace(npmCall, `raw = ${JSON.stringify(JSON.stringify(report))};`);
+  const tmp = `${process.env.RUNNER_TEMP ?? "/tmp"}/npm-audit-gate-synthetic-${expiresOn}.mjs`;
+  writeFileSync(tmp, patched);
   try {
-    execFileSync("node", [tmp], { encoding: "utf8" });
-    assert.fail("exceção vencida não pode passar no gate");
+    return { status: 0, stdout: execFileSync("node", [tmp], { encoding: "utf8" }), stderr: "" };
   } catch (error) {
-    assert.match(String(error.stderr ?? ""), /BLOQUEADO: node-forge/);
+    return { status: error.status, stdout: String(error.stdout ?? ""), stderr: String(error.stderr ?? "") };
   } finally {
     unlinkSync(tmp);
   }
+}
+
+test("gate: exceção válida libera somente o advisory listado", () => {
+  const result = runGateWithSyntheticAudit("2999-12-31");
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /excecao ativa: pacote-sintetico \(GHSA-test-0000-0000\)/);
+});
+
+test("gate: exceção vencida volta a bloquear a esteira", () => {
+  const result = runGateWithSyntheticAudit("2020-01-01");
+  assert.equal(result.status, 1, "exceção vencida não pode passar no gate");
+  assert.match(result.stderr, /BLOQUEADO: pacote-sintetico/);
 });
 
 test("gate: contrata high/critical — moderate/low nao bloqueia a esteira", () => {
