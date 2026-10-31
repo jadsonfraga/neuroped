@@ -347,3 +347,30 @@ Comandos exit 0 depois desta sessão: `npm run check`, `npx eslint` nos
 arquivos tocados, os seis testes de memória/paciente listados em
 EVIDENCE.md#LEG-17, e `npm run test:quick-wins` completo (0 `not ok`,
 incluindo o teste novo).
+
+
+## Ciclo 9 (2026-10-31) — OPS-03-D reconciliado
+
+A auditoria da `main` atual mostrou que a visão unificada do dia, ainda marcada
+como aberta em BACKLOG.md, já havia sido entregue e mesclada na PR #1069 em
+2026-10-01. A PR adicionou `AgendaUnifiedDay`, `agendaUnifiedDay.ts`, reforços
+no E2E e o teste unitário `tests/unit/agenda-unified-day.test.ts`; os 21 checks
+da PR ficaram verdes. A etapa D junta e ordena agendas por data/horário,
+exclui canceladas e faltas, evita colisão de IDs entre profissionais, falha
+fechado quando a resposta vem com dono incorreto ou contrato quebrado e mantém
+o restante útil quando uma fonte carrega ou falha. Fixtures são sintéticas,
+sem PHI.
+
+Evidência detalhada em `EVIDENCE.md#OPS-03-D`; desenho atualizado em
+`MULTI_PROVIDER_AGENDA.md`; BACKLOG.md agora marca OPS-03 como fechado, com
+censo pós-deploy, teste manual e acessibilidade real preservados como pendências
+operacionais explícitas.
+
+### Próximo ponto de retomada
+
+Reler a `main` e os PRs abertos antes de tocar qualquer código. S9 permanece
+bloqueado por destinação autorizada de registros legados. O piso legal de
+retenção de LTB-10 permanece bloqueado por revisão jurídico-regulatória. A
+próxima oportunidade técnica pequena deve ser escolhida entre documentação de
+lacunas já mescladas e um item de segurança ainda não assumido por PR; não
+reabrir OPS-03, S5 ou LEG-17.

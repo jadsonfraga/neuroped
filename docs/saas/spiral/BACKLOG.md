@@ -575,12 +575,17 @@ contra pedido de eliminação), não uma correção puramente técnica. Registra
 como `LEGAL_REVIEW_REQUIRED` em
 `docs/audits/LEGAL_REVIEW_REQUIRED_CLINICAL_RETENTION_FLOOR_2026-09-27.md`.
 
-## OPS-03 · agenda multiprofissional · EM ANDAMENTO (issue #1064)
-Uma recepção atender mais de um profissional (hoje `booking_staff_links.staff_user_id`
-é `UNIQUE`). Em PRs empilhadas: A (migração 0032, #1065), B (escolha validada no
-servidor, #1066) e C (UI). Desenho, ordem de publicação, rollback, a membership a
-cada requisição e o censo a rodar no D1 de produção estão em
-`docs/saas/MULTI_PROVIDER_AGENDA.md`. A e B+C (#1067) estão na `main`. A membership
-`assistant` ativa passou a ser exigida de TODA recepção, a cada requisição, e o
-vínculo só vale com clínica em comum com o profissional (sem lista de nomes para quem
-a perdeu). Continua aberto: a visão unificada do dia (D).
+## OPS-03 · agenda multiprofissional · FECHADO (issue #1064, PR #1069)
+Uma recepção pode atender mais de um profissional. A migração 0032 (#1065), a
+seleção validada no servidor e a UI (#1067), a exigência de membership `assistant`
+a cada requisição (#1068) e a visão unificada do dia (#1069) estão na `main`.
+A etapa D é só front, sem endpoint novo: combina no navegador os painéis que a
+etapa C já busca (um pedido por profissional, validado no servidor por vínculo e
+clínica), com teste unitário e fixtures sintéticas. A visão preserva a redação de dados
+para a recepção, não cria autoridade a partir do cliente e não mistura clínicas.
+
+A evidência de implementação e rollback continua em
+`docs/saas/MULTI_PROVIDER_AGENDA.md`; a PR #1069 teve 21 checks verdes.
+Permanecem fora do fechamento: censo pós-deploy em D1 de produção, teste manual
+com dispositivo real e validação de leitor de tela. Esses pontos são validação
+operacional/UX, não uma lacuna no contrato de autorização implementado.
