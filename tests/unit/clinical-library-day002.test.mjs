@@ -1,0 +1,25 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+const data=readFileSync("client/src/data/clinicalLibrary.ts","utf8");
+const page=readFileSync("client/src/pages/biblioteca-clinica.tsx","utf8");
+const day=readFileSync("client/src/components/biblioteca-clinica-desatencao-imaturidade.tsx","utf8");
+const workflow=readFileSync(".github/workflows/biblioteca-clinica-qa.yml","utf8");
+const title="Como diferenciar desatenção de imaturidade etária?";
+assert.equal((data.match(/day: 2,/g)??[]).length,1,"Dia 02 duplicado");
+assert.equal((data.match(/slug: "desatencao-imaturidade-etaria"/g)??[]).length,1,"Slug duplicado");
+assert.ok(data.includes('title: "'+title+'"'),"Pergunta não coincide com índice");
+assert.ok(day.includes("Dia 02/365 — {question}"),"Cabeçalho do Dia 02 ausente");
+assert.ok(day.includes('const question = "'+title+'"'),"Título divergente");
+assert.ok(page.includes("<DesatencaoImaturidadeChapter />"),"Componente não integrado");
+assert.ok(page.includes("capitulo-desatencao-imaturidade"),"Navegação não integrada");
+assert.ok(day.includes('id="capitulo-desatencao-imaturidade"'),"Âncora ausente");
+for(const heading of ["Em 30 segundos","Sinais que mudam a conduta","Fluxograma decisório","Achado → interpretação → próxima ação","Consulta operacional","Investigar ou observar","Manejo, família e escola","Caso de treinamento","Três erros frequentes","Incerteza e força da evidência","Bibliografia auditável"]){assert.ok(day.includes(heading),"Seção ausente: "+heading)}
+assert.ok(day.includes('aria-label="Fluxo clínico'),"Fluxo sem rótulo");
+assert.ok(day.includes('rel="noopener noreferrer"'),"Link externo sem proteção");
+assert.ok(day.includes("Consensus indisponível por cota"),"Proveniência ausente");
+assert.ok(day.includes("Sem aceite ou assinatura médica"),"Status clínico ausente");
+assert.ok(day.includes("MATERIAL EDUCACIONAL EM REVISÃO MÉDICA"),"Aviso de revisão ausente");
+assert.ok(workflow.includes("clinical-library-day002.test.mjs"),"QA não inclui Dia 02");
+assert.equal((day.match(/https:\/\//g)??[]).length,5,"Exigir 5 fontes rastreáveis");
+assert.ok(!day.includes("status: \"publicado\""),"Não autopromover");
+console.log("clinical-library-day002 ok");
