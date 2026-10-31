@@ -88,6 +88,13 @@ async function fixture() {
   raw.prepare("INSERT INTO clinics (id, slug, name, created_by_user_id) VALUES (?, ?, ?, ?)")
     .run(BETA, BETA, BETA, "owner-b");
   raw.prepare("INSERT INTO clinic_memberships (clinic_id, user_id, role) VALUES (?, ?, 'owner')").run(BETA, "owner-b");
+  raw.prepare(
+    `UPDATE billing_subscriptions
+        SET seats = 2
+      WHERE customer_id IN (
+        SELECT id FROM billing_customers WHERE clinic_id = ?
+      )`,
+  ).run(BETA);
   raw.prepare("INSERT INTO clinic_memberships (clinic_id, user_id, role) VALUES (?, ?, 'professional')").run(BETA, "prof-b");
 
   const tokens: Record<string, string> = {};

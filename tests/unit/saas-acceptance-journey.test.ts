@@ -4,7 +4,7 @@
  *
  * 1. Pessoa desconhecida cria conta (signup), CONFIRMA o e-mail e cria sua
  *    clínica — a confirmação é parte do caminho vendável, não um contorno;
- * 2. trial de 14 dias + 2 assentos + lifecycle nascem por trigger;
+ * 2. trial de 14 dias + 1 assento Solo + lifecycle nascem por trigger;
  * 3. entitlement/capabilities refletem o trial;
  * 4. convida um profissional (link /#/invite), que aceita criando conta;
  * 5. uma segunda pessoa cria clínica independente;
@@ -84,6 +84,7 @@ for (const file of [
   "db/migrations/0015_saas_billing_trial_seats_hardening.sql",
   "db/migrations/0019_saas_identity_settings.sql",
   "db/migrations/0024_email_verification.sql",
+  "db/migrations/0038_neuroped_solo_default_seat.sql",
 ]) {
   raw.exec(readFileSync(file, "utf8"));
 }
@@ -186,8 +187,8 @@ assert.equal(ownerA.role, "professional");
 const clinicA = await createClinic(ownerA, "Clínica Alice");
 
 const customer = raw
-  .prepare("SELECT status, trial_ends_at FROM billing_customers WHERE clinic_id = ?")
-  .get(clinicA) as { status: string; trial_ends_at: string };
+  .prepare("SELECT id, status, trial_ends_at FROM billing_customers WHERE clinic_id = ?")
+  .get(clinicA) as { id: string; status: string; trial_ends_at: string };
 assert.equal(customer.status, "trial", "clínica nova nasce em trial (trigger)");
 const subscription = raw
   .prepare(
@@ -195,7 +196,7 @@ const subscription = raw
       JOIN billing_customers bc ON bc.id = bs.customer_id WHERE bc.clinic_id = ?`,
   )
   .get(clinicA) as { seats: number; status: string };
-assert.equal(subscription.seats, 2, "trial nasce com 2 assentos");
+assert.equal(subscription.seats, 1, "trial Solo nasce com 1 assento");
 assert.ok(
   raw.prepare("SELECT status FROM tenant_lifecycle WHERE clinic_id = ?").get(clinicA),
   "lifecycle nasce junto do tenant",
@@ -212,10 +213,17 @@ assert.ok(
   assert.equal(body.entitlement.trialActive, true);
   assert.ok(body.entitlement.trialDaysRemaining >= 13, "trial de 14 dias reportado");
   assert.equal(body.entitlement.isActive, true);
-  assert.equal(body.seats.contracted, 2);
+  assert.equal(body.seats.contracted, 1);
   assert.equal(body.seats.activeMembers, 1);
   assert.equal(body.capabilities.canUseClinicalCore, true, "capabilities centrais ligadas no trial");
 }
+
+// A jornada também preserva o caminho Clínica: ampliar assentos é uma ação
+// explícita e não altera o default Solo de novos tenants.
+raw.prepare(
+  `UPDATE billing_subscriptions SET seats = 2, updated_at = ?
+    WHERE customer_id = ?`,
+).run("2026-09-26T14:15:00.000Z", customer.id);
 
 // ── 4. Convite → aceite cria conta e membership ─────────────────────────────
 const inviteToken = await (async () => {
@@ -274,6 +282,12 @@ const inviteToken = await (async () => {
 const ownerB = await signup("Dr. Caio Nunes", "caio@b.test");
 const clinicB = await createClinic(ownerB, "Clínica Caio");
 assert.notEqual(clinicA, clinicB);
+raw.prepare(
+  `UPDATE billing_subscriptions SET seats = 2, updated_at = ?
+    WHERE customer_id = (
+      SELECT id FROM billing_customers WHERE clinic_id = ? LIMIT 1
+    )`,
+).run("2026-09-26T14:20:00.000Z", clinicB);
 
 // ── 6. ADVERSARIAL: B não alcança NADA da clínica A ─────────────────────────
 {

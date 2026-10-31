@@ -85,5 +85,5 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`)
     .bind(id, patientId, parsed.data.title, parsed.data.content, parsed.data.category ?? null,
       parsed.data.source ?? "registro_clinico", JSON.stringify(parsed.data.tags), user.id, now, now).run();
-  return json({ id, patientId, ...parsed.data, authorUserId: user.id, createdAt: now, updatedAt: now }, 201);
+  return json({ id, ...parsed.data, patientId, authorUserId: user.id, createdAt: now, updatedAt: now }, 201);
 };

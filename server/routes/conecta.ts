@@ -186,7 +186,7 @@ export function registerConectaRoutes(app: Express): void {
         return res.status(201).json(created);
       } catch (error) {
         if (error instanceof z.ZodError) {
-          return res.status(400).json({ error: "Registro inválido", details: error.errors });
+          return res.status(400).json({ error: "Registro inválido", details: error.issues });
         }
         console.error("[conecta.create]", error);
         return res.status(500).json({ error: "Não foi possível salvar o registro." });

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { LEGAL_DOCUMENTS, currentLegalVersions } from "@shared/legal";
+import { CANONICAL_TRIAL_DAYS } from "@shared/billing";
 
 function readableSignupError(error: unknown): string {
   const code = (error as { code?: string })?.code ?? "";
@@ -71,7 +72,7 @@ export default function CadastroPage() {
       </div>
       <h1 className="text-xl font-bold text-foreground">Criar conta profissional</h1>
       <p className="mt-2 max-w-md text-center text-sm leading-relaxed text-muted-foreground">
-        Crie sua conta, monte sua clínica e comece com 14 dias de avaliação. Seus dados clínicos ficam isolados por clínica e cifrados no servidor.
+        Crie sua conta, monte sua clínica e comece com {CANONICAL_TRIAL_DAYS} dias de avaliação. Seus dados clínicos ficam isolados por clínica e cifrados no servidor.
       </p>
 
       {deliveryFailed && (

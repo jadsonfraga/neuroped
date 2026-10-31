@@ -207,6 +207,10 @@ function criarPaciente(clinicId: string, patientId: string, autorId: string) {
 
 criarClinica(RED, "red-run", RED_OWNER.id);
 criarClinica(BLUE, "blue-run", BLUE_OWNER.id);
+sqlite.prepare(
+  `UPDATE billing_subscriptions SET seats = 2
+    WHERE customer_id = (SELECT id FROM billing_customers WHERE clinic_id = ?)`,
+).run(RED);
 sqlite
   .prepare(
     `INSERT INTO clinic_memberships (clinic_id, user_id, role, active, created_at, updated_at)

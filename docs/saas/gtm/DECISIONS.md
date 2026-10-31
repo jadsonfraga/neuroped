@@ -16,7 +16,7 @@ antes de (1) e (2).
 **Consequência.** Fase 1 vira "Cliente Zero em LIVE" (a própria clínica) antes de
 qualquer terceiro. Fases 2 e 3 são majoritariamente ativação/verificação, não build.
 
-## D-002 · 2026-10-04 · Ciclo 1 (fechamento) — ICP provisório
+## D-002 · 2026-10-04 · Ciclo 1 (fechamento) — ICP provisório [SUPERADA POR D-011]
 **Contexto.** O proprietário não soube responder (ICP, estado de `SAAS_SIGNUP_ENABLED`,
 clínica própria em LIVE). Regra do loop: seguir com a melhor suposição declarada.
 **Decisão (PROVISÓRIA, revogável por evidência).**
@@ -70,7 +70,7 @@ backfill, exclusão nem remoção do bypass.
 **Consequência.** Caminho de G3 reduzido a: confirmar 2 números → G1/G4 → arquivar fixtures →
 decisão do 4º paciente → backfill → remover bypass.
 
-## D-008 · 2026-10-04 · Ciclo 6 — D-004: rascunho, não aplicação
+## D-008 · 2026-10-04 · Ciclo 6 — D-004: rascunho, não aplicação [SUPERADA POR D-011]
 **Contexto.** `/planos` descreve cifra, LGPD executável e isolamento absoluto; em produção G1/G2 e
 S9 estão abertos. A própria página declara que só entra capacidade existente.
 **Decisão.** Preparar o texto exato (antes/depois) e um bloco "Em implantação", sem editar a página.
@@ -94,3 +94,14 @@ contratação do advogado (ação do proprietário).
 trial), smoke sintético nos dias 1–2, uso real só com novos atendimentos, critérios de parada com
 rollback sem perda e limites do LIVE declarados.
 **Consequência.** O dia 1 só começa depois de G1, G4 e G3; até lá o roteiro fica parado.
+
+## D-011 · 2026-10-25 · NeuroPed Solo primeiro
+**Contexto.** O produto mantém capacidade multi-tenant e multiassento, mas uma oferta Clínica
+amplia onboarding, suporte e ciclo de venda antes da primeira prova comercial. O proprietário
+escolheu explicitamente o caminho mais simples, sem regressão dos contratos legados.
+**Decisão.** **Solo primeiro; Clínicas depois.** O ICP vigente é o neuropediatra que opera o
+próprio consultório. A primeira oferta é NeuroPed Solo: R$ 99/mês, 14 dias de avaliação e um
+profissional. D-002 e D-008 deixam de orientar posicionamento vigente; ficam como histórico.
+**Consequência.** Dez entrevistas usam somente o ICP Solo; o alvo continua 3 pilotos pagos e
+2 segundas faturas `charge_paid`. Clínica fica em Later. Asaas, Resend, R2/LGPD, revisão
+jurídica, legado e smoke publicado permanecem gates externos; não há declaração de produção pronta.

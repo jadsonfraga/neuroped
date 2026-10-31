@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/authClient";
+import { CANONICAL_TRIAL_DAYS } from "@shared/billing";
 
 interface ClinicSummary {
   id: string;
@@ -24,7 +25,7 @@ export default function OnboardingPage() {
   const [legalName, setLegalName] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [credentials, setCredentials] = useState("");
-  const [specialty, setSpecialty] = useState("Neuropediatria");
+  const [specialty, setSpecialty] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [needsVerification, setNeedsVerification] = useState(false);
@@ -73,10 +74,10 @@ export default function OnboardingPage() {
         if ((clinic as { code?: string }).code === "EMAIL_VERIFICATION_REQUIRED") setNeedsVerification(true);
         throw new Error((clinic as { error?: string }).error || `Não foi possível criar a clínica (${created.status}).`);
       }
-      // Identidade profissional para os documentos — melhor esforço: o perfil
-      // pode ser completado depois em Configurações.
-      if (displayName.trim()) {
-        await authFetch("/api/me/profile", {
+      // Nunca ocultar falha de perfil nem repetir criação de clínica após erro.
+      const createdId = (clinic as { id: string }).id;
+      try {
+        const profile = await authFetch("/api/me/profile", {
           method: "PUT",
           body: JSON.stringify({
             displayName: displayName.trim(),
@@ -84,9 +85,18 @@ export default function OnboardingPage() {
             specialty: specialty.trim(),
             documentEmail: user?.email ?? "",
           }),
-        }).catch(() => undefined);
+        });
+        if (!profile.ok) throw new Error("PROFILE_UPDATE_FAILED");
+      } catch {
+        setExisting((clinics) => [
+          ...(clinics ?? []).filter((entry) => entry.id !== createdId),
+          { id: createdId, name: clinicName.trim(), role: "owner" },
+        ]);
+        setError("Clínica criada, mas não foi possível salvar a identidade profissional. Entre na clínica acima, revise o perfil em Configurações e não emita documentos antes de confirmar seus dados.");
+        setSubmitting(false);
+        return;
       }
-      enterApp((clinic as { id: string }).id);
+      enterApp(createdId);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Falha ao criar a clínica.");
       setSubmitting(false);
@@ -105,7 +115,7 @@ export default function OnboardingPage() {
   if (!user) {
     return (
       <section className="mx-auto flex min-h-[60vh] w-full max-w-lg flex-col items-center justify-center px-4 text-center">
-        <p className="text-sm text-muted-foreground">Entre na sua conta para configurar a clínica.</p>
+        <p className="text-sm text-muted-foreground">Entre na sua conta para configurar seu consultório.</p>
         <a href="#/login" className="mt-3 text-sm font-semibold text-primary hover:underline">Ir para o login</a>
       </section>
     );
@@ -117,9 +127,9 @@ export default function OnboardingPage() {
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-chart-2 shadow-lg shadow-primary/25">
           <Building2 className="h-7 w-7 text-primary-foreground" strokeWidth={1.75} />
         </div>
-        <h1 className="text-xl font-bold text-foreground">Configurar sua clínica</h1>
+        <h1 className="text-xl font-bold text-foreground">Configurar seu consultório</h1>
         <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
-          Sua clínica é o espaço isolado dos seus pacientes e da sua equipe. Você entra como proprietário(a), com 14 dias de avaliação e 2 assentos.
+          Sua clínica é o espaço isolado dos seus pacientes e da sua equipe. Você entra como proprietário(a), com {CANONICAL_TRIAL_DAYS} dias de avaliação. Os assentos e as condições são confirmados no painel do plano.
         </p>
       </div>
 
@@ -139,10 +149,10 @@ export default function OnboardingPage() {
 
       <form onSubmit={handleSubmit} className="space-y-5 rounded-3xl border border-primary/15 bg-card p-5 shadow-xl shadow-primary/5 sm:p-6">
         <fieldset className="space-y-4">
-          <legend className="flex items-center gap-2 text-sm font-bold text-foreground"><Building2 className="h-4 w-4 text-primary" aria-hidden="true" />Clínica</legend>
+          <legend className="flex items-center gap-2 text-sm font-bold text-foreground"><Building2 className="h-4 w-4 text-primary" aria-hidden="true" />Consultório</legend>
           <div className="space-y-2">
-            <Label htmlFor="onb-clinic-name">Nome da clínica</Label>
-            <Input id="onb-clinic-name" required minLength={2} maxLength={160} value={clinicName} onChange={(event) => setClinicName(event.target.value)} placeholder="Ex.: Clínica Desenvolver" />
+            <Label htmlFor="onb-clinic-name">Nome do consultório</Label>
+            <Input id="onb-clinic-name" required minLength={2} maxLength={160} value={clinicName} onChange={(event) => setClinicName(event.target.value)} placeholder="Ex.: Consultório Desenvolver" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="onb-legal-name">Razão social (opcional)</Label>
@@ -162,7 +172,7 @@ export default function OnboardingPage() {
             <p className="text-[11px] leading-4 text-muted-foreground">Aparece nos laudos e receitas. Sem registro informado, os documentos indicam que a identidade não foi configurada — nunca inventamos credenciais.</p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="onb-specialty">Especialidade</Label>
+            <Label htmlFor="onb-specialty">Especialidade (somente habilitação real)</Label>
             <Input id="onb-specialty" maxLength={120} value={specialty} onChange={(event) => setSpecialty(event.target.value)} />
           </div>
         </fieldset>
@@ -170,7 +180,7 @@ export default function OnboardingPage() {
         {error && <p role="alert" className="rounded-xl border border-destructive/25 bg-destructive/5 p-3 text-xs leading-relaxed text-destructive">{error}{needsVerification && <> <a href="#/verificar-email" className="font-semibold underline underline-offset-2">Reenviar link de verificação</a></>}</p>}
         <Button type="submit" disabled={submitting} className="w-full gap-2 rounded-xl bg-gradient-to-r from-primary to-chart-2">
           {submitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <ShieldCheck className="h-4 w-4" aria-hidden="true" />}
-          {submitting ? "Criando clínica…" : "Criar clínica e entrar"}
+          {submitting ? "Criando consultório…" : "Criar consultório e entrar"}
         </Button>
       </form>
     </section>

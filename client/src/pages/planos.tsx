@@ -9,12 +9,12 @@ import {
   ListChecks,
   Mail,
   ShieldCheck,
-  Users,
   XCircle,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
+  CANONICAL_PLAN_DISPLAY_NAME,
   CANONICAL_PRICE_CENTS,
   CANONICAL_TRIAL_DAYS,
   POST_CANCEL_RETENTION_DAYS,
@@ -74,12 +74,6 @@ const INCLUDED = [
       "Cada clínica tem seu próprio ambiente separado. Pacientes, documentos e escalas de uma clínica não são alcançáveis por outra — o isolamento é decidido no servidor, a partir do vínculo do usuário, e não do que o navegador envia.",
   },
   {
-    icon: Users,
-    title: "Equipe com papéis e assentos",
-    body:
-      "Convide profissionais por e-mail, defina o papel de cada um, revogue o convite ou remova o acesso. A mesma recepção pode atender mais de um profissional da clínica, escolhendo de qual agenda opera, e cada ação fica na agenda escolhida. O teto de assentos da assinatura é aplicado no servidor, não na tela.",
-  },
-  {
     icon: Mail,
     title: "Escalas respondidas pela família",
     body:
@@ -87,27 +81,28 @@ const INCLUDED = [
   },
   {
     icon: FileLock2,
-    title: "Documentos e prontuário cifrados",
+    title: "Cifra clínica após validação do ambiente",
     body:
-      "O conteúdo clínico do NeuroPed LIVE é cifrado no servidor e emitido em documentos PDF com identificação da clínica. O navegador não guarda dado clínico identificável.",
+      "A cifra no servidor e a emissão de PDFs identificados fazem parte do produto, mas só são liberadas depois da validação do ambiente publicado. Até essa prova, o acesso clínico permanece bloqueado e configuração local não é apresentada como disponibilidade.",
   },
   {
     icon: ShieldCheck,
-    title: "LGPD executável, não declarativa",
+    title: "Privacidade verificada no ambiente",
     body:
-      "Consentimentos versionados, trilha de auditoria das operações e pedidos de exportação e de eliminação atendidos pelo próprio sistema — com retenção e bloqueio legal respeitados.",
+      "Consentimentos versionados, autorização por consultório e trilha de auditoria fazem parte do produto. Exportação, cifra clínica e integrações só são anunciadas como disponíveis depois da validação do ambiente publicado.",
   },
   {
     icon: LifeBuoy,
     title: "Encerramento sem refém",
     body:
-      `Cancele a assinatura e solicite o encerramento pelo painel. Há uma janela para desistir, e os dados permanecem recuperáveis por ${POST_CANCEL_RETENTION_DAYS} dias antes da eliminação definitiva.`,
+      `Cancele a assinatura e solicite exportação ou encerramento pelo painel. A janela técnica de ${POST_CANCEL_RETENTION_DAYS} dias não elimina obrigações legais de guarda: a execução de qualquer eliminação depende da análise de retenção, ausência de bloqueios e confirmação pelo servidor.`,
   },
 ];
 
 /** O que o produto NÃO faz — a mesma honestidade das telas clínicas. */
 const NOT_INCLUDED = [
   "Não emite diagnóstico. Nenhuma escala do NeuroPed conclui um quadro clínico.",
+  "Não toma decisões clínicas nem assina documentos automaticamente: a emissão exige revisão e aceite do profissional habilitado.",
   "Não substitui o julgamento profissional: instrumentos incompletos ou de aplicação assistida são rotulados como tal, e não se apresentam como versão oficial.",
   "Não vende consultoria, implantação ou treinamento — a assinatura é só o software.",
   "Não envia WhatsApp, SMS nem lembretes automáticos na véspera da consulta. As mensagens da agenda saem por e-mail ou ficam para envio manual.",
@@ -118,17 +113,16 @@ export default function PlanosPage() {
     <div className="space-y-6 pb-12">
       <header className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/15 via-chart-2/10 to-transparent p-6">
         <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          NeuroPed para clínicas
+          {CANONICAL_PLAN_DISPLAY_NAME}
         </span>
         <h1 className="mt-2 text-2xl font-bold text-foreground">
           O acompanhamento do neurodesenvolvimento organizado em um lugar só
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          Para pediatras, neuropediatras e equipes multiprofissionais que hoje
-          espalham escalas em papel, planilhas e mensagens soltas. O NeuroPed
-          reúne a escolha do instrumento, a coleta com a família, o registro
-          cifrado e o documento assinado no mesmo fluxo — com a clínica isolada
-          e a trilha de auditoria que a LGPD exige.
+          Para o neuropediatra que conduz o próprio consultório e hoje espalha
+          escalas em papel, planilhas e mensagens soltas. O NeuroPed reúne a
+          escolha do instrumento, a coleta com a família e o acompanhamento
+          clínico em um fluxo organizado para um profissional.
         </p>
       </header>
 
@@ -137,20 +131,20 @@ export default function PlanosPage() {
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                Plano profissional
+                {CANONICAL_PLAN_DISPLAY_NAME}
               </h2>
               <p className="mt-1 flex flex-wrap items-baseline gap-2">
                 <span className="text-3xl font-bold text-foreground" data-testid="plan-price">
                   {MONTHLY_PRICE}
                 </span>
                 <span className="text-sm text-muted-foreground">
-                  por profissional, por mês
+                  por mês, para um profissional
                 </span>
               </p>
               <p className="mt-2 text-sm text-muted-foreground">
                 {CANONICAL_TRIAL_DAYS} dias de avaliação antes da primeira
-                cobrança. Você paga pelos assentos que usar; adicionar ou
-                remover profissionais muda o valor do ciclo seguinte.
+                cobrança. A assinatura Solo cobre um profissional; a oferta
+                para clínicas com equipe fica para uma etapa posterior.
               </p>
             </div>
             <div className="flex flex-col gap-2">
@@ -170,6 +164,14 @@ export default function PlanosPage() {
             O cadastro direto pelo site pode estar temporariamente fechado. Se
             for o caso, a tela de cadastro avisa na hora e o acesso continua
             possível por convite da clínica.
+          </p>
+          <p
+            className="mt-3 text-xs leading-relaxed text-muted-foreground"
+            data-testid="solo-availability-note"
+          >
+            Recursos clínicos e integrações só são liberados quando o ambiente
+            publicado conclui as validações de segurança, privacidade, e-mail e
+            cobrança.
           </p>
         </CardContent>
       </Card>
@@ -225,8 +227,8 @@ export default function PlanosPage() {
               nos metadados.
             </li>
             <li>
-              • Direitos do titular (exportação e eliminação) atendidos pelo
-              próprio sistema, com evidência de execução.
+              • Pedidos de exportação e eliminação acompanhados por fluxos auditáveis.
+              O atendimento efetivo exige configuração operacional, verificação da execução e observância da retenção legal.
             </li>
           </ul>
           <p className="mt-3 text-xs text-muted-foreground">

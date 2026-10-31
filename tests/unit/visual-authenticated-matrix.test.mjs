@@ -73,6 +73,26 @@ for (const scenario of ["empty", "hangingPatients", "failingPatients", "expiredS
     `a matriz deve exercitar o cenário ${scenario} (vazio, carregando, erro, sessão e tenant)`,
   );
 }
+for (const requiredCase of [
+  "planos-desktop-light",
+  "planos-mobile-dark",
+  "onboarding-desktop-light",
+  "onboarding-mobile-dark",
+  "configuracoes-plano-desktop-light",
+  "configuracoes-plano-mobile-dark",
+]) {
+  assert.ok(caseIds.includes(requiredCase), `a matriz deve capturar a tela Solo alterada "${requiredCase}"`);
+}
+assert.match(
+  audit,
+  /id: "home-desktop-light"[\s\S]{0,300}onboarding-progress-card/,
+  "o cockpit desktop deve provar visualmente o onboarding Solo",
+);
+assert.match(
+  audit,
+  /id: "home-mobile-light"[\s\S]{0,300}onboarding-progress-card/,
+  "o cockpit mobile deve provar visualmente o onboarding Solo",
+);
 
 // ─── 2. O par expect/forbid é o que impede aprovação no gate de login ─────
 const forbidLoginCount = (audit.match(/forbid: \[LOGIN_FORM/g) ?? []).length
@@ -90,6 +110,11 @@ assert.match(
   audit,
   /estado-proibido:/,
   "a presença de um estado proibido precisa reprovar o caso",
+);
+assert.match(
+  audit,
+  /locator\(selector\)\.first\(\)\.waitFor\(\{ state: "visible", timeout: 10_000 \}\)/,
+  "estados assíncronos devem aguardar visibilidade antes de reprovar o caso",
 );
 for (const check of ["overflow-horizontal:", "foco-dialogo:", "axe:", "alvo-compacto:"]) {
   assert.ok(audit.includes(check), `o gate deve manter a verificação "${check}"`);
@@ -130,6 +155,11 @@ assert.match(
   fixture,
   /provenance/,
   "eventos do núcleo clínico da fixture devem carregar proveniência, como o contrato real",
+);
+assert.match(
+  fixture,
+  /pathname === "\/api\/billing\/me"[\s\S]{0,900}entitlement:[\s\S]{0,500}planId:[\s\S]{0,500}subscriptionStatus:[\s\S]{0,700}seats:\s*\{\s*contracted:[\s\S]{0,120}activeMembers:/,
+  "a fixture visual deve espelhar o snapshot canônico de billing, inclusive assentos Solo",
 );
 
 // O bundle do cliente e o servidor de produção jamais importam a fixture.

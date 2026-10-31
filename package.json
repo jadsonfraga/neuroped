@@ -98,10 +98,10 @@
     "test:no-fake-clinical-write": "node --import tsx tests/unit/no-fake-clinical-write.test.ts",
     "test:loose-ends": "node tests/unit/loose-ends-regression.test.mjs && node tests/unit/diarios-nicho-longitudinais.test.mjs && node --import tsx tests/unit/medicamentos-lapidacao.test.ts",
     "test:therapy-goals": "node --import tsx tests/unit/therapy-goals.test.ts",
-    "test:saas-self-service": "node tests/unit/saas-membership-owner-regression.test.mjs && node --import tsx --test tests/unit/tenant-management-authorization.test.ts && node --import tsx tests/unit/saas-onboarding-progress.test.ts && node --import tsx --test tests/unit/onboarding-progress-ui.test.tsx && node --import tsx tests/unit/saas-self-service.test.ts && node --import tsx tests/unit/saas-acceptance-journey.test.ts && node --import tsx tests/unit/cliente-zero-journey.test.ts && node --import tsx tests/unit/saas-legal-acceptance.test.ts && node tests/unit/saas-loop-artifacts-static.test.mjs && node --import tsx tests/unit/asaas-operational-contract.test.ts && node --import tsx tests/unit/resend-operational-contract.test.ts && node --import tsx tests/unit/cliente-zero-published-smoke.test.ts && node tests/unit/email-delivery-honesty-ui-static.test.mjs",
+    "test:saas-self-service": "node tests/unit/saas-membership-owner-regression.test.mjs && node --import tsx --test tests/unit/saas-solo-billing-foundation.test.ts tests/unit/solo-billing-ui.test.ts tests/unit/solo-onboarding-projection.test.ts && node --import tsx --test tests/unit/tenant-management-authorization.test.ts && node --import tsx tests/unit/saas-onboarding-progress.test.ts && node --import tsx --test tests/unit/onboarding-progress-ui.test.tsx && node --import tsx tests/unit/saas-self-service.test.ts && node --import tsx tests/unit/saas-acceptance-journey.test.ts && node --import tsx tests/unit/cliente-zero-journey.test.ts && node --import tsx tests/unit/saas-legal-acceptance.test.ts && node tests/unit/saas-loop-artifacts-static.test.mjs && node --import tsx tests/unit/asaas-operational-contract.test.ts && node --import tsx tests/unit/resend-operational-contract.test.ts && node --import tsx tests/unit/cliente-zero-published-smoke.test.ts && node tests/unit/email-delivery-honesty-ui-static.test.mjs && node --import tsx tests/unit/saas-release-gate.test.ts && node --import tsx tests/unit/connectivity-probe.test.ts && node tests/unit/institutional-contact-ui.test.mjs",
     "test:sonda": "node --import tsx tests/unit/sonda-dez-consolidation.test.ts && node --import tsx tests/unit/sonda-dez-digital.test.ts && node --import tsx tests/unit/sonda-dez-quality.test.ts && node tests/unit/sonda-dez-aventura-static.test.mjs",
     "test:e2e:sonda": "node --import tsx tests/e2e/sonda-dez-digital.mjs",
-    "test:super-neuropad": "node --import tsx --test tests/unit/golden-descritivo.test.ts tests/unit/sem-classificacao.test.ts tests/unit/super-neuropad-game.test.ts tests/unit/super-neuropad-visual-search.test.ts tests/unit/super-neuropad-integrated-bank.test.ts tests/unit/super-neuropad-extension-criteria.test.ts tests/unit/super-neuropad-evolution.test.ts tests/unit/super-neuropad-toddler.test.ts tests/unit/super-neuropad-family-delivery.test.ts tests/unit/super-neuropad-diagnostico.test.ts tests/unit/super-neuropad-perfil.test.ts tests/unit/super-neuropad-clinical-circuit.test.ts tests/unit/super-neuropad-clinical-circuit-expansion.test.ts tests/unit/super-neuropad-sufficiencia.test.ts tests/unit/super-neuropad-missoes.test.ts tests/unit/super-neuropad-age-adaptation.test.ts tests/unit/super-neuropad-jornada-anual.test.ts tests/unit/super-neuropad-revisao-auditoria.test.ts tests/unit/super-neuropad-obrigatorio.test.ts tests/unit/super-neuropad-proveniencia.test.ts tests/unit/super-neuropad-acesso-medico.test.ts tests/unit/super-neuropad-extensao.test.ts tests/unit/super-neuropad-mobile-overlap.test.ts tests/unit/arena.test.ts",
+    "test:super-neuropad": "node --import tsx --test tests/unit/golden-descritivo.test.ts tests/unit/sem-classificacao.test.ts tests/unit/super-neuropad-game.test.ts tests/unit/super-neuropad-visual-search.test.ts tests/unit/super-neuropad-integrated-bank.test.ts tests/unit/super-neuropad-extension-criteria.test.ts tests/unit/super-neuropad-evolution.test.ts tests/unit/super-neuropad-toddler.test.ts tests/unit/super-neuropad-family-delivery.test.ts tests/unit/super-neuropad-diagnostico.test.ts tests/unit/super-neuropad-perfil.test.ts tests/unit/super-neuropad-clinical-circuit.test.ts tests/unit/super-neuropad-clinical-circuit-expansion.test.ts tests/unit/super-neuropad-sufficiencia.test.ts tests/unit/super-neuropad-missoes.test.ts tests/unit/super-neuropad-age-adaptation.test.ts tests/unit/super-neuropad-jornada-anual.test.ts tests/unit/super-neuropad-revisao-auditoria.test.ts tests/unit/super-neuropad-obrigatorio.test.ts tests/unit/super-neuropad-proveniencia.test.ts tests/unit/super-neuropad-acesso-medico.test.ts tests/unit/super-neuropad-extensao.test.ts tests/unit/super-neuropad-mobile-overlap.test.ts tests/unit/super-neuropad-adultos-18plus.test.ts tests/unit/arena.test.ts",
     "test:e2e:super-neuropad": "node tests/e2e/super-neuropad-game.mjs",
     "test:e2e:super-neuropad-draft": "node tests/e2e/super-neuropad-draft-guard.mjs",
     "test:e2e:super-neuropad-circuit": "node tests/e2e/super-neuropad-circuit-sufficiency.mjs",
@@ -183,7 +183,7 @@
     "drizzle-orm": "^0.45.2",
     "drizzle-zod": "^0.7.0",
     "embla-carousel-react": "^8.6.0",
-    "express": "^5.0.1",
+    "express": "^5.3.0",
     "express-rate-limit": "^7.4.1",
     "express-session": "^1.18.1",
     "framer-motion": "^11.13.1",
@@ -195,7 +195,7 @@
     "memorystore": "^1.6.7",
     "next-themes": "^0.4.6",
     "node-forge": "^1.4.0",
-    "nodemailer": "^10.0.13",
+    "nodemailer": "^10.2.1",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
     "pdf-lib": "^1.17.1",
@@ -216,7 +216,7 @@
     "vaul": "^1.1.2",
     "wouter": "^3.3.5",
     "ws": "^8.18.0",
-    "zod": "^3.24.2"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
@@ -252,8 +252,8 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-unused-imports": "^4.4.1",
     "globals": "^17.8.0",
-    "lighthouse": "^13.4.1",
-    "playwright": "^1.58.2",
+    "lighthouse": "^13.5.0",
+    "playwright": "^1.64.1",
     "postcss": "^8.4.47",
     "prettier": "^3.4.2",
     "tailwindcss": "^3.4.17",
@@ -265,6 +265,7 @@
     "drizzle-kit": {
       "@esbuild-kit/esm-loader": "npm:tsx@^4.20.4"
     },
+    "body-parser": "^2.4.0",
     "qs": "^6.16.0"
   },
   "optionalDependencies": {
