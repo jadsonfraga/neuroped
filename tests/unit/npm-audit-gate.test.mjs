@@ -1,13 +1,12 @@
 // Trava anti-regressão do gate de auditoria de dependências
 // (`scripts/guards/npm-audit-gate.mjs`).
 //
-// O advisory GHSA-86w9-cpqp-85rv (node-forge <= 1.4.0, sem correção upstream)
-// derrubava todos os pipelines com `npm audit`. O gate substitui as chamadas
-// diretas nos workflows e mantém o comportamento original — falhar por
-// qualquer high/critical — com UMA exceção rastreável: id exato do advisory,
-// pacote afetado, motivo e data de validade. Vencida a data, volta a bloquear.
+// O advisory GHSA-86w9-cpqp-85rv (node-forge <= 1.4.0) foi resolvido
+// atualizando a dependência para 1.4.2. O gate mantém o comportamento original:
+// falhar por qualquer high/critical e exigir exceções explícitas quando uma
+// dependência ainda não tiver correção upstream.
 import assert from "node:assert/strict";
-import { readFileSync, writeFileSync, unlinkSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import test from "node:test";
 import { execFileSync } from "node:child_process";
 
@@ -16,29 +15,20 @@ const GATE = "scripts/guards/npm-audit-gate.mjs";
 test("gate: nenhuma high/critical fora da allowlist ativa no grafo atual", () => {
   const stdout = execFileSync("node", [GATE], { encoding: "utf8" });
   assert.match(stdout, /nenhuma vulnerabilidade high\/critical fora da allowlist ativa/);
-  assert.match(stdout, /GHSA-86w9-cpqp-85rv/);
+  assert.doesNotMatch(stdout, /GHSA-86w9-cpqp-85rv/);
+});
+
+test("gate: excecao obsoleta de node-forge foi removida", () => {
+  const source = readFileSync(GATE, "utf8");
+  assert.doesNotMatch(source, /GHSA-86w9-cpqp-85rv/);
+  assert.doesNotMatch(source, /packageName: "node-forge"/);
+  assert.match(source, /const ALLOWLIST = \[\];/);
 });
 
 test("gate: excecao obsoleta de braces foi removida", () => {
   const source = readFileSync(GATE, "utf8");
   assert.doesNotMatch(source, /GHSA-vfj7-8cjw-p6xm/);
   assert.doesNotMatch(source, /packageName: "braces"/);
-});
-
-test("gate: exceção vencida volta a bloquear a esteira", () => {
-  const source = readFileSync(GATE, "utf8");
-  assert.match(source, /expiresOn: "2026-11-02"/, "prazo da exceção documentado no fonte");
-  const expired = source.replace('expiresOn: "2026-11-02"', 'expiresOn: "2020-01-01"');
-  const tmp = `${process.env.RUNNER_TEMP ?? "/tmp"}/npm-audit-gate-expired.mjs`;
-  writeFileSync(tmp, expired);
-  try {
-    execFileSync("node", [tmp], { encoding: "utf8" });
-    assert.fail("exceção vencida não pode passar no gate");
-  } catch (error) {
-    assert.match(String(error.stderr ?? ""), /BLOQUEADO: node-forge/);
-  } finally {
-    unlinkSync(tmp);
-  }
 });
 
 test("gate: contrata high/critical — moderate/low nao bloqueia a esteira", () => {
