@@ -26,3 +26,20 @@ Critério de sucesso macro: um médico externo se cadastra sozinho, ativa, emite
 - [ ] Instrumentação de funil (visitante → cadastro → ativação → assinatura → retenção)
 - [ ] GTM: sociedades de neuropediatria, conteúdo médico ético, indicação
 - [ ] Limites de engenharia, documentação, suporte
+
+## Release comercial — P0 (25/10/2026, PR #1226 em draft)
+
+- [ ] Aprovar/reconciliar PR #1226; branch em draft nao equivale a producao.
+- [ ] Corrigir vulnerabilidades high em body-parser, zod, chromium-bidi e puppeteer-core (issue #480), sem acrescentar allowlist; reexecutar auditorias clinicas, lint, check, E2E e isolamento.
+- [ ] Confirmar crypto, D1 e R2 no Cloudflare LIVE publicado; health sem blockers, exportacao sintetica executada e restore ensaiado.
+- [ ] Comprovar verificacao por e-mail real no Resend e convites entregues.
+- [ ] Comprovar transacao real no Asaas, webhook autenticado, idempotencia, entitlement e reconciliacao.
+- [ ] Obter revisao juridica dos termos/privacidade, DPAs, protecao de criancas, IA e classificacao regulatoria de cada finalidade.
+- [ ] Medir restore RPO/RTO e registrar simulacao de incidente.
+- [ ] Auditar PANT/PANTY: versao/hash, aceite medico real, assinatura autorizada, QA integral de paginas.
+- [ ] Executar jornada cliente-zero publicada, com cliente externo, documento sintetico, exportacao e cancelamento.
+- [ ] Consolidar provas no scripts/ops/saas-release-gate.ts; o resultado nunca autoriza release sozinho.
+- [ ] Entrevistar 10 medicos; validar tres pilotos pagos com segunda fatura; medir ativacao, tempo ate primeiro documento revisado, churn e margem.
+- [ ] Desenvolver NeuroPed Evolution em PR separada: indicadores longitudinais auditaveis, proveniencia e validacao clinico-regulatoria antes de anunciar.
+
+**Decisao atual: NO-GO comercial para uso clinico real**. Nao liberar signup, dados de criancas, assinatura, merge ou deploy sem os gates relevantes.

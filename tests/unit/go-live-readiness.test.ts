@@ -198,6 +198,15 @@ type Diagnostico = {
   pendencias: string[];
   ordemInvertida: boolean;
   nota: string;
+  decisaoVenda: "NAO_ATESTADA";
+  configuracaoPilotoClinico: {
+    presente: boolean;
+    clinicoHabilitado: boolean;
+    criptoClinica: boolean;
+    exportacaoPrivada: boolean;
+    bloqueios: string[];
+  };
+  provasObrigatorias: string[];
 };
 
 async function diagnostico(env: Record<string, unknown>): Promise<Diagnostico> {
@@ -323,6 +332,24 @@ async function diagnostico(env: Record<string, unknown>): Promise<Diagnostico> {
   } finally {
     globalThis.fetch = fetchOriginal;
   }
+}
+
+
+// Configuração clínica é independente da cobrança: sem keyring e R2 não há
+// prova de clínica operante. Mesmo configurada não autoriza venda.
+{
+  const status = await diagnostico(AMBIENTE_COMPLETO);
+  assert.equal(status.pronto, true);
+  assert.equal(status.decisaoVenda, "NAO_ATESTADA");
+  assert.equal(status.configuracaoPilotoClinico.presente, false);
+  assert.ok(status.configuracaoPilotoClinico.bloqueios.includes("CLINICAL_CRYPTO_NOT_READY"));
+  const complete = await diagnostico({
+    ...AMBIENTE_COMPLETO, CLINICAL_LIVE_ENABLED: "true",
+    CLINICAL_DATA_KEY: sentinela("dados"), CLINICAL_INDEX_KEY: sentinela("indice"),
+    LGPD_EXPORT_BUCKET: { put() {}, get() {}, delete() {} },
+  });
+  assert.equal(complete.configuracaoPilotoClinico.presente, true);
+  assert.equal(complete.decisaoVenda, "NAO_ATESTADA");
 }
 
 console.log(

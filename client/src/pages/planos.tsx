@@ -95,13 +95,14 @@ const INCLUDED = [
     icon: LifeBuoy,
     title: "Encerramento sem refém",
     body:
-      `Cancele a assinatura e solicite o encerramento pelo painel. Há uma janela para desistir, e os dados permanecem recuperáveis por ${POST_CANCEL_RETENTION_DAYS} dias antes da eliminação definitiva.`,
+      `Cancele a assinatura e solicite exportação ou encerramento pelo painel. A janela técnica de ${POST_CANCEL_RETENTION_DAYS} dias não elimina obrigações legais de guarda: a execução de qualquer eliminação depende da análise de retenção, ausência de bloqueios e confirmação pelo servidor.`,
   },
 ];
 
 /** O que o produto NÃO faz — a mesma honestidade das telas clínicas. */
 const NOT_INCLUDED = [
   "Não emite diagnóstico. Nenhuma escala do NeuroPed conclui um quadro clínico.",
+  "Não toma decisões clínicas nem assina documentos automaticamente: a emissão exige revisão e aceite do profissional habilitado.",
   "Não substitui o julgamento profissional: instrumentos incompletos ou de aplicação assistida são rotulados como tal, e não se apresentam como versão oficial.",
   "Não vende consultoria, implantação ou treinamento — a assinatura é só o software.",
   "Não envia WhatsApp, SMS nem lembretes automáticos na véspera da consulta. As mensagens da agenda saem por e-mail ou ficam para envio manual.",
@@ -226,8 +227,8 @@ export default function PlanosPage() {
               nos metadados.
             </li>
             <li>
-              • Direitos do titular (exportação e eliminação) atendidos pelo
-              próprio sistema, com evidência de execução.
+              • Pedidos de exportação e eliminação acompanhados por fluxos auditáveis.
+              O atendimento efetivo exige configuração operacional, verificação da execução e observância da retenção legal.
             </li>
           </ul>
           <p className="mt-3 text-xs text-muted-foreground">

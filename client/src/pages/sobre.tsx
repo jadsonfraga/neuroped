@@ -240,6 +240,13 @@ export default function SobrePage() {
               </Button>
             </a>
           </div>
+          <address className="not-italic rounded-xl border border-border/70 bg-muted/30 p-4 text-xs leading-relaxed text-muted-foreground">
+            <p className="font-semibold text-foreground">Fraga Serviços Médicos Ltda. · CNPJ 33.158.207/0001-48</p>
+            <p>Telefone: <a className="underline underline-offset-2" href="tel:+5587991097371">(87) 9 9109-7371</a></p>
+            <p>WhatsApp: <a className="underline underline-offset-2" href="https://wa.me/5587991055790" target="_blank" rel="noopener noreferrer">(87) 9 9105-5790</a></p>
+            <p>E-mail: <a className="underline underline-offset-2" href="mailto:drjadsonfraga@proton.me">drjadsonfraga@proton.me</a></p>
+            <p>Instagram: <a className="underline underline-offset-2" href="https://www.instagram.com/drjadsonfraganeuroped/" target="_blank" rel="noopener noreferrer">@drjadsonfraganeuroped</a></p>
+          </address>
 
           <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <Calendar className="h-3.5 w-3.5" /> Dados institucionais revisados para uso público no NeuroPed.

@@ -1,0 +1,25 @@
+# NeuroPed SaaS — atualizações de segurança propostas por PR, nunca auto-merge.
+# A auditoria high/critical continua bloqueante; correções precisam de QA
+# clínico, multi-tenant, lint, TypeScript e build antes da promoção.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: daily
+      time: "09:00"
+      timezone: America/Recife
+    open-pull-requests-limit: 6
+    rebase-strategy: auto
+    commit-message:
+      prefix: "chore(deps)"
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: America/Recife
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "chore(ci)"
