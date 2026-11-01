@@ -51,7 +51,7 @@ export default function PrimeiraCriseAfebrilChapter() {
       </div>
     </section>
     <section><Heading number="03">Fluxograma decisório responsivo</Heading>
-      <div role="img" aria-label="Fluxograma: primeiro avaliar crise em curso e recuperação; se emergência, acionar SAMU; se estável, procurar causa aguda; depois investigar e acompanhar" className="rounded-[1.6rem] bg-[#12253c] p-4 sm:p-7">
+      <div role="group" aria-label="Fluxograma: primeiro avaliar crise em curso e recuperação; se emergência, acionar SAMU; se estável, procurar causa aguda; depois investigar e acompanhar" className="rounded-[1.6rem] bg-[#12253c] p-4 sm:p-7">
         <div className="mx-auto max-w-md rounded-xl border border-amber-200/50 bg-white/10 p-4 text-center font-bold text-amber-100">Primeiro episódio afebril → cronometrar, ABC e recuperação</div>
         <ArrowDown className="mx-auto my-3 h-6 w-6 text-amber-200" aria-hidden="true" />
         <div className="grid gap-3 md:grid-cols-3">
