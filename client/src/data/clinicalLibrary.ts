@@ -42,6 +42,19 @@ export interface ClinicalLibraryChapter {
 }
 export const clinicalLibraryChapters: ClinicalLibraryChapter[] = [
   {
+    slug: "primeira-crise-afebril",
+    day: 3,
+    title: "Primeira crise convulsiva afebril: qual a abordagem inicial?",
+    subtitle: "Estabilização, red flags, EEG, imagem e risco de recorrência",
+    category: "Epilepsia e eventos",
+    date: "2026-11-01",
+    updated: "2026-11-01",
+    status: "revisao_medica",
+    minutes: 6,
+    review: "Pesquisa Consensus Pro concluída em 01/11/2026; revisão médica e aceite pendentes.",
+    sources: ["ms-pcdt-epilepsia", "sbp-epilepsia", "nice-ng217", "rch-2025", "ilae-2014", "ilae-ifcn-2025", "wendt-2018", "jimenez-2021"],
+  },
+  {
     slug: "desatencao-imaturidade-etaria",
     day: 2,
     title: "Como diferenciar desatenção de imaturidade etária?",
@@ -207,7 +220,6 @@ export const wiscReferences: ClinicalLibraryReference[] = [
 ];
 
 export const nextClinicalTopics = [
-  "Primeira crise convulsiva afebril: qual a abordagem inicial?",
   "Como diferenciar dificuldade de alfabetização de dislexia?",
   "Quando o atraso de fala exige avaliação global?",
   "Como reconhecer ansiedade de separação que ultrapassa o esperado?",
