@@ -35,7 +35,7 @@ function FlowBox({ label, children, kind = "neutral" }: { label: string; childre
 }
 export default function PrimeiraCriseAfebrilChapter() {
   return <article id="capitulo-primeira-crise-afebril" aria-labelledby="primeira-crise-title" className="scroll-mt-24 space-y-8 sm:space-y-10">
-    <header className="overflow-hidden rounded-[1.8rem] bg-[#102438] p-5 text-white sm:p-9">
+    <header className="overflow-hidden rounded-[1.8rem] bg-slate-900 p-5 text-white sm:p-9">
       <p className="text-xs font-black uppercase tracking-[.18em] text-amber-200">Dia 03/365 · Epilepsia e eventos · 6 minutos</p>
       <h2 id="primeira-crise-title" className="mt-3 max-w-3xl font-serif text-3xl font-bold leading-tight sm:text-4xl">Dia 03/365 — {question}</h2>
       <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-200">Da segurança imediata à decisão sobre EEG, imagem e acompanhamento: um roteiro sem diagnóstico ou medicação automáticos.</p>
@@ -51,7 +51,7 @@ export default function PrimeiraCriseAfebrilChapter() {
       </div>
     </section>
     <section><Heading number="03">Fluxograma decisório responsivo</Heading>
-      <div role="group" aria-label="Fluxograma: primeiro avaliar crise em curso e recuperação; se emergência, acionar SAMU; se estável, procurar causa aguda; depois investigar e acompanhar" className="rounded-[1.6rem] bg-[#12253c] p-4 sm:p-7">
+      <div role="group" aria-label="Fluxograma: primeiro avaliar crise em curso e recuperação; se emergência, acionar SAMU; se estável, procurar causa aguda; depois investigar e acompanhar" className="rounded-[1.6rem] bg-slate-800 p-4 sm:p-7">
         <div className="mx-auto max-w-md rounded-xl border border-amber-200/50 bg-white/10 p-4 text-center font-bold text-amber-100">Primeiro episódio afebril → cronometrar, ABC e recuperação</div>
         <ArrowDown className="mx-auto my-3 h-6 w-6 text-amber-200" aria-hidden="true" />
         <div className="grid gap-3 md:grid-cols-3">
@@ -67,7 +67,7 @@ export default function PrimeiraCriseAfebrilChapter() {
       <div className="space-y-3">{findings.map(([finding, meaning, action]) => <div key={finding} className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-3 dark:border-slate-700 dark:bg-slate-900">{[["Achado",finding],["Interpretação",meaning],["Próxima ação",action]].map(([label,value])=><p key={label} className="text-sm leading-6 text-slate-700 dark:text-slate-200"><strong className="mb-1 block text-xs uppercase tracking-wider text-teal-700 dark:text-teal-300">{label}</strong>{value}</p>)}</div>)}</div>
     </section>
     <section><Heading number="05">Consulta operacional em seis etapas</Heading>
-      <ol className="grid gap-3 sm:grid-cols-2">{steps.map(([name,detail],i)=><li key={name} className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900"><span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#102438] text-xs font-bold text-amber-200">{i+1}</span><h4 className="mt-3 font-bold text-slate-900 dark:text-white">{name}</h4><p className="mt-2 text-sm leading-7 text-slate-600 dark:text-slate-300">{detail}</p></li>)}</ol>
+      <ol className="grid gap-3 sm:grid-cols-2">{steps.map(([name,detail],i)=><li key={name} className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900"><span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-amber-200">{i+1}</span><h4 className="mt-3 font-bold text-slate-900 dark:text-white">{name}</h4><p className="mt-2 text-sm leading-7 text-slate-600 dark:text-slate-300">{detail}</p></li>)}</ol>
     </section>
     <section><Heading number="06">Quando investigar versus observar</Heading>
       <div className="grid gap-3 md:grid-cols-2">
