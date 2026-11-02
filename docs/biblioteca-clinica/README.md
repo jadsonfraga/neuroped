@@ -21,8 +21,11 @@ O workflow `.github/workflows/biblioteca-clinica-pauta-diaria.yml` **não gera m
 
 A visualização de conteúdo `revisao_medica` não equivale a validação clínica. Somente aceite explícito do médico permite alterar o estado para `publicado`. Merge/deploy do material educacional não representa assinatura médica.
 
+## Catálogo e navegação (Dias 01–04)
+Cada capítulo tem `anchor` estável em `client/src/data/clinicalLibrary.ts`; cartão e link profundo `/#/biblioteca-clinica?capitulo=<slug>` resolvem a âncora pelo catálogo (`clinicalLibraryAnchorForSlug`), sem encadeamento manual por Dia. O link profundo também é lido de `location.search`, porque o retorno do login reescreve a URL para `/?capitulo=…#/biblioteca-clinica`. A navegação move o foco para o `<article>` do capítulo. O catálogo separa a **Trilha 365** (Dias 01–04, ordem do índice) do estudo WISC-IV anterior, que não conta como Dia 09. O selo do topo e o rótulo de cada cartão derivam de `status`; com tudo em `revisao_medica`, a página declara "Material educacional em revisão médica".
+
 ## Gates técnicos
-`node tests/unit/clinical-library-static.test.mjs`, `node tests/unit/clinical-library-day001.test.mjs`, `npm run test:known-routes`, `npm run check`, `npm run lint`, `npm run build:client`; revisão de diff e checks obrigatórios do HEAD exato. Merge apenas via PR protegido, depois validação do deploy Cloudflare e navegação em produção.
+`node tests/unit/clinical-library-static.test.mjs`, `node tests/unit/clinical-library-day00{1,2,3,4}.test.mjs`, `node tests/unit/clinical-library-catalog.test.mjs`, `npm run test:e2e:biblioteca-clinica` (build real + login sintético + axe), `npm run test:known-routes`, `npm run check`, `npm run lint`, `npm run build:client`; revisão de diff e checks obrigatórios do HEAD exato. Merge apenas via PR protegido, depois validação do deploy Cloudflare e navegação em produção.
 
 ## Retomada e idempotência
 Verificar o mesmo Dia no XLSX, no manifesto, no app/main e em PRs antes de qualquer nova criação. Se falhar um gate ou deploy, retomar a PR/rascunho do mesmo Dia; não avançar arbitrariamente ao Dia 02. Não alterar a numeração nem a pergunta canônica.

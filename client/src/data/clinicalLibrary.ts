@@ -37,12 +37,15 @@ export interface ClinicalLibraryChapter {
   status: ClinicalLibraryStatus;
   minutes: number;
   day?: number;
+  /** Id estável da âncora `<article>` do capítulo; usado por cartão e link profundo. */
+  anchor: string;
   review: string;
   sources: string[];
 }
 export const clinicalLibraryChapters: ClinicalLibraryChapter[] = [
   {
     slug: "alfabetizacao-dislexia",
+    anchor: "capitulo-alfabetizacao-dislexia",
     day: 4,
     title: "Como diferenciar dificuldade de alfabetização de dislexia?",
     subtitle: "Oportunidade de ensino, decodificação, resposta à intervenção e decisão clínica",
@@ -56,6 +59,7 @@ export const clinicalLibraryChapters: ClinicalLibraryChapter[] = [
   },
   {
     slug: "primeira-crise-afebril",
+    anchor: "capitulo-primeira-crise-afebril",
     day: 3,
     title: "Primeira crise convulsiva afebril: qual a abordagem inicial?",
     subtitle: "Estabilização, red flags, EEG, imagem e risco de recorrência",
@@ -69,6 +73,7 @@ export const clinicalLibraryChapters: ClinicalLibraryChapter[] = [
   },
   {
     slug: "desatencao-imaturidade-etaria",
+    anchor: "capitulo-desatencao-imaturidade",
     day: 2,
     title: "Como diferenciar desatenção de imaturidade etária?",
     subtitle: "Idade relativa, prejuízo em múltiplos contextos e decisão clínica",
@@ -82,6 +87,7 @@ export const clinicalLibraryChapters: ClinicalLibraryChapter[] = [
   },
   {
     slug: "tea-timidez-primeira-infancia",
+    anchor: "capitulo-tea-timidez",
     day: 1,
     title: "Como distinguir sinais de TEA de timidez na primeira infância?",
     subtitle: "Atenção compartilhada, reciprocidade, red flags e decisões de consultório",
@@ -95,6 +101,7 @@ export const clinicalLibraryChapters: ClinicalLibraryChapter[] = [
   },
   {
     slug: "wisc-iv-interpretacao-neuropediatria",
+    anchor: "capitulo-wisc",
     title: "Como interpretar o WISC-IV na neuropediatria",
     subtitle: "Os quatro índices, o QI Total e o raciocínio clínico por trás dos resultados",
     category: "Neuropsicologia",
@@ -237,3 +244,27 @@ export const nextClinicalTopics = [
   "Como reconhecer ansiedade de separação que ultrapassa o esperado?",
   "Quando a criança que não fala precisa de avaliação auditiva urgente?",
 ];
+
+/** Trilha 365: somente capítulos numerados pelo índice canônico, em ordem crescente de Dia. */
+export const clinicalLibraryTrail: ClinicalLibraryChapter[] = clinicalLibraryChapters
+  .filter((chapter) => typeof chapter.day === "number")
+  .sort((a, b) => (a.day ?? 0) - (b.day ?? 0));
+
+/** Estudos anteriores à Trilha 365 (sem Dia canônico); não contam como Dia do índice. */
+export const clinicalLibraryEarlierStudies: ClinicalLibraryChapter[] = clinicalLibraryChapters
+  .filter((chapter) => typeof chapter.day !== "number");
+
+/** Converte o `?capitulo=` do link profundo na âncora estável; slug desconhecido não navega. */
+export function clinicalLibraryAnchorForSlug(slug: string | null | undefined): string | null {
+  if (!slug) return null;
+  return clinicalLibraryChapters.find((chapter) => chapter.slug === slug)?.anchor ?? null;
+}
+
+/**
+ * Rótulo exibido para o estado clínico. `publicado` só existe após aceite médico
+ * explícito registrado em PR; integração técnica ou deploy não mudam este estado.
+ */
+export const clinicalLibraryStatusLabel: Record<ClinicalLibraryStatus, string> = {
+  revisao_medica: "Revisão médica pendente",
+  publicado: "Aceite médico registrado",
+};

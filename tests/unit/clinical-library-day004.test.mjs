@@ -12,8 +12,9 @@ assert.ok(data.includes('title: "' + title + '"'), "Título diverge do índice")
 assert.ok(day.includes('const question = "' + title + '"'), "Título diverge no capítulo");
 assert.ok(day.includes("Dia 04/365 — {question}"), "Cabeçalho ausente");
 assert.ok(page.includes("<AlfabetizacaoDislexiaChapter />"), "Capítulo não renderizado");
-assert.ok(page.includes('slug === "alfabetizacao-dislexia"'), "Rota por hash ausente");
-assert.ok(page.includes('item.day === 4 ? "capitulo-alfabetizacao-dislexia"'), "Navegação de cartão ausente");
+assert.match(data, /slug: "alfabetizacao-dislexia",\n\s+anchor: "capitulo-alfabetizacao-dislexia",/, "Âncora estável do Dia 04 ausente no catálogo");
+assert.ok(page.includes("clinicalLibraryAnchorForSlug(selectedChapterSlug())"), "Rota por link profundo ausente");
+assert.ok(page.includes("focusChapter(item.anchor, true)"), "Navegação de cartão ausente");
 assert.ok(day.includes('id="capitulo-alfabetizacao-dislexia"'), "Âncora ausente");
 for (const section of ["Em 30 segundos", "Sinais e red flags", "Fluxograma decisório", "Achado → interpretação → próxima ação", "Consulta operacional", "Quando investigar versus observar", "Manejo, seguimento", "Caso clínico inteiramente fictício", "Três erros frequentes", "Pontos de incerteza", "Bibliografia auditável"]) assert.ok(day.includes(section), "Seção ausente: " + section);
 assert.ok(day.includes("MATERIAL EDUCACIONAL EM REVISÃO MÉDICA"), "Aviso clínico ausente");

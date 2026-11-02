@@ -12,7 +12,8 @@ assert.equal((data.match(/day: 1,/g) ?? []).length, 1, "Dia 01 deve ser único")
 assert.ok(data.includes('title: "' + title + '"'), "Pergunta deve coincidir com índice canônico");
 assert.ok(day.includes("Dia 01/365 — " + title), "Título visível divergente do índice");
 assert.ok(page.includes("<TeaTimidezChapter />"), "Capítulo não integrado à Biblioteca");
-assert.ok(page.includes("capitulo-tea-timidez"), "Link do capítulo não navegável");
+assert.match(data, /slug: "tea-timidez-primeira-infancia",\n\s+anchor: "capitulo-tea-timidez",/, "Link do capítulo não navegável: âncora estável ausente no catálogo");
+assert.ok(page.includes("focusChapter(item.anchor, true)") && page.includes("clinicalLibraryAnchorForSlug(selectedChapterSlug())"), "Link do capítulo não navegável");
 assert.ok(day.includes('id="capitulo-tea-timidez"'), "Âncora do capítulo ausente");
 for (const heading of ["Em 30 segundos", "Sinais que mudam a conduta", "Fluxograma decisório", "Achado → interpretação → próxima ação", "Consulta operacional", "Investigar agora ou observar", "Manejo, família e escola", "Caso de treinamento", "Três erros frequentes", "Incerteza e força da evidência", "Bibliografia auditável"]) {
   assert.ok(day.includes(heading), "Seção obrigatória ausente: " + heading);
