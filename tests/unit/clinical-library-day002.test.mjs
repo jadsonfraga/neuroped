@@ -11,7 +11,8 @@ assert.ok(data.includes('title: "'+title+'"'),"Pergunta não coincide com índic
 assert.ok(day.includes("Dia 02/365 — {question}"),"Cabeçalho do Dia 02 ausente");
 assert.ok(day.includes('const question = "'+title+'"'),"Título divergente");
 assert.ok(page.includes("<DesatencaoImaturidadeChapter />"),"Componente não integrado");
-assert.ok(page.includes("capitulo-desatencao-imaturidade"),"Navegação não integrada");
+assert.match(data, /slug: "desatencao-imaturidade-etaria",\n\s+anchor: "capitulo-desatencao-imaturidade",/, "Navegação não integrada: âncora estável ausente no catálogo");
+assert.ok(page.includes("focusChapter(item.anchor, true)") && page.includes("clinicalLibraryAnchorForSlug(selectedChapterSlug())"), "Navegação não integrada");
 assert.ok(day.includes('id="capitulo-desatencao-imaturidade"'),"Âncora ausente");
 for(const heading of ["Em 30 segundos","Sinais que mudam a conduta","Fluxograma decisório","Achado → interpretação → próxima ação","Consulta operacional","Investigar ou observar","Manejo, família e escola","Caso de treinamento","Três erros frequentes","Incerteza e força da evidência","Bibliografia auditável"]){assert.ok(day.includes(heading),"Seção ausente: "+heading)}
 assert.ok(day.includes('aria-label="Fluxo clínico'),"Fluxo sem rótulo");

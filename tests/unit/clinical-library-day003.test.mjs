@@ -11,7 +11,8 @@ assert.ok(data.includes('title: "'+title+'"'),"Pergunta diverge do índice canô
 assert.ok(day.includes('const question = "'+title+'"'),"Pergunta diverge no capítulo");
 assert.ok(day.includes("Dia 03/365 — {question}"),"Cabeçalho ausente");
 assert.ok(page.includes("<PrimeiraCriseAfebrilChapter />"),"Componente não integrado");
-assert.ok(page.includes("capitulo-primeira-crise-afebril"),"Navegação não integrada");
+assert.match(data, /slug: "primeira-crise-afebril",\n\s+anchor: "capitulo-primeira-crise-afebril",/, "Navegação não integrada: âncora estável ausente no catálogo");
+assert.ok(page.includes("focusChapter(item.anchor, true)") && page.includes("clinicalLibraryAnchorForSlug(selectedChapterSlug())"), "Navegação não integrada");
 assert.ok(day.includes('id="capitulo-primeira-crise-afebril"'),"Âncora ausente");
 for(const section of ["Em 30 segundos","Sinais e red flags","Fluxograma decisório","Achado → interpretação → próxima ação","Consulta operacional","Quando investigar versus observar","Manejo, seguimento","Caso clínico inteiramente fictício","Três erros frequentes","Incertezas e força da evidência","Bibliografia auditável"])assert.ok(day.includes(section),"Seção ausente: "+section);
 assert.ok(day.includes("MATERIAL EDUCACIONAL EM REVISÃO MÉDICA"),"Falta aviso de revisão");
