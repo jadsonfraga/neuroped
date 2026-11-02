@@ -1055,3 +1055,27 @@ reaplica código e teste sobre main, preserva S2–S22 e requer nova CI.
 - **Fixtures e privacidade:** o teste usa nomes e IDs sintéticos, `patientId: null` e nenhum dado de paciente real. A recepção continua recebendo DTO redigido; a etapa D apenas compõe no cliente as respostas já filtradas pelo contexto servidor/profissional validado nas etapas anteriores.
 - **Limites remanescentes:** ainda faltam censo pós-deploy no D1 de produção, teste manual com dois vínculos reais, teste em dispositivo móvel e validação de leitor de tela. Esses itens permanecem explicitamente fora da prova automatizada; não são declarados como concluídos por esta evidência.
 - **Rollback:** reverter a PR #1069 remove a visão unificada do dia e retorna à agenda por profissional, sem migração adicional. As etapas A/B/C continuam independentes e não devem ser revertidas junto.
+
+
+### S13-R (ciclo 10, 2026-11-01) — alias canônico `/c/:clinicSlug/agendar`
+
+A lacuna de compartilhamento de rota foi reduzida sem migração de banco: o
+adaptador `client/src/lib/pathDeepLink.ts` reconhece somente o padrão seguro
+`/c/<slug>/agendar`, converte-o para a página pública existente `/#/agendar`
+e injeta `clinic=<slug>` na query. O `clinic` declarado no caminho substitui
+qualquer valor conflitante na query; `provider` e demais parâmetros compatíveis
+são preservados. Links legados `/agendar?...` continuam com o comportamento
+anterior, e callbacks com `session_id`, microsites estáticos e caminhos fora do
+contrato não são reescritos.
+
+A prova em `tests/unit/path-deep-link.test.ts` cobre rota canônica, barra final,
+provider preservado, conflito de clínica resolvido pelo caminho, slug inválido,
+sufixo não canônico, callbacks e todas as sentinelas de arquivos estáticos. A
+suíte passou com `node --import tsx tests/unit/path-deep-link.test.ts`,
+`npm run check`, `npm run lint` e `git diff --check`.
+
+Esta entrega não altera `booking_provider_profiles`, não troca a chave primária,
+não gera links automaticamente a partir de convites/notificações e não declara
+censo ou teste de produção concluídos. Ela é uma camada de compatibilidade de
+URL sobre o contrato S13 já existente; a persistência de links antigos permanece
+válida.
