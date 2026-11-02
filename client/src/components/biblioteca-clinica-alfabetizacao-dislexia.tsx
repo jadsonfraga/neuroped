@@ -17,7 +17,7 @@ const steps: [string, string][] = [
   ["Plano mensurável", "Instrução fônica, adaptações, medidas comparáveis de leitura e retorno pactuado com escola/família."],
 ];
 const refs = [
-  { name: "Brasil · Lei 14.254/2021", url: "https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2021/lei/L14254.htm", note: "Acompanhamento integral e identificação precoce. Norma legal, não protocolo diagnóstico." },
+  { name: "Brasil · Lei 14.254/2021", url: "https://legis.senado.leg.br/norma/35207438", note: "Acompanhamento integral e identificação precoce. Norma legal, não protocolo diagnóstico." },
   { name: "Hall et al. · Forty Years of Reading Intervention Research (2022/2023)", url: "https://doi.org/10.1002/rrq.477", note: "Metanálise: 53 estudos, N=6.053, g≈0,33; heterogeneidade e efeitos distintos por domínio." },
   { name: "Silva et al. · Rapid Automatized Naming and Explicit Phonological Processing (2020)", url: "https://doi.org/10.3389/fpsyg.2020.00928", note: "Estudo brasileiro observacional; nomeação rápida não é diagnóstico isolado." },
   { name: "Barbosa et al. · Profile of language and cognitive functions (2015)", url: "https://doi.org/10.1590/2317-1782/20152015043", note: "Amostra de falantes do português brasileiro; interpretação contextual." },
