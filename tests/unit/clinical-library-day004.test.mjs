@@ -1,0 +1,28 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+
+const data = readFileSync("client/src/data/clinicalLibrary.ts", "utf8");
+const page = readFileSync("client/src/pages/biblioteca-clinica.tsx", "utf8");
+const day = readFileSync("client/src/components/biblioteca-clinica-alfabetizacao-dislexia.tsx", "utf8");
+const workflow = readFileSync(".github/workflows/biblioteca-clinica-qa.yml", "utf8");
+const title = "Como diferenciar dificuldade de alfabetização de dislexia?";
+assert.equal((data.match(/day: 4,/g) ?? []).length, 1, "Dia 04 duplicado");
+assert.equal((data.match(/slug: "alfabetizacao-dislexia"/g) ?? []).length, 1, "Slug duplicado");
+assert.ok(data.includes('title: "' + title + '"'), "Título diverge do índice");
+assert.ok(day.includes('const question = "' + title + '"'), "Título diverge no capítulo");
+assert.ok(day.includes("Dia 04/365 — {question}"), "Cabeçalho ausente");
+assert.ok(page.includes("<AlfabetizacaoDislexiaChapter />"), "Capítulo não renderizado");
+assert.ok(page.includes('slug === "alfabetizacao-dislexia"'), "Rota por hash ausente");
+assert.ok(page.includes('item.day === 4 ? "capitulo-alfabetizacao-dislexia"'), "Navegação de cartão ausente");
+assert.ok(day.includes('id="capitulo-alfabetizacao-dislexia"'), "Âncora ausente");
+for (const section of ["Em 30 segundos", "Sinais e red flags", "Fluxograma decisório", "Achado → interpretação → próxima ação", "Consulta operacional", "Quando investigar versus observar", "Manejo, seguimento", "Caso clínico inteiramente fictício", "Três erros frequentes", "Pontos de incerteza", "Bibliografia auditável"]) assert.ok(day.includes(section), "Seção ausente: " + section);
+assert.ok(day.includes("MATERIAL EDUCACIONAL EM REVISÃO MÉDICA"), "Aviso clínico ausente");
+assert.ok(day.includes("Consensus Pro realizada"), "Proveniência de pesquisa ausente");
+assert.ok(day.includes("Lei 14.254/2021"), "Lei brasileira ausente");
+assert.ok(day.includes("10.1002/rrq.477"), "Metanálise sem DOI");
+assert.ok(day.includes('rel="noopener noreferrer"'), "Links externos sem proteção");
+assert.ok(workflow.includes("clinical-library-day004.test.mjs"), "QA não executa o Dia 04");
+assert.ok(workflow.includes("biblioteca-clinica-alfabetizacao-dislexia.tsx"), "QA não monitora o componente");
+assert.ok(!day.includes('status: "publicado"'), "Publicação clínica indevida");
+assert.ok(!day.includes("CRM-"), "Não inserir assinatura médica");
+console.log("clinical-library-day004 ok");
