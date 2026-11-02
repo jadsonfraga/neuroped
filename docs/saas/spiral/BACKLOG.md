@@ -113,7 +113,7 @@ incluído em `npm run test:operations`. Visto falhando pelo motivo certo
 contra o código anterior (serviço da clínica A aparecia no dashboard de B).
 Evidência em EVIDENCE.md#S8.
 
-## S13 · P1 · FECHADO parcialmente (ciclo 5) — desambiguação por slug; redesenho de rota ainda aberto
+## S13 · P1 · FECHADO parcialmente (ciclos 5 e 10) — desambiguação por slug e alias de rota entregues; migração estrutural ainda aberta
 Menor incremento seguro: o link público de agendamento pode declarar a
 clínica via `?clinic=<slug da clínica>` (perfil, horários, reserva, lista de
 espera e diretório em `functions/api/public-booking.ts`), resolvida por
@@ -128,13 +128,17 @@ compartilhados/salvos continuam funcionando. O botão "copiar link público"
 em `client/src/pages/agenda.tsx` já gera o link com `&clinic=<slug>` a
 partir da clínica ativa da sessão (`useClinic().activeClinic.slug`).
 
-Continua aberto, deliberadamente fora deste incremento: o redesenho de rota
-(`/c/:clinicSlug/agendar`), a troca de PK de `booking_provider_profiles`
-(hoje `user_id`, `slug UNIQUE` global — OPS-05) e de `booking_staff_links`
-(OPS-03), e qualquer geração automática de link a partir de convite/
-notificação. Isso exigiria migração, backfill e período de compatibilidade
-para links antigos — não é um incremento seguro de escopo único. Evidência
-em EVIDENCE.md#S13.
+A camada de compatibilidade de URL foi entregue no ciclo 10: `/c/:clinicSlug/agendar`
+é convertido para a página pública existente com `clinic=<clinicSlug>`, sem
+migração e com precedência do slug do caminho sobre query conflitante. A prova
+está em `tests/unit/path-deep-link.test.ts` e em EVIDENCE.md#S13-R.
+
+Continua aberto, deliberadamente fora deste incremento: a troca de PK de
+`booking_provider_profiles` (hoje `user_id`, `slug UNIQUE` global — OPS-05) e
+de `booking_staff_links` (OPS-03), e qualquer geração automática de link a
+partir de convite/notificação. Isso exigiria migração, backfill e período de
+compatibilidade para links antigos — não é um incremento seguro de escopo
+único.
 
 ## S14 · P2 · FECHADO (ciclo 4)
 Links públicos de intake (pré-consulta) e de escala remota ignoravam o

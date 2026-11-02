@@ -374,3 +374,28 @@ retenção de LTB-10 permanece bloqueado por revisão jurídico-regulatória. A
 próxima oportunidade técnica pequena deve ser escolhida entre documentação de
 lacunas já mescladas e um item de segurança ainda não assumido por PR; não
 reabrir OPS-03, S5 ou LEG-17.
+
+
+## Ciclo 10 (2026-11-01) — S13-R alias canônico de rota pública
+
+Foi implementado e testado o alias `/c/:clinicSlug/agendar` no adaptador de
+deep links. A rota é convertida antes do fallback para `#/`, chega ao componente
+público existente como `/#/agendar?clinic=<slug>`, preserva `provider` e faz o
+slug do caminho prevalecer sobre `clinic` conflitante na query. Slugs inválidos,
+callbacks com `session_id`, microsites estáticos e caminhos não canônicos mantêm
+as travas anteriores. Testes locais verdes: deep link, TypeScript, funções,
+lint e diff check.
+
+A evidência foi registrada em `EVIDENCE.md#S13-R` e o backlog foi reconciliado:
+a camada de URL está entregue; continuam abertas somente a troca estrutural de
+PKs, geração automática por convite/notificação e validações de operação que
+exigem ambiente externo.
+
+### Próximo ponto de retomada
+
+Criar branch a partir de `origin/main`, confirmar a integração da documentação
+e escolher a próxima lacuna não assumida. Não duplicar S5, OPS-03-D, S13-R ou
+a correção de `node-forge` 1.4.2, já integrados. A cadência de 30 minutos
+continua registrada, mas a alteração automática permanece bloqueada pela
+plataforma com `permission_denied: control source is unknown`; os ciclos devem
+retomar pelo estado deste arquivo quando forem disparados.

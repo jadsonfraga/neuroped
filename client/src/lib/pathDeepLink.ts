@@ -18,6 +18,7 @@ const STATIC_PREFIXES = [
 ] as const;
 
 const SAFE_PATH = /^\/[a-z0-9][a-z0-9\-/]*$/i;
+const CLINIC_BOOKING_PATH = /^\/c\/([a-z0-9][a-z0-9-]{0,78})\/agendar$/i;
 const MAX_PATH_LENGTH = 120;
 
 export interface LocationLike {
@@ -41,10 +42,20 @@ export function pathDeepLinkToHash(location: LocationLike): string | null {
   const firstSegment = path.split("/")[1]?.toLowerCase() ?? "";
   if ((STATIC_PREFIXES as readonly string[]).includes(firstSegment)) return null;
 
+  // A rota clínica canônica torna a clínica parte do link compartilhado. Ela
+  // vira a mesma página pública legada, mas a clínica do caminho é a fonte de
+  // verdade e substitui qualquer `clinic` conflitante na query.
+  const clinicBookingMatch = path.match(CLINIC_BOOKING_PATH);
+  const targetPath = clinicBookingMatch ? "/agendar" : path;
+  const params = new URLSearchParams(location.search);
+  if (clinicBookingMatch) {
+    params.set("clinic", clinicBookingMatch[1]);
+  }
+
   // Callback do Gov.br/SNCR volta com `session_id` na query do caminho; ele
   // é consumido por completeSncrCallbackIfPresent e não pode ir para o hash.
-  const params = new URLSearchParams(location.search);
   if (params.has("session_id")) return null;
 
-  return `/#${path}${location.search}`;
+  const query = params.toString();
+  return `/#${targetPath}${query ? `?${query}` : ""}`;
 }
