@@ -42,6 +42,19 @@ export interface ClinicalLibraryChapter {
 }
 export const clinicalLibraryChapters: ClinicalLibraryChapter[] = [
   {
+    slug: "alfabetizacao-dislexia",
+    day: 4,
+    title: "Como diferenciar dificuldade de alfabetização de dislexia?",
+    subtitle: "Oportunidade de ensino, decodificação, resposta à intervenção e decisão clínica",
+    category: "Aprendizagem e escola",
+    date: "2026-11-02",
+    updated: "2026-11-02",
+    status: "revisao_medica",
+    minutes: 6,
+    review: "Pesquisa Consensus Pro concluída em 02/11/2026; revisão médica e aceite pendentes.",
+    sources: ["lei-14254", "hall-2022", "silva-2020", "barbosa-2015", "nrp-2000", "ida-structured", "icd11-6a03"],
+  },
+  {
     slug: "primeira-crise-afebril",
     day: 3,
     title: "Primeira crise convulsiva afebril: qual a abordagem inicial?",
@@ -220,7 +233,6 @@ export const wiscReferences: ClinicalLibraryReference[] = [
 ];
 
 export const nextClinicalTopics = [
-  "Como diferenciar dificuldade de alfabetização de dislexia?",
   "Quando o atraso de fala exige avaliação global?",
   "Como reconhecer ansiedade de separação que ultrapassa o esperado?",
   "Quando a criança que não fala precisa de avaliação auditiva urgente?",
