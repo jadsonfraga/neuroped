@@ -9,6 +9,7 @@ on:
       - "client/src/components/biblioteca-clinica-tea-timidez.tsx"
       - "client/src/components/biblioteca-clinica-desatencao-imaturidade.tsx"
       - "client/src/components/biblioteca-clinica-primeira-crise-afebril.tsx"
+      - "client/src/components/biblioteca-clinica-alfabetizacao-dislexia.tsx"
       - "client/src/App.tsx"
       - "client/src/data/navigation.ts"
       - "client/src/security/knownRoutes.ts"
@@ -16,6 +17,7 @@ on:
       - "tests/unit/clinical-library-day001.test.mjs"
       - "tests/unit/clinical-library-day002.test.mjs"
       - "tests/unit/clinical-library-day003.test.mjs"
+      - "tests/unit/clinical-library-day004.test.mjs"
       - ".github/workflows/biblioteca-clinica-*.yml"
       - "docs/biblioteca-clinica/**"
 
@@ -32,6 +34,6 @@ jobs:
         with:
           node-version: "24"
       - name: Verificar capítulo, índice, bibliografia, aceite e pauta
-        run: node tests/unit/clinical-library-static.test.mjs && node tests/unit/clinical-library-day001.test.mjs && node tests/unit/clinical-library-day002.test.mjs && node tests/unit/clinical-library-day003.test.mjs
+        run: node tests/unit/clinical-library-static.test.mjs && node tests/unit/clinical-library-day001.test.mjs && node tests/unit/clinical-library-day002.test.mjs && node tests/unit/clinical-library-day003.test.mjs && node tests/unit/clinical-library-day004.test.mjs
       - name: Verificar sincronismo de rotas protegidas
         run: node tests/unit/known-routes-sync.test.mjs
