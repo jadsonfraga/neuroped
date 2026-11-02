@@ -1,0 +1,63 @@
+name: Biblioteca Clínica — smoke autenticado publicado
+
+# Navega a Biblioteca Clínica 365 no Cloudflare Pages publicado com a conta
+# técnica dedicada, SOMENTE LEITURA (tests/e2e/published-biblioteca.mjs).
+# Depois de cada deploy bem-sucedido da main, confere também que o
+# deploy-check.json serve exatamente o SHA implantado. Falha fechado sem as
+# credenciais técnicas: sem login real não existe validação autenticada.
+# Não substitui revisão médica: os capítulos seguem em revisao_medica.
+
+on:
+  workflow_run:
+    workflows: ["Deploy Cloudflare Pages"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: biblioteca-clinica-published-smoke
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    name: Biblioteca publicada (sessão autenticada)
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Smoke autenticado da Biblioteca publicada
+        env:
+          PUBLISHED_ORIGIN: https://neuroped.pages.dev
+          PUBLISHED_E2E_EMAIL: ${{ secrets.NEUROPED_E2E_EMAIL }}
+          PUBLISHED_E2E_PASSWORD: ${{ secrets.NEUROPED_E2E_PASSWORD }}
+          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: npm run test:e2e:published-biblioteca
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: published-biblioteca-${{ github.run_id }}
+          path: artifacts/e2e/published-biblioteca/
+          if-no-files-found: warn
+          retention-days: 14
