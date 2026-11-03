@@ -1,8 +1,9 @@
 /**
  * operations-multi-provider.test.ts — OPS-03, issue #1064, etapa B.
  *
- * Uma recepção (papel `operator`) atende mais de um profissional. O profissional
- * escolhido (`?provider=<id>`) é só um ALVO SOLICITADO: o servidor o valida contra
+ * Uma recepção (`operator` legado ou `reader` com membership `assistant`) atende
+ * mais de um profissional. O profissional escolhido (`?provider=<id>`) é só um
+ * ALVO SOLICITADO: o servidor o valida contra
  * o vínculo ativo persistido, e cada requisição opera exatamente um par
  * (profissional, clínica). Encadeia o middleware REAL com o handler REAL sobre o
  * schema real (db/schema.d1.sql + todas as migrações), sem mocks de SQL. Também
@@ -109,6 +110,8 @@ insertUser("prof-off", "Profissional Inativo", "professional", 0);
 insertUser("sec", "Secretária", "operator");
 insertUser("sec-legado", "Secretária Legada", "operator");
 insertUser("sec-revogada", "Secretária Sem Membership", "operator");
+insertUser("sec-reader", "Secretária Reader", "reader");
+insertUser("fin", "Financeiro", "reader");
 insertClinic("clinic-x", "Clínica X", "prof-1");
 insertClinic("clinic-y", "Clínica Y", "prof-3");
 insertClinic("clinic-z", "Clínica Z", "prof-4");
@@ -120,6 +123,8 @@ insertMembership("clinic-x", "prof-off", "professional");
 insertMembership("clinic-x", "sec", "assistant");
 insertMembership("clinic-y", "sec", "assistant");
 insertMembership("clinic-x", "sec-revogada", "assistant", 0);
+insertMembership("clinic-x", "sec-reader", "assistant");
+insertMembership("clinic-x", "fin", "financial");
 // vínculos da recepção principal: três profissionais, duas clínicas
 linkStaff("prof-1", "sec");
 linkStaff("prof-2", "sec");
@@ -130,6 +135,10 @@ linkStaff("prof-1", "sec-legado");
 // recepção com dois vínculos mas membership desativada
 linkStaff("prof-1", "sec-revogada");
 linkStaff("prof-2", "sec-revogada");
+// S10: a membership assistant válida pode autorizar a delegação mesmo sem
+// papel global operator; financial não vira recepção por inferência.
+linkStaff("prof-1", "sec-reader");
+linkStaff("prof-1", "fin");
 
 // O usuário autenticado real traz o nome do cadastro; o perfil público do
 // profissional nasce com ele (ensureProviderProfile).
@@ -352,6 +361,16 @@ for (const [id, name] of [["prof-1", "Consulta Um"], ["prof-2", "Consulta Dois"]
   assert.equal(linkStill.active, 1, "o vínculo continua ativo: o que revogou foi a membership");
   raw.prepare(`UPDATE clinic_memberships SET active = 1 WHERE user_id = 'sec-legado' AND clinic_id = 'clinic-x'`).run();
   assert.equal((await call("sec-legado", "operator")).status, 200, "reativar a membership devolve o acesso");
+
+  // S10: o escopo operacional vem da membership `assistant`, não do papel
+  // global. A conta reader opera o vínculo válido; financial permanece fora.
+  const readerAccess = await call("sec-reader", "reader", { query: "?provider=prof-1" });
+  assert.equal(readerAccess.status, 200, "reader com membership assistant ativa pode operar o vínculo");
+  assert.equal(readerAccess.body.access.providerUserId, "prof-1");
+  assert.equal((await call("sec-reader", "reader", { direct: true })).status, 200, "o handler direto preserva o mesmo contrato");
+  const financialDenied = await call("fin", "reader", { query: "?provider=prof-1" });
+  assert.equal(financialDenied.status, 403, "membership financial não concede agenda por inferência");
+  assert.equal(financialDenied.body.code, "PROVIDER_NOT_AVAILABLE", "financial não recebe enumeração diferenciada");
 
   // Clínica em comum é por PROFISSIONAL: membership só na clínica Y não abre o
   // prof-1 (clínica X), nem com um X-Tenant-Id que o prof-1 não tem.

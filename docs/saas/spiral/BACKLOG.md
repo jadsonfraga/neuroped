@@ -414,10 +414,18 @@ não foram alterados (sem migração e sem corte do cliente zero). A exigência
 de membership em tempo de uso para vínculos antigos depende de censo de
 produção.
 
-Continua aberto em S10: membership `assistant`/`financial` sem escopo próprio
-(o escopo `clinical` exige owner/clinic_admin/professional), ou seja, a
-secretária modelada como membro da clínica em vez de delegação por
-profissional. É uma mudança de modelo de papéis e fica em PR separada.
+S10-O foi comprovado no ciclo 11: uma conta global `reader` com membership
+`assistant` ativa e vínculo persistido pode operar a agenda delegada do
+profissional, tanto pelo middleware quanto pelo handler direto. `financial` não
+é promovido a recepção por inferência; configuração, relatório financeiro,
+pagamentos e ações sensíveis continuam restritos a `admin`/`professional`.
+Evidência em `EVIDENCE.md#S10-O`, com `npm run test:operations`, `npm run check`
+e `npm run lint` verdes.
+
+Continua aberto em S10: modelo completo de permissões próprias para
+`financial`, políticas clínicas além da delegação de agenda e o bypass do
+papel global `professional` sobre pacientes legados sem `clinic_id`. Essas
+partes exigem decisão de produto/migração e permanecem em frente separada.
 
 ## S9 · P0 · aberto — censo observado, associação legítima pendente
 Atualização 26/09/2026, 21:07 UTC: o workflow 36271735655 executou o censo

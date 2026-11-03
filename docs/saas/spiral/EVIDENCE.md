@@ -1079,3 +1079,30 @@ não gera links automaticamente a partir de convites/notificações e não decla
 censo ou teste de produção concluídos. Ela é uma camada de compatibilidade de
 URL sobre o contrato S13 já existente; a persistência de links antigos permanece
 válida.
+
+
+### S10-O (ciclo 11, 2026-11-03) — delegação operacional por membership `assistant`
+
+A lacuna de escopo próprio da recepção foi reduzida sem alterar schema: uma conta
+com papel global `reader` pode operar uma agenda somente quando possui membership
+`assistant` ativa na clínica do profissional e vínculo ativo correspondente. O
+middleware, o handler e `resolveOperationsAccess` usam a mesma resolução por
+profissional e clínica; o papel global não concede escopo clínico por si só.
+
+A implementação também libera o vínculo de uma conta `reader` quando ela é
+membership `assistant` ativa, mas não transforma membership `financial` em
+recepção. `canConfigure` permanece restrito a `admin`/`professional`, portanto
+configuração de equipe, relatório financeiro, pagamentos e demais ações sensíveis
+continuam fora da delegação. Seleção explícita inválida continua respondendo
+`PROVIDER_NOT_AVAILABLE`, sem enumerar o motivo.
+
+O teste real `tests/unit/operations-multi-provider.test.ts`, com schema e
+migrações reais e fixtures sintéticas, cobre: `reader` com `assistant` ativa no
+middleware e no handler direto; `financial` recusado; manutenção dos vínculos
+existentes de `operator`; membership removida; clínica incorreta; seleção de
+profissional; locks, auditoria e isolamento já existentes. A suíte passou com
+`npm run test:operations`, `npm run check`, `npm run lint` e `git diff --check`.
+
+O escopo maior de papéis clínicos legados e o modelo completo de permissões
+`financial` continuam fora desta entrega. Não houve migração, backfill nem uso
+de PHI; rollback é reverter os quatro arquivos alterados.

@@ -399,3 +399,29 @@ a correção de `node-forge` 1.4.2, já integrados. A cadência de 30 minutos
 continua registrada, mas a alteração automática permanece bloqueada pela
 plataforma com `permission_denied: control source is unknown`; os ciclos devem
 retomar pelo estado deste arquivo quando forem disparados.
+
+
+## Ciclo 11 (2026-11-03) — S10-O delegação operacional por membership
+
+Foi implementada uma fatia segura do redesenho de S10: contas globais `reader`
+com membership `assistant` ativa e vínculo persistido podem operar a agenda do
+profissional, no middleware e no handler direto. `resolveOperationsAccess`,
+o middleware e `preparePrincipal` usam a mesma fronteira profissional/clínica;
+`canConfigure` continua limitado a `admin`/`professional`, e membership
+`financial` não concede agenda por inferência. A seleção explícita inválida
+continua fail-closed com `PROVIDER_NOT_AVAILABLE`.
+
+A prova real usou schema e migrações, fixtures sintéticas, e passou em
+`npm run test:operations`, `npm run check`, `npm run lint` e `git diff --check`.
+Evidência detalhada em `EVIDENCE.md#S10-O`; BACKLOG.md marca a fatia como
+comprovada e preserva como abertas as permissões completas de `financial`, o
+modelo clínico restante e o bypass de pacientes legados sem `clinic_id`.
+
+### Próximo ponto de retomada
+
+Criar branch a partir de `origin/main`, verificar PRs concorrentes e não tocar
+novamente em S13-R, OPS-03-D, S5, node-forge ou S10-O. Priorizar outra lacuna
+executável, ou documentar um bloqueio quando a decisão exigir produto,
+migração, ambiente D1 de produção ou revisão jurídica. A rotina automática
+segue ativa, mas a alteração para 30 minutos permanece recusada pela plataforma
+com `permission_denied: control source is unknown`.
