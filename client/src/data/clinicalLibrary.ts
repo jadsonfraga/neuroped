@@ -44,6 +44,20 @@ export interface ClinicalLibraryChapter {
 }
 export const clinicalLibraryChapters: ClinicalLibraryChapter[] = [
   {
+    slug: "atraso-fala-avaliacao-global",
+    anchor: "capitulo-atraso-fala-avaliacao-global",
+    day: 5,
+    title: "Quando o atraso de fala exige avaliação global?",
+    subtitle: "Audição, compreensão, múltiplos domínios e decisão de investigação",
+    category: "Desenvolvimento e triagem",
+    date: "2026-11-03",
+    updated: "2026-11-03",
+    status: "revisao_medica",
+    minutes: 6,
+    review: "Rascunho educacional revisável. Revisão médica e aceite pendentes.",
+    sources: ["uspstf-language-2024", "faruk-2020", "ms-caderneta-crianca"],
+  },
+  {
     slug: "alfabetizacao-dislexia",
     anchor: "capitulo-alfabetizacao-dislexia",
     day: 4,
