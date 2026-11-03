@@ -231,8 +231,9 @@ async function getProviderChoice(
  *
  * `requestedProviderId` é só um ALVO SOLICITADO pelo cliente, nunca autoridade:
  * é validado aqui contra o vínculo ativo persistido da recepção. Profissional e
- * admin operam sempre a própria agenda (o pedido é ignorado); a seleção só existe
- * para o papel `operator`.
+ * admin operam sempre a própria agenda (o pedido é ignorado); a seleção existe
+ * para `operator` e para uma conta global não clínica (`reader`) que tenha
+ * membership `assistant` ativa e vínculo válido.
  */
 export async function resolveOperationsAccess(
   db: D1Database,
@@ -254,7 +255,11 @@ export async function resolveOperationsAccess(
     };
   }
 
-  if (user.role !== "operator") return { kind: "none" };
+  // O papel global não modela o escopo da clínica. `reader` pode exercer a
+  // delegação operacional somente quando o vínculo e a membership `assistant`
+  // abaixo forem válidos; papéis clínicos já retornaram acima e os demais ficam
+  // fora do contrato.
+  if (user.role !== "operator" && user.role !== "reader") return { kind: "none" };
 
   const choices = await listProviderChoices(db, user.id);
   const asPrincipal = (choice: OperationsProviderChoice): OperationsPrincipal => ({
@@ -368,7 +373,7 @@ export async function linkOperationsOperator(
     .bind(normalized)
     .first<{ id: string; role: string; is_active: number }>();
   if (!staff) return { ok: false, code: "STAFF_NOT_FOUND" };
-  if (!staff.is_active || staff.role !== "operator") {
+  if (!staff.is_active || !["operator", "reader"].includes(staff.role)) {
     return { ok: false, code: "STAFF_ROLE_INVALID" };
   }
   if (staff.id === principal.providerUserId) return { ok: false, code: "SELF_LINK_INVALID" };

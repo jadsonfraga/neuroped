@@ -18,8 +18,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const user = getContextUser(context);
   if (!user) return context.next();
 
-  // A recepção (papel global `operator`) não tem membership clínica: opera a
-  // agenda por delegação persistida em `booking_staff_links`. A fronteira de
+  // A recepção (`operator` legado ou `reader` com membership `assistant`) não
+  // usa o papel global como escopo clínico: opera por delegação persistida em
+  // `booking_staff_links`. A fronteira de
   // tenant e de billing é, portanto, a do PROFISSIONAL responsável — a mesma
   // derivação que o handler usa (`resolveOperationsContext`, fonte única).
   // Resolver pelo ator bloqueava toda secretária com 409 (AUTHZ-P1-04). Sem
@@ -28,7 +29,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // alvo solicitado e é validado contra o vínculo persistido.
   let tenantUserId = user.id;
   let clinicId: string | null;
-  if (user.role === "operator") {
+  if (user.role === "operator" || user.role === "reader") {
     const resolved = await resolveOperationsContext(context.env.DB, user, context.request);
     if (!resolved.ok) {
       if (resolved.code === "CLINIC_CONTEXT_REQUIRED") {

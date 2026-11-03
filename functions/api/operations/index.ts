@@ -68,7 +68,7 @@ function canConfigure(role: string): boolean {
 }
 
 function canOperate(role: string): boolean {
-  return canConfigure(role) || role === "operator";
+  return canConfigure(role) || role === "operator" || role === "reader";
 }
 
 function moneyCents(value: unknown): number | null {
@@ -459,7 +459,8 @@ async function preparePrincipal(context: Parameters<PagesFunction<OperationsEnv>
   if (!user || !canOperate(user.role) || !context.env.DB) return null;
   await ensureOperationsSchema(context.env.DB);
   await ensureOperationsHardeningSchema(context.env.DB);
-  // A recepção/operator é delegada ao profissional e não ganha escopo clínico só
+  // A recepção (`operator` legado ou `reader` com membership `assistant`) é
+  // delegada ao profissional e não ganha escopo clínico só
   // para operar a agenda. A fronteira tenant da agenda, portanto, é a clínica do
   // provider responsável — nunca uma elevação clínica da secretária. Ela precisa,
   // porém, ser membro `assistant` ATIVO dessa clínica a cada requisição.
@@ -489,10 +490,10 @@ function deniedResponse(
     return errorResponse(failure.error, failure.code, 403);
   }
   return errorResponse(
-    user?.role === "operator"
+    user?.role === "operator" || user?.role === "reader"
       ? "Recepção ainda não vinculada a um profissional."
       : "Acesso não autorizado.",
-    user?.role === "operator" ? "STAFF_LINK_REQUIRED" : "FORBIDDEN",
+    user?.role === "operator" || user?.role === "reader" ? "STAFF_LINK_REQUIRED" : "FORBIDDEN",
     403,
   );
 }
