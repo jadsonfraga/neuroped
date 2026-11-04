@@ -425,3 +425,14 @@ executável, ou documentar um bloqueio quando a decisão exigir produto,
 migração, ambiente D1 de produção ou revisão jurídica. A rotina automática
 segue ativa, mas a alteração para 30 minutos permanece recusada pela plataforma
 com `permission_denied: control source is unknown`.
+
+
+## Ciclo 12 (2026-11-04) — S10-F oportunidade financeira documentada
+
+A PR #1267 foi mesclada em `main` como `c5464da738ca9b8ca81a8a6af83c6f997a80e1af`, com 12 checks bem-sucedidos. A evidência documenta a divergência entre `finance.read` no catálogo do papel `financial` e o endpoint `financial_report`, hoje restrito a `admin`/`professional` porque contém nomes de pacientes e responsáveis.
+
+Nenhuma permissão foi liberada. O backlog agora exige decisão explícita sobre relatório redigido versus completo, escopo por clínica, quatro olhos e auditoria da exportação antes de qualquer implementação. A oportunidade está tecnicamente isolada e não deve ser resolvida por inferência.
+
+### Próximo ponto de retomada
+
+Partir de `origin/main`, verificar PRs abertas e não duplicar S10-O, S10-F, S13-R, OPS-03-D, S5 ou node-forge. Se não houver decisão de produto para S10-F, selecionar outra lacuna técnica pequena com fixtures sintéticas; manter S9, S4 e a retenção legal como bloqueios externos/jurídicos. A rotina continua ativa às 08:00 (`0 0 8 * * *`); a mudança para cada 30 minutos permanece não configurada.
