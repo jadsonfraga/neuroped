@@ -18,6 +18,8 @@ const steps = [
 const refs = [
   {name:"USPSTF · Screening for Speech and Language Delay (2024)",url:"https://doi.org/10.1001/jama.2023.26952",note:"Recomendação para crianças assintomáticas; não justifica esperar diante de queixa clínica."},
   {name:"Faruk et al. · Developmental screening tools (2020)",url:"https://doi.org/10.1136/bmjopen-2020-038182",note:"Revisão sistemática; heterogeneidade e limitações de validação cultural."},
+  {name:"AAP · Vigilância e rastreamento do desenvolvimento (2020; reafirmado 2024)",url:"https://doi.org/10.1542/peds.2019-3449",note:"Relatório clínico, PMID 31843861: preocupações do desenvolvimento justificam avaliação e encaminhamento."},
+  {name:"ASHA · Late Language Emergence",url:"https://www.asha.org/practice-portal/clinical-topics/late-language-emergence/",note:"Portal de prática clínica: diferencia atraso expressivo de misto e recomenda avaliação audiológica e seguimento."},
   {name:"Ministério da Saúde · Caderneta da Criança",url:"https://www.gov.br/saude/pt-br/assuntos/saude-de-a-a-z/c/caderneta-da-crianca",note:"Referência brasileira de vigilância do desenvolvimento; verificar edição aplicável."},
 ];
 function Heading({n,children}:{n:string;children:React.ReactNode}) {
