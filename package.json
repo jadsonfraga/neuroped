@@ -108,7 +108,6 @@
     "test:e2e:super-neuropad-draft": "node tests/e2e/super-neuropad-draft-guard.mjs",
     "test:e2e:super-neuropad-circuit": "node tests/e2e/super-neuropad-circuit-sufficiency.mjs",
     "test:e2e:super-neuropad-acesso-medico": "node tests/e2e/super-neuropad-acesso-medico.mjs",
-    "test:e2e:super-neuropad-opcionais": "node tests/e2e/super-neuropad-opcionais.mjs",
     "test:e2e:super-neuropad-a11y": "node tests/e2e/super-neuropad-accessibility.mjs",
     "test:dyslexia-risk": "node --import tsx --test tests/unit/golden-descritivo.test.ts tests/unit/sem-classificacao.test.ts tests/unit/instrumentos-e-registro.test.ts tests/unit/dyslexia-risk.test.ts tests/unit/dyslexia-game.test.ts tests/unit/dyslexia-risk-diagnostico.test.ts tests/unit/dyslexia-game-conteudo.test.ts",
     "test:e2e:dyslexia-risk": "node tests/e2e/dyslexia-game.mjs",
