@@ -1106,3 +1106,28 @@ profissional; locks, auditoria e isolamento já existentes. A suíte passou com
 O escopo maior de papéis clínicos legados e o modelo completo de permissões
 `financial` continuam fora desta entrega. Não houve migração, backfill nem uso
 de PHI; rollback é reverter os quatro arquivos alterados.
+
+
+### S10-F (ciclo 12, 2026-11-04) — oportunidade de escopo financeiro ainda não resolvida
+
+A inspeção da `main` confirmou uma divergência de produto que não deve ser
+corrigida por inferência técnica: o catálogo de permissões concede `finance.read`
+ao papel de membership `financial`, enquanto o endpoint operacional
+`resource=financial_report` exige `principal.canConfigure`, atualmente limitado
+a `admin`/`professional`. Os testes existentes comprovam simultaneamente que
+a membership `financial` não possui `clinical.read`, não pode ver o quadro clínico
+e não deve ser promovida a recepção por inferência.
+
+Esta é uma **evidência de oportunidade**, não uma autorização para liberar dados:
+o relatório inclui nomes de pacientes e responsáveis e sua exportação CSV é
+registrada na trilha operacional. A decisão segura precisa definir se `financial`
+terá acesso a um relatório financeiro redigido, a um relatório completo com
+quatro olhos, ou continuará sem essa capacidade. Sem essa decisão, qualquer
+mudança de código poderia expor PHI ou contrariar o modelo de papéis.
+
+A prova atual permanece verde em `tests/unit/operations-financial-report.test.ts`,
+`tests/unit/operations-clinic-day.test.ts`, `tests/unit/clinic-branding.test.ts`,
+`npm run test:operations`, `npm run check` e `npm run lint`. O resultado é
+reprodutível com fixtures sintéticas; não houve acesso a D1 de produção nem
+mudança de permissão. O próximo incremento deve ser escolhido após decisão de
+produto sobre o nível de redação, escopo por clínica e auditoria da exportação.

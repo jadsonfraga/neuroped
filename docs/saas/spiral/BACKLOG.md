@@ -424,8 +424,14 @@ e `npm run lint` verdes.
 
 Continua aberto em S10: modelo completo de permissões próprias para
 `financial`, políticas clínicas além da delegação de agenda e o bypass do
-papel global `professional` sobre pacientes legados sem `clinic_id`. Essas
-partes exigem decisão de produto/migração e permanecem em frente separada.
+papel global `professional` sobre pacientes legados sem `clinic_id`. A
+inspeção do ciclo 12 isolou uma decisão concreta: `finance.read` aparece no
+catálogo para `financial`, mas o `financial_report` atual ainda exige
+`principal.canConfigure` (`admin`/`professional`) e contém nomes de pacientes
+e responsáveis. Antes de qualquer código, é necessário decidir relatório
+redigido versus completo, escopo por clínica, quatro olhos e auditoria da
+exportação. Evidência em `EVIDENCE.md#S10-F`; permanece bloqueado por decisão
+de produto, não por falha técnica.
 
 ## S9 · P0 · aberto — censo observado, associação legítima pendente
 Atualização 26/09/2026, 21:07 UTC: o workflow 36271735655 executou o censo
