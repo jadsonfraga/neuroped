@@ -31,7 +31,7 @@ function Node({children,tone="default"}:{children:React.ReactNode;tone?:"default
 }
 export default function AtrasoFalaAvaliacaoGlobalChapter() {
   return <article id="capitulo-atraso-fala-avaliacao-global" aria-labelledby="atraso-fala-title" className="scroll-mt-24 space-y-8 sm:space-y-10">
-    <header className="rounded-[1.8rem] bg-[#12253c] p-5 text-white sm:p-9">
+    <header className="rounded-[1.8rem] bg-slate-900 p-5 text-white sm:p-9">
       <p className="text-xs font-bold uppercase tracking-widest text-amber-200">Dia 05/365 · Desenvolvimento e triagem · 6 minutos</p>
       <h2 id="atraso-fala-title" className="mt-3 font-serif text-3xl font-bold leading-tight sm:text-4xl">Dia 05/365 — Quando o atraso de fala exige avaliação global?</h2>
       <p className="mt-4 text-sm leading-7 text-slate-200">Decisão de consultório: distinguir atraso aparentemente isolado de sinais que exigem investigação ampliada.</p>
