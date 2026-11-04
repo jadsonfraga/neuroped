@@ -254,9 +254,9 @@ export const wiscReferences: ClinicalLibraryReference[] = [
 ];
 
 export const nextClinicalTopics = [
-  "Quando o atraso de fala exige avaliação global?",
   "Como reconhecer ansiedade de separação que ultrapassa o esperado?",
   "Quando a criança que não fala precisa de avaliação auditiva urgente?",
+  "Como avaliar insônia comportamental no pré-escolar?",
 ];
 
 /** Trilha 365: somente capítulos numerados pelo índice canônico, em ordem crescente de Dia. */
