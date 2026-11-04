@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { PremiumVisualPanel } from "@/components/PremiumVisualPanel";
 import { brandAssets } from "@/components/BrandAssets";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import {
   buildPreConsultaSummary,
   clearPreConsultas,
@@ -41,6 +42,7 @@ const respondentes: Array<{ id: PreConsultaRespondente; label: string }> = [
 
 export default function PreConsultaPage() {
   const { accessMode, isAuthenticated } = useAuth();
+  const { toast } = useToast();
   const localPersistenceEnabled = !(accessMode === "remote" && isAuthenticated);
   const [paciente, setPaciente] = useState("");
   const [anos, setAnos] = useState("4");
@@ -102,7 +104,12 @@ export default function PreConsultaPage() {
 
   async function copiar() {
     if (!ageValidation.isValid) return;
-    await copyText(summary);
+    if (await copyText(summary)) {
+      toast({ title: "Resumo copiado" });
+    } else {
+      // Clipboard negado ou indisponível: o usuário precisa saber que nada foi copiado.
+      toast({ title: "Não foi possível copiar o resumo", description: "Selecione o texto e copie manualmente, ou use Imprimir.", variant: "destructive" });
+    }
   }
 
   function imprimir() {
