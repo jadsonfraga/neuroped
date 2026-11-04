@@ -10,6 +10,7 @@ on:
       - "client/src/components/biblioteca-clinica-desatencao-imaturidade.tsx"
       - "client/src/components/biblioteca-clinica-primeira-crise-afebril.tsx"
       - "client/src/components/biblioteca-clinica-alfabetizacao-dislexia.tsx"
+      - "client/src/components/biblioteca-clinica-atraso-fala.tsx"
       - "client/src/App.tsx"
       - "client/src/data/navigation.ts"
       - "client/src/security/knownRoutes.ts"
@@ -40,7 +41,7 @@ jobs:
       - name: Verificar sincronismo de rotas protegidas
         run: node tests/unit/known-routes-sync.test.mjs
 
-      # E2E no build real com o login sintético: 4 capítulos, navegação por
+      # E2E no build real com o login sintético: 5 capítulos, navegação por
       # clique/teclado, link profundo após login e recarregamento, celular sem
       # rolagem horizontal e axe sem violação séria/crítica.
       - name: Instalar dependências
