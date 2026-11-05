@@ -314,18 +314,26 @@ export const clinicalRanking: ClinicalTierRule[] = [
 ];
 
 /**
- * Retorna o trio OURO/PRATA/BRONZE curado para a queixa + idade (meses).
- * Sem idade, devolve a regra representativa (primeira) da queixa.
+ * Retorna o trio OURO/PRATA/BRONZE curado para a queixa + idade.
+ *
+ * - Idade exata (ageMonths, sem faixa): regra cuja faixa CONTÉM a idade. Se nenhuma
+ *   regra cobre a idade, devolve undefined — nunca a regra de outra idade.
+ * - Faixa (ageBand): regra que cobre a faixa INTEIRA; na falta, a de maior
+ *   sobreposição. O ponto médio da faixa não é usado para escolher a regra.
+ * - Sem idade nem faixa: a regra representativa (primeira) da queixa.
  */
 export function getClinicalTiers(
   queixa: string,
-  ageMonths: number | null
+  ageMonths: number | null,
+  ageBand: { min: number; max: number } | null = null,
 ): ClinicalTierRule | undefined {
   // Fluxograma por sinal (signalFlowcharts, rico e editável) tem PRECEDÊNCIA
   // quando existe — é a fonte de verdade curada do pódio para aquele sinal.
+  // Com faixa, consulta a união dos ramos (sem ponto médio); o pódio só aceita
+  // o id curado se ele cobrir a faixa.
   const flow = getSignalFlowchart(queixa);
   if (flow) {
-    const ids = resolveFlowchartTierIds(flow, ageMonths);
+    const ids = resolveFlowchartTierIds(flow, ageBand ? null : ageMonths);
     if (ids.ouro.length > 0 || ids.prata.length > 0 || ids.bronze.length > 0) {
       return {
         queixa,
@@ -341,6 +349,21 @@ export function getClinicalTiers(
 
   const rules = clinicalRanking.filter((r) => r.queixa === queixa);
   if (rules.length === 0) return undefined;
+  if (ageBand) {
+    const full = rules.find((r) => r.ageMin <= ageBand.min && r.ageMax >= ageBand.max);
+    if (full) return full;
+    let best: ClinicalTierRule | undefined;
+    let bestOverlap = 0;
+    for (const rule of rules) {
+      const overlap = Math.min(rule.ageMax, ageBand.max) - Math.max(rule.ageMin, ageBand.min);
+      if (overlap > bestOverlap) {
+        best = rule;
+        bestOverlap = overlap;
+      }
+    }
+    return best;
+  }
   if (ageMonths == null) return rules[0];
-  return rules.find((r) => ageMonths >= r.ageMin && ageMonths <= r.ageMax) ?? rules[0];
+  // Lacuna entre faixas curadas: nenhuma regra fala desta idade exata.
+  return rules.find((r) => ageMonths >= r.ageMin && ageMonths <= r.ageMax);
 }

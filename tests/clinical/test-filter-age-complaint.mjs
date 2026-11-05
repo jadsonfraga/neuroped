@@ -101,6 +101,10 @@ equal(loadFilterSessionState(storage).exactAge,undefined);
 const ui = readFileSync("client/src/pages/filtro-engine.tsx","utf8");
 assert.doesNotMatch(ui,/inferAgeMonthsFromSearch|ageMonthsFromBand/);
 assert.match(ui,/const curatedAgeMonths = filterContext.ageMonths/);
+// Contrato do motor: ageMonths é SOMENTE idade exata; em modo faixa é nulo.
+// O ponto médio da faixa nunca valida instrumento como se fosse idade exata.
+assert.match(ui,/ageMonths: resolvedAge.status === "exact" \? resolvedAge.ageMonths : null/);
+assert.doesNotMatch(ui,/ageMonths: resolvedAge\.ageMonths,/);
 assert.match(ui,/age: resolvedAge.label/);
 assert.match(ui,/ageLabel: resolvedAge.label/);
 assert.equal((ui.match(/faixasEtarias=\{effectiveAgeOptions\}/g)??[]).length,2);

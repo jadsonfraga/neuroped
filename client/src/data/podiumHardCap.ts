@@ -1,4 +1,5 @@
 import type { RefinedScaleMatch } from "./advancedFilterLogic";
+import { fitsSelectedAge, scaleAgeFit } from "./scaleAgeFit";
 
 export const MAX_PODIUM_QUESTIONS = 100;
 
@@ -8,7 +9,10 @@ interface HardCapInput {
   bronze?: RefinedScaleMatch;
   candidates: RefinedScaleMatch[];
   selectedQueixas: string[];
+  /** Idade exata em meses (ignorada quando há faixa). */
   ageMonths: number | null;
+  /** Faixa selecionada: o teto aceita sobreposição parcial, nunca fora da faixa. */
+  ageBand?: { min: number; max: number } | null;
   countQuestions: (match: RefinedScaleMatch) => number;
 }
 
@@ -61,6 +65,7 @@ export function enforcePodiumHardCap({
   candidates,
   selectedQueixas,
   ageMonths,
+  ageBand = null,
   countQuestions,
 }: HardCapInput): HardCapResult {
   const original = [ouro, prata, bronze] as const;
@@ -73,8 +78,7 @@ export function enforcePodiumHardCap({
   }
 
   const containsAge = (item: RefinedScaleMatch) =>
-    ageMonths === null ||
-    (item.scale.ageMin <= ageMonths && item.scale.ageMax >= ageMonths);
+    fitsSelectedAge(scaleAgeFit(item.scale, { exactAge: ageMonths, ageBand }));
 
   const eligible = uniqueById([
     ...original.filter((item): item is RefinedScaleMatch => Boolean(item)),
