@@ -2,7 +2,8 @@ import { getApplicationMode, getImplementationStatus, scaleCoversSelectedSignalE
 import { getClinicalTiers, type ClinicalTierRule } from "./clinicalRanking";
 import { getDeliveredInteractiveItemCount, type Respondente } from "./scaleFilter";
 import { enforcePodiumHardCap } from "./podiumHardCap";
-import { refineFunctionalComplementarity } from "./filterPodiumComplementarity";
+import { refineFunctionalComplementarity, resolveRedundantMedals, type RedundancyDecision } from "./filterPodiumComplementarity";
+import { scaleAgeFit } from "./scaleAgeFit";
 
 // Limite total do pódio: a soma ESTIMADA de perguntas de Ouro + Prata + Bronze
 // nunca deve ultrapassar este teto (não sobrecarregar a família/o clínico).
@@ -51,10 +52,11 @@ export function selectCuratedTiers(
   ageMonths: number | null,
   refinedById: Map<string, RefinedScaleMatch>,
   selectedRespondente: Respondente | null,
+  ageBand: { min: number; max: number } | null = null,
 ): ClinicalTierRule | null {
   if (selectedQueixas.length === 0) return null;
   const rules = selectedQueixas
-    .map((q) => getClinicalTiers(q, ageMonths))
+    .map((q) => getClinicalTiers(q, ageMonths, ageBand))
     .filter((rule): rule is ClinicalTierRule => Boolean(rule));
   if (rules.length === 0) return null;
 
@@ -79,11 +81,25 @@ export function selectCuratedTiers(
   return best;
 }
 
+export interface DetailedPodiumSelection {
+  podium: PodiumSelection;
+  /** Decisões sobre redundância de construto no trio (troca, justificativa ou remoção). */
+  redundancy: RedundancyDecision[];
+}
+
 export function selectPodium(
   refinedMatches: RefinedScaleMatch[],
   curatedTiers: ClinicalTierRule | null,
   context: PodiumSelectionContext = {},
 ): PodiumSelection {
+  return selectPodiumDetailed(refinedMatches, curatedTiers, context).podium;
+}
+
+export function selectPodiumDetailed(
+  refinedMatches: RefinedScaleMatch[],
+  curatedTiers: ClinicalTierRule | null,
+  context: PodiumSelectionContext = {},
+): DetailedPodiumSelection {
   const empty: PodiumSelection = {
     ouro: undefined,
     prata: undefined,
@@ -91,7 +107,7 @@ export function selectPodium(
     direct: undefined,
     school: undefined,
   };
-  if (refinedMatches.length === 0) return empty;
+  if (refinedMatches.length === 0) return { podium: empty, redundancy: [] };
 
   // Preferred minimum score for a medal. If every safe candidate is below this
   // threshold, the podium still shows the best safe option instead of going empty.
@@ -119,14 +135,21 @@ export function selectPodium(
     : [];
   const selectedQueixas = [...new Set(context.selectedQueixas ?? [])];
   const selectedQueixaSet = new Set(selectedQueixas);
-  const exactAge = context.ageMonths ?? null;
+  // Faixa selecionada GOVERNA o encaixe etário. O ponto médio da faixa nunca vira
+  // "idade exata" aqui: quando há faixa, ageMonths é ignorado.
   const ageBand = context.ageBand ?? null;
+  const exactAge = ageBand ? null : (context.ageMonths ?? null);
+  const ageSelection = { exactAge, ageBand };
   const coversBand = (match: RefinedScaleMatch) =>
-    ageBand === null ||
-    (match.scale.ageMin <= ageBand.min && match.scale.ageMax >= ageBand.max);
+    ageBand === null || scaleAgeFit(match.scale, ageSelection) === "full";
   const selectedSignals = context.selectedSignals ?? [];
-  const containsAge = (match: RefinedScaleMatch) =>
-    exactAge === null || (match.scale.ageMin <= exactAge && match.scale.ageMax >= exactAge);
+  // "containsAge" = encaixe TOTAL na idade informada: idade exata contida na faixa
+  // do instrumento, ou, em faixa, cobertura da faixa inteira. Cobertura parcial
+  // continua elegível, mas só como fallback (com aviso de confirmação de idade).
+  const containsAge = (match: RefinedScaleMatch) => {
+    const fit = scaleAgeFit(match.scale, ageSelection);
+    return fit === "exact" || fit === "full" || fit === "unknown";
+  };
   // Correspondência canônica (auditoria semanal, P1): a comparação direta
   // ID-selecionado × signalTag nunca casava ("tdah-dificuldade-focar" vs
   // "desatencao") — o pódio concluía que nenhuma medalha cobria o sinal
@@ -599,6 +622,7 @@ export function selectPodium(
     candidates: sorted,
     selectedQueixas,
     ageMonths: exactAge,
+    ageBand,
     countQuestions: (match) => estimatedQuestionCount(match.scale),
   });
   ouro = cappedPodium.ouro;
@@ -716,12 +740,30 @@ export function selectPodium(
     selectedSignals,
     curatedScaleIds: [curatedTiers?.ouro, curatedTiers?.prata, curatedTiers?.bronze].filter((id): id is string => Boolean(id)),
     ageMonths: exactAge,
+    ageBand,
     questionCap: PODIUM_QUESTION_CAP,
     countQuestions: (match) => estimatedQuestionCount(match.scale),
   });
   ouro = complementary.ouro;
   prata = complementary.prata;
   bronze = complementary.bronze;
+
+  // Redundância residual: duas medalhas do mesmo construto só ocupam vagas
+  // diferentes com justificativa visível. Troca por outro construto seguro,
+  // mantém se cobre queixa/sinal único, ou remove a duplicata (uma forma basta).
+  const redundancyResolution = resolveRedundantMedals({
+    ouro, prata, bronze,
+    candidates: sorted,
+    selectedQueixas,
+    selectedSignals,
+    eligible: (m) => isApplicable(m) && containsAge(m),
+    questionCap: PODIUM_QUESTION_CAP,
+    countQuestions: (match) => estimatedQuestionCount(match.scale),
+  });
+  const redundancyDecisions = redundancyResolution.decisions;
+  ouro = redundancyResolution.trio.ouro;
+  prata = redundancyResolution.trio.prata;
+  bronze = redundancyResolution.trio.bronze;
   used.clear();
   for (const medal of [ouro, prata, bronze]) {
     if (medal) used.add(medal.scale.id);
@@ -742,5 +784,8 @@ export function selectPodium(
     return found;
   })();
 
-  return { ouro, prata, bronze, direct, school };
+  return {
+    podium: { ouro, prata, bronze, direct, school },
+    redundancy: redundancyDecisions,
+  };
 }

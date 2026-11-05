@@ -20,6 +20,10 @@ export interface FilterExportRow {
   scoringCutoff: string;
   fonte: string;
   reason: string;
+  /** Papel no trio (principal, complementar, terceira perspectiva…). Opcional, retrocompatível. */
+  papel?: string;
+  /** Encaixe etário com a idade/faixa selecionada. Opcional, retrocompatível. */
+  compatibilidadeEtaria?: string;
 }
 
 export interface FilterExportMeta {
@@ -28,6 +32,8 @@ export interface FilterExportMeta {
   respondente: string;
   generatedAtLabel: string;
   qualitativeReport?: string;
+  /** Lacunas e avisos honestos do trio (queixa/sinal sem instrumento, redundância, faixa parcial). */
+  lacunas?: string[];
 }
 
 const DISCLAIMER =
@@ -67,6 +73,8 @@ export function buildFilterCsv(meta: FilterExportMeta, rows: FilterExportRow[]):
     "Ponto de corte",
     "Fonte",
     "Motivo",
+    "Papel no trio",
+    "Encaixe etario",
   ];
   const metaLines = [
     `NeuroPed - Recomendacao de escalas;${meta.generatedAtLabel}`,
@@ -74,6 +82,7 @@ export function buildFilterCsv(meta: FilterExportMeta, rows: FilterExportRow[]):
     `Queixa(s);${meta.queixas}`,
     `Respondente;${meta.respondente}`,
     meta.qualitativeReport ? `Relato qualitativo;${csvCell(meta.qualitativeReport)}` : "",
+    meta.lacunas?.length ? `Lacunas do trio;${csvCell(meta.lacunas.join(" | "))}` : "",
     "",
   ];
   const body = rows.map((r) =>
@@ -89,6 +98,8 @@ export function buildFilterCsv(meta: FilterExportMeta, rows: FilterExportRow[]):
       r.scoringCutoff,
       r.fonte,
       r.reason,
+      r.papel ?? "",
+      r.compatibilidadeEtaria ?? "",
     ]
       .map(csvCell)
       .join(";")
@@ -128,6 +139,8 @@ export async function buildFilterPdf(
         r.tempo ? `Tempo de aplicacao: ${r.tempo}` : "",
         r.scoringCutoff ? `Ponto de corte: ${r.scoringCutoff}` : "",
         r.fonte ? `Fonte: ${r.fonte}` : "",
+        r.papel ? `Papel no trio: ${r.papel}` : "",
+        r.compatibilidadeEtaria ? `Encaixe etario: ${r.compatibilidadeEtaria}` : "",
         r.reason ? `Motivo: ${r.reason}` : "",
       ]
         .filter(Boolean)
@@ -145,6 +158,7 @@ export async function buildFilterPdf(
       { heading: "Contexto clinico", body: asciiSafe(contextBody) },
       ...(meta.qualitativeReport ? [{ heading: "Relato qualitativo por extenso", body: asciiSafe(meta.qualitativeReport) }] : []),
       ...scaleSections,
+      ...(meta.lacunas?.length ? [{ heading: "Lacunas e avisos do trio", body: asciiSafe(meta.lacunas.map((l) => `- ${l}`).join("\n")) }] : []),
     ],
     footer: asciiSafe(DISCLAIMER),
   });
