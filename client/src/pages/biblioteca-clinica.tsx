@@ -3,6 +3,7 @@ import TeaTimidezChapter from "@/components/biblioteca-clinica-tea-timidez";
 import DesatencaoImaturidadeChapter from "@/components/biblioteca-clinica-desatencao-imaturidade";
 import PrimeiraCriseAfebrilChapter from "@/components/biblioteca-clinica-primeira-crise-afebril";
 import AlfabetizacaoDislexiaChapter from "@/components/biblioteca-clinica-alfabetizacao-dislexia";
+import AtrasoFalaAvaliacaoGlobalChapter from "@/components/biblioteca-clinica-atraso-fala";
 import {
   ArrowRight, BookOpen, BrainCircuit, ChevronRight,
   CircleAlert, Clock3, FileText, Layers3, Lightbulb, LockKeyhole,
@@ -326,6 +327,7 @@ export default function BibliotecaClinicaPage() {
       <DesatencaoImaturidadeChapter />
       <PrimeiraCriseAfebrilChapter />
       <AlfabetizacaoDislexiaChapter />
+      <AtrasoFalaAvaliacaoGlobalChapter />
 
       <article id="capitulo-wisc" aria-labelledby="wisc-title" className="scroll-mt-20 space-y-12">
         <header className="rounded-[1.5rem] border-l-4 border-amber-500 bg-amber-50 p-5 dark:bg-amber-950/30">
