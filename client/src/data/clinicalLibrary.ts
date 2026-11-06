@@ -44,6 +44,20 @@ export interface ClinicalLibraryChapter {
 }
 export const clinicalLibraryChapters: ClinicalLibraryChapter[] = [
   {
+    slug: "ansiedade-separacao",
+    anchor: "capitulo-ansiedade-separacao",
+    day: 6,
+    title: "Como reconhecer ansiedade de separação que ultrapassa o esperado?",
+    subtitle: "Idade, prejuízo funcional, diferenciais e manejo graduado",
+    category: "Saúde mental frequente",
+    date: "2026-11-06",
+    updated: "2026-11-06",
+    status: "revisao_medica",
+    minutes: 6,
+    review: "Pesquisa Consensus em 06/11/2026; revisão médica pendente.",
+    sources: ["giani-2021-separacao", "abidi-2026-recusa-escolar"],
+  },
+  {
     slug: "atraso-fala-avaliacao-global",
     anchor: "capitulo-atraso-fala-avaliacao-global",
     day: 5,
