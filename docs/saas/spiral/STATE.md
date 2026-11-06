@@ -436,3 +436,13 @@ Nenhuma permissão foi liberada. O backlog agora exige decisão explícita sobre
 ### Próximo ponto de retomada
 
 Partir de `origin/main`, verificar PRs abertas e não duplicar S10-O, S10-F, S13-R, OPS-03-D, S5 ou node-forge. Se não houver decisão de produto para S10-F, selecionar outra lacuna técnica pequena com fixtures sintéticas; manter S9, S4 e a retenção legal como bloqueios externos/jurídicos. A rotina continua ativa às 08:00 (`0 0 8 * * *`); a mudança para cada 30 minutos permanece não configurada.
+
+## Ciclo 13 (2026-11-06) — integridade E2E do Super NeuroPAD
+
+A PR #1266 foi integrada após todos os checks obrigatórios passarem. Ela removeu o roteiro E2E da extensão opcional aposentada, que falhava procurando uma interface inexistente, sem remover funcionalidade atual, alterar lógica clínica ou tocar em dados persistidos.
+
+A evidência foi registrada em `EVIDENCE.md#Ciclo-13` e o histórico de cobertura vigente foi preservado. A dívida de código dos componentes/handlers opcionais não renderizados permanece fora deste incremento, para auditoria própria e sem remoção especulativa.
+
+### Próximo ponto de retomada
+
+Partir de `origin/main`, verificar PRs concorrentes e selecionar outra lacuna pequena e executável. S9, S10 estrutural, S13 estrutural e retenção legal permanecem condicionados a censo, decisão de produto, migração ou revisão jurídica. A cadência de 30 minutos continua solicitada, mas a plataforma ainda mantém a configuração disponível às 08:00 por `permission_denied: control source is unknown`.

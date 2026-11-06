@@ -1131,3 +1131,24 @@ A prova atual permanece verde em `tests/unit/operations-financial-report.test.ts
 reprodutível com fixtures sintéticas; não houve acesso a D1 de produção nem
 mudança de permissão. O próximo incremento deve ser escolhido após decisão de
 produto sobre o nível de redação, escopo por clínica e auditoria da exportação.
+
+### Ciclo 13 — integridade operacional da cobertura E2E do Super NeuroPAD
+
+A PR [#1266](https://github.com/jadsonfraga/neuroped/pull/1266) removeu o
+script `test:e2e:super-neuropad-opcionais`, que permanecia no `package.json`
+após a extensão opcional ter deixado de existir. O roteiro falhava procurando
+a interface aposentada; a cobertura vigente continua nos fluxos principal,
+draft, circuit, acesso médico, acessibilidade e nos testes do Super NeuroPAD.
+
+A mudança foi limitada ao contrato de testes: não removeu funcionalidade de
+produto, não alterou lógica clínica, não tocou em dados persistidos e não
+contém PHI. Todos os checks obrigatórios da PR ficaram verdes antes da
+integração, incluindo build, TypeScript, qualidade, readiness de produção,
+LGPD, isolamento LIVE, ausência de PHI no navegador e reconciliação de
+contratos. A PR foi integrada em `main` como incremento de confiabilidade
+operacional.
+
+A dívida remanescente — componentes e handlers da extensão opcional que já não
+são renderizados nem chamados — permanece explicitamente fora desta correção e
+pode ser tratada em frente própria, caso a auditoria de código confirme que não
+há consumidores legítimos.
