@@ -8,6 +8,7 @@
  * cartão, link profundo após login e após recarregar, e celular sem rolagem
  * horizontal. */
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { chromium } from "playwright";
 import { auditBrowserLaunchOptions } from "../../scripts/lib/browser-audit-runtime.mjs";
@@ -17,12 +18,24 @@ const email = process.env.PUBLISHED_E2E_EMAIL?.trim();
 const password = process.env.PUBLISHED_E2E_PASSWORD;
 const expectedSha = process.env.EXPECTED_SHA?.trim() || null;
 const artifactDir = process.env.PUBLISHED_BIBLIOTECA_ARTIFACT_DIR || "artifacts/e2e/published-biblioteca";
-const TRAIL = [
-  { day: 1, slug: "tea-timidez-primeira-infancia", anchor: "capitulo-tea-timidez", title: "Como distinguir sinais de TEA de timidez na primeira infância?" },
-  { day: 2, slug: "desatencao-imaturidade-etaria", anchor: "capitulo-desatencao-imaturidade", title: "Como diferenciar desatenção de imaturidade etária?" },
-  { day: 3, slug: "primeira-crise-afebril", anchor: "capitulo-primeira-crise-afebril", title: "Primeira crise convulsiva afebril: qual a abordagem inicial?" },
-  { day: 4, slug: "alfabetizacao-dislexia", anchor: "capitulo-alfabetizacao-dislexia", title: "Como diferenciar dificuldade de alfabetização de dislexia?" },
-];
+// A trilha esperada vem do catálogo do PRÓPRIO commit implantado (o workflow faz
+// checkout do SHA do deploy): cada Dia novo entra no smoke sem editar este
+// arquivo, e a produção continua comparada com a fonte exata do que foi publicado.
+// Antes, a lista fixa de 4 capítulos reprovou o deploy do Dia 05 (5 ≠ 4).
+function readTrailFromCatalog() {
+  const data = readFileSync(new URL("../../client/src/data/clinicalLibrary.ts", import.meta.url), "utf8");
+  const trail = [...data.matchAll(/\{\n\s+slug: "([^"]+)",\n\s+anchor: "([^"]+)",\n(?:\s+day: (\d+),\n)?\s+title: "([^"]+)",[\s\S]*?status: "([a-z_]+)",/g)]
+    .map(([, slug, anchor, day, title, status]) => ({ slug, anchor, day: day ? Number(day) : null, title, status }))
+    .filter((chapter) => chapter.day !== null)
+    .sort((a, b) => a.day - b.day);
+  const labels = Object.fromEntries([...data.matchAll(/^\s+(revisao_medica|publicado): "([^"]+)",$/gm)].map(([, key, value]) => [key, value]));
+  assert.ok(trail.length >= 3, `catálogo deve ter ao menos 3 Dias para o smoke (achou ${trail.length})`);
+  assert.deepEqual(trail.map((chapter) => chapter.day), trail.map((_, index) => index + 1), "Dias do catálogo contíguos a partir de 01");
+  assert.ok(labels.revisao_medica && labels.publicado, "rótulos de status ausentes no catálogo");
+  return { trail, labels };
+}
+const { trail: TRAIL, labels: STATUS_LABEL } = readTrailFromCatalog();
+const ALL_IN_REVIEW = TRAIL.every((chapter) => chapter.status === "revisao_medica");
 const PAGE = '[data-testid="biblioteca-clinica-page"]';
 
 assert.match(origin, /^https:\/\/([a-z0-9-]+\.)?neuroped\.pages\.dev$/, "origem fora do Pages do projeto: a senha técnica não sai daqui");
@@ -87,12 +100,12 @@ try {
   await expectFocused(page, TRAIL[1].anchor, "link profundo pelo login");
   check("login real com a conta técnica dedicada e link profundo preservado após o login");
 
-  assert.equal((await page.getByTestId("biblioteca-review-badge").textContent())?.trim(), "Material educacional em revisão médica");
+  assert.equal((await page.getByTestId("biblioteca-review-badge").textContent())?.trim(), ALL_IN_REVIEW ? "Material educacional em revisão médica" : "Estado de revisão indicado em cada capítulo");
   const cards = page.locator('[data-testid="biblioteca-trilha"] > li');
-  assert.equal(await cards.count(), 4, "Trilha 365 com exatamente 4 capítulos");
+  assert.equal(await cards.count(), TRAIL.length, `Trilha 365 com exatamente ${TRAIL.length} capítulos, como o catálogo implantado`);
   assert.deepEqual((await cards.locator("h4").allTextContents()).map((t) => t.trim()), TRAIL.map((t) => t.title));
-  assert.deepEqual((await cards.getByTestId("biblioteca-card-status").allTextContents()).map((t) => t.trim()), TRAIL.map(() => "Revisão médica pendente"));
-  check("catálogo publicado: 4 capítulos, títulos do índice-mestre, revisão médica pendente");
+  assert.deepEqual((await cards.getByTestId("biblioteca-card-status").allTextContents()).map((t) => t.trim()), TRAIL.map((chapter) => STATUS_LABEL[chapter.status]));
+  check(`catálogo publicado: ${TRAIL.length} capítulos, títulos e status idênticos ao catálogo do commit implantado`);
 
   for (const chapter of TRAIL) {
     const article = page.locator(`article#${chapter.anchor}`);
@@ -108,7 +121,7 @@ try {
 
   await page.reload({ waitUntil: "domcontentloaded" });
   await page.locator(PAGE).waitFor({ timeout: 45000 });
-  await expectFocused(page, TRAIL[3].anchor, "recarregar");
+  await expectFocused(page, TRAIL.at(-1).anchor, "recarregar");
   check("após recarregar, sessão mantida e capítulo do link reaberto");
   await page.screenshot({ path: `${artifactDir}/producao-desktop.png` });
   await desktop.context.close();
