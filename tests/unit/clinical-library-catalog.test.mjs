@@ -80,4 +80,13 @@ assert.ok(workflow.includes("clinical-library-catalog.test.mjs"), "QA não execu
 assert.ok(workflow.includes("test:e2e:biblioteca-clinica"), "QA não executa o E2E da Biblioteca");
 assert.equal(pkg.scripts["test:e2e:biblioteca-clinica"], "node tests/e2e/biblioteca-clinica.mjs");
 
+// Smoke publicado: trilha derivada do catálogo do commit implantado, nunca lista fixa
+// (a lista fixa de 4 capítulos reprovou o deploy do Dia 05).
+const publishedSmoke = readFileSync("tests/e2e/published-biblioteca.mjs", "utf8");
+const publishedWorkflow = readFileSync(".github/workflows/biblioteca-clinica-published-smoke.yml", "utf8");
+assert.ok(publishedSmoke.includes("readTrailFromCatalog()"), "smoke publicado deve ler a trilha do catálogo");
+assert.doesNotMatch(publishedSmoke, /const TRAIL = \[/, "smoke publicado não pode fixar a lista de capítulos");
+assert.doesNotMatch(publishedSmoke, /cards\.count\(\), \d+/, "smoke publicado não pode fixar a contagem de capítulos");
+assert.match(publishedWorkflow, /ref: \$\{\{ github\.event\.workflow_run\.head_sha \|\| github\.sha \}\}/, "smoke publicado deve fazer checkout do SHA implantado");
+
 console.log(`clinical-library-catalog ok (${trail.length} dias, ${blocks.length} capítulos, ${componentFiles.length} componentes)`);

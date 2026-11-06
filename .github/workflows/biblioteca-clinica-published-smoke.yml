@@ -28,8 +28,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      # O smoke lê a trilha esperada do catálogo: precisa ser o do commit
+      # implantado, não o HEAD atual da main (que pode já estar à frente).
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Configure Node.js
         uses: actions/setup-node@v6
