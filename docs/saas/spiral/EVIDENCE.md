@@ -1152,3 +1152,18 @@ A dívida remanescente — componentes e handlers da extensão opcional que já 
 são renderizados nem chamados — permanece explicitamente fora desta correção e
 pode ser tratada em frente própria, caso a auditoria de código confirme que não
 há consumidores legítimos.
+
+### Ciclo 14 — smoke de produção ancorado no artefato implantado
+
+A PR [#1273](https://github.com/jadsonfraga/neuroped/pull/1273) corrigiu a
+observabilidade da Biblioteca Clínica: o smoke pós-deploy passa a fazer
+checkout do `workflow_run.head_sha`, isto é, do SHA efetivamente implantado,
+em vez de comparar a produção com o HEAD corrente da `main`, que pode já estar
+à frente. Isso elimina falsos positivos e falsos negativos na prova de catálogo
+publicado.
+
+A proteção mantém o comportamento fail-closed sem credenciais e não fixa lista
+ou contagem de capítulos. A validação sintética confirmou títulos, status,
+recarregamento, viewport móvel e ausência de `pageerror`; os checks obrigatórios
+ficaram verdes antes da integração. A PR foi mesclada em `main` como
+`9945cbcb`, sem alteração de lógica clínica, PHI ou dados persistidos.
