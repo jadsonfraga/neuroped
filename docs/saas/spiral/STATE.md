@@ -446,3 +446,13 @@ A evidência foi registrada em `EVIDENCE.md#Ciclo-13` e o histórico de cobertur
 ### Próximo ponto de retomada
 
 Partir de `origin/main`, verificar PRs concorrentes e selecionar outra lacuna pequena e executável. S9, S10 estrutural, S13 estrutural e retenção legal permanecem condicionados a censo, decisão de produto, migração ou revisão jurídica. A cadência de 30 minutos continua solicitada, mas a plataforma ainda mantém a configuração disponível às 08:00 por `permission_denied: control source is unknown`.
+
+## Ciclo 14 (2026-11-06) — smoke publicado ancorado no SHA implantado
+
+A PR #1273 foi integrada como `9945cbcb`. O smoke pós-deploy da Biblioteca Clínica passou a comparar a produção com `workflow_run.head_sha`, o SHA efetivamente implantado, em vez de usar o HEAD corrente da `main`. A prova mantém fail-closed sem credenciais, não fixa a lista de capítulos e foi validada com títulos, status, reload, viewport móvel e ausência de `pageerror`.
+
+Não houve alteração de lógica clínica, PHI ou dados persistidos. A mudança melhora a confiabilidade da evidência de publicação e reduz o risco de concluir incorretamente que o catálogo implantado corresponde ao código atual.
+
+### Próximo ponto de retomada
+
+Partir de `origin/main`, verificar PRs concorrentes e continuar em uma frente pequena, preferencialmente de segurança, isolamento ou operação. Não reabrir S5, OPS-03-D, S13-R, S10-O, S10-F, node-forge, o E2E opcional ou a ancoragem do smoke. S9, S10 estrutural, S13 estrutural e retenção legal seguem condicionados a censo, decisão de produto, migração ou revisão jurídica.
