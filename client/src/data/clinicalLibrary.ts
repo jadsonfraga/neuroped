@@ -268,7 +268,6 @@ export const wiscReferences: ClinicalLibraryReference[] = [
 ];
 
 export const nextClinicalTopics = [
-  "Como reconhecer ansiedade de separação que ultrapassa o esperado?",
   "Quando a criança que não fala precisa de avaliação auditiva urgente?",
   "Como avaliar insônia comportamental no pré-escolar?",
 ];
