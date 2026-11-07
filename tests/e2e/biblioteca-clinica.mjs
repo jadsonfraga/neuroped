@@ -19,13 +19,14 @@ import {
   SYNTHETIC_CREDENTIALS,
 } from "../../scripts/lib/synthetic-clinical-api.mjs";
 
-// Perguntas literais da aba "Trilha 365" do índice-mestre (Dias 01–05).
+// Perguntas literais da aba "Trilha 365" do índice-mestre (Dias 01–06).
 const TRAIL = [
   { day: 1, slug: "tea-timidez-primeira-infancia", anchor: "capitulo-tea-timidez", title: "Como distinguir sinais de TEA de timidez na primeira infância?" },
   { day: 2, slug: "desatencao-imaturidade-etaria", anchor: "capitulo-desatencao-imaturidade", title: "Como diferenciar desatenção de imaturidade etária?" },
   { day: 3, slug: "primeira-crise-afebril", anchor: "capitulo-primeira-crise-afebril", title: "Primeira crise convulsiva afebril: qual a abordagem inicial?" },
   { day: 4, slug: "alfabetizacao-dislexia", anchor: "capitulo-alfabetizacao-dislexia", title: "Como diferenciar dificuldade de alfabetização de dislexia?" },
   { day: 5, slug: "atraso-fala-avaliacao-global", anchor: "capitulo-atraso-fala-avaliacao-global", title: "Quando o atraso de fala exige avaliação global?" },
+  { day: 6, slug: "ansiedade-separacao", anchor: "capitulo-ansiedade-separacao", title: "Como reconhecer ansiedade de separação que ultrapassa o esperado?" },
 ];
 const PAGE = '[data-testid="biblioteca-clinica-page"]';
 
@@ -105,13 +106,13 @@ try {
   check("selo do topo declara revisão médica pendente");
 
   const trailCards = page.locator('[data-testid="biblioteca-trilha"] > li');
-  assert.equal(await trailCards.count(), TRAIL.length, "Trilha 365 deve listar exatamente 5 capítulos");
+  assert.equal(await trailCards.count(), TRAIL.length, "Trilha 365 deve listar exatamente 6 capítulos");
   const cardTitles = await trailCards.locator("h4").allTextContents();
   assert.deepEqual(cardTitles.map((t) => t.trim()), TRAIL.map((t) => t.title), "títulos e ordem idênticos ao índice-mestre");
   const statuses = await trailCards.getByTestId("biblioteca-card-status").allTextContents();
   assert.deepEqual(statuses.map((t) => t.trim()), TRAIL.map(() => "Revisão médica pendente"), "cartões refletem revisao_medica");
   assert.equal(await page.locator('[data-testid="biblioteca-estudos-previos"] > li').count(), 1, "WISC-IV fica separado como estudo prévio");
-  check("catálogo: 5 capítulos da Trilha 365 + 1 estudo prévio separado");
+  check("catálogo: 6 capítulos da Trilha 365 + 1 estudo prévio separado");
 
   for (const chapter of TRAIL) {
     const article = page.locator(`article#${chapter.anchor}`);
@@ -133,7 +134,7 @@ try {
     assert.match(text, /revis[ãa]o m[ée]dica/i, `${chapter.anchor}: estado de revisão médica visível`);
     assert.doesNotMatch(text, /CRM[- ]?\d/, `${chapter.anchor}: sem assinatura médica`);
   }
-  check("5 capítulos únicos, com fluxograma nomeado, referências https/noopener e revisão médica visível");
+  check("6 capítulos únicos, com fluxograma nomeado, referências https/noopener e revisão médica visível");
 
   // Navegação por clique em cada cartão.
   for (const chapter of TRAIL) {
