@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import { sanitizeAgeInput, validateAge } from "@/lib/preConsultaCore";
 import {
   PREVISIT_SECURE_KEYS,
@@ -130,6 +131,7 @@ function FieldSelect({ label, value, onChange, options, id }: { label: string; v
 
 export default function PreRetornoPage() {
   const { accessMode, isAuthenticated } = useAuth();
+  const { toast } = useToast();
   const localPersistenceEnabled = !(accessMode === "remote" && isAuthenticated);
   const [paciente, setPaciente] = useState("");
   const [anos, setAnos] = useState("4");
@@ -189,9 +191,14 @@ export default function PreRetornoPage() {
     setStorageError("");
   }
 
-  function copiarResumo() {
+  async function copiarResumo() {
     if (!ageValidation.isValid) return;
-    copyText(resumo);
+    if (await copyText(resumo)) {
+      toast({ title: "Resumo copiado" });
+    } else {
+      // Clipboard negado ou indisponível: o usuário precisa saber que nada foi copiado.
+      toast({ title: "Não foi possível copiar o resumo", description: "Selecione o texto e copie manualmente, ou use Imprimir.", variant: "destructive" });
+    }
   }
 
   function compartilharWhatsApp() {

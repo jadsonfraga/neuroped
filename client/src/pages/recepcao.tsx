@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PremiumVisualPanel } from "@/components/PremiumVisualPanel";
 import { brandAssets } from "@/components/BrandAssets";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import { buildPreConsultaSummary, loadPreConsultas, savePreConsultas, type PreConsultaRecord, type PreConsultaStatus } from "@/lib/preConsultaCore";
 
 const statusLabels: Record<PreConsultaStatus, string> = {
@@ -27,6 +28,7 @@ function idade(record: PreConsultaRecord) {
 
 export default function RecepcaoPage() {
   const { accessMode, isAuthenticated } = useAuth();
+  const { toast } = useToast();
   const localPersistenceEnabled = !(accessMode === "remote" && isAuthenticated);
   const [items, setItems] = useState<PreConsultaRecord[]>([]);
   const [selected, setSelected] = useState<PreConsultaRecord | null>(null);
@@ -89,7 +91,12 @@ export default function RecepcaoPage() {
   }
 
   async function copiarResumo() {
-    await copyText(resumo);
+    if (await copyText(resumo)) {
+      toast({ title: "Resumo copiado" });
+    } else {
+      // Clipboard negado ou indisponível: o usuário precisa saber que nada foi copiado.
+      toast({ title: "Não foi possível copiar o resumo", description: "Selecione o texto e copie manualmente, ou use Imprimir.", variant: "destructive" });
+    }
   }
 
   return (
