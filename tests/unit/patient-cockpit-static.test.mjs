@@ -5,6 +5,7 @@ const read = (path) =>
   readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
 const cockpit = read("client/src/components/clinical/PatientCockpit.tsx");
 const patient = read("client/src/pages/paciente-detalhe.tsx");
+const eventsSource = read("client/src/lib/clinicalEventsSource.ts");
 
 assert.match(
   patient,
@@ -18,11 +19,17 @@ assert.match(
 );
 assert.match(cockpit, /scaleCount: number \| null/);
 assert.match(cockpit, /scaleCount === null \? "Indisponível"/);
+// O Clinical Core canônico tem duas portas: LIVE por clínica em produção
+// (/api/live/events) e o legado só no modo local. O cockpit consome as duas
+// pela fonte compartilhada (diagnóstico 07/11/2026, achado 1).
 assert.match(
   cockpit,
-  /\/api\/clinical-core\/events/,
-  "cockpit deve consumir o Clinical Core canônico",
+  /from "@\/lib\/clinicalEventsSource"/,
+  "cockpit deve consumir o Clinical Core canônico pela fonte compartilhada",
 );
+assert.match(cockpit, /clinicalEventsQueryKey\(patientId, source\)/);
+assert.match(eventsSource, /\/api\/live\/events/, "fonte LIVE por clínica");
+assert.match(eventsSource, /\/api\/clinical-core\/events/, "fonte local legada");
 assert.match(
   cockpit,
   /\/api\/consultations/,

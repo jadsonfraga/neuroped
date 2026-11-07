@@ -105,3 +105,17 @@ profissional. D-002 e D-008 deixam de orientar posicionamento vigente; ficam com
 **Consequência.** Dez entrevistas usam somente o ICP Solo; o alvo continua 3 pilotos pagos e
 2 segundas faturas `charge_paid`. Clínica fica em Later. Asaas, Resend, R2/LGPD, revisão
 jurídica, legado e smoke publicado permanecem gates externos; não há declaração de produção pronta.
+
+## D-012 · 2026-11-07 · G3: respostas do proprietário (autorização, não execução)
+**Contexto.** `PHASE3_GATE.md` pedia três respostas escritas para destravar o G3 (S9, legado).
+**Respostas do proprietário (sessão de 07/11/2026, sem nome de paciente):**
+1. Os 3 pacientes legados sem owner **são fictícios** (fixtures de demonstração) e podem ser descartados.
+2. Pergunta do paciente com owner sem clínica ativa: **não respondida nesta sessão**; continua pendente.
+3. A conta bootstrap admin **é a conta profissional do proprietário**.
+**Consequência (regras que não mudam).** Nada é apagado antes do G4 (backup/restore com cifra real
+provado) e do censo repetido imediatamente antes da migração. A conta do proprietário deve ser
+vinculada como titular da própria clínica antes de remover o acesso clínico global do admin; a
+remoção do bypass só acontece com essa vinculação verificada. O item 2 segue bloqueando a migração
+do quarto registro.
+**Prioridade de produto decidida na mesma sessão:** diários por clínica (persistência LIVE cifrada)
+antes da página de venda e do ensaio G4.

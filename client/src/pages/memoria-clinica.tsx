@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { LiveLegacyBlockedNotice, useLiveLegacyBlocked } from "@/components/LiveLegacyBlockedNotice";
 
 interface Patient { id: string; name: string }
 interface MemoryNote {
@@ -15,7 +16,7 @@ interface MemoryNote {
   category: string | null; source: string | null; tags: string[]; updatedAt: string;
 }
 
-export default function MemoriaClinicaPage() {
+function MemoriaClinicaContent() {
   const { toast } = useToast();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [patientId, setPatientId] = useState("");
@@ -113,4 +114,19 @@ export default function MemoriaClinicaPage() {
       </CardContent></Card>
     </div>}
   </div>;
+}
+
+export default function MemoriaClinicaPage() {
+  const blocked = useLiveLegacyBlocked();
+  if (blocked) {
+    return (
+      <div className="space-y-5 pb-8" data-testid="page-memoriaclinica-live-blocked">
+        <LiveLegacyBlockedNotice
+          moduleName="Memória clínica"
+          alternative="Registre a evolução no Prontuário do paciente, que já é vinculado à clínica."
+        />
+      </div>
+    );
+  }
+  return <MemoriaClinicaContent />;
 }
