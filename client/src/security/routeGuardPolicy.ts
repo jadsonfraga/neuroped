@@ -1,5 +1,6 @@
 import { isClinicalRoute } from "@/security/accessPolicy";
 import { LEGACY_DIRECT_TEST_REDIRECTS } from "@/data/legacyInstrumentRoutes";
+import { isLiveUnavailableNavRoute } from "@/security/liveUnavailableRoutes";
 
 export type RouteAccessMode = "checking" | "remote" | "local";
 export type RouteUserRole = "admin" | "professional" | "reader" | "operator" | "visitor";
@@ -356,6 +357,7 @@ export function canRenderNavigationItem({
   localPinConfigured = false,
   localPinUnlocked = false,
 }: Omit<RouteAccessInput, "allowedRoles">): boolean {
+  if (accessMode === "remote" && isAuthenticated && isLiveUnavailableNavRoute(path)) return false;
   return (
     decideRouteAccess({
       path,
