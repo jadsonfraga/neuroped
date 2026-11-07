@@ -17,6 +17,10 @@ const ALLOWED_NON_FUNCTION_ROUTES = new Map([
   // /api/live/documents (clinicalDocumentsClient.archiveInClinicalLive).
   ["/api/files", "modo local (Express); LIVE arquiva em /api/live/documents"],
   ["/api/files/sign-upload", "modo local (Express); LIVE arquiva em /api/live/documents"],
+  ["/api/files/:param", "modo local (Express); LIVE arquiva em /api/live/documents"],
+  // Conecta legado: GET/DELETE por evento só no Express; em LIVE a tela é
+  // bloqueada antes de montar (LiveLegacyBlockedNotice, PR #1282).
+  ["/api/conecta/events/:param", "modo local (Express); Conecta bloqueado em LIVE"],
   // SNCR/Anvisa: host externo (SNCR_API_URL), não é rota deste backend.
   ["/api/v1/auth/login", "API externa SNCR"],
   ["/api/v1/auth/token", "API externa SNCR"],
@@ -41,16 +45,20 @@ function stripComments(src) {
 }
 
 // Pages Functions: X.ts, X/index.ts, [param].ts / [param]/ e [[catchall]].
+// Segmento ":param" (vindo de `${...}` no cliente) só casa rota dinâmica.
 function functionRouteExists(path) {
   const segments = path.replace(/^\/api\/?/, "").split("/").filter(Boolean);
   function resolve(dir, rest) {
     if (rest.length === 0) return existsSync(join(dir, "index.ts"));
     if (!existsSync(dir)) return false;
     const entries = readdirSync(dir);
-    if (entries.some((e) => /^\[\[.+\]\]\.ts$/.test(e) || /^\[\[.+\]\]$/.test(e))) return true;
+    if (entries.some((e) => /^\[\[.+\]\](\.ts)?$/.test(e))) return true;
     const [head, ...tail] = rest;
-    if (tail.length === 0 && entries.includes(`${head}.ts`)) return true;
-    if (entries.includes(head) && statSync(join(dir, head)).isDirectory() && resolve(join(dir, head), tail)) return true;
+    const dynamicHead = head === ":param";
+    if (!dynamicHead) {
+      if (tail.length === 0 && entries.includes(`${head}.ts`)) return true;
+      if (entries.includes(head) && statSync(join(dir, head)).isDirectory() && resolve(join(dir, head), tail)) return true;
+    }
     for (const e of entries) {
       if (/^\[[^\]]+\]\.ts$/.test(e) && tail.length === 0) return true;
       if (/^\[[^\]]+\]$/.test(e) && statSync(join(dir, e)).isDirectory() && resolve(join(dir, e), tail)) return true;
@@ -60,11 +68,35 @@ function functionRouteExists(path) {
   return resolve("functions/api", segments);
 }
 
+/**
+ * Extrai o caminho /api/... de literais e templates, inclusive depois de uma
+ * base interpolada (`${API_BASE}/api/...`). Cada segmento com `${...}` vira
+ * ":param"; a consulta (?...) e o fragmento são descartados.
+ */
+export function extractApiPaths(src) {
+  const paths = [];
+  for (const match of src.matchAll(/["'`](?:\$\{[^}]*\})?(\/api\/(?:[A-Za-z0-9_\-/]|\$\{[^}]*\})*)/g)) {
+    const raw = match[1].replace(/\/+$/, "");
+    const normalized = raw
+      .split("/")
+      .map((segment) => (segment.includes("${") ? ":param" : segment))
+      .join("/");
+    paths.push(normalized);
+  }
+  return paths;
+}
+
+// Autoverificação do extrator (achado de revisão na #1284): base interpolada e
+// segmentos dinâmicos com sufixo não podem escapar do guard.
+assert.deepEqual(extractApiPaths("fetch(`${API_BASE}/api/auth/login`)"), ["/api/auth/login"]);
+assert.deepEqual(extractApiPaths("`/api/tenants/${clinicId}/members`"), ["/api/tenants/:param/members"]);
+assert.deepEqual(extractApiPaths("`/api/live/patients/${encodeURIComponent(id)}?clinicId=${c}`"), ["/api/live/patients/:param"]);
+assert.deepEqual(extractApiPaths('"/api/patients"'), ["/api/patients"]);
+
 const found = new Map();
 for (const file of walk("client/src")) {
   const src = stripComments(readFileSync(file, "utf8"));
-  for (const match of src.matchAll(/["'`](\/api\/[a-zA-Z0-9_\-/]+)/g)) {
-    const path = match[1].replace(/\/+$/, "");
+  for (const path of extractApiPaths(src)) {
     if (!found.has(path)) found.set(path, file);
   }
 }
