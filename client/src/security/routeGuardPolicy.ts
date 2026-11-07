@@ -1,5 +1,6 @@
 import { isClinicalRoute } from "@/security/accessPolicy";
 import { LEGACY_DIRECT_TEST_REDIRECTS } from "@/data/legacyInstrumentRoutes";
+import { isLiveUnavailableNavRoute } from "@/security/liveUnavailableRoutes";
 
 export type RouteAccessMode = "checking" | "remote" | "local";
 export type RouteUserRole = "admin" | "professional" | "reader" | "operator" | "visitor";
@@ -345,37 +346,6 @@ export function decideRouteAccess({
     return "forbidden";
   }
   return "allow";
-}
-
-/**
- * Telas que dependem de rascunho/histórico no dispositivo e ainda não têm
- * armazenamento vinculado à clínica. Numa sessão LIVE autenticada elas só
- * exibem o aviso de bloqueio (política LGPD de persistência no navegador),
- * então não são oferecidas no menu: a rota continua acessível por URL e
- * mostra o aviso explicativo, mas o profissional não cai num beco sem saída.
- * Fonte: diagnóstico de 07/11/2026, achado 4.
- */
-export const LIVE_UNAVAILABLE_NAV_ROUTES = [
-  "/diario-sono",
-  "/diario-alimentar",
-  "/diario-aderencia",
-  "/diario-desregulacao",
-  "/diario-dieta-sensorial",
-  "/diario-escola",
-  "/epilepsia",
-  "/cefaleia",
-  "/pre-consulta",
-  "/pre-retorno",
-  "/efeitos-colaterais",
-  "/recepcao",
-  "/assinatura-digital",
-  "/memoria-clinica",
-  "/conecta",
-] as const;
-
-export function isLiveUnavailableNavRoute(path: string): boolean {
-  const normalized = String(path || "/").split(/[?#]/, 1)[0].replace(/\/+$/, "") || "/";
-  return (LIVE_UNAVAILABLE_NAV_ROUTES as readonly string[]).includes(normalized);
 }
 
 export function canRenderNavigationItem({

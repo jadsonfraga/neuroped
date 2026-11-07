@@ -4,8 +4,6 @@ import { getAccessLevel, OPEN_ACCESS } from "../../client/src/security/accessPol
 import {
   canRenderNavigationItem,
   decideRouteAccess,
-  isLiveUnavailableNavRoute,
-  LIVE_UNAVAILABLE_NAV_ROUTES,
   isReaderClinicalRoute,
   isRouteSensitive,
   isVisitorRoute,
@@ -14,6 +12,7 @@ import {
   VISITOR_HOME,
   VISITOR_ROUTES,
 } from "../../client/src/security/routeGuardPolicy.ts";
+import { isLiveUnavailableNavRoute, LIVE_UNAVAILABLE_NAV_ROUTES } from "../../client/src/security/liveUnavailableRoutes.ts";
 
 // Modo ACESSO ABERTO (decisão do autor): sem qualquer senha, TODA rota é pública
 // e o RouteGuard sempre libera. As asserções de fail-closed abaixo (o modelo
@@ -621,6 +620,7 @@ for (const path of ["/avaliacao-pre-consulta-faixa-etaria/interno", "/avaliacao-
   assert.equal(isLiveUnavailableNavRoute("/diario-sono?x=1"), true);
   assert.equal(canRenderNavigationItem({ ...live, path: "/pacientes" }), true);
   assert.equal(canRenderNavigationItem({ ...live, path: "/neuroacompanhamento" }), true, "página-guia continua no menu");
+  assert.equal(canRenderNavigationItem({ ...live, path: "/conecta" }), true, "Conecta ancora o atalho DrJadsoneye e segue no menu");
   assert.equal(decideRouteAccess({ ...live, path: "/diario-sono" }), "allow", "a rota mostra o aviso, não é negada");
   // Cada rota listada precisa de fato bloquear a persistência em LIVE.
   const pageFor: Record<string, string> = {
