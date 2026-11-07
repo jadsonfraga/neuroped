@@ -64,9 +64,12 @@ async function assertExpandedNavigation() {
   assert.deepEqual(await hrefs(obs()), ["/avaliacao-pre-consulta-faixa-etaria"], "OBS é o segundo tile");
   assert.equal((await sonda().textContent())?.includes("Sonda Dez · Avaliação Direta"), true);
   assert.equal((await obs().textContent())?.includes("OBS-10 · Pré-Consulta"), true);
+  // Sessão LIVE: o Conecta ainda não tem armazenamento da clínica e não é
+  // oferecido no menu (diagnóstico 07/11/2026, achado 4); a rota segue
+  // acessível por URL com o aviso de bloqueio.
   assert.deepEqual(await hrefs(sidebar.locator(".np-side-connection:visible")), [
-    "/marcacao", "/conecta", "/eletroencefalograma", "/nesplora/",
-  ], "os quatro destinos aparecem exclusivamente no bloco Conexões");
+    "/marcacao", "/eletroencefalograma", "/nesplora/",
+  ], "os destinos de conexão disponíveis em LIVE aparecem exclusivamente no bloco Conexões");
   assert.equal(await sidebar.getByText("Conexões", { exact: true }).count(), 1);
   const clinicalHrefs = await hrefs(sidebar.locator(".np-side-hero:visible, .np-side-tile:visible"));
   for (const href of ["/marcacao", "/conecta", "/eletroencefalograma", "/nesplora/"]) {
