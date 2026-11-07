@@ -384,6 +384,32 @@ export async function collectTenantExportPayload(
       "O tenant excede o limite seguro para exportação síncrona; nenhum arquivo parcial foi gerado.",
     status: 413,
   });
+  // Diários LIVE (0039) entram na trava síncrona: bytes cifrados e linhas
+  // somam aos totais antes de carregar qualquer registro. Tabela ausente
+  // (migration pendente) conta zero.
+  const diaryExportCounts = async (): Promise<{ rows: number; bytes: number }> => {
+    try {
+      const row = await db
+        .prepare(
+          `SELECT COUNT(*) AS n, COALESCE(SUM(length(payload_encrypted)), 0) AS b
+             FROM live_diary_entries WHERE clinic_id = ?`,
+        )
+        .bind(clinicId)
+        .first<{ n: number; b: number }>();
+      return {
+        rows: validExportRowCount(row ? { n: row.n } : null),
+        bytes: validExportRowCount(row ? { n: row.b } : null),
+      };
+    } catch (error) {
+      if (isMissingExportTable(error, "live_diary_entries")) return { rows: 0, bytes: 0 };
+      throw error;
+    }
+  };
+  const withDiaries = (counts: TenantExportCounts, diaries: { rows: number; bytes: number }): TenantExportCounts => ({
+    ...counts,
+    encryptedBytes: counts.encryptedBytes + diaries.bytes,
+    otherRows: counts.otherRows + diaries.rows,
+  });
 
   // S12B (2026-09-26): `encrypted_bytes` precisa somar TODO conteúdo cifrado
   // que o snapshot abaixo vai carregar e decifrar, não só patients/events —
@@ -434,7 +460,7 @@ export async function collectTenantExportPayload(
         )
         .bind(clinicId, clinicId, clinicId, ...ENCRYPTED_BYTES_BINDS, ...OTHER_ROWS_BINDS)
         .first<CountRow>();
-      if (!exportWithinSyncLimits(normalizeCounts(counts))) return tooLarge();
+      if (!exportWithinSyncLimits(withDiaries(normalizeCounts(counts), await diaryExportCounts()))) return tooLarge();
     } catch {
       return coverageFailure();
     }
@@ -907,6 +933,9 @@ export async function collectTenantExportPayload(
       reported_by: string; payload_encrypted: string; encryption_version: string;
       supersedes_entry_id: string | null; status: string; created_at: string;
     }> = [];
+    if (options.enforceSyncLimits && !exportWithinSyncLimits(withDiaries(safeCounts, await diaryExportCounts()))) {
+      return tooLarge();
+    }
     try {
       const result = await db
         .prepare(

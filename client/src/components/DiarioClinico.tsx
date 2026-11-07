@@ -251,6 +251,18 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
+  // Um rascunho nunca atravessa prontuários: trocar de paciente com campos
+  // preenchidos pede confirmação e zera o formulário e a origem do relato.
+  function changeLivePatient(nextPatientId: string) {
+    if (nextPatientId === livePatientId) return;
+    const pristine = emptyForm(config.fields);
+    const dirty = config.fields.some((field) => (form[field.key] ?? "") !== (pristine[field.key] ?? ""));
+    if (dirty && !confirm("Trocar de paciente descarta o registro em preenchimento. Continuar?")) return;
+    setForm(pristine);
+    setReportedBy("family");
+    setLivePatientId(nextPatientId);
+  }
+
   async function saveLiveEntry() {
     if (!activeClinicId || !livePatientId) {
       toast({ title: "Selecione o paciente antes de registrar", variant: "destructive" });
@@ -416,10 +428,13 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
                 id="diario-live-paciente"
                 data-testid="diario-live-paciente"
                 value={livePatientId}
-                onChange={(event) => setLivePatientId(event.target.value)}
+                onChange={(event) => changeLivePatient(event.target.value)}
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
               >
                 <option value="">{livePatientsQuery.isLoading ? "Carregando pacientes…" : "Selecione o paciente"}</option>
+                {livePatientId && !livePatients.some((patient) => patient.id === livePatientId) && (
+                  <option value={livePatientId}>Paciente aberto pela ficha</option>
+                )}
                 {livePatients.map((patient) => (
                   <option key={patient.id} value={patient.id}>{patient.name}</option>
                 ))}

@@ -189,3 +189,30 @@ test("diários LIVE: cliente separa a data, descarta vazios e só mostra ativos"
   assert.equal(view[0].quality, "4");
   assert.deepEqual(liveDiaryEntriesFromResponse(null), []);
 });
+
+test("diários LIVE: trava síncrona da exportação conta bytes e linhas dos diários", async () => {
+  const f = await fixture();
+  try {
+    await prepareExport(f, ALFA);
+    // Um único registro cifrado acima do teto de bytes basta para recusar o
+    // caminho síncrono antes de carregar o payload.
+    f.raw
+      .prepare("INSERT INTO live_diary_entries (id, clinic_id, patient_id, author_user_id, diary_id, entry_date, reported_by, payload_encrypted, encryption_version) VALUES ('grande', ?, 'paciente-alfa', 'prof-a', 'diario-sono', '2026-11-01', 'family', ?, 'v')")
+      .run(ALFA, "x".repeat(20_000_001));
+    const sync = await collectTenantExportPayload(f.env.DB as never, f.env as never, ALFA, { enforceSyncLimits: true });
+    assert.equal(sync.ok, false);
+    assert.equal((sync as { code: string }).code, "TENANT_EXPORT_TOO_LARGE");
+  } finally {
+    f.raw.close();
+  }
+});
+
+test("diários LIVE: trocar de paciente nunca leva o rascunho para outro prontuário", () => {
+  const source = readFileSync("client/src/components/DiarioClinico.tsx", "utf8");
+  const fn = source.slice(source.indexOf("function changeLivePatient"), source.indexOf("async function saveLiveEntry"));
+  assert.match(fn, /confirm\(/, "pede confirmação com campos preenchidos");
+  assert.match(fn, /setForm\(pristine\)/, "zera o formulário");
+  assert.match(fn, /setReportedBy\("family"\)/, "zera a origem do relato");
+  assert.ok(fn.indexOf("setForm(pristine)") < fn.indexOf("setLivePatientId(nextPatientId)"), "formulário zerado antes da troca");
+  assert.match(source, /onChange=\{\(event\) => changeLivePatient\(event\.target\.value\)\}/);
+});
