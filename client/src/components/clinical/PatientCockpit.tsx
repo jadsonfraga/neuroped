@@ -9,6 +9,14 @@ import { FamilyPortalPanel } from "@/components/clinical/FamilyPortalPanel";
 import { AiUseRegistryPanel } from "@/components/clinical/AiUseRegistryPanel";
 import { RemoteIntakePanel } from "@/components/clinical/RemoteIntakePanel";
 import { RemoteScalePanel } from "@/components/clinical/RemoteScalePanel";
+import { useAuth } from "@/contexts/AuthContext";
+import { useClinic } from "@/contexts/ClinicContext";
+import {
+  clinicalEventsFromResponse,
+  clinicalEventsQueryKey,
+  clinicalEventsReady,
+  type ClinicalEventsSource,
+} from "@/lib/clinicalEventsSource";
 
 interface PatientCockpitProps {
   patientId: string;
@@ -109,17 +117,28 @@ function eventHeadline(event: ClinicalEvent): string {
 }
 
 export function PatientCockpit({ patientId, scaleCount }: PatientCockpitProps) {
-  const coreQuery = useQuery<ClinicalCoreResponse>({
-    queryKey: [`/api/clinical-core/events?patient_id=${encodeURIComponent(patientId)}&days=3650`],
-    enabled: Boolean(patientId),
+  const { accessMode, isAuthenticated } = useAuth();
+  const { activeClinicId } = useClinic();
+  const live = accessMode === "remote" && isAuthenticated;
+  const source: ClinicalEventsSource = { live, clinicId: live ? activeClinicId ?? null : null };
+  const coreQuery = useQuery<unknown, Error, ClinicalCoreResponse>({
+    queryKey: [clinicalEventsQueryKey(patientId, source)],
+    enabled: clinicalEventsReady(patientId, source),
+    select: (body) => {
+      const data = clinicalEventsFromResponse(body, source);
+      return { data, total: data.length };
+    },
   });
+  // Consultas e Conecta ainda vivem só nas tabelas legadas por dono, sem
+  // clínica. Em LIVE não se consulta o legado com o ID de um paciente LIVE: a
+  // última consulta vem dos encontros do próprio Clinical Core LIVE.
   const consultationQuery = useQuery<ConsultationResponse>({
     queryKey: [`/api/consultations?patient_id=${encodeURIComponent(patientId)}`],
-    enabled: Boolean(patientId),
+    enabled: Boolean(patientId) && !live,
   });
   const conectaQuery = useQuery<ConectaResponse>({
     queryKey: [`/api/conecta/events?patient_id=${encodeURIComponent(patientId)}&days=90`],
-    enabled: Boolean(patientId),
+    enabled: Boolean(patientId) && !live,
   });
 
   const coreEvents = coreQuery.data?.data;
@@ -174,7 +193,11 @@ export function PatientCockpit({ patientId, scaleCount }: PatientCockpitProps) {
     [events],
   );
 
-  const consultations = consultationQuery.data?.data ?? [];
+  const consultations: ConsultationRecord[] = live
+    ? events
+        .filter((event) => event.eventType === "encounter" && event.status === "active")
+        .map((event) => ({ id: event.id, date: event.occurredAt }))
+    : consultationQuery.data?.data ?? [];
   const latestConsultation = [...consultations].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   )[0];
@@ -289,7 +312,10 @@ export function PatientCockpit({ patientId, scaleCount }: PatientCockpitProps) {
               <p className="text-xs text-muted-foreground">Cobertura dos principais fluxos do produto.</p>
             </div>
             <ContinuityRow label="Última consulta" value={latestConsultation ? formatDate(latestConsultation.date) : "Sem consulta registrada"} />
-            <ContinuityRow label="Conecta · últimos 90 dias" value={conectaQuery.isError ? "Indisponível" : `${conectaQuery.data?.total ?? 0} registros`} />
+            <ContinuityRow
+              label="Conecta · últimos 90 dias"
+              value={live ? "Não integrado ao prontuário da clínica" : conectaQuery.isError ? "Indisponível" : `${conectaQuery.data?.total ?? 0} registros`}
+            />
             <ContinuityRow
               label="Escalas vinculadas"
               value={scaleCount === null ? "Indisponível" : `${scaleCount} aplicações`}
@@ -299,7 +325,7 @@ export function PatientCockpit({ patientId, scaleCount }: PatientCockpitProps) {
         </Card>
       </div>
 
-      <TherapyGoalsPanel patientId={patientId} events={events} unavailable={coreUnavailable} />
+      <TherapyGoalsPanel patientId={patientId} events={events} unavailable={coreUnavailable} source={source} />
 
       <div className="grid gap-4 xl:grid-cols-[1.35fr_1fr]">
         <Card className="border-card-border">

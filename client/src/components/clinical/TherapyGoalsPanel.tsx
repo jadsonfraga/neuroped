@@ -30,11 +30,19 @@ import {
   therapyGoalStatusLabels,
   type TherapyGoalSnapshot,
 } from "@shared/therapy-goals";
+import {
+  clinicalEventFromWriteResponse,
+  clinicalEventWriteRequest,
+  clinicalEventsQueryKey,
+  type ClinicalEventsSource,
+} from "@/lib/clinicalEventsSource";
 
 interface TherapyGoalsPanelProps {
   patientId: string;
   events: ClinicalEvent[];
   unavailable?: boolean;
+  /** Fonte do Clinical Core: LIVE por clínica em produção; legado só no modo local. */
+  source?: ClinicalEventsSource;
 }
 
 const outcomeContextLabels: Record<OutcomeContext, string> = {
@@ -82,11 +90,13 @@ function measurementText(goal: TherapyGoalSnapshot): string {
   return measurement.data.valueText || "Medida registrada sem valor resumível";
 }
 
-export function TherapyGoalsPanel({ patientId, events, unavailable = false }: TherapyGoalsPanelProps) {
+const LOCAL_SOURCE: ClinicalEventsSource = { live: false, clinicId: null };
+
+export function TherapyGoalsPanel({ patientId, events, unavailable = false, source = LOCAL_SOURCE }: TherapyGoalsPanelProps) {
   const { toast } = useToast();
   const goals = useMemo(() => deriveTherapyGoals(events), [events]);
   const activeCount = goals.filter((goal) => ["planned", "in_progress"].includes(goal.plan.data.status)).length;
-  const queryKey = `/api/clinical-core/events?patient_id=${encodeURIComponent(patientId)}&days=3650`;
+  const queryKey = clinicalEventsQueryKey(patientId, source);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [target, setTarget] = useState("");
@@ -108,12 +118,13 @@ export function TherapyGoalsPanel({ patientId, events, unavailable = false }: Th
   const [measureNote, setMeasureNote] = useState("");
 
   async function postEvent(input: ClinicalEventInput): Promise<ClinicalEvent> {
-    const response = await apiRequest("POST", "/api/clinical-core/events", input);
+    const request = clinicalEventWriteRequest(input, source);
+    const response = await apiRequest("POST", request.url, request.body);
     if (!response.ok) {
       const body = await response.json().catch(() => null);
       throw new Error(body?.error || "Não foi possível salvar no Clinical Core.");
     }
-    return response.json();
+    return clinicalEventFromWriteResponse(await response.json(), source);
   }
 
   const createGoalMutation = useMutation({
