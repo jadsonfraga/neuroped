@@ -1167,3 +1167,18 @@ ou contagem de capítulos. A validação sintética confirmou títulos, status,
 recarregamento, viewport móvel e ausência de `pageerror`; os checks obrigatórios
 ficaram verdes antes da integração. A PR foi mesclada em `main` como
 `9945cbcb`, sem alteração de lógica clínica, PHI ou dados persistidos.
+
+### Ciclo 15 — feedback fail-closed para cópia de resumo
+
+A PR [#1265](https://github.com/jadsonfraga/neuroped/pull/1265) corrigiu três
+jornadas de interface — pré-consulta, pré-retorno e recepção — que descartavam
+o retorno do helper compartilhado `copyText`. Quando o clipboard era negado ou
+indisponível, a tela podia confirmar sucesso sem que o resumo tivesse sido
+copiado. Agora cada chamada trata o resultado e apresenta aviso destrutivo de
+falha; o teste estático cobre os chamadores compartilhados e impede regressão.
+
+A prova não inspeciona nem persiste o conteúdo do clipboard e não altera a
+lógica clínica, a autorização, o backend ou dados persistidos. Os checks
+obrigatórios ficaram verdes antes da integração, incluindo qualidade, build,
+TypeScript, LGPD, isolamento LIVE e ausência de PHI no navegador. A PR foi
+mesclada em `main` como `924bf45f`.
