@@ -456,3 +456,13 @@ Não houve alteração de lógica clínica, PHI ou dados persistidos. A mudança
 ### Próximo ponto de retomada
 
 Partir de `origin/main`, verificar PRs concorrentes e continuar em uma frente pequena, preferencialmente de segurança, isolamento ou operação. Não reabrir S5, OPS-03-D, S13-R, S10-O, S10-F, node-forge, o E2E opcional ou a ancoragem do smoke. S9, S10 estrutural, S13 estrutural e retenção legal seguem condicionados a censo, decisão de produto, migração ou revisão jurídica.
+
+## Ciclo 15 (2026-11-07) — feedback fail-closed para cópia de resumo
+
+A PR #1265 foi integrada como `924bf45f`. As jornadas de pré-consulta, pré-retorno e recepção passaram a tratar explicitamente o resultado de `copyText`, avisando quando o clipboard falha em vez de confirmar uma cópia inexistente. A correção não inspeciona nem persiste o conteúdo copiado e não altera autorização, backend, lógica clínica ou dados persistidos.
+
+O contrato estático cobre os chamadores compartilhados e os checks obrigatórios passaram antes da integração, incluindo qualidade, build, TypeScript, LGPD, isolamento LIVE e ausência de PHI no navegador.
+
+### Próximo ponto de retomada
+
+Partir de `origin/main`, verificar PRs concorrentes e selecionar outra frente pequena de segurança, isolamento ou operação. Não reabrir as frentes já documentadas nos ciclos 5, 8, 10, 12, 13, 14 e 15. S9, S10 estrutural, S13 estrutural e retenção legal continuam condicionados a censo, decisão de produto, migração ou revisão jurídica; a cadência de 30 minutos continua bloqueada pela plataforma.
