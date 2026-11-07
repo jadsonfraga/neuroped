@@ -10,16 +10,14 @@
  * (SENSITIVE/READER) daquele arquivo são auditadas por texto, e esta lista não
  * concede nem remove acesso a papel algum.
  *
+ * Os seis diários do DiarioClinico (sono, alimentar, aderência, desregulação,
+ * dieta sensorial e escolar) saíram da lista quando passaram a gravar no
+ * prontuário da clínica (/api/live/diaries, migration 0039).
+ *
  * "/conecta" fica fora: ele também é a âncora da política de conexões do menu
  * (atalho do app externo DrJadsoneye) e já exibe o próprio aviso em LIVE.
  */
 export const LIVE_UNAVAILABLE_NAV_ROUTES = [
-  "/diario-sono",
-  "/diario-alimentar",
-  "/diario-aderencia",
-  "/diario-desregulacao",
-  "/diario-dieta-sensorial",
-  "/diario-escola",
   "/epilepsia",
   "/cefaleia",
   "/pre-consulta",

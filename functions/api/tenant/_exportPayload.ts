@@ -897,6 +897,48 @@ export async function collectTenantExportPayload(
     return coverageFailure();
   }
 
+  // Diários LIVE (migration 0039): direito de acesso/portabilidade. Tabela
+  // ausente antes da migration → lista vazia; falha de leitura ou de decifra
+  // aborta o export inteiro (nunca um arquivo parcial apresentado como completo).
+  let diaryEntries: unknown[];
+  try {
+    let diaryRows: Array<{
+      id: string; patient_id: string; author_user_id: string; diary_id: string; entry_date: string;
+      reported_by: string; payload_encrypted: string; encryption_version: string;
+      supersedes_entry_id: string | null; status: string; created_at: string;
+    }> = [];
+    try {
+      const result = await db
+        .prepare(
+          `SELECT id, patient_id, author_user_id, diary_id, entry_date, reported_by, payload_encrypted,
+                  encryption_version, supersedes_entry_id, status, created_at
+             FROM live_diary_entries WHERE clinic_id = ? ORDER BY entry_date ASC, created_at ASC`,
+        )
+        .bind(clinicId)
+        .all<(typeof diaryRows)[number]>();
+      diaryRows = result.results ?? [];
+    } catch (error) {
+      if (!isMissingExportTable(error, "live_diary_entries")) throw error;
+    }
+    diaryEntries = await Promise.all(
+      diaryRows.map(async (row) => ({
+        id: row.id,
+        patientId: row.patient_id,
+        authorUserId: row.author_user_id,
+        diaryId: row.diary_id,
+        entryDate: row.entry_date,
+        reportedBy: row.reported_by,
+        fields: await decryptClinicalJson<unknown>(env, clinicId, `live-diary-entry:${row.id}`, row.payload_encrypted),
+        encryptionVersion: row.encryption_version,
+        supersedesEntryId: row.supersedes_entry_id,
+        status: row.status,
+        createdAt: row.created_at,
+      })),
+    );
+  } catch {
+    return coverageFailure();
+  }
+
   return {
     ok: true,
     counts: safeCounts,
@@ -1028,6 +1070,7 @@ export async function collectTenantExportPayload(
         : null,
       aiUseRecords,
       retentionRules,
+      diaryEntries,
       retentionPolicy: retentionPolicy
         ? {
             retentionDays: retentionPolicy.retention_days,
