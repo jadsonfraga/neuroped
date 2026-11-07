@@ -54,6 +54,8 @@ export const D1_MIGRATION_WORKFLOWS = Object.freeze([
   ".github/workflows/staff-links-multi-d1.yml",
   // Itens 5–8 do roadmap (0034–0037): portal da família, marca, registro de IA, painel.
   ".github/workflows/roadmap-items-d1.yml",
+  // 0039: diários de acompanhamento no Clinical LIVE.
+  ".github/workflows/live-diaries-d1.yml",
 ]);
 
 // Workflows que publicam o Cloudflare Pages de produção (--branch main).
