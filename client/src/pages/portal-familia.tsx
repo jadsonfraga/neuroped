@@ -103,9 +103,11 @@ export default function PortalFamiliaPage() {
 
   // ID de paciente nunca é credencial familiar. A consulta só existe como
   // demonstração local fictícia ou prévia de um profissional autenticado.
-  const canPreviewDocuments =
-    accessMode === "local" ||
-    (accessMode === "remote" && isAuthenticated);
+  // Em LIVE a prévia legada (/api/documents, tabelas *_demo por dono) fica
+  // desligada: documentos para a família são liberados na ficha do paciente,
+  // pelo painel do Portal da família vinculado à clínica.
+  const canPreviewDocuments = accessMode === "local";
+  const liveProfessional = accessMode === "remote" && isAuthenticated;
 
   const {
     data: documents = [],
@@ -216,10 +218,10 @@ export default function PortalFamiliaPage() {
               role="status"
             >
               <Lock className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-              <span>
-                Por segurança, esta instalação não abre documentos usando ID,
-                data de nascimento ou sobrenome. Solicite o documento pelo
-                canal seguro informado pelo consultório.
+              <span data-testid={liveProfessional ? "portal-live-preview-blocked" : undefined}>
+                {liveProfessional
+                  ? "Prévia por ID desativada no modo clínico LIVE. Para liberar ou revisar documentos da família, abra a ficha do paciente e use o painel Portal da família."
+                  : "Por segurança, esta instalação não abre documentos usando ID, data de nascimento ou sobrenome. Solicite o documento pelo canal seguro informado pelo consultório."}
               </span>
             </div>
           ) : (
