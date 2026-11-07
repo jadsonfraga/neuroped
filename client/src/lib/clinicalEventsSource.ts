@@ -76,6 +76,11 @@ export function clinicalEventWriteRequest(
 ): { url: string; body: unknown } {
   if (!source.live) return { url: "/api/clinical-core/events", body: input };
   if (!source.clinicId) throw new Error("Selecione a clínica ativa antes de registrar no prontuário.");
+  // O contrato LIVE persiste só o payload estruturado; uma nota livre seria
+  // descartada em silêncio. Recusar é melhor do que perder o texto clínico.
+  if (typeof input.note === "string" && input.note.trim()) {
+    throw new Error("Nota adicional ainda não é salva no prontuário da clínica. Registre o conteúdo na observação estruturada.");
+  }
   return {
     url: "/api/live/events",
     body: {
