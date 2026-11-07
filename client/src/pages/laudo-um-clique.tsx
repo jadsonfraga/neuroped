@@ -8,8 +8,8 @@ import { PageHero } from "@/components/PageHero";
 import { localIsoDate } from "@/lib/clinicalDate";
 import { escapeHtml } from "@/lib/htmlEscape";
 import { issuerCredentials, useIssuer } from "@/lib/issuer";
-import { apiRequest } from "@/lib/queryClient";
-import { loadAllPatientResults } from "@/lib/patientResultsPagination";
+import { loadPatientPrefill, loadPatientScaleResults } from "@/lib/patientPrefillSource";
+import { usePatientDataSource } from "@/hooks/usePatientDataSource";
 import { readRouteParam } from "@/lib/routeQuery";
 import {
   entradaVazia,
@@ -60,6 +60,7 @@ h1{font-size:14pt;margin:0 0 4mm}pre{white-space:pre-wrap;font-family:inherit}.s
 export default function LaudoUmCliquePage() {
   const { issuer } = useIssuer();
   const patientId = readRouteParam("patientId") || null;
+  const { source: patientSource, ready: patientSourceReady } = usePatientDataSource();
   const [e, setE] = useState<EntradaLaudoUmClique>(() => ({ ...entradaVazia(), dataConsulta: localIsoDate() }));
   const [gerado, setGerado] = useState<ReturnType<typeof gerarLaudoUmClique> | null>(null);
   const [revisado, setRevisado] = useState(false);
@@ -71,16 +72,14 @@ export default function LaudoUmCliquePage() {
   const [copiado, setCopiado] = useState("");
 
   useEffect(() => {
-    if (!patientId) return;
+    if (!patientId || !patientSourceReady) return;
     let cancelado = false;
     setCarga("Carregando paciente e escalas…");
     (async () => {
       try {
-        const resp = await apiRequest("GET", `/api/patients/${encodeURIComponent(patientId)}`);
-        const payload = await resp.json();
-        const p = payload?.patient ?? payload?.data ?? payload;
+        const p = await loadPatientPrefill(patientId, patientSource);
         let resultados: unknown[] = [];
-        try { resultados = await loadAllPatientResults(patientId); } catch { /* sem escalas: segue manual */ }
+        try { resultados = await loadPatientScaleResults(patientId, patientSource); } catch { /* sem escalas: segue manual */ }
         if (cancelado) return;
         setE((cur) => ({
           ...cur,
@@ -95,7 +94,7 @@ export default function LaudoUmCliquePage() {
       }
     })();
     return () => { cancelado = true; };
-  }, [patientId]);
+  }, [patientId, patientSource, patientSourceReady]);
 
   const set = <K extends keyof EntradaLaudoUmClique>(k: K, v: EntradaLaudoUmClique[K]) => {
     setE((c) => ({ ...c, [k]: v }));

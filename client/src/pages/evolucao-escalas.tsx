@@ -5,27 +5,26 @@ import { PageHero } from "@/components/PageHero";
 import { EvolucaoEscalasPanel } from "@/components/EvolucaoEscalasPanel";
 import { Label } from "@/components/ui/label";
 import { calcularEvolucao, LIMIAR_PADRAO } from "@/lib/evolucaoEscalas";
-import { loadAllPatientResults } from "@/lib/patientResultsPagination";
-import { apiRequest } from "@/lib/queryClient";
+import { loadPatientPrefill, loadPatientScaleResults } from "@/lib/patientPrefillSource";
+import { usePatientDataSource } from "@/hooks/usePatientDataSource";
 import { readRouteParam } from "@/lib/routeQuery";
 
 export default function EvolucaoEscalasPage() {
   const patientId = readRouteParam("patientId") || null;
+  const { source: patientSource, ready: patientSourceReady } = usePatientDataSource();
   const [nome, setNome] = useState("");
   const [resultados, setResultados] = useState<unknown[]>([]);
   const [estado, setEstado] = useState<"idle" | "carregando" | "ok" | "erro">("idle");
   const [limiar, setLimiar] = useState(Math.round(LIMIAR_PADRAO * 100));
 
   useEffect(() => {
-    if (!patientId) return;
+    if (!patientId || !patientSourceReady) return;
     let cancelado = false;
     setEstado("carregando");
     (async () => {
       try {
-        const resp = await apiRequest("GET", `/api/patients/${encodeURIComponent(patientId)}`);
-        const payload = await resp.json();
-        const p = payload?.patient ?? payload?.data ?? payload;
-        const lista = await loadAllPatientResults(patientId);
+        const p = await loadPatientPrefill(patientId, patientSource);
+        const lista = await loadPatientScaleResults(patientId, patientSource);
         if (cancelado) return;
         setNome(p?.name ?? "");
         setResultados(lista);
@@ -35,7 +34,7 @@ export default function EvolucaoEscalasPage() {
       }
     })();
     return () => { cancelado = true; };
-  }, [patientId]);
+  }, [patientId, patientSource, patientSourceReady]);
 
   const { series, pendentes } = useMemo(() => calcularEvolucao(resultados, { limiarAmplitude: limiar / 100 }), [resultados, limiar]);
 
