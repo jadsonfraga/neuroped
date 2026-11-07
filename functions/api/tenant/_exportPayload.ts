@@ -384,6 +384,32 @@ export async function collectTenantExportPayload(
       "O tenant excede o limite seguro para exportação síncrona; nenhum arquivo parcial foi gerado.",
     status: 413,
   });
+  // Diários LIVE (0039) entram na trava síncrona: bytes cifrados e linhas
+  // somam aos totais antes de carregar qualquer registro. Tabela ausente
+  // (migration pendente) conta zero.
+  const diaryExportCounts = async (): Promise<{ rows: number; bytes: number }> => {
+    try {
+      const row = await db
+        .prepare(
+          `SELECT COUNT(*) AS n, COALESCE(SUM(length(payload_encrypted)), 0) AS b
+             FROM live_diary_entries WHERE clinic_id = ?`,
+        )
+        .bind(clinicId)
+        .first<{ n: number; b: number }>();
+      return {
+        rows: validExportRowCount(row ? { n: row.n } : null),
+        bytes: validExportRowCount(row ? { n: row.b } : null),
+      };
+    } catch (error) {
+      if (isMissingExportTable(error, "live_diary_entries")) return { rows: 0, bytes: 0 };
+      throw error;
+    }
+  };
+  const withDiaries = (counts: TenantExportCounts, diaries: { rows: number; bytes: number }): TenantExportCounts => ({
+    ...counts,
+    encryptedBytes: counts.encryptedBytes + diaries.bytes,
+    otherRows: counts.otherRows + diaries.rows,
+  });
 
   // S12B (2026-09-26): `encrypted_bytes` precisa somar TODO conteúdo cifrado
   // que o snapshot abaixo vai carregar e decifrar, não só patients/events —
@@ -434,7 +460,7 @@ export async function collectTenantExportPayload(
         )
         .bind(clinicId, clinicId, clinicId, ...ENCRYPTED_BYTES_BINDS, ...OTHER_ROWS_BINDS)
         .first<CountRow>();
-      if (!exportWithinSyncLimits(normalizeCounts(counts))) return tooLarge();
+      if (!exportWithinSyncLimits(withDiaries(normalizeCounts(counts), await diaryExportCounts()))) return tooLarge();
     } catch {
       return coverageFailure();
     }
@@ -897,6 +923,51 @@ export async function collectTenantExportPayload(
     return coverageFailure();
   }
 
+  // Diários LIVE (migration 0039): direito de acesso/portabilidade. Tabela
+  // ausente antes da migration → lista vazia; falha de leitura ou de decifra
+  // aborta o export inteiro (nunca um arquivo parcial apresentado como completo).
+  let diaryEntries: unknown[];
+  try {
+    let diaryRows: Array<{
+      id: string; patient_id: string; author_user_id: string; diary_id: string; entry_date: string;
+      reported_by: string; payload_encrypted: string; encryption_version: string;
+      supersedes_entry_id: string | null; status: string; created_at: string;
+    }> = [];
+    if (options.enforceSyncLimits && !exportWithinSyncLimits(withDiaries(safeCounts, await diaryExportCounts()))) {
+      return tooLarge();
+    }
+    try {
+      const result = await db
+        .prepare(
+          `SELECT id, patient_id, author_user_id, diary_id, entry_date, reported_by, payload_encrypted,
+                  encryption_version, supersedes_entry_id, status, created_at
+             FROM live_diary_entries WHERE clinic_id = ? ORDER BY entry_date ASC, created_at ASC`,
+        )
+        .bind(clinicId)
+        .all<(typeof diaryRows)[number]>();
+      diaryRows = result.results ?? [];
+    } catch (error) {
+      if (!isMissingExportTable(error, "live_diary_entries")) throw error;
+    }
+    diaryEntries = await Promise.all(
+      diaryRows.map(async (row) => ({
+        id: row.id,
+        patientId: row.patient_id,
+        authorUserId: row.author_user_id,
+        diaryId: row.diary_id,
+        entryDate: row.entry_date,
+        reportedBy: row.reported_by,
+        fields: await decryptClinicalJson<unknown>(env, clinicId, `live-diary-entry:${row.id}`, row.payload_encrypted),
+        encryptionVersion: row.encryption_version,
+        supersedesEntryId: row.supersedes_entry_id,
+        status: row.status,
+        createdAt: row.created_at,
+      })),
+    );
+  } catch {
+    return coverageFailure();
+  }
+
   return {
     ok: true,
     counts: safeCounts,
@@ -1028,6 +1099,7 @@ export async function collectTenantExportPayload(
         : null,
       aiUseRecords,
       retentionRules,
+      diaryEntries,
       retentionPolicy: retentionPolicy
         ? {
             retentionDays: retentionPolicy.retention_days,
