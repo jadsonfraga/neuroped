@@ -41,6 +41,14 @@ describe("patientPrefillSource", () => {
     assert.equal(result.classification, "");
     assert.equal(result.createdAt, "2026-11-01T10:00:00.000Z");
     assert.deepEqual(liveAssessmentsToResults(null), []);
+    const onlyActive = liveAssessmentsToResults({
+      data: [
+        { id: "a-2", instrumentId: "snap-iv", appliedAt: "2026-11-02T10:00:00.000Z", payload: { title: "SNAP-IV" }, status: "active" },
+        { id: "a-1", instrumentId: "snap-iv", appliedAt: "2026-11-01T10:00:00.000Z", payload: { title: "SNAP-IV" }, status: "corrected" },
+        { id: "a-0", instrumentId: "snap-iv", appliedAt: "2026-10-01T10:00:00.000Z", payload: { title: "SNAP-IV" }, status: "voided" },
+      ],
+    }) as Array<Record<string, unknown>>;
+    assert.deepEqual(onlyActive.map((row) => row.id), ["a-2"], "supersedida não entra no laudo nem na evolução");
   });
 
   for (const file of [

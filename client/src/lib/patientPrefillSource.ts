@@ -50,12 +50,17 @@ export async function loadPatientPrefill(patientId: string, source: PatientDataS
 /**
  * Avaliações LIVE guardam respostas, não escore nem classificação. O formato
  * devolvido segue o legado, com escore nulo e classificação vazia: nada é
- * inventado, e as telas tratam a escala como "sem escore".
+ * inventado, e as telas tratam a escala como "sem escore". Versões corrigidas
+ * (supersedidas) ficam de fora.
  */
 export function liveAssessmentsToResults(payload: unknown): unknown[] {
   const rows = (payload as { data?: unknown } | null)?.data;
   if (!Array.isArray(rows)) return [];
-  return rows.map((assessment: any) => ({
+  // O GET devolve também versões supersedidas ('corrected'): só a aplicação
+  // vigente entra no laudo e na evolução, senão a correção conta em dobro.
+  return rows
+    .filter((assessment: any) => (assessment?.status ?? "active") === "active")
+    .map((assessment: any) => ({
     id: assessment?.id,
     scaleName: assessment?.payload?.title ?? assessment?.instrumentId ?? "",
     instrumentId: assessment?.instrumentId,
