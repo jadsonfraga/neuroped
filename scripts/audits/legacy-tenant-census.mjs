@@ -178,6 +178,19 @@ export async function collectLegacyTenantCensus(query, { bootstrapEmail = "" } =
   };
 }
 
+/** Só contagens e booleanos; nunca e-mail, ID ou conteúdo. */
+export function censusLogSummary(report) {
+  return {
+    tables: Object.fromEntries(Object.entries(report.tables).map(([name, t]) => [name, t.rows])),
+    patientOwnership: report.patientOwnership,
+    distinctOwners: report.distinctOwners,
+    bootstrapAdmin: report.bootstrapAdmin,
+    s9Confirmation: report.s9Confirmation,
+    unambiguousOwnerMapping: report.unambiguousOwnerMapping,
+    migrationAuthorized: report.migrationAuthorized,
+  };
+}
+
 async function main() {
   const output = resolve("artifacts/legacy-tenant-census.json");
   mkdirSync(dirname(output), { recursive: true });
@@ -211,6 +224,9 @@ async function main() {
     const report = await collectLegacyTenantCensus(query, { bootstrapEmail: process.env.CENSUS_BOOTSTRAP_EMAIL ?? "" });
     save({ status: "observed", ...report });
     console.log("Legacy tenant census recorded: aggregate counts only, zero mutations.");
+    // O artifact expira e pode ficar fora do alcance de quem só lê o log; as
+    // mesmas contagens (sem identidade nem conteúdo) vão para o log do job.
+    console.log(`CENSUS_AGGREGATES ${JSON.stringify(censusLogSummary(report))}`);
   } catch (error) {
     // Do not echo SQL, provider bodies, environment or arbitrary exception text.
     const code = /^CENSUS_[A-Z_]+$/.test(error?.message ?? "") ? error.message : "CENSUS_FAILED";
