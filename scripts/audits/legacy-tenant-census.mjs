@@ -90,6 +90,35 @@ export async function collectLegacyTenantCensus(query, { bootstrapEmail = "" } =
     bootstrapAdmin.ownedLegacyPatients = await scalar(`SELECT COUNT(*) AS total FROM patients_demo p JOIN users u ON u.id = p.owner_user_id
       WHERE lower(u.email) = ? AND u.role = 'admin' AND u.is_active = 1`, [email]);
   }
+  // S9/G3: confirmação mínima do memo de decisão (só contagens). Cruza os 3
+  // IDs fixos do seed com a classe "sem owner" e conta o que NÃO é seed, para
+  // que arquivar fixtures e migrar o 4º registro não dependam de inferência.
+  const SEED_IDS = "('demo-001', 'demo-002', 'demo-003')";
+  const s9Confirmation = {
+    seedsWithoutOwner: await scalar(`SELECT COUNT(*) AS total FROM patients_demo WHERE id IN ${SEED_IDS} AND owner_user_id IS NULL`),
+    nonSeedPatients: await scalar(`SELECT COUNT(*) AS total FROM patients_demo WHERE id NOT IN ${SEED_IDS}`),
+    nonSeedWithoutOwner: await scalar(`SELECT COUNT(*) AS total FROM patients_demo WHERE id NOT IN ${SEED_IDS} AND owner_user_id IS NULL`),
+    nonSeedOwnedByBootstrap: null,
+    dependents: {},
+  };
+  if (bootstrapAdmin.configured) {
+    s9Confirmation.nonSeedOwnedByBootstrap = await scalar(`SELECT COUNT(*) AS total FROM patients_demo p JOIN users u ON u.id = p.owner_user_id
+      WHERE p.id NOT IN ${SEED_IDS} AND lower(u.email) = ? AND u.role = 'admin' AND u.is_active = 1`, [bootstrapEmail.trim().toLowerCase()]);
+  }
+  for (const table of LEGACY_TABLES.filter((name) => name !== "patients_demo" && name !== "external_import_batches")) {
+    if (!tables[table].available) { s9Confirmation.dependents[table] = null; continue; }
+    const ofSeeds = await scalar(`SELECT COUNT(*) AS total FROM ${table} WHERE patient_id IN ${SEED_IDS}`);
+    const ofNonSeeds = await scalar(`SELECT COUNT(*) AS total FROM ${table} WHERE patient_id IS NOT NULL AND patient_id NOT IN ${SEED_IDS}`);
+    s9Confirmation.dependents[table] = { ofSeeds, ofNonSeeds };
+  }
+  s9Confirmation.matchesMemo = s9Confirmation.seedsWithoutOwner === 3
+    && s9Confirmation.nonSeedPatients === 1
+    && s9Confirmation.nonSeedWithoutOwner === 0
+    && patientOwnership.no_owner === 3
+    // Sem a conta bootstrap configurada a posse do 4º registro não foi checada:
+    // desconhecido nunca confirma.
+    && s9Confirmation.nonSeedOwnedByBootstrap === 1;
+
   // S9: a uniquely attributable patient does not prove its dependent records
   // are reachable. Only fixed, patient-linked legacy tables belong here;
   // external_import_batches has a different ownership model and is excluded.
@@ -143,7 +172,7 @@ export async function collectLegacyTenantCensus(query, { bootstrapEmail = "" } =
   return {
     version: 1, scope: "aggregate-only", mutations: false, clinicalContentRead: false,
     tables, patientOwnership, patientOwnerPresence, distinctOwners, legacySeedIdsPresent, bootstrapAdmin,
-    patientDependencies,
+    s9Confirmation, patientDependencies,
     unambiguousOwnerMapping: patientOwnership.one_active_clinic === tables.patients_demo.rows,
     migrationAuthorized: false,
   };
