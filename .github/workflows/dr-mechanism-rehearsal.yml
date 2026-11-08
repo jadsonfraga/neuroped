@@ -41,6 +41,8 @@ env:
   # qualquer colisão. Nenhum comando wrangler recebe este valor.
   PRODUCTION_D1: neuroped-db
   BACKUP: /tmp/neuroped-dr-rehearsal-${{ github.run_id }}.sql
+  # G4: manifesto com SHA-256 dos textos claros sintéticos (sem conteúdo).
+  DR_MANIFEST: /tmp/neuroped-dr-real-manifest-${{ github.run_id }}.json
 
 jobs:
   rehearsal:
@@ -93,6 +95,15 @@ jobs:
           echo "restore=$RESTORE" >> "$GITHUB_OUTPUT"
           echo "Origem e destino isolados definidos; produção não será tocada."
 
+      - name: G4 — chave clínica efêmera do ensaio (nunca a de produção)
+        run: |
+          set -euo pipefail
+          # Cifra real (encryptClinicalJson) com chave descartável deste run.
+          # O keyring de produção não é lido: o script recusa se ele existir.
+          KEY=$(openssl rand -base64 48)
+          echo "::add-mask::$KEY"
+          echo "DR_REHEARSAL_DATA_KEY=$KEY" >> "$GITHUB_ENV"
+
       - name: Etapa B — criar dois D1 temporários
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -130,6 +141,12 @@ jobs:
 
           npx wrangler@4 d1 execute "$SOURCE" --remote --yes \
             --file=./scripts/dr/synthetic-fixture.sql
+
+          # G4: pacientes, eventos e diários sintéticos com ciphertext real.
+          umask 077
+          node ./scripts/dr/real-ciphertext.mts fixture "$DR_MANIFEST" > /tmp/dr-real.sql
+          npx wrangler@4 d1 execute "$SOURCE" --remote --yes --file=/tmp/dr-real.sql
+          rm -f /tmp/dr-real.sql
 
       - name: Etapa D — fingerprint e backup executado
         id: backup
@@ -184,6 +201,12 @@ jobs:
           fi
           echo "duration_s=$((END-START))" >> "$GITHUB_OUTPUT"
           echo "restore_fingerprint=$(cat /tmp/restored.sha256)" >> "$GITHUB_OUTPUT"
+
+          # G4: decifra no destino tudo o que foi cifrado na origem.
+          npx wrangler@4 d1 execute "$RESTORE" --remote \
+            --command "$(node ./scripts/dr/real-ciphertext.mts readback-sql)" --json \
+            | node ./scripts/dr/real-ciphertext.mts verify "$DR_MANIFEST" | tee /tmp/dr-real-import.txt
+          echo "real_ciphertext=$(cat /tmp/dr-real-import.txt)" >> "$GITHUB_OUTPUT"
           echo "Backup restaurado em D1 distinto com fingerprint idêntico."
 
       - name: Etapa F — mutação destrutiva e bookmark
@@ -239,6 +262,12 @@ jobs:
             exit 1
           fi
           echo "post_fingerprint=$(cat /tmp/post-time-travel.sha256)" >> "$GITHUB_OUTPUT"
+
+          # G4: a cifra real continua decifrável depois do Time Travel.
+          npx wrangler@4 d1 execute "$RESTORE" --remote \
+            --command "$(node ./scripts/dr/real-ciphertext.mts readback-sql)" --json \
+            | node ./scripts/dr/real-ciphertext.mts verify "$DR_MANIFEST" | tee /tmp/dr-real-tt.txt
+          echo "real_ciphertext=$(cat /tmp/dr-real-tt.txt)" >> "$GITHUB_OUTPUT"
           echo "Time Travel reconciliou todas as invariantes metadata-only."
 
       - name: Etapa H — provar undo do próprio restore
@@ -294,7 +323,8 @@ jobs:
           rm -f "$BACKUP" /tmp/source.sha256 /tmp/restored.sha256 \
             /tmp/damaged.sha256 /tmp/post-time-travel.sha256 /tmp/post-undo.sha256 \
             /tmp/dr-export.log /tmp/dr-import.log /tmp/dr-time-travel.log \
-            /tmp/dr-undo.log /tmp/b1.txt /tmp/migration.log
+            /tmp/dr-undo.log /tmp/b1.txt /tmp/migration.log \
+            /tmp/dr-real.sql /tmp/dr-real-import.txt /tmp/dr-real-tt.txt "$DR_MANIFEST"
           exit "$STATUS"
 
       - name: Relatório metadata-only
@@ -310,6 +340,9 @@ jobs:
             echo "- Time Travel: \`${{ steps.time_travel.outputs.duration_s }}\`s"
             echo "- Fingerprint origem/import/Time Travel: \`${{ steps.backup.outputs.source_fingerprint }}\`"
             echo "- Fingerprint após dano e após undo: \`${{ steps.damage.outputs.damaged_fingerprint }}\`"
+            echo "- G4 cifra real após import: \`${{ steps.import.outputs.real_ciphertext }}\`"
+            echo "- G4 cifra real após Time Travel: \`${{ steps.time_travel.outputs.real_ciphertext }}\`"
+            echo "  (chave efêmera deste run; prova o mecanismo de cifra no backup, não a chave de produção)"
             echo ""
             echo "Escopo: backup exportado e restaurado, seguido de Time Travel e undo,"
             echo "com dados sintéticos. NÃO mede o RTO de um restore de produção nem"
