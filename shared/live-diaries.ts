@@ -14,6 +14,9 @@ export const LIVE_DIARY_IDS = [
   "diario-desregulacao",
   "diario-dieta-sensorial",
   "diario-escola",
+  // 0040: telas próprias (crises e calendário de cefaleia).
+  "diario-epilepsia",
+  "calendario-cefaleia",
 ] as const;
 export type LiveDiaryId = (typeof LIVE_DIARY_IDS)[number];
 
@@ -22,12 +25,14 @@ export type LiveDiaryReporter = (typeof LIVE_DIARY_REPORTERS)[number];
 
 export const LIVE_DIARY_LIMITS = {
   maxFields: 40,
-  maxFieldLength: 2_000,
+  maxFieldLength: 4_000,
+  maxListItems: 40,
+  maxListItemLength: 200,
   maxPayloadBytes: 20_000,
   maxListed: 500,
 } as const;
 
-const FIELD_KEY = /^[a-z][a-z0-9_]{0,39}$/;
+const FIELD_KEY = /^[a-zA-Z][a-zA-Z0-9_]{0,39}$/;
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const OPAQUE_ID = /^[A-Za-z0-9][A-Za-z0-9_-]{0,119}$/;
 
@@ -37,9 +42,12 @@ export interface LiveDiaryEntryInput {
   diaryId: LiveDiaryId;
   entryDate: string;
   reportedBy: LiveDiaryReporter;
-  fields: Record<string, string>;
+  fields: Record<string, LiveDiaryFieldValue>;
   supersedesEntryId: string | null;
 }
+
+/** Texto, número finito, sim/não ou lista curta de textos (gatilhos, sintomas). */
+export type LiveDiaryFieldValue = string | number | boolean | string[];
 
 export type LiveDiaryValidation =
   | { ok: true; value: LiveDiaryEntryInput }
@@ -85,15 +93,36 @@ export function validateLiveDiaryEntry(body: Record<string, unknown>, now: Date 
   if (!rawFields || typeof rawFields !== "object" || Array.isArray(rawFields)) {
     return fail("VALIDATION_ERROR", "fields deve ser um objeto.");
   }
-  const fields: Record<string, string> = {};
+  const fields: Record<string, LiveDiaryFieldValue> = {};
   const entries = Object.entries(rawFields as Record<string, unknown>);
   if (entries.length > LIVE_DIARY_LIMITS.maxFields) return fail("VALIDATION_ERROR", "Campos demais no registro.");
   for (const [key, value] of entries) {
     if (!FIELD_KEY.test(key)) return fail("VALIDATION_ERROR", "Nome de campo inválido.");
     if (key === "date") continue; // a data vive em entryDate
     if (value === null || value === undefined || value === "") continue;
-    if (typeof value !== "string" && typeof value !== "number") return fail("VALIDATION_ERROR", "Valor de campo inválido.");
-    const text = String(value).trim();
+    if (typeof value === "boolean") {
+      fields[key] = value;
+      continue;
+    }
+    if (typeof value === "number") {
+      if (!Number.isFinite(value)) return fail("VALIDATION_ERROR", "Número inválido.");
+      fields[key] = value;
+      continue;
+    }
+    if (Array.isArray(value)) {
+      if (value.length > LIVE_DIARY_LIMITS.maxListItems) return fail("VALIDATION_ERROR", "Lista longa demais.");
+      const items: string[] = [];
+      for (const item of value) {
+        if (typeof item !== "string") return fail("VALIDATION_ERROR", "Item de lista inválido.");
+        const text = item.trim();
+        if (text.length > LIVE_DIARY_LIMITS.maxListItemLength) return fail("VALIDATION_ERROR", "Item de lista excede o limite.");
+        if (text) items.push(text);
+      }
+      if (items.length) fields[key] = items;
+      continue;
+    }
+    if (typeof value !== "string") return fail("VALIDATION_ERROR", "Valor de campo inválido.");
+    const text = value.trim();
     if (text.length > LIVE_DIARY_LIMITS.maxFieldLength) return fail("VALIDATION_ERROR", "Campo excede o limite de texto.");
     if (text) fields[key] = text;
   }

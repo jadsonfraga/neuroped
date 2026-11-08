@@ -125,7 +125,7 @@
     "test:e2e:portal-familia": "node tests/e2e/portal-familia.mjs",
     "test:multiclinica": "node --import tsx --test tests/unit/clinic-branding.test.ts tests/unit/clinic-branding-migration.test.ts && node --import tsx --test tests/unit/multiclinica-isolation.test.ts",
     "test:e2e:multiclinica": "node tests/e2e/multiclinica.mjs",
-    "test:live-diaries": "node --import tsx --test tests/unit/live-diaries-integration.test.ts",
+    "test:live-diaries": "node --import tsx --test tests/unit/live-diaries-integration.test.ts && node tests/unit/live-diaries-0040-rebuild.test.mjs",
     "test:lgpd-ia": "node --import tsx --test tests/unit/lgpd-registro-ia.test.ts && node --import tsx --test tests/unit/lgpd-registro-ia-integration.test.ts",
     "test:e2e:lgpd-ia": "node tests/e2e/lgpd-registro-ia.mjs",
     "test:painel": "node --import tsx --test tests/unit/painel-resultados.test.ts && node --import tsx --test tests/unit/painel-resultados-integration.test.ts",

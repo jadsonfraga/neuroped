@@ -90,7 +90,7 @@ async function patientInClinic(db: D1Database, clinicId: string, patientId: stri
 }
 
 async function present(env: TenantEnv, row: DiaryRow) {
-  const fields = await decryptClinicalJson<Record<string, string>>(env, row.clinic_id, purpose(row.id), row.payload_encrypted);
+  const fields = await decryptClinicalJson<Record<string, unknown>>(env, row.clinic_id, purpose(row.id), row.payload_encrypted);
   return {
     id: row.id,
     patientId: row.patient_id,

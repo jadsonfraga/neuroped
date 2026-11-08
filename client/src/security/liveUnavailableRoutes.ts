@@ -12,14 +12,13 @@
  *
  * Os seis diários do DiarioClinico (sono, alimentar, aderência, desregulação,
  * dieta sensorial e escolar) saíram da lista quando passaram a gravar no
- * prontuário da clínica (/api/live/diaries, migration 0039).
+ * prontuário da clínica (/api/live/diaries, migration 0039). O diário de
+ * crises e o calendário de cefaleia saíram com a 0040.
  *
  * "/conecta" fica fora: ele também é a âncora da política de conexões do menu
  * (atalho do app externo DrJadsoneye) e já exibe o próprio aviso em LIVE.
  */
 export const LIVE_UNAVAILABLE_NAV_ROUTES = [
-  "/epilepsia",
-  "/cefaleia",
   "/pre-consulta",
   "/pre-retorno",
   "/efeitos-colaterais",

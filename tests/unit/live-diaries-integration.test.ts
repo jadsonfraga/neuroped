@@ -89,7 +89,7 @@ test("diários LIVE: validação, correção por sucessão, anulação e gatilho
     assert.equal((await post(entry({ fields: {} }))).status, 400);
     assert.equal((await post(entry({ fields: { "Campo Inválido": "x" } }))).status, 400);
     assert.equal((await post(entry({ reportedBy: "ia" }))).status, 400);
-    assert.equal((await post(entry({ fields: { notes: "x".repeat(2_001) } }))).status, 400);
+    assert.equal((await post(entry({ fields: { notes: "x".repeat(4_001) } }))).status, 400);
 
     const first = (await (await post(entry())).json()) as { id: string };
     const fixed = await post(entry({ supersedesEntryId: first.id, fields: { quality: "3", notes: "Correção fictícia" } }));
@@ -215,4 +215,44 @@ test("diários LIVE: trocar de paciente nunca leva o rascunho para outro prontu�
   assert.match(fn, /setReportedBy\("family"\)/, "zera a origem do relato");
   assert.ok(fn.indexOf("setForm(pristine)") < fn.indexOf("setLivePatientId(nextPatientId)"), "formulário zerado antes da troca");
   assert.match(source, /onChange=\{\(event\) => changeLivePatient\(event\.target\.value\)\}/);
+});
+
+test("diários LIVE (0040): crises e cefaleia com listas, número e sim/não", async () => {
+  const f = await fixture();
+  try {
+    const crise = await f.call("prof-a", diaryPost as never, PATH, "POST", entry({
+      diaryId: "diario-epilepsia",
+      fields: { time: "14:30", type: "Crise focal fictícia", duration: "2 minutos", triggers: ["Privação de sono", " Febre "], postIctal: [], notes: "Relato fictício" },
+    }), ALFA);
+    assert.equal(crise.status, 201);
+    const c = (await crise.json()) as { fields: Record<string, unknown> };
+    assert.deepEqual(c.fields.triggers, ["Privação de sono", "Febre"], "itens aparados; lista vazia descartada");
+    assert.equal("postIctal" in c.fields, false);
+
+    const dor = await f.call("prof-a", diaryPost as never, PATH, "POST", entry({
+      diaryId: "calendario-cefaleia",
+      reportedBy: "patient",
+      fields: { intensity: 7, aura: true, type: "Dor fictícia", symptoms: ["Fotofobia"] },
+    }), ALFA);
+    assert.equal(dor.status, 201);
+    const d = (await dor.json()) as { fields: Record<string, unknown> };
+    assert.equal(d.fields.intensity, 7);
+    assert.equal(d.fields.aura, true);
+
+    // limites e tipos inválidos
+    const post = (fields: Record<string, unknown>) => f.call("prof-a", diaryPost as never, PATH, "POST", entry({ diaryId: "calendario-cefaleia", fields }), ALFA);
+    // Infinity não viaja em JSON (vira null); a recusa é do validador puro.
+    assert.equal(validateLiveDiaryEntry({ ...entry({ diaryId: "calendario-cefaleia" }), fields: { intensity: Number.POSITIVE_INFINITY } }).ok, false);
+    assert.equal((await post({ symptoms: Array.from({ length: 41 }, (_, i) => `s${i}`) })).status, 400);
+    assert.equal((await post({ symptoms: ["x".repeat(201)] })).status, 400);
+    assert.equal((await post({ symptoms: [1] })).status, 400);
+    assert.equal((await post({ nested: { a: 1 } })).status, 400);
+
+    const list = (await (await f.call("prof-a", diaryGet as never, `${PATH}?clinicId=${ALFA}&patientId=paciente-alfa&diaryId=calendario-cefaleia`, "GET", undefined, ALFA)).json()) as Listed;
+    assert.equal(list.data.length, 1);
+    const stored = f.raw.prepare("SELECT payload_encrypted FROM live_diary_entries WHERE diary_id = 'diario-epilepsia'").get() as { payload_encrypted: string };
+    assert.doesNotMatch(stored.payload_encrypted, /Privação|Relato fictício/);
+  } finally {
+    f.raw.close();
+  }
 });

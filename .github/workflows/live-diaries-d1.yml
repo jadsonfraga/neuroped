@@ -1,5 +1,7 @@
-name: Live diaries D1 (0039)
-# Aplica a migration aditiva 0039 (diários de acompanhamento no Clinical LIVE).
+name: Live diaries D1 (0039–0040)
+# Aplica a migration aditiva 0039 (diários de acompanhamento no Clinical LIVE)
+# e a 0040 (reconstrução da tabela para incluir crises e cefaleia no CHECK,
+# preservando todas as linhas; provada em tests/unit/live-diaries-0040-rebuild).
 # Só cria tabela, índices e gatilhos novos com IF NOT EXISTS; não lê nem altera
 # dado existente. Mesmo padrão dos demais workflows de migration: valida no PR,
 # aplica só no main, com preflight (aplicada / ausente / parcial) e verificação
@@ -9,6 +11,7 @@ on:
     branches: [main]
     paths:
       - "db/migrations/0039_live_diary_entries.sql"
+      - "db/migrations/0040_live_diary_entries_epilepsy_headache.sql"
       - "shared/live-diaries.ts"
       - "functions/api/live/diaries/**"
       - "tests/unit/live-diaries*.test.ts"
@@ -17,6 +20,7 @@ on:
     branches: [main]
     paths:
       - "db/migrations/0039_live_diary_entries.sql"
+      - "db/migrations/0040_live_diary_entries_epilepsy_headache.sql"
       - ".github/workflows/live-diaries-d1.yml"
   workflow_dispatch:
 
@@ -54,7 +58,7 @@ jobs:
         run: npm run check
 
   migrate-live-diaries:
-    name: Apply live diaries (0039) to D1
+    name: Apply live diaries (0039–0040) to D1
     needs: validate-live-diaries
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -116,6 +120,30 @@ jobs:
             exit 1
           fi
 
+      - name: Aplicar 0040 (preflight pelo CHECK)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT (SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'live_diary_entries' AND sql LIKE '%calendario-cefaleia%') AS aplicada, (SELECT COUNT(*) FROM sqlite_master WHERE name = 'live_diary_entries_new') AS parcial;" \
+            > /tmp/diaries-0040-preflight.txt 2>&1
+          cat /tmp/diaries-0040-preflight.txt
+          if ! grep -qE '(parcial[^0-9]*0[^0-9]|"parcial":\s*0)' /tmp/diaries-0040-preflight.txt; then
+            echo "::error::live_diary_entries_new existe: reconstrução parcial; intervenção manual necessária."
+            exit 1
+          fi
+          if grep -qE '(aplicada[^0-9]*1[^0-9]|"aplicada":\s*1)' /tmp/diaries-0040-preflight.txt; then
+            echo "0040: já aplicada."
+          elif grep -qE '(aplicada[^0-9]*0[^0-9]|"aplicada":\s*0)' /tmp/diaries-0040-preflight.txt; then
+            echo "0040: aplicando."
+            npx wrangler@4 d1 execute neuroped-db --remote --yes --file="./db/migrations/0040_live_diary_entries_epilepsy_headache.sql"
+          else
+            echo "::error::0040 com preflight ilegível; intervenção manual necessária."
+            exit 1
+          fi
+
       - name: Verificar forma sem ler dados de clínicas
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -123,7 +151,7 @@ jobs:
         run: |
           set -euo pipefail
           npx wrangler@4 d1 execute neuroped-db --remote \
-            --command "SELECT (SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'live_diary_entries') AS tabelas, (SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name IN ('trg_live_diary_entries_tenant_patient', 'trg_live_diary_entries_supersedes_tenant', 'trg_live_diary_entries_core_immutable', 'trg_live_diary_entries_status_flow')) AS gatilhos, (SELECT COUNT(*) FROM sqlite_master WHERE type = 'index' AND name IN ('idx_live_diary_entries_patient', 'idx_live_diary_entries_one_successor')) AS indices;" \
+            --command "SELECT (SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'live_diary_entries') AS tabelas, (SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name IN ('trg_live_diary_entries_tenant_patient', 'trg_live_diary_entries_supersedes_tenant', 'trg_live_diary_entries_core_immutable', 'trg_live_diary_entries_status_flow')) AS gatilhos, (SELECT COUNT(*) FROM sqlite_master WHERE type = 'index' AND name IN ('idx_live_diary_entries_patient', 'idx_live_diary_entries_one_successor')) AS indices, (SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'live_diary_entries' AND sql LIKE '%calendario-cefaleia%') AS check0040, (SELECT COUNT(*) FROM sqlite_master WHERE name = 'live_diary_entries_new') AS sobra;" \
             > /tmp/diaries-verify.txt 2>&1
           cat /tmp/diaries-verify.txt
           if ! grep -qE '(tabelas[^0-9]*1[^0-9]|"tabelas":\s*1)' /tmp/diaries-verify.txt; then
@@ -138,4 +166,12 @@ jobs:
             echo "::error::esperados 2 índices da 0039."
             exit 1
           fi
-          echo "0039 verificada: tabela, 4 gatilhos e 2 índices presentes."
+          if ! grep -qE '(check0040[^0-9]*1[^0-9]|"check0040":\s*1)' /tmp/diaries-verify.txt; then
+            echo "::error::CHECK da 0040 ausente em live_diary_entries."
+            exit 1
+          fi
+          if ! grep -qE '(sobra[^0-9]*0[^0-9]|"sobra":\s*0)' /tmp/diaries-verify.txt; then
+            echo "::error::tabela temporária da 0040 sobrou."
+            exit 1
+          fi
+          echo "0039–0040 verificadas: tabela com CHECK atualizado, 4 gatilhos e 2 índices presentes."
