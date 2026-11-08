@@ -1180,5 +1180,19 @@ falha; o teste estático cobre os chamadores compartilhados e impede regressão.
 A prova não inspeciona nem persiste o conteúdo do clipboard e não altera a
 lógica clínica, a autorização, o backend ou dados persistidos. Os checks
 obrigatórios ficaram verdes antes da integração, incluindo qualidade, build,
-TypeScript, LGPD, isolamento LIVE e ausência de PHI no navegador. A PR foi
-mesclada em `main` como `924bf45f`.
+TypeScript, LGPD, isolamento LIVE e ausência de PHI no navegador. A PR foi mesclada em `main` como `924bf45f`.
+
+### Ciclo 16 — observabilidade segura do censo legado S9
+
+A PR [#1292](https://github.com/jadsonfraga/neuroped/pull/1292) passou a
+imprimir no log do job `CENSUS_AGGREGATES` com as mesmas contagens e booleanos
+do censo legado, sem e-mail, ID, nome ou conteúdo. O artefato detalhado do
+censo continua efêmero; o resumo agregado torna a confirmação de S9 observável
+para quem só possui acesso aos logs, sem transformar o log em um novo depósito
+de PHI.
+
+O teste sintético confirma que o resumo corresponde ao memo esperado e que as
+sentinelas de identidade não aparecem. A execução continua somente leitura,
+sem mutações, backfill ou atribuição de owner; a decisão de negócio sobre a
+destinação dos registros órfãos permanece bloqueada. A PR foi integrada em
+`main` como `8d6a8fba`, com os checks obrigatórios verdes.

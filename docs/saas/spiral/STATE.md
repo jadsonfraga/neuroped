@@ -466,3 +466,13 @@ O contrato estático cobre os chamadores compartilhados e os checks obrigatório
 ### Próximo ponto de retomada
 
 Partir de `origin/main`, verificar PRs concorrentes e selecionar outra frente pequena de segurança, isolamento ou operação. Não reabrir as frentes já documentadas nos ciclos 5, 8, 10, 12, 13, 14 e 15. S9, S10 estrutural, S13 estrutural e retenção legal continuam condicionados a censo, decisão de produto, migração ou revisão jurídica; a cadência de 30 minutos continua bloqueada pela plataforma.
+
+## Ciclo 16 (2026-11-08) — observabilidade segura do censo S9
+
+A PR #1292 foi integrada como `8d6a8fba`. O job de censo legado agora imprime `CENSUS_AGGREGATES` no log, contendo apenas contagens e booleanos, sem e-mail, ID, nome ou conteúdo. O teste sintético confirma a correspondência com o memo e a ausência de sentinelas de identidade.
+
+A mudança melhora a disponibilidade da evidência para quem só possui acesso aos logs, sem realizar backfill, atribuir owners ou alterar a decisão de negócio sobre registros órfãos. S9 continua bloqueado pela destinação autorizada dos dados observados.
+
+### Próximo ponto de retomada
+
+Partir de `origin/main`, verificar PRs concorrentes e selecionar outra frente pequena de segurança, isolamento, LGPD ou operação. Não atribuir registros legados por inferência nem reabrir os ciclos já fechados; manter a cadência de 30 minutos como solicitação pendente da plataforma.
