@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
-import { collectLegacyTenantCensus } from "../../scripts/audits/legacy-tenant-census.mjs";
+import { collectLegacyTenantCensus, censusLogSummary } from "../../scripts/audits/legacy-tenant-census.mjs";
 
 function fixture() {
   const db = new DatabaseSync(":memory:");
@@ -290,5 +290,8 @@ test("S9/G3: confirmation counts match the memo only for 3 ownerless seeds + 1 b
     assert.equal(report.migrationAuthorized, false);
     const serialized = JSON.stringify(report);
     for (const forbidden of ["SENSITIVE-", "synthetic.invalid", "private-real"]) assert.equal(serialized.includes(forbidden), false);
+    const logged = JSON.stringify(censusLogSummary(report));
+    assert.match(logged, /"matchesMemo":true/);
+    for (const forbidden of ["SENSITIVE-", "synthetic.invalid", "private-real", "owner"+"@"]) assert.equal(logged.includes(forbidden), false);
   } finally { db.close(); }
 });
