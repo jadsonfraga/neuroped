@@ -251,3 +251,39 @@ test("incompatible dependency schema is an error, not an empty or successful map
     await assert.rejects(collectLegacyTenantCensus(f.query), /no such column/);
   } finally { f.db.close(); }
 });
+
+test("S9/G3: confirmation counts match the memo only for 3 ownerless seeds + 1 bootstrap-owned patient", async () => {
+  const f = fixture();
+  try {
+    const report = await collectLegacyTenantCensus(f.query, { bootstrapEmail: "unique@synthetic.invalid" });
+    assert.equal(report.s9Confirmation.seedsWithoutOwner, 1);
+    assert.equal(report.s9Confirmation.nonSeedPatients, 7);
+    assert.equal(report.s9Confirmation.nonSeedOwnedByBootstrap, 2);
+    assert.equal(report.s9Confirmation.matchesMemo, false, "fixture ambígua não confirma o memo");
+  } finally { f.db.close(); }
+
+  const db = new DatabaseSync(":memory:");
+  try {
+    db.exec("PRAGMA foreign_keys = OFF");
+    db.exec(readFileSync("db/schema.d1.sql", "utf8"));
+    db.exec(readFileSync("db/migrations/0009_saas_phase1_foundation.sql", "utf8"));
+    db.prepare("INSERT INTO users (id, name, email, role, is_active) VALUES ('owner', 'SENSITIVE-NAME', 'owner@synthetic.invalid', 'admin', 1)").run();
+    for (const id of ["demo-001", "demo-002", "demo-003"]) {
+      db.prepare("INSERT INTO patients_demo (id, owner_user_id, name) VALUES (?, NULL, 'SENSITIVE-PATIENT')").run(id);
+    }
+    db.prepare("INSERT INTO patients_demo (id, owner_user_id, name) VALUES ('private-real', 'owner', 'SENSITIVE-PATIENT')").run();
+    db.prepare("INSERT INTO consultations_demo (id, patient_id) VALUES ('c1', 'demo-001')").run();
+    db.prepare("INSERT INTO scale_results_demo (id, patient_id, scale_id, scale_name) VALUES ('s1', 'private-real', 'x', 'x')").run();
+    db.exec("PRAGMA query_only = ON");
+    const report = await collectLegacyTenantCensus(async (sql, params = []) => db.prepare(sql).all(...params), { bootstrapEmail: "owner@synthetic.invalid" });
+    assert.deepEqual(
+      { ...report.s9Confirmation, dependents: undefined },
+      { seedsWithoutOwner: 3, nonSeedPatients: 1, nonSeedWithoutOwner: 0, nonSeedOwnedByBootstrap: 1, dependents: undefined, matchesMemo: true },
+    );
+    assert.deepEqual(report.s9Confirmation.dependents.consultations_demo, { ofSeeds: 1, ofNonSeeds: 0 });
+    assert.deepEqual(report.s9Confirmation.dependents.scale_results_demo, { ofSeeds: 0, ofNonSeeds: 1 });
+    assert.equal(report.migrationAuthorized, false);
+    const serialized = JSON.stringify(report);
+    for (const forbidden of ["SENSITIVE-", "synthetic.invalid", "private-real"]) assert.equal(serialized.includes(forbidden), false);
+  } finally { db.close(); }
+});

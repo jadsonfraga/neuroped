@@ -9,7 +9,7 @@ Sem PHI em nenhuma evidência.
 |---|---|---|---|---|
 | G1 | Keyring clínico (`CLINICAL_DATA_KEY`/`_ID`/`CLINICAL_INDEX_KEY`) em Production | proprietário | audit: `clinicalCryptoConfigured=true` | ✅ 17/10/2026 (audit run 39067286705, HEAD `a2be6a7`: `cryptoDiagnostic.configured=true`). Prova só o keyring no runtime; a decifra do que já está gravado é o G4 |
 | G2 | Permissão `Workers R2 Storage: Edit` no token + bucket/binding | proprietário | audit: `lgpdExport.configured=true` | 🔒 17/10/2026: `r2.apiPermission=denied`, `LGPD_BUCKET_NOT_CONFIGURED` |
-| G3 | S9: destino autorizado dos 4 registros legados + backfill + remoção do bypass de admin global | proprietário decide; engenharia executa | censo repetido sem órfãos; testes negativos Alfa/Beta; acesso do Cliente Zero validado | 🔒 |
+| G3 | S9: destino autorizado dos 4 registros legados + backfill + remoção do bypass de admin global | proprietário decide; engenharia executa | censo repetido sem órfãos; testes negativos Alfa/Beta; acesso do Cliente Zero validado | ⏳ 08/11/2026: destino autorizado (D-012, D-013); censo com confirmação mínima em preparação; migração e remoção do bypass não executadas |
 | G4 | Ensaio de backup/restore com **ciphertext real** (reusa `dr-mechanism-rehearsal.yml`) | engenharia, após G1 | run verde com `encryptClinicalJson` real | ⏳ desbloqueado (G1 ✅); não executado |
 | G5 | S4: webhook sandbox Asaas exercitado em ambiente publicado | proprietário (credencial sandbox) | webhook autenticado processado | 🔒 |
 | G6 | Revisão jurídica de Política de Privacidade, Termos, DPA com clínicas e papel de DPO | proprietário + advogado | parecer registrado; textos publicados | ⏳ não iniciado |

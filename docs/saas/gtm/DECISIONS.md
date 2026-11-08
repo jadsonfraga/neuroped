@@ -119,3 +119,19 @@ remoção do bypass só acontece com essa vinculação verificada. O item 2 segu
 do quarto registro.
 **Prioridade de produto decidida na mesma sessão:** diários por clínica (persistência LIVE cifrada)
 antes da página de venda e do ensaio G4.
+
+## D-013 · 2026-11-08 · G3: quarto registro legado e próximo passo
+**Contexto.** D-012 deixou pendente a pergunta 2 (paciente com owner sem clínica ativa). O G4 ficou
+verde em 08/11/2026 (run 42468389352: cifra real decifrada após restauração e após Time Travel).
+**Resposta do proprietário (sessão de 08/11/2026, sem nome de paciente):** o paciente é **caso real
+do proprietário** e deve ficar **na clínica do proprietário**.
+**Consequência.**
+1. O censo agregado passa a registrar a confirmação mínima do memo S9 (`s9Confirmation`): seeds sem
+   owner, pacientes não-seed, quantos deles são da conta bootstrap e dependentes por grupo. O plano
+   só segue se `matchesMemo = true` no censo observado em produção.
+2. Destino do registro real: o prontuário LIVE da clínica do proprietário (cifrado), nunca o admin
+   por inferência. Pré-requisito verificável: a conta do proprietário com exatamente 1 vínculo ativo
+   de titular (`bootstrapAdmin.activeOwnerMemberships = 1`). Se for 0, o proprietário cria a clínica
+   pelo próprio app antes da migração.
+3. Fixtures (3): arquivamento só depois do censo repetido; contagens antes/depois registradas.
+4. O bypass de admin global só sai depois da migração verificada e dos testes negativos Alfa/Beta.
