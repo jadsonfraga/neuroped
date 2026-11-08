@@ -256,3 +256,29 @@ test("diários LIVE (0040): crises e cefaleia com listas, número e sim/não", a
     f.raw.close();
   }
 });
+
+test("diários LIVE: anular com patientId só alcança o paciente selecionado", async () => {
+  const f = await fixture();
+  try {
+    f.raw.prepare("INSERT INTO live_patients (id, clinic_id, created_by_user_id, profile_encrypted) VALUES ('paciente-alfa-2', ?, 'prof-a', 'cifrado-ficticio')").run(ALFA);
+    const created = (await (await f.call("prof-a", diaryPost as never, PATH, "POST", entry({ diaryId: "diario-epilepsia", fields: { type: "Crise fictícia" } }), ALFA)).json()) as { id: string };
+    // tela em outro paciente da mesma clínica não anula o registro do primeiro
+    assert.equal((await f.call("prof-a", diaryPatch as never, PATH, "PATCH", { clinicId: ALFA, id: created.id, action: "void", patientId: "paciente-alfa-2" }, ALFA)).status, 404);
+    assert.equal((f.raw.prepare("SELECT status FROM live_diary_entries WHERE id = ?").get(created.id) as { status: string }).status, "active");
+    assert.equal((await f.call("prof-a", diaryPatch as never, PATH, "PATCH", { clinicId: ALFA, id: created.id, action: "void", patientId: "inválido com espaço" }, ALFA)).status, 400);
+    assert.equal((await f.call("prof-a", diaryPatch as never, PATH, "PATCH", { clinicId: ALFA, id: created.id, action: "void", patientId: "paciente-alfa" }, ALFA)).status, 200);
+  } finally {
+    f.raw.close();
+  }
+});
+
+test("diários LIVE: o hook nunca mostra nem anula registros de outro paciente", () => {
+  const hook = readFileSync("client/src/components/LiveDiaryContext.tsx", "utf8");
+  const effect = hook.slice(hook.indexOf("useEffect(() => {"), hook.indexOf("}, [live, clinicId, patientId, diaryId, reload]);"));
+  assert.ok(effect.indexOf("setRows([])") >= 0 && effect.indexOf("setRows([])") < effect.indexOf("listLiveDiaryRows"), "limpa antes de buscar");
+  assert.match(effect, /setRowsKey\(key\)/, "carimba a chave do paciente ao receber");
+  assert.match(hook, /const visibleRows = rowsKey && rowsKey === currentKey \? rows : \[\];/);
+  assert.match(hook, /rows: visibleRows,/);
+  assert.match(hook, /voidLiveDiaryEntry\(clinicId, id, patientId\)/);
+  assert.match(readFileSync("client/src/components/DiarioClinico.tsx", "utf8"), /voidLiveDiaryEntry\(activeClinicId, id, livePatientId\)/);
+});

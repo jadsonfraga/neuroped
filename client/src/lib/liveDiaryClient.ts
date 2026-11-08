@@ -119,8 +119,8 @@ export async function createLiveDiaryEntry(body: LiveDiaryWriteBody): Promise<vo
   if (!response.ok) throw new Error(await errorMessage(response, "Não foi possível salvar no prontuário."));
 }
 
-export async function voidLiveDiaryEntry(clinicId: string, id: string): Promise<void> {
-  const response = await fetchLive("PATCH", "/api/live/diaries", { clinicId, id, action: "void" });
+export async function voidLiveDiaryEntry(clinicId: string, id: string, patientId?: string): Promise<void> {
+  const response = await fetchLive("PATCH", "/api/live/diaries", { clinicId, id, action: "void", ...(patientId ? { patientId } : {}) });
   if (!response.ok) throw new Error(await errorMessage(response, "Não foi possível anular o registro."));
 }
 

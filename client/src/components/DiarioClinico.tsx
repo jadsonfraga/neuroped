@@ -334,7 +334,7 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
     if (live) {
       if (!activeClinicId) return;
       if (!confirm("Anular este registro? Ele sai do diário, mas fica no histórico auditável do prontuário.")) return;
-      void voidLiveDiaryEntry(activeClinicId, id)
+      void voidLiveDiaryEntry(activeClinicId, id, livePatientId)
         .then(() => {
           toast({ title: "Registro anulado" });
           setLiveReload((value) => value + 1);

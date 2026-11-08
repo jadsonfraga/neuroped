@@ -28,6 +28,9 @@ export function useLiveDiary(diaryId: LiveDiaryId) {
   const [patientId, setPatientId] = useState(() => readRouteParam("patientId"));
   const [reportedBy, setReportedBy] = useState<LiveDiaryReporter>("family");
   const [rows, setRows] = useState<LiveDiaryRow[]>([]);
+  // Registros sempre amarrados ao paciente de onde vieram: na troca, os do
+  // anterior somem na hora e nunca aparecem (nem são anulados) sob outro nome.
+  const [rowsKey, setRowsKey] = useState("");
   const [ready, setReady] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -42,17 +45,24 @@ export function useLiveDiary(diaryId: LiveDiaryId) {
     name: patient.profile?.name ?? "Paciente sem nome",
   }));
 
+  const currentKey = clinicId && patientId ? `${clinicId}:${patientId}:${diaryId}` : "";
   useEffect(() => {
     let active = true;
     setError(null);
+    setRows([]);
+    setRowsKey("");
     if (!live || !clinicId || !patientId) {
-      setRows([]);
       setReady(true);
       return () => { active = false; };
     }
+    const key = `${clinicId}:${patientId}:${diaryId}`;
     setReady(false);
     void listLiveDiaryRows(clinicId, patientId, diaryId)
-      .then((next) => { if (active) setRows(next); })
+      .then((next) => {
+        if (!active) return;
+        setRows(next);
+        setRowsKey(key);
+      })
       .catch((cause: unknown) => {
         if (active) setError(cause instanceof Error ? cause.message : "Não foi possível carregar o diário.");
       })
@@ -85,13 +95,19 @@ export function useLiveDiary(diaryId: LiveDiaryId) {
     [clinicId, patientId, diaryId, reportedBy],
   );
 
+  const visibleRows = rowsKey && rowsKey === currentKey ? rows : [];
+
   const voidEntry = useCallback(
     async (id: string) => {
-      if (!clinicId) return;
-      await voidLiveDiaryEntry(clinicId, id);
+      if (!clinicId || !patientId) return;
+      // Só anula registro do paciente selecionado, carregado para ele.
+      if (rowsKey !== currentKey || !rows.some((row) => row.id === id && row.patientId === patientId)) {
+        throw new Error("O registro não pertence ao paciente selecionado. Recarregue o diário.");
+      }
+      await voidLiveDiaryEntry(clinicId, id, patientId);
       setReload((value) => value + 1);
     },
-    [clinicId],
+    [clinicId, patientId, rows, rowsKey, currentKey],
   );
 
   return {
@@ -102,7 +118,7 @@ export function useLiveDiary(diaryId: LiveDiaryId) {
     patientsLoading: patientsQuery.isLoading,
     reportedBy,
     setReportedBy,
-    rows,
+    rows: visibleRows,
     ready,
     error,
     busy,
