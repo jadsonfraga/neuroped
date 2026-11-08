@@ -90,7 +90,7 @@ async function patientInClinic(db: D1Database, clinicId: string, patientId: stri
 }
 
 async function present(env: TenantEnv, row: DiaryRow) {
-  const fields = await decryptClinicalJson<Record<string, string>>(env, row.clinic_id, purpose(row.id), row.payload_encrypted);
+  const fields = await decryptClinicalJson<Record<string, unknown>>(env, row.clinic_id, purpose(row.id), row.payload_encrypted);
   return {
     id: row.id,
     patientId: row.patient_id,
@@ -254,6 +254,12 @@ export const onRequestPatch: PagesFunction<TenantEnv> = async (context) => {
   if (!clinicId || !OPAQUE_ID.test(id) || body.action !== "void") {
     return tenantError("clinicId, id e action \"void\" são obrigatórios.", "VALIDATION_ERROR", 400);
   }
+  // patientId opcional (clientes antigos); quando vem, entra no predicado:
+  // anular só alcança registro do paciente selecionado na tela.
+  const patientId = typeof body.patientId === "string" ? body.patientId.trim() : "";
+  if (body.patientId !== undefined && !OPAQUE_ID.test(patientId)) {
+    return tenantError("patientId inválido.", "VALIDATION_ERROR", 400);
+  }
   const membership = await getClinicMembership(db, clinicId, user);
   if (!membership || !membershipCanWriteClinical(membership)) return tenantError("Escrita clínica negada para esta clínica.", "TENANT_FORBIDDEN", 403);
   const billingError = await requireBillingEntitlement(db, user.id, clinicId, "clinical");
@@ -261,14 +267,16 @@ export const onRequestPatch: PagesFunction<TenantEnv> = async (context) => {
 
   try {
     const current = await db
-      .prepare(`SELECT diary_id, status FROM ${TABLE} WHERE id = ? AND clinic_id = ? LIMIT 1`)
-      .bind(id, clinicId)
+      .prepare(`SELECT diary_id, status FROM ${TABLE} WHERE id = ? AND clinic_id = ? AND (? = '' OR patient_id = ?) LIMIT 1`)
+      .bind(id, clinicId, patientId, patientId)
       .first<{ diary_id: string; status: string }>();
     // Anti-enumeração: registro de outra clínica responde igual a inexistente.
     if (!current) return tenantError("Registro não encontrado nesta clínica.", "NOT_FOUND", 404);
     if (current.status !== "active") return tenantError("Somente registro ativo pode ser anulado.", "ENTRY_NOT_ACTIVE", 409);
     const results = await db.batch([
-      db.prepare(`UPDATE ${TABLE} SET status = 'voided' WHERE id = ? AND clinic_id = ? AND status = 'active'`).bind(id, clinicId),
+      db
+        .prepare(`UPDATE ${TABLE} SET status = 'voided' WHERE id = ? AND clinic_id = ? AND (? = '' OR patient_id = ?) AND status = 'active'`)
+        .bind(id, clinicId, patientId, patientId),
       prepareSaasAudit(
         db,
         { clinicId, actorUserId: user.id, action: "live_diary_entry_void", targetType: "live_diary_entry", targetId: id, metadata: { diaryId: current.diary_id } },

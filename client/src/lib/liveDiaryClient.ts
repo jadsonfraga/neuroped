@@ -1,5 +1,5 @@
 import { apiRequest } from "@/lib/queryClient";
-import type { LiveDiaryReporter } from "@shared/live-diaries";
+import type { LiveDiaryFieldValue, LiveDiaryReporter } from "@shared/live-diaries";
 
 /**
  * Cliente dos diários LIVE (/api/live/diaries). Os registros vivem no servidor,
@@ -11,7 +11,7 @@ export interface LiveDiaryRow {
   diaryId: string;
   entryDate: string;
   reportedBy: string;
-  fields: Record<string, string>;
+  fields: Record<string, LiveDiaryFieldValue>;
   status: string;
   createdAt: string;
 }
@@ -40,7 +40,12 @@ export function liveDiaryEntriesFromResponse(body: unknown): LiveDiaryEntryView[
     .filter((row) => row && typeof row.id === "string" && row.status === "active")
     .map((row) => {
       const created = Date.parse(row.createdAt);
-      const fields = row.fields && typeof row.fields === "object" ? row.fields : {};
+      const raw = row.fields && typeof row.fields === "object" ? row.fields : {};
+      // O DiarioClinico desenha texto: listas viram "a; b" e sim/não vira texto.
+      const fields: Record<string, string> = {};
+      for (const [key, value] of Object.entries(raw)) {
+        fields[key] = Array.isArray(value) ? value.join("; ") : typeof value === "boolean" ? (value ? "Sim" : "Não") : String(value);
+      }
       return {
         ...fields,
         id: row.id,
@@ -90,13 +95,32 @@ export async function listLiveDiaryEntries(clinicId: string, patientId: string, 
   return liveDiaryEntriesFromResponse(await response.json());
 }
 
-export async function createLiveDiaryEntry(body: ReturnType<typeof liveDiaryWriteBody>): Promise<void> {
+export interface LiveDiaryWriteBody {
+  clinicId: string;
+  patientId: string;
+  diaryId: string;
+  entryDate: string;
+  reportedBy: LiveDiaryReporter;
+  fields: Record<string, LiveDiaryFieldValue>;
+}
+
+/** Linhas ativas cruas (para telas com modelo próprio, como crises e cefaleia). */
+export async function listLiveDiaryRows(clinicId: string, patientId: string, diaryId: string): Promise<LiveDiaryRow[]> {
+  const response = await fetchLive(
+    "GET",
+    `/api/live/diaries?clinicId=${encodeURIComponent(clinicId)}&patientId=${encodeURIComponent(patientId)}&diaryId=${encodeURIComponent(diaryId)}`,
+  );
+  const body = (await response.json()) as { data?: unknown };
+  return Array.isArray(body?.data) ? (body.data as LiveDiaryRow[]).filter((row) => row?.status === "active") : [];
+}
+
+export async function createLiveDiaryEntry(body: LiveDiaryWriteBody): Promise<void> {
   const response = await fetchLive("POST", "/api/live/diaries", body);
   if (!response.ok) throw new Error(await errorMessage(response, "Não foi possível salvar no prontuário."));
 }
 
-export async function voidLiveDiaryEntry(clinicId: string, id: string): Promise<void> {
-  const response = await fetchLive("PATCH", "/api/live/diaries", { clinicId, id, action: "void" });
+export async function voidLiveDiaryEntry(clinicId: string, id: string, patientId?: string): Promise<void> {
+  const response = await fetchLive("PATCH", "/api/live/diaries", { clinicId, id, action: "void", ...(patientId ? { patientId } : {}) });
   if (!response.ok) throw new Error(await errorMessage(response, "Não foi possível anular o registro."));
 }
 
