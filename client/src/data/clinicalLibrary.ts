@@ -44,6 +44,20 @@ export interface ClinicalLibraryChapter {
 }
 export const clinicalLibraryChapters: ClinicalLibraryChapter[] = [
   {
+    slug: "audicao-urgente",
+    anchor: "capitulo-audicao-urgente",
+    day: 7,
+    title: "Quando a criança que não fala precisa de avaliação auditiva urgente?",
+    subtitle: "Red flags, prioridade audiológica e avaliação paralela do desenvolvimento",
+    category: "Linguagem e comunicação",
+    date: "2026-11-08",
+    updated: "2026-11-08",
+    status: "revisao_medica",
+    minutes: 6,
+    review: "Pesquisa Consensus Pro 08/11/2026; revisão médica pendente.",
+    sources: ["aap-audicao-2023", "jcih-2019", "ms-triagem-auditiva"],
+  },
+  {
     slug: "ansiedade-separacao",
     anchor: "capitulo-ansiedade-separacao",
     day: 6,
@@ -268,7 +282,6 @@ export const wiscReferences: ClinicalLibraryReference[] = [
 ];
 
 export const nextClinicalTopics = [
-  "Quando a criança que não fala precisa de avaliação auditiva urgente?",
   "Como avaliar insônia comportamental no pré-escolar?",
 ];
 
