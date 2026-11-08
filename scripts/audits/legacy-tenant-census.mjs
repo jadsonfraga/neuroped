@@ -115,7 +115,9 @@ export async function collectLegacyTenantCensus(query, { bootstrapEmail = "" } =
     && s9Confirmation.nonSeedPatients === 1
     && s9Confirmation.nonSeedWithoutOwner === 0
     && patientOwnership.no_owner === 3
-    && (s9Confirmation.nonSeedOwnedByBootstrap === null || s9Confirmation.nonSeedOwnedByBootstrap === 1);
+    // Sem a conta bootstrap configurada a posse do 4º registro não foi checada:
+    // desconhecido nunca confirma.
+    && s9Confirmation.nonSeedOwnedByBootstrap === 1;
 
   // S9: a uniquely attributable patient does not prove its dependent records
   // are reachable. Only fixed, patient-linked legacy tables belong here;

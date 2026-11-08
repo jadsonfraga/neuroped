@@ -281,6 +281,11 @@ test("S9/G3: confirmation counts match the memo only for 3 ownerless seeds + 1 b
       { seedsWithoutOwner: 3, nonSeedPatients: 1, nonSeedWithoutOwner: 0, nonSeedOwnedByBootstrap: 1, dependents: undefined, matchesMemo: true },
     );
     assert.deepEqual(report.s9Confirmation.dependents.consultations_demo, { ofSeeds: 1, ofNonSeeds: 0 });
+    const withoutBootstrap = await collectLegacyTenantCensus(async (sql, params = []) => db.prepare(sql).all(...params));
+    assert.equal(withoutBootstrap.s9Confirmation.nonSeedOwnedByBootstrap, null);
+    assert.equal(withoutBootstrap.s9Confirmation.matchesMemo, false, "posse não checada nunca confirma");
+    const otherOwner = await collectLegacyTenantCensus(async (sql, params = []) => db.prepare(sql).all(...params), { bootstrapEmail: "someone-else@synthetic.invalid" });
+    assert.equal(otherOwner.s9Confirmation.matchesMemo, false, "registro de outro owner não confirma");
     assert.deepEqual(report.s9Confirmation.dependents.scale_results_demo, { ofSeeds: 0, ofNonSeeds: 1 });
     assert.equal(report.migrationAuthorized, false);
     const serialized = JSON.stringify(report);
