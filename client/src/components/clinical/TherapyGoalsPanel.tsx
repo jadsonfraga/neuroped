@@ -194,7 +194,7 @@ export function TherapyGoalsPanel({ patientId, events, unavailable = false, sour
           source: "clinician",
           sourceLabel: "Medida de evolução vinculada a meta terapêutica",
         },
-        ...(measureNote.trim() ? { note: measureNote.trim() } : {}),
+        ...(!source.live && measureNote.trim() ? { note: measureNote.trim() } : {}),
         data: {
           domain: measureGoal.plan.data.goalDomain || "therapy_goal",
           measure: measureLabel.trim() || measureGoal.plan.data.measurementMethod || "Evolução da meta",
@@ -474,9 +474,17 @@ export function TherapyGoalsPanel({ patientId, events, unavailable = false, sour
             <Field className="sm:col-span-2" label="Observação qualitativa" htmlFor="goal-measure-text">
               <Textarea id="goal-measure-text" rows={2} value={measureText} onChange={(event) => setMeasureText(event.target.value.slice(0, 1000))} placeholder="Opcional; pode ser usada sem valor numérico" />
             </Field>
-            <Field className="sm:col-span-2" label="Nota / contexto adicional" htmlFor="goal-measure-note">
-              <Textarea id="goal-measure-note" rows={2} value={measureNote} onChange={(event) => setMeasureNote(event.target.value.slice(0, 5000))} placeholder="Registre apenas o que foi observado ou medido" />
-            </Field>
+            {source.live ? (
+              // O Clinical Core LIVE ainda não persiste a nota livre do evento:
+              // oferecê-la aqui faria o texto sumir em silêncio ao salvar.
+              <p className="sm:col-span-2 text-xs text-muted-foreground" data-testid="goal-measure-note-live-unavailable">
+                Nota adicional ainda não é salva no prontuário da clínica. Use a observação qualitativa acima.
+              </p>
+            ) : (
+              <Field className="sm:col-span-2" label="Nota / contexto adicional" htmlFor="goal-measure-note">
+                <Textarea id="goal-measure-note" rows={2} value={measureNote} onChange={(event) => setMeasureNote(event.target.value.slice(0, 5000))} placeholder="Registre apenas o que foi observado ou medido" />
+              </Field>
+            )}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setMeasureGoal(null)} disabled={measurementMutation.isPending}>Cancelar</Button>

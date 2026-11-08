@@ -84,6 +84,16 @@ describe("clinicalEventsSource", () => {
       payload: { measure: "Medida sintética", context: "clinic" },
     });
     assert.throws(() => clinicalEventWriteRequest({ provenance: {} } as any, { live: true, clinicId: null }));
+    // Nota livre não tem onde ser persistida no LIVE: recusar, nunca descartar.
+    assert.throws(
+      () => clinicalEventWriteRequest({ patientId: "pac-1", eventType: "outcome", occurredAt: "2026-11-02T10:00:00.000Z", provenance: { kind: "observed", source: "clinician" }, note: "Contexto sintético", data: { domain: "d", measure: "m" } } as any, LIVE),
+      /Nota adicional ainda não é salva/,
+    );
+    assert.equal(
+      clinicalEventWriteRequest({ patientId: "pac-1", eventType: "outcome", occurredAt: "2026-11-02T10:00:00.000Z", provenance: { kind: "observed", source: "clinician" }, note: "Contexto sintético", data: { domain: "d", measure: "m" } } as any, LOCAL).url,
+      "/api/clinical-core/events",
+      "modo local mantém a nota no contrato canônico",
+    );
   });
 
   it("converte a resposta de escrita LIVE para o formato canônico", () => {
@@ -117,5 +127,13 @@ describe("ficha do paciente não chama rota inexistente em produção", () => {
     const source = readFileSync("client/src/components/clinical/PatientCockpit.tsx", "utf8");
     assert.match(source, /\/api\/consultations[\s\S]{0,160}enabled: Boolean\(patientId\) && !live/);
     assert.match(source, /\/api\/conecta\/events[\s\S]{0,160}enabled: Boolean\(patientId\) && !live/);
+  });
+});
+
+describe("metas terapêuticas não descartam nota em LIVE", () => {
+  it("o campo de nota não é oferecido em LIVE e a nota não entra no envio", () => {
+    const panel = readFileSync("client/src/components/clinical/TherapyGoalsPanel.tsx", "utf8");
+    assert.match(panel, /source\.live \? \([\s\S]{0,400}goal-measure-note-live-unavailable/);
+    assert.match(panel, /!source\.live && measureNote\.trim\(\)/);
   });
 });
