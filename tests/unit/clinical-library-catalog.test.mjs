@@ -28,7 +28,7 @@ const blocks = [...data.matchAll(/\{\n\s+slug: "([^"]+)",\n\s+anchor: "([^"]+)",
   .map(([, slug, anchor, day, title, status]) => ({ slug, anchor, day: day ? Number(day) : null, title, status }));
 const trail = blocks.filter((b) => b.day !== null).sort((a, b) => a.day - b.day);
 
-assert.equal(trail.length, 7, "Trilha 365 deve ter exatamente os Dias 01–08");
+assert.equal(trail.length, 8, "Trilha 365 deve ter exatamente os Dias 01–08");
 assert.deepEqual(trail.map((b) => b.day), [1, 2, 3, 4, 5, 6, 7, 8], "Dias canônicos 1..8 sem lacuna nem repetição");
 for (const chapter of trail) {
   assert.equal(chapter.title, CANONICAL[chapter.day], `Dia ${chapter.day}: título diverge do índice-mestre`);
