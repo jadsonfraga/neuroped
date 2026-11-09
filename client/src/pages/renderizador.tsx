@@ -1,5 +1,5 @@
 import "@/styles/renderizador.css";
-import RenderizadorWindowsBridge from "./renderizador-ponte";
+import RenderizadorWindowsBridge from "@/components/RenderizadorWindowsBridge";
 import { useState, useRef, useEffect } from "react";
 import {
   Upload,
