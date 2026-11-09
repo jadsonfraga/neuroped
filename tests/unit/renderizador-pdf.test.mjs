@@ -1,86 +1,45 @@
+import assert from "node:assert/strict";
 import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "pant-renderer-"));
-import PdfPrinter from "pdfmake";
+import { jsPDF } from "jspdf";
 import {
-  definition,
-  sample,
+  createPantPdf,
   contentFromMarkdown,
+  sample,
 } from "../../client/src/lib/renderizador/document.mjs";
+
 const root = process.cwd() + "/client/public/renderizador/";
-const asset = (name) =>
-  Buffer.from(
-    JSON.parse(fs.readFileSync(root + name + ".json", "utf8")).data,
-    "base64",
-  );
-const font = (name) => {
-  const p = path.join(tmp, name);
-  fs.writeFileSync(p, asset(name));
-  return p;
-};
-const printer = new PdfPrinter({
-  Cormorant: {
-    normal: font("regular.ttf"),
-    bold: font("bold.ttf"),
-    italics: font("italic.ttf"),
-    bolditalics: font("italic.ttf"),
+const asset = (name) => JSON.parse(fs.readFileSync(root + name + ".json", "utf8")).data;
+const assets = {
+  fonts: {
+    normal: asset("regular.ttf"),
+    bold: asset("bold.ttf"),
+    italic: asset("italic.ttf"),
   },
-});
+  logo: "data:image/png;base64," + asset("brasao.png"),
+};
 const meta = {
   patient: "Documento demonstrativo",
   detail: "Exemplo sem dados clínicos",
   title: "Laudo Neuropediátrico",
   subtitle: "Avaliação neuropediátrica",
 };
-for (const [name, md] of [
-  ["sample", sample],
-  [
-    "long",
-    Array.from(
-      { length: 14 },
-      (_, i) =>
-        `## Seção ${i + 1}\n\n` +
-        "Texto de teste para verificar continuidade e paginação sem dados clínicos. A informação deve permanecer integral e legível. ".repeat(
-          10,
-        ),
-    ).join("\n\n") +
-      "\n\n| Campo | Descrição |\n| --- | --- |\n" +
-      Array.from(
-        { length: 60 },
-        (_, i) => `| Linha ${i + 1} | Informação de teste preservada |`,
-      ).join("\n"),
-  ],
-]) {
-  const doc = printer.createPdfKitDocument(
-    definition(
-      md,
-      meta,
-      "data:image/png;base64," + asset("brasao.png").toString("base64"),
-    ),
-  );
-  await new Promise((resolve, reject) => {
-    const s = fs.createWriteStream("/tmp/pant-" + name + ".pdf");
-    doc.pipe(s);
-    s.on("finish", resolve);
-    s.on("error", reject);
-    doc.end();
-  });
-}
-for (const md of [
-  "<script>alert(1)</script>",
-  "![foto](https://example.com/x.png)",
-]) {
-  let rejected = false;
-  try {
-    contentFromMarkdown(md);
-  } catch {
-    rejected = true;
-  }
-  if (!rejected) throw Error("Unsupported input accepted");
-}
-console.log(
-  "PDF demonstrativo, documento longo e rejeição de HTML/imagens: OK",
-);
+const long = Array.from(
+  { length: 14 },
+  (_, i) => `## Seção ${i + 1}\n\n` +
+    "Texto de teste para verificar continuidade e paginação sem dados clínicos. A informação deve permanecer integral e legível. ".repeat(12),
+).join("\n\n") + "\n\n| Campo | Descrição |\n| --- | --- |\n" +
+  Array.from({ length: 60 }, (_, i) => `| Linha ${i + 1} | Informação de teste preservada |`).join("\n");
 
-fs.rmSync(tmp, { recursive: true });
+for (const [name, markdown, minPages] of [["sample", sample, 2], ["long", long, 12]]) {
+  const pdf = createPantPdf(jsPDF, markdown, meta, assets);
+  assert.ok(pdf.getNumberOfPages() >= minPages, `${name}: paginou o conteúdo integral`);
+  const bytes = Buffer.from(pdf.output("arraybuffer"));
+  assert.equal(bytes.subarray(0, 5).toString(), "%PDF-");
+  assert.ok(bytes.length > 5000, `${name}: PDF contém o documento renderizado`);
+  fs.writeFileSync(`/tmp/pant-${name}.pdf`, bytes);
+}
+
+for (const markdown of ["<script>alert(1)</script>", "![foto](https://example.com/x.png)"]) {
+  assert.throws(() => contentFromMarkdown(markdown), /HTML|Imagens/);
+}
+console.log("PDF PANT local, documento longo, tabela paginada e rejeição de HTML/imagens: OK");
