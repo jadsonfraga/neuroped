@@ -1,4 +1,4 @@
-import type { Content, TDocumentDefinitions } from "pdfmake/interfaces";
+import type { jsPDF } from "jspdf";
 export const sample: string;
 export interface CoverMetadata {
   patient: string;
@@ -6,9 +6,24 @@ export interface CoverMetadata {
   title: string;
   subtitle: string;
 }
-export function contentFromMarkdown(md: string): Content[];
-export function definition(
+export interface RenderAssets {
+  fonts: { normal: string; bold: string; italic: string };
+  logo: string;
+}
+export interface MarkdownBlock {
+  type: string;
+  [key: string]: unknown;
+}
+export function contentFromMarkdown(md: string): MarkdownBlock[];
+export function createPantPdf(
+  constructor: typeof jsPDF,
   md: string,
   meta: CoverMetadata,
-  logo: string,
-): TDocumentDefinitions;
+  assets: RenderAssets,
+): jsPDF;
+export function createPdfBlob(
+  constructor: typeof jsPDF,
+  md: string,
+  meta: CoverMetadata,
+  assets: RenderAssets,
+): Blob;
