@@ -16,7 +16,8 @@ Markdown são recusados explicitamente, sem omissão silenciosa.
 O gerador preserva parágrafos, títulos, listas, tabelas, ênfase e citações.
 O brasão fornecido pelo proprietário e as fontes Cormorant Garamond estão
 incluídos nos recursos locais; a licença OFL acompanha as fontes. O CSS é
-limitado a `.pant-studio-root`. O PDFMake é carregado apenas ao gerar um PDF.
+limitado a `.pant-studio-root`. O jsPDF e o parser Markdown são carregados
+somente ao gerar o documento, mantendo o chunk de renderização abaixo do teto.
 
 Cloudflare e Vercel recebem o mesmo frontend. A CSP permite `frame-src 'self'
 blob:` somente para a prévia PDF local; `frame-ancestors 'none'` e demais
@@ -31,8 +32,10 @@ restrições permanecem. O backend e as políticas de autenticação não mudam.
 - `npm run audit:navigation`: exit 0.
 - `node --import tsx --test tests/unit/featured-navigation.test.ts`: 10 testes aprovados.
 - `node tests/unit/renderizador-navigation-static.test.mjs`: 3 testes aprovados.
-- `node tests/unit/renderizador-pdf.test.mjs`: PDF demonstrativo de 2 páginas,
-  documento longo com 60 linhas de tabela e rejeição de HTML/imagens aprovados.
+- `node tests/unit/renderizador-pdf.test.mjs`: PDFs demonstrativo e longo,
+  paginação com 60 linhas de tabela e rejeição de HTML/imagens aprovados.
+- `npm run audit:bundle`: maior chunk 1.148,63 KB bruto / 306,87 KB gzip,
+  abaixo dos limites de 1.240 KB / 320 KB.
 
 ## Rollback
 
