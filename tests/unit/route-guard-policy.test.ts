@@ -105,6 +105,7 @@ assert.equal(
 const REQUIRED_SENSITIVE_ROUTES = [
   "/avaliacao-pre-consulta-faixa-etaria",
   "/pant",
+  "/renderizador",
   "/assinatura-digital",
   "/documentos",
   "/pacientes",
