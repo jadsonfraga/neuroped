@@ -12,7 +12,7 @@ import {
   LoaderCircle,
   FileCheck2,
 } from "lucide-react";
-import { definition, sample } from "@/lib/renderizador/document.mjs";
+import { createPdfBlob, sample } from "@/lib/renderizador/document.mjs";
 export default function RenderizadorPage() {
   const [md, setMd] = useState(""),
     [name, setName] = useState(""),
@@ -96,45 +96,19 @@ export default function RenderizadorPage() {
     setBusy(true);
     setError("");
     try {
-      const mod = await import("pdfmake/build/pdfmake");
-      const pdfMake = mod.default;
-      const paths = ["regular.ttf", "bold.ttf", "italic.ttf", "brasao.png"];
-      const data = await Promise.all(
-        paths.map(async (f) => {
-          const r = await fetch(
-            import.meta.env.BASE_URL + "renderizador/" + f + ".json",
-          );
-          if (!r.ok)
-            throw Error("Não foi possível carregar os recursos visuais.");
-          const payload: { data: string } = await r.json();
-          return Uint8Array.from(atob(payload.data), (c) => c.charCodeAt(0));
+      const [{ jsPDF }, ...assetsJson] = await Promise.all([
+        import("jspdf"),
+        ...["regular.ttf", "bold.ttf", "italic.ttf", "brasao.png"].map(async (f) => {
+          const r = await fetch(import.meta.env.BASE_URL + "renderizador/" + f + ".json");
+          if (!r.ok) throw Error("Não foi possível carregar os recursos visuais.");
+          return (await r.json()) as { data: string };
         }),
-      );
-      const b64 = (bytes: Uint8Array) => {
-        let s = "";
-        for (let i = 0; i < bytes.length; i += 8192)
-          s += String.fromCharCode(...bytes.subarray(i, i + 8192));
-        return btoa(s);
-      };
-      pdfMake.vfs = Object.fromEntries(
-        paths.slice(0, 3).map((f, i) => [f, b64(data[i])]),
-      );
-      pdfMake.fonts = {
-        Cormorant: {
-          normal: "regular.ttf",
-          bold: "bold.ttf",
-          italics: "italic.ttf",
-          bolditalics: "italic.ttf",
-        },
-      };
+      ]);
+      const [regular, bold, italic, logo] = assetsJson as { data: string }[];
       const meta = { patient: patient.trim(), detail, title, subtitle };
-      const doc = definition(md, meta, "data:image/png;base64," + b64(data[3]));
-      const blob: Blob = await new Promise((resolve, reject) => {
-        try {
-          pdfMake.createPdf(doc).getBlob(resolve);
-        } catch (e) {
-          reject(e);
-        }
+      const blob = createPdfBlob(jsPDF, md, meta, {
+        fonts: { normal: regular.data, bold: bold.data, italic: italic.data },
+        logo: "data:image/png;base64," + logo.data,
       });
       if (job !== generation.current) return;
       if (oldUrl.current) URL.revokeObjectURL(oldUrl.current);
