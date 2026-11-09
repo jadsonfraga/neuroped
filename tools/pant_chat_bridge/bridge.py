@@ -170,7 +170,28 @@ def render(markdown: str, filename: str, mode: str):
                 )
             finally:
                 candidate.unlink(missing_ok=True)
+        # Nao confiar em PDF cacheado sem recibo autentico de integridade.
         data = out.read_bytes()
+        receipt_path = HOME / "recibos" / (out.stem + ".json")
+        if not receipt_path.is_file():
+            raise RuntimeError("PDF sem comprovante de integridade")
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        if (
+            receipt.get("source_sha256") != digest
+            or receipt.get("pdf_sha256") != sha256(data)
+            or receipt.get("status") != (
+                "aprovado_sem_assinatura" if mode == "final" else "revisao_medica_pendente"
+            )
+        ):
+            raise RuntimeError("Integridade ou estado clinico do PDF nao conferem")
+        if mode == "preview":
+            import fitz
+            doc = fitz.open(stream=data, filetype="pdf")
+            try:
+                if not all("RASCUNHO" in page.get_text() for page in doc):
+                    raise RuntimeError("PDF sem carimbo de revisao em todas as paginas")
+            finally:
+                doc.close()
     return data, {"source_sha256": digest, "pdf_sha256": sha256(data), "name": filename_out}
 
 def inbox_loop():
