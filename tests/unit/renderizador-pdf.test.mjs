@@ -1,0 +1,45 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import { jsPDF } from "jspdf";
+import {
+  createPantPdf,
+  contentFromMarkdown,
+  sample,
+} from "../../client/src/lib/renderizador/document.mjs";
+
+const root = process.cwd() + "/client/public/renderizador/";
+const asset = (name) => JSON.parse(fs.readFileSync(root + name + ".json", "utf8")).data;
+const assets = {
+  fonts: {
+    normal: asset("regular.ttf"),
+    bold: asset("bold.ttf"),
+    italic: asset("italic.ttf"),
+  },
+  logo: "data:image/png;base64," + asset("brasao.png"),
+};
+const meta = {
+  patient: "Documento demonstrativo",
+  detail: "Exemplo sem dados clínicos",
+  title: "Laudo Neuropediátrico",
+  subtitle: "Avaliação neuropediátrica",
+};
+const long = Array.from(
+  { length: 14 },
+  (_, i) => `## Seção ${i + 1}\n\n` +
+    "Texto de teste para verificar continuidade e paginação sem dados clínicos. A informação deve permanecer integral e legível. ".repeat(12),
+).join("\n\n") + "\n\n| Campo | Descrição |\n| --- | --- |\n" +
+  Array.from({ length: 60 }, (_, i) => `| Linha ${i + 1} | Informação de teste preservada |`).join("\n");
+
+for (const [name, markdown, minPages] of [["sample", sample, 2], ["long", long, 12]]) {
+  const pdf = createPantPdf(jsPDF, markdown, meta, assets);
+  assert.ok(pdf.getNumberOfPages() >= minPages, `${name}: paginou o conteúdo integral`);
+  const bytes = Buffer.from(pdf.output("arraybuffer"));
+  assert.equal(bytes.subarray(0, 5).toString(), "%PDF-");
+  assert.ok(bytes.length > 5000, `${name}: PDF contém o documento renderizado`);
+  fs.writeFileSync(`/tmp/pant-${name}.pdf`, bytes);
+}
+
+for (const markdown of ["<script>alert(1)</script>", "![foto](https://example.com/x.png)"]) {
+  assert.throws(() => contentFromMarkdown(markdown), /HTML|Imagens/);
+}
+console.log("PDF PANT local, documento longo, tabela paginada e rejeição de HTML/imagens: OK");

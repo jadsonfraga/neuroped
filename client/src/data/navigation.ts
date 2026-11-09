@@ -151,6 +151,13 @@ export const featuredNavigation: NavItem[] = [
     tone: "priority",
     description: "Prescrição clínica",
   },
+  {
+    href: "/renderizador",
+    label: "Renderizador",
+    icon: FileText,
+    tone: "priority",
+    description: "PANT Studio · Markdown para PDF",
+  },
   arenaNavigation,
   {
     href: "/por-faixa-etaria",
@@ -225,6 +232,7 @@ export const navSections: NavSection[] = [
       { href: "/pacientes", label: "Pacientes / Prontuário", icon: Users, tone: "priority" },
       { href: "/agenda", label: "Agenda & Gestão", icon: Calendar, tone: "priority" },
       { href: "/laudo-neuroped", label: "Laudos", icon: FileText, tone: "priority" },
+      { href: "/renderizador", label: "Renderizador", icon: FileText, tone: "priority", description: "PANT Studio · Markdown para PDF" },
       { href: "/laudo-um-clique", label: "Laudo em um clique", icon: FileText },
       { href: "/checagem-dose", label: "Checagem de dose (apoio)", icon: ShieldCheck },
       { href: "/receita-c1", label: "Receita C1", icon: Pill, tone: "priority" },

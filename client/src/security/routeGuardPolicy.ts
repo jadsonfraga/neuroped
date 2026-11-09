@@ -12,6 +12,7 @@ export const SENSITIVE_ROUTES = [
   "/dyslexia-risk",
   "/avaliacao-pre-consulta-faixa-etaria",
   "/pant",
+  "/renderizador",
   "/assinatura-digital",
   "/documentos",
   "/escuta-clinica",

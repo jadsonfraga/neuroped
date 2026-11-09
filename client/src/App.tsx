@@ -70,6 +70,7 @@ const SplashScreen = lazy(() =>
 );
 const SnapPage = lazy(() => import("@/pages/snap"));
 const PantPage = lazy(() => import("@/pages/pant"));
+const RenderizadorPage = lazy(() => import("@/pages/renderizador"));
 const FluxogramaPage = lazy(() => import("@/pages/fluxograma"));
 const PhqaPage = lazy(() => import("@/pages/phqa"));
 const CssrsPage = lazy(() => import("@/pages/cssrs"));
@@ -317,6 +318,7 @@ function AppRouter() {
             <Route path="/" component={HomePage} />
             <Route path="/snap" component={SnapPage} />
             <Route path="/pant" component={PantPage} />
+            <Route path="/renderizador" component={RenderizadorPage} />
             <Route path="/fluxograma" component={FluxogramaPage} />
             <Route path="/phqa" component={PhqaPage} />
             <Route path="/cssrs" component={CssrsPage} />
