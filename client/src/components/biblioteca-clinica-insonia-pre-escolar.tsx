@@ -28,7 +28,7 @@ export default function InsoniaPreEscolarChapter() {
   return <article id="capitulo-insonia-pre-escolar" aria-labelledby="insonia-pre-escolar-title" tabIndex={-1} className="scroll-mt-20 space-y-9 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm outline-offset-4 sm:p-8 dark:border-slate-700 dark:bg-slate-900">
     <header className="rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-teal-950 p-6 text-white sm:p-9">
       <div className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-teal-200"><MoonStar className="h-4 w-4" aria-hidden="true"/> Biblioteca Clínica · Dia 08/365</div>
-      <h2 id="insonia-pre-escolar-title" className="max-w-3xl text-2xl font-bold leading-tight sm:text-3xl">Como avaliar insônia comportamental no pré-escolar?</h2>
+      <h2 id="insonia-pre-escolar-title" className="max-w-3xl text-2xl font-bold leading-tight sm:text-3xl">Dia 08/365 — Como avaliar insônia comportamental no pré-escolar?</h2>
       <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-200">Do padrão do sono à decisão clínica: sinais de alerta, diário e intervenção parental estruturada.</p>
       <p className="mt-4 inline-flex rounded-full border border-amber-300/50 bg-amber-300/10 px-3 py-1 text-xs font-semibold text-amber-100">Material educacional em revisão médica · 6 min</p>
     </header>
