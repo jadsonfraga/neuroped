@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+entrada/
+saida/
+aceites/
+recibos/
