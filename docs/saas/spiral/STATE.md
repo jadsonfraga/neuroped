@@ -476,3 +476,13 @@ A mudança melhora a disponibilidade da evidência para quem só possui acesso a
 ### Próximo ponto de retomada
 
 Partir de `origin/main`, verificar PRs concorrentes e selecionar outra frente pequena de segurança, isolamento, LGPD ou operação. Não atribuir registros legados por inferência nem reabrir os ciclos já fechados; manter a cadência de 30 minutos como solicitação pendente da plataforma.
+
+## Ciclo 17 (2026-11-09) — fundação fail-closed PANT/PANTY
+
+A PR #1278 foi integrada como `f586d0db`. A fundação de auditoria clínica bloqueia CID em hipóteses não firmadas, metas sem critérios observáveis, medicação sem revisão integral, divergências sem fontes válidas e emissão sem aceite médico explícito. Os testes usam somente fixtures sintéticas.
+
+A fundação ainda não está conectada às páginas, ao backend, ao histórico, ao PDF ou à persistência. Não habilitar fluxo clínico com dados reais até existir integração autenticada, criptografada, auditada e coberta por regressões.
+
+### Próximo ponto de retomada
+
+Partir de `origin/main`, verificar PRs concorrentes e selecionar outra frente pequena de segurança, isolamento, LGPD ou operação. Para PANT/PANTY, o próximo incremento deve tratar integração segura ou permanecer documentado como oportunidade; não ligar a fundação diretamente a dados reais.
