@@ -44,6 +44,20 @@ export interface ClinicalLibraryChapter {
 }
 export const clinicalLibraryChapters: ClinicalLibraryChapter[] = [
   {
+    slug: "insonia-pre-escolar",
+    anchor: "capitulo-insonia-pre-escolar",
+    day: 8,
+    title: "Como avaliar insônia comportamental no pré-escolar?",
+    subtitle: "Red flags, diário de sono, manejo parental e seguimento",
+    category: "Sono e ritmos",
+    date: "2026-11-09",
+    updated: "2026-11-09",
+    status: "revisao_medica",
+    minutes: 6,
+    review: "Pesquisa Consensus Pro iniciada em 09/11/2026; revisão médica pendente.",
+    sources: ["mindell-2006", "morgenthaler-2006", "meltzer-2014", "rafihi-ferreira-2019"],
+  },
+  {
     slug: "audicao-urgente",
     anchor: "capitulo-audicao-urgente",
     day: 7,
@@ -282,7 +296,7 @@ export const wiscReferences: ClinicalLibraryReference[] = [
 ];
 
 export const nextClinicalTopics = [
-  "Como avaliar insônia comportamental no pré-escolar?",
+  "O que cada índice do WISC-IV informa ao neuropediatra?",
 ];
 
 /** Trilha 365: somente capítulos numerados pelo índice canônico, em ordem crescente de Dia. */
