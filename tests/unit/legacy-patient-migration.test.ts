@@ -27,7 +27,7 @@ async function setup(opts: { seeds?: number; withRealConsultation?: boolean; sec
   f.raw.prepare(`INSERT INTO patients_demo (id, owner_user_id, name, birth_date, guardian_name, notes)
                  VALUES ('legado-real', 'owner-a', ?, '2017-03-04', 'Responsável Fictício', 'Nota fictícia de teste')`).run(NAME);
   const scales: Array<[string, string, string, number | null, string]> = [
-    ["s1", "snap-iv", "SNAP-IV fictício", 12, '{"q1":2}'],
+    ["s1", "snap-iv", "SNAP-IV fictício", 12, '{"responses":[{"question":"Pergunta fictícia A","answer":"Às vezes"},{"question":"Pergunta fictícia B","answer":null}],"patientAge":"8 anos"}'],
     ["s2", "mchat-r", "M-CHAT-R fictício", null, "texto livre não-JSON"],
     ["s3", "", "Escala sem id", 3, '{"q":1}'],
   ];
@@ -63,7 +63,7 @@ test("G3: só o admin bootstrap, com confirmação, migra o paciente real cifrad
 
     const dry = await f.call("owner-a", migrate as never, PATH, "POST", body({ dryRun: true }));
     assert.equal(dry.status, 200);
-    assert.deepEqual(await dry.json(), { dryRun: true, clinicId: ALFA, patientsMigrated: 0, assessmentsMigrated: 0, assessmentsFound: 3, legacySourcePreserved: true });
+    assert.deepEqual(await dry.json(), { dryRun: true, clinicId: ALFA, patientsMigrated: 0, assessmentsMigrated: 0, assessmentsFound: 3, responsesFound: 2, legacySourcePreserved: true });
     assert.equal((f.raw.prepare("SELECT COUNT(*) AS n FROM live_patients").get() as { n: number }).n, before.livePatients, "dry-run não grava");
 
     const res = await f.call("owner-a", migrate as never, PATH, "POST", body());
@@ -82,11 +82,21 @@ test("G3: só o admin bootstrap, com confirmação, migra o paciente real cifrad
     assert.deepEqual(profile, { name: NAME, birthDate: "2017-03-04", guardianName: "Responsável Fictício", guardianPhone: null, diagnosisCode: null, notes: "Nota fictícia de teste" });
 
     // escalas legíveis pela rota LIVE padrão, com título e dados legados preservados
-    const listed = (await (await f.call("owner-a", assessmentsGet as never, `/api/live/assessments?clinicId=${ALFA}&patientId=${out.patientId}`, "GET", undefined, ALFA)).json()) as { data: Array<{ instrumentId: string; instrumentVersion: string; provenanceSource: string; payload: { title: string; legacy: { score: unknown; details: unknown } } }> };
+    const listed = (await (await f.call("owner-a", assessmentsGet as never, `/api/live/assessments?clinicId=${ALFA}&patientId=${out.patientId}`, "GET", undefined, ALFA)).json()) as { data: Array<{ instrumentId: string; instrumentVersion: string; provenanceSource: string; responses: Array<{ itemId: string; itemPosition: number; value: unknown }>; payload: { title: string; legacy: { score: unknown; details: unknown } } }> };
     assert.equal(listed.data.length, 3);
     const byTitle = Object.fromEntries(listed.data.map((a) => [a.payload.title, a]));
     assert.equal(byTitle["SNAP-IV fictício"].instrumentId, "snap-iv");
-    assert.deepEqual(byTitle["SNAP-IV fictício"].payload.legacy.details, { q1: 2 });
+    // respostas na estrutura canônica do LIVE (ficha e PDF), cifradas em repouso
+    assert.deepEqual(byTitle["SNAP-IV fictício"].responses.map((r) => [r.itemId, r.itemPosition, r.value]), [
+      ["item-1", 0, { question: "Pergunta fictícia A", answer: "Às vezes" }],
+      ["item-2", 1, { question: "Pergunta fictícia B", answer: null }],
+    ]);
+    assert.equal(byTitle["M-CHAT-R fictício"].responses.length, 0);
+    const storedResponses = f.raw.prepare("SELECT response_encrypted FROM live_assessment_responses WHERE patient_id = ?").all(out.patientId) as Array<{ response_encrypted: string }>;
+    assert.equal(storedResponses.length, 2);
+    for (const r of storedResponses) assert.doesNotMatch(r.response_encrypted, /Pergunta|vezes/);
+    const { savedScaleResponses } = await import("../../client/src/lib/savedScaleResult");
+    assert.deepEqual(savedScaleResponses(byTitle["SNAP-IV fictício"]).map((r) => r.question), ["Pergunta fictícia A", "Pergunta fictícia B"], "a ficha enxerga as respostas");
     assert.equal(byTitle["M-CHAT-R fictício"].payload.legacy.details, "texto livre não-JSON");
     assert.equal(byTitle["Escala sem id"].instrumentId, "legado");
     assert.ok(listed.data.every((a) => a.instrumentVersion === "legado" && a.provenanceSource === "instrument"));
