@@ -19,8 +19,8 @@ test("Renderizador integra menu e roteador sem redirecionar a outro site", () =>
   assert.doesNotMatch(page, /chatgpt\.site|target="_blank"|window\.open/);
 });
 test("renderização é local, com revisão e sem acesso ao prontuário", () => {
-  assert.match(page, /import\(["\']pdfmake\/build\/pdfmake["\']\)/);
-  assert.match(page, /\.getBlob\(resolve\)/);
+  assert.match(page, /import\(["\']jspdf["\']\)/);
+  assert.match(page, /createPdfBlob\(jsPDF/);
   assert.match(page, /disabled=\{!approved\}/);
   assert.match(page, /crypto\.subtle\.digest\(["\']SHA-256["\']/);
   assert.doesNotMatch(
