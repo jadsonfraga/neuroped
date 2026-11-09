@@ -1196,3 +1196,18 @@ sentinelas de identidade não aparecem. A execução continua somente leitura,
 sem mutações, backfill ou atribuição de owner; a decisão de negócio sobre a
 destinação dos registros órfãos permanece bloqueada. A PR foi integrada em
 `main` como `8d6a8fba`, com os checks obrigatórios verdes.
+
+### Ciclo 17 — fundação fail-closed de auditoria clínica PANT/PANTY
+
+A PR [#1278](https://github.com/jadsonfraga/neuroped/pull/1278) adicionou uma
+fundação isolada para auditar dossiês PANT/PANTY. A auditoria bloqueia CID em
+hipótese não firmada, metas sem critério observável ou fora da janela definida,
+medicação sem revisão integral, divergência sem fontes válidas e emissão sem
+aceite médico explícito. Divergências não são apagadas para obter aprovação.
+
+A implementação não foi integrada às páginas clínicas, ao backend, ao histórico,
+ao PDF ou a qualquer persistência; portanto, não habilita fluxo clínico em
+produção. Os testes usam exclusivamente fixtures sintéticas e os checks
+obrigatórios passaram. A PR foi integrada em `main` como `f586d0db`, mantendo
+como próximo passo separado a integração autenticada, criptografada e auditada
+antes de qualquer uso com dados reais.
