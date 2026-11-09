@@ -120,6 +120,7 @@ export const KNOWN_ROUTE_PATTERNS: readonly string[] = [
   "/paciente/:id",
   "/pacientes",
   "/pant",
+  "/renderizador",
   "/pdae",
   "/pedsql",
   "/phqa",
