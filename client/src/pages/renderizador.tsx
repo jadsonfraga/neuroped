@@ -91,7 +91,7 @@ export default function RenderizadorPage() {
   function insertStructuredTable() {
     invalidate();
     const table = structuredTableTemplate();
-    setMd((current) => `${current.trimEnd()}${current.trim() ? "\\n\\n" : ""}${table}\\n`);
+    setMd((current) => `${current.trimEnd()}${current.trim() ? "\n\n" : ""}${table}\n`);
     setTab("editor");
   }
   async function render() {
@@ -99,7 +99,7 @@ export default function RenderizadorPage() {
       setError("Complete manualmente os cabeçalhos e as células da tabela antes de gerar o PDF.");
       return;
     }
-    if (!/^#{1,6}\\s+\\S/m.test(md)) {
+    if (!/^#{1,6}\s+\S/m.test(md)) {
       setError("Marque os títulos do documento com #, ## ou ### antes de gerar o PDF. O texto clínico não será alterado automaticamente.");
       return;
     }
