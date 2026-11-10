@@ -43,3 +43,13 @@ for (const markdown of ["<script>alert(1)</script>", "![foto](https://example.co
   assert.throws(() => contentFromMarkdown(markdown), /HTML|Imagens/);
 }
 console.log("PDF PANT local, documento longo, tabela paginada e rejeição de HTML/imagens: OK");
+
+const markers = contentFromMarkdown("+++Diagnóstico firmado+++ e ==revisão necessária==.");
+assert.equal(markers[0].type, "paragraph");
+assert.equal(markers[0].runs.map((run) => run.text).join(""), "Diagnóstico firmado e revisão necessária.");
+assert.ok(markers[0].runs.filter((run) => run.bold).length >= 2, "destaques PANT preservam negrito");
+
+const longParagraph = "Trecho demonstrativo sem informação clínica. ".repeat(1150);
+const longPdf = createPantPdf(jsPDF, longParagraph, meta, assets);
+assert.ok(longPdf.getNumberOfPages() >= 3, "parágrafo longo deve paginar sem extravasar da folha");
+console.log("Marcadores PANT e paginação interna de parágrafos longos: OK");
