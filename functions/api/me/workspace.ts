@@ -108,7 +108,7 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
   if (row.expires_at && Date.parse(row.expires_at) <= Date.now()) {
     try {
       await db.prepare(
-        `DELETE FROM ${TABLE} WHERE user_id = ? AND item_key = ? AND expires_at = ?`,
+        `DELETE FROM ${TABLE} WHERE user_id = ? AND item_key_hash = ? AND expires_at = ?`,
       ).bind(user.id, keyHash, row.expires_at).run();
     } catch {
       return tenantError("Não foi possível limpar um item expirado.", "DB_ERROR", 500);
@@ -174,7 +174,7 @@ export const onRequestPut: PagesFunction<TenantEnv> = async (context) => {
       `INSERT INTO ${TABLE}
         (user_id, item_key_hash, payload_encrypted, encryption_version, expires_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?)
-       ON CONFLICT(user_id, item_key) DO UPDATE SET
+       ON CONFLICT(user_id, item_key_hash) DO UPDATE SET
          payload_encrypted = excluded.payload_encrypted,
          encryption_version = excluded.encryption_version,
          expires_at = excluded.expires_at,
@@ -207,7 +207,7 @@ export const onRequestDelete: PagesFunction<TenantEnv> = async (context) => {
 
   try {
     const deletion = db.prepare(
-      `DELETE FROM ${TABLE} WHERE user_id = ? AND item_key = ?`,
+      `DELETE FROM ${TABLE} WHERE user_id = ? AND item_key_hash = ?`,
     ).bind(user.id, keyHash);
     const audit = prepareSaasAudit(db, {
       actorUserId: user.id,
