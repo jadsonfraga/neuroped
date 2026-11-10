@@ -242,32 +242,32 @@ function PhysicalNoticePage({ type }: { type: NoticeType }) {
           </div>
           <div>
             <label htmlFor="notice-date" className="text-xs font-semibold">Data da prescrição *</label>
-            <Input id="notice-date" value={f.data} onChange={set("data")} placeholder="DD/MM/AAAA" className="mt-1" />
+            <Input id="notice-date" value={f.data} onChange={setText("data")} placeholder="DD/MM/AAAA" className="mt-1" />
           </div>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
-          <div><label htmlFor="notice-patient" className="text-xs font-semibold">Paciente *</label><Input id="notice-patient" value={f.paciente} onChange={set("paciente")} className="mt-1" /></div>
-          <div><label htmlFor="notice-document" className="text-xs font-semibold">CPF ou passaporte do paciente *</label><Input id="notice-document" value={f.documentoPaciente} onChange={set("documentoPaciente")} className="mt-1" /></div>
+          <div><label htmlFor="notice-patient" className="text-xs font-semibold">Paciente *</label><Input id="notice-patient" value={f.paciente} onChange={setText("paciente")} className="mt-1" /></div>
+          <div><label htmlFor="notice-document" className="text-xs font-semibold">CPF ou passaporte do paciente *</label><Input id="notice-document" value={f.documentoPaciente} onChange={setText("documentoPaciente")} className="mt-1" /></div>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
-          <div><label htmlFor="notice-address" className="text-xs font-semibold">Endereço completo do paciente *</label><Input id="notice-address" value={f.enderecoPaciente} onChange={set("enderecoPaciente")} className="mt-1" /></div>
-          <div><label htmlFor="notice-phone" className="text-xs font-semibold">Telefone do paciente *</label><Input id="notice-phone" value={f.telefonePaciente} onChange={set("telefonePaciente")} className="mt-1" /></div>
+          <div><label htmlFor="notice-address" className="text-xs font-semibold">Endereço completo do paciente *</label><Input id="notice-address" value={f.enderecoPaciente} onChange={setText("enderecoPaciente")} className="mt-1" /></div>
+          <div><label htmlFor="notice-phone" className="text-xs font-semibold">Telefone do paciente *</label><Input id="notice-phone" value={f.telefonePaciente} onChange={setText("telefonePaciente")} className="mt-1" /></div>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
-          <div><label htmlFor="notice-drug" className="text-xs font-semibold">Nome do medicamento *</label><Input id="notice-drug" value={f.medicamento} onChange={set("medicamento")} className="mt-1" /></div>
-          <div><label htmlFor="notice-strength" className="text-xs font-semibold">Concentração *</label><Input id="notice-strength" value={f.concentracao} onChange={set("concentracao")} className="mt-1" /></div>
-          <div><label htmlFor="notice-form" className="text-xs font-semibold">Forma farmacêutica *</label><Input id="notice-form" value={f.formaFarmaceutica} onChange={set("formaFarmaceutica")} className="mt-1" /></div>
-          <div><label htmlFor="notice-quantity" className="text-xs font-semibold">Quantidade *</label><Input id="notice-quantity" value={f.quantidade} onChange={set("quantidade")} className="mt-1" /></div>
+          <div><label htmlFor="notice-drug" className="text-xs font-semibold">Nome do medicamento *</label><Input id="notice-drug" value={f.medicamento} onChange={setText("medicamento")} className="mt-1" /></div>
+          <div><label htmlFor="notice-strength" className="text-xs font-semibold">Concentração *</label><Input id="notice-strength" value={f.concentracao} onChange={setText("concentracao")} className="mt-1" /></div>
+          <div><label htmlFor="notice-form" className="text-xs font-semibold">Forma farmacêutica *</label><Input id="notice-form" value={f.formaFarmaceutica} onChange={setText("formaFarmaceutica")} className="mt-1" /></div>
+          <div><label htmlFor="notice-quantity" className="text-xs font-semibold">Quantidade *</label><Input id="notice-quantity" value={f.quantidade} onChange={setText("quantidade")} className="mt-1" /></div>
         </div>
-        <div><label htmlFor="notice-posology" className="text-xs font-semibold">Posologia *</label><Textarea id="notice-posology" value={f.posologia} onChange={set("posologia")} className="mt-1 min-h-[88px]" /></div>
+        <div><label htmlFor="notice-posology" className="text-xs font-semibold">Posologia *</label><Textarea id="notice-posology" value={f.posologia} onChange={setText("posologia")} className="mt-1 min-h-[88px]" /></div>
       </section>
 
       <section className="rounded-2xl border border-border/70 bg-card/80 p-4 space-y-3">
         <h2 className="text-sm font-bold">Dados da gráfica indicados no modelo físico</h2>
         <div className="grid gap-3 sm:grid-cols-3">
-          <div><label htmlFor="notice-printer-name" className="text-xs font-semibold">Nome da gráfica *</label><Input id="notice-printer-name" value={f.graficaNome} onChange={set("graficaNome")} className="mt-1" /></div>
-          <div><label htmlFor="notice-printer-cnpj" className="text-xs font-semibold">CNPJ *</label><Input id="notice-printer-cnpj" value={f.graficaCnpj} onChange={set("graficaCnpj")} className="mt-1" /></div>
-          <div><label htmlFor="notice-printer-address" className="text-xs font-semibold">Endereço completo da gráfica *</label><Input id="notice-printer-address" value={f.graficaEndereco} onChange={set("graficaEndereco")} className="mt-1" /></div>
+          <div><label htmlFor="notice-printer-name" className="text-xs font-semibold">Nome da gráfica *</label><Input id="notice-printer-name" value={f.graficaNome} onChange={setText("graficaNome")} className="mt-1" /></div>
+          <div><label htmlFor="notice-printer-cnpj" className="text-xs font-semibold">CNPJ *</label><Input id="notice-printer-cnpj" value={f.graficaCnpj} onChange={setText("graficaCnpj")} className="mt-1" /></div>
+          <div><label htmlFor="notice-printer-address" className="text-xs font-semibold">Endereço completo da gráfica *</label><Input id="notice-printer-address" value={f.graficaEndereco} onChange={setText("graficaEndereco")} className="mt-1" /></div>
         </div>
       </section>
 
