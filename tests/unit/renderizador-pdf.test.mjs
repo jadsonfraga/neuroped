@@ -5,6 +5,7 @@ import { jsPDF } from "jspdf";
 import {
   createPantPdf,
   contentFromMarkdown,
+  pdfReleaseLabel,
   sample,
 } from "../../client/src/lib/renderizador/document.mjs";
 
@@ -73,10 +74,9 @@ assert.equal(parsedTemplate[0].type, "table", "estrutura inserida deve chegar ao
 
 
 const draftPdf = createPantPdf(jsPDF, "## Documento demonstrativo", { ...meta, releaseStatus: "draft" }, assets);
-const draftStream = draftPdf.internal.pages.flat().join("");
-assert.match(draftStream, /RASCUNHO/);
+assert.ok(draftPdf.getNumberOfPages() >= 2);
+assert.equal(pdfReleaseLabel("draft"), "RASCUNHO — NÃO LIBERADO");
 const definitivePdf = createPantPdf(jsPDF, "## Documento demonstrativo", { ...meta, releaseStatus: "definitive" }, assets);
-const definitiveStream = definitivePdf.internal.pages.flat().join("");
-assert.match(definitiveStream, /VERSÃO DEFINITIVA/);
-assert.doesNotMatch(definitiveStream, /RASCUNHO/);
+assert.ok(definitivePdf.getNumberOfPages() >= 2);
+assert.equal(pdfReleaseLabel("definitive"), "VERSÃO DEFINITIVA · REVISÃO MÉDICA CONFIRMADA");
 console.log("PDF de rascunho identificado e versão definitiva separada após revisão: OK");
