@@ -27,9 +27,6 @@ const server = await startStaticServer("dist/public", {
 const browser = await chromium.launch(auditBrowserLaunchOptions());
 const context = await browser.newContext({ acceptDownloads: true, reducedMotion: "reduce" });
 const page = await context.newPage();
-await page.addInitScript((storage) => {
-  for (const [key, value] of Object.entries(storage)) localStorage.setItem(key, value);
-}, ACCEPTED_FIRST_VISIT_STORAGE);
 const errors = [];
 const clinicalWrites = [];
 page.on("pageerror", (error) => errors.push(error.message));
@@ -52,6 +49,10 @@ function pdfPages(bytes) {
 }
 
 try {
+  await page.goto(server.origin + "/", { waitUntil: "domcontentloaded" });
+  await page.evaluate((storage) => {
+    for (const [key, value] of Object.entries(storage)) window.localStorage.setItem(key, value);
+  }, ACCEPTED_FIRST_VISIT_STORAGE);
   await page.goto(server.origin + "/#/renderizador", { waitUntil: "domcontentloaded" });
   await page.locator("#login-email").fill(SYNTHETIC_CREDENTIALS.email);
   await page.locator("#login-password").fill(SYNTHETIC_CREDENTIALS.password);
