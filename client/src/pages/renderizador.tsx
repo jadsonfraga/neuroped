@@ -13,6 +13,7 @@ import {
   FileCheck2,
 } from "lucide-react";
 import { createPdfBlob, sample } from "@/lib/renderizador/document.mjs";
+import { hasUnfilledTableTemplate, structuredTableTemplate } from "@/lib/renderizador/table-editor.mjs";
 export default function RenderizadorPage() {
   const [md, setMd] = useState(""),
     [name, setName] = useState(""),
@@ -87,7 +88,21 @@ export default function RenderizadorPage() {
     setDetail("Exemplo sem dados clínicos");
     setTab("editor");
   }
+  function insertStructuredTable() {
+    invalidate();
+    const table = structuredTableTemplate();
+    setMd((current) => `${current.trimEnd()}${current.trim() ? "\\n\\n" : ""}${table}\\n`);
+    setTab("editor");
+  }
   async function render() {
+    if (hasUnfilledTableTemplate(md)) {
+      setError("Complete manualmente os cabeçalhos e as células da tabela antes de gerar o PDF.");
+      return;
+    }
+    if (!/^#{1,6}\\s+\\S/m.test(md)) {
+      setError("Marque os títulos do documento com #, ## ou ### antes de gerar o PDF. O texto clínico não será alterado automaticamente.");
+      return;
+    }
     if (!md.trim() || !patient.trim()) {
       setError("Adicione o Markdown e informe o nome para a capa.");
       return;
@@ -263,10 +278,17 @@ export default function RenderizadorPage() {
                     }}
                     spellCheck={false}
                   />
+                  <p className="editor-guidance">Marque cada título com #, ## ou ###. Para tabelas, use a estrutura explícita antes de gerar.</p>
                   <div>
                     {name || "Texto colado"}
                     <span>{md.length.toLocaleString("pt-BR")} caracteres</span>
                   </div>
+                </div>
+              )}
+              {tab === "editor" && (
+                <div className="table-helper">
+                  <p>Adicione uma tabela explícita e preencha cada célula manualmente. O renderizador não reconstrói tabelas a partir de texto livre.</p>
+                  <button type="button" className="text-button" onClick={insertStructuredTable}>Inserir estrutura de tabela</button>
                 </div>
               )}
               <input
@@ -411,8 +433,7 @@ export default function RenderizadorPage() {
                       checked={approved}
                       onChange={(e) => setApproved(e.target.checked)}
                     />{" "}
-                    Revisei o texto integral e todas as páginas. Aprovo esta
-                    versão para exportação, sem assinatura automática.
+                    Revisei o conteúdo integral, todas as páginas e cada orientação de dose, horário e mudança temporal. Autorizo esta versão para exportação, sem assinatura automática.
                   </label>
                   <button
                     className="primary"
