@@ -11,7 +11,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { purgeLegacyCertificateCache } from "@/lib/certificateSession";
-import { canUseCertificateVault, forgetCertificate, loadCertificate, saveCertificate } from "@/lib/certificateVault";
+import {
+  canUseCertificateVault,
+  forgetCertificate,
+  forgetCertificateFromAccount,
+  loadCertificate,
+  loadCertificateFromAccount,
+  saveCertificate,
+  saveCertificateToAccount,
+  unlockCertificateFromAccount,
+  type AccountCertificateEnvelope,
+} from "@/lib/certificateVault";
+import { isAccountWorkspaceRemoteMode } from "@/lib/accountWorkspace";
 import { useAuth } from "@/contexts/AuthContext";
 import { buildAppHashUrl } from "@/lib/appUrl";
 import type { HealthDocumentMeta } from "@/lib/padesIcp";
@@ -77,25 +88,67 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
 
   const { user } = useAuth();
   const vaultAllowed = canUseCertificateVault(user);
+  const remoteCertificateVault = isAccountWorkspaceRemoteMode();
   const [rememberCert, setRememberCert] = useState(true);
   const [stored, setStored] = useState(false);
+  const [accountCertificate, setAccountCertificate] = useState<AccountCertificateEnvelope | null>(null);
 
-  // Admin master: o .pfx memorizado (cifrado) já vem acoplado; a senha nunca é salva.
+  // No app remoto, recupera apenas o envelope cifrado da conta; o PFX só é
+  // desbloqueado localmente após a senha correta. No modo local mantém o cofre do dispositivo.
   useEffect(() => {
     let cancelled = false;
-    if (!vaultAllowed) { setStored(false); return; }
-    void loadCertificate(user).then((rec) => {
-      if (cancelled || !rec) return;
-      p12LoadIdRef.current += 1;
-      setP12(rec.p12); setP12Name(rec.fileName); setStored(true);
-    }).catch(() => { /* segue com seleção manual */ });
+    if (!vaultAllowed) {
+      setStored(false);
+      setAccountCertificate(null);
+      return;
+    }
+    if (remoteCertificateVault) {
+      void loadCertificateFromAccount(user).then((record) => {
+        if (cancelled) return;
+        setAccountCertificate(record);
+        setStored(Boolean(record));
+        if (record) setP12Name("Certificado A1 salvo na conta");
+      }).catch(() => { /* segue com seleção manual */ });
+    } else {
+      void loadCertificate(user).then((record) => {
+        if (cancelled || !record) return;
+        p12LoadIdRef.current += 1;
+        setP12(record.p12);
+        setP12Name(record.fileName);
+        setStored(true);
+      }).catch(() => { /* segue com seleção manual */ });
+    }
     return () => { cancelled = true; };
-  }, [vaultAllowed, user]);
+  }, [vaultAllowed, remoteCertificateVault, user]);
 
   async function esquecer() {
-    await forgetCertificate(user);
-    setStored(false); setP12(null); setP12Name(""); setCert(null); setSenha("");
-    setOkMsg("Certificado removido deste dispositivo.");
+    if (remoteCertificateVault) await forgetCertificateFromAccount(user);
+    else await forgetCertificate(user);
+    setStored(false);
+    setAccountCertificate(null);
+    setP12(null);
+    setP12Name("");
+    setCert(null);
+    setSenha("");
+    setOkMsg("Certificado removido do cofre da conta.");
+  }
+
+  async function persistirCertificado(bytes: ArrayBuffer, password: string): Promise<string | null> {
+    if (!vaultAllowed || !rememberCert || stored) return null;
+    try {
+      if (remoteCertificateVault) {
+        const record = await saveCertificateToAccount(user, bytes, password);
+        setAccountCertificate(record);
+        setP12Name("Certificado A1 salvo na conta");
+        setStored(true);
+        return null;
+      }
+      await saveCertificate(user, bytes, p12Name || "certificado-a1.pfx");
+      setStored(true);
+      return null;
+    } catch (error) {
+      return error instanceof Error ? error.message : "Não foi possível memorizar o certificado.";
+    }
   }
 
   async function gerarComprovante(bytes: Uint8Array) {
@@ -118,27 +171,31 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
     const loadId = ++p12LoadIdRef.current;
     setP12Name(f.name);
     const bytes = await f.arrayBuffer();
-    if (loadId !== p12LoadIdRef.current) return; // uma seleção mais recente já venceu
+    if (loadId !== p12LoadIdRef.current) return;
     setP12(bytes);
     setStored(false);
-    if (vaultAllowed && rememberCert) {
-      try {
-        await saveCertificate(user, bytes, f.name);
-        setStored(true);
-        setOkMsg("Certificado memorizado neste dispositivo (cifrado). A senha nunca é salva.");
-      } catch (err) {
-        setErro(err instanceof Error ? err.message : "Não foi possível memorizar o certificado.");
-      }
-    }
+    setOkMsg("Certificado carregado. Verifique a senha correta para memorizá-lo na conta.");
   }
 
   async function verificar() {
-    if (!p12) { setErro("Selecione o arquivo .p12 do seu certificado A1."); return; }
+    if (!p12 && !(remoteCertificateVault && accountCertificate)) {
+      setErro("Selecione o arquivo .p12/.pfx ou use o certificado salvo na conta.");
+      return;
+    }
     setErro(""); setOkMsg(""); setBusy("verify");
     try {
       const { readP12Info } = await import("@/lib/icpSign");
-      const info = readP12Info(p12, senha);
+      const candidate = p12 ?? await unlockCertificateFromAccount(user, accountCertificate!, senha);
+      const info = readP12Info(candidate, senha);
+      setP12(candidate);
       setCert({ commonName: info.commonName, notAfter: info.notAfter, issuer: info.issuer });
+      const persistenceError = p12 ? await persistirCertificado(candidate, senha) : null;
+      setOkMsg(persistenceError
+        ? "Senha validada. O certificado continua disponível nesta aba, mas não foi memorizado na conta."
+        : (vaultAllowed && rememberCert
+          ? "Senha validada; certificado memorizado de forma criptografada na conta. A senha não foi enviada nem salva."
+          : "Certificado válido; a senha permanece somente nesta aba."));
+      if (persistenceError) setErro(persistenceError);
     } catch (error) {
       setErro(signingErrorMessage(error));
       return;
@@ -175,14 +232,21 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
 
   async function gerarEAssinar() {
     if (signingBlockedReason) { setErro(signingBlockedReason); return; }
-    if (!p12) { setErro("Selecione o arquivo .p12 do seu certificado A1."); return; }
+    if (!p12 && !(remoteCertificateVault && accountCertificate)) {
+      setErro("Selecione o arquivo .p12/.pfx ou use o certificado salvo na conta.");
+      return;
+    }
     setErro(""); setOkMsg(""); setBusy("sign");
+    let persistenceError: string | null = null;
     try {
       const { signPdfWithP12, downloadBytes, readP12Info } = await import("@/lib/icpSign");
-      const certificateInfo = readP12Info(p12, senha);
+      const activeP12 = p12 ?? await unlockCertificateFromAccount(user, accountCertificate!, senha);
+      const certificateInfo = readP12Info(activeP12, senha);
+      setP12(activeP12);
       setCert({ commonName: certificateInfo.commonName, notAfter: certificateInfo.notAfter, issuer: certificateInfo.issuer });
+      if (p12) persistenceError = await persistirCertificado(activeP12, senha);
       const pdfBytes = await buildPdf();
-      const signed = await signPdfWithP12(pdfBytes, p12, senha, {
+      const signed = await signPdfWithP12(pdfBytes, activeP12, senha, {
         reason: reason ?? "Assinatura digital ICP-Brasil",
         name: signerName,
         location,
@@ -210,6 +274,10 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
       } else {
         setOkMsg("Documento assinado e baixado com sucesso.");
       }
+      if (persistenceError) {
+        setOkMsg("Documento assinado; o certificado não foi memorizado na conta.");
+        setErro(persistenceError);
+      }
       await gerarComprovante(signed);
     } catch (error) {
       setErro(signingErrorMessage(error));
@@ -228,17 +296,21 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
         certificado permanece somente na memória desta aba. O PDF é gerado e assinado em padrão PAdES.
       </p>
 
-      {p12 && (
+      {(p12 || accountCertificate) && (
         <div className="mb-3 rounded-lg border border-blue-300 bg-blue-50 p-2 dark:border-blue-800 dark:bg-blue-950/30">
           <p className="flex items-center gap-1.5 text-xs text-blue-800 dark:text-blue-200">
             <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" />
             {stored
-              ? `Certificado memorizado neste dispositivo (${p12Name}), cifrado; a senha não é salva.`
-              : "Certificado carregado somente na memória desta aba; não será salvo no navegador."}
+              ? (remoteCertificateVault
+                ? "Certificado memorizado na conta, protegido por criptografia; a senha não é salva."
+                : `Certificado memorizado neste dispositivo (${p12Name}), cifrado; a senha não é salva.`)
+              : (p12
+                ? "Certificado carregado somente na memória desta aba até validar a senha."
+                : "Certificado salvo na conta; informe a senha para desbloqueá-lo.")}
           </p>
-          {stored && (
+          {(stored || accountCertificate) && (
             <button type="button" onClick={() => void esquecer()} className="mt-1 text-[11px] text-red-700 hover:underline" data-testid="button-forget-cert">
-              Esquecer certificado deste dispositivo
+              Esquecer certificado salvo
             </button>
           )}
         </div>
@@ -264,7 +336,9 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
           {vaultAllowed && (
             <label className="mt-1 flex items-center gap-1.5 text-[10px] text-muted-foreground">
               <input type="checkbox" checked={rememberCert} onChange={(e) => setRememberCert(e.target.checked)} data-testid="checkbox-remember-cert" />
-              Memorizar neste dispositivo (admin; cifrado; senha não é salva)
+              {remoteCertificateVault
+                ? "Memorizar na conta (admin; senha não é enviada nem salva)"
+                : "Memorizar neste dispositivo (admin; cifrado; senha não é salva)"}
             </label>
           )}
           {p12Name && (
@@ -304,7 +378,7 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
           variant="outline"
           size="sm"
           onClick={verificar}
-          disabled={!!busy || !p12}
+          disabled={!!busy || (!p12 && !accountCertificate)}
         >
           {busy === "verify" ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
           Verificar certificado
@@ -313,7 +387,7 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
           type="button"
           size="sm"
           onClick={gerarEAssinar}
-          disabled={!!busy || !p12 || !!signingBlockedReason}
+          disabled={!!busy || (!p12 && !accountCertificate) || !!signingBlockedReason}
           data-testid="button-sign"
         >
           {busy === "sign" ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileSignature className="w-4 h-4" />}
