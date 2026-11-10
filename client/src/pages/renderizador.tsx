@@ -157,7 +157,7 @@ export default function RenderizadorPage() {
     if (!url || approved) return;
     const a = document.createElement("a");
     a.href = url;
-    a.download = "PANT_RASCUNHO_NAO_LIBERADO_" + patient.trim().replace(/[^\\p{L}\\p{N}]+/gu, "_") + ".pdf";
+    a.download = "PANT_RASCUNHO_NAO_LIBERADO_" + patient.trim().replace(/[^\p{L}\p{N}]+/gu, "_") + ".pdf";
     a.click();
   }
   function download() {
