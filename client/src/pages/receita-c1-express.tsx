@@ -576,25 +576,15 @@ export default function ReceitaC1ExpressPage() {
       return;
     }
     setError(""); setOk(""); setBusy("sign");
-    let activeP12: ArrayBuffer | null = null;
     let persistenceError: string | null = null;
     try {
-      const { readP12Info } = await import("@/lib/icpSign");
-      activeP12 = p12 ?? await unlockCertificateFromAccount(user, accountCertificate!, senha);
+      const { readP12Info, signPdfWithP12, downloadBytes } = await import("@/lib/icpSign");
+      const activeP12 = p12 ?? await unlockCertificateFromAccount(user, accountCertificate!, senha);
       const info = readP12Info(activeP12, senha);
       setP12(activeP12);
       setCertInfo({ commonName: info.commonName, notAfter: info.notAfter });
       if (p12) persistenceError = await persistirCertificado(activeP12, senha);
-    } catch (error) {
-      const { icpErrorMessage } = await import("@/lib/icpSign");
-      setError(icpErrorMessage(error));
-      setBusy("");
-      return;
-    }
-    try {
-      if (!activeP12) throw new Error("Certificado não disponível.");
       const pdfBytes = await buildC1TemplatePdfBytes(form, issuer);
-      const { signPdfWithP12, downloadBytes } = await import("@/lib/icpSign");
       const signed = await signPdfWithP12(pdfBytes, activeP12, senha, {
         reason: "Receita de Controle Especial C1",
         name: pdfSafe(issuer.doctorName) || undefined,
