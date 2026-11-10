@@ -311,19 +311,22 @@ export function createPantPdf(jsPDF, md, meta, assets) {
   }
   function renderBlock(block) {
     if (block.type === "heading") {
-      ensureSpace(57);
+      const fontSize = block.depth === 1 ? 22 : block.depth === 2 ? 19 : block.depth === 3 ? 16 : 14;
+      doc.setFont("Cormorant", "bold");
+      doc.setFontSize(fontSize);
+      const headingText = flattenText(block.runs);
+      const lines = doc.splitTextToSize(headingText, maxWidth - 38);
+      ensureSpace(Math.max(50, lines.length * (fontSize + 3) + 18));
       y += 7;
       doc.setFont("Cormorant", "normal");
       doc.setFontSize(10);
       doc.setTextColor(...COLORS.gold);
       doc.text(String(block.number).padStart(2, "0"), left, y);
       doc.setFont("Cormorant", "bold");
-      doc.setFontSize(block.depth > 2 ? 17 : 20);
+      doc.setFontSize(fontSize);
       doc.setTextColor(...COLORS.navy);
-      const headingText = flattenText(block.runs);
-      const lines = doc.splitTextToSize(headingText, maxWidth - 38);
       doc.text(lines, left + 35, y + 1);
-      y += Math.max(24, lines.length * 23) + 11;
+      y += Math.max(fontSize + 4, lines.length * (fontSize + 3)) + 11;
       return;
     }
     if (block.type === "paragraph") {
