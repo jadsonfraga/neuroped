@@ -137,11 +137,9 @@ function PhysicalNoticePage({ type }: { type: NoticeType }) {
     return () => { cancelled = true; };
   }, [activeClinicId, isRemoteClinical, patientId]);
 
-  const set = (key: keyof NoticeFields) =>
-    ({ target }: { target: { value: string; checked?: boolean } }) => {
-      const value = key === "confirmouNumeroVisa" ? Boolean(target.checked) : target.value;
-      setF((previous) => ({ ...previous, [key]: value }));
-    };
+  const setText = <K extends Exclude<keyof NoticeFields, "confirmouNumeroVisa">>(key: K) =>
+    ({ target }: { target: { value: string } }) =>
+      setF((previous) => ({ ...previous, [key]: target.value }));
 
   function validateForPrint(): string[] {
     const missing: string[] = [];
@@ -212,9 +210,9 @@ function PhysicalNoticePage({ type }: { type: NoticeType }) {
       </PageHero>
 
       <nav aria-label="Tipos de receituário controlado" className="flex flex-wrap gap-2" role="tablist">
-        <Button asChild variant="outline" size="sm" role="tab" aria-selected="false"><a href={hrefFor("/receita-c1")}>Receita C1</a></Button>
-        <Button asChild variant={isA ? "default" : "outline"} size="sm" role="tab" aria-selected={isA}><a href={hrefFor("/receita-a1")}>Receita A1</a></Button>
-        <Button asChild variant={!isA ? "default" : "outline"} size="sm" role="tab" aria-selected={!isA}><a href={hrefFor("/receita-b1")}>Receita B1</a></Button>
+        <Button type="button" variant="outline" size="sm" role="tab" aria-selected="false" onClick={() => setLocation(hrefFor("/receita-c1"))}>Receita C1</Button>
+        <Button type="button" variant={isA ? "default" : "outline"} size="sm" role="tab" aria-selected={isA} onClick={() => setLocation(hrefFor("/receita-a1"))}>Receita A1</Button>
+        <Button type="button" variant={!isA ? "default" : "outline"} size="sm" role="tab" aria-selected={!isA} onClick={() => setLocation(hrefFor("/receita-b1"))}>Receita B1</Button>
       </nav>
 
       <div className="rounded-2xl border border-amber-400/60 bg-amber-50/80 p-4 text-sm text-amber-950 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-100" data-testid="visa-numbering-notice">
@@ -236,9 +234,9 @@ function PhysicalNoticePage({ type }: { type: NoticeType }) {
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <label htmlFor="notice-number" className="text-xs font-semibold">Número físico fornecido pela Vigilância Sanitária *</label>
-            <Input id="notice-number" value={f.numeroFisicoVisa} onChange={set("numeroFisicoVisa")} placeholder="Transcreva exatamente o número atribuído para uso físico" className="mt-1" autoComplete="off" />
+            <Input id="notice-number" value={f.numeroFisicoVisa} onChange={setText("numeroFisicoVisa")} placeholder="Transcreva exatamente o número atribuído para uso físico" className="mt-1" autoComplete="off" />
             <label className="mt-2 flex items-start gap-2 text-xs">
-              <input type="checkbox" checked={f.confirmouNumeroVisa} onChange={set("confirmouNumeroVisa")} className="mt-0.5" />
+              <input type="checkbox" checked={f.confirmouNumeroVisa} onChange={(event) => setF((previous) => ({ ...previous, confirmouNumeroVisa: event.target.checked }))} className="mt-0.5" />
               <span>Confirmo que este número foi atribuído pela Vigilância Sanitária para Notificação {type} em papel.</span>
             </label>
           </div>
