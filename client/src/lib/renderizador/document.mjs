@@ -191,6 +191,7 @@ export function createPantPdf(jsPDF, md, meta, assets) {
   const right = pageWidth - 79;
   const maxWidth = right - left;
   const bottom = pageHeight - 65;
+  const releaseStatus = meta.releaseStatus === "definitive" ? "definitive" : "draft";
 
   function drawFrame(cover) {
     doc.setFillColor(...(cover ? COLORS.navy : COLORS.ivory));
@@ -210,6 +211,9 @@ export function createPantPdf(jsPDF, md, meta, assets) {
       doc.setTextColor(119, 119, 119);
       doc.text("Dr. Jadson Fraga Araújo Júnior", right, 49, { align: "right" });
       doc.text("Neuropediatra · CRM-PE 25.227 · RQE 17.756", right, 61, { align: "right" });
+      doc.setFontSize(7);
+      doc.setTextColor(...(releaseStatus === "draft" ? COLORS.red : COLORS.navy));
+      doc.text(releaseStatus === "draft" ? "RASCUNHO — NÃO LIBERADO" : "VERSÃO DEFINITIVA — REVISÃO MÉDICA CONFIRMADA", right, 91, { align: "right" });
       const y = 77;
       doc.setLineWidth(1.5);
       doc.setDrawColor(...COLORS.gold);
@@ -240,7 +244,11 @@ export function createPantPdf(jsPDF, md, meta, assets) {
   doc.text(doc.splitTextToSize(meta.patient, 440), pageWidth / 2, 458, { align: "center" });
   doc.setFontSize(12);
   doc.text(doc.splitTextToSize(meta.detail || "", 440), pageWidth / 2, 489, { align: "center" });
+  doc.setFontSize(8);
+  doc.setTextColor(...(releaseStatus === "draft" ? COLORS.red : COLORS.navy));
+  doc.text(releaseStatus === "draft" ? "RASCUNHO — NÃO LIBERADO" : "VERSÃO DEFINITIVA — ACEITE MÉDICO REGISTRADO EM MANIFESTO", pageWidth / 2, 665, { align: "center" });
   doc.setFontSize(15);
+  doc.setTextColor(...COLORS.ivory);
   doc.text("Dr. Jadson Fraga Araújo Júnior", pageWidth / 2, 715, { align: "center" });
   doc.setFontSize(9);
   doc.setTextColor(...COLORS.gold);
