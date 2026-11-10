@@ -659,7 +659,9 @@ export default function ReceitaC1ExpressPage() {
         icon={Pill}
         eyebrow="receita c1 · emissão rápida"
         title="Emissão Rápida — Receita C1"
-        subtitle="Preencha os dados da prescrição e informe a senha do certificado digital. Para o administrador, o .pfx fica memorizado e cifrado neste dispositivo; a senha nunca é salva. Digite a senha e tecle Enter para gerar a receita assinada."
+        subtitle={remoteCertificateVault
+          ? "Preencha a receita e informe a senha do certificado. Após validação local, o administrador pode memorizar o PFX cifrado na conta; a senha nunca é enviada nem salva. Digite a senha e tecle Enter para assinar."
+          : "Preencha a receita e informe a senha do certificado. O administrador pode memorizar o PFX cifrado neste dispositivo; a senha nunca é salva. Digite a senha e tecle Enter para assinar."}
         gradient="from-primary to-chart-2"
       />
 
