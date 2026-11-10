@@ -120,7 +120,8 @@ export default function RenderizadorPage() {
         }),
       ]);
       const [regular, bold, italic, logo] = assetsJson as { data: string }[];
-      const meta = { patient: patient.trim(), detail, title, subtitle, releaseStatus: released ? "definitive" : "draft" };
+      const acceptedAt = released ? new Date().toISOString() : null;
+      const meta = { patient: patient.trim(), detail, title, subtitle, releaseStatus: released ? "definitive" : "draft", releaseAcceptedAt: acceptedAt };
       const blob = createPdfBlob(jsPDF, md, meta, {
         fonts: { normal: regular.data, bold: bold.data, italic: italic.data },
         logo: "data:image/png;base64," + logo.data,
@@ -142,6 +143,7 @@ export default function RenderizadorPage() {
         pdf_sha256: await hash(await blob.arrayBuffer()),
         metadata: meta,
         release_status: released ? "definitive_after_medical_review" : "draft_not_released",
+        medical_acceptance_at: acceptedAt,
       });
       setApproved(released);
     } catch (e: unknown) {
@@ -154,7 +156,7 @@ export default function RenderizadorPage() {
     }
   }
   function downloadDraft() {
-    if (!url || approved) return;
+    if (!url || approved || busy) return;
     const a = document.createElement("a");
     a.href = url;
     a.download = "PANT_RASCUNHO_NAO_LIBERADO_" + patient.trim().replace(/[^\p{L}\p{N}]+/gu, "_") + ".pdf";
@@ -175,7 +177,7 @@ export default function RenderizadorPage() {
           JSON.stringify(
             {
               ...manifest,
-              medical_acceptance_at: new Date().toISOString(),
+              medical_acceptance_at: manifest?.medical_acceptance_at || new Date().toISOString(),
               review_confirmed: approved,
             },
             null,
@@ -437,7 +439,7 @@ export default function RenderizadorPage() {
               {url && (
                 <div className="export-box">
                   {!approved && (
-                    <button className="text-button" onClick={downloadDraft}>Baixar PDF de rascunho — não liberado</button>
+                    <button className="text-button" disabled={busy} onClick={downloadDraft}>Baixar PDF de rascunho — não liberado</button>
                   )}
                   <p className="clinical-review-note">O renderizador não valida nem altera a prescrição. Confira a dose por administração, os horários e cada mudança temporal. Ao confirmar abaixo, será gerada uma nova versão definitiva, identificada como revisada.</p>
                   <label className="approval">
