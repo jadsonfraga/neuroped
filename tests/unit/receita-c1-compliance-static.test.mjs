@@ -23,7 +23,7 @@ for (const path of pages) {
   assert.match(src, /Identificação do fornecedor/, `${path}: bloco do fornecedor ausente na impressão`);
 }
 const panel = readFileSync("client/src/components/AssinaturaIcpPanel.tsx", "utf8");
-assert.match(panel, /disabled=\{!!busy \|\| !p12 \|\| !!signingBlockedReason\}/);
+assert.match(panel, /disabled=\{!!busy \|\| \(!p12 && !accountCertificate\) \|\| !!signingBlockedReason\}/);
 assert.match(panel, /healthDocument,\n\s*\}\);/);
 // Todo texto livre desenhado no PDF da receita passa por pdfSafe: pdf-lib (WinAnsi)
 // lança em caractere fora do Latin-1 e a receita assinada não sai.
