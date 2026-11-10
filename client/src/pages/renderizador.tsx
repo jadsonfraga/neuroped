@@ -94,7 +94,7 @@ export default function RenderizadorPage() {
     setMd((current) => `${current.trimEnd()}${current.trim() ? "\n\n" : ""}${table}\n`);
     setTab("editor");
   }
-  async function render() {
+  async function render(released = false) {
     if (hasUnfilledTableTemplate(md)) {
       setError("Complete manualmente os cabeçalhos e as células da tabela antes de gerar o PDF.");
       return;
@@ -120,7 +120,7 @@ export default function RenderizadorPage() {
         }),
       ]);
       const [regular, bold, italic, logo] = assetsJson as { data: string }[];
-      const meta = { patient: patient.trim(), detail, title, subtitle };
+      const meta = { patient: patient.trim(), detail, title, subtitle, releaseStatus: released ? "definitive" : "draft" };
       const blob = createPdfBlob(jsPDF, md, meta, {
         fonts: { normal: regular.data, bold: bold.data, italic: italic.data },
         logo: "data:image/png;base64," + logo.data,
@@ -141,15 +141,24 @@ export default function RenderizadorPage() {
         ),
         pdf_sha256: await hash(await blob.arrayBuffer()),
         metadata: meta,
+        release_status: released ? "definitive_after_medical_review" : "draft_not_released",
       });
-      setApproved(false);
+      setApproved(released);
     } catch (e: unknown) {
+      setApproved(false);
       setError(
         e instanceof Error ? e.message : "Não foi possível gerar o PDF.",
       );
     } finally {
       setBusy(false);
     }
+  }
+  function downloadDraft() {
+    if (!url || approved) return;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "PANT_RASCUNHO_NAO_LIBERADO_" + patient.trim().replace(/[^\\p{L}\\p{N}]+/gu, "_") + ".pdf";
+    a.click();
   }
   function download() {
     if (!url || !approved) return;
@@ -379,7 +388,7 @@ export default function RenderizadorPage() {
               <div className="preview-toolbar">
                 <div>
                   <span className={"status-dot " + (url ? "ready" : "")} />
-                  {url ? "PDF pronto para revisão" : "Modelo SuperNeuroPed"}
+                  {url ? approved ? "Versão definitiva liberada" : "PDF pronto para revisão" : "Modelo SuperNeuroPed"}
                 </div>
                 <span>A4 · RETRATO</span>
               </div>
@@ -427,24 +436,33 @@ export default function RenderizadorPage() {
               </div>
               {url && (
                 <div className="export-box">
+                  {!approved && (
+                    <button className="text-button" onClick={downloadDraft}>Baixar PDF de rascunho — não liberado</button>
+                  )}
+                  <p className="clinical-review-note">O renderizador não valida nem altera a prescrição. Confira a dose por administração, os horários e cada mudança temporal. Ao confirmar abaixo, será gerada uma nova versão definitiva, identificada como revisada.</p>
                   <label className="approval">
                     <input
                       type="checkbox"
                       checked={approved}
-                      onChange={(e) => setApproved(e.target.checked)}
+                      disabled={busy}
+                      onChange={(e) => {
+                        const release = e.target.checked;
+                        setApproved(release);
+                        void render(release);
+                      }}
                     />{" "}
                     Revisei o conteúdo integral, todas as páginas e cada orientação de dose, horário e mudança temporal. Autorizo esta versão para exportação, sem assinatura automática.
                   </label>
                   <button
                     className="primary"
-                    disabled={!approved}
+                    disabled={!approved || busy}
                     onClick={download}
                   >
                     <Download size={17} /> Baixar PDF
                   </button>
                   <button
                     className="text-button"
-                    disabled={!approved}
+                    disabled={!approved || busy}
                     onClick={saveManifest}
                   >
                     Baixar manifesto SHA-256
