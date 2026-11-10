@@ -20,7 +20,18 @@ import { PageHero } from "@/components/PageHero";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { purgeLegacyCertificateCache } from "@/lib/certificateSession";
-import { canUseCertificateVault, forgetCertificate, loadCertificate, saveCertificate } from "@/lib/certificateVault";
+import {
+  canUseCertificateVault,
+  forgetCertificate,
+  forgetCertificateFromAccount,
+  loadCertificate,
+  loadCertificateFromAccount,
+  saveCertificate,
+  saveCertificateToAccount,
+  unlockCertificateFromAccount,
+  type AccountCertificateEnvelope,
+} from "@/lib/certificateVault";
+import { isAccountWorkspaceRemoteMode } from "@/lib/accountWorkspace";
 import { useAuth } from "@/contexts/AuthContext";
 import { buildAppHashUrl } from "@/lib/appUrl";
 import { escapeHtml as escHtml } from "@/lib/htmlEscape";
@@ -442,93 +453,138 @@ export default function ReceitaC1ExpressPage() {
   const p12LoadIdRef = useRef(0);
   const { user } = useAuth();
   const vaultAllowed = canUseCertificateVault(user);
+  const remoteCertificateVault = isAccountWorkspaceRemoteMode();
   const [rememberCert, setRememberCert] = useState(true);
   const [storedCert, setStoredCert] = useState<{ fileName: string; savedAt: string } | null>(null);
+  const [accountCertificate, setAccountCertificate] = useState<AccountCertificateEnvelope | null>(null);
 
   const [busy, setBusy] = useState<"" | "sign" | "plain" | "verify">("");
   const [error, setError] = useState("");
   const [ok, setOk] = useState("");
   const [showPreview, setShowPreview] = useState(false);
 
-  // ── Elimina qualquer cache legado; o certificado só entra por upload local ─
   useEffect(() => {
     void purgeLegacyCertificateCache();
   }, []);
 
-  // ── Admin master: carrega o .pfx memorizado neste dispositivo (sem senha) ─
+  // Recupera o envelope do servidor, mas só desbloqueia o PFX localmente
+  // depois que o usuário informa a senha correta.
   useEffect(() => {
     let cancelled = false;
-    if (!vaultAllowed) { setStoredCert(null); return; }
-    void loadCertificate(user).then((stored) => {
-      if (cancelled || !stored) return;
-      setP12(stored.p12);
-      setStoredCert({ fileName: stored.fileName, savedAt: stored.savedAt });
-      setCertStatus("ready");
-    }).catch(() => { /* cofre indisponível: segue com upload manual */ });
+    if (!vaultAllowed) {
+      setStoredCert(null);
+      setAccountCertificate(null);
+      return;
+    }
+    if (remoteCertificateVault) {
+      void loadCertificateFromAccount(user).then((record) => {
+        if (cancelled) return;
+        setAccountCertificate(record);
+        setStoredCert(record ? { fileName: "cofre da conta", savedAt: record.updatedAt } : null);
+        if (record) setCertStatus("ready");
+      }).catch(() => { /* segue com seleção manual */ });
+    } else {
+      void loadCertificate(user).then((record) => {
+        if (cancelled || !record) return;
+        setP12(record.p12);
+        setStoredCert({ fileName: record.fileName, savedAt: record.savedAt });
+        setCertStatus("ready");
+      }).catch(() => { /* segue com seleção manual */ });
+    }
     return () => { cancelled = true; };
-  }, [vaultAllowed, user]);
+  }, [vaultAllowed, remoteCertificateVault, user]);
 
   async function esquecerCertificado() {
-    await forgetCertificate(user);
-    setStoredCert(null); setP12(null); setCertInfo(null); setSenha("");
+    if (remoteCertificateVault) await forgetCertificateFromAccount(user);
+    else await forgetCertificate(user);
+    setStoredCert(null);
+    setAccountCertificate(null);
+    setP12(null);
+    setCertInfo(null);
+    setSenha("");
     setCertStatus("missing");
-    setOk("Certificado removido deste dispositivo.");
+    setOk("Certificado removido do cofre da conta.");
   }
 
-  // ── Verifica info do certificado quando p12 + senha disponíveis ─
+  async function persistirCertificado(bytes: ArrayBuffer, password: string): Promise<string | null> {
+    if (!vaultAllowed || !rememberCert || storedCert) return null;
+    try {
+      if (remoteCertificateVault) {
+        const record = await saveCertificateToAccount(user, bytes, password);
+        setAccountCertificate(record);
+        setStoredCert({ fileName: "cofre da conta", savedAt: record.updatedAt });
+      } else {
+        await saveCertificate(user, bytes, "certificado-a1.pfx");
+        setStoredCert({ fileName: "neste dispositivo", savedAt: new Date().toISOString() });
+      }
+      return null;
+    } catch (err) {
+      return err instanceof Error ? err.message : "Não foi possível memorizar o certificado.";
+    }
+  }
+
+  // ── Valida a senha localmente e só então grava o envelope cifrado ─
   async function verificarCert() {
-    if (!p12 || !senha) return;
+    if ((!p12 && !(remoteCertificateVault && accountCertificate)) || !senha) return;
     setBusy("verify");
     setError(""); setOk("");
     try {
       const { readP12Info } = await import("@/lib/icpSign");
-      const info = readP12Info(p12, senha);
+      const candidate = p12 ?? await unlockCertificateFromAccount(user, accountCertificate!, senha);
+      const info = readP12Info(candidate, senha);
+      setP12(candidate);
       setCertInfo({ commonName: info.commonName, notAfter: info.notAfter });
-      setOk(`Certificado válido até ${info.notAfter.toLocaleDateString("pt-BR")}.`);
+      const persistenceError = p12 ? await persistirCertificado(candidate, senha) : null;
+      setOk(persistenceError
+        ? "Senha validada, mas o certificado não foi memorizado na conta."
+        : (vaultAllowed && rememberCert
+          ? (remoteCertificateVault
+            ? "Senha validada; certificado memorizado de forma criptografada na conta. A senha não foi enviada nem salva."
+            : "Certificado memorizado de forma criptografada neste dispositivo. A senha não foi salva.")
+          : "Certificado válido; a senha permanece somente nesta aba."));
+      if (persistenceError) setError(persistenceError);
     } catch {
       setError("Senha incorreta ou certificado inválido.");
       setCertInfo(null);
     } finally { setBusy(""); }
   }
 
-  // ── Upload manual do .p12 (fallback) ─────────────────────────
+  // ── Upload manual do .p12; a gravação aguarda validação da senha ─
   async function onUploadP12(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
     const loadId = ++p12LoadIdRef.current;
     const ab = await f.arrayBuffer();
-    if (loadId !== p12LoadIdRef.current) return; // uma seleção mais recente já venceu
+    if (loadId !== p12LoadIdRef.current) return;
     setP12(ab);
+    setStoredCert(null);
+    setCertInfo(null);
     setCertStatus("ready");
     setShowUpload(false);
-    if (vaultAllowed && rememberCert) {
-      try {
-        await saveCertificate(user, ab, f.name);
-        setStoredCert({ fileName: f.name, savedAt: new Date().toISOString() });
-        setOk("Certificado memorizado neste dispositivo (cifrado). A senha nunca é salva: digite-a a cada receita.");
-      } catch (err) {
-        setOk("Certificado carregado somente nesta aba.");
-        setError(err instanceof Error ? err.message : "Não foi possível memorizar o certificado.");
-      }
-    } else {
-      setOk("Certificado carregado somente nesta aba; não foi salvo no navegador.");
-    }
+    setOk("Certificado carregado. Verifique a senha correta para memorizá-lo na conta.");
+    setError("");
   }
 
   // ── Gerar PDF + assinar ───────────────────────────────────────
   async function gerarEAssinar() {
     const blocked = electronicRceBlockReason();
     if (blocked) { setError(blocked); return; }
-    if (!p12) { setError("Certificado não disponível."); return; }
+    if (!p12 && !(remoteCertificateVault && accountCertificate)) { setError("Certificado não disponível."); return; }
     if (!senha) { setError("Informe a senha do certificado."); return; }
     if (!form.paciente || !form.cpf.trim() || !form.idadePaciente || !form.dosesPorDia || !form.medicamento || !form.instrucoes) {
       setError("Preencha: paciente, CPF (ou passaporte), idade do paciente, doses por dia, medicamento e instruções de uso.");
       return;
     }
     setError(""); setOk(""); setBusy("sign");
+    let activeP12: ArrayBuffer | null = null;
+    let persistenceError: string | null = null;
     try {
       const { readP12Info } = await import("@/lib/icpSign");
-      readP12Info(p12, senha);
+      activeP12 = p12 ?? await unlockCertificateFromAccount(user, accountCertificate!, senha);
+      const info = readP12Info(activeP12, senha);
+      setP12(activeP12);
+      setCertInfo({ commonName: info.commonName, notAfter: info.notAfter });
+      if (p12) persistenceError = await persistirCertificado(activeP12, senha);
     } catch (error) {
       const { icpErrorMessage } = await import("@/lib/icpSign");
       setError(icpErrorMessage(error));
@@ -536,9 +592,10 @@ export default function ReceitaC1ExpressPage() {
       return;
     }
     try {
+      if (!activeP12) throw new Error("Certificado não disponível.");
       const pdfBytes = await buildC1TemplatePdfBytes(form, issuer);
       const { signPdfWithP12, downloadBytes } = await import("@/lib/icpSign");
-      const signed = await signPdfWithP12(pdfBytes, p12, senha, {
+      const signed = await signPdfWithP12(pdfBytes, activeP12, senha, {
         reason: "Receita de Controle Especial C1",
         name: pdfSafe(issuer.doctorName) || undefined,
         location: issuerCityLine(issuer) || undefined,
@@ -548,7 +605,10 @@ export default function ReceitaC1ExpressPage() {
       });
       downloadBytes(signed, `receita-c1-${dateStamp(false)}-assinada.pdf`);
       setSenha("");
-      setOk("Receita assinada e baixada com sucesso.");
+      setOk(persistenceError
+        ? "Receita assinada; o certificado não foi memorizado na conta."
+        : "Receita assinada e baixada com sucesso.");
+      if (persistenceError) setError(persistenceError);
     } catch (error) {
       const { icpErrorMessage } = await import("@/lib/icpSign");
       setError(icpErrorMessage(error));
@@ -626,7 +686,9 @@ export default function ReceitaC1ExpressPage() {
             <div className="flex items-center gap-2 text-sm text-emerald-800 dark:text-emerald-200">
               <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
               <span>
-                {storedCert ? `Certificado memorizado (${storedCert.fileName})` : "Certificado carregado somente nesta aba"}
+                {storedCert
+                  ? (remoteCertificateVault ? "Certificado memorizado na conta" : `Certificado memorizado (${storedCert.fileName})`)
+                  : "Certificado carregado somente nesta aba; será salvo após validar a senha"}
                 {certInfo && ` · válido até ${certInfo.notAfter.toLocaleDateString("pt-BR")}`}
               </span>
             </div>
@@ -637,7 +699,7 @@ export default function ReceitaC1ExpressPage() {
             >
               Trocar
             </button>
-            {storedCert && (
+            {(storedCert || accountCertificate) && (
               <button
                 type="button"
                 onClick={() => void esquecerCertificado()}
@@ -653,7 +715,7 @@ export default function ReceitaC1ExpressPage() {
           <div className="mb-4 rounded-xl border border-amber-300/70 bg-amber-50/70 dark:border-amber-800/50 dark:bg-amber-950/20 px-3 py-2 text-sm text-amber-800 dark:text-amber-200 flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5">
               <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-              Selecione seu arquivo .p12 / .pfx localmente. O certificado e a senha não serão enviados ao servidor.
+              Selecione o arquivo .p12 / .pfx localmente. Após validar a senha, somente o certificado cifrado será enviado à conta.
             </div>
             <button
               type="button"
@@ -665,7 +727,7 @@ export default function ReceitaC1ExpressPage() {
           </div>
         )}
 
-        {/* Upload exclusivamente local */}
+        {/* O PFX é lido localmente e só é enviado como envelope cifrado após validar a senha. */}
         {(showUpload || certStatus === "missing") && (
           <div className="mb-4 rounded-xl border border-border bg-background/50 p-3 space-y-2">
             <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
@@ -685,7 +747,9 @@ export default function ReceitaC1ExpressPage() {
                   onChange={(e) => setRememberCert(e.target.checked)}
                   data-testid="checkbox-remember-cert"
                 />
-                Memorizar o certificado neste dispositivo (somente administrador; cifrado; a senha não é salva)
+                {remoteCertificateVault
+                  ? "Memorizar na conta (somente administrador; a senha não é enviada nem salva)"
+                  : "Memorizar neste dispositivo (somente administrador; cifrado; a senha não é salva)"}
               </label>
             )}
           </div>
@@ -724,7 +788,7 @@ export default function ReceitaC1ExpressPage() {
               variant="outline"
               size="sm"
               onClick={verificarCert}
-              disabled={!!busy || !p12 || !senha}
+              disabled={!!busy || (!p12 && !accountCertificate) || !senha}
               className="gap-1.5 w-full sm:w-auto"
             >
               {busy === "verify" ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
