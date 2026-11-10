@@ -53,3 +53,13 @@ const longParagraph = "Trecho demonstrativo sem informação clínica. ".repeat(
 const longPdf = createPantPdf(jsPDF, longParagraph, meta, assets);
 assert.ok(longPdf.getNumberOfPages() >= 3, "parágrafo longo deve paginar sem extravasar da folha");
 console.log("Marcadores PANT e paginação interna de parágrafos longos: OK");
+
+const tableMarkdown = "| Terapia | Carga | Objetivo |\\n| --- | --- | --- |\\n| Fonoaudiologia | 3 h/semana | Comunicação funcional |";
+const parsedTable = contentFromMarkdown(tableMarkdown);
+assert.equal(parsedTable.length, 1, "tabela estruturada deve ser um único bloco");
+assert.equal(parsedTable[0].type, "table");
+assert.equal(parsedTable[0].header.map((cell) => cell.map((run) => run.text).join("")).join("|"), "Terapia|Carga|Objetivo");
+assert.equal(parsedTable[0].rows[0].map((cell) => cell.map((run) => run.text).join("")).join("|"), "Fonoaudiologia|3 h/semana|Comunicação funcional");
+const plainLines = contentFromMarkdown("Terapia Carga Objetivo\\nFonoaudiologia 3 h/semana Comunicação funcional");
+assert.ok(plainLines.every((block) => block.type === "paragraph"), "texto livre clínico nunca deve virar tabela por inferência");
+console.log("Tabelas estruturadas preservadas e texto livre mantido sem inferência: OK");
