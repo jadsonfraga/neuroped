@@ -106,7 +106,6 @@ function PhysicalNoticePage({ type }: { type: NoticeType }) {
   const isRemoteClinical = accessMode === "remote" && isAuthenticated;
   const patientId = readRouteParam("patientId") || null;
   const isA = type === "A";
-  const listCode = isA ? "A1" : "B1";
   const title = isA ? "Receita A1" : "Receita B1";
   const officialModel = isA ? OFFICIAL_MODEL_A : OFFICIAL_MODEL_B;
   const [f, setF] = useState<NoticeFields>({ ...EMPTY, data: todayBR() });
