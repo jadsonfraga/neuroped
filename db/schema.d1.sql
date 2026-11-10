@@ -171,17 +171,27 @@ INSERT OR IGNORE INTO app_settings (key, value) VALUES ('app.schema.version', '2
 
 -- Mirrors of migrations 0041–0042 for D1 bootstrap/dev schemas.
 CREATE TABLE IF NOT EXISTS account_workspace_items (
+  clinic_id TEXT NOT NULL REFERENCES clinics(id) ON DELETE CASCADE,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   item_key_hash TEXT NOT NULL CHECK (length(item_key_hash) = 64),
   payload_encrypted TEXT NOT NULL,
   encryption_version TEXT NOT NULL,
   expires_at TEXT,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (user_id, item_key_hash)
+  PRIMARY KEY (clinic_id, user_id, item_key_hash)
 );
 CREATE INDEX IF NOT EXISTS idx_account_workspace_items_expiry
-  ON account_workspace_items(user_id, expires_at)
+  ON account_workspace_items(clinic_id, user_id, expires_at)
   WHERE expires_at IS NOT NULL;
+CREATE TRIGGER IF NOT EXISTS trg_account_workspace_active_membership
+BEFORE INSERT ON account_workspace_items
+WHEN NOT EXISTS (
+  SELECT 1 FROM clinic_memberships m
+   WHERE m.clinic_id = NEW.clinic_id AND m.user_id = NEW.user_id AND m.active = 1
+)
+BEGIN
+  SELECT RAISE(ABORT, 'ACCOUNT_WORKSPACE_MEMBERSHIP_REQUIRED');
+END;
 
 CREATE TABLE IF NOT EXISTS certificate_vault (
   user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
