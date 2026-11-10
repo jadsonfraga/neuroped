@@ -70,3 +70,13 @@ assert.equal(hasUnfilledTableTemplate(tableTemplate), true, "modelo de tabela de
 assert.equal(hasUnfilledTableTemplate(tableTemplate.replaceAll("Cabeçalho 1", "Terapia").replaceAll("Cabeçalho 2", "Carga").replaceAll("Cabeçalho 3", "Objetivo").replaceAll("[preencher]", "Exemplo")), false, "tabela preenchida deve liberar a validação");
 const parsedTemplate = contentFromMarkdown(tableTemplate.replaceAll("Cabeçalho 1", "Terapia").replaceAll("Cabeçalho 2", "Carga").replaceAll("Cabeçalho 3", "Objetivo").replaceAll("[preencher]", "Exemplo"));
 assert.equal(parsedTemplate[0].type, "table", "estrutura inserida deve chegar ao parser como tabela");
+
+
+const draftPdf = createPantPdf(jsPDF, "## Documento demonstrativo", { ...meta, releaseStatus: "draft" }, assets);
+const draftStream = draftPdf.internal.pages.flat().join("");
+assert.match(draftStream, /RASCUNHO/);
+const definitivePdf = createPantPdf(jsPDF, "## Documento demonstrativo", { ...meta, releaseStatus: "definitive" }, assets);
+const definitiveStream = definitivePdf.internal.pages.flat().join("");
+assert.match(definitiveStream, /VERSÃO DEFINITIVA/);
+assert.doesNotMatch(definitiveStream, /RASCUNHO/);
+console.log("PDF de rascunho identificado e versão definitiva separada após revisão: OK");
