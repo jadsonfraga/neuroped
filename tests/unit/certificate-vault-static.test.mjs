@@ -1,26 +1,41 @@
-// Cofre do certificado A1: persistência só do .pfx cifrado, só para admin, senha nunca salva.
+// Certificate A1 is saved only after local password validation; backend stores ciphertext only.
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const vault = readFileSync("client/src/lib/certificateVault.ts", "utf8");
-const express = readFileSync("client/src/pages/receita-c1-express.tsx", "utf8");
 const panel = readFileSync("client/src/components/AssinaturaIcpPanel.tsx", "utf8");
+const express = readFileSync("client/src/pages/receita-c1-express.tsx", "utf8");
+const api = readFileSync("functions/api/certificate-vault.ts", "utf8");
+const migration = readFileSync("db/migrations/0042_certificate_vault.sql", "utf8");
 const legacy = readFileSync("client/src/lib/certificateSession.ts", "utf8");
+const retired = readFileSync("functions/api/cert.ts", "utf8");
 
-assert.match(vault, /user\.role === "admin"/, "somente admin usa o cofre");
-assert.match(vault, /generateKey\(\{ name: "AES-GCM", length: 256 \}, false,/, "chave de envelope não-extraível");
-assert.match(vault, /additionalData: aad/, "AAD amarra o registro ao usuário");
-const vaultCode = vault.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-assert.doesNotMatch(vaultCode, /senha|password|passphrase/i, "o cofre jamais recebe/guarda a senha");
-assert.doesNotMatch(vault, /fetch\(|XMLHttpRequest|localStorage|sessionStorage/, "o .pfx não sai do dispositivo");
-const legacyName = legacy.match(/LEGACY_DB_NAME = "([^"]+)"/)[1];
-const vaultName = vault.match(/VAULT_DB_NAME = "([^"]+)"/)[1];
-assert.notEqual(vaultName, legacyName, "purga do cache legado não apaga o cofre");
+assert.match(vault, /user\.role === "admin"/, "only admin can use the certificate vault");
+assert.match(vault, /PBKDF2/);
+assert.match(vault, /AES-GCM/);
+assert.match(vault, /additionalData: certificateAad\(user\.id\)/, "envelope is bound to account ID");
+assert.match(vault, /iterations: CERTIFICATE_VAULT_KDF_ITERATIONS/);
+assert.match(vault, /body: JSON\.stringify\(payload\)/, "only the encrypted envelope is serialized for upload");
+const uploadPayload = vault.slice(vault.indexOf("  const payload = {"), vault.indexOf("  const result = await accountVaultRequest"));
+assert.match(uploadPayload, /ciphertext: encodeBase64/);
+assert.doesNotMatch(uploadPayload, /password|senha|p12:/i, "upload envelope excludes password and plaintext PFX");
+assert.match(api, /user\?\.role === "admin"/, "backend repeats admin authorization");
+assert.match(api, /WHERE user_id = \?/g, "backend lookup and mutation are scoped to the authenticated user");
+assert.match(api, /Object\.keys\(body\)\.some/, "backend rejects password/PFX fields and unknown payload fields");
+assert.match(api, /body\.ciphertext/);
+assert.doesNotMatch(migration, /password|passphrase|private_key|pfx_plain/i, "database schema has no password or plaintext key field");
+assert.match(migration, /ciphertext_b64/);
+assert.match(retired, /status: 410/, "legacy certificate distribution endpoint remains retired");
 
-for (const [name, src] of [["express", express], ["panel", panel]]) {
-  assert.match(src, /saveCertificate\(user, [a-z]+, f\.name\)/, `${name}: salva somente bytes e nome do arquivo`);
-  assert.doesNotMatch(src, /saveCertificate\([^)]*senha/, `${name}: senha nunca vai ao cofre`);
-  assert.match(src, /e\.key === "Enter"[\s\S]{0,120}gerarEAssinar\(\)/, `${name}: Enter na senha gera e assina`);
-  assert.match(src, /setSenha\(""\)/, `${name}: senha é limpa após assinar`);
+for (const [name, source] of [["shared signature panel", panel], ["C1 Express", express]]) {
+  const uploadStart = source.indexOf("async function onPickP12") >= 0
+    ? source.indexOf("async function onPickP12")
+    : source.indexOf("async function onUploadP12");
+  const verifyStart = source.indexOf("async function verificar", uploadStart);
+  const upload = source.slice(uploadStart, verifyStart < 0 ? source.length : verifyStart);
+  assert.doesNotMatch(upload, /saveCertificate(?:ToAccount)?\(/, `${name}: selection alone cannot save a certificate`);
+  assert.match(source, /readP12Info\([\s\S]{0,500}persistirCertificado\(/, `${name}: local password validation occurs before persistence`);
+  assert.match(source, /saveCertificateToAccount\(/, `${name}: successful validation can save to the account vault`);
 }
-console.log("✓ cofre do certificado A1: admin-only, cifrado, sem senha persistida");
+assert.match(legacy, /neuroped-icp/, "legacy plaintext certificate cache continues to be purged");
+console.log("✓ certificate account vault is encrypted, admin-scoped and password-free on the backend");
