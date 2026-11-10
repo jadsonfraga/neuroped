@@ -26,10 +26,10 @@ const server = await startStaticServer("dist/public", {
 });
 const browser = await chromium.launch(auditBrowserLaunchOptions());
 const context = await browser.newContext({ acceptDownloads: true, reducedMotion: "reduce" });
-await context.addInitScript((storage) => {
+const page = await context.newPage();
+await page.addInitScript((storage) => {
   for (const [key, value] of Object.entries(storage)) localStorage.setItem(key, value);
 }, ACCEPTED_FIRST_VISIT_STORAGE);
-const page = await context.newPage();
 const errors = [];
 const clinicalWrites = [];
 page.on("pageerror", (error) => errors.push(error.message));
