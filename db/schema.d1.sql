@@ -168,3 +168,28 @@ INSERT OR IGNORE INTO app_settings (key, value) VALUES ('app.version', '2.0.0');
 INSERT OR IGNORE INTO app_settings (key, value) VALUES ('app.mode', 'demo');
 INSERT OR IGNORE INTO app_settings (key, value) VALUES ('app.lgpd.version', '1.0');
 INSERT OR IGNORE INTO app_settings (key, value) VALUES ('app.schema.version', '2026-05-08');
+
+-- Mirrors of migrations 0041–0042 for D1 bootstrap/dev schemas.
+CREATE TABLE IF NOT EXISTS account_workspace_items (
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  item_key TEXT NOT NULL CHECK (length(item_key) BETWEEN 1 AND 160),
+  payload_encrypted TEXT NOT NULL,
+  encryption_version TEXT NOT NULL,
+  expires_at TEXT,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (user_id, item_key)
+);
+CREATE INDEX IF NOT EXISTS idx_account_workspace_items_expiry
+  ON account_workspace_items(user_id, expires_at)
+  WHERE expires_at IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS certificate_vault (
+  user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  format_version INTEGER NOT NULL CHECK (format_version = 1),
+  kdf TEXT NOT NULL CHECK (kdf = 'PBKDF2-SHA256'),
+  kdf_iterations INTEGER NOT NULL CHECK (kdf_iterations = 310000),
+  salt_b64 TEXT NOT NULL CHECK (length(salt_b64) = 24),
+  iv_b64 TEXT NOT NULL CHECK (length(iv_b64) = 16),
+  ciphertext_b64 TEXT NOT NULL CHECK (length(ciphertext_b64) BETWEEN 24 AND 1700000),
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
