@@ -26,6 +26,7 @@ export default function RenderizadorPage() {
     [error, setError] = useState(""),
     [url, setUrl] = useState(""),
     [approved, setApproved] = useState(false),
+    [reviewPending, setReviewPending] = useState(false),
     [drag, setDrag] = useState(false),
     [manifest, setManifest] = useState<Record<string, unknown> | null>(null);
   const [logoPreview, setLogoPreview] = useState("");
@@ -61,6 +62,7 @@ export default function RenderizadorPage() {
   function invalidate() {
     generation.current++;
     setApproved(false);
+    setReviewPending(false);
     setUrl("");
     setManifest(null);
     setError("");
@@ -114,6 +116,7 @@ export default function RenderizadorPage() {
     }
     const job = ++generation.current;
     setApproved(false);
+    if (!released) setReviewPending(false);
     if (!released) {
       setUrl("");
       setManifest(null);
@@ -161,8 +164,10 @@ export default function RenderizadorPage() {
       setManifest(nextManifest);
       setUrl(nextUrl);
       setApproved(released);
+      setReviewPending(false);
     } catch (e: unknown) {
       setApproved(false);
+      setReviewPending(false);
       setError(
         e instanceof Error ? e.message : "Não foi possível gerar o PDF.",
       );
@@ -461,12 +466,13 @@ export default function RenderizadorPage() {
                   <label className="approval">
                     <input
                       type="checkbox"
-                      checked={approved}
+                      checked={approved || reviewPending}
                       disabled={busy}
                       onChange={(e) => {
                         if (e.target.checked) {
                           // Checkbox expresses the clinician's intent, not a completed release.
                           // Only render(true) may approve after the PDF/hash pair is complete.
+                          setReviewPending(true);
                           void render(true);
                         } else {
                           invalidate();
