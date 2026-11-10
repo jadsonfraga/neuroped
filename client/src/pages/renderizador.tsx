@@ -369,7 +369,7 @@ export default function RenderizadorPage() {
                   disabled={
                     busy || !md.trim() || !patient.trim() || !title.trim()
                   }
-                  onClick={render}
+                  onClick={() => render()}
                 >
                   {busy ? (
                     <LoaderCircle className="spin" size={17} />
