@@ -193,7 +193,9 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
       setOkMsg(persistenceError
         ? "Senha validada. O certificado continua disponível nesta aba, mas não foi memorizado na conta."
         : (vaultAllowed && rememberCert
-          ? "Senha validada; certificado memorizado de forma criptografada na conta. A senha não foi enviada nem salva."
+          ? (remoteCertificateVault
+            ? "Senha validada; certificado memorizado de forma criptografada na conta. A senha não foi enviada nem salva."
+            : "Certificado memorizado de forma criptografada neste dispositivo. A senha não foi salva.")
           : "Certificado válido; a senha permanece somente nesta aba."));
       if (persistenceError) setErro(persistenceError);
     } catch (error) {
