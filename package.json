@@ -83,7 +83,7 @@
     "lint": "eslint . --ext ts,tsx --max-warnings=0",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
     "audit:inventory": "node scripts/guards/audit-inventory.mjs",
-    "audit:navigation": "node scripts/guards/audit-navigation-routes.mjs",
+    "audit:navigation": "node scripts/guards/audit-navigation-routes.mjs && node tests/unit/renderizador-local-assets-static.test.mjs",
     "audit:scales:clinical": "node --import tsx scripts/auditClinicaEscalas.js",
     "audit:remote-scale-truth": "node --import tsx scripts/guards/check-remote-scale-clinical-truth.mjs",
     "guard:interactive-scale-ids": "node --import tsx scripts/gen-interactive-scale-ids.mts --check",

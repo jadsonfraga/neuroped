@@ -42,3 +42,12 @@ restrições permanecem. O backend e as políticas de autenticação não mudam.
 Reverter o commit deste PR e executar novamente os workflows canônicos de
 Cloudflare e Vercel. Nenhuma migração de banco nem configuração de segredo é
 necessária. O site PANT Studio original permanece independente.
+
+
+## Falha de produção e correção (#1303)
+
+Após autenticação, a primeira abertura de `/#/renderizador` falhou no preload do CSS lazy; atualizar o cache não resolveu. O CSS também continha uma importação redundante de Google Fonts, apesar da fonte local incorporada. A remoção elimina essa dependência externa, que é o principal suspeito do erro de preload; a confirmação depende da validação após deploy. A correção remove essa chamada externa e adiciona teste estático para proibir regressão. A aba usa agora somente os recursos visuais empacotados localmente.
+
+Rollback: reverter o este PR e redeployar o commit anterior; isso restaura a importação remota que se mostrou incompatível com a execução observada.
+
+Validação deste incidente: após deploy, autenticar, abrir Renderizador, usar o exemplo demonstrativo, gerar PDF local, revisar e verificar exportação e manifesto. Registrar resultado no PR antes do merge.
