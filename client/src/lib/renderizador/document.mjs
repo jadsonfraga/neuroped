@@ -55,6 +55,11 @@ function flattenText(tokens = []) {
 }
 
 export function contentFromMarkdown(md) {
+  // PANT source documents can use +++...+++ and ==...== for clinical emphasis.
+  // Convert only balanced, single-line markers; never rewrite clinical words.
+  const normalized = md
+    .replace(/\+\+\+([^\n+][^\n]*?)\+\+\+/g, "**$1**")
+    .replace(/==([^\n=][^\n]*?)==/g, "**$1**");
   let headingNumber = 0;
   function visit(tokens, depth = 0) {
     return tokens.flatMap((token) => {
@@ -97,7 +102,7 @@ export function contentFromMarkdown(md) {
       }
     });
   }
-  return visit(marked.lexer(md));
+  return visit(marked.lexer(normalized));
 }
 
 function fontStyle(run = {}) {
@@ -123,14 +128,21 @@ function drawRuns(doc, runs, x, y, maxWidth, opts = {}) {
   let lineX = actualX;
   let lineY = y;
   let lines = 1;
+  const nextLine = () => {
+    lineX = actualX;
+    lineY += leading;
+    lines++;
+    if (opts.bottom && lineY > opts.bottom) {
+      if (!opts.onPageBreak) throw Error("Texto ultrapassou o limite da página.");
+      lineY = opts.onPageBreak();
+    }
+  };
   for (const run of runs) {
     const text = String(run.text || "");
     const pieces = text.split(/(\s+|\n)/).filter((part) => part.length);
     for (const piece of pieces) {
       if (piece === "\n") {
-        lineX = actualX;
-        lineY += leading;
-        lines++;
+        nextLine();
         continue;
       }
       withFont(doc, run, size);
@@ -140,9 +152,7 @@ function drawRuns(doc, runs, x, y, maxWidth, opts = {}) {
         continue;
       }
       if (lineX > actualX && lineX + width > x + maxWidth) {
-        lineX = actualX;
-        lineY += leading;
-        lines++;
+        nextLine();
       }
       doc.text(piece, lineX, lineY);
       if (run.strike) {
@@ -251,9 +261,15 @@ export function createPantPdf(jsPDF, md, meta, assets) {
     if (y + height > bottom) newContentPage();
   }
   function paragraph(runs, opts = {}) {
-    const estimate = Math.max(30, Math.ceil(flattenText(runs).length / 74) * (opts.leading || 18));
-    ensureSpace(estimate);
-    const out = drawRuns(doc, runs, left + (opts.depth || 0) * 12, y, maxWidth - (opts.depth || 0) * 12, opts);
+    ensureSpace(30);
+    const out = drawRuns(doc, runs, left + (opts.depth || 0) * 12, y, maxWidth - (opts.depth || 0) * 12, {
+      ...opts,
+      bottom,
+      onPageBreak: () => {
+        newContentPage();
+        return y;
+      },
+    });
     y = out.y + (opts.after ?? 7);
   }
   function renderTable(block) {
