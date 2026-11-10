@@ -48,6 +48,6 @@ necessária. O site PANT Studio original permanece independente.
 
 Após autenticação, a primeira abertura de `/#/renderizador` falhou no preload do CSS lazy; atualizar o cache não resolveu. A causa identificada no bundle era a importação redundante de Google Fonts no CSS, apesar da fonte local incorporada. A correção remove essa chamada externa e adiciona teste estático para proibir regressão. A aba usa agora somente os recursos visuais empacotados localmente.
 
-Rollback: reverter o PR #1304 e redeployar o commit anterior; isso restaura a importação remota que se mostrou incompatível com a execução observada.
+Rollback: reverter o este PR e redeployar o commit anterior; isso restaura a importação remota que se mostrou incompatível com a execução observada.
 
 Validação deste incidente: após deploy, autenticar, abrir Renderizador, usar o exemplo demonstrativo, gerar PDF local, revisar e verificar exportação e manifesto. Registrar resultado no PR antes do merge.
