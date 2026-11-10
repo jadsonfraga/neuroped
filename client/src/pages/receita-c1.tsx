@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "wouter";
 import { FileText, Printer, RefreshCw, PenSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHero } from "@/components/PageHero";
@@ -33,6 +34,8 @@ interface ReceitaFields {
   pac: string;
   /** CPF do paciente (ou passaporte, se estrangeiro) — Portaria 06/1999 art. 85, red. RDC 1.000/2025. */
   cpf: string;
+  /** Referência física local informada pela Visa; não é número SNCR. */
+  numeroVisaLocal: string;
   idadePaciente: string;
   dosesPorDia: string;
   end: string;
@@ -44,7 +47,7 @@ interface ReceitaFields {
 }
 
 const RECEITA_TEMPLATE_VERSION = "Versão 2 — modelo Anvisa vigente para impressões desde 18/05/2026";
-const EMPTY: ReceitaFields = { pac: "", cpf: "", idadePaciente: "", dosesPorDia: "", end: "", med: "", qtd: "", qtde: "", poso: "", data: "" };
+const EMPTY: ReceitaFields = { pac: "", cpf: "", numeroVisaLocal: "", idadePaciente: "", dosesPorDia: "", end: "", med: "", qtd: "", qtde: "", poso: "", data: "" };
 
 function todayBR(): string {
   return new Intl.DateTimeFormat("pt-BR").format(new Date());
@@ -270,6 +273,7 @@ function viaHtml(tag: string, f: ReceitaFields, issuer: DocumentIssuer) {
     <div class="rt">
       <div class="rx">Receita de Controle Especial</div>
       <div class="via-tag">${tag}</div>
+      ${f.numeroVisaLocal.trim() ? `<div class="visa-number">Referência física local VISA (não SNCR): ${esc(f.numeroVisaLocal)}</div>` : ""}
     </div>
   </div>
   <div class="ribbon"><i class="g"></i><i class="t"></i><i class="b"></i><i class="n"></i></div>
@@ -390,7 +394,7 @@ html,body{background:var(--white);font-family:'Carlito',Arial,sans-serif;font-si
 .head .rx{font-family:'Cormorant Garamond',Georgia,serif;font-size:11.4pt;font-weight:700;
   letter-spacing:.08em;color:var(--white);white-space:nowrap;text-shadow:0 1px 0 var(--black-a32)}
 .head .via-tag{font-size:6.4pt;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--logo-gold-soft);margin-top:1.2mm}
+  color:var(--logo-gold-soft);margin-top:1.2mm}.head .visa-number{font-size:5.4pt;margin-top:1mm;color:var(--logo-gold-soft)}
 .ribbon{height:1.9mm;display:flex;box-shadow:0 .5mm 1.5mm var(--logo-navy-a10)}
 .ribbon i{display:block;height:100%}
 .ribbon .g{width:34%;background:linear-gradient(90deg,var(--ribbon-gold),var(--ribbon-gold-light),var(--ribbon-gold))}
@@ -562,6 +566,12 @@ export default function ReceitaC1Page() {
         </div>
       </PageHero>
 
+      <nav aria-label="Tipos de receituário controlado" className="flex flex-wrap gap-2" role="tablist">
+        <Button asChild variant="default" size="sm" role="tab" aria-selected="true"><Link href={"/receita-c1" + (patientId ? "?patientId=" + encodeURIComponent(patientId) : "")}>Receita C1</Link></Button>
+        <Button asChild variant="outline" size="sm" role="tab" aria-selected="false"><Link href={"/receita-a1" + (patientId ? "?patientId=" + encodeURIComponent(patientId) : "")}>Receita A1</Link></Button>
+        <Button asChild variant="outline" size="sm" role="tab" aria-selected="false"><Link href={"/receita-b1" + (patientId ? "?patientId=" + encodeURIComponent(patientId) : "")}>Receita B1</Link></Button>
+      </nav>
+
       <div className="rounded-2xl border border-amber-400/60 bg-amber-50/80 p-4 text-sm text-amber-950 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-100">
         <strong>Revisão obrigatória:</strong> este módulo usa o modelo Anvisa {RECEITA_TEMPLATE_VERSION.replace("Versão 2 — ", "")}. A tela não decide se uma substância é C1 nem substitui conferência da lista vigente, do prescritor, do estabelecimento ou da assinatura qualificada. Sem paciente vinculado, a impressão fica bloqueada.
       </div>
@@ -652,6 +662,12 @@ export default function ReceitaC1Page() {
             className="mt-1"
             data-testid="input-receita-cpf"
           />
+        </div>
+
+        <div className="max-w-xl">
+          <label htmlFor="receita-c1-numero-visa" className="text-xs font-semibold text-muted-foreground">Referência física local fornecida pela Vigilância Sanitária (opcional)</label>
+          <Input id="receita-c1-numero-visa" value={f.numeroVisaLocal} onChange={set("numeroVisaLocal")} placeholder="Somente se a Visa atribuiu número físico à RCE" className="mt-1" />
+          <p className="mt-1 text-xs text-muted-foreground">A RCE física não recebe numeração SNCR. Este campo apenas registra uma referência local expressamente fornecida pela Visa; não gera, reserva nem valida números.</p>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
