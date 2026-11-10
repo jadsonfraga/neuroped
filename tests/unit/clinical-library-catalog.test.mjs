@@ -46,7 +46,7 @@ for (const { anchor, slug } of blocks) {
 }
 
 // Cada capítulo é renderizado uma única vez na página.
-for (const tag of ["<TeaTimidezChapter />", "<DesatencaoImaturidadeChapter />", "<PrimeiraCriseAfebrilChapter />", "<AlfabetizacaoDislexiaChapter />", "<AtrasoFalaAvaliacaoGlobalChapter />", "<AnsiedadeSeparacaoChapter />", "<AudicaoUrgenteChapter />", "<InsoniaPreEscolarChapter />"]) {
+for (const tag of ["<TeaTimidezChapter />", "<DesatencaoImaturidadeChapter />", "<PrimeiraCriseAfebrilChapter />", "<AlfabetizacaoDislexiaChapter />", "<AtrasoFalaAvaliacaoGlobalChapter />", "<AnsiedadeSeparacaoChapter />", "<AudicaoUrgenteChapter />", "<InsoniaPreEscolarChapter />", "<WiscIndicesDia09Chapter />"]) {
   assert.equal(page.split(tag).length - 1, 1, `${tag} renderizado mais de uma vez ou ausente`);
 }
 
