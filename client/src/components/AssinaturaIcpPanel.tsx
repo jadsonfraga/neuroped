@@ -103,12 +103,27 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
       return;
     }
     if (remoteCertificateVault) {
-      void loadCertificateFromAccount(user).then((record) => {
-        if (cancelled) return;
-        setAccountCertificate(record);
-        setStored(Boolean(record));
-        if (record) setP12Name("Certificado A1 salvo na conta");
-      }).catch(() => { /* segue com seleção manual */ });
+      void (async () => {
+        try {
+          const record = await loadCertificateFromAccount(user);
+          if (cancelled) return;
+          if (record) {
+            setAccountCertificate(record);
+            setStored(true);
+            setP12Name("Certificado A1 salvo na conta");
+            return;
+          }
+        } catch {
+          // Se o backend estiver indisponível, tenta o cofre cifrado local.
+        }
+        const localRecord = await loadCertificate(user);
+        if (cancelled || !localRecord) return;
+        p12LoadIdRef.current += 1;
+        setP12(localRecord.p12);
+        setP12Name(localRecord.fileName);
+        setStored(false);
+        setOkMsg("Certificado deste dispositivo recuperado. Valide a senha para memorizá-lo na conta.");
+      })().catch(() => { /* segue com seleção manual */ });
     } else {
       void loadCertificate(user).then((record) => {
         if (cancelled || !record) return;
