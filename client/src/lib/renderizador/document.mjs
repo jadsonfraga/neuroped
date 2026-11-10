@@ -313,7 +313,8 @@ export function createPantPdf(jsPDF, md, meta, assets) {
         doc.setFont("Cormorant", header ? "bold" : "normal");
         doc.setFontSize(10.5);
         doc.setTextColor(...COLORS.ink);
-        doc.text(lines.slice(offset, offset + count), left + i * colWidth + 7, y + topPadding, {
+        const segment = lines.slice(offset, offset + count);
+        if (segment.length) doc.text(segment, left + i * colWidth + 7, y + topPadding, {
           maxWidth: colWidth - 13,
         });
       });
