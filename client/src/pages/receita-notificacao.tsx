@@ -78,7 +78,7 @@ function buildPhysicalNoticeHtml(type: NoticeType, f: NoticeFields, issuer: Docu
     "</head><body><main class=\"sheet\">" +
     "<header class=\"head\"><div class=\"issuer\"><div class=\"section-title\">Identificação do emitente</div><b>" + printValue(issuer.doctorName) + "</b><br>" + printValue(issuerCredentials(issuer)) + "<br>" + printValue(issuerContactLine(issuer)) + "</div>" +
     "<div class=\"title\">" + title + "<div class=\"fine\">Modelo físico · Lista " + (type === "A" ? "A1" : "B1") + "</div></div>" +
-    "<div class=\"badge\"><b>" + type + "</b>NÚMERO<div class=\"number\">" + printValue(f.numeroFisicoVisa) + "</div></div></header>" +
+    "<div class=\"badge\"><b>" + type + "</b>NÚMERO<div class=\"number\">" + printValue(f.numeroFisicoVisa) + "</div><div class=\"date\">DATA<br><strong>" + printValue(f.data) + "</strong></div></div></header>" +
     "<section class=\"section\"><div class=\"section-title\">Prescrição</div><div class=\"grid\">" +
     field("Nome do medicamento", f.medicamento) + field("Concentração", f.concentracao) +
     field("Forma farmacêutica", f.formaFarmaceutica) + field("Quantidade", f.quantidade) +
@@ -94,7 +94,7 @@ function buildPhysicalNoticeHtml(type: NoticeType, f: NoticeFields, issuer: Docu
     "<section class=\"section\"><div class=\"section-title\">Impressão</div><div class=\"grid\">" +
     field("Nome da gráfica", f.graficaNome) + field("CNPJ", f.graficaCnpj) + field("Endereço completo da gráfica", f.graficaEndereco) + field("Data de impressão", printDate) +
     "</div></section>" +
-    "<div class=\"footer fine\">Data da prescrição: " + printValue(f.data) + " · Município/UF: " + printValue(issuerCityLine(issuer)) + "</div>" +
+    "<div class=\"footer fine\">Município/UF: " + printValue(issuerCityLine(issuer)) + "</div>" +
     "</main></body></html>";
 }
 
