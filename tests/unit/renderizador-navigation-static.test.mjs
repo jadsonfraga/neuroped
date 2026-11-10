@@ -35,3 +35,14 @@ test("Cloudflare e Vercel permitem somente a prévia local de PDF no frame", () 
     assert.match(read(path), /frame-ancestors 'none'/);
   }
 });
+
+test("a versão definitiva só é liberada após PDF e hashes concluídos", () => {
+  assert.match(page, /manifest\?\.release_status !== "draft_not_released"/);
+  assert.match(page, /manifest\?\.release_status !== "definitive_after_medical_review"/);
+  assert.doesNotMatch(page, /setApproved\(release\)/);
+  assert.ok(page.indexOf("const [markdownHash, pdfHash]") > -1);
+  assert.ok(page.indexOf("const [markdownHash, pdfHash]") < page.indexOf("setApproved(released);"));
+  assert.match(page, /if \(job !== generation\.current\) return;/);
+  assert.match(page, /if \(e\.target\.checked\) \{/);
+  assert.match(page, /else \{\s*invalidate\(\);/);
+});

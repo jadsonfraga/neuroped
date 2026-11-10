@@ -251,7 +251,8 @@ export function createPantPdf(jsPDF, md, meta, assets) {
   doc.setFontSize(12);
   doc.text(doc.splitTextToSize(meta.detail || "", 440), pageWidth / 2, 489, { align: "center" });
   doc.setFontSize(8);
-  doc.setTextColor(...(releaseStatus === "draft" ? COLORS.red : COLORS.navy));
+  // Both statuses must remain legible on the dark cover.
+  doc.setTextColor(...COLORS.ivory);
   doc.text(pdfReleaseLabel(releaseStatus), pageWidth / 2, 665, { align: "center" });
   doc.setFontSize(15);
   doc.setTextColor(...COLORS.ivory);
@@ -289,18 +290,17 @@ export function createPantPdf(jsPDF, md, meta, assets) {
   function renderTable(block) {
     const cols = Math.max(1, block.header.length);
     const colWidth = maxWidth / cols;
-    const drawRow = (cells, header = false) => {
-      const rowTexts = cells.map(flattenText);
-      const wraps = rowTexts.map((text, i) => {
-        doc.setFont("Cormorant", header ? "bold" : "normal");
-        doc.setFontSize(10.5);
-        return doc.splitTextToSize(text, colWidth - 13);
-      });
-      const height = Math.max(25, ...wraps.map((lines) => lines.length * 13 + 12));
-      if (y + height > bottom) {
-        newContentPage();
-        if (!header) drawRow(block.header, true);
-      }
+    const lineHeight = 13;
+    const topPadding = 16;
+    const rowHeight = (count) => Math.max(25, count * lineHeight + 12);
+    const wrapCells = (cells, header) => cells.map((cell) => {
+      doc.setFont("Cormorant", header ? "bold" : "normal");
+      doc.setFontSize(10.5);
+      return doc.splitTextToSize(flattenText(cell), colWidth - 13);
+    });
+    const paintSegment = (wraps, header, offset, count) => {
+      const height = rowHeight(count);
+      if (y + height > bottom) throw Error("Uma linha da tabela excedeu o limite da página.");
       if (header) {
         doc.setFillColor(233, 223, 201);
         doc.rect(left, y, maxWidth, height, "F");
@@ -309,18 +309,48 @@ export function createPantPdf(jsPDF, md, meta, assets) {
       doc.setLineWidth(0.5);
       doc.rect(left, y, maxWidth, height);
       for (let i = 1; i < cols; i++) doc.line(left + i * colWidth, y, left + i * colWidth, y + height);
-      cells.forEach((cell, i) => {
-        const tx = left + i * colWidth + 7;
-        const ty = y + 16;
+      wraps.forEach((lines, i) => {
         doc.setFont("Cormorant", header ? "bold" : "normal");
         doc.setFontSize(10.5);
         doc.setTextColor(...COLORS.ink);
-        doc.text(wraps[i], tx, ty, { maxWidth: colWidth - 13 });
+        const segment = lines.slice(offset, offset + count);
+        if (segment.length) doc.text(segment, left + i * colWidth + 7, y + topPadding, {
+          maxWidth: colWidth - 13,
+        });
       });
       y += height;
     };
-    drawRow(block.header, true);
-    for (const row of block.rows) drawRow(row, false);
+    const headerWraps = wrapCells(block.header, true);
+    const headerLines = Math.max(1, ...headerWraps.map((lines) => lines.length));
+    const headerHeight = rowHeight(headerLines);
+    if (headerHeight + rowHeight(1) > bottom - 111) {
+      throw Error("Cabeçalho da tabela demasiado extenso. Reduza as células do cabeçalho.");
+    }
+    const drawHeader = () => {
+      if (y + headerHeight + rowHeight(1) > bottom) newContentPage();
+      paintSegment(headerWraps, true, 0, headerLines);
+    };
+    drawHeader();
+    for (const row of block.rows) {
+      const wraps = wrapCells(row, false);
+      const total = Math.max(1, ...wraps.map((lines) => lines.length));
+      let offset = 0;
+      while (offset < total) {
+        const availableLines = Math.floor((bottom - y - 12) / lineHeight);
+        const count = Math.min(total - offset, availableLines);
+        if (count < 1 || y + rowHeight(count) > bottom) {
+          newContentPage();
+          drawHeader();
+          continue;
+        }
+        paintSegment(wraps, false, offset, count);
+        offset += count;
+        if (offset < total) {
+          newContentPage();
+          drawHeader();
+        }
+      }
+    }
     y += 11;
   }
   function renderBlock(block) {

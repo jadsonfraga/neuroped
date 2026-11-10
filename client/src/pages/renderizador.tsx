@@ -26,6 +26,7 @@ export default function RenderizadorPage() {
     [error, setError] = useState(""),
     [url, setUrl] = useState(""),
     [approved, setApproved] = useState(false),
+    [reviewPending, setReviewPending] = useState(false),
     [drag, setDrag] = useState(false),
     [manifest, setManifest] = useState<Record<string, unknown> | null>(null);
   const [logoPreview, setLogoPreview] = useState("");
@@ -61,6 +62,7 @@ export default function RenderizadorPage() {
   function invalidate() {
     generation.current++;
     setApproved(false);
+    setReviewPending(false);
     setUrl("");
     setManifest(null);
     setError("");
@@ -107,7 +109,18 @@ export default function RenderizadorPage() {
       setError("Adicione o Markdown e informe o nome para a capa.");
       return;
     }
+    // A definitive file may only be requested from an existing, reviewable draft.
+    if (released && (!url || approved || manifest?.release_status !== "draft_not_released")) {
+      setError("Gere e revise primeiro o PDF de rascunho antes de autorizar a versão definitiva.");
+      return;
+    }
     const job = ++generation.current;
+    setApproved(false);
+    if (!released) setReviewPending(false);
+    if (!released) {
+      setUrl("");
+      setManifest(null);
+    }
     setBusy(true);
     setError("");
     try {
@@ -126,28 +139,35 @@ export default function RenderizadorPage() {
         fonts: { normal: regular.data, bold: bold.data, italic: italic.data },
         logo: "data:image/png;base64," + logo.data,
       });
-      if (job !== generation.current) return;
-      if (oldUrl.current) URL.revokeObjectURL(oldUrl.current);
-      oldUrl.current = URL.createObjectURL(blob);
-      setUrl(oldUrl.current);
       const hash = async (b: ArrayBuffer) =>
         Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", b)))
           .map((n) => n.toString(16).padStart(2, "0"))
           .join("");
-      setManifest({
+      // Compute both hashes before exposing a downloadable or approved PDF.
+      const [markdownHash, pdfHash] = await Promise.all([
+        hash(new TextEncoder().encode(md).buffer as ArrayBuffer),
+        hash(await blob.arrayBuffer()),
+      ]);
+      if (job !== generation.current) return;
+      const nextManifest = {
         template: "PANT Studio 1.0",
         generated_at: new Date().toISOString(),
-        markdown_sha256: await hash(
-          new TextEncoder().encode(md).buffer as ArrayBuffer,
-        ),
-        pdf_sha256: await hash(await blob.arrayBuffer()),
+        markdown_sha256: markdownHash,
+        pdf_sha256: pdfHash,
         metadata: meta,
         release_status: released ? "definitive_after_medical_review" : "draft_not_released",
         medical_acceptance_at: acceptedAt,
-      });
+      };
+      const nextUrl = URL.createObjectURL(blob);
+      if (oldUrl.current) URL.revokeObjectURL(oldUrl.current);
+      oldUrl.current = nextUrl;
+      setManifest(nextManifest);
+      setUrl(nextUrl);
       setApproved(released);
+      setReviewPending(false);
     } catch (e: unknown) {
       setApproved(false);
+      setReviewPending(false);
       setError(
         e instanceof Error ? e.message : "Não foi possível gerar o PDF.",
       );
@@ -156,14 +176,14 @@ export default function RenderizadorPage() {
     }
   }
   function downloadDraft() {
-    if (!url || approved || busy) return;
+    if (!url || approved || busy || manifest?.release_status !== "draft_not_released") return;
     const a = document.createElement("a");
     a.href = url;
     a.download = "PANT_RASCUNHO_NAO_LIBERADO_" + patient.trim().replace(/[^\p{L}\p{N}]+/gu, "_") + ".pdf";
     a.click();
   }
   function download() {
-    if (!url || !approved) return;
+    if (!url || !approved || busy || manifest?.release_status !== "definitive_after_medical_review") return;
     const a = document.createElement("a");
     a.href = url;
     a.download =
@@ -171,6 +191,7 @@ export default function RenderizadorPage() {
     a.click();
   }
   function saveManifest() {
+    if (!url || !approved || busy || manifest?.release_status !== "definitive_after_medical_review") return;
     const u = URL.createObjectURL(
       new Blob(
         [
@@ -445,12 +466,17 @@ export default function RenderizadorPage() {
                   <label className="approval">
                     <input
                       type="checkbox"
-                      checked={approved}
+                      checked={approved || reviewPending}
                       disabled={busy}
                       onChange={(e) => {
-                        const release = e.target.checked;
-                        setApproved(release);
-                        void render(release);
+                        if (e.target.checked) {
+                          // Checkbox expresses the clinician's intent, not a completed release.
+                          // Only render(true) may approve after the PDF/hash pair is complete.
+                          setReviewPending(true);
+                          void render(true);
+                        } else {
+                          invalidate();
+                        }
                       }}
                     />{" "}
                     Revisei o conteúdo integral, todas as páginas e cada orientação de dose, horário e mudança temporal. Autorizo esta versão para exportação, sem assinatura automática.

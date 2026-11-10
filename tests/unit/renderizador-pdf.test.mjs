@@ -81,3 +81,10 @@ const definitivePdf = createPantPdf(jsPDF, "## Documento demonstrativo", { ...me
 assert.ok(definitivePdf.getNumberOfPages() >= 2);
 assert.equal(pdfReleaseLabel("definitive"), "VERSÃO DEFINITIVA · REVISÃO MÉDICA CONFIRMADA");
 console.log("PDF de rascunho identificado e versão definitiva separada após revisão: OK");
+
+const oversizeCell = "| Terapia | Objetivo |\n| --- | --- |\n| Demonstração | " +
+  "Descrição sintética longa para testar continuação de célula sem perder colunas. ".repeat(240) + " |";
+const oversizedPdf = createPantPdf(jsPDF, oversizeCell, meta, assets);
+assert.ok(oversizedPdf.getNumberOfPages() >= 4,
+  "uma única célula muito longa deve continuar em outras páginas, repetindo cabeçalho e preservando colunas");
+console.log("Célula de tabela muito extensa continua em outras páginas: OK");
