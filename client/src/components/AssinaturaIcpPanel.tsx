@@ -294,8 +294,8 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
         <h3 className="text-sm font-bold text-foreground">Assinatura digital ICP-Brasil (certificado A1)</h3>
       </div>
       <p className="text-xs text-muted-foreground mb-3">
-        Selecione seu certificado <strong>.p12 / .pfx</strong> (A1). A assinatura ocorre localmente e o
-        certificado permanece somente na memória desta aba. O PDF é gerado e assinado em padrão PAdES.
+        Selecione seu certificado <strong>.p12 / .pfx</strong> (A1). A assinatura ocorre localmente.
+        Após validar a senha, o administrador pode guardar o PFX cifrado na conta; a senha nunca é enviada ou salva.
       </p>
 
       {(p12 || accountCertificate) && (
@@ -361,7 +361,7 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
             data-testid="input-p12-senha"
             autoComplete="off"
             onKeyDown={(e) => {
-              if (e.key === "Enter") { e.preventDefault(); if (!busy && p12) void gerarEAssinar(); }
+              if (e.key === "Enter") { e.preventDefault(); if (!busy && (p12 || accountCertificate)) void gerarEAssinar(); }
             }}
           />
         </div>
