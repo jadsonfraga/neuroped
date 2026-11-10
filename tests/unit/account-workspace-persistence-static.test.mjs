@@ -11,12 +11,13 @@ assert.match(storage, /isAccountWorkspaceRemoteMode\(\)/, "remote auth switches 
 assert.match(storage, /putAccountWorkspaceItem\(key, value, expiresAt\)/, "remote writes use the authenticated account API");
 assert.match(storage, /getAccountWorkspaceItem<T>\(key\)/, "remote reads restore data from the account API");
 assert.match(client, /authFetch\("\/api\/me\/workspace"/, "workspace calls use authenticated fetch");
-assert.match(route, /WHERE user_id = \? AND item_key = \?/g, "reads and deletes are owner-scoped in final SQL");
+assert.match(route, /WHERE user_id = \? AND item_key_hash = \?/, "reads and deletes are owner-scoped in final SQL");
+assert.match(route, /clinicalBlindIndex\(/, "workspace keys are blind-indexed instead of stored in plaintext");
 assert.match(route, /encryptClinicalJson\(/, "workspace payload is encrypted before D1 persistence");
 assert.match(route, /decryptClinicalJson<unknown>\(/, "workspace payload is decrypted only for its owner");
 assert.match(route, /prepareSaasAudit\(/, "writes and deletions create metadata-only audit events");
 assert.match(route, /MAX_PLAINTEXT_BYTES = 1_400_000/, "D1 row limit is bounded before encryption");
-assert.match(migration, /PRIMARY KEY \(user_id, item_key\)/, "workspace keys cannot collide across accounts");
+assert.match(migration, /PRIMARY KEY \(user_id, item_key_hash\)/, "workspace keys cannot collide across accounts");
 assert.match(migration, /ON DELETE CASCADE/, "account deletion removes owned workspace rows");
 assert.match(bootstrap, /CREATE TABLE IF NOT EXISTS account_workspace_items/, "D1 bootstrap schema includes the workspace table");
 
