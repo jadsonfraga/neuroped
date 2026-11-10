@@ -7,12 +7,12 @@
 
 CREATE TABLE IF NOT EXISTS account_workspace_items (
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  item_key TEXT NOT NULL CHECK (length(item_key) BETWEEN 1 AND 160),
+  item_key_hash TEXT NOT NULL CHECK (length(item_key_hash) = 64),
   payload_encrypted TEXT NOT NULL,
   encryption_version TEXT NOT NULL,
   expires_at TEXT,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (user_id, item_key)
+  PRIMARY KEY (user_id, item_key_hash)
 );
 
 CREATE INDEX IF NOT EXISTS idx_account_workspace_items_expiry
