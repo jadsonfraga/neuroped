@@ -1211,3 +1211,16 @@ produção. Os testes usam exclusivamente fixtures sintéticas e os checks
 obrigatórios passaram. A PR foi integrada em `main` como `f586d0db`, mantendo
 como próximo passo separado a integração autenticada, criptografada e auditada
 antes de qualquer uso com dados reais.
+
+### Ciclo 18 — receituários físicos A1/B1 com guards e numeração Visa
+
+A PR [#1306](https://github.com/jadsonfraga/neuroped/pull/1306) adicionou os
+modelos físicos de notificação A1/B1, com numeração Visa, validações de
+impressão e guards de rota. O patch inclui contratos para PAdES/ICP-ITI,
+separação das rotas de receita e testes estáticos de conformidade.
+
+A revisão preservou os limites de segurança: nenhum segredo novo foi adicionado,
+os dados de receita continuam sujeitos ao fluxo autenticado e os contratos não
+alteram a autorização clínica nem o armazenamento de PHI. Os checks obrigatórios
+passaram antes da integração, incluindo isolamento de tenant, readiness, PDF,
+TypeScript e qualidade. A PR foi mesclada em `main` como `e2dede6a`.

@@ -486,3 +486,13 @@ A fundação ainda não está conectada às páginas, ao backend, ao histórico,
 ### Próximo ponto de retomada
 
 Partir de `origin/main`, verificar PRs concorrentes e selecionar outra frente pequena de segurança, isolamento, LGPD ou operação. Para PANT/PANTY, o próximo incremento deve tratar integração segura ou permanecer documentado como oportunidade; não ligar a fundação diretamente a dados reais.
+
+## Ciclo 18 (2026-11-10) — receituários físicos A1/B1
+
+A PR #1306 foi integrada como `e2dede6a`. O produto agora possui os modelos físicos A1/B1 com numeração Visa, contratos de impressão e guards de rota, mantendo o fluxo autenticado e as validações de PAdES/ICP-ITI. Os checks obrigatórios de tenant isolation, readiness, PDF, TypeScript e qualidade passaram.
+
+Nenhum segredo novo foi adicionado e nenhuma autorização clínica ou armazenamento de PHI foi alterado. A mudança é um incremento operacional; a main permanece limpa e alinhada com `origin/main`.
+
+### Próximo ponto de retomada
+
+Partir de `origin/main`, verificar PRs concorrentes e escolher outra frente pequena de segurança, isolamento, LGPD ou operação. A PR #1307 de persistência de certificados A1 permanece não integrada devido a falhas de Production Readiness/Verify com 404s no hard release visual; não contornar esse gate. A cadência de 30 minutos continua bloqueada pela plataforma.
