@@ -477,12 +477,26 @@ export default function ReceitaC1ExpressPage() {
       return;
     }
     if (remoteCertificateVault) {
-      void loadCertificateFromAccount(user).then((record) => {
-        if (cancelled) return;
-        setAccountCertificate(record);
-        setStoredCert(record ? { fileName: "cofre da conta", savedAt: record.updatedAt } : null);
-        if (record) setCertStatus("ready");
-      }).catch(() => { /* segue com seleção manual */ });
+      void (async () => {
+        try {
+          const record = await loadCertificateFromAccount(user);
+          if (cancelled) return;
+          if (record) {
+            setAccountCertificate(record);
+            setStoredCert({ fileName: "cofre da conta", savedAt: record.updatedAt });
+            setCertStatus("ready");
+            return;
+          }
+        } catch {
+          // Se o backend estiver indisponível, tenta o cofre cifrado local.
+        }
+        const localRecord = await loadCertificate(user);
+        if (cancelled || !localRecord) return;
+        setP12(localRecord.p12);
+        setStoredCert(null);
+        setCertStatus("ready");
+        setOk("Certificado deste dispositivo recuperado. Valide a senha para memorizá-lo na conta.");
+      })().catch(() => { /* segue com seleção manual */ });
     } else {
       void loadCertificate(user).then((record) => {
         if (cancelled || !record) return;
