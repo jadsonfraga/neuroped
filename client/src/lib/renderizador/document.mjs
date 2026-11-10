@@ -105,6 +105,12 @@ export function contentFromMarkdown(md) {
   return visit(marked.lexer(normalized));
 }
 
+export function pdfReleaseLabel(status) {
+  return status === "definitive"
+    ? "VERSÃO DEFINITIVA · REVISÃO MÉDICA CONFIRMADA"
+    : "RASCUNHO — NÃO LIBERADO";
+}
+
 function fontStyle(run = {}) {
   if (run.bold && run.italic) return "bolditalic";
   if (run.bold) return "bold";
@@ -213,7 +219,7 @@ export function createPantPdf(jsPDF, md, meta, assets) {
       doc.text("Neuropediatra · CRM-PE 25.227 · RQE 17.756", right, 61, { align: "right" });
       doc.setFontSize(7);
       doc.setTextColor(...(releaseStatus === "draft" ? COLORS.red : COLORS.navy));
-      doc.text(releaseStatus === "draft" ? "RASCUNHO — NÃO LIBERADO" : "VERSÃO DEFINITIVA · REVISÃO MÉDICA CONFIRMADA", right, 91, { align: "right" });
+      doc.text(pdfReleaseLabel(releaseStatus), right, 91, { align: "right" });
       const y = 77;
       doc.setLineWidth(1.5);
       doc.setDrawColor(...COLORS.gold);
@@ -246,7 +252,7 @@ export function createPantPdf(jsPDF, md, meta, assets) {
   doc.text(doc.splitTextToSize(meta.detail || "", 440), pageWidth / 2, 489, { align: "center" });
   doc.setFontSize(8);
   doc.setTextColor(...(releaseStatus === "draft" ? COLORS.red : COLORS.navy));
-  doc.text(releaseStatus === "draft" ? "RASCUNHO — NÃO LIBERADO" : "VERSÃO DEFINITIVA · REVISÃO MÉDICA CONFIRMADA", pageWidth / 2, 665, { align: "center" });
+  doc.text(pdfReleaseLabel(releaseStatus), pageWidth / 2, 665, { align: "center" });
   doc.setFontSize(15);
   doc.setTextColor(...COLORS.ivory);
   doc.text("Dr. Jadson Fraga Araújo Júnior", pageWidth / 2, 715, { align: "center" });
