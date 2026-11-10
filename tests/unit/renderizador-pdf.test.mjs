@@ -82,7 +82,7 @@ assert.ok(definitivePdf.getNumberOfPages() >= 2);
 assert.equal(pdfReleaseLabel("definitive"), "VERSÃO DEFINITIVA · REVISÃO MÉDICA CONFIRMADA");
 console.log("PDF de rascunho identificado e versão definitiva separada após revisão: OK");
 
-const oversizeCell = "| Terapia | Objetivo |\\n| --- | --- |\\n| Demonstração | " +
+const oversizeCell = "| Terapia | Objetivo |\n| --- | --- |\n| Demonstração | " +
   "Descrição sintética longa para testar continuação de célula sem perder colunas. ".repeat(240) + " |";
 const oversizedPdf = createPantPdf(jsPDF, oversizeCell, meta, assets);
 assert.ok(oversizedPdf.getNumberOfPages() >= 4,
