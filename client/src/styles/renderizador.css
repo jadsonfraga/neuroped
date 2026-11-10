@@ -767,3 +767,22 @@
 .pant-studio-root input[hidden] {
   display: none !important;
 }
+
+.pant-studio-root .table-helper {
+  border: 1px solid var(--pant-render-color-79);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 0 0 22px;
+  background: var(--pant-render-color-85);
+}
+.pant-studio-root .table-helper p,
+.pant-studio-root .editor-guidance {
+  color: var(--pant-render-color-31);
+  font-size: 10px;
+  line-height: 1.55;
+  margin: 8px 0;
+}
+.pant-studio-root .table-helper .text-button {
+  color: var(--pant-render-color-39);
+  font-weight: 600;
+}

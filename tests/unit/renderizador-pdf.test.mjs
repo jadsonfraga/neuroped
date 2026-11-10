@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
+import { hasUnfilledTableTemplate, structuredTableTemplate } from "../../client/src/lib/renderizador/table-editor.mjs";
 import fs from "node:fs";
 import { jsPDF } from "jspdf";
 import {
   createPantPdf,
   contentFromMarkdown,
+  pdfReleaseLabel,
   sample,
 } from "../../client/src/lib/renderizador/document.mjs";
 
@@ -43,3 +45,39 @@ for (const markdown of ["<script>alert(1)</script>", "![foto](https://example.co
   assert.throws(() => contentFromMarkdown(markdown), /HTML|Imagens/);
 }
 console.log("PDF PANT local, documento longo, tabela paginada e rejeição de HTML/imagens: OK");
+
+const markers = contentFromMarkdown("+++Diagnóstico firmado+++ e ==revisão necessária==.");
+assert.equal(markers[0].type, "paragraph");
+assert.equal(markers[0].runs.map((run) => run.text).join(""), "Diagnóstico firmado e revisão necessária.");
+assert.ok(markers[0].runs.filter((run) => run.bold).length >= 2, "destaques PANT preservam negrito");
+
+const longParagraph = "Trecho demonstrativo sem informação clínica. ".repeat(1150);
+const longPdf = createPantPdf(jsPDF, longParagraph, meta, assets);
+assert.ok(longPdf.getNumberOfPages() >= 3, "parágrafo longo deve paginar sem extravasar da folha");
+console.log("Marcadores PANT e paginação interna de parágrafos longos: OK");
+
+const tableMarkdown = "| Terapia | Carga | Objetivo |\n| --- | --- | --- |\n| Fonoaudiologia | 3 h/semana | Comunicação funcional |";
+const parsedTable = contentFromMarkdown(tableMarkdown);
+assert.equal(parsedTable.length, 1, "tabela estruturada deve ser um único bloco");
+assert.equal(parsedTable[0].type, "table");
+assert.equal(parsedTable[0].header.map((cell) => cell.map((run) => run.text).join("")).join("|"), "Terapia|Carga|Objetivo");
+assert.equal(parsedTable[0].rows[0].map((cell) => cell.map((run) => run.text).join("")).join("|"), "Fonoaudiologia|3 h/semana|Comunicação funcional");
+const plainLines = contentFromMarkdown("Terapia Carga Objetivo\nFonoaudiologia 3 h/semana Comunicação funcional");
+assert.ok(plainLines.every((block) => block.type === "paragraph"), "texto livre clínico nunca deve virar tabela por inferência");
+console.log("Tabelas estruturadas preservadas e texto livre mantido sem inferência: OK");
+
+const tableTemplate = structuredTableTemplate();
+assert.equal(hasUnfilledTableTemplate(tableTemplate), true, "modelo de tabela deve permanecer pendente");
+assert.equal(hasUnfilledTableTemplate(tableTemplate.replace("Cabeçalho 1", "Terapia")), true, "qualquer célula de exemplo restante deve bloquear a geração");
+assert.equal(hasUnfilledTableTemplate(tableTemplate.replaceAll("Cabeçalho 1", "Terapia").replaceAll("Cabeçalho 2", "Carga").replaceAll("Cabeçalho 3", "Objetivo").replaceAll("[preencher]", "Exemplo")), false, "tabela preenchida deve liberar a validação");
+const parsedTemplate = contentFromMarkdown(tableTemplate.replaceAll("Cabeçalho 1", "Terapia").replaceAll("Cabeçalho 2", "Carga").replaceAll("Cabeçalho 3", "Objetivo").replaceAll("[preencher]", "Exemplo"));
+assert.equal(parsedTemplate[0].type, "table", "estrutura inserida deve chegar ao parser como tabela");
+
+
+const draftPdf = createPantPdf(jsPDF, "## Documento demonstrativo", { ...meta, releaseStatus: "draft" }, assets);
+assert.ok(draftPdf.getNumberOfPages() >= 2);
+assert.equal(pdfReleaseLabel("draft"), "RASCUNHO — NÃO LIBERADO");
+const definitivePdf = createPantPdf(jsPDF, "## Documento demonstrativo", { ...meta, releaseStatus: "definitive" }, assets);
+assert.ok(definitivePdf.getNumberOfPages() >= 2);
+assert.equal(pdfReleaseLabel("definitive"), "VERSÃO DEFINITIVA · REVISÃO MÉDICA CONFIRMADA");
+console.log("PDF de rascunho identificado e versão definitiva separada após revisão: OK");

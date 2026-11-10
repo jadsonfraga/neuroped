@@ -13,6 +13,7 @@ import {
   FileCheck2,
 } from "lucide-react";
 import { createPdfBlob, sample } from "@/lib/renderizador/document.mjs";
+import { hasUnfilledTableTemplate, structuredTableTemplate } from "@/lib/renderizador/table-editor.mjs";
 export default function RenderizadorPage() {
   const [md, setMd] = useState(""),
     [name, setName] = useState(""),
@@ -87,7 +88,21 @@ export default function RenderizadorPage() {
     setDetail("Exemplo sem dados clínicos");
     setTab("editor");
   }
-  async function render() {
+  function insertStructuredTable() {
+    invalidate();
+    const table = structuredTableTemplate();
+    setMd((current) => `${current.trimEnd()}${current.trim() ? "\n\n" : ""}${table}\n`);
+    setTab("editor");
+  }
+  async function render(released = false) {
+    if (hasUnfilledTableTemplate(md)) {
+      setError("Complete manualmente os cabeçalhos e as células da tabela antes de gerar o PDF.");
+      return;
+    }
+    if (!/^#{1,6}\s+\S/m.test(md)) {
+      setError("Marque os títulos do documento com #, ## ou ### antes de gerar o PDF. O texto clínico não será alterado automaticamente.");
+      return;
+    }
     if (!md.trim() || !patient.trim()) {
       setError("Adicione o Markdown e informe o nome para a capa.");
       return;
@@ -105,7 +120,8 @@ export default function RenderizadorPage() {
         }),
       ]);
       const [regular, bold, italic, logo] = assetsJson as { data: string }[];
-      const meta = { patient: patient.trim(), detail, title, subtitle };
+      const acceptedAt = released ? new Date().toISOString() : null;
+      const meta = { patient: patient.trim(), detail, title, subtitle, releaseStatus: released ? "definitive" : "draft", releaseAcceptedAt: acceptedAt };
       const blob = createPdfBlob(jsPDF, md, meta, {
         fonts: { normal: regular.data, bold: bold.data, italic: italic.data },
         logo: "data:image/png;base64," + logo.data,
@@ -126,15 +142,25 @@ export default function RenderizadorPage() {
         ),
         pdf_sha256: await hash(await blob.arrayBuffer()),
         metadata: meta,
+        release_status: released ? "definitive_after_medical_review" : "draft_not_released",
+        medical_acceptance_at: acceptedAt,
       });
-      setApproved(false);
+      setApproved(released);
     } catch (e: unknown) {
+      setApproved(false);
       setError(
         e instanceof Error ? e.message : "Não foi possível gerar o PDF.",
       );
     } finally {
       setBusy(false);
     }
+  }
+  function downloadDraft() {
+    if (!url || approved || busy) return;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "PANT_RASCUNHO_NAO_LIBERADO_" + patient.trim().replace(/[^\p{L}\p{N}]+/gu, "_") + ".pdf";
+    a.click();
   }
   function download() {
     if (!url || !approved) return;
@@ -151,7 +177,7 @@ export default function RenderizadorPage() {
           JSON.stringify(
             {
               ...manifest,
-              medical_acceptance_at: new Date().toISOString(),
+              medical_acceptance_at: manifest?.medical_acceptance_at || new Date().toISOString(),
               review_confirmed: approved,
             },
             null,
@@ -263,10 +289,17 @@ export default function RenderizadorPage() {
                     }}
                     spellCheck={false}
                   />
+                  <p className="editor-guidance">Marque cada título com #, ## ou ###. Para tabelas, use a estrutura explícita antes de gerar.</p>
                   <div>
                     {name || "Texto colado"}
                     <span>{md.length.toLocaleString("pt-BR")} caracteres</span>
                   </div>
+                </div>
+              )}
+              {tab === "editor" && (
+                <div className="table-helper">
+                  <p>Adicione uma tabela explícita e preencha cada célula manualmente. O renderizador não reconstrói tabelas a partir de texto livre.</p>
+                  <button type="button" className="text-button" onClick={insertStructuredTable}>Inserir estrutura de tabela</button>
                 </div>
               )}
               <input
@@ -336,7 +369,7 @@ export default function RenderizadorPage() {
                   disabled={
                     busy || !md.trim() || !patient.trim() || !title.trim()
                   }
-                  onClick={render}
+                  onClick={() => render()}
                 >
                   {busy ? (
                     <LoaderCircle className="spin" size={17} />
@@ -357,7 +390,7 @@ export default function RenderizadorPage() {
               <div className="preview-toolbar">
                 <div>
                   <span className={"status-dot " + (url ? "ready" : "")} />
-                  {url ? "PDF pronto para revisão" : "Modelo SuperNeuroPed"}
+                  {url ? busy ? "Gerando versão definitiva…" : approved ? "Versão definitiva liberada" : "PDF pronto para revisão" : "Modelo SuperNeuroPed"}
                 </div>
                 <span>A4 · RETRATO</span>
               </div>
@@ -405,25 +438,33 @@ export default function RenderizadorPage() {
               </div>
               {url && (
                 <div className="export-box">
+                  {!approved && (
+                    <button className="text-button" disabled={busy} onClick={downloadDraft}>Baixar PDF de rascunho — não liberado</button>
+                  )}
+                  <p className="clinical-review-note">O renderizador não valida nem altera a prescrição. Confira a dose por administração, os horários e cada mudança temporal. Ao confirmar abaixo, será gerada uma nova versão definitiva, identificada como revisada.</p>
                   <label className="approval">
                     <input
                       type="checkbox"
                       checked={approved}
-                      onChange={(e) => setApproved(e.target.checked)}
+                      disabled={busy}
+                      onChange={(e) => {
+                        const release = e.target.checked;
+                        setApproved(release);
+                        void render(release);
+                      }}
                     />{" "}
-                    Revisei o texto integral e todas as páginas. Aprovo esta
-                    versão para exportação, sem assinatura automática.
+                    Revisei o conteúdo integral, todas as páginas e cada orientação de dose, horário e mudança temporal. Autorizo esta versão para exportação, sem assinatura automática.
                   </label>
                   <button
                     className="primary"
-                    disabled={!approved}
+                    disabled={!approved || busy}
                     onClick={download}
                   >
                     <Download size={17} /> Baixar PDF
                   </button>
                   <button
                     className="text-button"
-                    disabled={!approved}
+                    disabled={!approved || busy}
                     onClick={saveManifest}
                   >
                     Baixar manifesto SHA-256

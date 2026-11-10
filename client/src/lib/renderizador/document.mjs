@@ -55,6 +55,11 @@ function flattenText(tokens = []) {
 }
 
 export function contentFromMarkdown(md) {
+  // PANT source documents can use +++...+++ and ==...== for clinical emphasis.
+  // Convert only balanced, single-line markers; never rewrite clinical words.
+  const normalized = md
+    .replace(/\+\+\+([^\n+][^\n]*?)\+\+\+/g, "**$1**")
+    .replace(/==([^\n=][^\n]*?)==/g, "**$1**");
   let headingNumber = 0;
   function visit(tokens, depth = 0) {
     return tokens.flatMap((token) => {
@@ -97,7 +102,13 @@ export function contentFromMarkdown(md) {
       }
     });
   }
-  return visit(marked.lexer(md));
+  return visit(marked.lexer(normalized));
+}
+
+export function pdfReleaseLabel(status) {
+  return status === "definitive"
+    ? "VERSÃO DEFINITIVA · REVISÃO MÉDICA CONFIRMADA"
+    : "RASCUNHO — NÃO LIBERADO";
 }
 
 function fontStyle(run = {}) {
@@ -123,14 +134,21 @@ function drawRuns(doc, runs, x, y, maxWidth, opts = {}) {
   let lineX = actualX;
   let lineY = y;
   let lines = 1;
+  const nextLine = () => {
+    lineX = actualX;
+    lineY += leading;
+    lines++;
+    if (opts.bottom && lineY > opts.bottom) {
+      if (!opts.onPageBreak) throw Error("Texto ultrapassou o limite da página.");
+      lineY = opts.onPageBreak();
+    }
+  };
   for (const run of runs) {
     const text = String(run.text || "");
     const pieces = text.split(/(\s+|\n)/).filter((part) => part.length);
     for (const piece of pieces) {
       if (piece === "\n") {
-        lineX = actualX;
-        lineY += leading;
-        lines++;
+        nextLine();
         continue;
       }
       withFont(doc, run, size);
@@ -140,9 +158,7 @@ function drawRuns(doc, runs, x, y, maxWidth, opts = {}) {
         continue;
       }
       if (lineX > actualX && lineX + width > x + maxWidth) {
-        lineX = actualX;
-        lineY += leading;
-        lines++;
+        nextLine();
       }
       doc.text(piece, lineX, lineY);
       if (run.strike) {
@@ -181,6 +197,7 @@ export function createPantPdf(jsPDF, md, meta, assets) {
   const right = pageWidth - 79;
   const maxWidth = right - left;
   const bottom = pageHeight - 65;
+  const releaseStatus = meta.releaseStatus === "definitive" ? "definitive" : "draft";
 
   function drawFrame(cover) {
     doc.setFillColor(...(cover ? COLORS.navy : COLORS.ivory));
@@ -200,6 +217,9 @@ export function createPantPdf(jsPDF, md, meta, assets) {
       doc.setTextColor(119, 119, 119);
       doc.text("Dr. Jadson Fraga Araújo Júnior", right, 49, { align: "right" });
       doc.text("Neuropediatra · CRM-PE 25.227 · RQE 17.756", right, 61, { align: "right" });
+      doc.setFontSize(7);
+      doc.setTextColor(...(releaseStatus === "draft" ? COLORS.red : COLORS.navy));
+      doc.text(pdfReleaseLabel(releaseStatus), right, 91, { align: "right" });
       const y = 77;
       doc.setLineWidth(1.5);
       doc.setDrawColor(...COLORS.gold);
@@ -230,7 +250,11 @@ export function createPantPdf(jsPDF, md, meta, assets) {
   doc.text(doc.splitTextToSize(meta.patient, 440), pageWidth / 2, 458, { align: "center" });
   doc.setFontSize(12);
   doc.text(doc.splitTextToSize(meta.detail || "", 440), pageWidth / 2, 489, { align: "center" });
+  doc.setFontSize(8);
+  doc.setTextColor(...(releaseStatus === "draft" ? COLORS.red : COLORS.navy));
+  doc.text(pdfReleaseLabel(releaseStatus), pageWidth / 2, 665, { align: "center" });
   doc.setFontSize(15);
+  doc.setTextColor(...COLORS.ivory);
   doc.text("Dr. Jadson Fraga Araújo Júnior", pageWidth / 2, 715, { align: "center" });
   doc.setFontSize(9);
   doc.setTextColor(...COLORS.gold);
@@ -251,9 +275,15 @@ export function createPantPdf(jsPDF, md, meta, assets) {
     if (y + height > bottom) newContentPage();
   }
   function paragraph(runs, opts = {}) {
-    const estimate = Math.max(30, Math.ceil(flattenText(runs).length / 74) * (opts.leading || 18));
-    ensureSpace(estimate);
-    const out = drawRuns(doc, runs, left + (opts.depth || 0) * 12, y, maxWidth - (opts.depth || 0) * 12, opts);
+    ensureSpace(30);
+    const out = drawRuns(doc, runs, left + (opts.depth || 0) * 12, y, maxWidth - (opts.depth || 0) * 12, {
+      ...opts,
+      bottom,
+      onPageBreak: () => {
+        newContentPage();
+        return y;
+      },
+    });
     y = out.y + (opts.after ?? 7);
   }
   function renderTable(block) {
@@ -295,19 +325,22 @@ export function createPantPdf(jsPDF, md, meta, assets) {
   }
   function renderBlock(block) {
     if (block.type === "heading") {
-      ensureSpace(57);
+      const fontSize = block.depth === 1 ? 22 : block.depth === 2 ? 19 : block.depth === 3 ? 16 : 14;
+      doc.setFont("Cormorant", "bold");
+      doc.setFontSize(fontSize);
+      const headingText = flattenText(block.runs);
+      const lines = doc.splitTextToSize(headingText, maxWidth - 38);
+      ensureSpace(Math.max(50, lines.length * (fontSize + 3) + 18));
       y += 7;
       doc.setFont("Cormorant", "normal");
       doc.setFontSize(10);
       doc.setTextColor(...COLORS.gold);
       doc.text(String(block.number).padStart(2, "0"), left, y);
       doc.setFont("Cormorant", "bold");
-      doc.setFontSize(block.depth > 2 ? 17 : 20);
+      doc.setFontSize(fontSize);
       doc.setTextColor(...COLORS.navy);
-      const headingText = flattenText(block.runs);
-      const lines = doc.splitTextToSize(headingText, maxWidth - 38);
       doc.text(lines, left + 35, y + 1);
-      y += Math.max(24, lines.length * 23) + 11;
+      y += Math.max(fontSize + 4, lines.length * (fontSize + 3)) + 11;
       return;
     }
     if (block.type === "paragraph") {
