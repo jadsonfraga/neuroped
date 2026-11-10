@@ -39,6 +39,13 @@ import {
   persistentSecureGet,
   persistentSecureSet,
 } from "@/lib/persistentSecureStorage";
+import {
+  deleteAccountWorkspaceItem,
+  getAccountWorkspaceItem,
+  hasAccountWorkspaceSession,
+  isAccountWorkspaceRemoteMode,
+  putAccountWorkspaceItem,
+} from "@/lib/accountWorkspace";
 
 const NAMESPACE = "neuroped:secure:";
 const PERSISTENT_SECURE_KEYS = new Set([
@@ -243,14 +250,31 @@ async function decryptEnvelope<T>(
 // ---------- API pública ----------
 
 /**
- * Armazena valor cifrado. Rascunhos clínicos ficam no sessionStorage da aba;
- * artefatos explicitamente longitudinais usam o cofre persistente IndexedDB.
+ * Armazena valor cifrado. No app remoto autenticado, o backend é a fonte
+ * persistente dos itens deste serviço; fora dele, mantém os cofres locais atuais.
  */
 export async function secureSet<T>(
   key: string,
   value: T,
   ttlMs = SESSION_TTL_MS,
 ): Promise<boolean> {
+  if (isAccountWorkspaceRemoteMode()) {
+    if (!hasAccountWorkspaceSession()) return false;
+    try {
+      const serialized = JSON.stringify(value);
+      if (typeof serialized !== "string" || new TextEncoder().encode(serialized).byteLength > MAX_SECURE_PLAINTEXT_BYTES) {
+        return false;
+      }
+      const expiresAt = isPersistentSecureKey(key)
+        ? null
+        : new Date(Date.now() + ttlMs).toISOString();
+      await putAccountWorkspaceItem(key, value, expiresAt);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   if (isPersistentSecureKey(key)) {
     return persistentSecureSet(key, value);
   }
@@ -294,10 +318,20 @@ export async function secureSet<T>(
 }
 
 /**
- * Recupera e decifra o valor. Chaves longitudinais consultam o cofre persistente;
- * demais chaves mantêm a semântica efêmera histórica.
+ * Recupera e decifra o valor. No app remoto, consulta o item da conta no backend;
+ * no modo local, mantém a semântica persistente/efêmera existente.
  */
 export async function secureGet<T>(key: string): Promise<T | null> {
+  if (isAccountWorkspaceRemoteMode()) {
+    if (!hasAccountWorkspaceSession()) return null;
+    try {
+      const item = await getAccountWorkspaceItem<T>(key);
+      return item?.data ?? null;
+    } catch {
+      return null;
+    }
+  }
+
   if (isPersistentSecureKey(key)) {
     return persistentSecureGet<T>(key);
   }
@@ -363,6 +397,9 @@ export async function secureGet<T>(key: string): Promise<T | null> {
  * Remove entrada cifrada específica.
  */
 export async function secureClear(key: string): Promise<void> {
+  if (isAccountWorkspaceRemoteMode() && hasAccountWorkspaceSession()) {
+    await deleteAccountWorkspaceItem(key);
+  }
   if (isPersistentSecureKey(key)) {
     await persistentSecureClear(key);
   }
@@ -437,8 +474,8 @@ export async function secureClearAll(): Promise<void> {
     // A chave em memória ainda será invalidada abaixo.
   }
 
-  // Artefatos persistentes podem conter histórico/frases sensíveis. Logout/troca
-  // de conta destrói o cofre persistente e sua chave não exportável.
+  // O logout/troca de conta remove caches locais. No modo remoto, os itens da
+  // conta permanecem no backend e serão restaurados após nova autenticação.
   await persistentSecureClearAll();
 
   // Invalida chave de sessão em memória
