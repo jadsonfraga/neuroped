@@ -46,7 +46,7 @@ necessária. O site PANT Studio original permanece independente.
 
 ## Falha de produção e correção (#1303)
 
-Após autenticação, a primeira abertura de `/#/renderizador` falhou no preload do CSS lazy; atualizar o cache não resolveu. A causa identificada no bundle era a importação redundante de Google Fonts no CSS, apesar da fonte local incorporada. A correção remove essa chamada externa e adiciona teste estático para proibir regressão. A aba usa agora somente os recursos visuais empacotados localmente.
+Após autenticação, a primeira abertura de `/#/renderizador` falhou no preload do CSS lazy; atualizar o cache não resolveu. O CSS também continha uma importação redundante de Google Fonts, apesar da fonte local incorporada. A remoção elimina essa dependência externa, que é o principal suspeito do erro de preload; a confirmação depende da validação após deploy. A correção remove essa chamada externa e adiciona teste estático para proibir regressão. A aba usa agora somente os recursos visuais empacotados localmente.
 
 Rollback: reverter o este PR e redeployar o commit anterior; isso restaura a importação remota que se mostrou incompatível com a execução observada.
 
