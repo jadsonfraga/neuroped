@@ -7,5 +7,5 @@ export function structuredTableTemplate() {
 }
 
 export function hasUnfilledTableTemplate(markdown) {
-  return /^\|\s*(?:Cabeçalho\s+\d+|\[preencher\])\s*\|/im.test(markdown);
+  return /^\|.*(?:Cabeçalho\s+\d+|\[preencher\]).*\|$/im.test(markdown);
 }

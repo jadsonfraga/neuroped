@@ -68,6 +68,7 @@ console.log("Tabelas estruturadas preservadas e texto livre mantido sem inferên
 
 const tableTemplate = structuredTableTemplate();
 assert.equal(hasUnfilledTableTemplate(tableTemplate), true, "modelo de tabela deve permanecer pendente");
+assert.equal(hasUnfilledTableTemplate(tableTemplate.replace("Cabeçalho 1", "Terapia")), true, "qualquer célula de exemplo restante deve bloquear a geração");
 assert.equal(hasUnfilledTableTemplate(tableTemplate.replaceAll("Cabeçalho 1", "Terapia").replaceAll("Cabeçalho 2", "Carga").replaceAll("Cabeçalho 3", "Objetivo").replaceAll("[preencher]", "Exemplo")), false, "tabela preenchida deve liberar a validação");
 const parsedTemplate = contentFromMarkdown(tableTemplate.replaceAll("Cabeçalho 1", "Terapia").replaceAll("Cabeçalho 2", "Carga").replaceAll("Cabeçalho 3", "Objetivo").replaceAll("[preencher]", "Exemplo"));
 assert.equal(parsedTemplate[0].type, "table", "estrutura inserida deve chegar ao parser como tabela");
