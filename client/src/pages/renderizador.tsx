@@ -390,7 +390,7 @@ export default function RenderizadorPage() {
               <div className="preview-toolbar">
                 <div>
                   <span className={"status-dot " + (url ? "ready" : "")} />
-                  {url ? approved ? "Versão definitiva liberada" : "PDF pronto para revisão" : "Modelo SuperNeuroPed"}
+                  {url ? busy ? "Gerando versão definitiva…" : approved ? "Versão definitiva liberada" : "PDF pronto para revisão" : "Modelo SuperNeuroPed"}
                 </div>
                 <span>A4 · RETRATO</span>
               </div>
