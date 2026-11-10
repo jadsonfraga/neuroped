@@ -29,7 +29,7 @@ function adminUser(context: { data?: unknown }) {
 }
 
 function validBase64(value: unknown, minBytes: number, maxBytes: number): value is string {
-  if (typeof value !== "string" || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value)) {
+  if (typeof value !== "string" || value.length > MAX_CIPHERTEXT_B64_CHARS || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value)) {
     return false;
   }
   try {
@@ -98,7 +98,7 @@ export const onRequestPut: PagesFunction<TenantEnv> = async (context) => {
     body.iterations !== KDF_ITERATIONS ||
     !validBase64(body.salt, 16, 16) ||
     !validBase64(body.iv, 12, 12) ||
-    !validBase64(body.ciphertext, 16, MAX_CIPHERTEXT_B64_CHARS)
+    !validBase64(body.ciphertext, 16, Math.floor(MAX_CIPHERTEXT_B64_CHARS * 3 / 4))
   ) {
     return tenantError("Envelope do certificado inválido.", "CERTIFICATE_ENVELOPE_INVALID", 400);
   }
