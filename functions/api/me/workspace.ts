@@ -16,6 +16,7 @@ import {
 import {
   clinicalCryptoReady,
   currentClinicalEncryptionVersion,
+  clinicalBlindIndex,
   decryptClinicalJson,
   encryptClinicalJson,
 } from "../tenant/_crypto";
@@ -27,7 +28,7 @@ const SENSITIVE_KEY = /(?:^|[:/._-])(access|refresh|password|passwd|token|secret
 
 interface WorkspaceRow {
   user_id: string;
-  item_key: string;
+  item_key_hash: string;
   payload_encrypted: string;
   encryption_version: string;
   expires_at: string | null;
@@ -44,6 +45,10 @@ function userScope(userId: string): string {
 
 function purpose(itemKey: string): string {
   return `account-workspace:${itemKey}`;
+}
+
+async function itemKeyHash(env: TenantEnv, userId: string, itemKey: string): Promise<string> {
+  return clinicalBlindIndex(env, userScope(userId), "account-workspace-key", itemKey);
 }
 
 function configurationError(env: TenantEnv): Response | null {
@@ -86,14 +91,15 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
   const itemKey = new URL(context.request.url).searchParams.get("key");
   if (!validKey(itemKey)) return tenantError("Chave de workspace inválida.", "VALIDATION_ERROR", 400);
 
+  const keyHash = await itemKeyHash(context.env, user.id, itemKey);
   let row: WorkspaceRow | null;
   try {
     row = await db.prepare(
-      `SELECT user_id, item_key, payload_encrypted, encryption_version, expires_at, updated_at
+      `SELECT user_id, item_key_hash, payload_encrypted, encryption_version, expires_at, updated_at
          FROM ${TABLE}
-        WHERE user_id = ? AND item_key = ?
+        WHERE user_id = ? AND item_key_hash = ?
         LIMIT 1`,
-    ).bind(user.id, itemKey).first<WorkspaceRow>();
+    ).bind(user.id, keyHash).first<WorkspaceRow>();
   } catch {
     return tenantError("Não foi possível consultar o workspace.", "DB_ERROR", 500);
   }
@@ -103,7 +109,7 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
     try {
       await db.prepare(
         `DELETE FROM ${TABLE} WHERE user_id = ? AND item_key = ? AND expires_at = ?`,
-      ).bind(user.id, itemKey, row.expires_at).run();
+      ).bind(user.id, keyHash, row.expires_at).run();
     } catch {
       return tenantError("Não foi possível limpar um item expirado.", "DB_ERROR", 500);
     }
@@ -154,6 +160,7 @@ export const onRequestPut: PagesFunction<TenantEnv> = async (context) => {
   }
 
   const itemKey = body.key;
+  const keyHash = await itemKeyHash(context.env, user.id, itemKey);
   try {
     const encrypted = await encryptClinicalJson(
       context.env,
@@ -165,14 +172,14 @@ export const onRequestPut: PagesFunction<TenantEnv> = async (context) => {
     const savedAt = new Date().toISOString();
     const upsert = db.prepare(
       `INSERT INTO ${TABLE}
-        (user_id, item_key, payload_encrypted, encryption_version, expires_at, updated_at)
+        (user_id, item_key_hash, payload_encrypted, encryption_version, expires_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?)
        ON CONFLICT(user_id, item_key) DO UPDATE SET
          payload_encrypted = excluded.payload_encrypted,
          encryption_version = excluded.encryption_version,
          expires_at = excluded.expires_at,
          updated_at = excluded.updated_at`,
-    ).bind(user.id, itemKey, encrypted, version, expiresAt ?? null, savedAt);
+    ).bind(user.id, keyHash, encrypted, version, expiresAt ?? null, savedAt);
     const audit = prepareSaasAudit(db, {
       actorUserId: user.id,
       action: "account_workspace.write",
@@ -196,11 +203,12 @@ export const onRequestDelete: PagesFunction<TenantEnv> = async (context) => {
 
   const itemKey = new URL(context.request.url).searchParams.get("key");
   if (!validKey(itemKey)) return tenantError("Chave de workspace inválida.", "VALIDATION_ERROR", 400);
+  const keyHash = await itemKeyHash(context.env, user.id, itemKey);
 
   try {
     const deletion = db.prepare(
       `DELETE FROM ${TABLE} WHERE user_id = ? AND item_key = ?`,
-    ).bind(user.id, itemKey);
+    ).bind(user.id, keyHash);
     const audit = prepareSaasAudit(db, {
       actorUserId: user.id,
       action: "account_workspace.delete",
