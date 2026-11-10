@@ -100,9 +100,13 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
   if (!row) return tenantError("Item não encontrado.", "WORKSPACE_ITEM_NOT_FOUND", 404);
 
   if (row.expires_at && Date.parse(row.expires_at) <= Date.now()) {
-    await db.prepare(
-      `DELETE FROM ${TABLE} WHERE user_id = ? AND item_key = ? AND expires_at = ?`,
-    ).bind(user.id, itemKey, row.expires_at).run();
+    try {
+      await db.prepare(
+        `DELETE FROM ${TABLE} WHERE user_id = ? AND item_key = ? AND expires_at = ?`,
+      ).bind(user.id, itemKey, row.expires_at).run();
+    } catch {
+      return tenantError("Não foi possível limpar um item expirado.", "DB_ERROR", 500);
+    }
     return tenantError("Item expirado.", "WORKSPACE_ITEM_NOT_FOUND", 404);
   }
 
@@ -133,7 +137,9 @@ export const onRequestPut: PagesFunction<TenantEnv> = async (context) => {
   if (!Object.prototype.hasOwnProperty.call(body, "data")) {
     return tenantError("Campo data obrigatório.", "VALIDATION_ERROR", 400);
   }
-  const expiresAt = parseExpiry(body.expiresAt);
+  const expiresAt = Object.prototype.hasOwnProperty.call(body, "expiresAt")
+    ? parseExpiry(body.expiresAt)
+    : null;
   if (expiresAt === undefined) return tenantError("Expiração inválida.", "VALIDATION_ERROR", 400);
 
   let serialized: string;
