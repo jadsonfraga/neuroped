@@ -262,7 +262,7 @@ export async function secureSet<T>(
     if (!hasAccountWorkspaceSession()) return false;
     try {
       const serialized = JSON.stringify(value);
-      if (typeof serialized !== "string" || new TextEncoder().encode(serialized).byteLength > MAX_SECURE_PLAINTEXT_BYTES) {
+      if (typeof serialized !== "string" || new TextEncoder().encode(serialized).byteLength > 1_400_000) {
         return false;
       }
       const expiresAt = isPersistentSecureKey(key)
