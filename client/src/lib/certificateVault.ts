@@ -1,16 +1,12 @@
 /**
- * Cofre local do certificado A1 (.pfx/.p12) do administrador.
+ * Cofre do certificado A1 (.pfx/.p12) do administrador.
  *
- * - Somente usuário autenticado com papel "admin" pode memorizar/carregar.
- * - O .pfx (já cifrado pela própria senha PKCS#12) recebe um segundo envelope
- *   AES-GCM-256 com chave WebCrypto NÃO-EXTRAÍVEL gerada neste dispositivo.
- *   A chave fica no IndexedDB como CryptoKey opaca: nenhum script consegue
- *   exportá-la e o arquivo copiado do disco não é utilizável fora deste perfil.
- * - A SENHA DO CERTIFICADO NUNCA É ARMAZENADA. Ela é digitada a cada assinatura
- *   e descartada da memória junto com a chave privada.
- * - Nada é enviado ao servidor nem publicado em hospedagem estática.
- *
- * Banco distinto do cache legado ("neuroped-icp"), que continua sendo apagado.
+ * - No app remoto, só o envelope cifrado com PBKDF2 + AES-GCM é enviado ao
+ *   backend e fica vinculado à conta autenticada. PFX em claro e senha nunca
+ *   são enviados nem persistidos.
+ * - No modo local, mantém o cofre IndexedDB protegido por CryptoKey não-extraível.
+ * - A senha só existe em memória enquanto o usuário valida/assina.
+ * - Banco distinto do cache legado ("neuroped-icp"), que continua sendo apagado.
  */
 export const VAULT_DB_NAME = "neuroped-cert-vault";
 const STORE = "vault";
@@ -111,4 +107,147 @@ export async function loadCertificate(user: VaultUser | null | undefined): Promi
 export async function forgetCertificate(user: VaultUser | null | undefined): Promise<void> {
   if (!user?.id || !hasPlatformSupport()) return;
   await tx("readwrite", (s) => s.delete(recordKey(user.id)));
+}
+
+
+// Cofre remoto: cifra no cliente com a senha confirmada do PFX antes do envio.
+export const CERTIFICATE_VAULT_FORMAT_VERSION = 1;
+export const CERTIFICATE_VAULT_KDF_ITERATIONS = 310_000;
+const MAX_ACCOUNT_P12_BYTES = 1_200_000;
+
+export interface AccountCertificateEnvelope {
+  formatVersion: 1;
+  kdf: "PBKDF2-SHA256";
+  iterations: number;
+  salt: string;
+  iv: string;
+  ciphertext: string;
+  updatedAt: string;
+}
+
+function encodeBase64(bytes: Uint8Array): string {
+  let binary = "";
+  for (let offset = 0; offset < bytes.length; offset += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+  }
+  return btoa(binary);
+}
+
+function decodeBase64(value: string): Uint8Array {
+  const binary = atob(value);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+  return bytes;
+}
+
+function certificateAad(userId: string): Uint8Array {
+  return new TextEncoder().encode(`neuroped:certificate-vault:v${CERTIFICATE_VAULT_FORMAT_VERSION}:${userId}`);
+}
+
+async function passwordWrapKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
+  if (!password) throw new Error("Informe a senha correta do certificado.");
+  const material = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    "PBKDF2",
+    false,
+    ["deriveKey"],
+  );
+  return crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt, iterations: CERTIFICATE_VAULT_KDF_ITERATIONS, hash: "SHA-256" },
+    material,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"],
+  );
+}
+
+async function accountVaultRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const { authFetch } = await import("@/lib/authClient");
+  const response = await authFetch(path, init);
+  if (!response.ok) throw new Error(`Cofre de certificado indisponível (HTTP ${response.status}).`);
+  return await response.json() as T;
+}
+
+/** Guarda somente ciphertext no backend, depois da validação local da senha do PFX. */
+export async function saveCertificateToAccount(
+  user: VaultUser | null | undefined,
+  p12: ArrayBuffer,
+  password: string,
+): Promise<AccountCertificateEnvelope> {
+  if (!canUseCertificateVault(user)) throw new Error("Somente o administrador pode guardar o certificado na conta.");
+  if (!password) throw new Error("Valide o certificado com a senha antes de memorizar.");
+  if (p12.byteLength === 0 || p12.byteLength > MAX_ACCOUNT_P12_BYTES) {
+    throw new Error("Arquivo de certificado excede o limite do cofre.");
+  }
+
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await passwordWrapKey(password, salt);
+  const ciphertext = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv, additionalData: certificateAad(user.id) },
+    key,
+    p12,
+  );
+  const payload = {
+    formatVersion: CERTIFICATE_VAULT_FORMAT_VERSION,
+    kdf: "PBKDF2-SHA256",
+    iterations: CERTIFICATE_VAULT_KDF_ITERATIONS,
+    salt: encodeBase64(salt),
+    iv: encodeBase64(iv),
+    ciphertext: encodeBase64(new Uint8Array(ciphertext)),
+  } as const;
+
+  const result = await accountVaultRequest<{ ok: true; updatedAt: string }>("/api/certificate-vault", {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+  return { ...payload, updatedAt: result.updatedAt };
+}
+
+export async function loadCertificateFromAccount(
+  user: VaultUser | null | undefined,
+): Promise<AccountCertificateEnvelope | null> {
+  if (!canUseCertificateVault(user)) return null;
+  const result = await accountVaultRequest<{ certificate: AccountCertificateEnvelope | null }>("/api/certificate-vault", {
+    method: "GET",
+    cache: "no-store",
+  });
+  return result.certificate;
+}
+
+export async function unlockCertificateFromAccount(
+  user: VaultUser | null | undefined,
+  envelope: AccountCertificateEnvelope,
+  password: string,
+): Promise<ArrayBuffer> {
+  if (!canUseCertificateVault(user)) throw new Error("Somente o administrador pode acessar o certificado da conta.");
+  if (envelope.formatVersion !== CERTIFICATE_VAULT_FORMAT_VERSION ||
+      envelope.kdf !== "PBKDF2-SHA256" ||
+      envelope.iterations !== CERTIFICATE_VAULT_KDF_ITERATIONS) {
+    throw new Error("Formato de cofre de certificado incompatível.");
+  }
+  try {
+    const key = await passwordWrapKey(password, decodeBase64(envelope.salt));
+    return await crypto.subtle.decrypt(
+      {
+        name: "AES-GCM",
+        iv: decodeBase64(envelope.iv),
+        additionalData: certificateAad(user.id),
+      },
+      key,
+      decodeBase64(envelope.ciphertext),
+    );
+  } catch {
+    throw new Error("Senha incorreta ou certificado salvo indisponível.");
+  }
+}
+
+export async function forgetCertificateFromAccount(
+  user: VaultUser | null | undefined,
+): Promise<void> {
+  if (!canUseCertificateVault(user)) return;
+  const { authFetch } = await import("@/lib/authClient");
+  const response = await authFetch("/api/certificate-vault", { method: "DELETE" });
+  if (!response.ok) throw new Error(`Não foi possível remover o certificado (HTTP ${response.status}).`);
 }
