@@ -114,10 +114,10 @@ assert.deepEqual(parseCrmCredential("crm/ba nº 7788"), { number: "7788", uf: "B
 assert.equal(parseCrmCredential("CRM-XX 123"), null);
 assert.equal(parseCrmCredential(""), null);
 
-// 6) Transição SNCR (RDC 1.000/2025): 29/10/2026 ainda permite; 30/10/2026 00:00 BRT bloqueia.
-assert.equal(isUnintegratedElectronicRceAllowed(Date.parse("2026-10-29T23:59:59-03:00")), true);
-assert.equal(isUnintegratedElectronicRceAllowed(Date.parse("2026-10-30T00:00:00-03:00")), false);
+// 6) Transição SNCR (RDC 1.046/2026): RCE sem numeração até 03/03/2027; 04/03/2027 00:00 BRT bloqueia.
+assert.equal(isUnintegratedElectronicRceAllowed(Date.parse("2027-03-03T23:59:59-03:00")), true);
+assert.equal(isUnintegratedElectronicRceAllowed(Date.parse("2027-03-04T00:00:00-03:00")), false);
 assert.equal(electronicRceBlockReason(Date.parse("2026-10-08T12:00:00-03:00")), null);
-assert.match(electronicRceBlockReason(Date.parse("2026-11-01T12:00:00-03:00")) ?? "", /SNCR/);
+assert.match(electronicRceBlockReason(Date.parse("2027-03-04T12:00:00-03:00")) ?? "", /SNCR/);
 
 console.log("pades-icp-iti: ok");

@@ -29,6 +29,8 @@ export const SENSITIVE_ROUTES = [
   "/avaliacao-multiprofissional",
   "/fichas-registro",
   "/laudo-neuroped", "/laudo-super", "/laudo-um-clique", "/evolucao-escalas", "/resumo-pre-consulta", "/checagem-dose",
+  "/receita-a1",
+  "/receita-b1",
   "/receita-c1",
   "/receita-c1-express",
   "/diario-escola",

@@ -149,7 +149,15 @@ export const featuredNavigation: NavItem[] = [
     label: "Receita C1",
     icon: Pill,
     tone: "priority",
-    description: "Prescrição clínica",
+    description: "Receita de Controle Especial · Lista C1",
+  },
+  {
+    href: "/receita-a1", label: "Receita A1", icon: Pill, tone: "priority",
+    description: "Notificação física A · número fornecido pela VISA",
+  },
+  {
+    href: "/receita-b1", label: "Receita B1", icon: Pill, tone: "priority",
+    description: "Notificação física B · número fornecido pela VISA",
   },
   {
     href: "/renderizador",
@@ -236,6 +244,8 @@ export const navSections: NavSection[] = [
       { href: "/laudo-um-clique", label: "Laudo em um clique", icon: FileText },
       { href: "/checagem-dose", label: "Checagem de dose (apoio)", icon: ShieldCheck },
       { href: "/receita-c1", label: "Receita C1", icon: Pill, tone: "priority" },
+      { href: "/receita-a1", label: "Receita A1", icon: Pill, tone: "priority", description: "Notificação física A · Lista A1" },
+      { href: "/receita-b1", label: "Receita B1", icon: Pill, tone: "priority", description: "Notificação física B · Lista B1" },
       { href: "/memoria-clinica", label: "Memória clínica", icon: BrainCog },
       { href: "/laudo-super", label: "Laudos SuperNeuroPed", icon: ShieldCheck },
     ],
