@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { hasUnfilledTableTemplate, structuredTableTemplate } from "../../client/src/lib/renderizador/table-editor.mjs";
 import fs from "node:fs";
 import { jsPDF } from "jspdf";
 import {
