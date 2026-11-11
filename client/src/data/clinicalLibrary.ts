@@ -44,6 +44,20 @@ export interface ClinicalLibraryChapter {
 }
 export const clinicalLibraryChapters: ClinicalLibraryChapter[] = [
   {
+    slug: "agressividade-dia10",
+    anchor: "capitulo-agressividade-dia10",
+    day: 10,
+    title: "Como analisar agressividade infantil antes de propor medicação?",
+    subtitle: "Risco, análise funcional e intervenções antes da farmacoterapia",
+    category: "Comportamento e sensorial",
+    date: "2026-11-11",
+    updated: "2026-11-11",
+    status: "revisao_medica",
+    minutes: 6,
+    review: "Consensus consultado em 11/11/2026; revisão médica pendente.",
+    sources: ["evans-aggression-2024", "chin-irritability-2025"],
+  },
+  {
     slug: "wisc-indices-dia09",
     anchor: "capitulo-wisc-indices-dia09",
     day: 9,
@@ -310,7 +324,7 @@ export const wiscReferences: ClinicalLibraryReference[] = [
 ];
 
 export const nextClinicalTopics = [
-  "Como analisar agressividade infantil antes de propor medicação?",
+  "Como diferenciar enxaqueca de cefaleia tensional em escolares?",
 ];
 
 /** Trilha 365: somente capítulos numerados pelo índice canônico, em ordem crescente de Dia. */
