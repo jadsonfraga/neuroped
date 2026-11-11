@@ -496,3 +496,13 @@ Nenhum segredo novo foi adicionado e nenhuma autorização clínica ou armazenam
 ### Próximo ponto de retomada
 
 Partir de `origin/main`, verificar PRs concorrentes e escolher outra frente pequena de segurança, isolamento, LGPD ou operação. A PR #1307 de persistência de certificados A1 permanece não integrada devido a falhas de Production Readiness/Verify com 404s no hard release visual; não contornar esse gate. A cadência de 30 minutos continua bloqueada pela plataforma.
+
+## Ciclo 19 (2026-11-11) — filtro de sinais aguardando reconciliação
+
+A PR #1312 possui checks verdes e propõe cobertura explícita de sinais individuais e carga verificável, mas conflita com a implementação de filtro já integrada em #1313. O merge foi abortado sem alterações parciais porque os conflitos atingem workflow, motor de pódio, auditoria, UI e métricas.
+
+A oportunidade está registrada em `EVIDENCE.md#Ciclo-19`. O próximo trabalho deve resolver manualmente a combinação, preservando o fail-closed de carga desconhecida e os contratos de métricas; depois executar as suítes clínicas e o hard release completo. A main segura de retomada é `40b371c9`.
+
+### Próximo ponto de retomada
+
+Partir de `origin/main`, não tentar novamente um merge automático da PR #1312. Resolver os conflitos em branch própria ou escolher outra frente não conflitante. Não alterar filtros clínicos por descarte de um lado inteiro e não integrar a PR #1307 enquanto seus gates de Production Readiness/Verify permanecerem falhos.
