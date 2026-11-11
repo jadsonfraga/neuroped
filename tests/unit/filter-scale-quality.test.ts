@@ -39,6 +39,7 @@ const scale = (over: Partial<ScaleEntry> & { id: string }): ScaleEntry =>
     tempo: "10 min",
     appRoute: `/generic-scale/${over.id}`,
     description: "Instrumento sintético com 20 perguntas.",
+    verifiedItemCount: over.verifiedItemCount ?? Number(over.description?.match(/\d+/)?.[0] ?? 20),
     licencaUso: "livre",
     implementationStatus: "complete",
     applicationMode: "observacional_clinico",

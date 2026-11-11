@@ -9,6 +9,8 @@ interface HardCapInput {
   bronze?: RefinedScaleMatch;
   candidates: RefinedScaleMatch[];
   selectedQueixas: string[];
+  selectedSignals?: string[];
+  coversSignal?: (match: RefinedScaleMatch, signal: string) => boolean;
   /** Idade exata em meses (ignorada quando há faixa). */
   ageMonths: number | null;
   /** Faixa selecionada: o teto aceita sobreposição parcial, nunca fora da faixa. */
@@ -26,6 +28,7 @@ export interface HardCapResult {
 interface BudgetState {
   slotMask: number;
   coverageMask: bigint;
+  signalMask: bigint;
   totalQuestions: number;
   qualityScore: number;
   picks: Array<RefinedScaleMatch | undefined>;
@@ -64,6 +67,8 @@ export function enforcePodiumHardCap({
   bronze,
   candidates,
   selectedQueixas,
+  selectedSignals = [],
+  coversSignal = () => false,
   ageMonths,
   ageBand = null,
   countQuestions,
@@ -73,10 +78,6 @@ export function enforcePodiumHardCap({
     (sum, item) => sum + (item ? countQuestions(item) : 0),
     0,
   );
-  if (originalTotal <= MAX_PODIUM_QUESTIONS) {
-    return { ouro, prata, bronze, totalQuestions: originalTotal };
-  }
-
   const containsAge = (item: RefinedScaleMatch) =>
     fitsSelectedAge(scaleAgeFit(item.scale, { exactAge: ageMonths, ageBand }));
 
@@ -101,19 +102,53 @@ export function enforcePodiumHardCap({
     }
     return mask;
   };
+  const signalIndex = new Map(
+    selectedSignals.slice(0, 20).map((signal, index) => [signal, index]),
+  );
+  const signalCoverageOf = (item: RefinedScaleMatch): bigint => {
+    let mask = 0n;
+    for (const [signal, index] of signalIndex) {
+      if (coversSignal(item, signal)) mask |= 1n << BigInt(index);
+    }
+    return mask;
+  };
+  const coverableSignalMask = eligible.reduce(
+    (mask, item) => mask | signalCoverageOf(item),
+    0n,
+  );
+  const originalSignalMask = original.reduce(
+    (mask, item) => mask | (item ? signalCoverageOf(item) : 0n),
+    0n,
+  );
+  const originalCountsKnown = original.every((item) => {
+    if (!item) return true;
+    const count = countQuestions(item);
+    return Number.isFinite(count) && count > 0;
+  });
+  const originalCoversEveryCoverableSignal =
+    (originalSignalMask & coverableSignalMask) === coverableSignalMask;
+  if (
+    originalCountsKnown &&
+    originalTotal <= MAX_PODIUM_QUESTIONS &&
+    originalCoversEveryCoverableSignal
+  ) {
+    return { ouro, prata, bronze, totalQuestions: originalTotal };
+  }
 
   const initial: BudgetState = {
     slotMask: 0,
     coverageMask: 0n,
+    signalMask: 0n,
     totalQuestions: 0,
     qualityScore: 0,
     picks: [undefined, undefined, undefined],
   };
-  let states = new Map<string, BudgetState>([["0|0|0", initial]]);
+  let states = new Map<string, BudgetState>([["0|0|0|0", initial]]);
 
   for (const item of eligible) {
     const burden = countQuestions(item);
     const coverage = coverageOf(item);
+    const signalCoverage = signalCoverageOf(item);
     const next = new Map(states);
 
     for (const state of states.values()) {
@@ -124,6 +159,7 @@ export function enforcePodiumHardCap({
 
         const slotMask = state.slotMask | (1 << slot);
         const coverageMask = state.coverageMask | coverage;
+        const signalMask = state.signalMask | signalCoverage;
         const originalBonus =
           item.scale.id === original[slot]?.scale.id ? 600 : 0;
         const qualityScore =
@@ -136,11 +172,12 @@ export function enforcePodiumHardCap({
         const candidate: BudgetState = {
           slotMask,
           coverageMask,
+          signalMask,
           totalQuestions,
           qualityScore,
           picks,
         };
-        const key = `${slotMask}|${coverageMask.toString()}|${totalQuestions}`;
+        const key = `${slotMask}|${coverageMask.toString()}|${signalMask.toString()}|${totalQuestions}`;
         const previous = next.get(key);
         if (!previous || candidate.qualityScore > previous.qualityScore) {
           next.set(key, candidate);
@@ -156,9 +193,14 @@ export function enforcePodiumHardCap({
   for (const state of states.values()) {
     const slotCount = bitCount(BigInt(state.slotMask));
     const coverageCount = bitCount(state.coverageMask);
+    const signalCount = bitCount(state.signalMask & coverableSignalMask);
+    const coversEveryCoverableSignal =
+      (state.signalMask & coverableSignalMask) === coverableSignalMask;
     const rank =
+      coverageCount * 25_000_000 +
+      (coversEveryCoverableSignal && coverableSignalMask !== 0n ? 8_000_000 : 0) +
+      signalCount * 3_000_000 +
       slotCount * 1_000_000 +
-      coverageCount * 25_000 +
       state.qualityScore;
     if (rank > bestRank) {
       bestRank = rank;

@@ -78,8 +78,7 @@ import { selectCuratedTiers, selectPodiumDetailed } from "@/data/filterPodium";
 import { auditPodium, type MedalAudit, type PodiumMedalKey } from "@/data/filterPodiumAudit";
 import { opbParentCopy } from "@/data/opbParentCopy";
 import { PopularSymptomPicker } from "@/components/PopularSymptomPicker";
-import { getValidFilterSignalIds } from "@/data/filterSignalState";
-import { getAllSignalsForQueixa } from "@/data/signalsAndSymptoms";
+import { getFilterSignalLabels, getValidFilterSignalIds } from "@/data/filterSignalState";
 import {
   filterScalesWithClinicalRescue,
   getBroadbandFallback,
@@ -873,24 +872,6 @@ function getQueixaLabels(selectedQueixas: string[]): string[] {
   );
 }
 
-function getSignalLabels(
-  selectedQueixas: string[],
-  selectedSignalIds: string[],
-): string[] {
-  if (selectedSignalIds.length === 0 || selectedQueixas.length === 0) return [];
-  const selected = new Set(selectedSignalIds);
-  const seen = new Set<string>();
-  const labels: string[] = [];
-  for (const queixaId of selectedQueixas) {
-    for (const signal of getAllSignalsForQueixa(queixaId)) {
-      if (!selected.has(signal.id) || seen.has(signal.id)) continue;
-      seen.add(signal.id);
-      labels.push(signal.label);
-    }
-  }
-  return labels;
-}
-
 function scaleDetailLine(scale: ScaleEntry | undefined): string {
   if (!scale) return "";
   const details = [
@@ -950,7 +931,7 @@ function buildQualitativeFilterReport(args: {
       : selectedAssessmentType === "monitoring"
         ? "monitoramento evolutivo"
         : "triagem e apoio à decisão";
-  const signalLabels = getSignalLabels(
+  const signalLabels = getFilterSignalLabels(
     selectedQueixas,
     selectedSignalIds,
   ).slice(0, 6);
@@ -1726,7 +1707,7 @@ export default function FiltroPage() {
         selectedSignals: selectedSignalIds,
         selection: { exactAge: curatedAgeMonths, ageBand: curatedAgeBand },
         queixaLabel: (id) => queixas.find((q) => q.id === id)?.label ?? id,
-        signalLabel: (id) => getSignalLabels(activeQueixas, [id])[0] ?? id,
+        signalLabel: (id) => getFilterSignalLabels(activeQueixas, [id])[0] ?? id,
       }),
     [podiumDetail, podiumPool, activeQueixas, selectedSignalIds, curatedAgeMonths, curatedAgeBand],
   );
@@ -3263,7 +3244,8 @@ export default function FiltroPage() {
                               <div className="filter-260-why" data-testid="medal-practical">
                                 <strong>Quem responde:</strong> {medal.respondentLabel} ·{" "}
                                 <strong>Tempo:</strong> {medal.timeLabel} ·{" "}
-                                <strong>Idade:</strong> {medal.ageFitLabel}
+                                <strong>Idade:</strong> {medal.ageFitLabel} ·{" "}
+                                <strong>Itens:</strong> {medal.questionCountLabel}
                               </div>
                             </>
                           );

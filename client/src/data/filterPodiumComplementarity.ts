@@ -201,6 +201,7 @@ export function refineFunctionalComplementarity({
   // a tornar impossível, completar com três instrumentos sem a âncora, sempre
   // respeitando 100 itens, idade, respondente e sinais clinicamente cobertos.
   if (anchor && chosen.length < 3) {
+    const coverageBaseline = [...chosen];
     const otherCandidates = pool.filter((m) => !isFunctionalAnchor(m.scale.id));
     let bestWithAnchor: RefinedScaleMatch[] | null = null;
     let bestWithAnchorScore = -Infinity;
@@ -208,7 +209,7 @@ export function refineFunctionalComplementarity({
       for (let j = i + 1; j < otherCandidates.length; j++) {
         const trio = [otherCandidates[i], otherCandidates[j], anchor];
         if (burden(trio) > questionCap) continue;
-        if (coveredSignals(original).length > 0 && coveredSignals(trio).length === 0) continue;
+        if (!preservesCoverage(coverageBaseline, trio)) continue;
         const score = rank(trio);
         if (score > bestWithAnchorScore) {
           bestWithAnchor = trio;
@@ -218,24 +219,6 @@ export function refineFunctionalComplementarity({
     }
     if (bestWithAnchor) {
       chosen = bestWithAnchor;
-    } else {
-      let bestTriple: RefinedScaleMatch[] | null = null;
-      let bestTripleScore = -Infinity;
-      for (let i = 0; i < otherCandidates.length; i++) {
-        for (let j = i + 1; j < otherCandidates.length; j++) {
-          for (let k = j + 1; k < otherCandidates.length; k++) {
-            const trio = [otherCandidates[i], otherCandidates[j], otherCandidates[k]];
-            if (burden(trio) > questionCap) continue;
-            if (coveredSignals(original).length > 0 && coveredSignals(trio).length === 0) continue;
-            const score = rank(trio);
-            if (score > bestTripleScore) {
-              bestTriple = trio;
-              bestTripleScore = score;
-            }
-          }
-        }
-      }
-      if (bestTriple) chosen = bestTriple;
     }
   }
 
