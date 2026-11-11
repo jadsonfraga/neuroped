@@ -29,6 +29,7 @@ interface BudgetState {
   slotMask: number;
   coverageMask: bigint;
   signalMask: bigint;
+  fullAgeCount: number;
   totalQuestions: number;
   qualityScore: number;
   picks: Array<RefinedScaleMatch | undefined>;
@@ -127,10 +128,13 @@ export function enforcePodiumHardCap({
   });
   const originalCoversEveryCoverableSignal =
     (originalSignalMask & coverableSignalMask) === coverableSignalMask;
+  const fullAgeEligible = ageBand ? eligible.some((item) => scaleAgeFit(item.scale, { exactAge: null, ageBand }) === "full") : false;
+  const originalHasPartialAge = ageBand && original.some((item) => item && scaleAgeFit(item.scale, { exactAge: null, ageBand }) === "partial");
   if (
     originalCountsKnown &&
     originalTotal <= MAX_PODIUM_QUESTIONS &&
-    originalCoversEveryCoverableSignal
+    originalCoversEveryCoverableSignal &&
+    !(fullAgeEligible && originalHasPartialAge)
   ) {
     return { ouro, prata, bronze, totalQuestions: originalTotal };
   }
@@ -139,6 +143,7 @@ export function enforcePodiumHardCap({
     slotMask: 0,
     coverageMask: 0n,
     signalMask: 0n,
+    fullAgeCount: 0,
     totalQuestions: 0,
     qualityScore: 0,
     picks: [undefined, undefined, undefined],
@@ -160,6 +165,7 @@ export function enforcePodiumHardCap({
         const slotMask = state.slotMask | (1 << slot);
         const coverageMask = state.coverageMask | coverage;
         const signalMask = state.signalMask | signalCoverage;
+        const fullAgeCount = state.fullAgeCount + (ageBand && scaleAgeFit(item.scale, { exactAge: null, ageBand }) === "full" ? 1 : 0);
         const originalBonus =
           item.scale.id === original[slot]?.scale.id ? 600 : 0;
         const qualityScore =
@@ -173,6 +179,7 @@ export function enforcePodiumHardCap({
           slotMask,
           coverageMask,
           signalMask,
+          fullAgeCount,
           totalQuestions,
           qualityScore,
           picks,
@@ -201,6 +208,7 @@ export function enforcePodiumHardCap({
       (coversEveryCoverableSignal && coverableSignalMask !== 0n ? 8_000_000 : 0) +
       signalCount * 3_000_000 +
       slotCount * 1_000_000 +
+      state.fullAgeCount * 100_000 +
       state.qualityScore;
     if (rank > bestRank) {
       bestRank = rank;

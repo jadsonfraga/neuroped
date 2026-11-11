@@ -186,7 +186,9 @@ for (const c of contexts) {
     const covered = medals.some((m) => m.scale.queixas.includes(q));
     if (covered) acc.complaintsCovered++;
     // Coberturável = existe pelo menos uma candidata SEGURA que fala à queixa.
-    const coverable = matches.some((m) => m.scale.queixas.includes(q));
+    // Coberturável dentro do orçamento fechado: candidato sem contagem
+    // verificável não pode ser incluído sem romper a garantia de 100 itens.
+    const coverable = matches.some((m) => m.scale.queixas.includes(q) && Number.isFinite(estimatedQuestionCount(m.scale)) && estimatedQuestionCount(m.scale) <= PODIUM_QUESTION_CAP);
     if (coverable) acc.complaintsCoverable++;
     if (coverable && covered) acc.complaintsCoverableAndCovered++;
   }
@@ -221,6 +223,7 @@ const report = {
   signal_contexts_covered_pct: pct(acc.signalContextsCovered, acc.signalContexts),
   signal_contexts_with_safe_candidate: acc.signalContextsWithSafeCandidate,
   signal_covered_when_coverable_pct: pct(acc.signalContextsCoveredWhenSafeCandidate, acc.signalContextsWithSafeCandidate),
+  signal_covered_when_safe_candidate_pct: pct(acc.signalContextsCoveredWhenSafeCandidate, acc.signalContextsWithSafeCandidate),
   acute_contexts: acc.acuteContexts,
   acute_broadband_violations: acc.acuteBroadbandViolations,
   curated_contexts: acc.curatedCount,

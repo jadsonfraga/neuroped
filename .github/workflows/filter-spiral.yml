@@ -41,12 +41,16 @@ jobs:
       - name: Prove exact-age and complaint-filter contracts
         run: node --import tsx tests/clinical/test-filter-age-complaint.mjs
 
-      - name: Run complete filter and podium quality suite
+      - name: Prove clinical filter, podium, signal labels and hard cap
         run: |
           npm run test:filter
           npm run test:podium
           npm run test:ideal-choice
           npm run test:practical-filter
+
+      - name: Audit filter on synthetic profiles and reject measured regressions
+        shell: bash
+        run: node --import tsx tests/tools/filter-quality-metrics.ts --json | node scripts/guards/assert-filter-quality-metrics.mjs
 
       - name: Install Chromium for real browser gates
         run: npx playwright install --with-deps chromium

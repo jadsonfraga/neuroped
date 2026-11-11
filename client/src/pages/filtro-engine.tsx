@@ -3087,7 +3087,24 @@ export default function FiltroPage() {
                   <strong>Lacunas e avisos do trio:</strong>
                   <ul className="mt-1 list-disc space-y-0.5 pl-4">
                     {podiumAudit.gaps.map((gap, index) => (
-                      <li key={`${gap.kind}-${index}`}>{gap.message}</li>
+                      <li key={gap.kind + "-" + index}>
+                        {gap.message}
+                        {gap.alternativeId && (() => {
+                          const scale = podiumPool.find((match) => match.scale.id === gap.alternativeId)?.scale;
+                          if (!scale) return null;
+                          const route = resolveAppRoute(scale) ?? "/generic-scale/" + scale.id;
+                          return (
+                            <Link
+                              href={route}
+                              onClick={() => rememberOpened(scale, route)}
+                              data-testid="filter-signal-alternative"
+                              className="ml-1 font-semibold underline underline-offset-2"
+                            >
+                              Abrir alternativa fora do trio
+                            </Link>
+                          );
+                        })()}
+                      </li>
                     ))}
                   </ul>
                 </div>

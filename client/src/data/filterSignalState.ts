@@ -83,10 +83,7 @@ export function getValidFilterSignalIds(
   return new Set(getFilterSignalsForQueixas(selectedQueixas).map((signal) => signal.id));
 }
 
-/**
- * Detecta sinais órfãos: permaneciam persistidos depois de a queixa de origem
- * ser removida e podiam influenciar o ranking sem aparecer na interface.
- */
+/** Detecta sinais órfãos após remover a queixa de origem. */
 export function getOrphanFilterSignalIds(
   selectedQueixas: readonly string[],
   selectedSignalIds: readonly string[],

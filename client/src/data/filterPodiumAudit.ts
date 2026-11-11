@@ -72,6 +72,7 @@ export interface MedalAudit {
 export interface PodiumGap {
   kind: "queixa" | "sinal" | "faixa" | "redundancia" | "vaga" | "teto" | "carga";
   message: string;
+  alternativeId?: string; // opção segura fora do trio, sujeita a recomposição clínica
 }
 
 export interface PodiumAudit {
@@ -201,6 +202,9 @@ export function auditPodium(input: PodiumAuditInput): PodiumAudit {
     return sum + (match ? estimatedQuestionCount(match.scale) : 0);
   }, 0);
 
+  // Toda medalha do trio tem carga verificada; categorias separadas podem
+  // conservar a informação explícita de carga desconhecida.
+
   // Lacunas: queixas sem instrumento no trio (com diagnóstico do motivo).
   const trioCovers = (q: string) => trioMatches.some((m) => m.scale.queixas.includes(q));
   for (const q of selectedQueixas) {
@@ -228,14 +232,17 @@ export function auditPodium(input: PodiumAuditInput): PodiumAudit {
       gaps.push({ kind: "sinal", message: `Sinal ${signalLabel(sig)} sem instrumento aplicável seguro para este perfil.` });
       continue;
     }
-    const verified = covering.map((m) => estimatedQuestionCount(m.scale)).filter(Number.isFinite);
+    const verified = covering.filter((m) => Number.isFinite(estimatedQuestionCount(m.scale)));
     if (verified.length === 0) {
-      gaps.push({ kind: "carga", message: `Sinal ${signalLabel(sig)} tem instrumento aplicável, mas a carga de itens ainda não foi verificada para compor o trio.` });
+      gaps.push({ kind: "carga", alternativeId: covering[0].scale.id, message: `Sinal ${signalLabel(sig)} tem instrumento aplicável, mas a carga de itens ainda não foi verificada para compor o trio.` });
       continue;
     }
-    const cheapest = Math.min(...verified);
+    const alternative = verified.reduce((best, candidate) =>
+      estimatedQuestionCount(candidate.scale) < estimatedQuestionCount(best.scale) ? candidate : best);
+    const cheapest = estimatedQuestionCount(alternative.scale);
     gaps.push({
       kind: "sinal",
+      alternativeId: alternative.scale.id,
       message: cheapest > PODIUM_QUESTION_CAP
         ? `Sinal ${signalLabel(sig)} não coberto no trio: o instrumento que o cobre exige ${cheapest} perguntas e excede o teto de ${PODIUM_QUESTION_CAP}.`
         : `Sinal ${signalLabel(sig)} não coberto no trio por prioridade de queixa e relevância; há instrumento seguro que o cobre.`,
