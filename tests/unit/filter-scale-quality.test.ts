@@ -17,7 +17,7 @@ import {
   type FilterContext,
   type RefinedScaleMatch,
 } from "../../client/src/data/advancedFilterLogic.ts";
-import { selectCuratedTiers, selectPodiumDetailed, PODIUM_QUESTION_CAP, estimatedQuestionCount, getPodiumQuestionCountInfo } from "../../client/src/data/filterPodium.ts";
+import { selectCuratedTiers, selectPodiumDetailed, PODIUM_QUESTION_CAP, estimatedQuestionCount, getQuestionCountInfo } from "../../client/src/data/filterPodium.ts";
 import { auditPodium } from "../../client/src/data/filterPodiumAudit.ts";
 import { resolveRedundantMedals, sameClinicalConstruct } from "../../client/src/data/filterPodiumComplementarity.ts";
 import { scaleAgeFit } from "../../client/src/data/scaleAgeFit.ts";
@@ -39,6 +39,7 @@ const scale = (over: Partial<ScaleEntry> & { id: string }): ScaleEntry =>
     tempo: "10 min",
     appRoute: `/generic-scale/${over.id}`,
     description: "Instrumento sintético com 20 perguntas.",
+    verifiedItemCount: over.verifiedItemCount ?? Number(over.description?.match(/\d+/)?.[0] ?? 20),
     licencaUso: "livre",
     implementationStatus: "complete",
     applicationMode: "observacional_clinico",
@@ -414,16 +415,20 @@ test("catálogo real (amostra sintética de perfis): idade, respondente, teto e 
 });
 
 
-test("contagem sem itens verificáveis é explicitamente estimada", () => {
+test("contagem sem itens verificáveis é explicitamente desconhecida", () => {
   const unknown = scale({ id: "sint-contagem-incerta", queixas: ["tea"], description: "Descrição sem número de perguntas.", scoringCutoff: "" });
-  const info = getPodiumQuestionCountInfo(unknown);
-  assert.deepEqual(info, { count: 20, source: "estimated" });
+  delete unknown.verifiedItemCount;
+  const info = getQuestionCountInfo(unknown);
+  assert.equal(info.count, null);
+  assert.equal(info.status, "unknown");
   const declared = scale({ id: "sint-contagem-declarada", queixas: ["tea"], description: "Questionário com 48 perguntas.", scoringCutoff: "" });
-  assert.deepEqual(getPodiumQuestionCountInfo(declared), { count: 48, source: "declared" });
+  delete declared.verifiedItemCount;
+  assert.equal(getQuestionCountInfo(declared).count, null);
 });
 
-test("auditoria sinaliza carga provisória sem declarar o teto verificado", () => {
+test("auditoria não coloca carga desconhecida no trio", () => {
   const unknown = scale({ id: "sint-sem-carga", queixas: ["tea"], description: "Sem informação quantitativa.", scoringCutoff: "" });
+  delete unknown.verifiedItemCount;
   const { audit } = run([unknown], ctx({ queixas: ["tea"], ageMonths: 30 }));
-  assert.ok(audit.gaps.some((gap) => gap.kind === "teto" && /provisório/.test(gap.message)));
+  assert.equal(audit.medals.filter((medal) => ["ouro", "prata", "bronze"].includes(medal.slot)).length, 0);
 });

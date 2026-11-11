@@ -111,6 +111,7 @@ interface Acc {
   signalContexts: number;
   signalContextsCovered: number;
   signalContextsWithSafeCandidate: number;
+  signalContextsCoveredWhenSafeCandidate: number;
   acuteContexts: number;
   acuteBroadbandViolations: number;
   curatedCount: number;
@@ -122,7 +123,7 @@ const acc: Acc = {
   bandNoOverlapViolations: 0, bandMedals: 0, bandMedalsFull: 0, bandMedalsPartial: 0,
   respondentViolations: 0, redundantPairs: 0, contextsWithRedundantPair: 0, capViolations: 0,
   complaintsSelected: 0, complaintsCovered: 0, signalContexts: 0, signalContextsCovered: 0,
-  signalContextsWithSafeCandidate: 0, acuteContexts: 0, acuteBroadbandViolations: 0, curatedCount: 0,
+  signalContextsWithSafeCandidate: 0, signalContextsCoveredWhenSafeCandidate: 0, acuteContexts: 0, acuteBroadbandViolations: 0, curatedCount: 0,
 };
 
 for (const c of contexts) {
@@ -185,15 +186,20 @@ for (const c of contexts) {
     const covered = medals.some((m) => m.scale.queixas.includes(q));
     if (covered) acc.complaintsCovered++;
     // Coberturável = existe pelo menos uma candidata SEGURA que fala à queixa.
-    const coverable = matches.some((m) => m.scale.queixas.includes(q));
+    // Coberturável dentro do orçamento fechado: candidato sem contagem
+    // verificável não pode ser incluído sem romper a garantia de 100 itens.
+    const coverable = matches.some((m) => m.scale.queixas.includes(q) && Number.isFinite(estimatedQuestionCount(m.scale)) && estimatedQuestionCount(m.scale) <= PODIUM_QUESTION_CAP);
     if (coverable) acc.complaintsCoverable++;
     if (coverable && covered) acc.complaintsCoverableAndCovered++;
   }
   if (c.signals.length > 0) {
     acc.signalContexts++;
     const sigCtx = { queixas: c.queixas, selectedSignals: c.signals };
-    if (medals.some((m) => scaleCoversSelectedSignalExactly(m.scale, sigCtx))) acc.signalContextsCovered++;
-    if (matches.some((m) => scaleCoversSelectedSignalExactly(m.scale, sigCtx))) acc.signalContextsWithSafeCandidate++;
+    const covered = medals.some((m) => scaleCoversSelectedSignalExactly(m.scale, sigCtx));
+    const coverable = matches.some((m) => scaleCoversSelectedSignalExactly(m.scale, sigCtx) && Number.isFinite(estimatedQuestionCount(m.scale)) && estimatedQuestionCount(m.scale) <= PODIUM_QUESTION_CAP);
+    if (covered) acc.signalContextsCovered++;
+    if (coverable) acc.signalContextsWithSafeCandidate++;
+    if (coverable && covered) acc.signalContextsCoveredWhenSafeCandidate++;
   }
 }
 
@@ -216,7 +222,8 @@ const report = {
   signal_contexts: acc.signalContexts,
   signal_contexts_covered_pct: pct(acc.signalContextsCovered, acc.signalContexts),
   signal_contexts_with_safe_candidate: acc.signalContextsWithSafeCandidate,
-  signal_covered_when_safe_candidate_pct: pct(acc.signalContextsCovered, acc.signalContextsWithSafeCandidate),
+  signal_covered_when_coverable_pct: pct(acc.signalContextsCoveredWhenSafeCandidate, acc.signalContextsWithSafeCandidate),
+  signal_covered_when_safe_candidate_pct: pct(acc.signalContextsCoveredWhenSafeCandidate, acc.signalContextsWithSafeCandidate),
   acute_contexts: acc.acuteContexts,
   acute_broadband_violations: acc.acuteBroadbandViolations,
   curated_contexts: acc.curatedCount,

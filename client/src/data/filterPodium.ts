@@ -4,32 +4,79 @@ import { getDeliveredInteractiveItemCount, type Respondente } from "./scaleFilte
 import { enforcePodiumHardCap } from "./podiumHardCap";
 import { refineFunctionalComplementarity, resolveRedundantMedals, type RedundancyDecision } from "./filterPodiumComplementarity";
 import { scaleAgeFit } from "./scaleAgeFit";
+import { SONDA_DEZ_PROTOCOL } from "./sondaDezProtocol";
 
-// Limite total do pódio: a soma ESTIMADA de perguntas de Ouro + Prata + Bronze
+// Limite total do pódio: a soma VERIFICADA de perguntas de Ouro + Prata + Bronze
 // nunca deve ultrapassar este teto (não sobrecarregar a família/o clínico).
 export const PODIUM_QUESTION_CAP = 100;
 
-// The 100-question cap uses verified application counts when available.
-// When an instrument supplies only metadata (or no count), that budget is
-// provisional and must be flagged in the same audit consumed by UI/exports.
-export type PodiumQuestionCountSource = "interactive" | "dedicated" | "declared" | "estimated";
-export function getPodiumQuestionCountInfo(
-  scale: RefinedScaleMatch["scale"],
-): { count: number; source: PodiumQuestionCountSource } {
-  const interactive = getDeliveredInteractiveItemCount(scale.id);
-  if (interactive > 0) return { count: interactive, source: "interactive" };
-  // EAF: 6 domains x 4 questions on its dedicated page.
-  if (scale.id === "eaf") return { count: 24, source: "dedicated" };
-  const txt = (scale.description ?? "") + " " + (scale.scoringCutoff ?? "");
-  const m = txt.match(/(\d{1,3})\s*(perguntas|itens|quest|quesitos|afirma|sim\/n)/i);
-  if (m) {
-    const count = Number(m[1]);
-    if (Number.isFinite(count) && count > 0) return { count, source: "declared" };
-  }
-  return { count: 20, source: "estimated" };
+export type QuestionCountSource = "interactive" | "catalog" | "dedicated" | "unknown";
+export interface QuestionCountInfo {
+  count: number | null;
+  status: "verified" | "unknown";
+  source: QuestionCountSource;
 }
+
+// Contagens auditadas diretamente nos arrays/campos renderizados pelas páginas
+// dedicadas. Itens variáveis (diários, faixas etárias, grupos musculares) ficam
+// de fora até que a carga contextual seja modelada; descrição não é evidência.
+const VERIFIED_DEDICATED_ITEM_COUNTS: Readonly<Record<string, number>> = {
+  snap: 18,
+  phqa: 9,
+  gmfcs: 1,
+  cssrs: 6,
+  "ecar-si": 36,
+  ygtss: 19,
+  emdi: 36,
+  eaf: 24,
+  pdae: 24,
+  ecsm: 15,
+  ips: 24,
+  edi: 24,
+  eai: 20,
+  easi: 15,
+  ems: 15,
+  etare: 18,
+  eaah: 20,
+  ballard: 12,
+  "regula-20-sdg": 20,
+  "adapta-18-sdg": 18,
+  "porta-20-sdg": 20,
+  "ticar-18-sdg": 18,
+  "ponte-16-sdg": 16,
+  "rota-aut-18-sdg": 18,
+  "ritmo-sono-20-sdg": 20,
+  // A Sonda Dez é variável por faixa (21–25 campos); 25 é o máximo real
+  // conferido no protocolo e, portanto, uma reserva conservadora do orçamento.
+  "testes-diretos": Math.max(...SONDA_DEZ_PROTOCOL.map((band) =>
+    band.missions.reduce((sum, mission) => sum + mission.fields.length, 0))),
+  "testes-reconhecimento": Math.max(...SONDA_DEZ_PROTOCOL.map((band) =>
+    band.missions.reduce((sum, mission) => sum + mission.fields.length, 0))),
+};
+
+export function getQuestionCountInfo(
+  scale: RefinedScaleMatch["scale"],
+): QuestionCountInfo {
+  const interactive = getDeliveredInteractiveItemCount(scale.id);
+  if (Number.isInteger(interactive) && interactive > 0) {
+    return { count: interactive, status: "verified", source: "interactive" };
+  }
+  if (Number.isInteger(scale.verifiedItemCount) && (scale.verifiedItemCount ?? 0) > 0) {
+    return { count: scale.verifiedItemCount!, status: "verified", source: "catalog" };
+  }
+  const dedicated = VERIFIED_DEDICATED_ITEM_COUNTS[scale.id];
+  if (Number.isInteger(dedicated) && dedicated > 0) {
+    return { count: dedicated, status: "verified", source: "dedicated" };
+  }
+  return { count: null, status: "unknown", source: "unknown" };
+}
+
+/**
+ * Compatibilidade interna durante a migração: carga desconhecida é infinita,
+ * portanto falha fechada e jamais cabe por acaso no teto de 100.
+ */
 export function estimatedQuestionCount(scale: RefinedScaleMatch["scale"]): number {
-  return getPodiumQuestionCountInfo(scale).count;
+  return getQuestionCountInfo(scale).count ?? Number.POSITIVE_INFINITY;
 }
 
 export type PodiumSlot = "ouro" | "prata" | "bronze" | "direct" | "school";
@@ -159,6 +206,11 @@ export function selectPodiumDetailed(
   // "desatencao") — o pódio concluía que nenhuma medalha cobria o sinal
   // marcado. A única fonte de verdade vive em advancedFilterLogic.
   const signalCtx = { queixas: selectedQueixas, selectedSignals };
+  const coversSignal = (match: RefinedScaleMatch, signal: string) =>
+    scaleCoversSelectedSignalExactly(match.scale, {
+      queixas: selectedQueixas,
+      selectedSignals: [signal],
+    });
   // Dois papéis, duas exigências (auditoria semanal, P1/P2):
   // - signalHit (resgate/troca): cobertura EXATA por sinal — um slot marcado
   //   como "cobrindo" por correspondência frouxa suprime o resgate da
@@ -625,6 +677,8 @@ export function selectPodiumDetailed(
     bronze,
     candidates: sorted,
     selectedQueixas,
+    selectedSignals,
+    coversSignal,
     ageMonths: exactAge,
     ageBand,
     countQuestions: (match) => estimatedQuestionCount(match.scale),
@@ -710,7 +764,12 @@ export function selectPodiumDetailed(
           const currentRespondents = current.scale.respondente ?? [];
           const candRespondents = cand.scale.respondente ?? [];
           if (currentRespondents.length > 0 && candRespondents.length > 0 && !currentRespondents.some((r) => candRespondents.includes(r))) return false;
-          if (selectedSignals.length > 0 && signalHit(current) && !signalHit(cand)) return false;
+          const signalsUniqueToCurrent = selectedSignals.filter(
+            (signal) =>
+              coversSignal(current, signal) &&
+              !others.some((other) => other && coversSignal(other, signal)),
+          );
+          if (signalsUniqueToCurrent.some((signal) => !coversSignal(cand, signal))) return false;
           used.delete(current.scale.id);
         }
         used.add(cand.scale.id);

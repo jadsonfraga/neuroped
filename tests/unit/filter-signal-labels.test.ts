@@ -15,7 +15,7 @@ test("detailed signals and popular symptoms do not leak orphan selections", () =
   const detail = getAllSignalsForQueixa("tea")[0];
   const popular = getPopularSymptoms("tea")[0];
   assert.ok(detail && popular);
-  assert.deepEqual(getFilterSignalLabels(["tea"], [popular.id, detail.id, "tdah-nao-para-quieto"]), [detail.label, popular.label]);
+  assert.deepEqual(getFilterSignalLabels(["tea"], [popular.id, detail.id, "tdah-nao-para-quieto"]), [popular.label, detail.label]);
   assert.deepEqual(getOrphanFilterSignalIds(["tea"], ["tdah-nao-para-quieto"]), ["tdah-nao-para-quieto"]);
 });
 

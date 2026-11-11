@@ -872,13 +872,6 @@ function getQueixaLabels(selectedQueixas: string[]): string[] {
   );
 }
 
-function getSignalLabels(
-  selectedQueixas: string[],
-  selectedSignalIds: string[],
-): string[] {
-  return getFilterSignalLabels(selectedQueixas, selectedSignalIds);
-}
-
 function scaleDetailLine(scale: ScaleEntry | undefined): string {
   if (!scale) return "";
   const details = [
@@ -938,7 +931,7 @@ function buildQualitativeFilterReport(args: {
       : selectedAssessmentType === "monitoring"
         ? "monitoramento evolutivo"
         : "triagem e apoio à decisão";
-  const signalLabels = getSignalLabels(
+  const signalLabels = getFilterSignalLabels(
     selectedQueixas,
     selectedSignalIds,
   ).slice(0, 6);
@@ -1714,7 +1707,7 @@ export default function FiltroPage() {
         selectedSignals: selectedSignalIds,
         selection: { exactAge: curatedAgeMonths, ageBand: curatedAgeBand },
         queixaLabel: (id) => queixas.find((q) => q.id === id)?.label ?? id,
-        signalLabel: (id) => getSignalLabels(activeQueixas, [id])[0] ?? id,
+        signalLabel: (id) => getFilterSignalLabels(activeQueixas, [id])[0] ?? id,
       }),
     [podiumDetail, podiumPool, activeQueixas, selectedSignalIds, curatedAgeMonths, curatedAgeBand],
   );
@@ -3269,7 +3262,7 @@ export default function FiltroPage() {
                                 <strong>Quem responde:</strong> {medal.respondentLabel} ·{" "}
                                 <strong>Tempo:</strong> {medal.timeLabel} ·{" "}
                                 <strong>Idade:</strong> {medal.ageFitLabel} ·{" "}
-                                <strong>Itens:</strong> {medal.questions}{medal.questionCountSource === "estimated" ? " (estimativa)" : medal.questionCountSource === "declared" ? " (declarados)" : ""}
+                                <strong>Itens:</strong> {medal.questionCountLabel}
                               </div>
                             </>
                           );

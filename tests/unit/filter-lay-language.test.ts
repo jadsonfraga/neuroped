@@ -67,6 +67,18 @@ for (const [queixaId, symptoms] of Object.entries(popularSymptomsByQueixa)) {
 }
 assert.deepEqual(getOrphanFilterSignalIds(["tea"], ["tea-nao-aponta", "tdah-nao-para-quieto"]), ["tdah-nao-para-quieto"], "só o sinal da queixa ausente é órfão");
 
+// Uma única resolução alimenta UI, relatório e matcher. O rótulo popular não
+// pode cair para o ID técnico, e o sinal detalhado continua com o mesmo texto.
+{
+  const stateModule = await import("../../client/src/data/filterSignalState.ts");
+  const getLabels = (stateModule as Record<string, unknown>).getFilterSignalLabels;
+  assert.equal(typeof getLabels, "function", "filterSignalState deve expor o resolvedor único de rótulos");
+  const labels = getLabels as (queixas: readonly string[], ids: readonly string[]) => string[];
+  assert.deepEqual(labels(["tdah"], ["tdah-nao-para-quieto"]), ["Não para quieto"]);
+  assert.deepEqual(labels(["tdah"], ["tdah-dificuldade-focar"]), ["Dificuldade de focar em atividades breves"]);
+  assert.deepEqual(labels(["tea"], ["tdah-nao-para-quieto"]), [], "não resolve sinal fora da queixa ativa");
+}
+
 // Favoritos: só ids, alternância, limite, entrada inválida descartada.
 const mem = new Map<string, string>();
 const storage = { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => void mem.set(k, v), removeItem: (k: string) => void mem.delete(k) };

@@ -96,6 +96,12 @@ export interface ScaleEntry {
   assessmentUse?: AssessmentUse;       // finalidade clínica explícita (sobrepõe a derivação por prioridade)
   applicationMode?: ApplicationMode;   // modo concreto de aplicação (sobrepõe a derivação por respondente)
   implementationStatus?: ImplementationStatus; // status real no app (sobrepõe a derivação por appRoute/licença)
+  /**
+   * Quantidade conferida de respostas exigidas pela implementação dedicada.
+   * Nunca preencher a partir de texto promocional/descrição; ausência significa
+   * carga desconhecida e impede uso no orçamento fechado do pódio.
+   */
+  verifiedItemCount?: number;
   /** Grupo de redundância: duas escalas do mesmo grupo não entram juntas nas 3 vagas da pré-consulta. */
   overlapGroup?: string;
   /** Domínio clínico fino de uso principal (id de queixa); validado por `validate:domains`. */
