@@ -17,7 +17,7 @@ import {
   type FilterContext,
   type RefinedScaleMatch,
 } from "../../client/src/data/advancedFilterLogic.ts";
-import { selectCuratedTiers, selectPodiumDetailed, PODIUM_QUESTION_CAP, estimatedQuestionCount } from "../../client/src/data/filterPodium.ts";
+import { selectCuratedTiers, selectPodiumDetailed, PODIUM_QUESTION_CAP, estimatedQuestionCount, getPodiumQuestionCountInfo } from "../../client/src/data/filterPodium.ts";
 import { auditPodium } from "../../client/src/data/filterPodiumAudit.ts";
 import { resolveRedundantMedals, sameClinicalConstruct } from "../../client/src/data/filterPodiumComplementarity.ts";
 import { scaleAgeFit } from "../../client/src/data/scaleAgeFit.ts";
@@ -225,6 +225,8 @@ test("sinal cujo instrumento não cabe no teto é reportado com o motivo de orç
   if (!medals.some((m) => m.scale.id === "sint-pesado")) {
     const gap = audit.gaps.find((g) => g.kind === "sinal");
     assert.ok(gap && /teto de 100 perguntas/.test(gap.message), "motivo de orçamento visível");
+    assert.ok(gap.message.includes(heavy.name), 'mostra alternativa segura pelo nome');
+    assert.equal(gap.alternativeId, heavy.id, "alternativa segura pode ser aberta sem integrar o trio");
   }
 });
 
@@ -409,4 +411,19 @@ test("catálogo real (amostra sintética de perfis): idade, respondente, teto e 
       assert.ok(medals.every((m) => !m.isBroadbandFallback), "risco agudo sem fallback");
     }
   }
+});
+
+
+test("contagem sem itens verificáveis é explicitamente estimada", () => {
+  const unknown = scale({ id: "sint-contagem-incerta", queixas: ["tea"], description: "Descrição sem número de perguntas.", scoringCutoff: "" });
+  const info = getPodiumQuestionCountInfo(unknown);
+  assert.deepEqual(info, { count: 20, source: "estimated" });
+  const declared = scale({ id: "sint-contagem-declarada", queixas: ["tea"], description: "Questionário com 48 perguntas.", scoringCutoff: "" });
+  assert.deepEqual(getPodiumQuestionCountInfo(declared), { count: 48, source: "declared" });
+});
+
+test("auditoria sinaliza carga provisória sem declarar o teto verificado", () => {
+  const unknown = scale({ id: "sint-sem-carga", queixas: ["tea"], description: "Sem informação quantitativa.", scoringCutoff: "" });
+  const { audit } = run([unknown], ctx({ queixas: ["tea"], ageMonths: 30 }));
+  assert.ok(audit.gaps.some((gap) => gap.kind === "teto" && /provisório/.test(gap.message)));
 });

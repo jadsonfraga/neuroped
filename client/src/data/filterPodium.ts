@@ -9,23 +9,27 @@ import { scaleAgeFit } from "./scaleAgeFit";
 // nunca deve ultrapassar este teto (não sobrecarregar a família/o clínico).
 export const PODIUM_QUESTION_CAP = 100;
 
-// Estimativa do número de perguntas de uma escala. Aplicações interativas têm a
-// contagem REAL de itens; para as demais (páginas dedicadas/fichas) extraímos
-// "N perguntas/itens/questões/afirmações" da descrição e, na ausência, usamos
-// uma estimativa conservadora.
-export function estimatedQuestionCount(scale: RefinedScaleMatch["scale"]): number {
+// The 100-question cap uses verified application counts when available.
+// When an instrument supplies only metadata (or no count), that budget is
+// provisional and must be flagged in the same audit consumed by UI/exports.
+export type PodiumQuestionCountSource = "interactive" | "dedicated" | "declared" | "estimated";
+export function getPodiumQuestionCountInfo(
+  scale: RefinedScaleMatch["scale"],
+): { count: number; source: PodiumQuestionCountSource } {
   const interactive = getDeliveredInteractiveItemCount(scale.id);
-  if (interactive > 0) return interactive;
-  // A EAF usa a página dedicada (/eaf), fora do registro de itens interativos:
-  // 6 domínios × 4 itens = 24 perguntas reais, não o fallback de 20.
-  if (scale.id === "eaf") return 24;
-  const txt = `${scale.description ?? ""} ${scale.scoringCutoff ?? ""}`;
+  if (interactive > 0) return { count: interactive, source: "interactive" };
+  // EAF: 6 domains x 4 questions on its dedicated page.
+  if (scale.id === "eaf") return { count: 24, source: "dedicated" };
+  const txt = (scale.description ?? "") + " " + (scale.scoringCutoff ?? "");
   const m = txt.match(/(\d{1,3})\s*(perguntas|itens|quest|quesitos|afirma|sim\/n)/i);
   if (m) {
     const count = Number(m[1]);
-    if (!isNaN(count)) return Math.min(count, 120);
+    if (Number.isFinite(count) && count > 0) return { count, source: "declared" };
   }
-  return 20;
+  return { count: 20, source: "estimated" };
+}
+export function estimatedQuestionCount(scale: RefinedScaleMatch["scale"]): number {
+  return getPodiumQuestionCountInfo(scale).count;
 }
 
 export type PodiumSlot = "ouro" | "prata" | "bronze" | "direct" | "school";

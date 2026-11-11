@@ -23,6 +23,27 @@ export function getValidFilterSignalIds(
  * Detecta sinais órfãos: permaneciam persistidos depois de a queixa de origem
  * ser removida e podiam influenciar o ranking sem aparecer na interface.
  */
+export function getFilterSignalLabels(
+  selectedQueixas: readonly string[],
+  selectedSignalIds: readonly string[],
+): string[] {
+  if (selectedSignalIds.length === 0) return [];
+  const selected = new Set(selectedSignalIds);
+  const seen = new Set<string>();
+  const labels: string[] = [];
+  for (const queixaId of selectedQueixas) {
+    for (const signal of [
+      ...getAllSignalsForQueixa(queixaId),
+      ...getPopularSymptoms(queixaId),
+    ]) {
+      if (!selected.has(signal.id) || seen.has(signal.id)) continue;
+      seen.add(signal.id);
+      labels.push(signal.label);
+    }
+  }
+  return labels;
+}
+
 export function getOrphanFilterSignalIds(
   selectedQueixas: readonly string[],
   selectedSignalIds: readonly string[],

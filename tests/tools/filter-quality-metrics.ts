@@ -216,6 +216,7 @@ const report = {
   signal_contexts: acc.signalContexts,
   signal_contexts_covered_pct: pct(acc.signalContextsCovered, acc.signalContexts),
   signal_contexts_with_safe_candidate: acc.signalContextsWithSafeCandidate,
+  signal_covered_when_safe_candidate_pct: pct(acc.signalContextsCovered, acc.signalContextsWithSafeCandidate),
   acute_contexts: acc.acuteContexts,
   acute_broadband_violations: acc.acuteBroadbandViolations,
   curated_contexts: acc.curatedCount,

@@ -78,8 +78,7 @@ import { selectCuratedTiers, selectPodiumDetailed } from "@/data/filterPodium";
 import { auditPodium, type MedalAudit, type PodiumMedalKey } from "@/data/filterPodiumAudit";
 import { opbParentCopy } from "@/data/opbParentCopy";
 import { PopularSymptomPicker } from "@/components/PopularSymptomPicker";
-import { getValidFilterSignalIds } from "@/data/filterSignalState";
-import { getAllSignalsForQueixa } from "@/data/signalsAndSymptoms";
+import { getFilterSignalLabels, getValidFilterSignalIds } from "@/data/filterSignalState";
 import {
   filterScalesWithClinicalRescue,
   getBroadbandFallback,
@@ -877,18 +876,7 @@ function getSignalLabels(
   selectedQueixas: string[],
   selectedSignalIds: string[],
 ): string[] {
-  if (selectedSignalIds.length === 0 || selectedQueixas.length === 0) return [];
-  const selected = new Set(selectedSignalIds);
-  const seen = new Set<string>();
-  const labels: string[] = [];
-  for (const queixaId of selectedQueixas) {
-    for (const signal of getAllSignalsForQueixa(queixaId)) {
-      if (!selected.has(signal.id) || seen.has(signal.id)) continue;
-      seen.add(signal.id);
-      labels.push(signal.label);
-    }
-  }
-  return labels;
+  return getFilterSignalLabels(selectedQueixas, selectedSignalIds);
 }
 
 function scaleDetailLine(scale: ScaleEntry | undefined): string {
@@ -3106,7 +3094,24 @@ export default function FiltroPage() {
                   <strong>Lacunas e avisos do trio:</strong>
                   <ul className="mt-1 list-disc space-y-0.5 pl-4">
                     {podiumAudit.gaps.map((gap, index) => (
-                      <li key={`${gap.kind}-${index}`}>{gap.message}</li>
+                      <li key={gap.kind + "-" + index}>
+                        {gap.message}
+                        {gap.alternativeId && (() => {
+                          const scale = podiumPool.find((match) => match.scale.id === gap.alternativeId)?.scale;
+                          if (!scale) return null;
+                          const route = resolveAppRoute(scale) ?? "/generic-scale/" + scale.id;
+                          return (
+                            <Link
+                              href={route}
+                              onClick={() => rememberOpened(scale, route)}
+                              data-testid="filter-signal-alternative"
+                              className="ml-1 font-semibold underline underline-offset-2"
+                            >
+                              Abrir alternativa fora do trio
+                            </Link>
+                          );
+                        })()}
+                      </li>
                     ))}
                   </ul>
                 </div>
@@ -3263,7 +3268,8 @@ export default function FiltroPage() {
                               <div className="filter-260-why" data-testid="medal-practical">
                                 <strong>Quem responde:</strong> {medal.respondentLabel} ·{" "}
                                 <strong>Tempo:</strong> {medal.timeLabel} ·{" "}
-                                <strong>Idade:</strong> {medal.ageFitLabel}
+                                <strong>Idade:</strong> {medal.ageFitLabel} ·{" "}
+                                <strong>Itens:</strong> {medal.questions}{medal.questionCountSource === "estimated" ? " (estimativa)" : medal.questionCountSource === "declared" ? " (declarados)" : ""}
                               </div>
                             </>
                           );
