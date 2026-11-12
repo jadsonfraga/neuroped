@@ -178,14 +178,15 @@ function drawRuns(doc, runs, x, y, maxWidth, opts = {}) {
         lineY = opts.onPageBreak();
       }
     }
-    const gaps = line.words.filter((word, i) => i > 0).length;
+    // Only real spaces stretch; style boundaries inside a word or number (e.g. **5**,0 mg) stay joined.
+    const gaps = line.words.filter((word, i) => i > 0 && word.gap > 0).length;
     const slack = width - line.width;
     // Justify only wrapped lines with real gaps and a reasonable stretch.
     const justify = opts.justify !== false && !line.hardBreak && gaps > 0 && slack > 0 && slack / gaps < size * 1.2;
     const extra = justify ? slack / gaps : 0;
     let lineX = x + indent;
     line.words.forEach((word, i) => {
-      if (i > 0) lineX += word.gap + extra;
+      if (i > 0) lineX += word.gap + (word.gap > 0 ? extra : 0);
       withFont(doc, word.run, size);
       doc.text(word.text, lineX, lineY);
       if (word.run.strike) {

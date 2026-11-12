@@ -113,3 +113,25 @@ assert.equal(laid.at(-1).hardBreak, true, "última linha do parágrafo fica alin
 assert.equal(laid.flatMap((l) => l.words.map((w) => w.text)).join(" "), ("palavra ".repeat(80) + "fim").trim(), "layout preserva todas as palavras na ordem");
 console.log("Justificação preserva palavras e não estica a última linha: OK");
 
+
+// Justificação não pode separar fragmentos formatados sem espaço (doses como **5**,0 mg).
+const drawn = [];
+// jsPDF defines text() on each instance, so the instance itself is instrumented.
+function RecordingPdf(options) {
+  const pdf = new jsPDF(options);
+  const original = pdf.text.bind(pdf);
+  pdf.text = (text, x, y, opts) => {
+    if (typeof text === "string") drawn.push({ text, x, y, width: pdf.getTextWidth(text) });
+    return original(text, x, y, opts);
+  };
+  return pdf;
+}
+const doseMd = "Dose **5**,0 mg pela manhã " + "com texto sintético de preenchimento ".repeat(12);
+createPantPdf(RecordingPdf, doseMd, meta, assets);
+const five = drawn.findIndex((d) => d.text === "5");
+assert.ok(five > -1 && drawn[five + 1].text === ",0", "número e vírgula decimal desenhados em sequência");
+assert.equal(drawn[five + 1].y, drawn[five].y, "na mesma linha justificada");
+assert.ok(Math.abs(drawn[five + 1].x - (drawn[five].x + drawn[five].width)) < 0.01, "5 e ,0 permanecem colados após justificar");
+const lineWords = drawn.filter((d) => d.y === drawn[five].y);
+assert.ok(lineWords.at(-1).x + lineWords.at(-1).width > 79 + 437 - 0.5, "a linha foi de fato justificada até a margem");
+console.log("Justificação preserva números e palavras com formatação interna: OK");
