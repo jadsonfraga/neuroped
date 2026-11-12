@@ -14,8 +14,7 @@ import {
   type ImplementationStatus,
 } from "./scaleFilter";
 import { INTERACTIVE_SCALE_IDS } from "./interactiveScaleIds.generated";
-import { getAllSignalsForQueixa } from "./signalsAndSymptoms";
-import { popularSymptomById } from "./popularSymptoms";
+import { resolveFilterSignals } from "./filterSignalState";
 import { scaleAgeFit } from "./scaleAgeFit";
 
 export const SAFE_EMPTY_MESSAGE =
@@ -661,20 +660,12 @@ function tokensFromText(value: string): Set<string> {
 }
 
 function selectedSignalText(ctx: SignalMatchContext): string {
-  const ids = new Set(ctx.selectedSignals || []);
-  const labels: string[] = [];
-  for (const queixa of ctx.queixas) {
-    for (const signal of getAllSignalsForQueixa(queixa)) {
-      if (ids.has(signal.id)) labels.push(signal.label, signal.description);
-    }
-  }
-  // Sintomas populares (linguagem de pai/mãe) — resolve o rótulo pelo id para
-  // que a marcação também case por token com a descrição/tags da escala.
-  for (const id of ids) {
-    const popular = popularSymptomById[id];
-    if (popular) labels.push(popular.label);
-  }
-  return [...ids, ...labels].join(" ");
+  const ids = ctx.selectedSignals || [];
+  const resolved = resolveFilterSignals(ctx.queixas, ids);
+  return [
+    ...ids,
+    ...resolved.flatMap((signal) => [signal.label, signal.description ?? ""]),
+  ].join(" ");
 }
 
 // Fonte ÚNICA de signalTags: une as tags inline da escala (scale.signalTags)
@@ -795,16 +786,8 @@ export function scaleCoversSelectedSignalExactly(
   if (!ctx.selectedSignals?.length) return false;
   const forms = new Set<string>();
   for (const raw of ctx.selectedSignals) forms.add(normalizeClinicalText(raw));
-  for (const queixa of ctx.queixas) {
-    for (const signal of getAllSignalsForQueixa(queixa)) {
-      if (ctx.selectedSignals.includes(signal.id)) {
-        forms.add(normalizeClinicalText(signal.label));
-      }
-    }
-  }
-  for (const id of ctx.selectedSignals) {
-    const popular = popularSymptomById[id];
-    if (popular) forms.add(normalizeClinicalText(popular.label));
+  for (const signal of resolveFilterSignals(ctx.queixas, ctx.selectedSignals)) {
+    forms.add(normalizeClinicalText(signal.label));
   }
   return allSignalTags(scale).some((tag) => forms.has(normalizeClinicalText(tag)));
 }

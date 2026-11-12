@@ -19,7 +19,7 @@ import {
 import type { RedundancyDecision } from "./filterPodiumComplementarity";
 import { scaleAgeFit, scaleAgeFitLabel, type AgeSelection, type ScaleAgeFit } from "./scaleAgeFit";
 import type { DetailedPodiumSelection, PodiumSelection } from "./filterPodium";
-import { PODIUM_QUESTION_CAP, estimatedQuestionCount } from "./filterPodium";
+import { PODIUM_QUESTION_CAP, estimatedQuestionCount, getQuestionCountInfo } from "./filterPodium";
 
 export type MedalRole = "principal" | "complementar" | "terceira_perspectiva" | "teste_direto" | "escola";
 export type PodiumMedalKey = keyof PodiumSelection;
@@ -59,7 +59,8 @@ export interface MedalAudit {
   addsLabel: string;
   respondentLabel: string;
   timeLabel: string;
-  questions: number;
+  questions: number | null;
+  questionCountLabel: string;
   ageFit: ScaleAgeFit;
   ageFitLabel: string;
   /** true quando a escala abre e pode ser aplicada no app. */
@@ -69,8 +70,9 @@ export interface MedalAudit {
 }
 
 export interface PodiumGap {
-  kind: "queixa" | "sinal" | "faixa" | "redundancia" | "vaga" | "teto";
+  kind: "queixa" | "sinal" | "faixa" | "redundancia" | "vaga" | "teto" | "carga";
   message: string;
+  alternativeId?: string; // opção segura fora do trio, sujeita a recomposição clínica
 }
 
 export interface PodiumAudit {
@@ -157,6 +159,7 @@ export function auditPodium(input: PodiumAuditInput): PodiumAudit {
 
   const medal = (slot: PodiumMedalKey, match: RefinedScaleMatch, role: MedalRole, others: RefinedScaleMatch[]): MedalAudit => {
     const fit = scaleAgeFit(match.scale, selection);
+    const questionCount = getQuestionCountInfo(match.scale);
     return {
       slot,
       id: match.scale.id,
@@ -170,7 +173,8 @@ export function auditPodium(input: PodiumAuditInput): PodiumAudit {
           : addsOver(match, others, selectedQueixas, selectedSignals, queixaLabel, signalLabel),
       respondentLabel: respondentText(match),
       timeLabel: match.scale.tempo || "Tempo não informado",
-      questions: estimatedQuestionCount(match.scale),
+      questions: questionCount.count,
+      questionCountLabel: questionCount.count === null ? "Carga não verificada" : `${questionCount.count} itens verificados`,
       ageFit: fit,
       ageFitLabel: scaleAgeFitLabel(fit),
       opensInApp: getImplementationStatus(match.scale) === "complete",
@@ -198,6 +202,9 @@ export function auditPodium(input: PodiumAuditInput): PodiumAudit {
     return sum + (match ? estimatedQuestionCount(match.scale) : 0);
   }, 0);
 
+  // Toda medalha do trio tem carga verificada; categorias separadas podem
+  // conservar a informação explícita de carga desconhecida.
+
   // Lacunas: queixas sem instrumento no trio (com diagnóstico do motivo).
   const trioCovers = (q: string) => trioMatches.some((m) => m.scale.queixas.includes(q));
   for (const q of selectedQueixas) {
@@ -211,12 +218,8 @@ export function auditPodium(input: PodiumAuditInput): PodiumAudit {
     });
   }
 
-  // Lacunas: sinais marcados sem cobertura no trio. O resgate por sinal preserva Ouro e
-  // Prata; o motivo de orçamento compara com o teto que sobra ao lado delas.
-  const topTwoBurden = ["ouro", "prata"].reduce((sum, slot) => {
-    const match = podium.podium[slot as "ouro" | "prata"];
-    return match ? sum + estimatedQuestionCount(match.scale) : sum;
-  }, 0);
+  // Lacunas consideram a composição inteira: Ouro e Prata podem ser trocados
+  // para preservar cada sinal sem ultrapassar o orçamento.
   for (const sig of selectedSignals) {
     const covered = trioMatches.some((m) =>
       scaleCoversSelectedSignalExactly(m.scale, { queixas: selectedQueixas, selectedSignals: [sig] }));
@@ -229,12 +232,19 @@ export function auditPodium(input: PodiumAuditInput): PodiumAudit {
       gaps.push({ kind: "sinal", message: `Sinal ${signalLabel(sig)} sem instrumento aplicável seguro para este perfil.` });
       continue;
     }
-    const cheapest = Math.min(...covering.map((m) => estimatedQuestionCount(m.scale)));
-    const budget = PODIUM_QUESTION_CAP - topTwoBurden;
+    const verified = covering.filter((m) => Number.isFinite(estimatedQuestionCount(m.scale)));
+    if (verified.length === 0) {
+      gaps.push({ kind: "carga", alternativeId: covering[0].scale.id, message: `Sinal ${signalLabel(sig)} tem instrumento aplicável, mas a carga de itens ainda não foi verificada para compor o trio.` });
+      continue;
+    }
+    const alternative = verified.reduce((best, candidate) =>
+      estimatedQuestionCount(candidate.scale) < estimatedQuestionCount(best.scale) ? candidate : best);
+    const cheapest = estimatedQuestionCount(alternative.scale);
     gaps.push({
       kind: "sinal",
-      message: cheapest > budget
-        ? `Sinal ${signalLabel(sig)} não coberto no trio: o instrumento que o cobre (${cheapest} perguntas) não cabe no teto de ${PODIUM_QUESTION_CAP} perguntas ao lado do Ouro e da Prata.`
+      alternativeId: alternative.scale.id,
+      message: cheapest > PODIUM_QUESTION_CAP
+        ? `Sinal ${signalLabel(sig)} não coberto no trio: o instrumento que o cobre exige ${cheapest} perguntas e excede o teto de ${PODIUM_QUESTION_CAP}.`
         : `Sinal ${signalLabel(sig)} não coberto no trio por prioridade de queixa e relevância; há instrumento seguro que o cobre.`,
     });
   }

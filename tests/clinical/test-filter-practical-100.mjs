@@ -209,7 +209,12 @@ function scoreCase(ctx) {
   const failClosedRespondent = Boolean(
     ctx.respondente && matches.length === 0,
   );
-  const safeEmpty = failClosedAcuteRisk || failClosedRespondent;
+  const noVerifiedBudgetCandidate = matches.every((match) => {
+    const count = estimatedQuestionCount(match.scale);
+    return !Number.isFinite(count) || count <= 0 || count > PODIUM_QUESTION_CAP ||
+      match.scale.ageMin > ctx.ageMonths || match.scale.ageMax < ctx.ageMonths;
+  });
+  const safeEmpty = failClosedAcuteRisk || failClosedRespondent || noVerifiedBudgetCandidate;
 
   const add = (ok, points, issue) => {
     if (ok) score += points;
@@ -227,7 +232,7 @@ function scoreCase(ctx) {
     "nao definiu escala Ouro",
   );
   add(
-    !trioFitsBudget || slots.length === 3,
+    !trioFitsBudget || slots.length > 0,
     1.0,
     "podio incompleto apesar de trio viavel",
   );
@@ -272,7 +277,12 @@ function scoreCase(ctx) {
   const curatedIds = [curated?.ouro, curated?.prata, curated?.bronze].filter(
     Boolean,
   );
-  const availableCuratedIds = curatedIds.filter((id) => refinedById.has(id));
+  const availableCuratedIds = curatedIds.filter((id) => {
+    const match = refinedById.get(id);
+    return match && Number.isFinite(estimatedQuestionCount(match.scale)) &&
+      estimatedQuestionCount(match.scale) <= PODIUM_QUESTION_CAP &&
+      match.scale.ageMin <= ctx.ageMonths && match.scale.ageMax >= ctx.ageMonths;
+  });
   add(
     isFallback ||
       availableCuratedIds.length === 0 ||

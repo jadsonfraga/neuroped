@@ -44,6 +44,34 @@ export interface ClinicalLibraryChapter {
 }
 export const clinicalLibraryChapters: ClinicalLibraryChapter[] = [
   {
+    slug: "agressividade-dia10",
+    anchor: "capitulo-agressividade-dia10",
+    day: 10,
+    title: "Como analisar agressividade infantil antes de propor medicação?",
+    subtitle: "Risco, análise funcional e intervenções antes da farmacoterapia",
+    category: "Comportamento e sensorial",
+    date: "2026-11-11",
+    updated: "2026-11-11",
+    status: "revisao_medica",
+    minutes: 6,
+    review: "Consensus consultado em 11/11/2026; revisão médica pendente.",
+    sources: ["evans-aggression-2024", "chin-irritability-2025"],
+  },
+  {
+    slug: "wisc-indices-dia09",
+    anchor: "capitulo-wisc-indices-dia09",
+    day: 9,
+    title: "O que cada índice do WISC-IV informa ao neuropediatra?",
+    subtitle: "Interpretação dos quatro índices, validade e decisão clínica",
+    category: "Testes e exames",
+    date: "2026-11-10",
+    updated: "2026-11-10",
+    status: "revisao_medica",
+    minutes: 6,
+    review: "Pesquisa Consensus Pro iniciada em 10/11/2026; revisão médica pendente.",
+    sources: ["pearson-cpi", "discrepancy", "learning", "satepsi", "aaidd"],
+  },
+  {
     slug: "insonia-pre-escolar",
     anchor: "capitulo-insonia-pre-escolar",
     day: 8,
@@ -296,7 +324,7 @@ export const wiscReferences: ClinicalLibraryReference[] = [
 ];
 
 export const nextClinicalTopics = [
-  "O que cada índice do WISC-IV informa ao neuropediatra?",
+  "Como diferenciar enxaqueca de cefaleia tensional em escolares?",
 ];
 
 /** Trilha 365: somente capítulos numerados pelo índice canônico, em ordem crescente de Dia. */

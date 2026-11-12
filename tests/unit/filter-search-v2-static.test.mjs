@@ -38,7 +38,6 @@ const must = [
   "moveActiveIndex(current, autocompleteItems.length",
   'data-testid="filter-recents"',
   "loadFilterRecents()",
-  "if (flashMode) return;\n    setRecents(recordFilterRecent(",
   // Rodada 3: sinais do texto, favoritos, motivos nos cards compactos.
   "inferSignalIds(search, filterContext.queixas)",
   "setSelectedQueixas((prev) => (prev.includes(signal.queixaId) ? prev : [...prev, signal.queixaId]));",
@@ -50,6 +49,11 @@ const must = [
   'favoritos: "Favoritos primeiro",',
 ];
 for (const needle of must) assert.ok(engine.includes(needle), `filtro-engine deve conter: ${needle}`);
+
+// Garante o contrato comportamental, sem depender de whitespace da implementação.
+const recentsBlock = engine.slice(engine.indexOf("const rememberOpened = "), engine.indexOf("// Favoritos (estrela)"));
+assert.match(recentsBlock, /if\s*\(flashMode\)\s*return;/, "modo efêmero não grava recentes");
+assert.match(recentsBlock, /setRecents\s*\(\s*recordFilterRecent\s*\(/, "abertura continua registrando somente instrumento");
 
 // Busca antiga por substring foi retirada; nada de fallback silencioso.
 assert.ok(!engine.includes("function searchBoost("), "searchBoost legado removido");

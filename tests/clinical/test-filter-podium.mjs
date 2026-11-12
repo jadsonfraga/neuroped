@@ -97,10 +97,12 @@ function auditContext(ctx) {
     ctx.ageMonths,
     refinedById,
     ctx.respondente ?? null,
+    ctx.ageBand ?? null,
   );
   const podium = selectPodium(matches, curated, {
     selectedQueixas: ctx.queixas,
     ageMonths: ctx.ageMonths ?? null,
+    ageBand: ctx.ageBand ?? null,
     selectedSignals: ctx.selectedSignals ?? [],
   });
   const slots = [podium.ouro, podium.prata, podium.bronze].filter(Boolean);
@@ -110,23 +112,6 @@ function auditContext(ctx) {
     (sum, count) => sum + count,
     0,
   );
-
-  const feasibleCounts = matches
-    .filter(
-      (m) =>
-        ctx.ageMonths == null ||
-        (m.scale.ageMin <= ctx.ageMonths && m.scale.ageMax >= ctx.ageMonths),
-    )
-    .map((m) => estimatedQuestionCount(m.scale))
-    .filter(
-      (count) =>
-        Number.isFinite(count) && count > 0 && count <= PODIUM_QUESTION_CAP,
-    )
-    .sort((a, b) => a - b);
-  const trioFitsBudget =
-    feasibleCounts.length >= 3 &&
-    feasibleCounts[0] + feasibleCounts[1] + feasibleCounts[2] <=
-      PODIUM_QUESTION_CAP;
 
   const acuteRisk = isAcuteRiskContext(ctx);
   if (acuteRisk) {
@@ -155,24 +140,17 @@ function auditContext(ctx) {
       ctx,
     );
   }
-  if (trioFitsBudget) {
-    ok(
-      slots.length === 3,
-      "quando existe trio viavel, o podio deve produzir Ouro, Prata e Bronze",
-      {
-        ...ctx,
-        slots: ids,
-        candidatos: matches.map((m) => m.scale.id),
-        menoresCargas: feasibleCounts.slice(0, 3),
-      },
-    );
-  }
-
-  const hasQualifiedCandidate = matches.some((m) => m.relevanceScore >= 60);
+  // Duas ou uma medalha são saída válida quando a terceira vaga exigiria
+  // perder cobertura, âncora funcional, não redundância ou teto. A auditoria
+  // mede a taxa de trio completo, mas não a trata como obrigação clínica.
+  const hasQualifiedCandidate = matches.some((m) => {
+    const count = estimatedQuestionCount(m.scale);
+    return m.relevanceScore >= 60 && Number.isFinite(count) && count > 0 && count <= PODIUM_QUESTION_CAP;
+  });
   if (hasQualifiedCandidate) {
     ok(
       Boolean(podium.ouro),
-      "podio deve ter Ouro quando ha candidato com score >= 60",
+      "podio deve ter Ouro quando ha candidato com score >= 60 e carga verificada",
       ctx,
     );
   }

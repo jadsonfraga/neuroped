@@ -1211,3 +1211,54 @@ produção. Os testes usam exclusivamente fixtures sintéticas e os checks
 obrigatórios passaram. A PR foi integrada em `main` como `f586d0db`, mantendo
 como próximo passo separado a integração autenticada, criptografada e auditada
 antes de qualquer uso com dados reais.
+
+### Ciclo 18 — receituários físicos A1/B1 com guards e numeração Visa
+
+A PR [#1306](https://github.com/jadsonfraga/neuroped/pull/1306) adicionou os
+modelos físicos de notificação A1/B1, com numeração Visa, validações de
+impressão e guards de rota. O patch inclui contratos para PAdES/ICP-ITI,
+separação das rotas de receita e testes estáticos de conformidade.
+
+A revisão preservou os limites de segurança: nenhum segredo novo foi adicionado,
+os dados de receita continuam sujeitos ao fluxo autenticado e os contratos não
+alteram a autorização clínica nem o armazenamento de PHI. Os checks obrigatórios
+passaram antes da integração, incluindo isolamento de tenant, readiness, PDF,
+TypeScript e qualidade. A PR foi mesclada em `main` como `e2dede6a`.
+
+### Ciclo 20 — conteúdo educativo sobre agressividade infantil com triagem de risco
+
+A PR [#1315](https://github.com/jadsonfraga/neuroped/pull/1315) adicionou uma
+entrada da Biblioteca Clínica sobre agressividade infantil, com fluxograma de
+risco iminente, investigação de sinais de alerta, análise funcional,
+intervenções e reavaliação. O conteúdo orienta procurar urgência diante de
+risco grave, violência, regressão, dor ou deterioração, e mantém linguagem de
+interpretação possível em vez de diagnóstico automático.
+
+A página não prescreve automaticamente, não usa dados de pacientes e explicita
+que medicação exige avaliação individual, indicação fundamentada,
+contraindicações, interações e monitorização. A tabela recebeu região acessível
+com rolagem horizontal para preservar a leitura em telas menores. A PR passou
+nos checks obrigatórios, incluindo filtros, TypeScript, qualidade, readiness,
+isolamento LIVE e ausência de PHI no navegador, e foi integrada em `main` como
+`1368bc56`.
+
+### Ciclo 19 — oportunidade de integração segura do filtro de sinais
+
+A PR [#1312](https://github.com/jadsonfraga/neuroped/pull/1312) propõe uma
+melhoria relevante para o filtro de escalas: cobertura explícita de sinais
+individuais, carga de itens auditável e alternativas seguras quando o trio não
+cobre um sinal. Os checks da PR estavam verdes, mas a integração contra a
+`main` atual não pôde ser concluída automaticamente: houve conflitos em
+`.github/workflows/filter-spiral.yml`, `filterPodium.ts`,
+`filterPodiumAudit.ts`, `filtro-engine.tsx` e `filter-quality-metrics.ts`.
+
+O merge foi abortado deliberadamente. Aceitar um lado inteiro poderia perder
+correções recentes de orçamento verificável, rótulos de carga ou contratos de
+métricas; resolver por descarte seria inadequado em lógica de apoio à decisão
+clínica. A `main` foi restaurada limpa em `40b371c9`, sem alteração parcial.
+
+Esta é uma **evidência de oportunidade bloqueada por reconciliação técnica**:
+o próximo incremento deve combinar manualmente a cobertura nova de sinais com
+a implementação já integrada em #1313, executar novamente os testes clínicos
+e os checks de produção e só então considerar a integração. Não há liberação
+de diagnóstico automático nem uso de PHI nesta análise.

@@ -31,6 +31,9 @@ const lazyImports = [
       /const\s+(\w+)\s*=\s*lazy\(\s*\(\)\s*=>\s*import\(\s*"@\/pages\/([^"]+)"\s*\)\s*,?\s*\)/g,
     ),
   ].map((match) => ({ symbol: match[1], page: match[2] })),
+  ...[
+    ...app.matchAll(/const\s+(\w+)\s*=\s*lazy\(\s*\(\)\s*=>\s*import\(\s*"@\/pages\/([^"]+)"\s*\)\.then\(\s*\(\s*\w+\s*\)\s*=>\s*\(\s*\{\s*default:\s*\w+\.\w+\s*\}\s*\)\s*\)\s*\)/g),
+  ].map((match) => ({ symbol: match[1], page: match[2] })),
   ...[...app.matchAll(/import\s+(\w+)\s+from\s+"@\/pages\/([^"]+)"/g)].map(
     (match) => ({ symbol: match[1], page: match[2] }),
   ),
@@ -160,6 +163,8 @@ const essentialRoutePaths = [
   "/laudo-neuroped",
   "/receita-c1",
   "/receita-c1-express",
+  "/receita-a1",
+  "/receita-b1",
   "/verificar",
   "/diario-escola",
   "/inventarios-escola",
@@ -237,6 +242,18 @@ const restoredRouteContracts = [
     path: "/receita-c1-express",
     page: "receita-c1-express",
     symbol: "ReceitaC1ExpressPage",
+    roles: ["admin", "professional"],
+  },
+  {
+    path: "/receita-a1",
+    page: "receita-notificacao",
+    symbol: "ReceitaA1Page",
+    roles: ["admin", "professional"],
+  },
+  {
+    path: "/receita-b1",
+    page: "receita-notificacao",
+    symbol: "ReceitaB1Page",
     roles: ["admin", "professional"],
   },
   { path: "/verificar", page: "verificar", symbol: "VerificarPage" },

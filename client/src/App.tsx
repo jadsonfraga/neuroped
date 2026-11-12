@@ -193,6 +193,8 @@ const EvolucaoEscalasPage = lazy(() => import("@/pages/evolucao-escalas"));
 const ResumoPreConsultaPage = lazy(() => import("@/pages/resumo-pre-consulta"));
 const ChecagemDosePage = lazy(() => import("@/pages/checagem-dose"));
 const ReceitaC1Page = lazy(() => import("@/pages/receita-c1"));
+const ReceitaA1Page = lazy(() => import("@/pages/receita-notificacao").then((m) => ({ default: m.ReceitaA1Page })));
+const ReceitaB1Page = lazy(() => import("@/pages/receita-notificacao").then((m) => ({ default: m.ReceitaB1Page })));
 const ReceitaC1ExpressPage = lazy(() => import("@/pages/receita-c1-express"));
 const VerificarPage = lazy(() => import("@/pages/verificar"));
 const DiarioEscolaPage = lazy(() => import("@/pages/diario-escola"));
@@ -509,6 +511,16 @@ function AppRouter() {
             <Route path="/receita-c1">
               <RouteGuard roles={["admin", "professional"]}>
                 <ReceitaC1Page />
+              </RouteGuard>
+            </Route>
+            <Route path="/receita-a1">
+              <RouteGuard roles={["admin", "professional"]}>
+                <ReceitaA1Page />
+              </RouteGuard>
+            </Route>
+            <Route path="/receita-b1">
+              <RouteGuard roles={["admin", "professional"]}>
+                <ReceitaB1Page />
               </RouteGuard>
             </Route>
             <Route path="/receita-c1-express">

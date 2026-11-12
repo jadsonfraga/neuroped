@@ -14,6 +14,8 @@ import {
   FileCheck2,
 } from "lucide-react";
 import { createPdfBlob, sample } from "@/lib/renderizador/document.mjs";
+import { hasUnfilledTableTemplate, structuredTableTemplate } from "@/lib/renderizador/table-editor.mjs";
+import { structurePastedText, type StructuredText } from "@/lib/renderizador/auto-structure.mjs";
 export default function RenderizadorPage() {
   const [md, setMd] = useState(""),
     [name, setName] = useState(""),
@@ -26,8 +28,10 @@ export default function RenderizadorPage() {
     [error, setError] = useState(""),
     [url, setUrl] = useState(""),
     [approved, setApproved] = useState(false),
+    [reviewPending, setReviewPending] = useState(false),
     [drag, setDrag] = useState(false),
-    [manifest, setManifest] = useState<Record<string, unknown> | null>(null);
+    [manifest, setManifest] = useState<Record<string, unknown> | null>(null),
+    [structure, setStructure] = useState<StructuredText | null>(null);
   const [logoPreview, setLogoPreview] = useState("");
   const [bridgeView, setBridgeView] = useState(false);
   useEffect(() => {
@@ -62,8 +66,10 @@ export default function RenderizadorPage() {
   function invalidate() {
     generation.current++;
     setApproved(false);
+    setReviewPending(false);
     setUrl("");
     setManifest(null);
+    setStructure(null);
     setError("");
   }
   async function load(f?: File) {
@@ -89,12 +95,42 @@ export default function RenderizadorPage() {
     setDetail("Exemplo sem dados clínicos");
     setTab("editor");
   }
-  async function render() {
+  function insertStructuredTable() {
+    invalidate();
+    const table = structuredTableTemplate();
+    setMd((current) => `${current.trimEnd()}${current.trim() ? "\n\n" : ""}${table}\n`);
+    setTab("editor");
+  }
+  async function render(released = false) {
+    if (hasUnfilledTableTemplate(md)) {
+      setError("Complete manualmente os cabeçalhos e as células da tabela antes de gerar o PDF.");
+      return;
+    }
     if (!md.trim() || !patient.trim()) {
-      setError("Adicione o Markdown e informe o nome para a capa.");
+      setError("Adicione o texto do laudo e informe o nome para a capa.");
+      return;
+    }
+    // Títulos, listas e tabelas são reconhecidos automaticamente; a função
+    // falha fechada se qualquer palavra do texto fosse alterada.
+    let prepared: StructuredText;
+    try {
+      prepared = structurePastedText(md);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Não foi possível estruturar o texto.");
+      return;
+    }
+    // A definitive file may only be requested from an existing, reviewable draft.
+    if (released && (!url || approved || manifest?.release_status !== "draft_not_released")) {
+      setError("Gere e revise primeiro o PDF de rascunho antes de autorizar a versão definitiva.");
       return;
     }
     const job = ++generation.current;
+    setApproved(false);
+    if (!released) setReviewPending(false);
+    if (!released) {
+      setUrl("");
+      setManifest(null);
+    }
     setBusy(true);
     setError("");
     try {
@@ -107,30 +143,51 @@ export default function RenderizadorPage() {
         }),
       ]);
       const [regular, bold, italic, logo] = assetsJson as { data: string }[];
-      const meta = { patient: patient.trim(), detail, title, subtitle };
-      const blob = createPdfBlob(jsPDF, md, meta, {
+      const acceptedAt = released ? new Date().toISOString() : null;
+      const meta = { patient: patient.trim(), detail, title, subtitle, releaseStatus: released ? "definitive" : "draft", releaseAcceptedAt: acceptedAt };
+      const blob = createPdfBlob(jsPDF, prepared.markdown, meta, {
         fonts: { normal: regular.data, bold: bold.data, italic: italic.data },
         logo: "data:image/png;base64," + logo.data,
       });
-      if (job !== generation.current) return;
-      if (oldUrl.current) URL.revokeObjectURL(oldUrl.current);
-      oldUrl.current = URL.createObjectURL(blob);
-      setUrl(oldUrl.current);
       const hash = async (b: ArrayBuffer) =>
         Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", b)))
           .map((n) => n.toString(16).padStart(2, "0"))
           .join("");
-      setManifest({
+      // Compute both hashes before exposing a downloadable or approved PDF.
+      const [markdownHash, renderedHash, pdfHash] = await Promise.all([
+        hash(new TextEncoder().encode(md).buffer as ArrayBuffer),
+        hash(new TextEncoder().encode(prepared.markdown).buffer as ArrayBuffer),
+        hash(await blob.arrayBuffer()),
+      ]);
+      if (job !== generation.current) return;
+      const nextManifest = {
         template: "PANT Studio 1.0",
         generated_at: new Date().toISOString(),
-        markdown_sha256: await hash(
-          new TextEncoder().encode(md).buffer as ArrayBuffer,
-        ),
-        pdf_sha256: await hash(await blob.arrayBuffer()),
+        markdown_sha256: markdownHash,
+        rendered_markdown_sha256: renderedHash,
+        auto_structure: {
+          mode: prepared.mode,
+          headings_detected: prepared.headings,
+          tables_converted: prepared.tables,
+          list_items_converted: prepared.lists,
+          words_preserved: true,
+        },
+        pdf_sha256: pdfHash,
         metadata: meta,
-      });
-      setApproved(false);
+        release_status: released ? "definitive_after_medical_review" : "draft_not_released",
+        medical_acceptance_at: acceptedAt,
+      };
+      const nextUrl = URL.createObjectURL(blob);
+      if (oldUrl.current) URL.revokeObjectURL(oldUrl.current);
+      oldUrl.current = nextUrl;
+      setManifest(nextManifest);
+      setStructure(prepared);
+      setUrl(nextUrl);
+      setApproved(released);
+      setReviewPending(false);
     } catch (e: unknown) {
+      setApproved(false);
+      setReviewPending(false);
       setError(
         e instanceof Error ? e.message : "Não foi possível gerar o PDF.",
       );
@@ -138,8 +195,15 @@ export default function RenderizadorPage() {
       setBusy(false);
     }
   }
+  function downloadDraft() {
+    if (!url || approved || busy || manifest?.release_status !== "draft_not_released") return;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "PANT_RASCUNHO_NAO_LIBERADO_" + patient.trim().replace(/[^\p{L}\p{N}]+/gu, "_") + ".pdf";
+    a.click();
+  }
   function download() {
-    if (!url || !approved) return;
+    if (!url || !approved || busy || manifest?.release_status !== "definitive_after_medical_review") return;
     const a = document.createElement("a");
     a.href = url;
     a.download =
@@ -147,13 +211,14 @@ export default function RenderizadorPage() {
     a.click();
   }
   function saveManifest() {
+    if (!url || !approved || busy || manifest?.release_status !== "definitive_after_medical_review") return;
     const u = URL.createObjectURL(
       new Blob(
         [
           JSON.stringify(
             {
               ...manifest,
-              medical_acceptance_at: new Date().toISOString(),
+              medical_acceptance_at: manifest?.medical_acceptance_at || new Date().toISOString(),
               review_confirmed: approved,
             },
             null,
@@ -188,7 +253,7 @@ export default function RenderizadorPage() {
               <div className="eyebrow">DO TEXTO AO DOCUMENTO</div>
               <h1>Renderizador</h1>
               <p>
-                Transforme Markdown em um PDF com a identidade SuperNeuroPed.
+                Cole o texto do laudo ou envie um Markdown e gere o PDF com a identidade SuperNeuroPed.
               </p>
             </div>
             <button type="button" className="text-button" onClick={() => setBridgeView(true)}>
@@ -220,7 +285,7 @@ export default function RenderizadorPage() {
                   </span>
                   <h2>Conteúdo do laudo</h2>
                 </div>
-                <span className="tag">MARKDOWN</span>
+                <span className="tag">TEXTO OU MARKDOWN</span>
               </div>
               <div className="tabs">
                 <button
@@ -270,7 +335,7 @@ export default function RenderizadorPage() {
                 <div className="textarea-wrap">
                   <textarea
                     aria-label="Markdown do laudo"
-                    placeholder="Cole o conteúdo integral do laudo em Markdown…"
+                    placeholder="Cole o conteúdo integral do laudo (texto do Word, Docs ou Markdown)…"
                     value={md}
                     onChange={(e) => {
                       invalidate();
@@ -278,10 +343,17 @@ export default function RenderizadorPage() {
                     }}
                     spellCheck={false}
                   />
+                  <p className="editor-guidance">Cole o texto como está. Títulos, listas e tabelas copiadas do Word ou de planilhas são reconhecidos automaticamente, sem alterar nenhuma palavra. Marcações com # continuam valendo quando presentes.</p>
                   <div>
                     {name || "Texto colado"}
                     <span>{md.length.toLocaleString("pt-BR")} caracteres</span>
                   </div>
+                </div>
+              )}
+              {tab === "editor" && (
+                <div className="table-helper">
+                  <p>Tabelas coladas do Word ou de planilhas viram tabela automaticamente. Texto livre separado só por espaços nunca é convertido em tabela; para montar uma do zero, insira a estrutura e preencha cada célula.</p>
+                  <button type="button" className="text-button" onClick={insertStructuredTable}>Inserir estrutura de tabela</button>
                 </div>
               )}
               <input
@@ -351,7 +423,7 @@ export default function RenderizadorPage() {
                   disabled={
                     busy || !md.trim() || !patient.trim() || !title.trim()
                   }
-                  onClick={render}
+                  onClick={() => render()}
                 >
                   {busy ? (
                     <LoaderCircle className="spin" size={17} />
@@ -362,6 +434,27 @@ export default function RenderizadorPage() {
                   {!busy && <ChevronRight size={16} />}
                 </button>
               </div>
+              {structure && url && (
+                <p className="editor-guidance" role="status">
+                  {structure.mode === "markdown"
+                    ? "Marcações do próprio texto respeitadas"
+                    : `Estrutura automática: ${structure.headings} título(s)`}
+                  {structure.tables ? ` · ${structure.tables} tabela(s) convertida(s)` : ""}
+                  {structure.lists ? ` · ${structure.lists} item(ns) de lista` : ""}
+                  {" · todas as palavras preservadas. Confira os títulos na prévia."}
+                </p>
+              )}
+              {structure && url && structure.titles.length > 0 && (
+                <details className="structure-titles">
+                  <summary>Ver os {structure.titles.length} títulos usados no PDF</summary>
+                  <ol>
+                    {structure.titles.map((t, i) => (
+                      <li key={i}>{t}</li>
+                    ))}
+                  </ol>
+                  <p>Se uma linha virou título por engano, termine-a com ponto final no texto e gere novamente.</p>
+                </details>
+              )}
               {error && (
                 <p role="alert" className="error">
                   {error}
@@ -372,7 +465,7 @@ export default function RenderizadorPage() {
               <div className="preview-toolbar">
                 <div>
                   <span className={"status-dot " + (url ? "ready" : "")} />
-                  {url ? "PDF pronto para revisão" : "Modelo SuperNeuroPed"}
+                  {url ? busy ? "Gerando versão definitiva…" : approved ? "Versão definitiva liberada" : "PDF pronto para revisão" : "Modelo SuperNeuroPed"}
                 </div>
                 <span>A4 · RETRATO</span>
               </div>
@@ -420,25 +513,38 @@ export default function RenderizadorPage() {
               </div>
               {url && (
                 <div className="export-box">
+                  {!approved && (
+                    <button className="text-button" disabled={busy} onClick={downloadDraft}>Baixar PDF de rascunho — não liberado</button>
+                  )}
+                  <p className="clinical-review-note">O renderizador não valida nem altera a prescrição. Confira a dose por administração, os horários e cada mudança temporal. Ao confirmar abaixo, será gerada uma nova versão definitiva, identificada como revisada.</p>
                   <label className="approval">
                     <input
                       type="checkbox"
-                      checked={approved}
-                      onChange={(e) => setApproved(e.target.checked)}
+                      checked={approved || reviewPending}
+                      disabled={busy}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          // Checkbox expresses the clinician's intent, not a completed release.
+                          // Only render(true) may approve after the PDF/hash pair is complete.
+                          setReviewPending(true);
+                          void render(true);
+                        } else {
+                          invalidate();
+                        }
+                      }}
                     />{" "}
-                    Revisei o texto integral e todas as páginas. Aprovo esta
-                    versão para exportação, sem assinatura automática.
+                    Revisei o conteúdo integral, todas as páginas e cada orientação de dose, horário e mudança temporal. Autorizo esta versão para exportação, sem assinatura automática.
                   </label>
                   <button
                     className="primary"
-                    disabled={!approved}
+                    disabled={!approved || busy}
                     onClick={download}
                   >
                     <Download size={17} /> Baixar PDF
                   </button>
                   <button
                     className="text-button"
-                    disabled={!approved}
+                    disabled={!approved || busy}
                     onClick={saveManifest}
                   >
                     Baixar manifesto SHA-256
