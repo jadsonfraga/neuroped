@@ -40,8 +40,11 @@ test("a versão definitiva só é liberada após PDF e hashes concluídos", () =
   assert.match(page, /manifest\?\.release_status !== "draft_not_released"/);
   assert.match(page, /manifest\?\.release_status !== "definitive_after_medical_review"/);
   assert.doesNotMatch(page, /setApproved\(release\)/);
-  assert.ok(page.indexOf("const [markdownHash, pdfHash]") > -1);
-  assert.ok(page.indexOf("const [markdownHash, pdfHash]") < page.indexOf("setApproved(released);"));
+  const hashes = "const [markdownHash, renderedHash, pdfHash]";
+  assert.ok(page.indexOf(hashes) > -1);
+  assert.ok(page.indexOf(hashes) < page.indexOf("setApproved(released);"));
+  assert.match(page, /createPdfBlob\(jsPDF, prepared\.markdown,/);
+  assert.match(page, /rendered_markdown_sha256: renderedHash/);
   assert.match(page, /if \(job !== generation\.current\) return;/);
   assert.match(page, /if \(e\.target\.checked\) \{/);
   assert.match(page, /else \{\s*invalidate\(\);/);
