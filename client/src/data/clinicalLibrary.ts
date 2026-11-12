@@ -43,6 +43,7 @@ export interface ClinicalLibraryChapter {
   sources: string[];
 }
 export const clinicalLibraryChapters: ClinicalLibraryChapter[] = [
+  { slug: "cefaleia-dia11", anchor: "capitulo-cefaleia-dia11", day: 11, title: "Como diferenciar enxaqueca de cefaleia tensional em escolares?", subtitle: "Red flags, fenótipo e decisões de consultório", category: "Cefaleias e dor", date: "2026-11-12", updated: "2026-11-12", status: "revisao_medica", minutes: 6, review: "Consensus via conector 12/11/2026; revisão médica pendente.", sources: ["szperka-2021", "osk oui-2019"] },
   {
     slug: "agressividade-dia10",
     anchor: "capitulo-agressividade-dia10",
@@ -324,7 +325,7 @@ export const wiscReferences: ClinicalLibraryReference[] = [
 ];
 
 export const nextClinicalTopics = [
-  "Como diferenciar enxaqueca de cefaleia tensional em escolares?",
+  "Quando farmacoterapia é indicada no TDAH e quando não é?",
 ];
 
 /** Trilha 365: somente capítulos numerados pelo índice canônico, em ordem crescente de Dia. */
