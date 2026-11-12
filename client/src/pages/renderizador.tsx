@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { createPdfBlob, sample } from "@/lib/renderizador/document.mjs";
 import { hasUnfilledTableTemplate, structuredTableTemplate } from "@/lib/renderizador/table-editor.mjs";
+import { structurePastedText, type StructuredText } from "@/lib/renderizador/auto-structure.mjs";
 export default function RenderizadorPage() {
   const [md, setMd] = useState(""),
     [name, setName] = useState(""),
@@ -28,7 +29,8 @@ export default function RenderizadorPage() {
     [approved, setApproved] = useState(false),
     [reviewPending, setReviewPending] = useState(false),
     [drag, setDrag] = useState(false),
-    [manifest, setManifest] = useState<Record<string, unknown> | null>(null);
+    [manifest, setManifest] = useState<Record<string, unknown> | null>(null),
+    [structure, setStructure] = useState<StructuredText | null>(null);
   const [logoPreview, setLogoPreview] = useState("");
   useEffect(() => {
     let active = true;
@@ -65,6 +67,7 @@ export default function RenderizadorPage() {
     setReviewPending(false);
     setUrl("");
     setManifest(null);
+    setStructure(null);
     setError("");
   }
   async function load(f?: File) {
@@ -101,12 +104,17 @@ export default function RenderizadorPage() {
       setError("Complete manualmente os cabeçalhos e as células da tabela antes de gerar o PDF.");
       return;
     }
-    if (!/^#{1,6}\s+\S/m.test(md)) {
-      setError("Marque os títulos do documento com #, ## ou ### antes de gerar o PDF. O texto clínico não será alterado automaticamente.");
+    if (!md.trim() || !patient.trim()) {
+      setError("Adicione o texto do laudo e informe o nome para a capa.");
       return;
     }
-    if (!md.trim() || !patient.trim()) {
-      setError("Adicione o Markdown e informe o nome para a capa.");
+    // Títulos, listas e tabelas são reconhecidos automaticamente; a função
+    // falha fechada se qualquer palavra do texto fosse alterada.
+    let prepared: StructuredText;
+    try {
+      prepared = structurePastedText(md);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Não foi possível estruturar o texto.");
       return;
     }
     // A definitive file may only be requested from an existing, reviewable draft.
@@ -135,7 +143,7 @@ export default function RenderizadorPage() {
       const [regular, bold, italic, logo] = assetsJson as { data: string }[];
       const acceptedAt = released ? new Date().toISOString() : null;
       const meta = { patient: patient.trim(), detail, title, subtitle, releaseStatus: released ? "definitive" : "draft", releaseAcceptedAt: acceptedAt };
-      const blob = createPdfBlob(jsPDF, md, meta, {
+      const blob = createPdfBlob(jsPDF, prepared.markdown, meta, {
         fonts: { normal: regular.data, bold: bold.data, italic: italic.data },
         logo: "data:image/png;base64," + logo.data,
       });
@@ -144,8 +152,9 @@ export default function RenderizadorPage() {
           .map((n) => n.toString(16).padStart(2, "0"))
           .join("");
       // Compute both hashes before exposing a downloadable or approved PDF.
-      const [markdownHash, pdfHash] = await Promise.all([
+      const [markdownHash, renderedHash, pdfHash] = await Promise.all([
         hash(new TextEncoder().encode(md).buffer as ArrayBuffer),
+        hash(new TextEncoder().encode(prepared.markdown).buffer as ArrayBuffer),
         hash(await blob.arrayBuffer()),
       ]);
       if (job !== generation.current) return;
@@ -153,6 +162,14 @@ export default function RenderizadorPage() {
         template: "PANT Studio 1.0",
         generated_at: new Date().toISOString(),
         markdown_sha256: markdownHash,
+        rendered_markdown_sha256: renderedHash,
+        auto_structure: {
+          mode: prepared.mode,
+          headings_detected: prepared.headings,
+          tables_converted: prepared.tables,
+          list_items_converted: prepared.lists,
+          words_preserved: true,
+        },
         pdf_sha256: pdfHash,
         metadata: meta,
         release_status: released ? "definitive_after_medical_review" : "draft_not_released",
@@ -162,6 +179,7 @@ export default function RenderizadorPage() {
       if (oldUrl.current) URL.revokeObjectURL(oldUrl.current);
       oldUrl.current = nextUrl;
       setManifest(nextManifest);
+      setStructure(prepared);
       setUrl(nextUrl);
       setApproved(released);
       setReviewPending(false);
@@ -223,7 +241,7 @@ export default function RenderizadorPage() {
               <div className="eyebrow">DO TEXTO AO DOCUMENTO</div>
               <h1>Renderizador</h1>
               <p>
-                Transforme Markdown em um PDF com a identidade SuperNeuroPed.
+                Cole o texto do laudo ou envie um Markdown e gere o PDF com a identidade SuperNeuroPed.
               </p>
             </div>
             <button className="text-button" onClick={demo}>
@@ -252,7 +270,7 @@ export default function RenderizadorPage() {
                   </span>
                   <h2>Conteúdo do laudo</h2>
                 </div>
-                <span className="tag">MARKDOWN</span>
+                <span className="tag">TEXTO OU MARKDOWN</span>
               </div>
               <div className="tabs">
                 <button
@@ -302,7 +320,7 @@ export default function RenderizadorPage() {
                 <div className="textarea-wrap">
                   <textarea
                     aria-label="Markdown do laudo"
-                    placeholder="Cole o conteúdo integral do laudo em Markdown…"
+                    placeholder="Cole o conteúdo integral do laudo (texto do Word, Docs ou Markdown)…"
                     value={md}
                     onChange={(e) => {
                       invalidate();
@@ -310,7 +328,7 @@ export default function RenderizadorPage() {
                     }}
                     spellCheck={false}
                   />
-                  <p className="editor-guidance">Marque cada título com #, ## ou ###. Para tabelas, use a estrutura explícita antes de gerar.</p>
+                  <p className="editor-guidance">Cole o texto como está. Títulos, listas e tabelas copiadas do Word ou de planilhas são reconhecidos automaticamente, sem alterar nenhuma palavra. Marcações com # continuam valendo quando presentes.</p>
                   <div>
                     {name || "Texto colado"}
                     <span>{md.length.toLocaleString("pt-BR")} caracteres</span>
@@ -319,7 +337,7 @@ export default function RenderizadorPage() {
               )}
               {tab === "editor" && (
                 <div className="table-helper">
-                  <p>Adicione uma tabela explícita e preencha cada célula manualmente. O renderizador não reconstrói tabelas a partir de texto livre.</p>
+                  <p>Tabelas coladas do Word ou de planilhas viram tabela automaticamente. Texto livre separado só por espaços nunca é convertido em tabela; para montar uma do zero, insira a estrutura e preencha cada célula.</p>
                   <button type="button" className="text-button" onClick={insertStructuredTable}>Inserir estrutura de tabela</button>
                 </div>
               )}
@@ -401,6 +419,16 @@ export default function RenderizadorPage() {
                   {!busy && <ChevronRight size={16} />}
                 </button>
               </div>
+              {structure && url && (
+                <p className="editor-guidance" role="status">
+                  {structure.mode === "markdown"
+                    ? "Marcações do próprio texto respeitadas"
+                    : `Estrutura automática: ${structure.headings} título(s)`}
+                  {structure.tables ? ` · ${structure.tables} tabela(s) convertida(s)` : ""}
+                  {structure.lists ? ` · ${structure.lists} item(ns) de lista` : ""}
+                  {" · todas as palavras preservadas. Confira os títulos na prévia."}
+                </p>
+              )}
               {error && (
                 <p role="alert" className="error">
                   {error}

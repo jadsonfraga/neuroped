@@ -60,6 +60,20 @@ try {
   await page.getByRole("heading", { name: "Renderizador" }).waitFor({ timeout: 20000 });
   await page.getByRole("button", { name: "Colar ou editar texto" }).click();
 
+  // Texto colado sem nenhum "#": deve gerar a prévia com estrutura automática.
+  const plainEditor = page.getByLabel("Markdown do laudo");
+  await plainEditor.fill([
+    "DOCUMENTO DEMONSTRATIVO",
+    "Texto sintético de demonstração colado sem marcação, apenas para teste do fluxo.",
+    "Intervenção\tFrequência",
+    "Exemplo\t1 h/semana",
+  ].join("\n"));
+  await page.locator('input[placeholder="Nome completo"]').fill("Paciente Demonstrativo");
+  await page.getByRole("button", { name: "Gerar prévia PDF" }).click();
+  await page.locator('iframe[title="Prévia integral do PDF"]').waitFor({ timeout: 20000 });
+  await page.getByRole("status").filter({ hasText: "todas as palavras preservadas" }).waitFor();
+  assert.equal(await page.getByRole("alert").count(), 0, "texto sem # não pode ser bloqueado");
+
   const markdown = [
     "# Documento demonstrativo",
     "",
