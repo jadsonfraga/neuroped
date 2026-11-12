@@ -506,3 +506,13 @@ A oportunidade está registrada em `EVIDENCE.md#Ciclo-19`. O próximo trabalho d
 ### Próximo ponto de retomada
 
 Partir de `origin/main`, não tentar novamente um merge automático da PR #1312. Resolver os conflitos em branch própria ou escolher outra frente não conflitante. Não alterar filtros clínicos por descarte de um lado inteiro e não integrar a PR #1307 enquanto seus gates de Production Readiness/Verify permanecerem falhos.
+
+## Ciclo 20 (2026-11-12) — conteúdo educativo sobre agressividade infantil
+
+A PR #1315 foi integrada como `1368bc56`. A Biblioteca Clínica recebeu conteúdo educativo sobre agressividade infantil com triagem de risco iminente, sinais de alerta, análise funcional, intervenção e reavaliação. A página mantém linguagem de interpretação possível, não diagnóstico automático, e afirma que medicação exige avaliação individual e monitorização.
+
+Não foram usados dados de pacientes. Os checks de filtros, TypeScript, qualidade, readiness, isolamento LIVE e ausência de PHI no navegador passaram. A tabela recebeu região acessível para rolagem horizontal.
+
+### Próximo ponto de retomada
+
+Partir de `origin/main`, verificar PRs concorrentes e escolher outra frente pequena de segurança, isolamento, LGPD ou operação. A reconciliação da PR #1312 foi posteriormente incorporada à main, mas a evidência histórica do ciclo 19 deve ser revisada contra o estado atual antes de qualquer nova alteração de filtro. A PR #1307 segue bloqueada pelos gates visuais 404.

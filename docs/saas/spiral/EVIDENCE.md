@@ -1225,6 +1225,23 @@ alteram a autorização clínica nem o armazenamento de PHI. Os checks obrigató
 passaram antes da integração, incluindo isolamento de tenant, readiness, PDF,
 TypeScript e qualidade. A PR foi mesclada em `main` como `e2dede6a`.
 
+### Ciclo 20 — conteúdo educativo sobre agressividade infantil com triagem de risco
+
+A PR [#1315](https://github.com/jadsonfraga/neuroped/pull/1315) adicionou uma
+entrada da Biblioteca Clínica sobre agressividade infantil, com fluxograma de
+risco iminente, investigação de sinais de alerta, análise funcional,
+intervenções e reavaliação. O conteúdo orienta procurar urgência diante de
+risco grave, violência, regressão, dor ou deterioração, e mantém linguagem de
+interpretação possível em vez de diagnóstico automático.
+
+A página não prescreve automaticamente, não usa dados de pacientes e explicita
+que medicação exige avaliação individual, indicação fundamentada,
+contraindicações, interações e monitorização. A tabela recebeu região acessível
+com rolagem horizontal para preservar a leitura em telas menores. A PR passou
+nos checks obrigatórios, incluindo filtros, TypeScript, qualidade, readiness,
+isolamento LIVE e ausência de PHI no navegador, e foi integrada em `main` como
+`1368bc56`.
+
 ### Ciclo 19 — oportunidade de integração segura do filtro de sinais
 
 A PR [#1312](https://github.com/jadsonfraga/neuroped/pull/1312) propõe uma
