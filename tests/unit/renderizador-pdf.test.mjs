@@ -6,6 +6,8 @@ import {
   createPantPdf,
   contentFromMarkdown,
   pdfReleaseLabel,
+  headingNumbering,
+  layoutRuns,
   sample,
 } from "../../client/src/lib/renderizador/document.mjs";
 
@@ -76,7 +78,8 @@ assert.equal(parsedTemplate[0].type, "table", "estrutura inserida deve chegar ao
 
 const draftPdf = createPantPdf(jsPDF, "## Documento demonstrativo", { ...meta, releaseStatus: "draft" }, assets);
 assert.ok(draftPdf.getNumberOfPages() >= 2);
-assert.equal(pdfReleaseLabel("draft"), "RASCUNHO — NÃO LIBERADO");
+assert.equal(pdfReleaseLabel("draft"), "RASCUNHO · NÃO LIBERADO");
+assert.doesNotMatch(pdfReleaseLabel("draft") + pdfReleaseLabel("definitive"), /[—–]/, "selos do PDF sem travessão");
 const definitivePdf = createPantPdf(jsPDF, "## Documento demonstrativo", { ...meta, releaseStatus: "definitive" }, assets);
 assert.ok(definitivePdf.getNumberOfPages() >= 2);
 assert.equal(pdfReleaseLabel("definitive"), "VERSÃO DEFINITIVA · REVISÃO MÉDICA CONFIRMADA");
@@ -88,3 +91,25 @@ const oversizedPdf = createPantPdf(jsPDF, oversizeCell, meta, assets);
 assert.ok(oversizedPdf.getNumberOfPages() >= 4,
   "uma única célula muito longa deve continuar em outras páginas, repetindo cabeçalho e preservando colunas");
 console.log("Célula de tabela muito extensa continua em outras páginas: OK");
+
+// Numeração de seções: só no nível de seção e nunca sobre a numeração do autor.
+const titled = contentFromMarkdown("# Laudo\n\n## Seção A\n\ntexto\n\n### Detalhe\n\ntexto\n\n## Seção B\n\ntexto");
+const nums = headingNumbering(titled);
+assert.deepEqual(titled.filter((b) => b.type === "heading").map((b) => nums.get(b) ?? null), [null, 1, null, 2]);
+const authored = contentFromMarkdown("## 1. Identificação\n\ntexto\n\n## 2. História\n\ntexto");
+assert.equal(headingNumbering(authored).size, 0, "títulos já numerados pelo autor não recebem segundo número");
+const chapters = contentFromMarkdown("# Capítulo A\n\ntexto\n\n# Capítulo B\n\ntexto");
+assert.equal(headingNumbering(chapters).size, 2, "capítulos # do PANT continuam numerados");
+console.log("Numeração de seções sem duplicidade com a do autor: OK");
+
+// Justificação: linhas quebradas preenchem a largura; a última linha não estica.
+const probe = new jsPDF({ unit: "pt", format: "a4" });
+probe.addFileToVFS("regular.ttf", assets.fonts.normal);
+probe.addFont("regular.ttf", "Cormorant", "normal");
+const laid = layoutRuns(probe, [{ text: "palavra ".repeat(80) + "fim" }], 437, 12.5);
+assert.ok(laid.length > 2);
+assert.ok(laid.slice(0, -1).every((l) => !l.hardBreak && l.width <= 437), "linhas quebradas cabem na largura");
+assert.equal(laid.at(-1).hardBreak, true, "última linha do parágrafo fica alinhada à esquerda");
+assert.equal(laid.flatMap((l) => l.words.map((w) => w.text)).join(" "), ("palavra ".repeat(80) + "fim").trim(), "layout preserva todas as palavras na ordem");
+console.log("Justificação preserva palavras e não estica a última linha: OK");
+

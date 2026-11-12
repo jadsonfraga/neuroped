@@ -108,7 +108,7 @@ export function contentFromMarkdown(md) {
 export function pdfReleaseLabel(status) {
   return status === "definitive"
     ? "VERSÃO DEFINITIVA · REVISÃO MÉDICA CONFIRMADA"
-    : "RASCUNHO — NÃO LIBERADO";
+    : "RASCUNHO · NÃO LIBERADO";
 }
 
 function fontStyle(run = {}) {
@@ -126,51 +126,96 @@ function withFont(doc, run = {}, size = 12.5) {
   else doc.setTextColor(...COLORS.ink);
 }
 
+// Lays out styled runs into lines first, then paints them. Lines that wrap
+// are justified (extra space spread across word gaps); the last line of a
+// paragraph and lines ended by an explicit break stay left-aligned.
+export function layoutRuns(doc, runs, maxWidth, size = 12.5) {
+  const lines = [];
+  let line = { words: [], width: 0, hardBreak: false };
+  let pendingSpace = 0;
+  const push = (hardBreak) => {
+    line.hardBreak = hardBreak;
+    lines.push(line);
+    line = { words: [], width: 0, hardBreak: false };
+    pendingSpace = 0;
+  };
+  for (const run of runs) {
+    const pieces = String(run.text || "").split(/(\s+|\n)/).filter((part) => part.length);
+    for (const piece of pieces) {
+      if (piece === "\n") {
+        push(true);
+        continue;
+      }
+      withFont(doc, run, size);
+      if (/^\s+$/.test(piece)) {
+        if (line.words.length) pendingSpace = doc.getTextWidth(" ");
+        continue;
+      }
+      const width = doc.getTextWidth(piece);
+      if (line.words.length && line.width + pendingSpace + width > maxWidth) push(false);
+      const gap = line.words.length ? pendingSpace : 0;
+      line.words.push({ text: piece, run, width, gap });
+      line.width += gap + width;
+      pendingSpace = 0;
+    }
+  }
+  if (line.words.length || !lines.length) push(true);
+  return lines;
+}
+
 function drawRuns(doc, runs, x, y, maxWidth, opts = {}) {
   const size = opts.size || 12.5;
   const leading = opts.leading || size * 1.45;
   const indent = opts.indent || 0;
-  const actualX = x + indent;
-  let lineX = actualX;
+  const width = maxWidth - indent;
+  const lines = layoutRuns(doc, runs, width, size);
   let lineY = y;
-  let lines = 1;
-  const nextLine = () => {
-    lineX = actualX;
-    lineY += leading;
-    lines++;
-    if (opts.bottom && lineY > opts.bottom) {
-      if (!opts.onPageBreak) throw Error("Texto ultrapassou o limite da página.");
-      lineY = opts.onPageBreak();
+  lines.forEach((line, index) => {
+    if (index > 0) {
+      lineY += leading;
+      if (opts.bottom && lineY > opts.bottom) {
+        if (!opts.onPageBreak) throw Error("Texto ultrapassou o limite da página.");
+        lineY = opts.onPageBreak();
+      }
     }
-  };
-  for (const run of runs) {
-    const text = String(run.text || "");
-    const pieces = text.split(/(\s+|\n)/).filter((part) => part.length);
-    for (const piece of pieces) {
-      if (piece === "\n") {
-        nextLine();
-        continue;
-      }
-      withFont(doc, run, size);
-      const width = doc.getTextWidth(piece);
-      if (/^\s+$/.test(piece)) {
-        if (lineX + width <= x + maxWidth) lineX += width;
-        continue;
-      }
-      if (lineX > actualX && lineX + width > x + maxWidth) {
-        nextLine();
-      }
-      doc.text(piece, lineX, lineY);
-      if (run.strike) {
+    const gaps = line.words.filter((word, i) => i > 0).length;
+    const slack = width - line.width;
+    // Justify only wrapped lines with real gaps and a reasonable stretch.
+    const justify = opts.justify !== false && !line.hardBreak && gaps > 0 && slack > 0 && slack / gaps < size * 1.2;
+    const extra = justify ? slack / gaps : 0;
+    let lineX = x + indent;
+    line.words.forEach((word, i) => {
+      if (i > 0) lineX += word.gap + extra;
+      withFont(doc, word.run, size);
+      doc.text(word.text, lineX, lineY);
+      if (word.run.strike) {
         doc.setDrawColor(...COLORS.ink);
         doc.setLineWidth(0.45);
-        doc.line(lineX, lineY - size * 0.3, lineX + width, lineY - size * 0.3);
+        doc.line(lineX, lineY - size * 0.3, lineX + word.width, lineY - size * 0.3);
       }
-      lineX += width;
-    }
-  }
+      lineX += word.width;
+    });
+  });
   doc.setTextColor(...COLORS.ink);
-  return { y: lineY + leading, lines };
+  return { y: lineY + leading, lines: lines.length };
+}
+
+// Section numbers are added only when the author did not number the headings
+// and only at the section level: the shallowest depth used by two or more
+// headings (a lone document title above the sections stays unnumbered).
+export function headingNumbering(blocks) {
+  const headings = blocks.filter((block) => block.type === "heading");
+  const text = (block) => flattenText(block.runs).trim();
+  const authorNumbered = headings.some((block) => /^(?:\d{1,3}(?:\.\d{1,3})*[.)]?|[IVXLC]{1,6}[.)])\s/.test(text(block)));
+  const numbers = new Map();
+  if (authorNumbered) return numbers;
+  const counts = {};
+  headings.forEach((block) => { counts[block.depth] = (counts[block.depth] || 0) + 1; });
+  const levels = Object.keys(counts).map(Number).filter((depth) => counts[depth] >= 2).sort((a, b) => a - b);
+  if (!levels.length) return numbers;
+  let n = 0;
+  headings.forEach((block) => { if (block.depth === levels[0]) numbers.set(block, ++n); });
+  return numbers;
 }
 
 export function createPantPdf(jsPDF, md, meta, assets) {
@@ -276,7 +321,13 @@ export function createPantPdf(jsPDF, md, meta, assets) {
     if (y + height > bottom) newContentPage();
   }
   function paragraph(runs, opts = {}) {
-    ensureSpace(30);
+    const size = opts.size || 12.5;
+    const leading = opts.leading || size * 1.45;
+    const lineCount = layoutRuns(doc, runs, maxWidth - (opts.depth || 0) * 12 - (opts.indent || 0), size).length;
+    // Never leave a single line of a multi-line paragraph at the foot of a page.
+    // A one-line paragraph only needs its baseline to fit; the first line of a
+    // longer paragraph must be accompanied by at least one more line.
+    ensureSpace((Math.min(lineCount, 2) - 1) * leading);
     const out = drawRuns(doc, runs, left + (opts.depth || 0) * 12, y, maxWidth - (opts.depth || 0) * 12, {
       ...opts,
       bottom,
@@ -351,26 +402,33 @@ export function createPantPdf(jsPDF, md, meta, assets) {
         }
       }
     }
-    y += 11;
+    y += 16;
   }
   function renderBlock(block) {
     if (block.type === "heading") {
       const fontSize = block.depth === 1 ? 22 : block.depth === 2 ? 19 : block.depth === 3 ? 16 : 14;
+      const number = numbering.get(block);
+      const textX = number ? left + 35 : left;
       doc.setFont("Cormorant", "bold");
       doc.setFontSize(fontSize);
       const headingText = flattenText(block.runs);
-      const lines = doc.splitTextToSize(headingText, maxWidth - 38);
-      ensureSpace(Math.max(50, lines.length * (fontSize + 3) + 18));
+      const lines = doc.splitTextToSize(headingText, right - textX);
+      const headingHeight = Math.max(fontSize + 4, lines.length * (fontSize + 3)) + 11;
+      // Keep the heading on the same page as at least three lines of what follows.
+      if (y > 111) y += 9;
+      ensureSpace(headingHeight + 7 + 3 * 12.5 * 1.45);
       y += 7;
-      doc.setFont("Cormorant", "normal");
-      doc.setFontSize(10);
-      doc.setTextColor(...COLORS.gold);
-      doc.text(String(block.number).padStart(2, "0"), left, y);
+      if (number) {
+        doc.setFont("Cormorant", "normal");
+        doc.setFontSize(10);
+        doc.setTextColor(...COLORS.gold);
+        doc.text(String(number).padStart(2, "0"), left, y);
+      }
       doc.setFont("Cormorant", "bold");
       doc.setFontSize(fontSize);
       doc.setTextColor(...COLORS.navy);
-      doc.text(lines, left + 35, y + 1);
-      y += Math.max(fontSize + 4, lines.length * (fontSize + 3)) + 11;
+      doc.text(lines, textX, y + 1);
+      y += headingHeight;
       return;
     }
     if (block.type === "paragraph") {
@@ -415,7 +473,9 @@ export function createPantPdf(jsPDF, md, meta, assets) {
     }
   }
 
-  for (const block of contentFromMarkdown(md)) renderBlock(block);
+  const blocks = contentFromMarkdown(md);
+  const numbering = headingNumbering(blocks);
+  for (const block of blocks) renderBlock(block);
 
   const pageCount = doc.getNumberOfPages();
   for (let page = 2; page <= pageCount; page++) {

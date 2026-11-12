@@ -83,7 +83,7 @@ function readTable(lines, start) {
 
 /**
  * @param {string} input text pasted or loaded by the clinician
- * @returns {{markdown:string, mode:"markdown"|"plain", headings:number, tables:number, lists:number, changed:boolean}}
+ * @returns {{markdown:string, mode:"markdown"|"plain", headings:number, tables:number, lists:number, titles:string[], changed:boolean}}
  */
 export function structurePastedText(input) {
   const source = String(input ?? "").replace(/\r\n?/g, "\n").replace(/ /g, " ");
@@ -161,6 +161,14 @@ export function structurePastedText(input) {
     blocks.push({ type: "para", text: line });
   }
 
+  // A leading all-caps line above other sections is the document title (level 1).
+  const firstText = blocks.find((b) => b.type !== "blank");
+  if (mode === "plain" && headings >= 2 && firstText && firstText.type === "heading" &&
+      firstText.text.startsWith("## ") && isUpperTitle(firstText.text.slice(3)) &&
+      !NUMBER_PREFIX.test(firstText.text.slice(3))) {
+    firstText.text = "# " + firstText.text.slice(3);
+  }
+
   let markdown;
   if (mode === "markdown") {
     markdown = blocks.map((b) => (b.type === "blank" ? "" : b.text)).join("\n");
@@ -181,5 +189,6 @@ export function structurePastedText(input) {
   if (before.length !== after.length || before.some((w, k) => w !== after[k])) {
     throw Error("A estruturação automática alteraria o texto. Nenhum PDF foi gerado; marque os títulos manualmente com #.");
   }
-  return { markdown, mode, headings, tables, lists, changed: markdown.trim() !== source.trim() };
+  const titles = markdown.split("\n").filter((l) => /^#{1,6}\s+\S/.test(l)).map((l) => l.replace(/^#{1,6}\s+/, ""));
+  return { markdown, mode, headings, tables, lists, titles, changed: markdown.trim() !== source.trim() };
 }

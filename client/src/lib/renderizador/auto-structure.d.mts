@@ -4,6 +4,7 @@ export interface StructuredText {
   headings: number;
   tables: number;
   lists: number;
+  titles: string[];
   changed: boolean;
 }
 export function wordsOf(text: string): string[];

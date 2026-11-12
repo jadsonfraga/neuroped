@@ -25,6 +25,8 @@ assert.equal(r.mode, "plain");
 assert.deepEqual(wordsOf(r.markdown), wordsOf(pasted), "nenhuma palavra pode ser alterada, removida ou reordenada");
 const blocks = contentFromMarkdown(r.markdown);
 const headings = blocks.filter((b) => b.type === "heading").map((b) => b.runs.map((x) => x.text).join(""));
+assert.equal(blocks.find((b) => b.type === "heading").depth, 1, "primeira linha em caixa alta vira título do documento");
+assert.deepEqual(r.titles, headings, "a tela lista exatamente os títulos usados no PDF");
 assert.deepEqual(headings, ["DOCUMENTO DEMONSTRATIVO", "1. IDENTIFICAÇÃO", "Seção de demonstração", "Itens de exemplo:", "Encerramento"]);
 assert.equal(blocks.filter((b) => b.type === "table").length, 1, "tabela colada com tabulações vira tabela");
 assert.equal(blocks.find((b) => b.type === "list").items.length, 2, "marcadores • viram lista");

@@ -73,6 +73,9 @@ try {
   await page.locator('iframe[title="Prévia integral do PDF"]').waitFor({ timeout: 20000 });
   await page.getByRole("status").filter({ hasText: "todas as palavras preservadas" }).waitFor();
   assert.equal(await page.getByRole("alert").count(), 0, "texto sem # não pode ser bloqueado");
+  await page.getByText("Ver os 1 títulos usados no PDF").click();
+  assert.equal(await page.locator(".structure-titles li").first().textContent(), "DOCUMENTO DEMONSTRATIVO",
+    "a tela mostra as linhas que viraram título");
 
   const markdown = [
     "# Documento demonstrativo",

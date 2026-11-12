@@ -429,6 +429,17 @@ export default function RenderizadorPage() {
                   {" · todas as palavras preservadas. Confira os títulos na prévia."}
                 </p>
               )}
+              {structure && url && structure.titles.length > 0 && (
+                <details className="structure-titles">
+                  <summary>Ver os {structure.titles.length} títulos usados no PDF</summary>
+                  <ol>
+                    {structure.titles.map((t, i) => (
+                      <li key={i}>{t}</li>
+                    ))}
+                  </ol>
+                  <p>Se uma linha virou título por engano, termine-a com ponto final no texto e gere novamente.</p>
+                </details>
+              )}
               {error && (
                 <p role="alert" className="error">
                   {error}
