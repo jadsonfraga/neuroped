@@ -8,6 +8,7 @@ import AudicaoUrgenteChapter from "@/components/biblioteca-clinica-audicao-urgen
 import InsoniaPreEscolarChapter from "@/components/biblioteca-clinica-insonia-pre-escolar";
 import WiscIndicesDia09Chapter from "@/components/biblioteca-clinica-wisc-dia09";
 import AgressividadeDia10Chapter from "@/components/biblioteca-clinica-agressividade-dia10";
+import CefaleiaDia11Chapter from "@/components/biblioteca-clinica-cefaleia-dia11";
 import AtrasoFalaAvaliacaoGlobalChapter from "@/components/biblioteca-clinica-atraso-fala";
 import {
   ArrowRight, BookOpen, BrainCircuit, ChevronRight,
@@ -336,6 +337,7 @@ export default function BibliotecaClinicaPage() {
       <AudicaoUrgenteChapter />
       <InsoniaPreEscolarChapter />
       <AgressividadeDia10Chapter />
+      <CefaleiaDia11Chapter />
       <WiscIndicesDia09Chapter />
       <AtrasoFalaAvaliacaoGlobalChapter />
 

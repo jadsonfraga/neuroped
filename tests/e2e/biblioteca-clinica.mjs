@@ -1,6 +1,6 @@
 /** Biblioteca Clínica 365 no build real, com o login sintético existente.
  * Sem bypass de autenticação, sem escrita clínica e sem dado de paciente.
- * Prova: catálogo com os 10 capítulos da Trilha 365 na ordem do índice, navegação
+ * Prova: catálogo com os 11 capítulos da Trilha 365 na ordem do índice, navegação
  * por cartão (clique e teclado) com foco no capítulo, link profundo que sobrevive
  * ao recarregamento, fluxogramas nomeados, referências seguras, estado de revisão
  * médica, ausência de duplicação, layout sem rolagem horizontal no celular e axe
@@ -19,7 +19,7 @@ import {
   SYNTHETIC_CREDENTIALS,
 } from "../../scripts/lib/synthetic-clinical-api.mjs";
 
-// Perguntas literais da aba "Trilha 365" do índice-mestre (Dias 01–10).
+// Perguntas literais da aba "Trilha 365" do índice-mestre (Dias 01–11).
 const TRAIL = [
   { day: 1, slug: "tea-timidez-primeira-infancia", anchor: "capitulo-tea-timidez", title: "Como distinguir sinais de TEA de timidez na primeira infância?" },
   { day: 2, slug: "desatencao-imaturidade-etaria", anchor: "capitulo-desatencao-imaturidade", title: "Como diferenciar desatenção de imaturidade etária?" },
@@ -31,6 +31,7 @@ const TRAIL = [
   { day: 8, slug: "insonia-pre-escolar", anchor: "capitulo-insonia-pre-escolar", title: "Como avaliar insônia comportamental no pré-escolar?" },
   { day: 9, slug: "wisc-indices-dia09", anchor: "capitulo-wisc-indices-dia09", title: "O que cada índice do WISC-IV informa ao neuropediatra?" },
   { day: 10, slug: "agressividade-dia10", anchor: "capitulo-agressividade-dia10", title: "Como analisar agressividade infantil antes de propor medicação?" },
+  { day: 11, slug: "cefaleia-dia11", anchor: "capitulo-cefaleia-dia11", title: "Como diferenciar enxaqueca de cefaleia tensional em escolares?" },
 ];
 const PAGE = '[data-testid="biblioteca-clinica-page"]';
 
@@ -110,7 +111,7 @@ try {
   check("selo do topo declara revisão médica pendente");
 
   const trailCards = page.locator('[data-testid="biblioteca-trilha"] > li');
-  assert.equal(await trailCards.count(), TRAIL.length, "Trilha 365 deve listar exatamente 10 capítulos");
+  assert.equal(await trailCards.count(), TRAIL.length, "Trilha 365 deve listar exatamente 11 capítulos");
   const cardTitles = await trailCards.locator("h4").allTextContents();
   assert.deepEqual(cardTitles.map((t) => t.trim()), TRAIL.map((t) => t.title), "títulos e ordem idênticos ao índice-mestre");
   const statuses = await trailCards.getByTestId("biblioteca-card-status").allTextContents();
