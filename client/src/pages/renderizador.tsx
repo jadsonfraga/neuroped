@@ -1,4 +1,5 @@
 import "@/styles/renderizador.css";
+import RenderizadorWindowsBridge from "@/components/RenderizadorWindowsBridge";
 import { useState, useRef, useEffect } from "react";
 import {
   Upload,
@@ -32,6 +33,7 @@ export default function RenderizadorPage() {
     [manifest, setManifest] = useState<Record<string, unknown> | null>(null),
     [structure, setStructure] = useState<StructuredText | null>(null);
   const [logoPreview, setLogoPreview] = useState("");
+  const [bridgeView, setBridgeView] = useState(false);
   useEffect(() => {
     let active = true;
     fetch(import.meta.env.BASE_URL + "renderizador/brasao.png.json")
@@ -232,6 +234,16 @@ export default function RenderizadorPage() {
     a.click();
     setTimeout(() => URL.revokeObjectURL(u), 1000);
   }
+  if (bridgeView) {
+    return (
+      <div className="mx-auto max-w-6xl space-y-2 p-4">
+        <button type="button" className="rounded-lg border px-4 py-2 text-sm font-semibold" onClick={() => setBridgeView(false)}>
+          Voltar ao PANT Studio
+        </button>
+        <RenderizadorWindowsBridge />
+      </div>
+    );
+  }
   return (
     <div className="pant-studio-root">
       <div className="main">
@@ -244,6 +256,9 @@ export default function RenderizadorPage() {
                 Cole o texto do laudo ou envie um Markdown e gere o PDF com a identidade SuperNeuroPed.
               </p>
             </div>
+            <button type="button" className="text-button" onClick={() => setBridgeView(true)}>
+              Ponte ChatGPT / Windows <ChevronRight size={16} />
+            </button>
             <button className="text-button" onClick={demo}>
               Conhecer o modelo <ArrowUpRight size={16} />
             </button>
