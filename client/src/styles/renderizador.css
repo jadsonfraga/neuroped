@@ -786,3 +786,18 @@
   color: var(--pant-render-color-39);
   font-weight: 600;
 }
+.pant-studio-root .structure-titles {
+  color: var(--pant-render-color-31);
+  font-size: 11px;
+  line-height: 1.55;
+  margin: 4px 0 10px;
+}
+.pant-studio-root .structure-titles summary {
+  cursor: pointer;
+  color: var(--pant-render-color-39);
+  font-weight: 600;
+}
+.pant-studio-root .structure-titles ol {
+  margin: 6px 0 4px 18px;
+  padding: 0;
+}
