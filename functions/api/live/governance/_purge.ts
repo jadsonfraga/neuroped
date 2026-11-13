@@ -44,8 +44,16 @@ const PURGE_ORDER: ReadonlyArray<{ table: string; patientColumn: string }> = [
   { table: "live_document_versions", patientColumn: "patient_id" },
   { table: "live_documents", patientColumn: "patient_id" },
   { table: "live_clinical_events", patientColumn: "patient_id" },
+  { table: "live_diary_entries", patientColumn: "patient_id" },
   { table: "live_patients", patientColumn: "id" },
 ];
+
+/**
+ * Tabelas clínicas de migrations aditivas que podem ainda não existir no banco
+ * (migration pendente). Ausente = nenhum dado a apagar: sai do batch em vez de
+ * derrubar a eliminação inteira. Presente = entra no DELETE como as demais.
+ */
+const OPTIONAL_PURGE_TABLES: ReadonlyArray<string> = ["live_diary_entries"];
 
 /**
  * Tabelas de governança que apontam para o titular com ON DELETE RESTRICT e
@@ -90,6 +98,7 @@ const RETENTION_FLOOR_TABLES: ReadonlyArray<{ table: string; ts: string }> = [
   { table: "live_documents", ts: "updated_at" },
   { table: "live_document_versions", ts: "issued_at" },
   { table: "live_scale_responses", ts: "submitted_at" },
+  { table: "live_diary_entries", ts: "created_at" },
   { table: "live_patients", ts: "created_at" },
 ];
 
@@ -439,7 +448,22 @@ export async function executeTenantScopedPurge(
           .bind(targets.clinicId),
   );
 
-  const children = PURGE_ORDER.filter(({ table }) => table !== "live_patients");
+  let absentOptionalTables: Set<string>;
+  try {
+    const placeholders = OPTIONAL_PURGE_TABLES.map(() => "?").join(", ");
+    const present = await db
+      .prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name IN (${placeholders})`)
+      .bind(...OPTIONAL_PURGE_TABLES)
+      .all<{ name: string }>();
+    const presentNames = new Set((present.results ?? []).map((row) => row.name));
+    absentOptionalTables = new Set(OPTIONAL_PURGE_TABLES.filter((table) => !presentNames.has(table)));
+  } catch {
+    await params.fail("PURGE_PREFLIGHT_FAILED:optional_tables");
+    return null;
+  }
+  const children = PURGE_ORDER.filter(
+    ({ table }) => table !== "live_patients" && !absentOptionalTables.has(table),
+  );
   const patientsEntry = PURGE_ORDER.find(
     ({ table }) => table === "live_patients",
   )!;

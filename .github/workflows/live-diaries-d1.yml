@@ -1,0 +1,177 @@
+name: Live diaries D1 (0039–0040)
+# Aplica a migration aditiva 0039 (diários de acompanhamento no Clinical LIVE)
+# e a 0040 (reconstrução da tabela para incluir crises e cefaleia no CHECK,
+# preservando todas as linhas; provada em tests/unit/live-diaries-0040-rebuild).
+# Só cria tabela, índices e gatilhos novos com IF NOT EXISTS; não lê nem altera
+# dado existente. Mesmo padrão dos demais workflows de migration: valida no PR,
+# aplica só no main, com preflight (aplicada / ausente / parcial) e verificação
+# de forma sem ler dados de clínicas.
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "db/migrations/0039_live_diary_entries.sql"
+      - "db/migrations/0040_live_diary_entries_epilepsy_headache.sql"
+      - "shared/live-diaries.ts"
+      - "functions/api/live/diaries/**"
+      - "tests/unit/live-diaries*.test.ts"
+      - ".github/workflows/live-diaries-d1.yml"
+  push:
+    branches: [main]
+    paths:
+      - "db/migrations/0039_live_diary_entries.sql"
+      - "db/migrations/0040_live_diary_entries_epilepsy_headache.sql"
+      - ".github/workflows/live-diaries-d1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: d1-live-diaries-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate-live-diaries:
+    name: Validate live diaries schema and endpoint
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+      - name: Bootstrap do schema com todas as migrações
+        run: node tests/unit/schema-bootstrap-contract.test.mjs
+      - name: Diários LIVE (0039)
+        run: npm run test:live-diaries
+      - name: TypeScript
+        run: npm run check
+
+  migrate-live-diaries:
+    name: Apply live diaries (0039–0040) to D1
+    needs: validate-live-diaries
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60 # inclui até 45 min de espera na fila D1
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      - name: Validate Cloudflare credentials
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          [ -n "$CF_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
+          [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
+      # Fila das escritas D1 sem pending slot: ver scripts/ci/wait-d1-writers.mjs.
+      - name: Aguardar fila de escritas D1 (migration)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          MODE: migration
+        run: node scripts/ci/wait-d1-writers.mjs
+
+      - name: Pré-requisitos — tabelas referenciadas existem
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT COUNT(*) AS tabelas FROM sqlite_master WHERE type = 'table' AND name IN ('clinics', 'users', 'live_patients');" \
+            > /tmp/diaries-prereq.txt 2>&1
+          cat /tmp/diaries-prereq.txt
+          if ! grep -qE '(tabelas[^0-9]*3[^0-9]|"tabelas":\s*3)' /tmp/diaries-prereq.txt; then
+            echo "::error::clinics, users e live_patients precisam existir antes da 0039."
+            exit 1
+          fi
+
+      - name: Aplicar 0039 (preflight)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT COUNT(*) AS tabelas FROM sqlite_master WHERE type = 'table' AND name = 'live_diary_entries';" \
+            > /tmp/diaries-preflight.txt 2>&1
+          cat /tmp/diaries-preflight.txt
+          if grep -qE '(tabelas[^0-9]*1[^0-9]|"tabelas":\s*1)' /tmp/diaries-preflight.txt; then
+            echo "0039: já aplicada."
+          elif grep -qE '(tabelas[^0-9]*0[^0-9]|"tabelas":\s*0)' /tmp/diaries-preflight.txt; then
+            echo "0039: aplicando."
+            npx wrangler@4 d1 execute neuroped-db --remote --yes --file="./db/migrations/0039_live_diary_entries.sql"
+          else
+            echo "::error::0039 com preflight ilegível; intervenção manual necessária."
+            exit 1
+          fi
+
+      - name: Aplicar 0040 (preflight pelo CHECK)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT (SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'live_diary_entries' AND sql LIKE '%calendario-cefaleia%') AS aplicada, (SELECT COUNT(*) FROM sqlite_master WHERE name = 'live_diary_entries_new') AS parcial;" \
+            > /tmp/diaries-0040-preflight.txt 2>&1
+          cat /tmp/diaries-0040-preflight.txt
+          if ! grep -qE '(parcial[^0-9]*0[^0-9]|"parcial":\s*0)' /tmp/diaries-0040-preflight.txt; then
+            echo "::error::live_diary_entries_new existe: reconstrução parcial; intervenção manual necessária."
+            exit 1
+          fi
+          if grep -qE '(aplicada[^0-9]*1[^0-9]|"aplicada":\s*1)' /tmp/diaries-0040-preflight.txt; then
+            echo "0040: já aplicada."
+          elif grep -qE '(aplicada[^0-9]*0[^0-9]|"aplicada":\s*0)' /tmp/diaries-0040-preflight.txt; then
+            echo "0040: aplicando."
+            npx wrangler@4 d1 execute neuroped-db --remote --yes --file="./db/migrations/0040_live_diary_entries_epilepsy_headache.sql"
+          else
+            echo "::error::0040 com preflight ilegível; intervenção manual necessária."
+            exit 1
+          fi
+
+      - name: Verificar forma sem ler dados de clínicas
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT (SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'live_diary_entries') AS tabelas, (SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name IN ('trg_live_diary_entries_tenant_patient', 'trg_live_diary_entries_supersedes_tenant', 'trg_live_diary_entries_core_immutable', 'trg_live_diary_entries_status_flow')) AS gatilhos, (SELECT COUNT(*) FROM sqlite_master WHERE type = 'index' AND name IN ('idx_live_diary_entries_patient', 'idx_live_diary_entries_one_successor')) AS indices, (SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'live_diary_entries' AND sql LIKE '%calendario-cefaleia%') AS check0040, (SELECT COUNT(*) FROM sqlite_master WHERE name = 'live_diary_entries_new') AS sobra;" \
+            > /tmp/diaries-verify.txt 2>&1
+          cat /tmp/diaries-verify.txt
+          if ! grep -qE '(tabelas[^0-9]*1[^0-9]|"tabelas":\s*1)' /tmp/diaries-verify.txt; then
+            echo "::error::live_diary_entries ausente após a 0039."
+            exit 1
+          fi
+          if ! grep -qE '(gatilhos[^0-9]*4[^0-9]|"gatilhos":\s*4)' /tmp/diaries-verify.txt; then
+            echo "::error::esperados 4 gatilhos da 0039."
+            exit 1
+          fi
+          if ! grep -qE '(indices[^0-9]*2[^0-9]|"indices":\s*2)' /tmp/diaries-verify.txt; then
+            echo "::error::esperados 2 índices da 0039."
+            exit 1
+          fi
+          if ! grep -qE '(check0040[^0-9]*1[^0-9]|"check0040":\s*1)' /tmp/diaries-verify.txt; then
+            echo "::error::CHECK da 0040 ausente em live_diary_entries."
+            exit 1
+          fi
+          if ! grep -qE '(sobra[^0-9]*0[^0-9]|"sobra":\s*0)' /tmp/diaries-verify.txt; then
+            echo "::error::tabela temporária da 0040 sobrou."
+            exit 1
+          fi
+          echo "0039–0040 verificadas: tabela com CHECK atualizado, 4 gatilhos e 2 índices presentes."

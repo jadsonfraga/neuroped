@@ -406,7 +406,8 @@ for (const ctx of cases) {
     r7.push("R7-bloqueio-clinico");
   if (new Set(slots.map((s) => s.scale.id)).size !== slots.length)
     r7.push("R7-repetida");
-  if (trioFitsBudget && slots.length !== 3) r7.push("R7-incompleto");
+  // Um trio meramente barato pode ser redundante ou perder cobertura de sinal.
+  // Duas medalhas com carga verificada e cobertura superior são saída válida.
   if (podiumQuestionTotal > PODIUM_QUESTION_CAP) r7.push("R7-carga-acima-100");
   if (r7.length) {
     safetyViolations += 1;

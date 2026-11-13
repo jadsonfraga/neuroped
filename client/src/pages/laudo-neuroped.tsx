@@ -17,8 +17,9 @@ import {
   type DocumentIssuer,
 } from "@/lib/issuer";
 import { dateStamp } from "@/lib/printDocument";
-import { apiRequest } from "@/lib/queryClient";
 import { readRouteParam } from "@/lib/routeQuery";
+import { loadPatientPrefill } from "@/lib/patientPrefillSource";
+import { usePatientDataSource } from "@/hooks/usePatientDataSource";
 
 /* ────────────────────────────────────────────────────────────
    Laudo Neuropediátrico — WebUI de geração assistida (embutida)
@@ -175,6 +176,7 @@ export default function LaudoNeuropedPage() {
   const [copiado, setCopiado] = useState(false);
 
   const patientId = readRouteParam("patientId") || null;
+  const { source: patientSource, ready: patientSourceReady } = usePatientDataSource();
 
   // Aberto a partir de um paciente, o laudo já nasce identificado. Antes, o
   // `patientId` só era usado nos metadados do documento salvo: quem vinha da
@@ -184,14 +186,12 @@ export default function LaudoNeuropedPage() {
   //
   // Só preenche campo VAZIO: conteúdo já digitado nunca é sobrescrito.
   useEffect(() => {
-    if (!patientId) return;
+    if (!patientId || !patientSourceReady) return;
     let cancelled = false;
-    apiRequest("GET", `/api/patients/${encodeURIComponent(patientId)}`)
-      .then((response) => response.json())
-      .then((payload) => {
+    loadPatientPrefill(patientId, patientSource)
+      .then((patient) => {
         if (cancelled) return;
-        const patient = payload?.patient ?? payload?.data ?? payload;
-        if (!patient?.name) return;
+        if (!patient.name) return;
         setEntrada((current) => ({
           ...current,
           paciente: current.paciente || patient.name,
@@ -205,7 +205,7 @@ export default function LaudoNeuropedPage() {
     return () => {
       cancelled = true;
     };
-  }, [patientId]);
+  }, [patientId, patientSource, patientSourceReady]);
 
   const configurado = useMemo(() => {
     return (

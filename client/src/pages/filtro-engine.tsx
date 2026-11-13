@@ -74,11 +74,11 @@ import type {
   RecommendationOPB,
 } from "@/data/filterRecommendationsOPB";
 import { getClinicalTiers } from "@/data/clinicalRanking";
-import { selectCuratedTiers, selectPodium } from "@/data/filterPodium";
+import { selectCuratedTiers, selectPodiumDetailed } from "@/data/filterPodium";
+import { auditPodium, type MedalAudit, type PodiumMedalKey } from "@/data/filterPodiumAudit";
 import { opbParentCopy } from "@/data/opbParentCopy";
 import { PopularSymptomPicker } from "@/components/PopularSymptomPicker";
-import { getValidFilterSignalIds } from "@/data/filterSignalState";
-import { getAllSignalsForQueixa } from "@/data/signalsAndSymptoms";
+import { getFilterSignalLabels, getValidFilterSignalIds } from "@/data/filterSignalState";
 import {
   filterScalesWithClinicalRescue,
   getBroadbandFallback,
@@ -115,6 +115,14 @@ type Slot =
   | "Teste Direto"
   | "Questionário Escolar"
   | "Satisfação Medicação";
+/** Liga o rótulo visível da vaga à chave da auditoria do pódio (filterPodiumAudit). */
+const PODIUM_SLOT_KEY: Partial<Record<Slot, PodiumMedalKey>> = {
+  Ouro: "ouro",
+  Prata: "prata",
+  Bronze: "bronze",
+  "Teste Direto": "direct",
+  "Questionário Escolar": "school",
+};
 /** O filtro mostra somente instrumentos que abrem integralmente no app (decisão de 15/10/2026). */
 type AvailabilityMode = "complete";
 type Tier = "ouro" | "prata" | "bronze";
@@ -864,24 +872,6 @@ function getQueixaLabels(selectedQueixas: string[]): string[] {
   );
 }
 
-function getSignalLabels(
-  selectedQueixas: string[],
-  selectedSignalIds: string[],
-): string[] {
-  if (selectedSignalIds.length === 0 || selectedQueixas.length === 0) return [];
-  const selected = new Set(selectedSignalIds);
-  const seen = new Set<string>();
-  const labels: string[] = [];
-  for (const queixaId of selectedQueixas) {
-    for (const signal of getAllSignalsForQueixa(queixaId)) {
-      if (!selected.has(signal.id) || seen.has(signal.id)) continue;
-      seen.add(signal.id);
-      labels.push(signal.label);
-    }
-  }
-  return labels;
-}
-
 function scaleDetailLine(scale: ScaleEntry | undefined): string {
   if (!scale) return "";
   const details = [
@@ -941,7 +931,7 @@ function buildQualitativeFilterReport(args: {
       : selectedAssessmentType === "monitoring"
         ? "monitoramento evolutivo"
         : "triagem e apoio à decisão";
-  const signalLabels = getSignalLabels(
+  const signalLabels = getFilterSignalLabels(
     selectedQueixas,
     selectedSignalIds,
   ).slice(0, 6);
@@ -1207,6 +1197,9 @@ export default function FiltroPage() {
     );
   const applyUrlState = urlState.present && !useNavigationPrefill && !urlMirrorsSession;
   const [timeBudget, setTimeBudget] = useState<number | null>(applyUrlState ? (urlState.timeBudget ?? null) : null);
+  // Escalas que a pessoa trocou no pódio. O pódio é recalculado SOBRE o conjunto
+  // já seguro (bloqueios, idade, respondente e risco não são contornados).
+  const [podiumExcluded, setPodiumExcluded] = useState<string[]>([]);
   const [sortMode, setSortMode] = useState<SortMode>("relevancia");
   const searchInputRef = useRef<HTMLInputElement>(null);
   // Autocompletar (combobox APG): aberto só com foco + ≥ 2 caracteres.
@@ -1484,7 +1477,9 @@ export default function FiltroPage() {
       selectedQueixas.length === 0 ? inferComplaintIds(search, queixas) : [];
     return {
       queixas: selectedQueixas.length > 0 ? selectedQueixas : inferredQueixas,
-      ageMonths: resolvedAge.ageMonths,
+      // Contrato do motor: ageMonths é SOMENTE idade exata. Em modo faixa fica nulo;
+      // o ponto médio da faixa (resolvedAge.ageMonths) nunca vira idade de validação.
+      ageMonths: resolvedAge.status === "exact" ? resolvedAge.ageMonths : null,
       ageBand: resolvedAge.ageBand,
       ageInputInvalid: resolvedAge.status === "invalid",
       respondente: selectedRespondente ?? null,
@@ -1518,6 +1513,12 @@ export default function FiltroPage() {
     selectedSignalIds,
     search,
   ]);
+
+  // Novo perfil (idade, queixa, respondente, sinais…) = nova busca: as trocas manuais
+  // do pódio anterior não valem para ele.
+  useEffect(() => {
+    setPodiumExcluded([]);
+  }, [filterContext]);
 
   // Candidatos seguros, já ordenados por pertinência clínica. PODE SER VAZIO.
   const safeRanking = useMemo(
@@ -1606,9 +1607,13 @@ export default function FiltroPage() {
     if (!search.trim() || !searchUnmatched || searchKnown) return [];
     return suggestSearchCorrections(catalog, search, queixas.map((q) => ({ id: q.id, label: q.label })));
   }, [catalog, search, searchUnmatched, searchKnown]);
+  const podiumPool = useMemo(
+    () => refinedMatches.filter((m) => !podiumExcluded.includes(m.scale.id)),
+    [refinedMatches, podiumExcluded],
+  );
   const refinedById = useMemo(
-    () => new Map(refinedMatches.map((m) => [m.scale.id, m])),
-    [refinedMatches],
+    () => new Map(podiumPool.map((m) => [m.scale.id, m])),
+    [podiumPool],
   );
 
   // Contagens vivas por faceta ("e se eu escolher isto?"), pelo MESMO motor.
@@ -1620,8 +1625,9 @@ export default function FiltroPage() {
       timeBudget,
     });
   }, [catalog, filterContext, hasSearch, timeBudget]);
-  // A curadoria usa a mesma idade resolvida pelo motor.
+  // A curadoria usa a mesma idade resolvida pelo motor: idade exata, ou faixa.
   const curatedAgeMonths = filterContext.ageMonths;
+  const curatedAgeBand = filterContext.ageBand ?? null;
   const activeQueixas = filterContext.queixas;
   const rankedPool = useMemo(
     () => refinedMatches.map((m) => m.scale),
@@ -1666,30 +1672,44 @@ export default function FiltroPage() {
         curatedAgeMonths,
         refinedById,
         selectedRespondente,
+        curatedAgeBand,
       ),
-    [activeQueixas, curatedAgeMonths, selectedRespondente, refinedById],
+    [activeQueixas, curatedAgeMonths, curatedAgeBand, selectedRespondente, refinedById],
   );
 
   // === PÓDIO: score-ordered, curated tiers as soft tiebreaker, quality threshold ≥60 ===
-  const auditedPodium = useMemo(
+  const podiumDetail = useMemo(
     () =>
-      selectPodium(hasSafeResults ? refinedMatches : [], curatedTiers, {
+      selectPodiumDetailed(hasSafeResults ? podiumPool : [], curatedTiers, {
         selectedQueixas: activeQueixas,
         ageMonths: curatedAgeMonths,
         selectedSignals: selectedSignalIds,
-        ageBand: effectiveAgeRange
-          ? { min: effectiveAgeRange.min, max: effectiveAgeRange.max }
-          : null,
+        ageBand: curatedAgeBand,
       }),
     [
-      effectiveAgeRange,
-      refinedMatches,
+      podiumPool,
       hasSafeResults,
       curatedTiers,
       activeQueixas,
       curatedAgeMonths,
+      curatedAgeBand,
       selectedSignalIds,
     ],
+  );
+  const auditedPodium = podiumDetail.podium;
+  // Explicação do trio e lacunas honestas (papel, encaixe etário, sinais e teto).
+  const podiumAudit = useMemo(
+    () =>
+      auditPodium({
+        podium: podiumDetail,
+        candidates: podiumPool,
+        selectedQueixas: activeQueixas,
+        selectedSignals: selectedSignalIds,
+        selection: { exactAge: curatedAgeMonths, ageBand: curatedAgeBand },
+        queixaLabel: (id) => queixas.find((q) => q.id === id)?.label ?? id,
+        signalLabel: (id) => getFilterSignalLabels(activeQueixas, [id])[0] ?? id,
+      }),
+    [podiumDetail, podiumPool, activeQueixas, selectedSignalIds, curatedAgeMonths, curatedAgeBand],
   );
 
   // Síntese clínica referencia o Ouro do pódio directamente (elimina divergência).
@@ -1801,6 +1821,10 @@ export default function FiltroPage() {
 
   // Linhas estruturadas para exportação (PDF/CSV) — só escalas que abrem, com
   // os mesmos qualificadores clínicos exibidos nos cards.
+  const medalOf = (slotLabel: string): MedalAudit | undefined => {
+    const key = PODIUM_SLOT_KEY[slotLabel as Slot];
+    return key ? podiumAudit.medals.find((m) => m.slot === key) : undefined;
+  };
   const exportRows: FilterExportRow[] = ranking
     .filter((r) => r.hasScale && r.scale)
     .map((r) => {
@@ -1817,6 +1841,8 @@ export default function FiltroPage() {
         scoringCutoff: s.scoringCutoff ?? "",
         fonte: s.fonte ?? "",
         reason: r.reason ?? "",
+        papel: medalOf(r.slot)?.roleLabel ?? "",
+        compatibilidadeEtaria: medalOf(r.slot)?.ageFitLabel ?? "",
       };
     });
 
@@ -1830,6 +1856,7 @@ export default function FiltroPage() {
     respondente: selectedRespondente ?? "qualquer",
     generatedAtLabel: new Date().toLocaleDateString("pt-BR"),
     qualitativeReport: qualitativeReportText,
+    lacunas: podiumAudit.gaps.map((gap) => gap.message),
   });
 
   const exportCsv = () => {
@@ -3037,6 +3064,51 @@ export default function FiltroPage() {
                 </CardContent>
               </Card>
             ) : (
+              <>
+              {podiumExcluded.length > 0 && (
+                <div className="mb-2 flex flex-wrap items-center gap-2 text-[12px]" data-testid="filter-podium-swapped">
+                  <span>
+                    Pódio recalculado sem {podiumExcluded.length} escala(s) trocada(s) por você.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setPodiumExcluded([])}
+                    className="inline-flex min-h-7 items-center rounded-md border border-border px-2 font-semibold hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                  >
+                    Restaurar pódio sugerido
+                  </button>
+                </div>
+              )}
+              {podiumAudit.gaps.length > 0 && (
+                <div
+                  className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] leading-snug text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200"
+                  data-testid="filter-podium-gaps"
+                >
+                  <strong>Lacunas e avisos do trio:</strong>
+                  <ul className="mt-1 list-disc space-y-0.5 pl-4">
+                    {podiumAudit.gaps.map((gap, index) => (
+                      <li key={gap.kind + "-" + index}>
+                        {gap.message}
+                        {gap.alternativeId && (() => {
+                          const scale = podiumPool.find((match) => match.scale.id === gap.alternativeId)?.scale;
+                          if (!scale) return null;
+                          const route = resolveAppRoute(scale) ?? "/generic-scale/" + scale.id;
+                          return (
+                            <Link
+                              href={route}
+                              onClick={() => rememberOpened(scale, route)}
+                              data-testid="filter-signal-alternative"
+                              className="ml-1 font-semibold underline underline-offset-2"
+                            >
+                              Abrir alternativa fora do trio
+                            </Link>
+                          );
+                        })()}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               <div className="filter-260-grid">
                 {ranking.map((item) => {
                   const reasons = item.hasScale
@@ -3176,6 +3248,25 @@ export default function FiltroPage() {
                             <strong>Motivo:</strong> {item.reason}
                           </div>
                         )}
+                        {item.hasScale && (() => {
+                          const medal: MedalAudit | undefined = podiumAudit.medals.find(
+                            (m) => m.slot === PODIUM_SLOT_KEY[item.slot as Slot],
+                          );
+                          if (!medal) return null;
+                          return (
+                            <>
+                              <div className="filter-260-evidence" data-testid="medal-role">
+                                <strong>{medal.roleLabel}:</strong> {medal.addsLabel}
+                              </div>
+                              <div className="filter-260-why" data-testid="medal-practical">
+                                <strong>Quem responde:</strong> {medal.respondentLabel} ·{" "}
+                                <strong>Tempo:</strong> {medal.timeLabel} ·{" "}
+                                <strong>Idade:</strong> {medal.ageFitLabel} ·{" "}
+                                <strong>Itens:</strong> {medal.questionCountLabel}
+                              </div>
+                            </>
+                          );
+                        })()}
                         {item.hasScale && item.clinicalReason && (
                           <div className="filter-260-evidence">
                             <strong>Por que ranqueou:</strong>{" "}
@@ -3226,6 +3317,19 @@ export default function FiltroPage() {
                               <Star className={`h-4 w-4 ${favoriteSet.has(item.scale.id) ? "fill-amber-400 text-amber-500" : ""}`} aria-hidden="true" />
                             </button>
                           )}
+                          {item.hasScale && item.scale && ["Ouro", "Prata", "Bronze"].includes(item.slot) && (
+                            <button
+                              type="button"
+                              data-testid="medal-swap"
+                              onClick={() => {
+                                const id = item.scale!.id;
+                                setPodiumExcluded((prev) => (prev.includes(id) ? prev : [...prev, id]));
+                              }}
+                              className="mr-2 inline-flex min-h-6 items-center rounded-md border border-border px-1.5 text-[11px] font-semibold text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                            >
+                              Trocar esta escala
+                            </button>
+                          )}
                           {item.hasScale ? (
                             <Link
                               href={item.route}
@@ -3252,6 +3356,7 @@ export default function FiltroPage() {
                   );
                 })}
               </div>
+              </>
             )}
 
             {/* Comparação lado a lado — 2 a 3 escalas recomendadas, atributo a

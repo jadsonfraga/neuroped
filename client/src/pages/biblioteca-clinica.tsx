@@ -1,26 +1,37 @@
 import { useEffect, useMemo, useState } from "react";
 import TeaTimidezChapter from "@/components/biblioteca-clinica-tea-timidez";
 import DesatencaoImaturidadeChapter from "@/components/biblioteca-clinica-desatencao-imaturidade";
+import PrimeiraCriseAfebrilChapter from "@/components/biblioteca-clinica-primeira-crise-afebril";
+import AlfabetizacaoDislexiaChapter from "@/components/biblioteca-clinica-alfabetizacao-dislexia";
+import AnsiedadeSeparacaoChapter from "@/components/biblioteca-clinica-ansiedade-separacao";
+import AudicaoUrgenteChapter from "@/components/biblioteca-clinica-audicao-urgente";
+import InsoniaPreEscolarChapter from "@/components/biblioteca-clinica-insonia-pre-escolar";
+import WiscIndicesDia09Chapter from "@/components/biblioteca-clinica-wisc-dia09";
+import AgressividadeDia10Chapter from "@/components/biblioteca-clinica-agressividade-dia10";
+import CefaleiaDia11Chapter from "@/components/biblioteca-clinica-cefaleia-dia11";
+import AtrasoFalaAvaliacaoGlobalChapter from "@/components/biblioteca-clinica-atraso-fala";
 import {
   ArrowRight, BookOpen, BrainCircuit, ChevronRight,
   CircleAlert, Clock3, FileText, Layers3, Lightbulb, LockKeyhole,
   Microscope, Search, ShieldCheck, Sparkles,
 } from "lucide-react";
 import {
-  clinicalConditions, clinicalLibraryChapters, nextClinicalTopics,
+  clinicalConditions, clinicalLibraryAnchorForSlug, clinicalLibraryChapters,
+  clinicalLibraryEarlierStudies, clinicalLibraryStatusLabel, clinicalLibraryTrail, nextClinicalTopics,
   wiscCheckpoints, wiscFictionalCases, wiscIndices, wiscReferences,
-  type WiscIndexKey,
+  type ClinicalLibraryChapter, type WiscIndexKey,
 } from "@/data/clinicalLibrary";
 
 const indexTheme: Record<WiscIndexKey, { panel: string; ink: string; tile: string; progress: string }> = {
-  ICV: { panel: "border-sky-200 bg-sky-50 dark:border-sky-900 dark:bg-sky-950/40", ink: "text-sky-800 dark:text-sky-200", tile: "bg-sky-600", progress: "bg-sky-500" },
-  IOP: { panel: "border-teal-200 bg-teal-50 dark:border-teal-900 dark:bg-teal-950/40", ink: "text-teal-800 dark:text-teal-200", tile: "bg-teal-600", progress: "bg-teal-500" },
-  IMO: { panel: "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40", ink: "text-amber-800 dark:text-amber-200", tile: "bg-amber-600", progress: "bg-amber-500" },
-  IVP: { panel: "border-rose-200 bg-rose-50 dark:border-rose-900 dark:bg-rose-950/40", ink: "text-rose-800 dark:text-rose-200", tile: "bg-rose-600", progress: "bg-rose-500" },
+  ICV: { panel: "border-sky-200 bg-sky-50 dark:border-sky-900 dark:bg-sky-950/40", ink: "text-sky-800 dark:text-sky-200", tile: "bg-sky-700", progress: "bg-sky-500" },
+  IOP: { panel: "border-teal-200 bg-teal-50 dark:border-teal-900 dark:bg-teal-950/40", ink: "text-teal-800 dark:text-teal-200", tile: "bg-teal-700", progress: "bg-teal-500" },
+  IMO: { panel: "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40", ink: "text-amber-800 dark:text-amber-200", tile: "bg-amber-700", progress: "bg-amber-500" },
+  IVP: { panel: "border-rose-200 bg-rose-50 dark:border-rose-900 dark:bg-rose-950/40", ink: "text-rose-800 dark:text-rose-200", tile: "bg-rose-700", progress: "bg-rose-500" },
 };
 
-function Kicker({ children }: { children: React.ReactNode }) {
-  return <p className="text-[11px] font-black uppercase tracking-[.18em] text-teal-700 dark:text-teal-300">{children}</p>;
+function Kicker({ children, onDark = false }: { children: React.ReactNode; onDark?: boolean }) {
+  // Sobre o fundo azul-marinho fixo, teal-700 não atinge contraste AA: usar tom claro.
+  return <p className={`text-[11px] font-black uppercase tracking-[.18em] ${onDark ? "text-teal-200" : "text-teal-700 dark:text-teal-300"}`}>{children}</p>;
 }
 
 function SectionTitle({ id, number, title, summary }: { id: string; number: string; title: string; summary: string }) {
@@ -83,7 +94,7 @@ function IndexExplorer() {
             className={`rounded-2xl border p-4 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 ${active === item.key ? `${indexTheme[item.key].panel} ring-2 ring-teal-600/30` : "border-slate-200 bg-white hover:border-teal-400 dark:border-slate-700 dark:bg-slate-900"}`}>
             <span className={`inline-flex rounded-lg px-2.5 py-1 text-xs font-black text-white ${indexTheme[item.key].tile}`}>{item.key}</span>
             <span className="mt-3 block text-sm font-bold text-slate-900 dark:text-slate-100">{item.name}</span>
-            <span className="mt-1 block text-xs leading-5 text-slate-500 dark:text-slate-400">{item.subtitle}</span>
+            <span className="mt-1 block text-xs leading-5 text-slate-600 dark:text-slate-300">{item.subtitle}</span>
           </button>
         ))}
       </div>
@@ -181,15 +192,97 @@ function ReviewChecklist() {
   );
 }
 
+function normalizeSearch(text: string): string {
+  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+function prefersReducedMotion(): boolean {
+  try {
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Leva o leitor ao capítulo pela âncora estável e move o foco para o <article>,
+ * para que teclado e leitor de tela continuem a partir do conteúdo escolhido.
+ */
+function focusChapter(anchor: string, smooth: boolean): boolean {
+  const target = document.getElementById(anchor);
+  if (!target) return false;
+  target.scrollIntoView({ block: "start", behavior: smooth && !prefersReducedMotion() ? "smooth" : "auto" });
+  if (!target.hasAttribute("tabindex")) {
+    // Alvo de foco programático, não controle interativo: sem contorno no artigo inteiro.
+    target.setAttribute("tabindex", "-1");
+    target.style.outline = "none";
+  }
+  target.focus({ preventScroll: true });
+  return true;
+}
+
+/**
+ * `?capitulo=` do link profundo. Normalmente vem dentro do hash
+ * (`#/biblioteca-clinica?capitulo=…`), mas o retorno do login reescreve a URL
+ * para `/?capitulo=…#/biblioteca-clinica`; sem esta segunda leitura, quem abria
+ * o link compartilhado antes de entrar perdia o capítulo escolhido.
+ */
+function selectedChapterSlug(): string | null {
+  const fromHash = new URLSearchParams(window.location.hash.split("?")[1] ?? "").get("capitulo");
+  return fromHash ?? new URLSearchParams(window.location.search).get("capitulo");
+}
+
+function formatDate(iso: string): string {
+  return iso.split("-").reverse().join("/");
+}
+
+function CatalogCard({ item }: { item: ClinicalLibraryChapter }) {
+  const inReview = item.status === "revisao_medica";
+  return (
+    <a
+      href={`#/biblioteca-clinica?capitulo=${item.slug}`}
+      data-testid={`biblioteca-card-${item.slug}`}
+      onClick={(event) => {
+        event.preventDefault();
+        window.history.replaceState(null, "", "#/biblioteca-clinica?capitulo=" + encodeURIComponent(item.slug));
+        focusChapter(item.anchor, true);
+      }}
+      className="group flex flex-col gap-4 rounded-[1.4rem] border border-slate-200 bg-white p-5 text-left shadow-sm hover:border-teal-500 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 sm:flex-row sm:items-center dark:border-slate-700 dark:bg-slate-900"
+    >
+      <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-2xl bg-teal-50 text-teal-800 dark:bg-teal-950 dark:text-teal-200">
+        {item.day
+          ? <><span className="text-[10px] font-bold uppercase tracking-wider">Dia</span><span className="text-2xl font-black leading-none">{String(item.day).padStart(2, "0")}</span></>
+          : <span className="text-xs font-black uppercase tracking-wider">Prévio</span>}
+      </div>
+      <div className="min-w-0 flex-1">
+        <span className="text-[10px] font-black uppercase tracking-[.14em] text-teal-700 dark:text-teal-300">{item.category} · {formatDate(item.date)}</span>
+        <h4 className="mt-1 text-lg font-bold text-slate-900 dark:text-slate-100">{item.title}</h4>
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{item.subtitle}</p>
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+          <Clock3 className="h-3.5 w-3.5" aria-hidden="true" /> {item.minutes} min de leitura <span aria-hidden="true">·</span>
+          <span data-testid="biblioteca-card-status" className={inReview ? "font-semibold text-amber-700 dark:text-amber-200" : "font-semibold text-teal-700 dark:text-teal-200"}>{clinicalLibraryStatusLabel[item.status]}</span>
+        </div>
+      </div>
+      <ArrowRight className="hidden h-5 w-5 text-teal-700 sm:block" aria-hidden="true" />
+    </a>
+  );
+}
+
 export default function BibliotecaClinicaPage() {
   const [query, setQuery] = useState("");
-  const entries = useMemo(() => clinicalLibraryChapters.filter(ch => (ch.title + " " + ch.subtitle + " " + ch.category).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(query.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase())), [query]);
+  const needle = normalizeSearch(query);
+  const { trail, earlier } = useMemo(() => {
+    const matches = (ch: ClinicalLibraryChapter) => normalizeSearch(ch.title + " " + ch.subtitle + " " + ch.category).includes(needle);
+    return { trail: clinicalLibraryTrail.filter(matches), earlier: clinicalLibraryEarlierStudies.filter(matches) };
+  }, [needle]);
   const chapter = clinicalLibraryChapters.find(item => item.slug === "wisc-iv-interpretacao-neuropediatria") ?? clinicalLibraryChapters[0];
+  const allInReview = clinicalLibraryChapters.every((item) => item.status === "revisao_medica");
+  const lastUpdate = clinicalLibraryChapters.map((item) => item.date).sort().at(-1) ?? "";
+  const nextDay = (clinicalLibraryTrail.at(-1)?.day ?? 0) + 1;
   useEffect(() => {
     const scrollToSelected = () => {
-      const slug = new URLSearchParams(window.location.hash.split("?")[1] ?? "").get("capitulo");
-      const target = slug === "tea-timidez-primeira-infancia" ? "capitulo-tea-timidez" : slug === "desatencao-imaturidade-etaria" ? "capitulo-desatencao-imaturidade" : slug === "wisc-iv-interpretacao-neuropediatria" ? "capitulo-wisc" : null;
-      if (target) requestAnimationFrame(() => document.getElementById(target)?.scrollIntoView({ block: "start" }));
+      const target = clinicalLibraryAnchorForSlug(selectedChapterSlug());
+      if (target) requestAnimationFrame(() => focusChapter(target, false));
     };
     scrollToSelected();
     window.addEventListener("hashchange", scrollToSelected);
@@ -197,7 +290,7 @@ export default function BibliotecaClinicaPage() {
   }, []);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-10 px-3 pb-16 pt-3 sm:px-6 sm:pt-6">
+    <div data-testid="biblioteca-clinica-page" className="mx-auto max-w-6xl space-y-10 px-3 pb-16 pt-3 sm:px-6 sm:pt-6">
       <div className="relative overflow-hidden rounded-[2rem] bg-[#102438] p-6 text-white shadow-xl sm:p-10">
         <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full border-[50px] border-teal-400/10" />
         <div className="relative">
@@ -207,7 +300,7 @@ export default function BibliotecaClinicaPage() {
           <div className="mt-6 flex flex-wrap gap-2 text-xs">
             <span className="rounded-full bg-teal-500/20 px-3 py-2 text-teal-100"><Layers3 className="mr-1 inline h-4 w-4" /> Capítulos versionados</span>
             <span className="rounded-full bg-white/10 px-3 py-2 text-slate-100"><Microscope className="mr-1 inline h-4 w-4" /> Evidência e limites</span>
-            <span className="rounded-full bg-white/10 px-3 py-2 text-slate-100"><ShieldCheck className="mr-1 inline h-4 w-4" /> Revisão médica</span>
+            <span data-testid="biblioteca-review-badge" className="rounded-full border border-amber-200/40 bg-amber-300/10 px-3 py-2 font-semibold text-amber-100"><CircleAlert className="mr-1 inline h-4 w-4" aria-hidden="true" /> {allInReview ? "Material educacional em revisão médica" : "Estado de revisão indicado em cada capítulo"}</span>
           </div>
         </div>
       </div>
@@ -217,21 +310,36 @@ export default function BibliotecaClinicaPage() {
           <div><Kicker>Estante de conhecimento</Kicker><h2 id="catalog-title" className="mt-1 font-serif text-2xl font-bold text-slate-900 dark:text-slate-100">Capítulos</h2></div>
           <label className="relative block w-full max-w-xs"><span className="sr-only">Buscar capítulos</span><Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-slate-400" /><input type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Buscar assunto..." className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white" /></label>
         </div>
-        <div className="grid gap-3">
-          {entries.length === 0 && <p className="rounded-2xl border border-slate-200 p-6 text-sm text-slate-500">Nenhum capítulo encontrado.</p>}
-          {entries.map((item) => (
-            <a key={item.slug} href={`#/${"biblioteca-clinica"}?capitulo=${item.slug}`} onClick={(event) => { event.preventDefault(); window.history.replaceState(null, "", "#/biblioteca-clinica?capitulo=" + encodeURIComponent(item.slug)); document.getElementById(item.day === 1 ? "capitulo-tea-timidez" : item.day === 2 ? "capitulo-desatencao-imaturidade" : "capitulo-wisc")?.scrollIntoView({ behavior: "smooth" }); }}
-              className="group flex flex-col gap-4 rounded-[1.4rem] border border-slate-200 bg-white p-5 text-left shadow-sm hover:border-teal-500 hover:shadow-md sm:flex-row sm:items-center dark:border-slate-700 dark:bg-slate-900">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-2xl font-black text-teal-800 dark:bg-teal-950 dark:text-teal-200">{item.day ? String(item.day).padStart(2, "0") : "PRÉVIO"}</div>
-              <div className="flex-1"><span className="text-[10px] font-black uppercase tracking-[.14em] text-teal-700 dark:text-teal-300">{item.category} · {item.date.split("-").reverse().join("/")}</span><h3 className="mt-1 text-lg font-bold text-slate-900 dark:text-slate-100">{item.title}</h3><p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{item.subtitle}</p><div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400"><Clock3 className="h-3.5 w-3.5" /> {item.minutes} min de leitura <span aria-hidden="true">·</span> <span className="font-semibold text-amber-700 dark:text-amber-200">Revisão médica pendente</span></div></div>
-              <ArrowRight className="hidden h-5 w-5 text-teal-700 sm:block" aria-hidden="true" />
-            </a>
-          ))}
-        </div>
+        {trail.length === 0 && earlier.length === 0 && <p role="status" className="rounded-2xl border border-slate-200 p-6 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">Nenhum capítulo encontrado.</p>}
+        {trail.length > 0 && (
+          <>
+            <h3 id="trail-title" className="mb-3 text-sm font-bold uppercase tracking-[.14em] text-slate-700 dark:text-slate-200">Trilha 365 · {trail.length === clinicalLibraryTrail.length ? `${trail.length} capítulos` : `${trail.length} de ${clinicalLibraryTrail.length} capítulos`}</h3>
+            <ol aria-labelledby="trail-title" data-testid="biblioteca-trilha" className="grid gap-3">
+              {trail.map((item) => <li key={item.slug}><CatalogCard item={item} /></li>)}
+            </ol>
+          </>
+        )}
+        {earlier.length > 0 && (
+          <>
+            <h3 id="earlier-title" className="mb-3 mt-8 text-sm font-bold uppercase tracking-[.14em] text-slate-700 dark:text-slate-200">Estudo anterior à Trilha 365</h3>
+            <ul aria-labelledby="earlier-title" data-testid="biblioteca-estudos-previos" className="grid gap-3">
+              {earlier.map((item) => <li key={item.slug}><CatalogCard item={item} /></li>)}
+            </ul>
+          </>
+        )}
       </section>
 
       <TeaTimidezChapter />
       <DesatencaoImaturidadeChapter />
+      <PrimeiraCriseAfebrilChapter />
+      <AlfabetizacaoDislexiaChapter />
+      <AnsiedadeSeparacaoChapter />
+      <AudicaoUrgenteChapter />
+      <InsoniaPreEscolarChapter />
+      <AgressividadeDia10Chapter />
+      <CefaleiaDia11Chapter />
+      <WiscIndicesDia09Chapter />
+      <AtrasoFalaAvaliacaoGlobalChapter />
 
       <article id="capitulo-wisc" aria-labelledby="wisc-title" className="scroll-mt-20 space-y-12">
         <header className="rounded-[1.5rem] border-l-4 border-amber-500 bg-amber-50 p-5 dark:bg-amber-950/30">
@@ -308,7 +416,7 @@ export default function BibliotecaClinicaPage() {
         </section>
 
         <section className="rounded-[1.6rem] bg-[#12253c] p-6 text-white sm:p-8">
-          <Kicker>Conclusão que fica</Kicker>
+          <Kicker onDark>Conclusão que fica</Kicker>
           <blockquote className="mt-3 font-serif text-xl leading-9 sm:text-2xl">“O gráfico ajuda a formular perguntas. O diagnóstico exige história, critérios clínicos e funcionalidade.”</blockquote>
           <p className="mt-4 text-sm leading-7 text-slate-300">Em crianças com potencial de raciocínio preservado e eficiência reduzida, a intervenção deve mirar as barreiras demonstradas — não um rótulo inferido do índice.</p>
         </section>
@@ -317,9 +425,9 @@ export default function BibliotecaClinicaPage() {
       <section aria-labelledby="future-topics" className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 dark:border-slate-700 dark:bg-slate-900">
         <div className="flex items-center gap-2"><FileText className="h-5 w-5 text-teal-700 dark:text-teal-300" /><h2 id="future-topics" className="font-serif text-xl font-bold text-slate-900 dark:text-white">Próximos temas na pauta editorial</h2></div>
         <p className="mt-2 text-sm leading-7 text-slate-600 dark:text-slate-300">A sequência abaixo segue o índice canônico de 365 perguntas. Conteúdos educacionais podem ser exibidos como material em revisão médica; somente o aceite médico explícito autoriza classificá-los como validados clinicamente.</p>
-        <div className="mt-4 grid gap-2 sm:grid-cols-2">{nextClinicalTopics.slice(0, 6).map((topic, i) => <div key={topic} className="flex items-start gap-3 rounded-xl bg-white p-3 dark:bg-slate-800"><span className="text-xs font-bold text-teal-700 dark:text-teal-300">{String(i + 2).padStart(2, "0")}</span><span className="text-sm text-slate-800 dark:text-slate-200">{topic}</span></div>)}</div>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">{nextClinicalTopics.slice(0, 6).map((topic, i) => <div key={topic} className="flex items-start gap-3 rounded-xl bg-white p-3 dark:bg-slate-800"><span className="text-xs font-bold text-teal-700 dark:text-teal-300">{String(i + nextDay).padStart(2, "0")}</span><span className="text-sm text-slate-800 dark:text-slate-200">{topic}</span></div>)}</div>
       </section>
-      <p className="text-center text-xs text-slate-500">Biblioteca clínica NeuroPed · Conteúdo educacional sujeito à revisão médica · 29/10/2026</p>
+      <p className="text-center text-xs text-slate-500">Biblioteca clínica NeuroPed · Conteúdo educacional sujeito à revisão médica · atualizada em {formatDate(lastUpdate)}</p>
     </div>
   );
 }

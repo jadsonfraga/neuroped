@@ -12,6 +12,14 @@ assert.equal(at("/planos"), "/#/planos");
 assert.equal(at("/termos-de-uso"), "/#/termos-de-uso");
 assert.equal(at("/paciente/abc-123"), "/#/paciente/abc-123");
 
+// A rota canônica de clínica preserva provider, fixa a clínica do caminho e
+// continua chegando ao mesmo componente público por hash.
+assert.equal(at("/c/clinica-alfa/agendar"), "/#/agendar?clinic=clinica-alfa");
+assert.equal(at("/c/clinica-alfa/agendar/", "?provider=prof-1"), "/#/agendar?provider=prof-1&clinic=clinica-alfa");
+assert.equal(at("/c/clinica-alfa/agendar", "?provider=prof-1&clinic=clinica-beta"), "/#/agendar?provider=prof-1&clinic=clinica-alfa");
+assert.equal(at("/c/CLINICA_ALFA/agendar"), null, "slug fora do contrato não deve virar rota");
+assert.equal(at("/c/clinica-alfa/agenda"), "/#/c/clinica-alfa/agenda", "caminhos seguros não canônicos preservam o comportamento legado");
+
 // Já roteado por hash ou na raiz: nada muda.
 assert.equal(at("/", "", "#/agendar"), null);
 assert.equal(at("/agendar", "", "#/planos"), null);
@@ -26,6 +34,7 @@ for (const path of ["/nesplora", "/nesplora/index.html", "/obs10-global/", "/int
 
 // Callback do SNCR (session_id na query) é consumido em outro ponto.
 assert.equal(at("/receita-c1", "?session_id=abc"), null);
+assert.equal(at("/c/clinica-alfa/agendar", "?session_id=abc"), null);
 
 // Caminhos estranhos não viram hash.
 assert.equal(at("/<script>"), null);

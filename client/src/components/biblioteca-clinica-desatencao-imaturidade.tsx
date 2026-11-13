@@ -47,7 +47,7 @@ export default function DesatencaoImaturidadeChapter() {
         </div>
       </section>
       <section><Heading n="03" title="Fluxograma decisório" />
-        <div aria-label="Fluxo clínico para diferenciar desatenção de imaturidade etária" className="rounded-[1.6rem] bg-[#12253c] p-4 text-white sm:p-7">
+        <div role="group" aria-label="Fluxo clínico para diferenciar desatenção de imaturidade etária" className="rounded-[1.6rem] bg-[#12253c] p-4 text-white sm:p-7">
           <div className="mx-auto max-w-xl rounded-xl border border-amber-300/40 bg-amber-300/10 p-4 text-center font-bold text-amber-100">Queixa de desatenção</div>
           <ArrowDown className="mx-auto my-3 h-5 w-5 text-amber-200" aria-hidden="true" />
           <div className="grid gap-3 md:grid-cols-3">

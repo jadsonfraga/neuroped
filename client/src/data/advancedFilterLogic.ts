@@ -14,8 +14,8 @@ import {
   type ImplementationStatus,
 } from "./scaleFilter";
 import { INTERACTIVE_SCALE_IDS } from "./interactiveScaleIds.generated";
-import { getAllSignalsForQueixa } from "./signalsAndSymptoms";
-import { popularSymptomById } from "./popularSymptoms";
+import { resolveFilterSignals } from "./filterSignalState";
+import { scaleAgeFit } from "./scaleAgeFit";
 
 export const SAFE_EMPTY_MESSAGE =
   "Nenhuma escala segura encontrada para este perfil. Revise idade, queixa ou respondente.";
@@ -549,7 +549,9 @@ export function clinicalHardBlock(
   // TDAH clássico como queixa principal: não recomendado abaixo de 4 anos (48 meses).
   // Bloqueia escalas que entram pelo TDAH, salvo se o usuário também pediu outra
   // queixa (comportamento/atraso/etc.) que a própria escala cobre — aí ela entra por essa via.
-  if (age !== null && age < 48 && scale.queixas.includes("tdah")) {
+  // Em faixa, avalia o extremo mais novo (youngestAge), como as demais travas: o
+  // ponto médio da faixa nunca decide uma trava de segurança.
+  if (youngestAge !== null && youngestAge < 48 && scale.queixas.includes("tdah")) {
     const matchesOtherSelectedQueixa = ctx.queixas.some(
       (q) => q !== "tdah" && scale.queixas.includes(q),
     );
@@ -658,20 +660,12 @@ function tokensFromText(value: string): Set<string> {
 }
 
 function selectedSignalText(ctx: SignalMatchContext): string {
-  const ids = new Set(ctx.selectedSignals || []);
-  const labels: string[] = [];
-  for (const queixa of ctx.queixas) {
-    for (const signal of getAllSignalsForQueixa(queixa)) {
-      if (ids.has(signal.id)) labels.push(signal.label, signal.description);
-    }
-  }
-  // Sintomas populares (linguagem de pai/mãe) — resolve o rótulo pelo id para
-  // que a marcação também case por token com a descrição/tags da escala.
-  for (const id of ids) {
-    const popular = popularSymptomById[id];
-    if (popular) labels.push(popular.label);
-  }
-  return [...ids, ...labels].join(" ");
+  const ids = ctx.selectedSignals || [];
+  const resolved = resolveFilterSignals(ctx.queixas, ids);
+  return [
+    ...ids,
+    ...resolved.flatMap((signal) => [signal.label, signal.description ?? ""]),
+  ].join(" ");
 }
 
 // Fonte ÚNICA de signalTags: une as tags inline da escala (scale.signalTags)
@@ -792,16 +786,8 @@ export function scaleCoversSelectedSignalExactly(
   if (!ctx.selectedSignals?.length) return false;
   const forms = new Set<string>();
   for (const raw of ctx.selectedSignals) forms.add(normalizeClinicalText(raw));
-  for (const queixa of ctx.queixas) {
-    for (const signal of getAllSignalsForQueixa(queixa)) {
-      if (ctx.selectedSignals.includes(signal.id)) {
-        forms.add(normalizeClinicalText(signal.label));
-      }
-    }
-  }
-  for (const id of ctx.selectedSignals) {
-    const popular = popularSymptomById[id];
-    if (popular) forms.add(normalizeClinicalText(popular.label));
+  for (const signal of resolveFilterSignals(ctx.queixas, ctx.selectedSignals)) {
+    forms.add(normalizeClinicalText(signal.label));
   }
   return allSignalTags(scale).some((tag) => forms.has(normalizeClinicalText(tag)));
 }
@@ -868,8 +854,24 @@ export function calculateRefinedScore(
   let score = 0;
 
   // 1. Compatibilidade etária (0–30).
+  // Idade EXATA (ctx.ageMonths) governa quando informada. Sem idade exata, em faixa,
+  // pontua a COBERTURA da faixa inteira: cobrir toda a faixa vale mais que cobrir
+  // só parte dela. Nunca usa ponto médio de faixa como idade.
   const age = ctx.ageMonths;
-  if (age === null) {
+  if (age === null && ctx.ageBand) {
+    const bandFit = scaleAgeFit(scale, { ageBand: ctx.ageBand });
+    if (bandFit === "full") {
+      score += 26;
+      reasons.push("Cobre toda a faixa selecionada");
+    } else if (bandFit === "partial") {
+      // Sobreposição parcial: a trava de idade já exige sobreposição (clinicalHardBlock).
+      score += 14;
+      reasons.push("Cobre parte da faixa selecionada");
+    } else {
+      // Sem sobreposição: só aparece em diagnóstico de candidata já bloqueada.
+      reasons.push("Fora da faixa selecionada");
+    }
+  } else if (age === null) {
     score += 18;
   } else {
     const rangeSize = Math.max(1, scale.ageMax - scale.ageMin);
@@ -1062,7 +1064,7 @@ export function calculateRefinedScore(
 function calculateConfidenceLevel(ctx: FilterContext, score: number): number {
   const completeness =
     (ctx.queixas.length > 0 ? 1 : 0) +
-    (ctx.ageMonths !== null ? 1 : 0) +
+    (ctx.ageMonths !== null || ctx.ageBand ? 1 : 0) +
     (ctx.respondente ? 1 : 0) +
     (ctx.assessmentUse ? 1 : 0) +
     (ctx.selectedSignals?.length ? 1 : 0);
@@ -1352,7 +1354,9 @@ export function detectClinicalPattern(context: FilterContext): string {
   }
 
   if (queixas.includes("depressao")) {
-    if (context.ageMonths !== null && context.ageMonths >= 144)
+    // Em faixa, o rótulo usa o extremo mais novo (como as travas de segurança).
+    const youngest = context.ageMonths ?? context.ageBand?.min ?? null;
+    if (youngest !== null && youngest >= 144)
       return "Depressão no adolescente";
     return "Humor deprimido";
   }

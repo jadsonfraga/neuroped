@@ -1044,3 +1044,221 @@ reaplica código e teste sobre main, preserva S2–S22 e requer nova CI.
   completo (0 `not ok`).
 - Fixtures 100% sintéticas (nomes de teste, sem PHI).
 - Rollback: reverter o commit; sem migração, sem efeito em dado persistido.
+
+
+## OPS-03-D (ciclo 9, 2026-10-01) — visão unificada do dia para recepção multiprofissional
+
+- **Entrega reconciliada:** a PR [#1069](https://github.com/jadsonfraga/neuroped/pull/1069), merge commit `738180a995dbd8bfcefcebf30abe5d37f49ac71f`, concluiu a etapa D da issue [#1064](https://github.com/jadsonfraga/neuroped/issues/1064). A PR passou em **21 checks**, incluindo TypeScript, build, lint, contratos de navegação, persistência no browser, isolamento LIVE e os testes específicos da agenda.
+- **Escopo:** `client/src/components/AgendaUnifiedDay.tsx`, `client/src/lib/agendaUnifiedDay.ts`, alterações isoladas em `client/src/pages/agenda.tsx`, `tests/unit/agenda-unified-day.test.ts`, reforços no E2E `tests/e2e/agenda-multi-provider.mjs` e no contrato estático. Não houve migração nova nem mudança no modelo de autorização da etapa A/B/C.
+- **Contrato funcional provado:** `buildUnifiedDay` reúne as agendas escolhidas para a mesma data, ordena por horário e nome do profissional, descarta cancelamentos e faltas, preserva fusos distintos como aviso, mantém chaves sem colisão quando dois profissionais têm o mesmo ID de consulta e limita a quantidade de profissionais exibidos.
+- **Fail-closed provado:** a função não rotula uma resposta pertencente ao profissional A como se fosse do profissional B; descarta consultas intrusas, marca fonte com `access` ausente ou proprietário divergente como erro, e mantém os dados dos demais profissionais quando uma fonte está carregando ou falha.
+- **Fixtures e privacidade:** o teste usa nomes e IDs sintéticos, `patientId: null` e nenhum dado de paciente real. A recepção continua recebendo DTO redigido; a etapa D apenas compõe no cliente as respostas já filtradas pelo contexto servidor/profissional validado nas etapas anteriores.
+- **Limites remanescentes:** ainda faltam censo pós-deploy no D1 de produção, teste manual com dois vínculos reais, teste em dispositivo móvel e validação de leitor de tela. Esses itens permanecem explicitamente fora da prova automatizada; não são declarados como concluídos por esta evidência.
+- **Rollback:** reverter a PR #1069 remove a visão unificada do dia e retorna à agenda por profissional, sem migração adicional. As etapas A/B/C continuam independentes e não devem ser revertidas junto.
+
+
+### S13-R (ciclo 10, 2026-11-01) — alias canônico `/c/:clinicSlug/agendar`
+
+A lacuna de compartilhamento de rota foi reduzida sem migração de banco: o
+adaptador `client/src/lib/pathDeepLink.ts` reconhece somente o padrão seguro
+`/c/<slug>/agendar`, converte-o para a página pública existente `/#/agendar`
+e injeta `clinic=<slug>` na query. O `clinic` declarado no caminho substitui
+qualquer valor conflitante na query; `provider` e demais parâmetros compatíveis
+são preservados. Links legados `/agendar?...` continuam com o comportamento
+anterior, e callbacks com `session_id`, microsites estáticos e caminhos fora do
+contrato não são reescritos.
+
+A prova em `tests/unit/path-deep-link.test.ts` cobre rota canônica, barra final,
+provider preservado, conflito de clínica resolvido pelo caminho, slug inválido,
+sufixo não canônico, callbacks e todas as sentinelas de arquivos estáticos. A
+suíte passou com `node --import tsx tests/unit/path-deep-link.test.ts`,
+`npm run check`, `npm run lint` e `git diff --check`.
+
+Esta entrega não altera `booking_provider_profiles`, não troca a chave primária,
+não gera links automaticamente a partir de convites/notificações e não declara
+censo ou teste de produção concluídos. Ela é uma camada de compatibilidade de
+URL sobre o contrato S13 já existente; a persistência de links antigos permanece
+válida.
+
+
+### S10-O (ciclo 11, 2026-11-03) — delegação operacional por membership `assistant`
+
+A lacuna de escopo próprio da recepção foi reduzida sem alterar schema: uma conta
+com papel global `reader` pode operar uma agenda somente quando possui membership
+`assistant` ativa na clínica do profissional e vínculo ativo correspondente. O
+middleware, o handler e `resolveOperationsAccess` usam a mesma resolução por
+profissional e clínica; o papel global não concede escopo clínico por si só.
+
+A implementação também libera o vínculo de uma conta `reader` quando ela é
+membership `assistant` ativa, mas não transforma membership `financial` em
+recepção. `canConfigure` permanece restrito a `admin`/`professional`, portanto
+configuração de equipe, relatório financeiro, pagamentos e demais ações sensíveis
+continuam fora da delegação. Seleção explícita inválida continua respondendo
+`PROVIDER_NOT_AVAILABLE`, sem enumerar o motivo.
+
+O teste real `tests/unit/operations-multi-provider.test.ts`, com schema e
+migrações reais e fixtures sintéticas, cobre: `reader` com `assistant` ativa no
+middleware e no handler direto; `financial` recusado; manutenção dos vínculos
+existentes de `operator`; membership removida; clínica incorreta; seleção de
+profissional; locks, auditoria e isolamento já existentes. A suíte passou com
+`npm run test:operations`, `npm run check`, `npm run lint` e `git diff --check`.
+
+O escopo maior de papéis clínicos legados e o modelo completo de permissões
+`financial` continuam fora desta entrega. Não houve migração, backfill nem uso
+de PHI; rollback é reverter os quatro arquivos alterados.
+
+
+### S10-F (ciclo 12, 2026-11-04) — oportunidade de escopo financeiro ainda não resolvida
+
+A inspeção da `main` confirmou uma divergência de produto que não deve ser
+corrigida por inferência técnica: o catálogo de permissões concede `finance.read`
+ao papel de membership `financial`, enquanto o endpoint operacional
+`resource=financial_report` exige `principal.canConfigure`, atualmente limitado
+a `admin`/`professional`. Os testes existentes comprovam simultaneamente que
+a membership `financial` não possui `clinical.read`, não pode ver o quadro clínico
+e não deve ser promovida a recepção por inferência.
+
+Esta é uma **evidência de oportunidade**, não uma autorização para liberar dados:
+o relatório inclui nomes de pacientes e responsáveis e sua exportação CSV é
+registrada na trilha operacional. A decisão segura precisa definir se `financial`
+terá acesso a um relatório financeiro redigido, a um relatório completo com
+quatro olhos, ou continuará sem essa capacidade. Sem essa decisão, qualquer
+mudança de código poderia expor PHI ou contrariar o modelo de papéis.
+
+A prova atual permanece verde em `tests/unit/operations-financial-report.test.ts`,
+`tests/unit/operations-clinic-day.test.ts`, `tests/unit/clinic-branding.test.ts`,
+`npm run test:operations`, `npm run check` e `npm run lint`. O resultado é
+reprodutível com fixtures sintéticas; não houve acesso a D1 de produção nem
+mudança de permissão. O próximo incremento deve ser escolhido após decisão de
+produto sobre o nível de redação, escopo por clínica e auditoria da exportação.
+
+### Ciclo 13 — integridade operacional da cobertura E2E do Super NeuroPAD
+
+A PR [#1266](https://github.com/jadsonfraga/neuroped/pull/1266) removeu o
+script `test:e2e:super-neuropad-opcionais`, que permanecia no `package.json`
+após a extensão opcional ter deixado de existir. O roteiro falhava procurando
+a interface aposentada; a cobertura vigente continua nos fluxos principal,
+draft, circuit, acesso médico, acessibilidade e nos testes do Super NeuroPAD.
+
+A mudança foi limitada ao contrato de testes: não removeu funcionalidade de
+produto, não alterou lógica clínica, não tocou em dados persistidos e não
+contém PHI. Todos os checks obrigatórios da PR ficaram verdes antes da
+integração, incluindo build, TypeScript, qualidade, readiness de produção,
+LGPD, isolamento LIVE, ausência de PHI no navegador e reconciliação de
+contratos. A PR foi integrada em `main` como incremento de confiabilidade
+operacional.
+
+A dívida remanescente — componentes e handlers da extensão opcional que já não
+são renderizados nem chamados — permanece explicitamente fora desta correção e
+pode ser tratada em frente própria, caso a auditoria de código confirme que não
+há consumidores legítimos.
+
+### Ciclo 14 — smoke de produção ancorado no artefato implantado
+
+A PR [#1273](https://github.com/jadsonfraga/neuroped/pull/1273) corrigiu a
+observabilidade da Biblioteca Clínica: o smoke pós-deploy passa a fazer
+checkout do `workflow_run.head_sha`, isto é, do SHA efetivamente implantado,
+em vez de comparar a produção com o HEAD corrente da `main`, que pode já estar
+à frente. Isso elimina falsos positivos e falsos negativos na prova de catálogo
+publicado.
+
+A proteção mantém o comportamento fail-closed sem credenciais e não fixa lista
+ou contagem de capítulos. A validação sintética confirmou títulos, status,
+recarregamento, viewport móvel e ausência de `pageerror`; os checks obrigatórios
+ficaram verdes antes da integração. A PR foi mesclada em `main` como
+`9945cbcb`, sem alteração de lógica clínica, PHI ou dados persistidos.
+
+### Ciclo 15 — feedback fail-closed para cópia de resumo
+
+A PR [#1265](https://github.com/jadsonfraga/neuroped/pull/1265) corrigiu três
+jornadas de interface — pré-consulta, pré-retorno e recepção — que descartavam
+o retorno do helper compartilhado `copyText`. Quando o clipboard era negado ou
+indisponível, a tela podia confirmar sucesso sem que o resumo tivesse sido
+copiado. Agora cada chamada trata o resultado e apresenta aviso destrutivo de
+falha; o teste estático cobre os chamadores compartilhados e impede regressão.
+
+A prova não inspeciona nem persiste o conteúdo do clipboard e não altera a
+lógica clínica, a autorização, o backend ou dados persistidos. Os checks
+obrigatórios ficaram verdes antes da integração, incluindo qualidade, build,
+TypeScript, LGPD, isolamento LIVE e ausência de PHI no navegador. A PR foi mesclada em `main` como `924bf45f`.
+
+### Ciclo 16 — observabilidade segura do censo legado S9
+
+A PR [#1292](https://github.com/jadsonfraga/neuroped/pull/1292) passou a
+imprimir no log do job `CENSUS_AGGREGATES` com as mesmas contagens e booleanos
+do censo legado, sem e-mail, ID, nome ou conteúdo. O artefato detalhado do
+censo continua efêmero; o resumo agregado torna a confirmação de S9 observável
+para quem só possui acesso aos logs, sem transformar o log em um novo depósito
+de PHI.
+
+O teste sintético confirma que o resumo corresponde ao memo esperado e que as
+sentinelas de identidade não aparecem. A execução continua somente leitura,
+sem mutações, backfill ou atribuição de owner; a decisão de negócio sobre a
+destinação dos registros órfãos permanece bloqueada. A PR foi integrada em
+`main` como `8d6a8fba`, com os checks obrigatórios verdes.
+
+### Ciclo 17 — fundação fail-closed de auditoria clínica PANT/PANTY
+
+A PR [#1278](https://github.com/jadsonfraga/neuroped/pull/1278) adicionou uma
+fundação isolada para auditar dossiês PANT/PANTY. A auditoria bloqueia CID em
+hipótese não firmada, metas sem critério observável ou fora da janela definida,
+medicação sem revisão integral, divergência sem fontes válidas e emissão sem
+aceite médico explícito. Divergências não são apagadas para obter aprovação.
+
+A implementação não foi integrada às páginas clínicas, ao backend, ao histórico,
+ao PDF ou a qualquer persistência; portanto, não habilita fluxo clínico em
+produção. Os testes usam exclusivamente fixtures sintéticas e os checks
+obrigatórios passaram. A PR foi integrada em `main` como `f586d0db`, mantendo
+como próximo passo separado a integração autenticada, criptografada e auditada
+antes de qualquer uso com dados reais.
+
+### Ciclo 18 — receituários físicos A1/B1 com guards e numeração Visa
+
+A PR [#1306](https://github.com/jadsonfraga/neuroped/pull/1306) adicionou os
+modelos físicos de notificação A1/B1, com numeração Visa, validações de
+impressão e guards de rota. O patch inclui contratos para PAdES/ICP-ITI,
+separação das rotas de receita e testes estáticos de conformidade.
+
+A revisão preservou os limites de segurança: nenhum segredo novo foi adicionado,
+os dados de receita continuam sujeitos ao fluxo autenticado e os contratos não
+alteram a autorização clínica nem o armazenamento de PHI. Os checks obrigatórios
+passaram antes da integração, incluindo isolamento de tenant, readiness, PDF,
+TypeScript e qualidade. A PR foi mesclada em `main` como `e2dede6a`.
+
+### Ciclo 20 — conteúdo educativo sobre agressividade infantil com triagem de risco
+
+A PR [#1315](https://github.com/jadsonfraga/neuroped/pull/1315) adicionou uma
+entrada da Biblioteca Clínica sobre agressividade infantil, com fluxograma de
+risco iminente, investigação de sinais de alerta, análise funcional,
+intervenções e reavaliação. O conteúdo orienta procurar urgência diante de
+risco grave, violência, regressão, dor ou deterioração, e mantém linguagem de
+interpretação possível em vez de diagnóstico automático.
+
+A página não prescreve automaticamente, não usa dados de pacientes e explicita
+que medicação exige avaliação individual, indicação fundamentada,
+contraindicações, interações e monitorização. A tabela recebeu região acessível
+com rolagem horizontal para preservar a leitura em telas menores. A PR passou
+nos checks obrigatórios, incluindo filtros, TypeScript, qualidade, readiness,
+isolamento LIVE e ausência de PHI no navegador, e foi integrada em `main` como
+`1368bc56`.
+
+### Ciclo 19 — oportunidade de integração segura do filtro de sinais
+
+A PR [#1312](https://github.com/jadsonfraga/neuroped/pull/1312) propõe uma
+melhoria relevante para o filtro de escalas: cobertura explícita de sinais
+individuais, carga de itens auditável e alternativas seguras quando o trio não
+cobre um sinal. Os checks da PR estavam verdes, mas a integração contra a
+`main` atual não pôde ser concluída automaticamente: houve conflitos em
+`.github/workflows/filter-spiral.yml`, `filterPodium.ts`,
+`filterPodiumAudit.ts`, `filtro-engine.tsx` e `filter-quality-metrics.ts`.
+
+O merge foi abortado deliberadamente. Aceitar um lado inteiro poderia perder
+correções recentes de orçamento verificável, rótulos de carga ou contratos de
+métricas; resolver por descarte seria inadequado em lógica de apoio à decisão
+clínica. A `main` foi restaurada limpa em `40b371c9`, sem alteração parcial.
+
+Esta é uma **evidência de oportunidade bloqueada por reconciliação técnica**:
+o próximo incremento deve combinar manualmente a cobertura nova de sinais com
+a implementação já integrada em #1313, executar novamente os testes clínicos
+e os checks de produção e só então considerar a integração. Não há liberação
+de diagnóstico automático nem uso de PHI nesta análise.

@@ -9,7 +9,7 @@ está na tabela abaixo.
 | A | Migração 0032, bootstrap em runtime, workflow de migração, resolução do principal fail-closed com mais de um vínculo | Na `main` (#1065), migração aplicada |
 | B | Seleção validada do profissional, middleware, vínculo com vários profissionais, revogação por vínculo, e-mail com contexto do profissional | Na `main`, junto com a C (#1067) |
 | C | Seletor na UI, rótulo "Agenda de X", `queryKey` com o profissional, texto de `/planos` | Na `main`, junto com a B (#1067) |
-| D | Visão unificada do dia (opcional, PR separada) | PR D (só front, sem endpoint novo) |
+| D | Visão unificada do dia (opcional, PR separada) | Na `main` (#1069), só front (sem endpoint novo), com UI e teste unitário; 21 checks verdes |
 
 ## Problema
 

@@ -1,4 +1,5 @@
 import { getImplementationStatus, scaleCoversSelectedSignalExactly, type RefinedScaleMatch } from "./advancedFilterLogic";
+import { fitsSelectedAge, scaleAgeFit } from "./scaleAgeFit";
 
 /**
  * Âncoras funcionais existentes: EAF-NEXUS (preferida ≥2a) e EFDI-V/NV (alternativa precoce).
@@ -18,7 +19,10 @@ interface ComplementaryPodiumInput extends MedalTrio {
   selectedQueixas: string[];
   selectedSignals: string[];
   curatedScaleIds?: string[];
+  /** Idade exata em meses (ignorada quando há faixa). */
   ageMonths: number | null;
+  /** Faixa selecionada: a troca aceita sobreposição parcial, nunca fora da faixa. */
+  ageBand?: { min: number; max: number } | null;
   questionCap: number;
   countQuestions: (match: RefinedScaleMatch) => number;
 }
@@ -59,14 +63,14 @@ function repeatPairs(items: RefinedScaleMatch[]): number {
 
 export function refineFunctionalComplementarity({
   ouro, prata, bronze, candidates, selectedQueixas, selectedSignals,
-  curatedScaleIds = [], ageMonths, questionCap, countQuestions,
+  curatedScaleIds = [], ageMonths, ageBand = null, questionCap, countQuestions,
 }: ComplementaryPodiumInput): MedalTrio {
   const original = [ouro, prata, bronze].filter((m): m is RefinedScaleMatch => Boolean(m));
   if (original.length === 0) return { ouro, prata, bronze };
   const valid = (match: RefinedScaleMatch) => {
     const n = countQuestions(match);
     return getImplementationStatus(match.scale) === "complete" &&
-      (ageMonths === null || (match.scale.ageMin <= ageMonths && match.scale.ageMax >= ageMonths)) &&
+      fitsSelectedAge(scaleAgeFit(match.scale, { exactAge: ageMonths, ageBand })) &&
       Number.isFinite(n) && n > 0 && n <= questionCap;
   };
   // A âncora jamais é criada do nada, nem contorna um filtro clínico: deve
@@ -197,6 +201,7 @@ export function refineFunctionalComplementarity({
   // a tornar impossível, completar com três instrumentos sem a âncora, sempre
   // respeitando 100 itens, idade, respondente e sinais clinicamente cobertos.
   if (anchor && chosen.length < 3) {
+    const coverageBaseline = [...chosen];
     const otherCandidates = pool.filter((m) => !isFunctionalAnchor(m.scale.id));
     let bestWithAnchor: RefinedScaleMatch[] | null = null;
     let bestWithAnchorScore = -Infinity;
@@ -204,7 +209,7 @@ export function refineFunctionalComplementarity({
       for (let j = i + 1; j < otherCandidates.length; j++) {
         const trio = [otherCandidates[i], otherCandidates[j], anchor];
         if (burden(trio) > questionCap) continue;
-        if (coveredSignals(original).length > 0 && coveredSignals(trio).length === 0) continue;
+        if (!preservesCoverage(coverageBaseline, trio)) continue;
         const score = rank(trio);
         if (score > bestWithAnchorScore) {
           bestWithAnchor = trio;
@@ -214,24 +219,6 @@ export function refineFunctionalComplementarity({
     }
     if (bestWithAnchor) {
       chosen = bestWithAnchor;
-    } else {
-      let bestTriple: RefinedScaleMatch[] | null = null;
-      let bestTripleScore = -Infinity;
-      for (let i = 0; i < otherCandidates.length; i++) {
-        for (let j = i + 1; j < otherCandidates.length; j++) {
-          for (let k = j + 1; k < otherCandidates.length; k++) {
-            const trio = [otherCandidates[i], otherCandidates[j], otherCandidates[k]];
-            if (burden(trio) > questionCap) continue;
-            if (coveredSignals(original).length > 0 && coveredSignals(trio).length === 0) continue;
-            const score = rank(trio);
-            if (score > bestTripleScore) {
-              bestTriple = trio;
-              bestTripleScore = score;
-            }
-          }
-        }
-      }
-      if (bestTriple) chosen = bestTriple;
     }
   }
 
@@ -272,4 +259,87 @@ export function refineFunctionalComplementarity({
     return b.relevanceScore - a.relevanceScore;
   });
   return { ouro: chosen[0], prata: chosen[1], bronze: chosen[2] };
+}
+
+export type RedundancyDecision =
+  | { slot: "prata" | "bronze"; action: "replaced"; removedId: string; keptId: string; withId: string }
+  | { slot: "prata" | "bronze"; action: "dropped"; removedId: string; keptId: string }
+  | { slot: "prata" | "bronze"; action: "kept_justified"; removedId: string; keptId: string; uniqueComplaints: string[]; uniqueSignals: string[] };
+
+export interface RedundancyResolutionInput extends MedalTrio {
+  candidates: RefinedScaleMatch[];
+  selectedQueixas: string[];
+  selectedSignals: string[];
+  /** Candidata aplicável e que cobre a idade/faixa selecionada (pré-condição para trocar). */
+  eligible: (match: RefinedScaleMatch) => boolean;
+  questionCap: number;
+  countQuestions: (match: RefinedScaleMatch) => number;
+}
+
+/**
+ * Resolve a redundância de construto que sobra no pódio.
+ *
+ * Duas medalhas do mesmo grupo de redundância (overlapGroup ou mesmo construto)
+ * só podem ocupar vagas diferentes com justificativa explícita. Para Prata e
+ * Bronze, em ordem de prioridade, esta rotina:
+ *  1. troca a medalha redundante por candidata elegível de OUTRO construto que
+ *     preserve a cobertura de queixas e sinais já alcançada;
+ *  2. mantém a medalha redundante só se ela cobrir uma queixa ou sinal que
+ *     nenhuma outra medalha cobre (justificativa registrada);
+ *  3. caso contrário, remove a redundante: uma forma do mesmo instrumento basta,
+ *     e o pódio não preenche vaga por obrigação.
+ * O Ouro nunca é removido aqui.
+ */
+export function resolveRedundantMedals({
+  ouro, prata, bronze, candidates, selectedQueixas, selectedSignals, eligible, questionCap, countQuestions,
+}: RedundancyResolutionInput): { trio: MedalTrio; decisions: RedundancyDecision[] } {
+  const decisions: RedundancyDecision[] = [];
+  let trio: MedalTrio = { ouro, prata, bronze };
+  const coveredBy = (arr: RefinedScaleMatch[]) => ({
+    queixas: new Set(selectedQueixas.filter((q) => arr.some((m) => m.scale.queixas.includes(q)))),
+    signals: new Set(selectedSignals.filter((sig) => arr.some((m) =>
+      scaleCoversSelectedSignalExactly(m.scale, { queixas: selectedQueixas, selectedSignals: [sig] })))),
+  });
+  for (const slot of ["prata", "bronze"] as const) {
+    const current = trio[slot];
+    if (!current || !trio.ouro) continue;
+    const kept = [trio.ouro, slot === "bronze" ? trio.prata : undefined]
+      .filter((m): m is RefinedScaleMatch => Boolean(m) && m !== current);
+    const conflicting = kept.find((other) => other.scale.id !== current.scale.id && sameClinicalConstruct(other, current));
+    if (!conflicting) continue;
+
+    const before = coveredBy([...kept, current]);
+    const keptIds = new Set([...kept, current].map((m) => m.scale.id));
+    const keptBurden = kept.reduce((sum, m) => sum + countQuestions(m), 0);
+    const replacement = candidates
+      .filter((m) =>
+        !keptIds.has(m.scale.id) &&
+        eligible(m) &&
+        getImplementationStatus(m.scale) === "complete" &&
+        kept.every((other) => !sameClinicalConstruct(other, m)) &&
+        m.relevanceScore >= current.relevanceScore - 20 &&
+        keptBurden + countQuestions(m) <= questionCap)
+      .find((m) => {
+        const after = coveredBy([...kept, m]);
+        return [...before.queixas].every((q) => after.queixas.has(q)) &&
+          [...before.signals].every((s) => after.signals.has(s));
+      });
+    if (replacement) {
+      trio = { ...trio, [slot]: replacement };
+      decisions.push({ slot, action: "replaced", removedId: current.scale.id, keptId: conflicting.scale.id, withId: replacement.scale.id });
+      continue;
+    }
+
+    // Sem alternativa de outro construto: mantém só se a medalha cobre algo único.
+    const others = coveredBy(kept);
+    const uniqueComplaints = selectedQueixas.filter((q) => before.queixas.has(q) && !others.queixas.has(q));
+    const uniqueSignals = selectedSignals.filter((s) => before.signals.has(s) && !others.signals.has(s));
+    if (uniqueComplaints.length > 0 || uniqueSignals.length > 0) {
+      decisions.push({ slot, action: "kept_justified", removedId: current.scale.id, keptId: conflicting.scale.id, uniqueComplaints, uniqueSignals });
+      continue;
+    }
+    trio = { ...trio, [slot]: undefined };
+    decisions.push({ slot, action: "dropped", removedId: current.scale.id, keptId: conflicting.scale.id });
+  }
+  return { trio, decisions };
 }

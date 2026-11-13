@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { getAccessLevel, OPEN_ACCESS } from "../../client/src/security/accessPolicy.ts";
 import {
+  canRenderNavigationItem,
   decideRouteAccess,
   isReaderClinicalRoute,
   isRouteSensitive,
@@ -11,6 +12,7 @@ import {
   VISITOR_HOME,
   VISITOR_ROUTES,
 } from "../../client/src/security/routeGuardPolicy.ts";
+import { isLiveUnavailableNavRoute, LIVE_UNAVAILABLE_NAV_ROUTES } from "../../client/src/security/liveUnavailableRoutes.ts";
 
 // Modo ACESSO ABERTO (decisão do autor): sem qualquer senha, TODA rota é pública
 // e o RouteGuard sempre libera. As asserções de fail-closed abaixo (o modelo
@@ -103,6 +105,7 @@ assert.equal(
 const REQUIRED_SENSITIVE_ROUTES = [
   "/avaliacao-pre-consulta-faixa-etaria",
   "/pant",
+  "/renderizador",
   "/assinatura-digital",
   "/documentos",
   "/pacientes",
@@ -604,4 +607,30 @@ for (const path of ["/avaliacao-pre-consulta-faixa-etaria/interno", "/avaliacao-
   assert.equal(decideRouteAccess({ path: "/pacientes", accessMode: "remote", isAuthenticated: true, isLoading: false, userRole: "professional" }), "allow");
 
   console.log("✓ visitante: abre somente as escalas; clínico, conta e páginas públicas ficam fora");
+}
+
+// Diagnóstico 07/11/2026, achado 4: telas que só exibem o aviso de bloqueio em
+// LIVE não são oferecidas no menu/dock/paleta; a rota em si continua liberada
+// (o aviso explica o motivo) e o modo local/anônimo não muda.
+{
+  const live = { accessMode: "remote" as const, isAuthenticated: true, isLoading: false, userRole: "professional" as const };
+  for (const route of LIVE_UNAVAILABLE_NAV_ROUTES) {
+    assert.equal(canRenderNavigationItem({ ...live, path: route }), false, `${route} fora do menu em LIVE`);
+    assert.equal(canRenderNavigationItem({ ...live, accessMode: "local", localPinConfigured: true, localPinUnlocked: true, path: route }), true, `${route} segue no menu local`);
+  }
+  assert.equal(isLiveUnavailableNavRoute("/recepcao?x=1"), true);
+  assert.equal(canRenderNavigationItem({ ...live, path: "/pacientes" }), true);
+  assert.equal(canRenderNavigationItem({ ...live, path: "/neuroacompanhamento" }), true, "página-guia continua no menu");
+  assert.equal(canRenderNavigationItem({ ...live, path: "/conecta" }), true, "Conecta ancora o atalho DrJadsoneye e segue no menu");
+  assert.equal(decideRouteAccess({ ...live, path: "/recepcao" }), "allow", "a rota mostra o aviso, não é negada");
+  // Os seis diários do DiarioClinico gravam no prontuário da clínica (0039) e
+  // voltam ao menu LIVE; a política não pode voltar a escondê-los.
+  for (const route of ["/diario-sono", "/diario-alimentar", "/diario-aderencia", "/diario-desregulacao", "/diario-dieta-sensorial", "/diario-escola", "/epilepsia", "/cefaleia"]) {
+    assert.equal(canRenderNavigationItem({ ...live, path: route }), true, `${route} no menu LIVE`);
+  }
+  // As rotas ainda listadas precisam de fato bloquear a persistência em LIVE.
+  for (const file of ["pre-consulta", "pre-retorno", "recepcao"]) {
+    assert.match(readFileSync(`client/src/pages/${file}.tsx`, "utf8"), /localPersistenceEnabled = !\(accessMode === "remote" && isAuthenticated\)/);
+  }
+  console.log("✓ menu LIVE: telas sem armazenamento da clínica não aparecem; rota segue explicando o bloqueio");
 }

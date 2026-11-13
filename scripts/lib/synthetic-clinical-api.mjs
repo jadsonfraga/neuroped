@@ -421,6 +421,7 @@ export function createSyntheticClinicalApi(scenario = {}) {
     liveEvents: seedLiveEvents(),
     coreEvents: seedCoreEvents(),
     documents: [],
+    diaryEntries: [],
     sessions: new Set(),
   };
 
@@ -736,6 +737,50 @@ export function createSyntheticClinicalApi(scenario = {}) {
 
     if (pathname.startsWith("/api/results/")) {
       send(response, 200, { ok: true });
+      return true;
+    }
+
+    // Diários LIVE (migration 0039) — em memória, só dados sintéticos.
+    if (pathname === "/api/live/diaries") {
+      if (request.method === "POST") {
+        const body = await readBody(request);
+        if (!body.patientId || !body.diaryId || !body.entryDate || !body.fields || !Object.keys(body.fields).length) {
+          send(response, 400, { error: "Registro inválido.", code: "VALIDATION_ERROR" });
+          return true;
+        }
+        const row = {
+          id: `diario-sintetico-${state.diaryEntries.length + 1}`,
+          patientId: body.patientId,
+          authorUserId: "usuario-sintetico",
+          diaryId: body.diaryId,
+          entryDate: body.entryDate,
+          reportedBy: body.reportedBy ?? "family",
+          fields: body.fields,
+          supersedesEntryId: null,
+          status: "active",
+          createdAt: new Date().toISOString(),
+        };
+        state.diaryEntries.push(row);
+        send(response, 201, row);
+        return true;
+      }
+      if (request.method === "PATCH") {
+        const body = await readBody(request);
+        const row = state.diaryEntries.find((entry) => entry.id === body.id && entry.status === "active");
+        if (!row) {
+          send(response, 404, { error: "Registro não encontrado nesta clínica.", code: "NOT_FOUND" });
+          return true;
+        }
+        row.status = "voided";
+        send(response, 200, { id: row.id, status: "voided" });
+        return true;
+      }
+      const patientId = searchParams.get("patientId");
+      const diaryId = searchParams.get("diaryId");
+      const rows = state.diaryEntries.filter(
+        (entry) => entry.patientId === patientId && (!diaryId || entry.diaryId === diaryId) && entry.status === "active",
+      );
+      send(response, 200, { data: rows });
       return true;
     }
 

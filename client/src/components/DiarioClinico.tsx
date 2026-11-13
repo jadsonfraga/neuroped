@@ -15,6 +15,17 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useClinic } from "@/contexts/ClinicContext";
+import { useQuery } from "@tanstack/react-query";
+import { readRouteParam } from "@/lib/routeQuery";
+import {
+  createLiveDiaryEntry,
+  listLiveDiaryEntries,
+  liveDiaryWriteBody,
+  REPORTER_LABELS,
+  voidLiveDiaryEntry,
+} from "@/lib/liveDiaryClient";
+import { isLiveDiaryId, LIVE_DIARY_REPORTERS, type LiveDiaryReporter } from "@shared/live-diaries";
 import { MAX_SECURE_PLAINTEXT_BYTES, secureGet, secureSet } from "@/lib/secureStorage";
 import { neutralizeCsvFormula } from "@/lib/csv";
 
@@ -128,6 +139,23 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
   const { toast } = useToast();
   const { accessMode, isAuthenticated } = useAuth();
   const localDraftEnabled = !(accessMode === "remote" && isAuthenticated);
+  // Sessão LIVE: o diário vive no prontuário da clínica (/api/live/diaries),
+  // cifrado e vinculado ao paciente. Nada é lido ou gravado no navegador.
+  const live = !localDraftEnabled && isLiveDiaryId(config.id);
+  const { activeClinicId } = useClinic();
+  const [livePatientId, setLivePatientId] = useState(() => readRouteParam("patientId"));
+  const [reportedBy, setReportedBy] = useState<LiveDiaryReporter>("family");
+  const [liveError, setLiveError] = useState<string | null>(null);
+  const [liveBusy, setLiveBusy] = useState(false);
+  const [liveReload, setLiveReload] = useState(0);
+  const livePatientsQuery = useQuery<{ data?: Array<{ id: string; profile?: { name?: string } }> }>({
+    queryKey: [`/api/live/patients?clinicId=${encodeURIComponent(activeClinicId ?? "")}`],
+    enabled: live && Boolean(activeClinicId),
+  });
+  const livePatients = (livePatientsQuery.data?.data ?? []).map((patient) => ({
+    id: patient.id,
+    name: patient.profile?.name ?? "Paciente sem nome",
+  }));
   const [entries, setEntries] = useState<DiarioEntry[]>([]);
   const [entriesReady, setEntriesReady] = useState(false);
   const [storageError, setStorageError] = useState(false);
@@ -140,7 +168,22 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
     if (!localDraftEnabled) {
       setEntries([]);
       setStorageError(false);
-      setEntriesReady(true);
+      setLiveError(null);
+      if (!live || !activeClinicId || !livePatientId) {
+        setEntriesReady(true);
+        return () => { active = false; };
+      }
+      setEntriesReady(false);
+      void listLiveDiaryEntries(activeClinicId, livePatientId, config.id)
+        .then((rows) => {
+          if (active) setEntries(rows as DiarioEntry[]);
+        })
+        .catch((error: unknown) => {
+          if (active) setLiveError(error instanceof Error ? error.message : "Não foi possível carregar o diário.");
+        })
+        .finally(() => {
+          if (active) setEntriesReady(true);
+        });
       return () => { active = false; };
     }
 
@@ -175,7 +218,7 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
       setEntriesReady(true);
     })();
     return () => { active = false; };
-  }, [config.fields, config.id, config.storageKey, localDraftEnabled]);
+  }, [config.fields, config.id, config.storageKey, localDraftEnabled, live, activeClinicId, livePatientId, liveReload]);
 
   useEffect(() => {
     if (!entriesReady || !localDraftEnabled) return;
@@ -208,8 +251,61 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
+  // Um rascunho nunca atravessa prontuários: trocar de paciente com campos
+  // preenchidos pede confirmação e zera o formulário e a origem do relato.
+  function changeLivePatient(nextPatientId: string) {
+    if (nextPatientId === livePatientId) return;
+    const pristine = emptyForm(config.fields);
+    const dirty = config.fields.some((field) => (form[field.key] ?? "") !== (pristine[field.key] ?? ""));
+    if (dirty && !confirm("Trocar de paciente descarta o registro em preenchimento. Continuar?")) return;
+    setForm(pristine);
+    setReportedBy("family");
+    setLivePatientId(nextPatientId);
+  }
+
+  async function saveLiveEntry() {
+    if (!activeClinicId || !livePatientId) {
+      toast({ title: "Selecione o paciente antes de registrar", variant: "destructive" });
+      return;
+    }
+    const missing = config.fields.filter((f) => f.required && !form[f.key]?.trim());
+    if (missing.length) {
+      toast({ title: "Preencha os campos obrigatórios", variant: "destructive" });
+      return;
+    }
+    setLiveBusy(true);
+    try {
+      await createLiveDiaryEntry(
+        liveDiaryWriteBody({
+          clinicId: activeClinicId,
+          patientId: livePatientId,
+          diaryId: config.id,
+          reportedBy,
+          form,
+          fallbackDate: localIsoDate(),
+        }),
+      );
+      setForm(emptyForm(config.fields));
+      toast({ title: "Registro salvo no prontuário do paciente" });
+      setTab("history");
+      setLiveReload((value) => value + 1);
+    } catch (error) {
+      toast({
+        title: "Registro não salvo",
+        description: error instanceof Error ? error.message : "Nada foi gravado.",
+        variant: "destructive",
+      });
+    } finally {
+      setLiveBusy(false);
+    }
+  }
+
   function saveEntry(e: React.FormEvent) {
     e.preventDefault();
+    if (live) {
+      void saveLiveEntry();
+      return;
+    }
     if (!localDraftEnabled) {
       toast({
         title: "Registro local bloqueado no modo clínico LIVE",
@@ -235,6 +331,23 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
   }
 
   function removeEntry(id: string) {
+    if (live) {
+      if (!activeClinicId) return;
+      if (!confirm("Anular este registro? Ele sai do diário, mas fica no histórico auditável do prontuário.")) return;
+      void voidLiveDiaryEntry(activeClinicId, id, livePatientId)
+        .then(() => {
+          toast({ title: "Registro anulado" });
+          setLiveReload((value) => value + 1);
+        })
+        .catch((error: unknown) => {
+          toast({
+            title: "Registro não anulado",
+            description: error instanceof Error ? error.message : "Tente novamente.",
+            variant: "destructive",
+          });
+        });
+      return;
+    }
     setEntries((prev) => prev.filter((e) => e.id !== id));
   }
 
@@ -270,7 +383,7 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
     );
   }
 
-  if (!localDraftEnabled) {
+  if (!localDraftEnabled && !live) {
     return (
       <Card
         className="border-amber-300 bg-amber-50/80 dark:border-amber-900/60 dark:bg-amber-950/20"
@@ -289,12 +402,62 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
     );
   }
 
+  if (live && !activeClinicId) {
+    return (
+      <Card data-testid="diario-live-sem-clinica">
+        <CardContent className="p-5 text-sm text-muted-foreground">
+          Selecione a clínica ativa para registrar no diário do paciente.
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6 pb-12">
       {storageError && (
         <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive" role="alert">
           Os rascunhos continuam visíveis, mas não puderam ser salvos neste dispositivo. Exporte o CSV antes de sair da tela.
         </div>
+      )}
+      {live && (
+        <Card data-testid="diario-live-contexto">
+          <CardContent className="grid gap-3 p-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="diario-live-paciente" className="text-xs">Paciente</Label>
+              <select
+                id="diario-live-paciente"
+                data-testid="diario-live-paciente"
+                value={livePatientId}
+                onChange={(event) => changeLivePatient(event.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              >
+                <option value="">{livePatientsQuery.isLoading ? "Carregando pacientes…" : "Selecione o paciente"}</option>
+                {livePatientId && !livePatients.some((patient) => patient.id === livePatientId) && (
+                  <option value={livePatientId}>Paciente aberto pela ficha</option>
+                )}
+                {livePatients.map((patient) => (
+                  <option key={patient.id} value={patient.id}>{patient.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="diario-live-relato" className="text-xs">Relatado por</Label>
+              <select
+                id="diario-live-relato"
+                value={reportedBy}
+                onChange={(event) => setReportedBy(event.target.value as LiveDiaryReporter)}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              >
+                {LIVE_DIARY_REPORTERS.map((reporter) => (
+                  <option key={reporter} value={reporter}>{REPORTER_LABELS[reporter]}</option>
+                ))}
+              </select>
+            </div>
+            {liveError && (
+              <p role="alert" className="text-sm text-destructive sm:col-span-2" data-testid="diario-live-erro">{liveError}</p>
+            )}
+          </CardContent>
+        </Card>
       )}
       {/* Header */}
       <div className="flex items-center gap-3">
@@ -367,8 +530,8 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
                   </div>
                 ))}
               </div>
-              <Button type="submit">
-                <Plus className="w-4 h-4 mr-1" /> Salvar rascunho local
+              <Button type="submit" disabled={live && (liveBusy || !livePatientId)}>
+                <Plus className="w-4 h-4 mr-1" /> {live ? (liveBusy ? "Salvando…" : "Salvar no prontuário") : "Salvar rascunho local"}
               </Button>
             </form>
           </CardContent>
@@ -383,15 +546,21 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
               <Button size="sm" variant="outline" onClick={exportCSV}>
                 <FileDown className="w-4 h-4 mr-1" /> Exportar CSV
               </Button>
-              <Button size="sm" variant="ghost" className="text-destructive" onClick={clearAll}>
-                <Trash2 className="w-4 h-4 mr-1" /> Apagar tudo
-              </Button>
+              {!live && (
+                <Button size="sm" variant="ghost" className="text-destructive" onClick={clearAll}>
+                  <Trash2 className="w-4 h-4 mr-1" /> Apagar tudo
+                </Button>
+              )}
             </div>
           )}
           {sorted.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center text-sm text-muted-foreground">
-                Nenhum rascunho local ainda. Clique em “Novo registro”.
+                {live
+                  ? livePatientId
+                    ? "Nenhum registro neste diário para o paciente. Clique em “Novo registro”."
+                    : "Selecione o paciente para ver o diário."
+                  : "Nenhum rascunho local ainda. Clique em “Novo registro”."}
               </CardContent>
             </Card>
           ) : (
@@ -404,7 +573,7 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
                       onClick={() => removeEntry(entry.id)}
                       className="text-xs text-destructive hover:underline"
                     >
-                      apagar
+                      {live ? "anular" : "apagar"}
                     </button>
                   </div>
                   <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
@@ -477,7 +646,9 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
 
       <p className="text-[11px] text-muted-foreground border-t border-border pt-3 flex items-start gap-1.5">
         <Info className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-        Rascunho longitudinal local — os dados ficam apenas neste dispositivo e não integram o prontuário LIVE. Padrões são insumo para o médico; leve o histórico completo (Exportar CSV) à consulta.
+        {live
+          ? "Registro observacional relatado, salvo cifrado no prontuário da clínica e vinculado ao paciente. Não pontua nem interpreta; padrões são insumo para a avaliação médica."
+          : "Rascunho longitudinal local — os dados ficam apenas neste dispositivo e não integram o prontuário LIVE. Padrões são insumo para o médico; leve o histórico completo (Exportar CSV) à consulta."}
       </p>
     </div>
   );

@@ -25,6 +25,7 @@ import { invalidateIssuerCache } from "@/lib/issuer";
 import { checkoutSeatsForSolo, isMultiSeatTenant } from "@/lib/soloBilling";
 import { OutcomesSection } from "@/components/settings/OutcomesSection";
 import { PrivacySection } from "@/components/settings/PrivacySection";
+import { LegacyMigrationCard } from "@/components/settings/LegacyMigrationCard";
 import { BrandingSection } from "@/components/settings/BrandingSection";
 import { RolePermissionsCard } from "@/components/settings/RolePermissionsCard";
 import { ROLE_LABELS } from "@shared/clinic-roles";
@@ -940,6 +941,7 @@ function ConfiguracoesContent() {
         />
       )}
       {section === "privacidade" && activeClinicId && hasPermission(permissions, "organization.manage") && <PrivacySection key={activeClinicId} clinicId={activeClinicId} />}
+      {section === "privacidade" && <LegacyMigrationCard />}
       {section === "equipe" && activeClinicId && hasPermission(permissions, "team.manage") && <RolePermissionsCard />}
       {section === "equipe" && activeClinicId && hasPermission(permissions, "team.manage") && <EquipeSection clinicId={activeClinicId} />}
       {section === "plano" && activeClinicId && hasPermission(permissions, "billing.manage") && <PlanoSection clinicId={activeClinicId} />}

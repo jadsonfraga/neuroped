@@ -164,9 +164,18 @@ async function readDiarySentinels(page) {
   }, { dbName: DB_NAME, valueStore: VALUE_STORE });
 }
 
-async function assertBlockedRoute(page, base, route, testId) {
+// Os seis diários do DiarioClinico gravam no prontuário da clínica em LIVE
+// (/api/live/diaries, migration 0039): a tela abre o modo LIVE (ou pede a
+// clínica ativa) e jamais o aviso de bloqueio — e continua sem tocar o cofre.
+async function assertLiveDiaryRoute(page, base, route) {
   await page.goto(`${base}/#${route}`, { waitUntil: "domcontentloaded" });
-  await page.getByTestId(testId).waitFor({ state: "visible", timeout: 15000 });
+  await page
+    .locator('[data-testid="diario-live-contexto"], [data-testid="diario-live-sem-clinica"], [data-testid="clinic-context-unavailable"]')
+    .first()
+    .waitFor({ state: "visible", timeout: 15000 });
+  if (await page.getByTestId("diario-local-persistence-disabled").count()) {
+    throw new Error(`${route}: diário LIVE caiu no aviso de bloqueio local`);
+  }
 }
 
 async function main() {
@@ -189,14 +198,14 @@ async function main() {
     await page.getByTestId("clinical-school-correlation-live-blocked").waitFor({ state: "visible", timeout: 15000 });
     await page.getByTestId("diario-local-persistence-disabled").waitFor({ state: "visible", timeout: 15000 });
 
-    await assertBlockedRoute(page, base, "/diario-escola", "diario-local-persistence-disabled");
-    await assertBlockedRoute(page, base, "/diario-sono", "diario-local-persistence-disabled");
-    await assertBlockedRoute(page, base, "/diario-alimentar", "diario-local-persistence-disabled");
-    await assertBlockedRoute(page, base, "/diario-aderencia", "diario-local-persistence-disabled");
-    await assertBlockedRoute(page, base, "/diario-desregulacao", "diario-local-persistence-disabled");
-    await assertBlockedRoute(page, base, "/diario-dieta-sensorial", "diario-local-persistence-disabled");
-    await assertBlockedRoute(page, base, "/epilepsia", "epilepsy-diary-local-persistence-disabled");
-    await assertBlockedRoute(page, base, "/cefaleia", "headache-diary-local-persistence-disabled");
+    await assertLiveDiaryRoute(page, base, "/diario-escola");
+    await assertLiveDiaryRoute(page, base, "/diario-sono");
+    await assertLiveDiaryRoute(page, base, "/diario-alimentar");
+    await assertLiveDiaryRoute(page, base, "/diario-aderencia");
+    await assertLiveDiaryRoute(page, base, "/diario-desregulacao");
+    await assertLiveDiaryRoute(page, base, "/diario-dieta-sensorial");
+    await assertLiveDiaryRoute(page, base, "/epilepsia");
+    await assertLiveDiaryRoute(page, base, "/cefaleia");
 
     const stored = await readDiarySentinels(page);
     const storedKeys = Object.keys(stored).sort();
@@ -213,7 +222,7 @@ async function main() {
     const loginVisible = await page.getByRole("heading", { name: /entrar|login/i }).isVisible().catch(() => false);
     if (loginVisible) throw new Error("sessão remota E2E não foi reconhecida como autenticada");
 
-    console.log("[live-diary-block] ✓ remoto autenticado: 9 superfícies bloqueadas e IndexedDB local preservado sem migração");
+    console.log("[live-diary-block] ✓ remoto autenticado: NeuroAcompanhamento bloqueado, 8 diários no prontuário LIVE e IndexedDB local preservado sem migração");
   } finally {
     await browser.close();
     server.close();

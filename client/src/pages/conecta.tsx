@@ -65,6 +65,7 @@ import {
   eventsWithinDays,
   latestConectaEvent,
 } from "@/lib/conectaEngine";
+import { LiveLegacyBlockedNotice, useLiveLegacyBlocked } from "@/components/LiveLegacyBlockedNotice";
 
 interface PatientSummary {
   id: string;
@@ -153,7 +154,7 @@ function emptyDetail(): NonNullable<ConectaEventInput["detail"]> {
   return {};
 }
 
-export default function ConectaPage() {
+function ConectaContent() {
   const { toast } = useToast();
   const { accessMode, isAuthenticated } = useAuth();
   const remoteSession = accessMode === "remote" && isAuthenticated;
@@ -688,4 +689,19 @@ export default function ConectaPage() {
       </Dialog>
     </div>
   );
+}
+
+export default function ConectaPage() {
+  const blocked = useLiveLegacyBlocked();
+  if (blocked) {
+    return (
+      <div className="space-y-5 pb-8" data-testid="page-conecta-live-blocked">
+        <LiveLegacyBlockedNotice
+          moduleName="NeuroPed Conecta"
+          alternative="Use a ficha do paciente (Portal da família e convites de escalas) para trocas vinculadas à clínica."
+        />
+      </div>
+    );
+  }
+  return <ConectaContent />;
 }

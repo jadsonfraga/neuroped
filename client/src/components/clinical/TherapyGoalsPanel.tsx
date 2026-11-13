@@ -30,11 +30,19 @@ import {
   therapyGoalStatusLabels,
   type TherapyGoalSnapshot,
 } from "@shared/therapy-goals";
+import {
+  clinicalEventFromWriteResponse,
+  clinicalEventWriteRequest,
+  clinicalEventsQueryKey,
+  type ClinicalEventsSource,
+} from "@/lib/clinicalEventsSource";
 
 interface TherapyGoalsPanelProps {
   patientId: string;
   events: ClinicalEvent[];
   unavailable?: boolean;
+  /** Fonte do Clinical Core: LIVE por clínica em produção; legado só no modo local. */
+  source?: ClinicalEventsSource;
 }
 
 const outcomeContextLabels: Record<OutcomeContext, string> = {
@@ -82,11 +90,13 @@ function measurementText(goal: TherapyGoalSnapshot): string {
   return measurement.data.valueText || "Medida registrada sem valor resumível";
 }
 
-export function TherapyGoalsPanel({ patientId, events, unavailable = false }: TherapyGoalsPanelProps) {
+const LOCAL_SOURCE: ClinicalEventsSource = { live: false, clinicId: null };
+
+export function TherapyGoalsPanel({ patientId, events, unavailable = false, source = LOCAL_SOURCE }: TherapyGoalsPanelProps) {
   const { toast } = useToast();
   const goals = useMemo(() => deriveTherapyGoals(events), [events]);
   const activeCount = goals.filter((goal) => ["planned", "in_progress"].includes(goal.plan.data.status)).length;
-  const queryKey = `/api/clinical-core/events?patient_id=${encodeURIComponent(patientId)}&days=3650`;
+  const queryKey = clinicalEventsQueryKey(patientId, source);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [target, setTarget] = useState("");
@@ -108,12 +118,13 @@ export function TherapyGoalsPanel({ patientId, events, unavailable = false }: Th
   const [measureNote, setMeasureNote] = useState("");
 
   async function postEvent(input: ClinicalEventInput): Promise<ClinicalEvent> {
-    const response = await apiRequest("POST", "/api/clinical-core/events", input);
+    const request = clinicalEventWriteRequest(input, source);
+    const response = await apiRequest("POST", request.url, request.body);
     if (!response.ok) {
       const body = await response.json().catch(() => null);
       throw new Error(body?.error || "Não foi possível salvar no Clinical Core.");
     }
-    return response.json();
+    return clinicalEventFromWriteResponse(await response.json(), source);
   }
 
   const createGoalMutation = useMutation({
@@ -183,7 +194,7 @@ export function TherapyGoalsPanel({ patientId, events, unavailable = false }: Th
           source: "clinician",
           sourceLabel: "Medida de evolução vinculada a meta terapêutica",
         },
-        ...(measureNote.trim() ? { note: measureNote.trim() } : {}),
+        ...(!source.live && measureNote.trim() ? { note: measureNote.trim() } : {}),
         data: {
           domain: measureGoal.plan.data.goalDomain || "therapy_goal",
           measure: measureLabel.trim() || measureGoal.plan.data.measurementMethod || "Evolução da meta",
@@ -463,9 +474,17 @@ export function TherapyGoalsPanel({ patientId, events, unavailable = false }: Th
             <Field className="sm:col-span-2" label="Observação qualitativa" htmlFor="goal-measure-text">
               <Textarea id="goal-measure-text" rows={2} value={measureText} onChange={(event) => setMeasureText(event.target.value.slice(0, 1000))} placeholder="Opcional; pode ser usada sem valor numérico" />
             </Field>
-            <Field className="sm:col-span-2" label="Nota / contexto adicional" htmlFor="goal-measure-note">
-              <Textarea id="goal-measure-note" rows={2} value={measureNote} onChange={(event) => setMeasureNote(event.target.value.slice(0, 5000))} placeholder="Registre apenas o que foi observado ou medido" />
-            </Field>
+            {source.live ? (
+              // O Clinical Core LIVE ainda não persiste a nota livre do evento:
+              // oferecê-la aqui faria o texto sumir em silêncio ao salvar.
+              <p className="sm:col-span-2 text-xs text-muted-foreground" data-testid="goal-measure-note-live-unavailable">
+                Nota adicional ainda não é salva no prontuário da clínica. Use a observação qualitativa acima.
+              </p>
+            ) : (
+              <Field className="sm:col-span-2" label="Nota / contexto adicional" htmlFor="goal-measure-note">
+                <Textarea id="goal-measure-note" rows={2} value={measureNote} onChange={(event) => setMeasureNote(event.target.value.slice(0, 5000))} placeholder="Registre apenas o que foi observado ou medido" />
+              </Field>
+            )}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setMeasureGoal(null)} disabled={measurementMutation.isPending}>Cancelar</Button>

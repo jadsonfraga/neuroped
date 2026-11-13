@@ -113,7 +113,7 @@ incluído em `npm run test:operations`. Visto falhando pelo motivo certo
 contra o código anterior (serviço da clínica A aparecia no dashboard de B).
 Evidência em EVIDENCE.md#S8.
 
-## S13 · P1 · FECHADO parcialmente (ciclo 5) — desambiguação por slug; redesenho de rota ainda aberto
+## S13 · P1 · FECHADO parcialmente (ciclos 5 e 10) — desambiguação por slug e alias de rota entregues; migração estrutural ainda aberta
 Menor incremento seguro: o link público de agendamento pode declarar a
 clínica via `?clinic=<slug da clínica>` (perfil, horários, reserva, lista de
 espera e diretório em `functions/api/public-booking.ts`), resolvida por
@@ -128,13 +128,17 @@ compartilhados/salvos continuam funcionando. O botão "copiar link público"
 em `client/src/pages/agenda.tsx` já gera o link com `&clinic=<slug>` a
 partir da clínica ativa da sessão (`useClinic().activeClinic.slug`).
 
-Continua aberto, deliberadamente fora deste incremento: o redesenho de rota
-(`/c/:clinicSlug/agendar`), a troca de PK de `booking_provider_profiles`
-(hoje `user_id`, `slug UNIQUE` global — OPS-05) e de `booking_staff_links`
-(OPS-03), e qualquer geração automática de link a partir de convite/
-notificação. Isso exigiria migração, backfill e período de compatibilidade
-para links antigos — não é um incremento seguro de escopo único. Evidência
-em EVIDENCE.md#S13.
+A camada de compatibilidade de URL foi entregue no ciclo 10: `/c/:clinicSlug/agendar`
+é convertido para a página pública existente com `clinic=<clinicSlug>`, sem
+migração e com precedência do slug do caminho sobre query conflitante. A prova
+está em `tests/unit/path-deep-link.test.ts` e em EVIDENCE.md#S13-R.
+
+Continua aberto, deliberadamente fora deste incremento: a troca de PK de
+`booking_provider_profiles` (hoje `user_id`, `slug UNIQUE` global — OPS-05) e
+de `booking_staff_links` (OPS-03), e qualquer geração automática de link a
+partir de convite/notificação. Isso exigiria migração, backfill e período de
+compatibilidade para links antigos — não é um incremento seguro de escopo
+único.
 
 ## S14 · P2 · FECHADO (ciclo 4)
 Links públicos de intake (pré-consulta) e de escala remota ignoravam o
@@ -410,10 +414,24 @@ não foram alterados (sem migração e sem corte do cliente zero). A exigência
 de membership em tempo de uso para vínculos antigos depende de censo de
 produção.
 
-Continua aberto em S10: membership `assistant`/`financial` sem escopo próprio
-(o escopo `clinical` exige owner/clinic_admin/professional), ou seja, a
-secretária modelada como membro da clínica em vez de delegação por
-profissional. É uma mudança de modelo de papéis e fica em PR separada.
+S10-O foi comprovado no ciclo 11: uma conta global `reader` com membership
+`assistant` ativa e vínculo persistido pode operar a agenda delegada do
+profissional, tanto pelo middleware quanto pelo handler direto. `financial` não
+é promovido a recepção por inferência; configuração, relatório financeiro,
+pagamentos e ações sensíveis continuam restritos a `admin`/`professional`.
+Evidência em `EVIDENCE.md#S10-O`, com `npm run test:operations`, `npm run check`
+e `npm run lint` verdes.
+
+Continua aberto em S10: modelo completo de permissões próprias para
+`financial`, políticas clínicas além da delegação de agenda e o bypass do
+papel global `professional` sobre pacientes legados sem `clinic_id`. A
+inspeção do ciclo 12 isolou uma decisão concreta: `finance.read` aparece no
+catálogo para `financial`, mas o `financial_report` atual ainda exige
+`principal.canConfigure` (`admin`/`professional`) e contém nomes de pacientes
+e responsáveis. Antes de qualquer código, é necessário decidir relatório
+redigido versus completo, escopo por clínica, quatro olhos e auditoria da
+exportação. Evidência em `EVIDENCE.md#S10-F`; permanece bloqueado por decisão
+de produto, não por falha técnica.
 
 ## S9 · P0 · aberto — censo observado, associação legítima pendente
 Atualização 26/09/2026, 21:07 UTC: o workflow 36271735655 executou o censo
@@ -575,12 +593,17 @@ contra pedido de eliminação), não uma correção puramente técnica. Registra
 como `LEGAL_REVIEW_REQUIRED` em
 `docs/audits/LEGAL_REVIEW_REQUIRED_CLINICAL_RETENTION_FLOOR_2026-09-27.md`.
 
-## OPS-03 · agenda multiprofissional · EM ANDAMENTO (issue #1064)
-Uma recepção atender mais de um profissional (hoje `booking_staff_links.staff_user_id`
-é `UNIQUE`). Em PRs empilhadas: A (migração 0032, #1065), B (escolha validada no
-servidor, #1066) e C (UI). Desenho, ordem de publicação, rollback, a membership a
-cada requisição e o censo a rodar no D1 de produção estão em
-`docs/saas/MULTI_PROVIDER_AGENDA.md`. A e B+C (#1067) estão na `main`. A membership
-`assistant` ativa passou a ser exigida de TODA recepção, a cada requisição, e o
-vínculo só vale com clínica em comum com o profissional (sem lista de nomes para quem
-a perdeu). Continua aberto: a visão unificada do dia (D).
+## OPS-03 · agenda multiprofissional · FECHADO (issue #1064, PR #1069)
+Uma recepção pode atender mais de um profissional. A migração 0032 (#1065), a
+seleção validada no servidor e a UI (#1067), a exigência de membership `assistant`
+a cada requisição (#1068) e a visão unificada do dia (#1069) estão na `main`.
+A etapa D é só front, sem endpoint novo: combina no navegador os painéis que a
+etapa C já busca (um pedido por profissional, validado no servidor por vínculo e
+clínica), com teste unitário e fixtures sintéticas. A visão preserva a redação de dados
+para a recepção, não cria autoridade a partir do cliente e não mistura clínicas.
+
+A evidência de implementação e rollback continua em
+`docs/saas/MULTI_PROVIDER_AGENDA.md`; a PR #1069 teve 21 checks verdes.
+Permanecem fora do fechamento: censo pós-deploy em D1 de produção, teste manual
+com dispositivo real e validação de leitor de tela. Esses pontos são validação
+operacional/UX, não uma lacuna no contrato de autorização implementado.

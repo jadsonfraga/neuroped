@@ -1,5 +1,6 @@
 import { isClinicalRoute } from "@/security/accessPolicy";
 import { LEGACY_DIRECT_TEST_REDIRECTS } from "@/data/legacyInstrumentRoutes";
+import { isLiveUnavailableNavRoute } from "@/security/liveUnavailableRoutes";
 
 export type RouteAccessMode = "checking" | "remote" | "local";
 export type RouteUserRole = "admin" | "professional" | "reader" | "operator" | "visitor";
@@ -11,6 +12,7 @@ export const SENSITIVE_ROUTES = [
   "/dyslexia-risk",
   "/avaliacao-pre-consulta-faixa-etaria",
   "/pant",
+  "/renderizador",
   "/assinatura-digital",
   "/documentos",
   "/escuta-clinica",
@@ -27,6 +29,8 @@ export const SENSITIVE_ROUTES = [
   "/avaliacao-multiprofissional",
   "/fichas-registro",
   "/laudo-neuroped", "/laudo-super", "/laudo-um-clique", "/evolucao-escalas", "/resumo-pre-consulta", "/checagem-dose",
+  "/receita-a1",
+  "/receita-b1",
   "/receita-c1",
   "/receita-c1-express",
   "/diario-escola",
@@ -356,6 +360,7 @@ export function canRenderNavigationItem({
   localPinConfigured = false,
   localPinUnlocked = false,
 }: Omit<RouteAccessInput, "allowedRoles">): boolean {
+  if (accessMode === "remote" && isAuthenticated && isLiveUnavailableNavRoute(path)) return false;
   return (
     decideRouteAccess({
       path,

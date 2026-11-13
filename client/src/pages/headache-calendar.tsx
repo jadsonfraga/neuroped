@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-import { AlertTriangle, BrainCog, Plus, Trash2, FileDown, Info, Calendar, ShieldAlert } from "lucide-react";
+import { AlertTriangle, BrainCog, Plus, Trash2, FileDown, Info, Calendar } from "lucide-react";
 import {
   headacheTypes, headacheLocations, headacheTriggers,
   headacheSymptoms, headacheAuraTypes,
@@ -16,6 +16,8 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { secureGet, secureSet } from "@/lib/secureStorage";
 import { neutralizeCsvFormula } from "@/lib/csv";
+import { LiveDiaryContextCard, useLiveDiary } from "@/components/LiveDiaryContext";
+import { useToast } from "@/hooks/use-toast";
 
 const STORAGE_KEY = "diario:cefaleia:v1";
 const MAX_ENTRIES = 500;
@@ -87,6 +89,23 @@ export default function HeadacheCalendarPage() {
   const saveQueue = useRef<Promise<unknown>>(Promise.resolve());
   const [current, setCurrent] = useState<HeadacheEntry>(newEntry());
   const [adding, setAdding] = useState(false);
+  // Sessão LIVE: os episódios vão para o prontuário da clínica
+  // (/api/live/diaries), cifrados e vinculados ao paciente; nada no navegador.
+  const diary = useLiveDiary("calendario-cefaleia");
+  const live = diary.live;
+  const { toast } = useToast();
+  const liveEntries = sortClinicalDesc(
+    diary.rows.flatMap((row) => {
+      const [entry] = sanitizeEntries([{ ...row.fields, date: row.entryDate }]);
+      return entry ? [{ ...entry, liveId: row.id }] : [];
+    }),
+  );
+  const shown: HeadacheEntry[] = live ? liveEntries : entries;
+  const draftDirty = adding && JSON.stringify({ ...current, date: "" }) !== JSON.stringify({ ...newEntry(), date: "" });
+  function discardDraft() {
+    setCurrent(newEntry());
+    setAdding(false);
+  }
 
   useEffect(() => {
     let active = true;
@@ -118,7 +137,23 @@ export default function HeadacheCalendarPage() {
     void operation.then((stored) => setStorageError(stored !== true));
   }, [entries, entriesReady, localDraftEnabled]);
 
+  async function saveLiveEntry() {
+    if (!current.type) return;
+    const { date, ...fields } = current;
+    try {
+      await diary.save(date || localIsoDate(), fields);
+      toast({ title: "Episódio registrado no prontuário do paciente" });
+      discardDraft();
+    } catch (error) {
+      toast({ title: "Registro não salvo", description: error instanceof Error ? error.message : "Nada foi gravado.", variant: "destructive" });
+    }
+  }
+
   function saveEntry() {
+    if (live) {
+      void saveLiveEntry();
+      return;
+    }
     if (!localDraftEnabled || !current.type) return;
     setEntries((previous) => sortClinicalDesc([current, ...previous]).slice(0, MAX_ENTRIES));
     setCurrent(newEntry());
@@ -126,12 +161,20 @@ export default function HeadacheCalendarPage() {
   }
 
   function removeEntry(i: number) {
+    if (live) {
+      const target = liveEntries[i];
+      if (!target || !confirm("Anular este registro? Ele sai do calendário, mas fica no histórico auditável do prontuário.")) return;
+      void diary.voidEntry(target.liveId).catch((error: unknown) => {
+        toast({ title: "Registro não anulado", description: error instanceof Error ? error.message : "Tente novamente.", variant: "destructive" });
+      });
+      return;
+    }
     setEntries((previous) => previous.filter((_, idx) => idx !== i));
   }
 
   function exportCSV() {
     const headers = ["Data", "Intensidade", "Tipo", "Localização", "Duração", "Aura", "Tipo Aura", "Desencadeantes", "Sintomas", "Medicação", "Alívio", "Notas"];
-    const rows = entries.map(e => [
+    const rows = shown.map(e => [
       e.date, e.intensity, e.type, e.location, e.duration,
       e.aura ? "Sim" : "Não", e.auraType,
       e.triggers.join("; "), e.symptoms.join("; "),
@@ -163,34 +206,16 @@ export default function HeadacheCalendarPage() {
     );
   }
 
-  if (!localDraftEnabled) {
-    return (
-      <Card
-        className="border-amber-300 bg-amber-50/80 dark:border-amber-900/60 dark:bg-amber-950/20"
-        data-testid="headache-diary-local-persistence-disabled"
-      >
-        <CardContent className="flex items-start gap-3 p-5 text-sm leading-6 text-amber-950 dark:text-amber-100">
-          <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
-          <div>
-            <p className="font-semibold">Calendário local de cefaleia bloqueado no modo clínico LIVE.</p>
-            <p className="mt-1">
-              A sessão remota não lê nem grava o histórico deste dispositivo. Registros locais preexistentes permanecem preservados e não são migrados automaticamente para o prontuário tenant-aware.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <div className="space-y-6">
+      {live && <LiveDiaryContextCard diary={diary} hasDraft={draftDirty} discardDraft={discardDraft} />}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-red-600 flex items-center justify-center shadow-sm">
           <BrainCog className="w-5 h-5 text-white" />
         </div>
         <div>
           <h1 className="text-lg font-bold">Calendário de Cefaleia</h1>
-          <p className="text-xs text-muted-foreground">Rascunho local de episódios de dor de cabeça</p>
+          <p className="text-xs text-muted-foreground">{live ? "Registro no prontuário da clínica de episódios de dor de cabeça" : "Rascunho local de episódios de dor de cabeça"}</p>
         </div>
       </div>
 
@@ -198,7 +223,9 @@ export default function HeadacheCalendarPage() {
         <div className="flex items-start gap-2">
           <Info className="w-4 h-4 text-rose-600 dark:text-rose-400 mt-0.5 flex-shrink-0" />
           <p className="text-xs text-rose-800 dark:text-rose-300 leading-relaxed">
-            Registre cada episódio com detalhes. Este é um rascunho local cifrado e não integra o prontuário LIVE; exporte o CSV quando precisar compartilhar com a equipe clínica.
+            {live
+              ? "Registre cada episódio com detalhes. O registro é relatado e observacional, salvo cifrado no prontuário da clínica e vinculado ao paciente; não classifica a cefaleia nem substitui a avaliação médica. Dados locais deste dispositivo não são lidos nem migrados."
+              : "Registre cada episódio com detalhes. Este é um rascunho local cifrado e não integra o prontuário LIVE; exporte o CSV quando precisar compartilhar com a equipe clínica."}
           </p>
         </div>
       </div>
@@ -214,7 +241,7 @@ export default function HeadacheCalendarPage() {
         <Button onClick={() => setAdding(true)} className="gap-2" disabled={adding}>
           <Plus className="w-4 h-4" /> Novo Episódio
         </Button>
-        {entries.length > 0 && (
+        {shown.length > 0 && (
           <Button onClick={exportCSV} variant="outline" className="gap-2">
             <FileDown className="w-4 h-4" /> Exportar CSV
           </Button>
@@ -357,27 +384,27 @@ export default function HeadacheCalendarPage() {
             </div>
 
             <div className="flex gap-2">
-              <Button onClick={saveEntry} disabled={!current.type} className="flex-1">Salvar Rascunho</Button>
+              <Button onClick={saveEntry} disabled={!current.type || (live && (diary.busy || !diary.patientId))} className="flex-1">{live ? (diary.busy ? "Salvando…" : "Salvar no prontuário") : "Salvar Rascunho"}</Button>
               <Button onClick={() => { setCurrent(newEntry()); setAdding(false); }} variant="outline">Cancelar</Button>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {entries.length === 0 && !adding && (
+      {shown.length === 0 && !adding && (
         <Card className="border-card-border">
           <CardContent className="p-8 text-center space-y-3">
             <Calendar className="w-10 h-10 text-muted-foreground mx-auto" />
             <p className="text-sm text-muted-foreground">Nenhum episódio registrado ainda.</p>
-            <p className="text-xs text-muted-foreground">Clique em “Novo Episódio” para começar o rascunho local.</p>
+            <p className="text-xs text-muted-foreground">{live ? (diary.patientId ? "Clique em “Novo Episódio” para registrar no prontuário." : "Selecione o paciente para ver o calendário.") : "Clique em “Novo Episódio” para começar o rascunho local."}</p>
           </CardContent>
         </Card>
       )}
 
-      {entries.length > 0 && (
+      {shown.length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-sm font-bold text-foreground">Rascunhos ({entries.length})</h3>
-          {entries.map((e, i) => (
+          <h3 className="text-sm font-bold text-foreground">{live ? "Registros" : "Rascunhos"} ({shown.length})</h3>
+          {shown.map((e, i) => (
             <Card key={`${e.date}-${e.type}-${i}`} className="border-card-border">
               <CardContent className="p-4 space-y-2">
                 <div className="flex items-center justify-between">

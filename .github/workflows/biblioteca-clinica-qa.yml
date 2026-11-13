@@ -8,12 +8,19 @@ on:
       - "client/src/pages/biblioteca-clinica.tsx"
       - "client/src/components/biblioteca-clinica-tea-timidez.tsx"
       - "client/src/components/biblioteca-clinica-desatencao-imaturidade.tsx"
+      - "client/src/components/biblioteca-clinica-primeira-crise-afebril.tsx"
+      - "client/src/components/biblioteca-clinica-alfabetizacao-dislexia.tsx"
+      - "client/src/components/biblioteca-clinica-atraso-fala.tsx"
       - "client/src/App.tsx"
       - "client/src/data/navigation.ts"
       - "client/src/security/knownRoutes.ts"
       - "tests/unit/clinical-library-static.test.mjs"
       - "tests/unit/clinical-library-day001.test.mjs"
       - "tests/unit/clinical-library-day002.test.mjs"
+      - "tests/unit/clinical-library-day003.test.mjs"
+      - "tests/unit/clinical-library-day004.test.mjs"
+      - "tests/unit/clinical-library-catalog.test.mjs"
+      - "tests/e2e/biblioteca-clinica.mjs"
       - ".github/workflows/biblioteca-clinica-*.yml"
       - "docs/biblioteca-clinica/**"
 
@@ -30,6 +37,32 @@ jobs:
         with:
           node-version: "24"
       - name: Verificar capítulo, índice, bibliografia, aceite e pauta
-        run: node tests/unit/clinical-library-static.test.mjs && node tests/unit/clinical-library-day001.test.mjs && node tests/unit/clinical-library-day002.test.mjs
+        run: node tests/unit/clinical-library-static.test.mjs && node tests/unit/clinical-library-day001.test.mjs && node tests/unit/clinical-library-day002.test.mjs && node tests/unit/clinical-library-day003.test.mjs && node tests/unit/clinical-library-day004.test.mjs && node tests/unit/clinical-library-catalog.test.mjs
       - name: Verificar sincronismo de rotas protegidas
         run: node tests/unit/known-routes-sync.test.mjs
+
+      # E2E no build real com o login sintético: 5 capítulos, navegação por
+      # clique/teclado, link profundo após login e recarregamento, celular sem
+      # rolagem horizontal e axe sem violação séria/crítica.
+      - name: Instalar dependências
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
+      - name: Instalar Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Compilar cliente
+        run: npm run build:client
+
+      - name: E2E da Biblioteca Clínica
+        run: npm run test:e2e:biblioteca-clinica
+
+      - name: Evidência do E2E
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: biblioteca-clinica-e2e-${{ github.run_id }}
+          path: artifacts/e2e/biblioteca-clinica/
+          if-no-files-found: warn
+          retention-days: 14

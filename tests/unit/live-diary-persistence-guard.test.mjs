@@ -71,9 +71,12 @@ function assertStandaloneDiaryGuard(source, { name, entryType, disabledTestId })
   const writeAt = source.indexOf("secureSet(STORAGE_KEY, snapshot)");
   assert.ok(saveGuard >= 0 && writeAt >= 0 && saveGuard < writeAt, `${name}: guard deve anteceder secureSet`);
 
-  assert.match(source, new RegExp(`data-testid="${disabledTestId}"`));
-  assert.match(source, /não lê nem grava o histórico deste dispositivo/);
-  assert.match(source, /não são migrados automaticamente para o prontuário tenant-aware/);
+  // Desde a 0040, em LIVE a tela grava no prontuário da clínica pelo hook
+  // compartilhado; o cofre local continua fora do caminho LIVE (guards acima).
+  assert.match(source, /useLiveDiary\("[a-z-]+"\)/, `${name}: modo LIVE usa o diário da clínica`);
+  assert.match(source, /<LiveDiaryContextCard diary=\{diary\}/, `${name}: paciente e origem do relato em LIVE`);
+  assert.match(source, /Dados locais deste dispositivo não são lidos nem migrados/, `${name}: aviso de que nada local é lido`);
+  assert.doesNotMatch(source, new RegExp(`data-testid="${disabledTestId}"`), `${name}: o aviso de bloqueio saiu`);
 }
 
 assertStandaloneDiaryGuard(epilepsy, {

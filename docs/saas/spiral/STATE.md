@@ -347,3 +347,172 @@ Comandos exit 0 depois desta sessão: `npm run check`, `npx eslint` nos
 arquivos tocados, os seis testes de memória/paciente listados em
 EVIDENCE.md#LEG-17, e `npm run test:quick-wins` completo (0 `not ok`,
 incluindo o teste novo).
+
+
+## Ciclo 9 (2026-10-31) — OPS-03-D reconciliado
+
+A auditoria da `main` atual mostrou que a visão unificada do dia, ainda marcada
+como aberta em BACKLOG.md, já havia sido entregue e mesclada na PR #1069 em
+2026-10-01. A PR adicionou `AgendaUnifiedDay`, `agendaUnifiedDay.ts`, reforços
+no E2E e o teste unitário `tests/unit/agenda-unified-day.test.ts`; os 21 checks
+da PR ficaram verdes. A etapa D junta e ordena agendas por data/horário,
+exclui canceladas e faltas, evita colisão de IDs entre profissionais, falha
+fechado quando a resposta vem com dono incorreto ou contrato quebrado e mantém
+o restante útil quando uma fonte carrega ou falha. Fixtures são sintéticas,
+sem PHI.
+
+Evidência detalhada em `EVIDENCE.md#OPS-03-D`; desenho atualizado em
+`MULTI_PROVIDER_AGENDA.md`; BACKLOG.md agora marca OPS-03 como fechado, com
+censo pós-deploy, teste manual e acessibilidade real preservados como pendências
+operacionais explícitas.
+
+### Próximo ponto de retomada
+
+Reler a `main` e os PRs abertos antes de tocar qualquer código. S9 permanece
+bloqueado por destinação autorizada de registros legados. O piso legal de
+retenção de LTB-10 permanece bloqueado por revisão jurídico-regulatória. A
+próxima oportunidade técnica pequena deve ser escolhida entre documentação de
+lacunas já mescladas e um item de segurança ainda não assumido por PR; não
+reabrir OPS-03, S5 ou LEG-17.
+
+
+## Ciclo 10 (2026-11-01) — S13-R alias canônico de rota pública
+
+Foi implementado e testado o alias `/c/:clinicSlug/agendar` no adaptador de
+deep links. A rota é convertida antes do fallback para `#/`, chega ao componente
+público existente como `/#/agendar?clinic=<slug>`, preserva `provider` e faz o
+slug do caminho prevalecer sobre `clinic` conflitante na query. Slugs inválidos,
+callbacks com `session_id`, microsites estáticos e caminhos não canônicos mantêm
+as travas anteriores. Testes locais verdes: deep link, TypeScript, funções,
+lint e diff check.
+
+A evidência foi registrada em `EVIDENCE.md#S13-R` e o backlog foi reconciliado:
+a camada de URL está entregue; continuam abertas somente a troca estrutural de
+PKs, geração automática por convite/notificação e validações de operação que
+exigem ambiente externo.
+
+### Próximo ponto de retomada
+
+Criar branch a partir de `origin/main`, confirmar a integração da documentação
+e escolher a próxima lacuna não assumida. Não duplicar S5, OPS-03-D, S13-R ou
+a correção de `node-forge` 1.4.2, já integrados. A cadência de 30 minutos
+continua registrada, mas a alteração automática permanece bloqueada pela
+plataforma com `permission_denied: control source is unknown`; os ciclos devem
+retomar pelo estado deste arquivo quando forem disparados.
+
+
+## Ciclo 11 (2026-11-03) — S10-O delegação operacional por membership
+
+Foi implementada uma fatia segura do redesenho de S10: contas globais `reader`
+com membership `assistant` ativa e vínculo persistido podem operar a agenda do
+profissional, no middleware e no handler direto. `resolveOperationsAccess`,
+o middleware e `preparePrincipal` usam a mesma fronteira profissional/clínica;
+`canConfigure` continua limitado a `admin`/`professional`, e membership
+`financial` não concede agenda por inferência. A seleção explícita inválida
+continua fail-closed com `PROVIDER_NOT_AVAILABLE`.
+
+A prova real usou schema e migrações, fixtures sintéticas, e passou em
+`npm run test:operations`, `npm run check`, `npm run lint` e `git diff --check`.
+Evidência detalhada em `EVIDENCE.md#S10-O`; BACKLOG.md marca a fatia como
+comprovada e preserva como abertas as permissões completas de `financial`, o
+modelo clínico restante e o bypass de pacientes legados sem `clinic_id`.
+
+### Próximo ponto de retomada
+
+Criar branch a partir de `origin/main`, verificar PRs concorrentes e não tocar
+novamente em S13-R, OPS-03-D, S5, node-forge ou S10-O. Priorizar outra lacuna
+executável, ou documentar um bloqueio quando a decisão exigir produto,
+migração, ambiente D1 de produção ou revisão jurídica. A rotina automática
+segue ativa, mas a alteração para 30 minutos permanece recusada pela plataforma
+com `permission_denied: control source is unknown`.
+
+
+## Ciclo 12 (2026-11-04) — S10-F oportunidade financeira documentada
+
+A PR #1267 foi mesclada em `main` como `c5464da738ca9b8ca81a8a6af83c6f997a80e1af`, com 12 checks bem-sucedidos. A evidência documenta a divergência entre `finance.read` no catálogo do papel `financial` e o endpoint `financial_report`, hoje restrito a `admin`/`professional` porque contém nomes de pacientes e responsáveis.
+
+Nenhuma permissão foi liberada. O backlog agora exige decisão explícita sobre relatório redigido versus completo, escopo por clínica, quatro olhos e auditoria da exportação antes de qualquer implementação. A oportunidade está tecnicamente isolada e não deve ser resolvida por inferência.
+
+### Próximo ponto de retomada
+
+Partir de `origin/main`, verificar PRs abertas e não duplicar S10-O, S10-F, S13-R, OPS-03-D, S5 ou node-forge. Se não houver decisão de produto para S10-F, selecionar outra lacuna técnica pequena com fixtures sintéticas; manter S9, S4 e a retenção legal como bloqueios externos/jurídicos. A rotina continua ativa às 08:00 (`0 0 8 * * *`); a mudança para cada 30 minutos permanece não configurada.
+
+## Ciclo 13 (2026-11-06) — integridade E2E do Super NeuroPAD
+
+A PR #1266 foi integrada após todos os checks obrigatórios passarem. Ela removeu o roteiro E2E da extensão opcional aposentada, que falhava procurando uma interface inexistente, sem remover funcionalidade atual, alterar lógica clínica ou tocar em dados persistidos.
+
+A evidência foi registrada em `EVIDENCE.md#Ciclo-13` e o histórico de cobertura vigente foi preservado. A dívida de código dos componentes/handlers opcionais não renderizados permanece fora deste incremento, para auditoria própria e sem remoção especulativa.
+
+### Próximo ponto de retomada
+
+Partir de `origin/main`, verificar PRs concorrentes e selecionar outra lacuna pequena e executável. S9, S10 estrutural, S13 estrutural e retenção legal permanecem condicionados a censo, decisão de produto, migração ou revisão jurídica. A cadência de 30 minutos continua solicitada, mas a plataforma ainda mantém a configuração disponível às 08:00 por `permission_denied: control source is unknown`.
+
+## Ciclo 14 (2026-11-06) — smoke publicado ancorado no SHA implantado
+
+A PR #1273 foi integrada como `9945cbcb`. O smoke pós-deploy da Biblioteca Clínica passou a comparar a produção com `workflow_run.head_sha`, o SHA efetivamente implantado, em vez de usar o HEAD corrente da `main`. A prova mantém fail-closed sem credenciais, não fixa a lista de capítulos e foi validada com títulos, status, reload, viewport móvel e ausência de `pageerror`.
+
+Não houve alteração de lógica clínica, PHI ou dados persistidos. A mudança melhora a confiabilidade da evidência de publicação e reduz o risco de concluir incorretamente que o catálogo implantado corresponde ao código atual.
+
+### Próximo ponto de retomada
+
+Partir de `origin/main`, verificar PRs concorrentes e continuar em uma frente pequena, preferencialmente de segurança, isolamento ou operação. Não reabrir S5, OPS-03-D, S13-R, S10-O, S10-F, node-forge, o E2E opcional ou a ancoragem do smoke. S9, S10 estrutural, S13 estrutural e retenção legal seguem condicionados a censo, decisão de produto, migração ou revisão jurídica.
+
+## Ciclo 15 (2026-11-07) — feedback fail-closed para cópia de resumo
+
+A PR #1265 foi integrada como `924bf45f`. As jornadas de pré-consulta, pré-retorno e recepção passaram a tratar explicitamente o resultado de `copyText`, avisando quando o clipboard falha em vez de confirmar uma cópia inexistente. A correção não inspeciona nem persiste o conteúdo copiado e não altera autorização, backend, lógica clínica ou dados persistidos.
+
+O contrato estático cobre os chamadores compartilhados e os checks obrigatórios passaram antes da integração, incluindo qualidade, build, TypeScript, LGPD, isolamento LIVE e ausência de PHI no navegador.
+
+### Próximo ponto de retomada
+
+Partir de `origin/main`, verificar PRs concorrentes e selecionar outra frente pequena de segurança, isolamento ou operação. Não reabrir as frentes já documentadas nos ciclos 5, 8, 10, 12, 13, 14 e 15. S9, S10 estrutural, S13 estrutural e retenção legal continuam condicionados a censo, decisão de produto, migração ou revisão jurídica; a cadência de 30 minutos continua bloqueada pela plataforma.
+
+## Ciclo 16 (2026-11-08) — observabilidade segura do censo S9
+
+A PR #1292 foi integrada como `8d6a8fba`. O job de censo legado agora imprime `CENSUS_AGGREGATES` no log, contendo apenas contagens e booleanos, sem e-mail, ID, nome ou conteúdo. O teste sintético confirma a correspondência com o memo e a ausência de sentinelas de identidade.
+
+A mudança melhora a disponibilidade da evidência para quem só possui acesso aos logs, sem realizar backfill, atribuir owners ou alterar a decisão de negócio sobre registros órfãos. S9 continua bloqueado pela destinação autorizada dos dados observados.
+
+### Próximo ponto de retomada
+
+Partir de `origin/main`, verificar PRs concorrentes e selecionar outra frente pequena de segurança, isolamento, LGPD ou operação. Não atribuir registros legados por inferência nem reabrir os ciclos já fechados; manter a cadência de 30 minutos como solicitação pendente da plataforma.
+
+## Ciclo 17 (2026-11-09) — fundação fail-closed PANT/PANTY
+
+A PR #1278 foi integrada como `f586d0db`. A fundação de auditoria clínica bloqueia CID em hipóteses não firmadas, metas sem critérios observáveis, medicação sem revisão integral, divergências sem fontes válidas e emissão sem aceite médico explícito. Os testes usam somente fixtures sintéticas.
+
+A fundação ainda não está conectada às páginas, ao backend, ao histórico, ao PDF ou à persistência. Não habilitar fluxo clínico com dados reais até existir integração autenticada, criptografada, auditada e coberta por regressões.
+
+### Próximo ponto de retomada
+
+Partir de `origin/main`, verificar PRs concorrentes e selecionar outra frente pequena de segurança, isolamento, LGPD ou operação. Para PANT/PANTY, o próximo incremento deve tratar integração segura ou permanecer documentado como oportunidade; não ligar a fundação diretamente a dados reais.
+
+## Ciclo 18 (2026-11-10) — receituários físicos A1/B1
+
+A PR #1306 foi integrada como `e2dede6a`. O produto agora possui os modelos físicos A1/B1 com numeração Visa, contratos de impressão e guards de rota, mantendo o fluxo autenticado e as validações de PAdES/ICP-ITI. Os checks obrigatórios de tenant isolation, readiness, PDF, TypeScript e qualidade passaram.
+
+Nenhum segredo novo foi adicionado e nenhuma autorização clínica ou armazenamento de PHI foi alterado. A mudança é um incremento operacional; a main permanece limpa e alinhada com `origin/main`.
+
+### Próximo ponto de retomada
+
+Partir de `origin/main`, verificar PRs concorrentes e escolher outra frente pequena de segurança, isolamento, LGPD ou operação. A PR #1307 de persistência de certificados A1 permanece não integrada devido a falhas de Production Readiness/Verify com 404s no hard release visual; não contornar esse gate. A cadência de 30 minutos continua bloqueada pela plataforma.
+
+## Ciclo 19 (2026-11-11) — filtro de sinais aguardando reconciliação
+
+A PR #1312 possui checks verdes e propõe cobertura explícita de sinais individuais e carga verificável, mas conflita com a implementação de filtro já integrada em #1313. O merge foi abortado sem alterações parciais porque os conflitos atingem workflow, motor de pódio, auditoria, UI e métricas.
+
+A oportunidade está registrada em `EVIDENCE.md#Ciclo-19`. O próximo trabalho deve resolver manualmente a combinação, preservando o fail-closed de carga desconhecida e os contratos de métricas; depois executar as suítes clínicas e o hard release completo. A main segura de retomada é `40b371c9`.
+
+### Próximo ponto de retomada
+
+Partir de `origin/main`, não tentar novamente um merge automático da PR #1312. Resolver os conflitos em branch própria ou escolher outra frente não conflitante. Não alterar filtros clínicos por descarte de um lado inteiro e não integrar a PR #1307 enquanto seus gates de Production Readiness/Verify permanecerem falhos.
+
+## Ciclo 20 (2026-11-12) — conteúdo educativo sobre agressividade infantil
+
+A PR #1315 foi integrada como `1368bc56`. A Biblioteca Clínica recebeu conteúdo educativo sobre agressividade infantil com triagem de risco iminente, sinais de alerta, análise funcional, intervenção e reavaliação. A página mantém linguagem de interpretação possível, não diagnóstico automático, e afirma que medicação exige avaliação individual e monitorização.
+
+Não foram usados dados de pacientes. Os checks de filtros, TypeScript, qualidade, readiness, isolamento LIVE e ausência de PHI no navegador passaram. A tabela recebeu região acessível para rolagem horizontal.
+
+### Próximo ponto de retomada
+
+Partir de `origin/main`, verificar PRs concorrentes e escolher outra frente pequena de segurança, isolamento, LGPD ou operação. A reconciliação da PR #1312 foi posteriormente incorporada à main, mas a evidência histórica do ciclo 19 deve ser revisada contra o estado atual antes de qualquer nova alteração de filtro. A PR #1307 segue bloqueada pelos gates visuais 404.

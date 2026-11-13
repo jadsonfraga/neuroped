@@ -37,12 +37,141 @@ export interface ClinicalLibraryChapter {
   status: ClinicalLibraryStatus;
   minutes: number;
   day?: number;
+  /** Id estável da âncora `<article>` do capítulo; usado por cartão e link profundo. */
+  anchor: string;
   review: string;
   sources: string[];
 }
 export const clinicalLibraryChapters: ClinicalLibraryChapter[] = [
   {
+    slug: "cefaleia-dia11",
+    anchor: "capitulo-cefaleia-dia11",
+    day: 11,
+    title: "Como diferenciar enxaqueca de cefaleia tensional em escolares?",
+    subtitle: "Red flags, fenótipo e decisões de consultório",
+    category: "Cefaleias e dor",
+    date: "2026-11-12",
+    updated: "2026-11-12",
+    status: "revisao_medica",
+    minutes: 6,
+    review: "Consensus via conector 12/11/2026; revisão médica pendente.",
+    sources: ["szperka-2021", "oskoui-2019"],
+  },
+  {
+    slug: "agressividade-dia10",
+    anchor: "capitulo-agressividade-dia10",
+    day: 10,
+    title: "Como analisar agressividade infantil antes de propor medicação?",
+    subtitle: "Risco, análise funcional e intervenções antes da farmacoterapia",
+    category: "Comportamento e sensorial",
+    date: "2026-11-11",
+    updated: "2026-11-11",
+    status: "revisao_medica",
+    minutes: 6,
+    review: "Consensus consultado em 11/11/2026; revisão médica pendente.",
+    sources: ["evans-aggression-2024", "chin-irritability-2025"],
+  },
+  {
+    slug: "wisc-indices-dia09",
+    anchor: "capitulo-wisc-indices-dia09",
+    day: 9,
+    title: "O que cada índice do WISC-IV informa ao neuropediatra?",
+    subtitle: "Interpretação dos quatro índices, validade e decisão clínica",
+    category: "Testes e exames",
+    date: "2026-11-10",
+    updated: "2026-11-10",
+    status: "revisao_medica",
+    minutes: 6,
+    review: "Pesquisa Consensus Pro iniciada em 10/11/2026; revisão médica pendente.",
+    sources: ["pearson-cpi", "discrepancy", "learning", "satepsi", "aaidd"],
+  },
+  {
+    slug: "insonia-pre-escolar",
+    anchor: "capitulo-insonia-pre-escolar",
+    day: 8,
+    title: "Como avaliar insônia comportamental no pré-escolar?",
+    subtitle: "Red flags, diário de sono, manejo parental e seguimento",
+    category: "Sono e ritmos",
+    date: "2026-11-09",
+    updated: "2026-11-09",
+    status: "revisao_medica",
+    minutes: 6,
+    review: "Pesquisa Consensus Pro iniciada em 09/11/2026; revisão médica pendente.",
+    sources: ["mindell-2006", "morgenthaler-2006", "meltzer-2014", "rafihi-ferreira-2019"],
+  },
+  {
+    slug: "audicao-urgente",
+    anchor: "capitulo-audicao-urgente",
+    day: 7,
+    title: "Quando a criança que não fala precisa de avaliação auditiva urgente?",
+    subtitle: "Red flags, prioridade audiológica e avaliação paralela do desenvolvimento",
+    category: "Linguagem e comunicação",
+    date: "2026-11-08",
+    updated: "2026-11-08",
+    status: "revisao_medica",
+    minutes: 6,
+    review: "Pesquisa Consensus Pro 08/11/2026; revisão médica pendente.",
+    sources: ["aap-audicao-2023", "jcih-2019", "ms-triagem-auditiva"],
+  },
+  {
+    slug: "ansiedade-separacao",
+    anchor: "capitulo-ansiedade-separacao",
+    day: 6,
+    title: "Como reconhecer ansiedade de separação que ultrapassa o esperado?",
+    subtitle: "Idade, prejuízo funcional, diferenciais e manejo graduado",
+    category: "Saúde mental frequente",
+    date: "2026-11-06",
+    updated: "2026-11-06",
+    status: "revisao_medica",
+    minutes: 6,
+    review: "Pesquisa Consensus em 06/11/2026; revisão médica pendente.",
+    sources: ["giani-2021-separacao", "abidi-2026-recusa-escolar"],
+  },
+  {
+    slug: "atraso-fala-avaliacao-global",
+    anchor: "capitulo-atraso-fala-avaliacao-global",
+    day: 5,
+    title: "Quando o atraso de fala exige avaliação global?",
+    subtitle: "Audição, compreensão, múltiplos domínios e decisão de investigação",
+    category: "Desenvolvimento e triagem",
+    date: "2026-11-03",
+    updated: "2026-11-03",
+    status: "revisao_medica",
+    minutes: 6,
+    review: "Rascunho educacional revisável. Revisão médica e aceite pendentes.",
+    sources: ["uspstf-language-2024", "faruk-2020", "ms-caderneta-crianca"],
+  },
+  {
+    slug: "alfabetizacao-dislexia",
+    anchor: "capitulo-alfabetizacao-dislexia",
+    day: 4,
+    title: "Como diferenciar dificuldade de alfabetização de dislexia?",
+    subtitle: "Oportunidade de ensino, decodificação, resposta à intervenção e decisão clínica",
+    category: "Aprendizagem e escola",
+    date: "2026-11-02",
+    updated: "2026-11-02",
+    status: "revisao_medica",
+    minutes: 6,
+    review: "Pesquisa Consensus Pro concluída em 02/11/2026; revisão médica e aceite pendentes.",
+    sources: ["lei-14254", "hall-2022", "silva-2020", "barbosa-2015", "nrp-2000", "ida-structured", "icd11-6a03"],
+  },
+  {
+    slug: "primeira-crise-afebril",
+    anchor: "capitulo-primeira-crise-afebril",
+    day: 3,
+    title: "Primeira crise convulsiva afebril: qual a abordagem inicial?",
+    subtitle: "Estabilização, red flags, EEG, imagem e risco de recorrência",
+    category: "Epilepsia e eventos",
+    date: "2026-11-01",
+    updated: "2026-11-01",
+    status: "revisao_medica",
+    minutes: 6,
+    review: "Pesquisa Consensus Pro concluída em 01/11/2026; revisão médica e aceite pendentes.",
+    sources: ["ms-pcdt-epilepsia", "sbp-epilepsia", "nice-ng217", "rch-2025", "ilae-2014", "ilae-ifcn-2025", "wendt-2018", "jimenez-2021"],
+  },
+  {
     slug: "desatencao-imaturidade-etaria",
+    anchor: "capitulo-desatencao-imaturidade",
     day: 2,
     title: "Como diferenciar desatenção de imaturidade etária?",
     subtitle: "Idade relativa, prejuízo em múltiplos contextos e decisão clínica",
@@ -56,6 +185,7 @@ export const clinicalLibraryChapters: ClinicalLibraryChapter[] = [
   },
   {
     slug: "tea-timidez-primeira-infancia",
+    anchor: "capitulo-tea-timidez",
     day: 1,
     title: "Como distinguir sinais de TEA de timidez na primeira infância?",
     subtitle: "Atenção compartilhada, reciprocidade, red flags e decisões de consultório",
@@ -69,6 +199,7 @@ export const clinicalLibraryChapters: ClinicalLibraryChapter[] = [
   },
   {
     slug: "wisc-iv-interpretacao-neuropediatria",
+    anchor: "capitulo-wisc",
     title: "Como interpretar o WISC-IV na neuropediatria",
     subtitle: "Os quatro índices, o QI Total e o raciocínio clínico por trás dos resultados",
     category: "Neuropsicologia",
@@ -207,9 +338,29 @@ export const wiscReferences: ClinicalLibraryReference[] = [
 ];
 
 export const nextClinicalTopics = [
-  "Primeira crise convulsiva afebril: qual a abordagem inicial?",
-  "Como diferenciar dificuldade de alfabetização de dislexia?",
-  "Quando o atraso de fala exige avaliação global?",
-  "Como reconhecer ansiedade de separação que ultrapassa o esperado?",
-  "Quando a criança que não fala precisa de avaliação auditiva urgente?",
+  "Quando farmacoterapia é indicada no TDAH e quando não é?",
 ];
+
+/** Trilha 365: somente capítulos numerados pelo índice canônico, em ordem crescente de Dia. */
+export const clinicalLibraryTrail: ClinicalLibraryChapter[] = clinicalLibraryChapters
+  .filter((chapter) => typeof chapter.day === "number")
+  .sort((a, b) => (a.day ?? 0) - (b.day ?? 0));
+
+/** Estudos anteriores à Trilha 365 (sem Dia canônico); não contam como Dia do índice. */
+export const clinicalLibraryEarlierStudies: ClinicalLibraryChapter[] = clinicalLibraryChapters
+  .filter((chapter) => typeof chapter.day !== "number");
+
+/** Converte o `?capitulo=` do link profundo na âncora estável; slug desconhecido não navega. */
+export function clinicalLibraryAnchorForSlug(slug: string | null | undefined): string | null {
+  if (!slug) return null;
+  return clinicalLibraryChapters.find((chapter) => chapter.slug === slug)?.anchor ?? null;
+}
+
+/**
+ * Rótulo exibido para o estado clínico. `publicado` só existe após aceite médico
+ * explícito registrado em PR; integração técnica ou deploy não mudam este estado.
+ */
+export const clinicalLibraryStatusLabel: Record<ClinicalLibraryStatus, string> = {
+  revisao_medica: "Revisão médica pendente",
+  publicado: "Aceite médico registrado",
+};
