@@ -115,6 +115,24 @@ e `shared/schema.ts`. É informativo e não exige correção agora.
 verdade clínica (Biblioteca) e 1 a conferir no painel (`[env.preview]`). Os achados 2 e 5 caem,
 e o achado 6 não exige ação.
 
+## Atualização em 13/11/2026
+
+Reconferido sobre `main` = `faf65ef4`, antes da integração deste relatório.
+
+| # | Estado em 13/11 | Evidência |
+|---|---|---|
+| 1 | **Aberto**, sem mudança. Continua dependendo da decisão do proprietário (S9 / gate G3). | `functions/api/auth/_authorization.ts`: `patientOwnerPredicate` ainda devolve cláusulas vazias para `admin`. |
+| 2 | Refutado (inalterado). | Ver R1. |
+| 3 | **Corrigido na `main`.** O cartão lê `item.status` via `clinicalLibraryStatusLabel`, e o cabeçalho deriva o selo de `allInReview`. | `client/src/pages/biblioteca-clinica.tsx`, `biblioteca-card-status`. |
+| 4 | Aberto, porque não é verificável a partir do repositório. `wrangler.toml` continua sem `[env.preview]`. Os workflows publicam só `--branch main`. | Conferir no painel do Cloudflare Pages se existem builds automáticos de branch. |
+| 5 | Ambiental (inalterado). Os deploys da `main` seguem aprovando o Lighthouse na CI. | Deploys 1675–1677 com a catraca de release verde. |
+| 6 | Sem ação (inalterado). | — |
+
+Itens resolvidos desde 31/10, fora desta tabela:
+- dependências do Dependabot (#1237–#1245) consolidadas numa entrega única;
+- cobertura do gate de auditoria (validade das exceções e trava `node-forge >= 1.4.2`) recuperada;
+- e2e órfão `super-neuropad-opcionais` retirado da `main` em 06/11 (`78990e0b`).
+
 ## Pendências externas inalteradas
 
 G2 (R2/LGPD), G4 (restauração com ciphertext real), G5 (webhook Asaas publicado),
