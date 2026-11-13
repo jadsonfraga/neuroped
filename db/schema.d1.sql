@@ -168,3 +168,48 @@ INSERT OR IGNORE INTO app_settings (key, value) VALUES ('app.version', '2.0.0');
 INSERT OR IGNORE INTO app_settings (key, value) VALUES ('app.mode', 'demo');
 INSERT OR IGNORE INTO app_settings (key, value) VALUES ('app.lgpd.version', '1.0');
 INSERT OR IGNORE INTO app_settings (key, value) VALUES ('app.schema.version', '2026-05-08');
+
+-- Mirrors of migrations 0041–0042 for D1 bootstrap/dev schemas.
+CREATE TABLE IF NOT EXISTS account_workspace_items (
+  clinic_id TEXT NOT NULL REFERENCES clinics(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  item_key_hash TEXT NOT NULL CHECK (length(item_key_hash) = 64),
+  payload_encrypted TEXT NOT NULL,
+  encryption_version TEXT NOT NULL,
+  version TEXT NOT NULL CHECK (length(version) BETWEEN 16 AND 64),
+  expires_at TEXT,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (clinic_id, user_id, item_key_hash)
+);
+CREATE INDEX IF NOT EXISTS idx_account_workspace_items_expiry
+  ON account_workspace_items(clinic_id, user_id, expires_at)
+  WHERE expires_at IS NOT NULL;
+CREATE TRIGGER IF NOT EXISTS trg_account_workspace_active_membership
+BEFORE INSERT ON account_workspace_items
+WHEN NOT EXISTS (
+  SELECT 1 FROM clinic_memberships m
+   WHERE m.clinic_id = NEW.clinic_id AND m.user_id = NEW.user_id AND m.active = 1
+)
+BEGIN
+  SELECT RAISE(ABORT, 'ACCOUNT_WORKSPACE_MEMBERSHIP_REQUIRED');
+END;
+CREATE TRIGGER IF NOT EXISTS trg_account_workspace_active_membership_update
+BEFORE UPDATE ON account_workspace_items
+WHEN NOT EXISTS (
+  SELECT 1 FROM clinic_memberships m
+   WHERE m.clinic_id = NEW.clinic_id AND m.user_id = NEW.user_id AND m.active = 1
+)
+BEGIN
+  SELECT RAISE(ABORT, 'ACCOUNT_WORKSPACE_MEMBERSHIP_REQUIRED');
+END;
+
+CREATE TABLE IF NOT EXISTS certificate_vault (
+  user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  format_version INTEGER NOT NULL CHECK (format_version = 1),
+  kdf TEXT NOT NULL CHECK (kdf = 'PBKDF2-SHA256'),
+  kdf_iterations INTEGER NOT NULL CHECK (kdf_iterations BETWEEN 600000 AND 5000000),
+  salt_b64 TEXT NOT NULL CHECK (length(salt_b64) = 24),
+  iv_b64 TEXT NOT NULL CHECK (length(iv_b64) = 16),
+  ciphertext_b64 TEXT NOT NULL CHECK (length(ciphertext_b64) BETWEEN 24 AND 1700000),
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

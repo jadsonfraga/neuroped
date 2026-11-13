@@ -54,8 +54,10 @@ assert.deepEqual(await secureGet("pre-consulta"), {
 });
 
 // Regressão: a conversão Base64 não pode estourar a pilha com payloads grandes.
-const largePayload = "x".repeat(1_500_000);
+// O teto é único para cofre local e workspace da conta (1,4 MB antes de cifrar).
+const largePayload = "x".repeat(1_350_000);
 assert.equal(await secureSet("payload-grande", largePayload), true);
+assert.equal(await secureSet("payload-acima-do-teto", "x".repeat(1_400_001)), false, "acima do teto comum é recusado");
 assert.equal(
   (await secureGet<string>("payload-grande"))?.length,
   largePayload.length,

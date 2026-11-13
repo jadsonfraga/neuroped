@@ -465,6 +465,11 @@ export function createSyntheticClinicalApi(scenario = {}) {
     return state.sessions.has(token);
   }
 
+  /** @type {Map<string, {data: unknown, version: string, expiresAt: string | null, updatedAt: string}>} */
+  const workspaceItems = new Map();
+  /** @type {Record<string, unknown> | null} */
+  let certificateEnvelope = null;
+
   function readBody(request) {
     return new Promise((resolve) => {
       let raw = "";
@@ -604,6 +609,72 @@ export function createSyntheticClinicalApi(scenario = {}) {
         }
       }
       send(response, 200, detail);
+      return true;
+    }
+
+    // Workspace da conta (mesmo contrato de functions/api/me/workspace.ts):
+    // ausência = 200 found:false; gravação exige baseVersion e responde 409 se
+    // a versão não for a atual. Em memória, por cenário; nada vai ao disco.
+    if (pathname === "/api/me/workspace") {
+      const key = request.method === "PUT" ? null : searchParams.get("key");
+      if (request.method === "GET") {
+        const item = key ? workspaceItems.get(key) : null;
+        if (!item || (item.expiresAt && Date.parse(item.expiresAt) <= Date.now())) {
+          if (key) workspaceItems.delete(key);
+          send(response, 200, { found: false });
+          return true;
+        }
+        send(response, 200, { found: true, data: item.data, version: item.version, expiresAt: item.expiresAt, updatedAt: item.updatedAt });
+        return true;
+      }
+      if (request.method === "PUT") {
+        const body = await readBody(request);
+        if (typeof body.key !== "string" || !("data" in body) || !("baseVersion" in body)) {
+          send(response, 400, { error: "Requisição inválida.", code: "VALIDATION_ERROR" });
+          return true;
+        }
+        const existing = workspaceItems.get(body.key);
+        const live = existing && !(existing.expiresAt && Date.parse(existing.expiresAt) <= Date.now()) ? existing : null;
+        if ((live ? live.version : null) !== body.baseVersion) {
+          send(response, 409, { error: "Conflito de versão.", code: "WORKSPACE_VERSION_CONFLICT", currentVersion: live ? live.version : null });
+          return true;
+        }
+        const saved = {
+          data: body.data,
+          version: crypto.randomUUID(),
+          expiresAt: typeof body.expiresAt === "string" ? body.expiresAt : null,
+          updatedAt: new Date().toISOString(),
+        };
+        workspaceItems.set(body.key, saved);
+        send(response, 200, { ok: true, version: saved.version, updatedAt: saved.updatedAt });
+        return true;
+      }
+      if (request.method === "DELETE") {
+        if (key) workspaceItems.delete(key);
+        send(response, 200, { ok: true });
+        return true;
+      }
+      send(response, 405, { error: "Método não permitido." });
+      return true;
+    }
+
+    if (pathname === "/api/certificate-vault") {
+      if (request.method === "GET") {
+        send(response, 200, { certificate: certificateEnvelope });
+        return true;
+      }
+      if (request.method === "PUT") {
+        const body = await readBody(request);
+        certificateEnvelope = { ...body, updatedAt: new Date().toISOString() };
+        send(response, 200, { ok: true, updatedAt: certificateEnvelope.updatedAt });
+        return true;
+      }
+      if (request.method === "DELETE") {
+        certificateEnvelope = null;
+        send(response, 200, { ok: true });
+        return true;
+      }
+      send(response, 405, { error: "Método não permitido." });
       return true;
     }
 

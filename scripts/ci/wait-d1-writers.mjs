@@ -56,6 +56,8 @@ export const D1_MIGRATION_WORKFLOWS = Object.freeze([
   ".github/workflows/roadmap-items-d1.yml",
   // 0039: diários de acompanhamento no Clinical LIVE.
   ".github/workflows/live-diaries-d1.yml",
+  // 0041–0042: workspace cifrado da conta e cofre do certificado A1.
+  ".github/workflows/account-workspace-d1.yml",
 ]);
 
 // Workflows que publicam o Cloudflare Pages de produção (--branch main).
