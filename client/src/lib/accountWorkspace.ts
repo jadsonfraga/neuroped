@@ -9,7 +9,7 @@
  * - toda gravação declara a versão lida (`baseVersion`). O servidor responde
  *   409 se outra aba/aparelho gravou antes, e o chamador decide como mesclar.
  */
-import { authFetch, getAccessToken } from "@/lib/authClient";
+import { authFetch, getAccessToken, getStoredUser, isVisitorSession } from "@/lib/authClient";
 
 /** Teto do servidor antes de cifrar (limite de linha do D1). */
 export const MAX_ACCOUNT_WORKSPACE_BYTES = 1_400_000;
@@ -47,8 +47,16 @@ export function isAccountWorkspaceRemoteMode(): boolean {
   return mode === "remote" || (mode !== "local" && import.meta.env?.PROD === true);
 }
 
+/**
+ * Sessão que pode usar o workspace da conta. Visitante (somente escalas) e conta
+ * com troca de senha pendente não têm acesso clínico: o servidor recusaria, então
+ * nem chamamos. Para elas valem as regras anteriores (memória/cofre local
+ * conforme a política LIVE).
+ */
 export function hasAccountWorkspaceSession(): boolean {
-  return isAccountWorkspaceRemoteMode() && Boolean(getAccessToken());
+  if (!isAccountWorkspaceRemoteMode() || !getAccessToken()) return false;
+  if (isVisitorSession()) return false;
+  return getStoredUser()?.mustChangePassword !== true;
 }
 
 const TRANSIENT_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
@@ -117,14 +125,18 @@ export async function putAccountWorkspaceItem<T>(
     throw new AccountWorkspaceUnavailableError("gravação", null);
   }
   if (response.status === 409) {
-    let current: string | null;
+    // Só o conflito de versão é recuperável por mesclagem; outros 409 (ex.:
+    // clínica ativa não selecionada) são indisponibilidade.
+    let body: { code?: unknown; currentVersion?: unknown } = {};
     try {
-      const body = await response.json() as { currentVersion?: unknown };
-      current = typeof body.currentVersion === "string" ? body.currentVersion : null;
+      body = await response.json() as typeof body;
     } catch {
-      current = null;
+      body = {};
     }
-    throw new AccountWorkspaceConflictError(current);
+    if (body.code === "WORKSPACE_VERSION_CONFLICT") {
+      throw new AccountWorkspaceConflictError(typeof body.currentVersion === "string" ? body.currentVersion : null);
+    }
+    throw new AccountWorkspaceUnavailableError("gravação", 409);
   }
   if (!response.ok) throw new AccountWorkspaceUnavailableError("gravação", response.status);
   const body = await response.json() as Partial<AccountWorkspaceWriteResult>;

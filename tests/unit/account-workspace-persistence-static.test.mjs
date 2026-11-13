@@ -19,6 +19,9 @@ assert.match(sync, /transport\.putItem\(key, candidate, options\.expiresAt, base
 assert.match(merge, /export function mergeRecordLists/, "record lists merge by id against the common base");
 assert.match(client, /if \(body\.found === false\) return null;/, "absence is an explicit found:false, never a swallowed error");
 assert.match(client, /response\.status === 409/, "version conflicts are surfaced to the sync layer");
+assert.match(client, /body\.code === "WORKSPACE_VERSION_CONFLICT"/, "only a version conflict is treated as mergeable");
+assert.match(client, /if \(isVisitorSession\(\)\) return false;/, "visitor sessions never call the workspace API (server would refuse)");
+assert.match(client, /mustChangePassword !== true/, "sessions pending a password change never call the workspace API");
 assert.match(client, /JSON\.stringify\(\{ key, data, expiresAt, baseVersion \}\)/, "PUT declares baseVersion");
 assert.match(client, /authFetch\("\/api\/me\/workspace"/, "workspace calls use authenticated fetch");
 assert.match(route, /WHERE clinic_id = \? AND user_id = \? AND item_key_hash = \?/, "workspace queries are tenant-and-owner scoped");
