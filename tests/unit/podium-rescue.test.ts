@@ -32,6 +32,7 @@ function makeMatch(partial: {
     ageMax: partial.ageMax ?? 216,
     respondente: partial.respondente ?? ["pais", "clinico"],
     signalTags: partial.signalTags ?? [],
+    verifiedItemCount: partial.itens,
     description: `${partial.itens} itens de teste sintético`,
     implementationStatus: "complete",
     appRoute: `/generic-scale/${partial.id}`,
@@ -159,6 +160,70 @@ function podiumTotal(p: ReturnType<typeof selectPodium>): number {
   // M-CHAT, Denver II e SCARED saíram em 17/10/2026: as alternativas no app não podem "falar" impulsividade.
   for (const id of ["na-sinais-precoces-tea-pais", "na-observacao-clinica-tea", "swyc-marcos-24m", "na-ansiedade-autorrelato"]) check(id, false);
   console.log("✓ matcher canônico discrimina sinais reais da UI no catálogo real");
+}
+
+// ── 5. Todos os sinais cobertos individualmente ────────────────────────────
+// Cobrir o primeiro sinal não pode suprimir o resgate do segundo.
+{
+  const matches = [
+    makeMatch({ id: "sinal-a", rel: 98, itens: 20, queixas: ["tdah"], signalTags: ["desatencao"] }),
+    makeMatch({ id: "generica-a", rel: 97, itens: 15, queixas: ["tdah"] }),
+    makeMatch({ id: "generica-b", rel: 96, itens: 15, queixas: ["tdah"] }),
+    makeMatch({ id: "sinal-b", rel: 78, itens: 24, queixas: ["tdah"], signalTags: ["impulsividade"] }),
+  ];
+  const podium = selectPodium(matches, null, {
+    selectedQueixas: ["tdah"],
+    ageMonths: 96,
+    selectedSignals: ["desatencao", "impulsividade"],
+  });
+  const ids = podiumIds(podium);
+  assert.ok(ids.includes("sinal-a"), `desatenção deve permanecer coberta (veio: ${ids.join(", ")})`);
+  assert.ok(ids.includes("sinal-b"), `impulsividade deve ser resgatada (veio: ${ids.join(", ")})`);
+  assert.ok(podiumTotal(podium) <= PODIUM_QUESTION_CAP);
+}
+
+// Ranking determinístico com empate e candidato de carga desconhecida.
+{
+  const matches = [
+    makeMatch({ id: "estavel-a", rel: 85, itens: 20, queixas: ["sono"] }),
+    makeMatch({ id: "estavel-b", rel: 85, itens: 25, queixas: ["sono"] }),
+    makeMatch({ id: "estavel-c", rel: 82, itens: 30, queixas: ["sono"] }),
+    makeMatch({ id: "sem-contagem", rel: 100, itens: 20, queixas: ["sono"] }),
+  ];
+  delete matches[3].scale.verifiedItemCount;
+  matches[3].scale.description = "Carga não conferida";
+  const context = { selectedQueixas: ["sono"], ageMonths: 96, selectedSignals: [] };
+  const first = podiumIds(selectPodium(matches, null, context));
+  const second = podiumIds(selectPodium(matches, null, context));
+  assert.deepEqual(second, first, "mesma entrada deve produzir ordem estável");
+  assert.ok(!first.includes("sem-contagem"), "carga desconhecida não entra no trio fechado");
+}
+
+// ── 6. Uma dupla melhor não pode ser desfeita para completar três selos ────
+// Cenário real equivalente ao AHSD: uma candidata longa (66) cabe com a âncora
+// funcional (24), mas não ao lado das duas primeiras medalhas (20 + 20).
+{
+  const matches = [
+    makeMatch({ id: "generica-ouro", rel: 99, itens: 20, queixas: ["altas-habilidades"] }),
+    makeMatch({ id: "generica-prata", rel: 98, itens: 20, queixas: ["altas-habilidades"] }),
+    makeMatch({ id: "eaf", rel: 70, itens: 24, queixas: ["funcionalidade"] }),
+    makeMatch({
+      id: "ahsd-especifica",
+      rel: 50,
+      itens: 66,
+      queixas: ["altas-habilidades"],
+      signalTags: ["super inteligente"],
+    }),
+  ];
+  const podium = selectPodium(matches, null, {
+    selectedQueixas: ["altas-habilidades"],
+    ageMonths: 90,
+    selectedSignals: ["super inteligente"],
+  });
+  const ids = podiumIds(podium);
+  assert.ok(ids.includes("ahsd-especifica"), `a dupla viável deve preservar o sinal (veio: ${ids.join(", ")})`);
+  assert.ok(ids.includes("eaf"), "a âncora funcional compatível deve permanecer");
+  assert.ok(podiumTotal(podium) <= PODIUM_QUESTION_CAP);
 }
 
 console.log("✓ passes pós-teto do pódio (sinal + curadoria) travados por fixtures");

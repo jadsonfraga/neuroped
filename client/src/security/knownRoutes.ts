@@ -138,6 +138,8 @@ export const KNOWN_ROUTE_PATTERNS: readonly string[] = [
   "/psc17",
   "/psiquiatria",
   "/qualidade",
+  "/receita-a1",
+  "/receita-b1",
   "/receita-c1",
   "/receita-c1-express",
   "/recepcao",
