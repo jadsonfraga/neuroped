@@ -137,15 +137,22 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
   }, [vaultAllowed, remoteCertificateVault, user]);
 
   async function esquecer() {
-    if (remoteCertificateVault) await forgetCertificateFromAccount(user);
-    else await forgetCertificate(user);
+    setErro("");
+    try {
+      // No app remoto remove o envelope da conta e qualquer cópia antiga do aparelho.
+      if (remoteCertificateVault) await forgetCertificateFromAccount(user);
+      await forgetCertificate(user);
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : "Não foi possível remover o certificado salvo.");
+      return;
+    }
     setStored(false);
     setAccountCertificate(null);
     setP12(null);
     setP12Name("");
     setCert(null);
     setSenha("");
-    setOkMsg("Certificado removido do cofre da conta.");
+    setOkMsg(remoteCertificateVault ? "Certificado removido do cofre da conta." : "Certificado removido deste dispositivo.");
   }
 
   async function persistirCertificado(bytes: ArrayBuffer, password: string): Promise<string | null> {
@@ -156,6 +163,8 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
         setAccountCertificate(record);
         setP12Name("Certificado A1 salvo na conta");
         setStored(true);
+        // Migração concluída: não manter uma segunda cópia no aparelho.
+        await forgetCertificate(user).catch(() => undefined);
         return null;
       }
       await saveCertificate(user, bytes, p12Name || "certificado-a1.pfx");

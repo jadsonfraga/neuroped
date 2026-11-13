@@ -31,6 +31,15 @@
  *  - a cifra reduz exposição em repouso, mas não protege contra XSS na mesma origem.
  *
  * Dados de pré-consulta/pré-retorno e rascunhos de escalas continuam efêmeros.
+ *
+ * APP REMOTO AUTENTICADO (LIVE):
+ *  - a regra LIVE proíbe PHI no storage do navegador; o backend da conta
+ *    (/api/me/workspace, cifrado por clínica) é a única persistência;
+ *  - versão e valor lidos ficam só em memória, para concorrência otimista e
+ *    mesclagem em três vias quando outra aba/aparelho gravou antes;
+ *  - falha de leitura nunca vira "vazio": a gravação seguinte só cria o item se
+ *    ele não existir, e o servidor recusa sobrescrever o que não foi lido;
+ *  - sem sessão (visitante), valem os cofres locais acima, como antes.
  */
 
 import {
@@ -40,12 +49,14 @@ import {
   persistentSecureSet,
 } from "@/lib/persistentSecureStorage";
 import {
+  AccountWorkspaceConflictError,
+  MAX_ACCOUNT_WORKSPACE_BYTES,
   deleteAccountWorkspaceItem,
   getAccountWorkspaceItem,
   hasAccountWorkspaceSession,
-  isAccountWorkspaceRemoteMode,
   putAccountWorkspaceItem,
 } from "@/lib/accountWorkspace";
+import { createWorkspaceSync } from "@/lib/workspaceSync";
 
 const NAMESPACE = "neuroped:secure:";
 const PERSISTENT_SECURE_KEYS = new Set([
@@ -77,7 +88,9 @@ const LEGACY_SENSITIVE_KEYS = [
 const LEGACY_SENSITIVE_PREFIXES = ["neuroped:scale-draft:"];
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000; // 8 horas de sessão clínica
 const LEGACY_PBKDF2_ITERATIONS = 100_000;
-export const MAX_SECURE_PLAINTEXT_BYTES = 2_000_000;
+// Um único teto para todos os destinos: o cofre local e o workspace da conta
+// (limite de linha do D1 antes de cifrar). Orçamentos dos módulos derivam dele.
+export const MAX_SECURE_PLAINTEXT_BYTES = MAX_ACCOUNT_WORKSPACE_BYTES;
 const BASE64_CHUNK_BYTES = 0x8000;
 
 interface StoredEnvelope {
@@ -247,6 +260,39 @@ async function decryptEnvelope<T>(
   return JSON.parse(new TextDecoder().decode(plaintext)) as T;
 }
 
+// ---------- Workspace da conta (app remoto autenticado) ----------
+
+// Versões lidas ficam somente em memória (regra LIVE); ver workspaceSync.ts.
+const accountWorkspace = createWorkspaceSync({
+  getItem: getAccountWorkspaceItem,
+  putItem: putAccountWorkspaceItem,
+  deleteItem: deleteAccountWorkspaceItem,
+  isConflict: (error) => error instanceof AccountWorkspaceConflictError,
+});
+
+async function remoteSecureGet<T>(key: string): Promise<T | null> {
+  return accountWorkspace.get<T>(key);
+}
+
+async function remoteSecureSet<T>(key: string, value: T, ttlMs: number): Promise<boolean> {
+  const ephemeral = !isPersistentSecureKey(key);
+  return accountWorkspace.set(key, value, {
+    expiresAt: ephemeral ? new Date(Date.now() + ttlMs).toISOString() : null,
+    ephemeral,
+    maxBytes: MAX_ACCOUNT_WORKSPACE_BYTES,
+  });
+}
+
+async function remoteSecureClear(key: string): Promise<void> {
+  const removed = await accountWorkspace.clear(key);
+  if (!removed) console.warn("[secureStorage] não foi possível remover o item da conta.");
+}
+
+/** Esquece versões em memória (logout/troca de conta). */
+function resetRemoteWorkspaceState(): void {
+  accountWorkspace.reset();
+}
+
 // ---------- API pública ----------
 
 /**
@@ -258,21 +304,10 @@ export async function secureSet<T>(
   value: T,
   ttlMs = SESSION_TTL_MS,
 ): Promise<boolean> {
-  if (isAccountWorkspaceRemoteMode()) {
-    if (!hasAccountWorkspaceSession()) return false;
-    try {
-      const serialized = JSON.stringify(value);
-      if (typeof serialized !== "string" || new TextEncoder().encode(serialized).byteLength > 1_400_000) {
-        return false;
-      }
-      const expiresAt = isPersistentSecureKey(key)
-        ? null
-        : new Date(Date.now() + ttlMs).toISOString();
-      await putAccountWorkspaceItem(key, value, expiresAt);
-      return true;
-    } catch {
-      return false;
-    }
+  // Sessão remota autenticada: só o backend da conta (nada de PHI no navegador).
+  // Sem sessão, segue o cofre local histórico, como antes do workspace remoto.
+  if (hasAccountWorkspaceSession()) {
+    return remoteSecureSet(key, value, ttlMs);
   }
 
   if (isPersistentSecureKey(key)) {
@@ -322,14 +357,8 @@ export async function secureSet<T>(
  * no modo local, mantém a semântica persistente/efêmera existente.
  */
 export async function secureGet<T>(key: string): Promise<T | null> {
-  if (isAccountWorkspaceRemoteMode()) {
-    if (!hasAccountWorkspaceSession()) return null;
-    try {
-      const item = await getAccountWorkspaceItem<T>(key);
-      return item?.data ?? null;
-    } catch {
-      return null;
-    }
+  if (hasAccountWorkspaceSession()) {
+    return remoteSecureGet<T>(key);
   }
 
   if (isPersistentSecureKey(key)) {
@@ -397,8 +426,11 @@ export async function secureGet<T>(key: string): Promise<T | null> {
  * Remove entrada cifrada específica.
  */
 export async function secureClear(key: string): Promise<void> {
-  if (isAccountWorkspaceRemoteMode() && hasAccountWorkspaceSession()) {
-    await deleteAccountWorkspaceItem(key);
+  if (hasAccountWorkspaceSession()) {
+    // A regra LIVE também proíbe remover PHI do navegador na sessão remota;
+    // a remoção local de segurança acontece no logout (secureClearAll).
+    await remoteSecureClear(key);
+    return;
   }
   if (isPersistentSecureKey(key)) {
     await persistentSecureClear(key);
@@ -477,6 +509,7 @@ export async function secureClearAll(): Promise<void> {
   // O logout/troca de conta remove caches locais. No modo remoto, os itens da
   // conta permanecem no backend e serão restaurados após nova autenticação.
   await persistentSecureClearAll();
+  resetRemoteWorkspaceState();
 
   // Invalida chave de sessão em memória
   _sessionKey = null;

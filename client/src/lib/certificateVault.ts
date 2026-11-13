@@ -112,7 +112,13 @@ export async function forgetCertificate(user: VaultUser | null | undefined): Pro
 
 // Cofre remoto: cifra no cliente com a senha confirmada do PFX antes do envio.
 export const CERTIFICATE_VAULT_FORMAT_VERSION = 1;
-export const CERTIFICATE_VAULT_KDF_ITERATIONS = 310_000;
+// PBKDF2-HMAC-SHA256: 600.000 é o piso atual do OWASP (Bitwarden adotou o mesmo
+// padrão em 2023). A contagem viaja no envelope: novos envelopes usam o valor
+// corrente e envelopes antigos continuam abrindo com a contagem com que foram
+// gravados, dentro da faixa aceita pelo banco.
+export const CERTIFICATE_VAULT_KDF_ITERATIONS = 600_000;
+export const CERTIFICATE_VAULT_MIN_ITERATIONS = 600_000;
+export const CERTIFICATE_VAULT_MAX_ITERATIONS = 5_000_000;
 const MAX_ACCOUNT_P12_BYTES = 1_200_000;
 
 export interface AccountCertificateEnvelope {
@@ -144,8 +150,19 @@ function certificateAad(userId: string): Uint8Array {
   return new TextEncoder().encode(`neuroped:certificate-vault:v${CERTIFICATE_VAULT_FORMAT_VERSION}:${userId}`);
 }
 
-async function passwordWrapKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
+function acceptedIterations(value: unknown): value is number {
+  return Number.isInteger(value)
+    && (value as number) >= CERTIFICATE_VAULT_MIN_ITERATIONS
+    && (value as number) <= CERTIFICATE_VAULT_MAX_ITERATIONS;
+}
+
+async function passwordWrapKey(
+  password: string,
+  salt: Uint8Array,
+  iterations: number = CERTIFICATE_VAULT_KDF_ITERATIONS,
+): Promise<CryptoKey> {
   if (!password) throw new Error("Informe a senha correta do certificado.");
+  if (!acceptedIterations(iterations)) throw new Error("Formato de cofre de certificado incompatível.");
   const material = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(password),
@@ -154,7 +171,7 @@ async function passwordWrapKey(password: string, salt: Uint8Array): Promise<Cryp
     ["deriveKey"],
   );
   return crypto.subtle.deriveKey(
-    { name: "PBKDF2", salt, iterations: CERTIFICATE_VAULT_KDF_ITERATIONS, hash: "SHA-256" },
+    { name: "PBKDF2", salt, iterations, hash: "SHA-256" },
     material,
     { name: "AES-GCM", length: 256 },
     false,
@@ -224,11 +241,11 @@ export async function unlockCertificateFromAccount(
   if (!canUseCertificateVault(user)) throw new Error("Somente o administrador pode acessar o certificado da conta.");
   if (envelope.formatVersion !== CERTIFICATE_VAULT_FORMAT_VERSION ||
       envelope.kdf !== "PBKDF2-SHA256" ||
-      envelope.iterations !== CERTIFICATE_VAULT_KDF_ITERATIONS) {
+      !acceptedIterations(envelope.iterations)) {
     throw new Error("Formato de cofre de certificado incompatível.");
   }
   try {
-    const key = await passwordWrapKey(password, decodeBase64(envelope.salt));
+    const key = await passwordWrapKey(password, decodeBase64(envelope.salt), envelope.iterations);
     return await crypto.subtle.decrypt(
       {
         name: "AES-GCM",

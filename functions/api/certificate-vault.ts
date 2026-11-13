@@ -10,7 +10,10 @@ import { prepareSaasAudit, tenantError, tenantJson, type TenantEnv } from "./ten
 
 const TABLE = "certificate_vault";
 const KDF = "PBKDF2-SHA256";
-const KDF_ITERATIONS = 310_000;
+// Faixa aceita: piso OWASP atual (600.000) até um teto que evita DoS no cliente.
+// O valor real fica gravado por envelope, permitindo subir o custo no futuro.
+const MIN_KDF_ITERATIONS = 600_000;
+const MAX_KDF_ITERATIONS = 5_000_000;
 const MAX_CIPHERTEXT_B64_CHARS = 1_700_000;
 
 interface CertificateRow {
@@ -95,7 +98,9 @@ export const onRequestPut: PagesFunction<TenantEnv> = async (context) => {
   if (
     body.formatVersion !== 1 ||
     body.kdf !== KDF ||
-    body.iterations !== KDF_ITERATIONS ||
+    !Number.isInteger(body.iterations) ||
+    (body.iterations as number) < MIN_KDF_ITERATIONS ||
+    (body.iterations as number) > MAX_KDF_ITERATIONS ||
     !validBase64(body.salt, 16, 16) ||
     !validBase64(body.iv, 12, 12) ||
     !validBase64(body.ciphertext, 16, Math.floor(MAX_CIPHERTEXT_B64_CHARS * 3 / 4))
@@ -103,6 +108,7 @@ export const onRequestPut: PagesFunction<TenantEnv> = async (context) => {
     return tenantError("Envelope do certificado inválido.", "CERTIFICATE_ENVELOPE_INVALID", 400);
   }
 
+  const iterations = body.iterations as number;
   const updatedAt = new Date().toISOString();
   try {
     const save = db.prepare(
@@ -117,12 +123,12 @@ export const onRequestPut: PagesFunction<TenantEnv> = async (context) => {
          iv_b64 = excluded.iv_b64,
          ciphertext_b64 = excluded.ciphertext_b64,
          updated_at = excluded.updated_at`,
-    ).bind(user.id, KDF, KDF_ITERATIONS, body.salt, body.iv, body.ciphertext, updatedAt);
+    ).bind(user.id, KDF, iterations, body.salt, body.iv, body.ciphertext, updatedAt);
     const audit = prepareSaasAudit(db, {
       actorUserId: user.id,
       action: "certificate_vault.save",
       targetType: "certificate_vault",
-      metadata: { formatVersion: 1, kdf: KDF },
+      metadata: { formatVersion: 1, kdf: KDF, iterations },
     });
     await db.batch([save, audit]);
     return tenantJson({ ok: true, updatedAt });

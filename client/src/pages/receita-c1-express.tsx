@@ -509,15 +509,22 @@ export default function ReceitaC1ExpressPage() {
   }, [vaultAllowed, remoteCertificateVault, user]);
 
   async function esquecerCertificado() {
-    if (remoteCertificateVault) await forgetCertificateFromAccount(user);
-    else await forgetCertificate(user);
+    setError("");
+    try {
+      // No app remoto remove o envelope da conta e qualquer cópia antiga do aparelho.
+      if (remoteCertificateVault) await forgetCertificateFromAccount(user);
+      await forgetCertificate(user);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível remover o certificado salvo.");
+      return;
+    }
     setStoredCert(null);
     setAccountCertificate(null);
     setP12(null);
     setCertInfo(null);
     setSenha("");
     setCertStatus("missing");
-    setOk("Certificado removido do cofre da conta.");
+    setOk(remoteCertificateVault ? "Certificado removido do cofre da conta." : "Certificado removido deste dispositivo.");
   }
 
   async function persistirCertificado(bytes: ArrayBuffer, password: string): Promise<string | null> {
@@ -527,6 +534,8 @@ export default function ReceitaC1ExpressPage() {
         const record = await saveCertificateToAccount(user, bytes, password);
         setAccountCertificate(record);
         setStoredCert({ fileName: "cofre da conta", savedAt: record.updatedAt });
+        // Migração concluída: não manter uma segunda cópia no aparelho.
+        await forgetCertificate(user).catch(() => undefined);
       } else {
         await saveCertificate(user, bytes, "certificado-a1.pfx");
         setStoredCert({ fileName: "neste dispositivo", savedAt: new Date().toISOString() });
