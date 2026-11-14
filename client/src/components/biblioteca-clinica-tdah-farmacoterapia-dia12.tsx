@@ -43,7 +43,7 @@ export default function TdahFarmacoterapiaDia12Chapter() {
       </section>
       <section aria-labelledby="dia12-quadro">
         <h3 id="dia12-quadro" className="text-lg font-semibold">Achado → interpretação → próxima ação</h3>
-        <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+        <div tabIndex={0} role="region" aria-label="Tabela de achados, interpretação e próxima ação" className="mt-3 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
           <table className="min-w-[620px] w-full text-left text-sm"><thead className="bg-slate-100 dark:bg-slate-800"><tr><th scope="col" className="p-3">Achado</th><th scope="col" className="p-3">Interpretação</th><th scope="col" className="p-3">Próxima ação</th></tr></thead><tbody>{rows.map(([a,b,c]) => <tr key={a} className="border-t border-slate-200 align-top dark:border-slate-700"><td className="p-3 font-medium">{a}</td><td className="p-3">{b}</td><td className="p-3">{c}</td></tr>)}</tbody></table>
         </div>
       </section>
