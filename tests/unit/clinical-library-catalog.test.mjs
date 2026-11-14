@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 
-// Contrato do catálogo da Biblioteca Clínica 365 (Dias 01–11): identidade
+// Contrato do catálogo da Biblioteca Clínica 365 (Dias 01–12): identidade
 // canônica, âncoras estáveis, ausência de duplicação, estado de revisão médica
 // honesto e navegação sem encadeamento manual por Dia.
 const data = readFileSync("client/src/data/clinicalLibrary.ts", "utf8");
@@ -24,15 +24,16 @@ const CANONICAL = {
   9: "O que cada índice do WISC-IV informa ao neuropediatra?",
   10: "Como analisar agressividade infantil antes de propor medicação?",
   11: "Como diferenciar enxaqueca de cefaleia tensional em escolares?",
+  12: "Quando farmacoterapia é indicada no TDAH e quando não é?",
 };
-const NEXT_DAY_12 = "Quando farmacoterapia é indicada no TDAH e quando não é?";
+const NEXT_DAY_13 = "Como examinar hipotonia na consulta de desenvolvimento?";
 
 const blocks = [...data.matchAll(/\{\n\s+slug: "([^"]+)",\n\s+anchor: "([^"]+)",\n(?:\s+day: (\d+),\n)?\s+title: "([^"]+)",[\s\S]*?status: "([a-z_]+)",/g)]
   .map(([, slug, anchor, day, title, status]) => ({ slug, anchor, day: day ? Number(day) : null, title, status }));
 const trail = blocks.filter((b) => b.day !== null).sort((a, b) => a.day - b.day);
 
-assert.equal(trail.length, 11, "Trilha 365 deve ter exatamente os Dias 01–11");
-assert.deepEqual(trail.map((b) => b.day), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], "Dias canônicos 1..9 sem lacuna nem repetição");
+assert.equal(trail.length, 12, "Trilha 365 deve ter exatamente os Dias 01–12");
+assert.deepEqual(trail.map((b) => b.day), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], "Dias canônicos 1..9 sem lacuna nem repetição");
 for (const chapter of trail) {
   assert.equal(chapter.title, CANONICAL[chapter.day], `Dia ${chapter.day}: título diverge do índice-mestre`);
   assert.equal(chapter.status, "revisao_medica", `Dia ${chapter.day}: sem aceite médico, status deve ser revisao_medica`);
@@ -48,7 +49,7 @@ for (const { anchor, slug } of blocks) {
 }
 
 // Cada capítulo é renderizado uma única vez na página.
-for (const tag of ["<TeaTimidezChapter />", "<DesatencaoImaturidadeChapter />", "<PrimeiraCriseAfebrilChapter />", "<AlfabetizacaoDislexiaChapter />", "<AtrasoFalaAvaliacaoGlobalChapter />", "<AnsiedadeSeparacaoChapter />", "<AudicaoUrgenteChapter />", "<InsoniaPreEscolarChapter />", "<WiscIndicesDia09Chapter />", "<AgressividadeDia10Chapter />", "<CefaleiaDia11Chapter />"]) {
+for (const tag of ["<TeaTimidezChapter />", "<DesatencaoImaturidadeChapter />", "<PrimeiraCriseAfebrilChapter />", "<AlfabetizacaoDislexiaChapter />", "<AtrasoFalaAvaliacaoGlobalChapter />", "<AnsiedadeSeparacaoChapter />", "<AudicaoUrgenteChapter />", "<InsoniaPreEscolarChapter />", "<WiscIndicesDia09Chapter />", "<AgressividadeDia10Chapter />", "<CefaleiaDia11Chapter />", "<TdahFarmacoterapiaDia12Chapter />"]) {
   assert.equal(page.split(tag).length - 1, 1, `${tag} renderizado mais de uma vez ou ausente`);
 }
 
@@ -78,7 +79,7 @@ for (const [name, text] of Object.entries(components)) {
 }
 
 // Pauta seguinte alinhada ao índice e numerada a partir do último Dia publicado.
-assert.match(data, new RegExp(`export const nextClinicalTopics = \\[\\n\\s+"${NEXT_DAY_12.replace(/[?]/g, "\\?")}"`), "próximo tema deve ser o Dia 11 do índice");
+assert.match(data, new RegExp(`export const nextClinicalTopics = \\[\\n\\s+"${NEXT_DAY_13.replace(/[?]/g, "\\?")}"`), "próximo tema deve ser o Dia 13 do índice");
 assert.ok(page.includes("String(i + nextDay)"), "numeração da pauta deve derivar do último Dia da trilha");
 
 // Gates executados pelo QA da Biblioteca.
