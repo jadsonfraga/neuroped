@@ -44,6 +44,20 @@ export interface ClinicalLibraryChapter {
 }
 export const clinicalLibraryChapters: ClinicalLibraryChapter[] = [
   {
+    slug: "tdah-farmacoterapia-dia12",
+    anchor: "capitulo-tdah-farmacoterapia-dia12",
+    day: 12,
+    title: "Quando farmacoterapia é indicada no TDAH e quando não é?",
+    subtitle: "Idade, prejuízo funcional, segurança e decisão compartilhada",
+    category: "Farmacoterapia e vigilância",
+    date: "2026-11-14",
+    updated: "2026-11-14",
+    status: "revisao_medica",
+    minutes: 6,
+    review: "Consensus via conector 14/11/2026; revisão médica pendente.",
+    sources: ["wolraich-2019", "nice-ng87", "gosling-2025"],
+  },
+  {
     slug: "cefaleia-dia11",
     anchor: "capitulo-cefaleia-dia11",
     day: 11,
@@ -338,7 +352,7 @@ export const wiscReferences: ClinicalLibraryReference[] = [
 ];
 
 export const nextClinicalTopics = [
-  "Quando farmacoterapia é indicada no TDAH e quando não é?",
+  "Como examinar hipotonia na consulta de desenvolvimento?",
 ];
 
 /** Trilha 365: somente capítulos numerados pelo índice canônico, em ordem crescente de Dia. */
