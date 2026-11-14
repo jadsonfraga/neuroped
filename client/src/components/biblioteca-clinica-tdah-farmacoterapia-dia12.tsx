@@ -16,7 +16,7 @@ export default function TdahFarmacoterapiaDia12Chapter() {
         <h2 id="dia12-title" className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Dia 12/365 — Quando farmacoterapia é indicada no TDAH e quando não é?</h2>
         <p className="text-sm text-slate-600 dark:text-slate-300">Decisão clínica por idade, prejuízo funcional, preferências e segurança · leitura de 6 minutos</p>
       </header>
-      <section aria-labelledby="dia12-resumo" className="rounded-2xl border-l-4 border-teal-600 bg-teal-50 p-5 dark:bg-teal-950/30">
+      <section aria-label="Farmacoterapia no TDAH: em 30 segundos" className="rounded-2xl border-l-4 border-teal-600 bg-teal-50 p-5 dark:bg-teal-950/30">
         <h3 id="dia12-resumo" className="font-semibold text-teal-900 dark:text-teal-200">Em 30 segundos</h3>
         <p className="mt-2 text-sm leading-relaxed text-slate-800 dark:text-slate-200">Medicar não é consequência automática de uma escala ou queixa escolar. Exige diagnóstico consistente, prejuízo funcional relevante, avaliação de diferenciais e decisão compartilhada. Na pré-escola, intervenções comportamentais e treinamento parental vêm primeiro. Em escolares, farmacoterapia e apoios psicossociais podem ser combinados conforme necessidade.</p>
       </section>
@@ -41,7 +41,7 @@ export default function TdahFarmacoterapiaDia12Chapter() {
           <div className="rounded-xl border border-slate-300 p-4 text-center dark:border-slate-600"><strong>Antes de eventual prescrição:</strong> história cardíaca, PA, pulso, crescimento, sono, apetite, comorbidades e interações. Definir metas e retorno.</div>
         </div>
       </section>
-      <section aria-labelledby="dia12-quadro">
+      <section aria-label="Farmacoterapia no TDAH: achado, interpretação e próxima ação">
         <h3 id="dia12-quadro" className="text-lg font-semibold">Achado → interpretação → próxima ação</h3>
         <div tabIndex={0} role="region" aria-label="Tabela de achados, interpretação e próxima ação" className="mt-3 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
           <table className="min-w-[620px] w-full text-left text-sm"><thead className="bg-slate-100 dark:bg-slate-800"><tr><th scope="col" className="p-3">Achado</th><th scope="col" className="p-3">Interpretação</th><th scope="col" className="p-3">Próxima ação</th></tr></thead><tbody>{rows.map(([a,b,c]) => <tr key={a} className="border-t border-slate-200 align-top dark:border-slate-700"><td className="p-3 font-medium">{a}</td><td className="p-3">{b}</td><td className="p-3">{c}</td></tr>)}</tbody></table>
@@ -68,11 +68,11 @@ export default function TdahFarmacoterapiaDia12Chapter() {
         <blockquote className="mt-2 border-l-2 border-slate-300 pl-4 text-sm italic">O objetivo não é deixar a criança quieta; é melhorar aprendizagem, convivência e autonomia sem prejudicar o bem-estar. A medicação não é teste diagnóstico.</blockquote>
         <p className="mt-2 text-sm">Solicite exemplos funcionais da escola e acompanhe mudanças após apoios pedagógicos, sem delegar a ela o diagnóstico.</p>
       </section>
-      <section aria-labelledby="dia12-caso">
+      <section aria-label="Farmacoterapia no TDAH: caso inteiramente fictício">
         <h3 id="dia12-caso" className="text-lg font-semibold">Caso inteiramente fictício</h3>
         <p className="mt-2 text-sm leading-relaxed">Uma criança fictícia de oito anos apresenta impulsividade e desatenção persistentes em casa e na escola, com prejuízo acadêmico e social apesar de adaptações. A consulta identifica sono irregular, sem alertas cardiovasculares. A equipe aborda o sono, estabelece metas funcionais e discute farmacoterapia com os responsáveis após avaliação de segurança, mantendo apoio escolar e reavaliação periódica.</p>
       </section>
-      <section aria-labelledby="dia12-erros">
+      <section aria-label="Farmacoterapia no TDAH: três erros frequentes">
         <h3 id="dia12-erros" className="text-lg font-semibold">Três erros frequentes</h3>
         <ol className="mt-2 list-decimal space-y-2 pl-5 text-sm"><li>Medicar apenas por relato escolar ou pontuação isolada.</li><li>Interpretar melhora após estimulante como confirmação diagnóstica.</li><li>Aumentar dose sem monitorar função, sono, crescimento, pressão, pulso e efeitos adversos.</li></ol>
       </section>
