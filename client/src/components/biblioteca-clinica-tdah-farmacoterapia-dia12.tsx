@@ -13,7 +13,7 @@ export default function TdahFarmacoterapiaDia12Chapter() {
     <article id="capitulo-tdah-farmacoterapia-dia12" tabIndex={-1} aria-labelledby="dia12-title" className="scroll-mt-24 space-y-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm outline-none dark:border-slate-700 dark:bg-slate-900 sm:p-8">
       <header className="space-y-3">
         <span className="inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-900 dark:bg-amber-950 dark:text-amber-200">Dia 12/365 · Material educacional em revisão médica</span>
-        <h2 id="dia12-title" className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Quando farmacoterapia é indicada no TDAH e quando não é?</h2>
+        <h2 id="dia12-title" className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Dia 12/365 — Quando farmacoterapia é indicada no TDAH e quando não é?</h2>
         <p className="text-sm text-slate-600 dark:text-slate-300">Decisão clínica por idade, prejuízo funcional, preferências e segurança · leitura de 6 minutos</p>
       </header>
       <section aria-labelledby="dia12-resumo" className="rounded-2xl border-l-4 border-teal-600 bg-teal-50 p-5 dark:bg-teal-950/30">
