@@ -35,7 +35,7 @@ jobs:
 
       - name: Checkout pull request head without credentials
         if: steps.gemini_auth.outputs.configured == 'true'
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
