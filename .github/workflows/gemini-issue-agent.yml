@@ -54,7 +54,7 @@ jobs:
 
       - name: Configure Node.js 24
         if: steps.gemini_auth.outputs.configured == 'true'
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version: '24'
           cache: npm
