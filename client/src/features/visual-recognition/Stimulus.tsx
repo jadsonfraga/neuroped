@@ -1,10 +1,12 @@
-import { itemFor, type Item } from "./model";
+import { ASSET_FOLDERS, assetHash, itemFor, type ArtStyle, type Item } from "./model";
 
-export function assetUrl(id:string):string { return new URL(`recognition-v2/${encodeURIComponent(id)}.svg`,document.baseURI).href; }
-export function Stimulus({id,urls,child=false,onError}:{id:string;urls?:Record<string,string>;child?:boolean;onError?:(id:string)=>void}){
+export function assetUrl(id:string,style:ArtStyle="sobrio"):string { return new URL(`${ASSET_FOLDERS[style]}/${encodeURIComponent(id)}.svg`,document.baseURI).href; }
+/** Estilo exibível: o pedido, ou o único disponível (figura nova só existe no kawaii). */
+function shownStyle(item:Item,style:ArtStyle):ArtStyle{return item.assets[style]?style:item.assets.kawaii?"kawaii":"sobrio";}
+export function Stimulus({id,urls,child=false,onError,artStyle="sobrio"}:{id:string;urls?:Record<string,string>;child?:boolean;onError?:(id:string)=>void;artStyle?:ArtStyle}){
   const item=itemFor(id);
   const label=child?"Figura de avaliação":item.label;
-  if(item.art==="symbol") return <img draggable={false} src={urls?.[id] ?? assetUrl(id)} alt={label} className="rv-illustration" onError={()=>onError?.(id)} />;
+  if(item.art==="symbol") return <img draggable={false} src={urls?.[id] ?? assetUrl(id,shownStyle(item,artStyle))} alt={label} className={`rv-illustration rv-art-${shownStyle(item,artStyle)}`} onError={()=>onError?.(id)} />;
   if(item.art==="color") return <svg viewBox="0 0 240 220" role="img" aria-label={label} className="rv-illustration"><rect x="35" y="25" width="170" height="170" rx="20" fill={item.color} stroke="var(--rv-art-swatch-outline)" strokeWidth="2"/></svg>;
   return <Opposite item={item} label={label}/>;
 }
@@ -27,17 +29,18 @@ function Opposite({item,label}:{item:Item;label:string}){
 /** Load every required local symbol into memory before permitting presentation.
  * No patient data, CDN, remote image search, cache mutation or persistent record.
  */
-export async function preloadSymbols(ids:string[],signal:AbortSignal):Promise<Record<string,string>>{
+export async function preloadSymbols(ids:string[],signal:AbortSignal,style:ArtStyle="sobrio"):Promise<Record<string,string>>{
   const urls:Record<string,string>={};
   try{
     for(const id of [...new Set(ids)]){
       const item=itemFor(id);if(item.art!=="symbol")continue;
-      const response=await fetch(assetUrl(id),{signal,cache:"force-cache"});
+      const expected=assetHash(item,style);
+      const response=await fetch(assetUrl(id,style),{signal,cache:"force-cache"});
       if(!response.ok)throw new Error(`Não foi possível carregar ${item.label}. Não iniciar a aplicação.`);
       const bytes=await response.arrayBuffer();
       if(!crypto.subtle)throw new Error("É necessária uma conexão segura para verificar o banco visual.");
       const digest=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",bytes))).map(value=>value.toString(16).padStart(2,"0")).join("");
-      if(digest!==item.hash)throw new Error(`Versão da figura ${item.label} divergente. Atualize o aplicativo antes de aplicar.`);
+      if(digest!==expected)throw new Error(`Versão da figura ${item.label} divergente. Atualize o aplicativo antes de aplicar.`);
       const url=URL.createObjectURL(new Blob([bytes],{type:"image/svg+xml"}));urls[id]=url;
       const image=new Image();image.src=url;await image.decode();
       if(signal.aborted)throw new Error("Carregamento cancelado.");

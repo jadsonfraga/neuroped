@@ -89,7 +89,7 @@
     "guard:interactive-scale-ids": "node --import tsx scripts/gen-interactive-scale-ids.mts --check",
     "guard:clinical-artifacts": "node scripts/guards/check-generated-clinical-artifacts.mjs",
     "test:notes": "node --import tsx tests/unit/notes-engine.test.ts",
-    "test:cognitive": "node --import tsx tests/unit/cognitive-lab.test.ts && node --import tsx --test tests/unit/visual-recognition.test.ts tests/unit/visual-recognition-curation.test.ts tests/unit/visual-recognition-design.test.ts tests/unit/visual-recognition-integrity.test.ts && npm run test:dyslexia-risk && npm run test:sonda && npm run test:direct-track && node --import tsx --test tests/unit/reading-dictation-age-config.test.ts",
+    "test:cognitive": "node --import tsx tests/unit/cognitive-lab.test.ts && node --import tsx --test tests/unit/visual-recognition.test.ts tests/unit/visual-recognition-curation.test.ts tests/unit/visual-recognition-design.test.ts tests/unit/visual-recognition-integrity.test.ts tests/unit/visual-recognition-kawaii.test.ts && npm run test:dyslexia-risk && npm run test:sonda && npm run test:direct-track && node --import tsx --test tests/unit/reading-dictation-age-config.test.ts",
     "test:direct-track": "node --import tsx --test tests/unit/direct-track-tabs.test.ts && node --import tsx --test tests/unit/aventura-gamification-static.test.mjs && node --import tsx --test tests/unit/modo-facil.test.ts && node --import tsx --test tests/unit/cognitive-age-bank.test.ts && node --import tsx --test tests/unit/objective-bank.test.ts && npm run test:super-neuropad",
     "test:e2e:visitor-scales": "node tests/e2e/visitor-scales-only.mjs",
     "test:e2e:modo-facil": "node tests/e2e/modo-facil.mjs",

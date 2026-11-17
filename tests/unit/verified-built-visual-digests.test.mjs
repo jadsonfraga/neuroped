@@ -116,3 +116,26 @@ test("builds without this visual inventory retain the original inspection", () =
     assert.equal(pin.test(inspect("assets/auth.js", source)), true);
   } finally { rmSync(root, { recursive: true }); }
 });
+
+test("banco kawaii (v3) compilado: mesmo id com origem e bytes próprios; troca de origem entre bancos é sinalizada", () => {
+  const f = fixture();
+  try {
+    mkdirSync(join(f.root, "recognition-v3"));
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg"><circle r="30"/></svg>\n';
+    const digest = createHash("sha256").update(svg).digest("hex");
+    const item = { id: "bola", sourcePath: "NEUROPED/kawaii/bola.svg", sha256: digest, style: "kawaii" };
+    writeFileSync(join(f.root, "recognition-v3/bola.svg"), svg);
+    const v3 = "recognition-v3/manifest.json";
+    const json = JSON.stringify({ items: [item] });
+    writeFileSync(join(f.root, v3), json);
+    const inspect = createBuiltVisualDigestInspector(f.root);
+    assert.equal(pin.test(inspect(v3, json)), false, "manifesto kawaii verificado");
+    assert.equal(pin.test(inspect(manifestPath, f.json)), false, "manifesto sóbrio continua verificado");
+    const both = `const sober=[${JSON.stringify(f.item)}];const kawaii=[${JSON.stringify(item)}];`;
+    assert.equal(pin.test(inspect(bundlePath, both)), false, "os dois bancos no mesmo módulo");
+    assert.equal(pin.test(inspect(bundlePath, `const x={id:"bola",sourcePath:"EN/ball.svg",sha256:"${digest}"};`)), true, "hash kawaii com origem sóbria não é aceito");
+    assert.equal(pin.test(inspect(bundlePath, `const x={id:"bola",sourcePath:"NEUROPED/kawaii/bola.svg",sha256:"${f.digest}"};`)), true, "hash sóbrio com origem kawaii não é aceito");
+    writeFileSync(join(f.root, v3), JSON.stringify({ items: [{ ...item, sourcePath: "EN/ball.svg" }] }));
+    assert.throws(() => createBuiltVisualDigestInspector(f.root), /inválido/, "origem fora do padrão do banco kawaii falha fechado");
+  } finally { rmSync(f.root, { recursive: true }); }
+});

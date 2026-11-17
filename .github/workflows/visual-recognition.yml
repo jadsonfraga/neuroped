@@ -6,6 +6,9 @@ on:
       - client/src/styles/tokens.css
       - client/src/pages/teste-reconhecimento-visual.tsx
       - client/public/recognition-v2/**
+      - client/public/recognition-v3/**
+      - scripts/recognition/**
+      - scripts/build-recognition-kawaii.mjs
       - scripts/guards/audit-access-policy.mjs
       - scripts/guards/audit-built-pin-verifier.mjs
       - scripts/guards/lib/verified*visual-digests.mjs
@@ -20,6 +23,9 @@ on:
       - client/src/styles/tokens.css
       - client/src/pages/teste-reconhecimento-visual.tsx
       - client/public/recognition-v2/**
+      - client/public/recognition-v3/**
+      - scripts/recognition/**
+      - scripts/build-recognition-kawaii.mjs
       - scripts/guards/audit-access-policy.mjs
       - scripts/guards/audit-built-pin-verifier.mjs
       - scripts/guards/lib/verified*visual-digests.mjs

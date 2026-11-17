@@ -2,7 +2,11 @@ import { createHash } from "node:crypto";
 import { readFileSync, lstatSync } from "node:fs";
 import { join } from "node:path";
 
-const manifestPath = "client/public/recognition-v2/manifest.json";
+// Bancos visuais publicados: sóbrio (Mulberry, v2) e kawaii autoral (v3).
+const MANIFEST_FOLDERS = new Map([
+  ["client/public/recognition-v2/manifest.json", "client/public/recognition-v2"],
+  ["client/public/recognition-v3/manifest.json", "client/public/recognition-v3"],
+]);
 
 /**
  * A digest is not an authentication credential. Exempt only checksum fields
@@ -10,7 +14,8 @@ const manifestPath = "client/public/recognition-v2/manifest.json";
  * An invalid manifest throws and the caller must fail closed.
  */
 export function verifiedVisualDigestSource(relativePath, source, root) {
-  if (relativePath !== manifestPath) return source;
+  const folder = MANIFEST_FOLDERS.get(relativePath);
+  if (!folder) return source;
   const manifest = JSON.parse(source);
   if (!Array.isArray(manifest.items) || manifest.items.length === 0) {
     throw new Error("Manifesto visual sem inventário verificável.");
@@ -23,7 +28,7 @@ export function verifiedVisualDigestSource(relativePath, source, root) {
       throw new Error("ID ou checksum inválido no manifesto visual.");
     }
     ids.add(item.id);
-    const file = join(root, "client/public/recognition-v2", `${item.id}.svg`);
+    const file = join(root, folder, `${item.id}.svg`);
     if (!lstatSync(file).isFile() || lstatSync(file).isSymbolicLink()) {
       throw new Error("Ativo visual deve ser arquivo regular local.");
     }

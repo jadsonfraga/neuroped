@@ -1,6 +1,18 @@
 import sourceManifest from "../../../public/recognition-v2/manifest.json";
+import kawaiiManifest from "../../../public/recognition-v3/manifest.json";
 
-export const VERSION = "2026-09-23.2";
+export const VERSION = "2026-11-17.3";
+/**
+ * Estilo das ilustrações. Kawaii (banco autoral recognition-v3) é o padrão até
+ * 59 meses: silhuetas grandes e prototípicas para 1 a 4 anos. A partir de 5 anos
+ * o padrão é o banco sóbrio (Mulberry, recognition-v2), sem infantilização. O
+ * profissional pode trocar; o estilo usado fica registrado em cada oportunidade.
+ */
+export const ART_STYLES = { kawaii:"Kawaii · 1 a 4 anos", sobrio:"Sóbrio · 5 anos ou mais" } as const;
+export type ArtStyle = keyof typeof ART_STYLES;
+export const KAWAII_MAX_MONTHS = 59;
+export const ASSET_FOLDERS:Record<ArtStyle,string> = { kawaii:"recognition-v3", sobrio:"recognition-v2" };
+export function defaultArtStyle(age:number):ArtStyle{return age<=KAWAII_MAX_MONTHS?"kawaii":"sobrio";}
 export const NATURE = "Observação clínica autoral, não padronizada. Não mede acuidade visual, inteligência, idade mental ou diagnóstico. Requer revisão profissional.";
 export const CATEGORIES = { animais:"Animais", frutas:"Frutas", transportes:"Transportes", cores:"Cores", opostos:"Conceitos e opostos", objetos:"Objetos do cotidiano" } as const;
 export type Category = keyof typeof CATEGORIES;
@@ -33,32 +45,57 @@ export const PAIRS = [
   {id:"temperatura",words:["Quente","Frio"],min:60,note:"Inferência semântica contextualizada; não mede temperatura nem sensibilidade térmica. Nunca utilizar líquidos quentes com a criança.",context:"Um recipiente contém água que acabou de ferver. O outro contém água com gelo."},
   {id:"massa",words:["Mais pesado","Mais leve"],min:60,note:"Inferência contextual, dependente de conhecimento dos materiais. Não mede massa ou força; o tamanho das caixas é igual. Objetos reais seguros podem ser necessários.",context:"As caixas têm o mesmo tamanho. Uma está cheia de pedras; a outra está cheia de algodão."},
 ] as const;
+export interface Asset { hash:string; sourcePath:string }
 export interface Item {
   id:string; label:string; category:Category; minMonths:number; art:"symbol"|"color"|"opposite";
   aliases:string[]; hash:string; sourcePath?:string; color?:string; pair?:string; side?:number; note:string; context?:string;
+  /** Ilustração disponível por estilo (somente figuras "symbol"). */
+  assets:Partial<Record<ArtStyle,Asset>>;
 }
 const aliases:Record<string,string[]>={
   cachorro:["cão","au-au"],gato:["gatinho","miau"],passaro:["passarinho","ave"],porco:["porco"],tartaruga:["tartaruga"],
   moto:["moto"],aviao:["aeroplano"],onibus:["busão"],uva:["uvas","cacho de uvas"],caneca:["xícara"],garrafa:["garrafa","leite"],escova:["escova"],limao:["limão"],"guarda-chuva":["sombrinha"],
+  pintinho:["piu-piu","pintinho"],urso:["ursinho"],macaco:["macaquinho"],joaninha:["joaninha"],balao:["bexiga"],celular:["telefone"],mamadeira:["mamá"],coco:["coco verde"],
 };
-export const ITEMS:Item[]=[
-  ...sourceManifest.items.map((item):Item=>({
+const kawaiiAssets=new Map(kawaiiManifest.items.map(item=>[item.id,{hash:item.sha256,sourcePath:item.sourcePath}]));
+const soberIds=new Set(sourceManifest.items.map(item=>item.id));
+const symbolNote=(id:string)=>["Confira se esta representação faz parte do repertório da criança. Variantes e onomatopeias devem ser descritas; não equivalem automaticamente a nomeação convencional.",["limao","pessego","chapeu","garrafa","onibus","tartaruga","coco","sapato"].includes(id)?"Exemplar específico: confirme familiaridade e aceite denominações usuais sem exigir espécie, variedade ou modelo.":""].filter(Boolean).join(" ");
+// Figuras novas do banco kawaii (sem equivalente sóbrio) entram ao fim da própria
+// categoria; a ordem relativa das figuras sóbrias não muda (roteiros sóbrios idênticos).
+const symbolItems:Item[]=(()=>{
+  const sober=sourceManifest.items.map((item):Item=>{
+    const kawaii=kawaiiAssets.get(item.id);
+    return{id:item.id,label:item.label,category:item.category as Category,minMonths:item.minMonths,art:"symbol",aliases:aliases[item.id]??[],hash:item.sha256,sourcePath:item.sourcePath,
+      note:symbolNote(item.id),assets:{sobrio:{hash:item.sha256,sourcePath:item.sourcePath},...(kawaii?{kawaii}:{})}};
+  });
+  const kawaiiOnly=kawaiiManifest.items.filter(item=>!soberIds.has(item.id)).map((item):Item=>({
     id:item.id,label:item.label,category:item.category as Category,minMonths:item.minMonths,art:"symbol",aliases:aliases[item.id]??[],hash:item.sha256,sourcePath:item.sourcePath,
-    note:["Confira se esta representação faz parte do repertório da criança. Variantes e onomatopeias devem ser descritas; não equivalem automaticamente a nomeação convencional.",["limao","pessego","chapeu","garrafa","onibus","tartaruga"].includes(item.id)?"Exemplar específico: confirme familiaridade e aceite denominações usuais sem exigir espécie, variedade ou modelo.":""].filter(Boolean).join(" "),
-  })),
-  ...COLORS.map(([id,label,color],index):Item=>({id,label,color,category:"cores",minMonths:index<4?30:48,art:"color",aliases:[],hash:`${VERSION}:${id}`,note:"Mancha uniforme; brilho e filtros da tela interferem. Não é teste de visão cromática."})),
-  ...PAIRS.flatMap(pair=>pair.words.map((label,side):Item=>({id:`${pair.id}-${side}`,label,category:"opostos",minMonths:pair.min,art:"opposite",aliases:[],hash:`${VERSION}:${pair.id}-${side}`,pair:pair.id,side,note:pair.note,...("context" in pair?{context:pair.context}:{})}))),
+    note:symbolNote(item.id),assets:{kawaii:{hash:item.sha256,sourcePath:item.sourcePath}},
+  }));
+  const order=[...new Set([...sober,...kawaiiOnly].map(item=>item.category))];
+  return order.flatMap(category=>[...sober.filter(item=>item.category===category),...kawaiiOnly.filter(item=>item.category===category)]);
+})();
+export const ITEMS:Item[]=[
+  ...symbolItems,
+  ...COLORS.map(([id,label,color],index):Item=>({id,label,color,category:"cores",minMonths:index<4?30:48,art:"color",aliases:[],hash:`${VERSION}:${id}`,assets:{},note:"Mancha uniforme; brilho e filtros da tela interferem. Não é teste de visão cromática."})),
+  ...PAIRS.flatMap(pair=>pair.words.map((label,side):Item=>({id:`${pair.id}-${side}`,label,category:"opostos",minMonths:pair.min,art:"opposite",aliases:[],hash:`${VERSION}:${pair.id}-${side}`,assets:{},pair:pair.id,side,note:pair.note,...("context" in pair?{context:pair.context}:{})}))),
 ];
 export const ITEM_MAP=new Map(ITEMS.map(item=>[item.id,item]));
 export function itemFor(id:string):Item{const item=ITEM_MAP.get(id);if(!item)throw new Error(`Figura não cadastrada: ${id}`);return item;}
+/** Cores e opostos são desenhados no app e valem para os dois estilos. */
+export function hasArt(item:Item,style:ArtStyle):boolean{return item.art!=="symbol"||Boolean(item.assets[style]);}
+export function assetHash(item:Item,style:ArtStyle):string{
+  if(item.art!=="symbol")return item.hash;
+  const asset=item.assets[style];if(!asset)throw new Error(`A figura ${item.label} não existe no estilo ${ART_STYLES[style]}.`);return asset.hash;
+}
 export function ageInMonths(years:string,months:string):number|null{
   if(!/^\d{1,2}$/.test(years)||!/^\d{1,2}$/.test(months))return null;
   const y=Number(years),m=Number(months),total=y*12+m;return m<=11&&total>=12&&total<=239?total:null;
 }
 export function bandFor(age:number){return Number.isInteger(age)?BANDS.find(b=>age>=b.min&&age<=b.max):undefined;}
-export function eligibleItems(age:number,mode:Mode):Item[]{
-  if(!bandFor(age)||!Object.hasOwn(MODES,mode))return [];
-  return ITEMS.filter(item=>item.minMonths<=age&&!(mode==="nomeacao"&&item.category==="cores"&&age<48)&&!(mode==="pareamento"&&item.category==="opostos"));
+export function eligibleItems(age:number,mode:Mode,style:ArtStyle="sobrio"):Item[]{
+  if(!bandFor(age)||!Object.hasOwn(MODES,mode)||!Object.hasOwn(ART_STYLES,style))return [];
+  return ITEMS.filter(item=>item.minMonths<=age&&hasArt(item,style)&&!(mode==="nomeacao"&&item.category==="cores"&&age<48)&&!(mode==="pareamento"&&item.category==="opostos"));
 }
 export function shuffle<T>(values:readonly T[],seed:number):T[]{
   const out=[...values];let state=seed>>>0;
@@ -77,18 +114,21 @@ export function easyPlanSettings(age:number):{choices:2|3|4;count:number;distrac
   return{choices:4,count:12,distractors:"categoria",categories:Object.keys(CATEGORIES) as Category[]};
 }
 /** Figuras do Modo Fácil: receptivas, sem contexto e nas categorias da faixa. */
-export function easyPlanSelection(age:number):string[]{
+export function easyPlanSelection(age:number,style:ArtStyle=defaultArtStyle(age)):string[]{
   const settings=easyPlanSettings(age);
-  return eligibleItems(age,"receptivo").filter(item=>!item.context&&settings.categories.includes(item.category)).map(item=>item.id);
+  return eligibleItems(age,"receptivo",style).filter(item=>!item.context&&settings.categories.includes(item.category)).map(item=>item.id);
 }
 /** Quantidade prometida ao adulto = quantidade que o jogo realmente tem (12–23 meses: 7, não 8). */
-export function easyPlanCount(age:number):number{return Math.min(easyPlanSettings(age).count,easyPlanSelection(age).length);}
-export interface Config{ageMonths:number;mode:Mode;choices:2|3|4;count:number;selectedIds:string[];seed:number;distractors:"distantes"|"categoria";contextAcknowledged:boolean;conditions:string[];}
-export interface Trial{id:string;targetId:string;optionIds:string[];mode:Mode;question:string;context?:string;assetVersion:string;adaptedFrom?:string;}
-export function makeTrial(targetId:string,mode:Mode,pool:Item[],choices:number,seed:number,index:number):Trial{
+export function easyPlanCount(age:number,style:ArtStyle=defaultArtStyle(age)):number{return Math.min(easyPlanSettings(age).count,easyPlanSelection(age,style).length);}
+/** artStyle ausente (registros anteriores a 2026-11-17) = padrão da idade. */
+export interface Config{ageMonths:number;mode:Mode;choices:2|3|4;count:number;selectedIds:string[];seed:number;distractors:"distantes"|"categoria";contextAcknowledged:boolean;conditions:string[];artStyle?:ArtStyle;}
+export interface Trial{id:string;targetId:string;optionIds:string[];mode:Mode;question:string;context?:string;assetVersion:string;adaptedFrom?:string;artStyle?:ArtStyle;}
+export function configArtStyle(config:Pick<Config,"ageMonths"|"artStyle">):ArtStyle{return config.artStyle??defaultArtStyle(config.ageMonths);}
+export function makeTrial(targetId:string,mode:Mode,pool:Item[],choices:number,seed:number,index:number,artStyle:ArtStyle="sobrio"):Trial{
   const target=itemFor(targetId);
-  if(!Object.hasOwn(MODES,mode)||![2,3,4].includes(choices))throw new Error("Configuração inválida.");
-  let others=pool.filter(item=>item.id!==target.id&&(target.pair?item.pair===target.pair:item.art===target.art));
+  if(!Object.hasOwn(MODES,mode)||![2,3,4].includes(choices)||!Object.hasOwn(ART_STYLES,artStyle))throw new Error("Configuração inválida.");
+  if(!hasArt(target,artStyle))throw new Error(`A figura ${target.label} não existe no estilo ${ART_STYLES[artStyle]}.`);
+  let others=pool.filter(item=>hasArt(item,artStyle)&&item.id!==target.id&&(target.pair?item.pair===target.pair:item.art===target.art));
   if(!target.pair&&target.category==="cores")others=others.filter(item=>item.category==="cores");
   const need=target.pair?Math.min(1,others.length):Math.min(choices-1,others.length);
   if((mode!=="nomeacao"||target.pair)&&need<1)throw new Error(target.pair?"Conceitos precisam dos dois estados do mesmo par: selecione as duas figuras.":"Selecione ao menos duas figuras compatíveis para montar as alternativas.");
@@ -107,12 +147,14 @@ export function makeTrial(targetId:string,mode:Mode,pool:Item[],choices:number,s
     optionIds.splice(position,0,target.id);
   }
   const question=mode==="pareamento"?"Ache a figura igual ao modelo. O modelo continua visível.":mode==="nomeacao"?target.pair?"Compare as duas figuras. Como você descreveria a figura destacada?":target.category==="cores"?"Que cor é esta?":"O que é isto?":`Mostre: ${target.label.toLocaleLowerCase("pt-BR")}.`;
-  return{id:`rv-${seed}-${index}`,targetId,optionIds,mode,question,context:target.context,assetVersion:VERSION};
+  return{id:`rv-${seed}-${index}`,targetId,optionIds,mode,question,context:target.context,assetVersion:VERSION,artStyle};
 }
 export function buildPlan(config:Config):Trial[]{
   if(!bandFor(config.ageMonths)||![2,3,4].includes(config.choices)||!Number.isInteger(config.count)||config.count<1||config.count>100||!Number.isInteger(config.seed)||!Object.hasOwn(MODES,config.mode))throw new Error("Configuração inválida.");
   if(config.ageMonths<24&&config.mode==="nomeacao")throw new Error("Antes de 24 meses, prefira exploração e reconhecimento receptivo; não exigir nomeação.");
-  const allowed=eligibleItems(config.ageMonths,config.mode);
+  if(config.artStyle!==undefined&&!Object.hasOwn(ART_STYLES,config.artStyle))throw new Error("Configuração inválida.");
+  const style=configArtStyle(config);
+  const allowed=eligibleItems(config.ageMonths,config.mode,style);
   if(new Set(config.selectedIds).size!==config.selectedIds.length||config.selectedIds.some(id=>!allowed.some(item=>item.id===id)))throw new Error("Seleção incompatível com o roteiro ou modalidade.");
   const selected=allowed.filter(item=>config.selectedIds.includes(item.id));if(!selected.length)throw new Error("Selecione figuras para iniciar.");
   if(selected.some(item=>item.context)&&!config.contextAcknowledged)throw new Error("Leia os limites dos conceitos contextualizados antes de iniciar.");
@@ -124,7 +166,7 @@ export function buildPlan(config:Config):Trial[]{
     // "Mesma categoria" sem outra figura da categoria (ex.: só uma fruta aos 12–23 meses)
     // cai para categoria distinta em vez de travar o roteiro com mensagem sobre pares.
     const pool=!target.pair&&target.category!=="cores"&&!byCategory.some(item=>item.id!==target.id)?selected.filter(item=>item.art===target.art):byCategory;
-    return makeTrial(target.id,config.mode,pool,config.choices,config.seed,index);
+    return makeTrial(target.id,config.mode,pool,config.choices,config.seed,index,style);
   });
 }
 export const OUTCOMES={correspondente:"Resposta correspondente",diferente:"Resposta diferente",sem_resposta:"Não respondeu",recusa:"Recusou",nao_aplicado:"Não aplicado",ambiguo:"Figura ambígua / não reconhecível",tecnico:"Problema técnico"} as const;
@@ -164,14 +206,14 @@ export function observe(trial:Trial,draft:Draft,events:StageEvent[],ledger:Obser
   if(!supersedes&&active.some(record=>record.trial.id===trial.id))throw new Error("Esta oportunidade já foi registrada; use correção com justificativa.");
   const original=supersedes?active.find(record=>record.id===supersedes):undefined;
   if(supersedes&&(!original||!correctionReason?.trim()||original.trial.id!==trial.id||JSON.stringify(original.trial)!==JSON.stringify(trial)||JSON.stringify(original.events)!==JSON.stringify(events)))throw new Error("Correção exige registro ativo, eventos preservados e justificativa.");
-  const item=itemFor(trial.targetId);
+  const item=itemFor(trial.targetId),style=trial.artStyle??"sobrio";
   const previousExposure=original?.previousExposure??ledger.some(record=>record.trial.id!==trial.id&&record.trial.targetId===trial.targetId&&record.events.some(event=>event.kind==="apresentado")&&(record.trial.mode==="receptivo"||record.response.help!=="independente"));
-  return{id:`${trial.id}-r${ledger.length+1}`,trial:{...trial,optionIds:[...trial.optionIds]},item:{label:item.label,category:item.category,hash:item.hash},options:trial.optionIds.map(id=>{const option=itemFor(id);return{id,label:option.label,hash:option.hash};}),response:{...draft},events:events.map(event=>({...event})),previousExposure,recordedAt:new Date().toISOString(),supersedes,correctionReason};
+  return{id:`${trial.id}-r${ledger.length+1}`,trial:{...trial,optionIds:[...trial.optionIds]},item:{label:item.label,category:item.category,hash:assetHash(item,style)},options:trial.optionIds.map(id=>{const option=itemFor(id);return{id,label:option.label,hash:assetHash(option,style)};}),response:{...draft},events:events.map(event=>({...event})),previousExposure,recordedAt:new Date().toISOString(),supersedes,correctionReason};
 }
 export function reportText(config:Config,plan:Trial[],ledger:Observation[]):string{
   const records=activeObservations(ledger);const primary=new Set(records.filter(record=>!record.trial.adaptedFrom).map(record=>record.trial.id));
-  const header=["RECONHECIMENTO VISUAL · REGISTRO DESCRITIVO",`Versão ${VERSION} | ${config.ageMonths} meses | Roteiro ${bandFor(config.ageMonths)?.label??"não identificado"}`,NATURE,"As faixas organizam a aplicação; não são normas ou idades-limite para adquirir habilidades.",`Cobertura: ${primary.size} de ${plan.length} oportunidades principais documentadas. ${plan.length-primary.size} ainda sem registro.`,"Pareamento demonstra correspondência perceptual, não necessariamente conhecimento do significado. Figuras familiares, linguagem, visão, motricidade e condições da sessão interferem.",`Condições declaradas: ${config.conditions.join("; ")||"nenhuma informada"}.`,""];
+  const header=["RECONHECIMENTO VISUAL · REGISTRO DESCRITIVO",`Versão ${VERSION} | ${config.ageMonths} meses | Roteiro ${bandFor(config.ageMonths)?.label??"não identificado"} | Figuras: ${ART_STYLES[configArtStyle(config)]}`,NATURE,"As faixas organizam a aplicação; não são normas ou idades-limite para adquirir habilidades.",`Cobertura: ${primary.size} de ${plan.length} oportunidades principais documentadas. ${plan.length-primary.size} ainda sem registro.`,"Pareamento demonstra correspondência perceptual, não necessariamente conhecimento do significado. Figuras familiares, linguagem, visão, motricidade e condições da sessão interferem.",`Condições declaradas: ${config.conditions.join("; ")||"nenhuma informada"}.`,""];
   for(const mode of Object.keys(MODES) as Mode[]){const group=records.filter(record=>record.trial.mode===mode);if(!group.length)continue;header.push(`${MODES[mode]}: ${group.length} registros; ${group.filter(record=>record.response.outcome==="correspondente"&&record.response.help==="independente"&&!record.previousExposure).length} respostas correspondentes sem ajuda declarada e sem exposição prévia ao nome/ajuda registrada. Contagem descritiva, não escore normativo.`);}
   for(const record of records){const r=record.response;header.push("",`${record.item.label} · ${CATEGORIES[record.item.category]} · ${MODES[record.trial.mode]}`,`Pergunta: ${record.trial.question}`,record.trial.context?`Contexto lido: ${record.trial.context}`:"",`Ordem mostrada: ${record.options.map(option=>option.label).join(" | ")}`,`Situação: ${r.outcome?OUTCOMES[r.outcome]:"não registrado"}. Via: ${r.channel?CHANNELS[r.channel]:"não informada"}. Ajuda: ${SUPPORTS[r.help]}. Familiaridade: ${r.familiarity}.`,`Resposta literal: ${r.literal||"não verbalizada / não transcrita"}`,`Observações: ${r.note||"sem observação adicional"}`,`Apresentações: ${record.events.filter(event=>event.kind==="apresentado").length}; toques: ${record.events.filter(event=>event.kind==="toque").map(event=>record.options.find(option=>option.id===event.itemId)?.label??"evento inválido").join(" → ")||"nenhum"}.`,record.previousExposure?"Houve exposição prévia ao nome/ajuda nesta sessão: não interpretar como nomeação espontânea independente.":"",record.trial.adaptedFrom?"Tentativa complementar: manter separada da oportunidade inicial.":"",record.supersedes?`Registro corrigido com histórico preservado. Motivo: ${record.correctionReason}`:"");}
-  header.push("","Síntese diagnóstica e assinatura: exclusivas do profissional após integração clínica.","Ilustrações: Mulberry Symbols, © 2018–2026 Steve Lee, CC BY-SA 4.0. Cores e relações geométricas: implementação autoral NeuroPed. Repertório visual ainda não validado psicometricamente em crianças brasileiras.");return header.join("\n");
+  header.push("","Síntese diagnóstica e assinatura: exclusivas do profissional após integração clínica.",configArtStyle(config)==="kawaii"?"Ilustrações kawaii: banco autoral NeuroPed (recognition-v3), desenhado para 1 a 4 anos.":"Ilustrações: Mulberry Symbols, © 2018–2026 Steve Lee, CC BY-SA 4.0.","Cores e relações geométricas: implementação autoral NeuroPed. Repertório visual ainda não validado psicometricamente em crianças brasileiras.");return header.join("\n");
 }

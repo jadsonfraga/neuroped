@@ -3,7 +3,13 @@ import { existsSync, lstatSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import ts from "typescript";
 
-const MANIFEST = "recognition-v2/manifest.json";
+// Bancos visuais publicados: sóbrio (Mulberry, v2) e kawaii autoral (v3). Cada
+// manifesto só é aceito com a origem de seu próprio banco.
+const BANKS = [
+  { manifest: "recognition-v2/manifest.json", folder: "recognition-v2", origin: /^EN\/[^/]+\.svg$/ },
+  { manifest: "recognition-v3/manifest.json", folder: "recognition-v3", origin: /^NEUROPED\/kawaii\/[a-z0-9-]+\.svg$/ },
+];
+const MANIFESTS = new Set(BANKS.map((bank) => bank.manifest));
 const SOURCES = new Set([
   "src/pages/teste-reconhecimento-visual.tsx",
   "client/src/pages/teste-reconhecimento-visual.tsx",
@@ -19,20 +25,28 @@ function regularFile(path) {
  * actual shipped bytes. No file-wide or value-wide secret-scanner exemptions.
  * Parse data records without executing the compiled application. */
 export function createBuiltVisualDigestInspector(root) {
-  if (!existsSync(join(root, MANIFEST))) return (_path, source) => source;
-  const manifest = JSON.parse(regularFile(join(root, MANIFEST)).toString("utf8"));
-  if (!Array.isArray(manifest.items) || !manifest.items.length) throw new Error("Manifesto visual compilado sem inventário.");
+  const present = BANKS.filter((bank) => existsSync(join(root, bank.manifest)));
+  if (!present.length) return (_path, source) => source;
+  // Chave = id + origem: o mesmo id existe nos dois bancos com bytes diferentes.
   const items = new Map();
-  for (const item of manifest.items) {
-    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(item.id) || items.has(item.id) ||
-        !/^[a-f0-9]{64}$/.test(item.sha256) || !/^EN\/[^/]+\.svg$/.test(item.sourcePath)) {
-      throw new Error("Identidade ou checksum inválido no inventário compilado.");
+  const perManifest = new Map();
+  for (const bank of present) {
+    const manifest = JSON.parse(regularFile(join(root, bank.manifest)).toString("utf8"));
+    if (!Array.isArray(manifest.items) || !manifest.items.length) throw new Error("Manifesto visual compilado sem inventário.");
+    const ids = new Set();
+    for (const item of manifest.items) {
+      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(item.id) || ids.has(item.id) ||
+          !/^[a-f0-9]{64}$/.test(item.sha256) || !bank.origin.test(item.sourcePath)) {
+        throw new Error("Identidade ou checksum inválido no inventário compilado.");
+      }
+      const bytes = regularFile(join(root, bank.folder, `${item.id}.svg`));
+      if (!bytes.toString("utf8").includes("<svg") || createHash("sha256").update(bytes).digest("hex") !== item.sha256) {
+        throw new Error(`Imagem compilada não corresponde ao manifesto: ${item.id}`);
+      }
+      ids.add(item.id);
+      items.set(`${item.id}|${item.sourcePath}`, item);
     }
-    const bytes = regularFile(join(root, "recognition-v2", `${item.id}.svg`));
-    if (!bytes.toString("utf8").includes("<svg") || createHash("sha256").update(bytes).digest("hex") !== item.sha256) {
-      throw new Error(`Imagem compilada não corresponde ao manifesto: ${item.id}`);
-    }
-    items.set(item.id, item);
+    perManifest.set(bank.manifest, ids.size);
   }
   const vite = JSON.parse(regularFile(join(root, ".vite/manifest.json")).toString("utf8"));
   const entries = Object.entries(vite).filter(([key, value]) => SOURCES.has(key) || SOURCES.has(value?.src));
@@ -61,9 +75,9 @@ export function createBuiltVisualDigestInspector(root) {
   }
 
   return (relativePath, source) => {
-    if (relativePath !== MANIFEST && !bundles.has(relativePath)) return source;
+    if (!MANIFESTS.has(relativePath) && !bundles.has(relativePath)) return source;
     const parsed = ts.createSourceFile(relativePath, source, ts.ScriptTarget.Latest, true,
-      relativePath === MANIFEST ? ts.ScriptKind.JSON : ts.ScriptKind.JS);
+      MANIFESTS.has(relativePath) ? ts.ScriptKind.JSON : ts.ScriptKind.JS);
     if (parsed.parseDiagnostics.length) throw new Error("Não foi possível analisar estruturalmente o inventário visual compilado.");
     function collectRecords(tree) {
       const ranges = [], seen = new Set();
@@ -82,8 +96,8 @@ export function createBuiltVisualDigestInspector(root) {
       function visit(node) {
         if (ts.isObjectLiteralExpression(node)) {
           const id = literalProperty(node, "id"), origin = literalProperty(node, "sourcePath"), digest = literalProperty(node, "sha256");
-          const item = id && items.get(id.text);
-          if (item && origin?.text === item.sourcePath && digest?.text === item.sha256) {
+          const item = id && origin && items.get(`${id.text}|${origin.text}`);
+          if (item && digest?.text === item.sha256) {
             ranges.push([digest.getStart(tree), digest.end, '"VERIFIED_LOCAL_VISUAL_ASSET_DIGEST"']);
             seen.add(item.id);
           }
@@ -101,7 +115,8 @@ export function createBuiltVisualDigestInspector(root) {
       return inspected;
     }
     const { ranges, seen } = collectRecords(parsed);
-    if (relativePath === MANIFEST && (ranges.length !== items.size || seen.size !== items.size)) {
+    const expected = perManifest.get(relativePath);
+    if (MANIFESTS.has(relativePath) && (ranges.length !== expected || seen.size !== expected)) {
       throw new Error("Estrutura ou campos duplicados no manifesto visual compilado.");
     }
     const decodedSources = [];

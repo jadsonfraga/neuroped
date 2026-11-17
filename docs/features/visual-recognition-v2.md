@@ -92,3 +92,39 @@ Rollback: reverter o commit de merge da PR em nova PR, executar os gates e publi
 ## Refinamentos após inspeção visual de todos os estímulos
 
 A ilustração de frango preparado foi rejeitada no pré-release e substituída por um galo vivo, com nome correto e origem EN/cockerel.svg. Prato e garrafa foram recortados para remover figuras secundárias (talheres/prato menor e uma vaca). Nenhum item preparado como alimento é apresentado como ave viva. O manifesto registra recorte e novo hash; a licença CC BY-SA 4.0 é preservada. Esses controles são inspeção técnica/visual, não estudo de reconhecibilidade com crianças.
+
+## Banco kawaii para 1 a 4 anos (versão 2026-11-17.3)
+
+**O que muda.** O teste passa a ter dois bancos de ilustrações e o estilo usado fica registrado em cada oportunidade (`trial.artStyle`), no JSON e no relatório:
+
+- **Kawaii** (`client/public/recognition-v3/`, padrão de 12 a 59 meses): 74 ilustrações vetoriais autorais NeuroPed, com silhueta prototípica grande e centrada, contorno macio, cores de alto contraste com o fundo branco e rosto kawaii sobre a superfície maior da figura. O rosto nunca substitui o traço que identifica o objeto (orelhas, tromba, pescoço, coroa do abacaxi, rodas).
+- **Sóbrio** (`client/public/recognition-v2/`, Mulberry, padrão a partir de 60 meses): continua o mesmo. Isso preserva a regra "sem infantilização" dos roteiros de 5 a 19 anos.
+
+**Troca de estilo.** O profissional pode trocar o estilo no campo "Figuras" (pela idade, kawaii ou sóbrio). Por exemplo, pode usar figuras kawaii aos 5 anos com atraso de desenvolvimento, ou sóbrias aos 4 anos. Trocar o estilo reinicia as conferências de preparo. Os dois estilos não são intercambiáveis entre si: o relatório informa qual foi usado.
+
+**Figuras redesenhadas e novas.** As 58 figuras do banco sóbrio foram redesenhadas no estilo kawaii, com o mesmo rótulo, categoria e faixa etária; o redesenho não altera o roteiro. Há 16 figuras novas, exclusivas do kawaii. A idade mínima de cada uma é um piso operacional do roteiro, não uma norma:
+
+| Categoria | Figuras novas (a partir de) |
+|---|---|
+| Animais | pintinho (24), urso (24), macaco (36), joaninha (36), zebra (48), coruja (48) |
+| Frutas | abacate (36), mamão (36) |
+| Transportes | trator (36), foguete (48) |
+| Objetos | copo (12), mamadeira (12), livro (24), balão (24), boneca (24), celular (24) |
+
+**Efeito no banco.** O banco disponível aumenta em cada faixa: aos 2 anos, 33 figuras kawaii contra 25 sóbrias; aos 3 anos, 58 contra 45; aos 4 anos, 71 contra 55. No Modo Fácil, a faixa de 12–23 meses passa a ter as 8 figuras prometidas (antes eram 7).
+
+**Exemplares específicos.** O coco é desenhado como coco verde com canudo, e o sapato é infantil, com tira. O roteiro já pede para confirmar familiaridade com exemplares específicos e para aceitar denominações usuais ("coco verde", "tênis").
+
+**Integridade.** A integridade segue o mesmo padrão do banco sóbrio:
+- `recognition-v3/manifest.json` traz o SHA-256 de cada SVG;
+- antes de apresentar, cada figura é conferida no navegador pelo hash do estilo escolhido, e uma figura adulterada bloqueia a sessão;
+- os guardas `verified-visual-digests` e `verified-built-visual-digests` aceitam o hash somente com a origem do próprio banco;
+- os SVGs não têm texto, script, imagem embutida nem referência externa.
+
+**Geração.** Os arquivos são gerados de forma determinística por `node scripts/build-recognition-kawaii.mjs`, a partir de `scripts/recognition/kawaii-figures.mjs`. O teste `tests/unit/visual-recognition-kawaii.test.ts` compara os arquivos publicados com a regeneração: nunca editar os SVGs à mão.
+
+**Outros consumidores.** O Super NeuroPad e outras chamadas sem estilo continuam no banco sóbrio. As figuras novas não aparecem para elas.
+
+**Limites.** Ilustrações autorais ainda não testadas empiricamente quanto à reconhecibilidade e familiaridade com crianças brasileiras. Registre familiaridade e figura ambígua, e não atribua à criança a dificuldade da figura. Revisão profissional antes de cada aplicação.
+
+**Rollback.** Basta `git revert` do commit. Os registros antigos sem `artStyle` são lidos como banco sóbrio, e não há migração de dados.
