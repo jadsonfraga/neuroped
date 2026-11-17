@@ -59,6 +59,11 @@ export const FASES_LABEL: Record<Outcome, string> = {
   ND: "Não fez agora", R: "Não quis", NA: "Pulado",
 };
 export const NOT_APPLIED_RESPONSE = "Tarefa não aplicada.";
+const NOTE_PREFIX = `${NOT_APPLIED_RESPONSE} Nota: `;
+/** Limite da resposta no registro (`parseRecordJSON`: 2000). A nota rápida pode virar "Tarefa não aplicada. Nota: …",
+ * então o campo aceita só o que cabe com o prefixo: o JSON exportado sempre reabre, sem cortar texto em silêncio. */
+export const RESPONSE_MAX = 2000;
+export const NOTE_MAX = RESPONSE_MAX - NOTE_PREFIX.length;
 
 export interface FasesMark { outcome: Outcome; assistance?: string; note?: string }
 /** Uma marcação vira uma observação guiada com o mesmo id do Guia da assistente, para o JSON reabrir na revisão completa.
@@ -70,7 +75,7 @@ export function markObservation(task: PracticalTask, mark: FasesMark, second: nu
   return {
     ...base,
     id: cardId(task), phase: task.phase, task: task.title, outcome: mark.outcome,
-    response: mark.outcome === "NA" ? (note ? `${NOT_APPLIED_RESPONSE} Nota: ${note}` : NOT_APPLIED_RESPONSE) : note,
+    response: mark.outcome === "NA" ? (note ? `${NOTE_PREFIX}${note}` : NOT_APPLIED_RESPONSE) : note,
     assistance: needsReason ? (mark.assistance ?? "").trim() : "",
     modelInInstruction: Boolean(task.model),
     applicationSecond: base.applicationSecond,
@@ -82,7 +87,7 @@ export function markObservation(task: PracticalTask, mark: FasesMark, second: nu
 export function noteOf(entry: Observation | undefined): string {
   if (!entry) return "";
   if (entry.outcome !== "NA") return entry.response;
-  return entry.response.startsWith(`${NOT_APPLIED_RESPONSE} Nota: `) ? entry.response.slice(NOT_APPLIED_RESPONSE.length + 7) : "";
+  return entry.response.startsWith(NOTE_PREFIX) ? entry.response.slice(NOTE_PREFIX.length) : "";
 }
 export function isMarked(card: FasesCard, observations: readonly Observation[]): boolean {
   return observations.some((entry) => entry.id === cardId(card.task) && Boolean(entry.outcome));

@@ -10,7 +10,7 @@ import { reviewText } from "../review";
 import { printPlainTextDocument } from "@/lib/printDocument";
 import {
   APPLICATOR_RECORDING, FASES_END, FASES_HELP, FASES_LABEL, FASES_SKIP, buildFasesPlan, cardId, entryCardOf, fasesSummary,
-  flattenPlan, isMarked, markObservation, materialsFor, noteOf, phaseProgress, type FasesMark,
+  flattenPlan, isMarked, markObservation, materialsFor, noteOf, phaseProgress, NOTE_MAX, RESPONSE_MAX, type FasesMark,
 } from "./model";
 import { applicatorResult, cardLine, phaseLine } from "./result";
 import "./fases.css";
@@ -301,7 +301,7 @@ export default function FasesMode({ signature, onState }: Props) {
         <summary>Notas para o médico (opcional) · {summary.withoutNote} cartão(ões) sem nota</summary>
         <p className="obs10-muted">Opcional. Escreva só o que viu ou ouviu, com as palavras da criança. Não escreva “normal”. Sem nota, vale a categoria que você marcou.</p>
         {notes.map(({ card, entry }) => entry && <label key={entry.id}>{plan[card.phase].icon} {card.task.title} · {FASES_LABEL[entry.outcome as keyof typeof FASES_LABEL]}
-          <textarea value={entry.response} maxLength={2000} placeholder="O que a criança fez ou falou?" onChange={(e) => editNote(entry.id, e.target.value)} />
+          <textarea value={entry.response} maxLength={RESPONSE_MAX} placeholder="O que a criança fez ou falou?" onChange={(e) => editNote(entry.id, e.target.value)} />
         </label>)}
       </details>}
       <details className="fases-report"><summary>Ver o resumo completo</summary><pre>{report}</pre></details>
@@ -354,7 +354,7 @@ export default function FasesMode({ signature, onState }: Props) {
         <p className="fases-observe"><strong>Observe:</strong> {current.observe}</p>
         {current.task.model && <p className="fases-flag">👀 Esta tarefa já inclui uma demonstração. “Mostrei como fazer” é só para ajuda extra.</p>}
         {current.task.walking && <p className="fases-flag">Só com marcha estável, sem dor e com proteção por perto. Se não, toque em “Pular”.</p>}
-        <label className="fases-note">Nota rápida (opcional): o que fez ou falou<input value={note} maxLength={2000} placeholder="Ex.: disse “bola” e apontou" onChange={(e) => setNote(e.target.value)} /></label>
+        <label className="fases-note">Nota rápida (opcional): o que fez ou falou<input value={note} maxLength={NOTE_MAX} placeholder="Ex.: disse “bola” e apontou" onChange={(e) => setNote(e.target.value)} /></label>
         <div className="fases-choices" role="group" aria-label="O que aconteceu?" data-testid="obs10-fases-choices">
           {sub === null && <>
             <button type="button" onClick={() => record({ outcome: "E" })}><span aria-hidden="true">✅</span>Fez sem ajuda extra</button>

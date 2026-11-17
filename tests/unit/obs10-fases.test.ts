@@ -11,7 +11,7 @@ import { applicatorResult, applicatorResultText } from "../../client/src/feature
 import { makeDossier } from "../../client/src/features/obs10/dossier";
 import { parseRecordJSON } from "../../client/src/features/obs10/importRecord";
 import {
-  APPLICATOR_RECORDING, FASES_END, FASES_HELP, FASES_LABEL, FASES_SKIP, NOT_APPLIED_RESPONSE, buildFasesPlan, cardId, entryCardOf, fasesSummary,
+  APPLICATOR_RECORDING, NOTE_MAX, RESPONSE_MAX, FASES_END, FASES_HELP, FASES_LABEL, FASES_SKIP, NOT_APPLIED_RESPONSE, buildFasesPlan, cardId, entryCardOf, fasesSummary,
   flattenPlan, markObservation, materialsFor, mentionsCamera, noteOf, phaseProgress, withoutCamera,
 } from "../../client/src/features/obs10/fases/model";
 
@@ -130,6 +130,11 @@ test("registro do modo Fases: linha de preparo, relatório, dossiê e reimporta�
   assert.ok(reopened.ok, "JSON do modo Fases reabre no Guia da assistente");
   assert.equal(reopened.ok && reopened.record.context.preparation, "fases");
   assert.equal(reopened.ok && reopened.record.observations[0].task, cards[0].task.title);
+  const longest = markObservation(cards[2].task, { outcome: "NA", assistance: FASES_SKIP[0], note: "x".repeat(NOTE_MAX) }, 60, undefined, false);
+  assert.equal(longest.response.length, RESPONSE_MAX, "nota máxima + prefixo de não aplicação cabe no limite do registro");
+  assert.equal(noteOf(longest), "x".repeat(NOTE_MAX), "nota preservada sem corte");
+  assert.ok(parseRecordJSON(JSON.stringify({ ...record, observations: [...observations, longest] })).ok, "JSON com nota máxima pulada reabre");
+  assert.ok(ui.includes("maxLength={NOTE_MAX}"), "campo de nota rápida limitado ao que cabe");
   const forged = parseRecordJSON(JSON.stringify({ ...record, context: { ...record.context, preparation: "jogo" } }));
   assert.equal(forged.ok, false, "valor de preparo desconhecido é recusado");
 });
