@@ -39,7 +39,6 @@ async function prepare(years, months) {
   await page.getByLabel("Meses adicionais", { exact: true }).fill(months);
   await page.getByRole("button", { name: /^Criança bem/ }).click();
   await page.getByRole("button", { name: /^Sala segura e kit separado/ }).click();
-  await page.getByRole("button", { name: /^Celular de apoio filmando/ }).click();
 }
 /** Respeita o intervalo anti-toque-duplo da interface (350 ms), como uma aplicadora que lê o cartão seguinte. */
 async function tap(label) { await button(label).click(); await page.waitForTimeout(400); }
@@ -59,14 +58,14 @@ try {
   await page.getByTestId("obs10-fases-start").waitFor();
   const go = button("Começar · 10 minutos");
   assert.equal(await go.isDisabled(), true);
-  assert.match(await page.locator(".fases-missing").textContent(), /idade · criança bem · sala e kit · filmagem/);
+  assert.match(await page.locator(".fases-missing").textContent(), /^Falta: idade · criança bem · sala e kit$/);
+  assert.equal(await page.getByText(/filmando|Sem filmagem/).count(), 0, "preparo sem câmera");
   await page.getByLabel("Anos completos", { exact: true }).fill("4");
   assert.match(await page.locator(".obs10-band-selected").textContent(), /Ficha: 4 anos/);
   assert.ok(await page.locator(".fases-kit li").count() > 2, "kit ilustrado da ficha");
   assert.equal(await go.isDisabled(), true, "idade sozinha não inicia");
   await page.getByRole("button", { name: /^Criança bem/ }).click();
   await page.getByRole("button", { name: /^Sala segura e kit separado/ }).click();
-  await page.getByRole("button", { name: /^Celular de apoio filmando/ }).click();
   assert.equal(await go.isDisabled(), false);
   await screen("01-preparo-desktop");
   await page.setViewportSize({ width: 390, height: 844 }); await screen("02-preparo-celular");
@@ -80,13 +79,14 @@ try {
   await focusedHeading();
   await screen("03-cartao-desktop");
   const firstId = await page.getByTestId("obs10-fases-card").getAttribute("data-task-id");
+  assert.doesNotMatch(await page.locator(".fases-say, .fases-steps, .fases-observe").allTextContents().then((t) => t.join(" ")), /c[aâ]mera|film|grava/i, "cartão sem câmera");
   await page.getByLabel("Nota rápida (opcional): o que fez ou falou", { exact: true }).fill("entrou de mãos dadas e sentou");
   await tap("Fez sem ajuda extra");
   let marks = 1, interludes = 0, doubleTapped = false;
   for (let guard = 0; guard < 60; guard++) {
     if (await page.getByTestId("obs10-fases-interlude").count()) {
       const final = await button("Encerrar e ver resumo").count();
-      if (interludes === 0) { await focusedHeading(); await screen("04-fase-concluida"); }
+      if (interludes === 0) { await focusedHeading(); await screen("04-fase-concluida"); assert.doesNotMatch(await page.getByTestId("obs10-fases-interlude").textContent(), /Câmera/); }
       interludes++;
       if (final) break;
       await page.getByRole("button", { name: /^Começar a fase \d$/ }).click();
@@ -122,6 +122,11 @@ try {
   await page.getByTestId("obs10-fases-end").waitFor();
   await focusedHeading();
   assert.match(await page.getByTestId("obs10-fases-end").textContent(), /Todas as fases percorridas; encerrado pela aplicadora\./);
+  const result = await page.getByTestId("obs10-fases-result").textContent();
+  assert.match(result, /Resultado pelo seu registro/);
+  assert.match(result, /Para o médico conferir na consulta/);
+  assert.match(result, /com ajuda \(pedido repetido\)/);
+  assert.match(result, /Não aplicados/);
   await page.getByLabel("Código do registro, sem nome (opcional)", { exact: true }).fill("OBS-FASES-FICTICIO");
   const notes = page.locator(".fases-notes textarea");
   assert.ok(await notes.count() > 0, "notas opcionais para cartões marcados");
@@ -136,7 +141,10 @@ try {
   assert.match(txt, /Fato\/resposta literal: entrou de mãos dadas e sentou/);
   assert.match(txt, /Fato\/resposta literal: olhou para a mãe e sorriu/);
   assert.match(txt, /Ajuda\/adaptação\/motivo da não aplicação: Sem tempo\./);
-  assert.match(txt, /Captação: Filmagem externa declarada pela aplicadora/);
+  assert.match(txt, /Captação: Sem vídeo: modo Fases sem câmera/);
+  assert.match(txt, /RESULTADO PELO REGISTRO DA APLICADORA — SEM VÍDEO/);
+  assert.match(txt, /Para o médico conferir na consulta/);
+  assert.doesNotMatch(txt, /Registro incompleto: Descreva o fato|qualidade audiovisual/, "sem pendência de vídeo nem de descrição obrigatória");
   assert.doesNotMatch(txt, /acertou|errou|pontos|estrela/i);
   const raw = await download("registro-fases.json", "Baixar arquivo para reabrir (JSON)");
   const record = JSON.parse(raw);

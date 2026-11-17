@@ -6,11 +6,13 @@ import { test } from "node:test";
 import { AGE_BANDS, OBS10_VERSION, OUTCOMES, PHASES } from "../../client/src/features/obs10/protocol";
 import { PRACTICAL_TASKS } from "../../client/src/features/obs10/practical";
 import { PREPARATION_DIRECT_LINE, PREPARATION_FASES_LINE, makeReport, observationIssues, type SessionRecord } from "../../client/src/features/obs10/session";
+import { reviewText } from "../../client/src/features/obs10/review";
+import { applicatorResult, applicatorResultText } from "../../client/src/features/obs10/fases/result";
 import { makeDossier } from "../../client/src/features/obs10/dossier";
 import { parseRecordJSON } from "../../client/src/features/obs10/importRecord";
 import {
-  FASES_END, FASES_HELP, FASES_LABEL, FASES_SKIP, NOT_APPLIED_RESPONSE, buildFasesPlan, cardId, entryCardOf, fasesSummary,
-  flattenPlan, markObservation, materialsFor, noteOf, phaseProgress,
+  APPLICATOR_RECORDING, FASES_END, FASES_HELP, FASES_LABEL, FASES_SKIP, NOT_APPLIED_RESPONSE, buildFasesPlan, cardId, entryCardOf, fasesSummary,
+  flattenPlan, markObservation, materialsFor, mentionsCamera, noteOf, phaseProgress, withoutCamera,
 } from "../../client/src/features/obs10/fases/model";
 
 const page = readFileSync("client/src/pages/pre-consulta-obs10.tsx", "utf8");
@@ -121,12 +123,52 @@ test("registro do modo Fases: linha de preparo, relatório, dossiê e reimporta�
   assert.match(report, /Fato\/resposta literal: entrou e sentou/);
   assert.match(report, /NÃO É LAUDO NEM DIAGNÓSTICO/);
   assert.match(makeDossier(record), /Preparação: modo Fases/);
+  assert.match(report, /RESULTADO PELO REGISTRO DA APLICADORA — SEM VÍDEO/);
+  assert.doesNotMatch(report, /Registro incompleto: Descreva o fato|qualidade audiovisual|Qualidade referida|Referência audiovisual/, "sem vídeo: nada de pendência de descrição ou de qualidade audiovisual");
+  assert.doesNotMatch(reviewText(record), /Descreva o fato|qualidade audiovisual/);
   const reopened = parseRecordJSON(JSON.stringify(record));
   assert.ok(reopened.ok, "JSON do modo Fases reabre no Guia da assistente");
   assert.equal(reopened.ok && reopened.record.context.preparation, "fases");
   assert.equal(reopened.ok && reopened.record.observations[0].task, cards[0].task.title);
   const forged = parseRecordJSON(JSON.stringify({ ...record, context: { ...record.context, preparation: "jogo" } }));
   assert.equal(forged.ok, false, "valor de preparo desconhecido é recusado");
+});
+
+test("sem câmera: cartões não pedem filmagem e mantêm a orientação de segurança", () => {
+  for (const item of AGE_BANDS) for (const card of flattenPlan(buildFasesPlan(item, item.min, true))) {
+    assert.equal(mentionsCamera(card), false, `${item.id}/${card.task.id}: texto sem câmera`);
+    assert.ok(card.steps.length > 0 && card.say.trim() && card.observe.trim(), `${item.id}/${card.task.id}: cartão continua completo`);
+  }
+  assert.equal(withoutCamera("Conteúdo sensível: pare a gravação e chame o médico para conversa reservada."), "Conteúdo sensível: pare e chame o médico para conversa reservada.");
+  assert.match(APPLICATOR_RECORDING, /Sem vídeo/);
+  assert.doesNotMatch(ui, /FILMING|Celular de apoio filmando|Sem filmagem hoje/, "a filmagem saiu do preparo");
+  assert.ok(ui.includes("const ready = Boolean(band && childOk && roomOk);"), "início depende só da idade e das duas confirmações");
+  assert.ok(ui.includes("showCamera={false}"));
+});
+
+test("resultado pelo registro da aplicadora: descritivo por fase, sem soma nem conclusão", () => {
+  const item = band("y04");
+  const cards = flattenPlan(buildFasesPlan(item, 50, false));
+  const observations = [
+    markObservation(cards[0].task, { outcome: "E" }, 5, undefined, false),
+    markObservation(cards[1].task, { outcome: "V", assistance: FASES_HELP[0].assistance, note: "respondeu “bola”" }, 20, undefined, false),
+    markObservation(cards[2].task, { outcome: "ND" }, 60, undefined, false),
+    markObservation(cards[3].task, { outcome: "NA", assistance: FASES_SKIP[3] }, 90, undefined, false),
+  ];
+  const context = { code: "", chronologicalMonths: 50, correctedMonths: null, bandId: item.id, schooling: "", language: "", adaptations: "", conditions: "", familyReport: "", proneAllowed: false, preparation: "fases" as const };
+  const result = applicatorResult({ context, observations });
+  assert.equal(result.phases.length, PHASES.length);
+  assert.equal(result.phases.reduce((n, p) => n + p.cards.length, 0), cards.length, "todos os cartões da ficha aparecem");
+  assert.deepEqual(result.toReview.map((c) => c.title), [cards[1].task.title, cards[2].task.title], "conferir: com ajuda e não fez agora");
+  assert.equal(result.skipped[0].reason, FASES_SKIP[3]);
+  const text = applicatorResultText({ context, observations });
+  assert.match(text, /não é escore, norma, percentil nem diagnóstico/);
+  assert.match(text, /com ajuda \(pedido repetido\)\. Nota: “respondeu “bola””/);
+  assert.match(text, /sem marca/);
+  assert.doesNotMatch(text, /total|pontua|percentual|%|acert|err[oa]u|normal|alterad|atraso|d[eé]ficit/i, "sem soma, porcentagem ou conclusão clínica");
+  const guided = makeReport({ version: OBS10_VERSION, context: { ...context, preparation: undefined }, observations, durationSeconds: 100, endReason: "x", encodingSecond: null, recallSecond: null, recording: "r" });
+  assert.doesNotMatch(guided, /RESULTADO PELO REGISTRO DA APLICADORA/, "Guia da assistente não muda");
+  assert.match(guided, /Registro incompleto: Descreva o fato/, "Guia continua exigindo descrição");
 });
 
 test("página: Fases é o padrão, trava as abas na coleta e protege a saída", () => {

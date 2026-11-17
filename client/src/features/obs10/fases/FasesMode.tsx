@@ -9,9 +9,10 @@ import { GUIDED_STYLE } from "../guidedStyle";
 import { reviewText } from "../review";
 import { printPlainTextDocument } from "@/lib/printDocument";
 import {
-  FASES_END, FASES_HELP, FASES_LABEL, FASES_SKIP, FILMING_RECORDING, buildFasesPlan, cardId, entryCardOf, fasesSummary,
-  flattenPlan, isMarked, markObservation, materialsFor, noteOf, phaseProgress, type FasesMark, type FilmingChoice,
+  APPLICATOR_RECORDING, FASES_END, FASES_HELP, FASES_LABEL, FASES_SKIP, buildFasesPlan, cardId, entryCardOf, fasesSummary,
+  flattenPlan, isMarked, markObservation, materialsFor, noteOf, phaseProgress, type FasesMark,
 } from "./model";
+import { applicatorResult, cardLine, phaseLine } from "./result";
 import "./fases.css";
 
 export interface FasesState { dirty: boolean; locked: boolean }
@@ -39,7 +40,6 @@ export default function FasesMode({ signature, onState }: Props) {
   const [prone, setProne] = useState(false);
   const [childOk, setChildOk] = useState(false);
   const [roomOk, setRoomOk] = useState(false);
-  const [filming, setFilming] = useState<FilmingChoice | "">("");
   const [stage, setStage] = useState<Stage>("start");
   const [context, setContext] = useState<SessionContext | null>(null);
   const [cursor, setCursor] = useState(0);
@@ -70,8 +70,8 @@ export default function FasesMode({ signature, onState }: Props) {
   const effective = chrono === null || !correctedValid ? null : correctedOn ? Number(corrected) : chrono;
   const band = effective === null ? undefined : bandForMonths(effective);
   const preview = useMemo(() => band && effective !== null ? flattenPlan(buildFasesPlan(band, effective, prone && band.min < 9)) : [], [band, effective, prone]);
-  const ready = Boolean(band && childOk && roomOk && filming);
-  const missing = [!band && "idade", !childOk && "criança bem", !roomOk && "sala e kit", !filming && "filmagem"].filter(Boolean) as string[];
+  const ready = Boolean(band && childOk && roomOk);
+  const missing = [!band && "idade", !childOk && "criança bem", !roomOk && "sala e kit"].filter(Boolean) as string[];
 
   const playBand = context ? AGE_BANDS.find((item) => item.id === context.bandId) : undefined;
   const plan = useMemo(() => context && playBand ? buildFasesPlan(playBand, context.correctedMonths ?? context.chronologicalMonths, context.proneAllowed) : [], [context, playBand]);
@@ -177,7 +177,7 @@ export default function FasesMode({ signature, onState }: Props) {
   function reset() {
     if (!window.confirm("Baixou o resumo? Uma nova avaliação apaga os dados desta tela. Continuar?")) return;
     wall.current = null; mono.current = null; last.current = 0; ended.current = false;
-    setYears(""); setMonths(""); setUseCorrected(false); setCorrected(""); setProne(false); setChildOk(false); setRoomOk(false); setFilming("");
+    setYears(""); setMonths(""); setUseCorrected(false); setCorrected(""); setProne(false); setChildOk(false); setRoomOk(false);
     setContext(null); setObservations([]); setCursor(0); setInterlude(null); setSub(null); setNote(""); setElapsed(0); setEndReason("");
     setSessionId(""); setCode(""); setUrgent(false); setStatus(""); setSaved({ txt: null, json: null });
     setStage("start");
@@ -186,8 +186,9 @@ export default function FasesMode({ signature, onState }: Props) {
   const sessionRecord: SessionRecord | null = context ? {
     version: OBS10_VERSION, sessionId, context: { ...context, code: code.trim() }, observations, handoff: emptyHandoff(),
     durationSeconds: elapsed, endReason: endReason || "em andamento", encodingSecond: null, recallSecond: null,
-    recording: filming ? FILMING_RECORDING[filming] : "Forma de filmagem não declarada.",
+    recording: APPLICATOR_RECORDING,
   } : null;
+  const result = stage === "end" && sessionRecord ? applicatorResult(sessionRecord) : null;
   const report = stage === "end" && sessionRecord ? `${makeReport(sessionRecord, signature)}\n\n${reviewText(sessionRecord)}` : "";
   const json = stage === "end" && sessionRecord ? JSON.stringify(sessionRecord, null, 2) : "";
   const stale = (saved.txt !== null && saved.txt !== report) || (saved.json !== null && saved.json !== json);
@@ -205,7 +206,7 @@ export default function FasesMode({ signature, onState }: Props) {
         <span className="fases-badge" aria-hidden="true">🎮</span>
         <div>
           <h2 id="fases-start-title">Avaliação em 6 fases</h2>
-          <p>Você lê o cartão, a criança faz, você toca no que aconteceu. O aplicativo segue para o próximo cartão sozinho.</p>
+          <p>Sem câmera. Você lê o cartão, a criança faz, você toca no que aconteceu. O seu registro vira o resultado para o médico.</p>
         </div>
       </div>
       <ol className="fases-howto" aria-label="Em cada cartão">
@@ -231,15 +232,11 @@ export default function FasesMode({ signature, onState }: Props) {
           <legend><span aria-hidden="true">2</span>Checklist de largada</legend>
           <button type="button" className="fases-toggle" aria-pressed={childOk} onClick={() => setChildOk((v) => !v)}><span aria-hidden="true">🧒</span><span><strong>Criança bem</strong><small>Acordada, confortável, sem mudança aguda; responsável por perto.</small></span></button>
           <button type="button" className="fases-toggle" aria-pressed={roomOk} onClick={() => setRoomOk((v) => !v)}><span aria-hidden="true">🛟</span><span><strong>Sala segura e kit separado</strong><small>Piso livre, sem peças pequenas ou comida; médico disponível.</small></span></button>
-          <div className="fases-filming" role="group" aria-label="Filmagem">
-            <button type="button" className="fases-toggle" aria-pressed={filming === "external"} onClick={() => setFilming("external")}><span aria-hidden="true">🎥</span><span><strong>Celular de apoio filmando</strong><small>Com autorização registrada, fixo e na horizontal.</small></span></button>
-            <button type="button" className="fases-toggle" aria-pressed={filming === "none"} onClick={() => setFilming("none")}><span aria-hidden="true">📝</span><span><strong>Sem filmagem hoje</strong><small>Sem autorização ou sem aparelho: só as marcações.</small></span></button>
-          </div>
         </fieldset>
       </div>
       {band && <section className="fases-kit" aria-labelledby="fases-kit-title">
         <h3 id="fases-kit-title">Separe antes de começar</h3>
-        <ul>{KITS[band.id].map((item) => <li key={item.id}><MaterialPicture id={item.id} label={MATERIALS[item.id].label} /><span>{MATERIALS[item.id].label}</span><small>{item.quantity ?? MATERIALS[item.id].quantity}</small></li>)}</ul>
+        <ul>{KITS[band.id].filter((item) => item.id !== "device").map((item) => <li key={item.id}><MaterialPicture id={item.id} label={MATERIALS[item.id].label} /><span>{MATERIALS[item.id].label}</span><small>{item.quantity ?? MATERIALS[item.id].quantity}</small></li>)}</ul>
         <p className="obs10-muted">Sem peças pequenas, comida ou vidro. Faltou algo? Na hora, toque em “Pular” e escolha “Falta material seguro”.</p>
       </section>}
       <button type="button" className="obs10-primary fases-go" disabled={!ready} onClick={start}><span aria-hidden="true">▶</span> Começar · 10 minutos</button>
@@ -280,6 +277,14 @@ export default function FasesMode({ signature, onState }: Props) {
         <div><dt>Tempo de coleta</dt><dd>{clock(elapsed)}</dd></div>
       </dl>
       {path}
+      {result && <section className="fases-result" aria-labelledby="fases-result-title" data-testid="obs10-fases-result">
+        <h3 id="fases-result-title">Resultado pelo seu registro</h3>
+        <p className="obs10-muted">Organizado a partir do que você marcou, sem vídeo. É descrição para o médico, não nota nem diagnóstico: “não fez agora” e “não quis” não indicam incapacidade.</p>
+        <ul className="fases-result-phases">{result.phases.map((phase) => <li key={phase.index}><strong>{phase.icon} Fase {phase.index + 1} · {phase.title}</strong><span>{phaseLine(phase)}</span></li>)}</ul>
+        <h4>Para o médico conferir na consulta</h4>
+        {result.toReview.length ? <ul className="fases-result-list">{result.toReview.map((card) => <li key={`${card.phase}-${card.title}`}>{cardLine(card)}</li>)}</ul> : <p>Nenhum cartão marcado com ajuda, “não fez agora” ou “não quis”.</p>}
+        {result.skipped.length > 0 && <><h4>Não aplicados</h4><ul className="fases-result-list">{result.skipped.map((card) => <li key={`${card.phase}-${card.title}`}>Fase {card.phase + 1} · {card.title}: {card.reason || "motivo não informado"}</li>)}</ul></>}
+      </section>}
       <section className="fases-deliver" aria-labelledby="fases-deliver-title">
         <h3 id="fases-deliver-title">Entregar ao médico</h3>
         <label>Código do registro, sem nome (opcional)<input value={code} maxLength={32} placeholder="Ex.: OBS-001" onChange={(e) => setCode(e.target.value)} /></label>
@@ -290,11 +295,11 @@ export default function FasesMode({ signature, onState }: Props) {
         </div>
         {stale && <p className="obs10-caution" role="status">Você mudou algo depois do último download. Baixe de novo para levar a versão atual.</p>}
         {status && <p role="status" className="fases-status">{status}</p>}
-        <p className="obs10-muted">Tudo fica só nesta tela. Baixe antes de sair ou começar outra avaliação. Para conferir vídeo e trechos, reabra o JSON no “Guia da assistente”.</p>
+        <p className="obs10-muted">Tudo fica só nesta tela. Baixe antes de sair ou começar outra avaliação. O JSON também reabre no “Guia da assistente”.</p>
       </section>
       {notes.length > 0 && <details className="fases-notes" open={summary.withoutNote > 0}>
         <summary>Notas para o médico (opcional) · {summary.withoutNote} cartão(ões) sem nota</summary>
-        <p className="obs10-muted">Escreva só o que viu ou ouviu, com as palavras da criança. Não escreva “normal”. Cartões sem nota seguem marcados como descrição pendente.</p>
+        <p className="obs10-muted">Opcional. Escreva só o que viu ou ouviu, com as palavras da criança. Não escreva “normal”. Sem nota, vale a categoria que você marcou.</p>
         {notes.map(({ card, entry }) => entry && <label key={entry.id}>{plan[card.phase].icon} {card.task.title} · {FASES_LABEL[entry.outcome as keyof typeof FASES_LABEL]}
           <textarea value={entry.response} maxLength={2000} placeholder="O que a criança fez ou falou?" onChange={(e) => editNote(entry.id, e.target.value)} />
         </label>)}
@@ -331,7 +336,6 @@ export default function FasesMode({ signature, onState }: Props) {
         <div className="fases-next">
           <strong>Próxima: {PHASES[interlude.done + 1].icon} Fase {interlude.done + 2} · {PHASES[interlude.done + 1].title}</strong>
           {materialsFor(plan[interlude.done + 1]).length > 0 ? <p>Pegue: {materialsFor(plan[interlude.done + 1]).join(", ")}.</p> : <p>Nenhum objeto novo para pegar.</p>}
-          <p>Câmera: {PHASES[interlude.done + 1].camera}</p>
         </div>
         <button type="button" className="obs10-primary fases-go" onClick={() => { focusNext.current = true; setInterlude(null); }}><span aria-hidden="true">▶</span> Começar a fase {interlude.done + 2}</button>
       </>}
@@ -345,9 +349,9 @@ export default function FasesMode({ signature, onState }: Props) {
         <button type="button" className="obs10-primary fases-go" onClick={() => record({ outcome: "NA", assistance: current.omission ?? "" })}>Registrar e seguir <span aria-hidden="true">➜</span></button>
       </div> : <>
         {pick.length > 0 && <p className="fases-pick"><strong>Pegue:</strong> {pick.join(", ")}</p>}
-        <div className="obs10-say fases-say"><span>DIGA / FAÇA</span><p>{current.task.say}</p></div>
-        <ol className="fases-steps">{current.task.steps.map((step, n) => <li key={`${current.task.id}-${n}`}>{step}</li>)}</ol>
-        <p className="fases-observe"><strong>Observe:</strong> {current.task.record}</p>
+        <div className="obs10-say fases-say"><span>DIGA / FAÇA</span><p>{current.say}</p></div>
+        <ol className="fases-steps">{current.steps.map((step, n) => <li key={`${current.task.id}-${n}`}>{step}</li>)}</ol>
+        <p className="fases-observe"><strong>Observe:</strong> {current.observe}</p>
         {current.task.model && <p className="fases-flag">👀 Esta tarefa já inclui uma demonstração. “Mostrei como fazer” é só para ajuda extra.</p>}
         {current.task.walking && <p className="fases-flag">Só com marcha estável, sem dor e com proteção por perto. Se não, toque em “Pular”.</p>}
         <label className="fases-note">Nota rápida (opcional): o que fez ou falou<input value={note} maxLength={2000} placeholder="Ex.: disse “bola” e apontou" onChange={(e) => setNote(e.target.value)} /></label>
@@ -371,7 +375,7 @@ export default function FasesMode({ signature, onState }: Props) {
           </>}
         </div>
         <p className="obs10-muted">Nenhuma opção vale ponto. “Não fez agora” e “Não quis” não provam incapacidade.</p>
-        <details className="fases-more"><summary>Material, câmera e recurso na tela</summary><TaskResources task={current.task} bandId={playBand?.id ?? ""} kit={{}} screenAllowed /></details>
+        <details className="fases-more"><summary>Material e recurso na tela</summary><TaskResources task={current.task} bandId={playBand?.id ?? ""} kit={{}} screenAllowed showCamera={false} /></details>
       </>}
       {currentEntry?.outcome && <p className="fases-saved">Já marcado: {FASES_LABEL[currentEntry.outcome]}. Toque em outra opção para trocar.</p>}
       <div className="fases-nav">

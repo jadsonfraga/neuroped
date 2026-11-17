@@ -6,7 +6,20 @@ import { PHASES, type AgeBand, type Outcome } from "../protocol";
 import { MATERIALS, PRACTICAL_TASKS, taskOmission, type PracticalTask } from "../practical";
 import { emptyObservation, type Observation } from "../session";
 
-export interface FasesCard { task: PracticalTask; omission: string | null; phase: number; position: number }
+/** Texto exibido no cartão, já sem instruções de câmera/filmagem: o modo Fases não exige câmera. */
+export interface FasesCard { task: PracticalTask; omission: string | null; phase: number; position: number; say: string; steps: string[]; observe: string }
+
+const CAMERA_ONLY_STEPS = new Set(["Posicione a câmera antes da interação.", "Filme as duas mãos e a folha."]);
+const CAMERA_REWRITES: ReadonlyArray<readonly [string, string]> = [
+  ["pare a gravação e chame o médico", "pare e chame o médico"],
+  ["não conclua déficit de força só pelo vídeo", "não conclua déficit de força só por esta observação"],
+  ["Intervalo é o marcado na aplicação; não é timestamp conferido do vídeo.", "Anote as palavras lembradas, literalmente; o intervalo não é medido neste modo."],
+];
+/** Adapta o texto operacional ao modo sem câmera. Regras de segurança são mantidas; só a menção à filmagem sai. */
+export function withoutCamera(text: string): string {
+  return CAMERA_REWRITES.reduce((value, [from, to]) => value.split(from).join(to), text);
+}
+const CAMERA_WORDS = /c[aâ]mera|film|grava[çc][ãa]o|v[ií]deo/i;
 export interface FasesPhase { index: number; title: string; icon: string; camera: string; cards: FasesCard[] }
 
 /** Cartões da ficha em ordem, agrupados nos seis blocos do protocolo. Omissões vêm da regra única `taskOmission`. */
@@ -15,9 +28,16 @@ export function buildFasesPlan(band: AgeBand, months: number, proneAllowed: bool
   let position = 0;
   return PHASES.map((phase, index) => ({
     index, title: phase.title, icon: phase.icon, camera: phase.camera,
-    cards: tasks.filter((task) => task.phase === index).map((task) => ({ task, omission: taskOmission(task, months, proneAllowed), phase: index, position: position++ })),
+    cards: tasks.filter((task) => task.phase === index).map((task) => ({
+      task, omission: taskOmission(task, months, proneAllowed), phase: index, position: position++,
+      say: withoutCamera(task.say),
+      steps: task.steps.filter((step) => !CAMERA_ONLY_STEPS.has(step)).map(withoutCamera),
+      observe: withoutCamera(task.record),
+    })),
   }));
 }
+/** Verificação usada nos testes: nenhum texto do cartão pede câmera ou filmagem. */
+export const mentionsCamera = (card: FasesCard): boolean => [card.say, ...card.steps, card.observe].some((text) => CAMERA_WORDS.test(text));
 export const flattenPlan = (plan: readonly FasesPhase[]): FasesCard[] => plan.flatMap((phase) => phase.cards);
 export const cardId = (task: PracticalTask) => `guided-${task.id}`;
 
@@ -93,11 +113,8 @@ export function materialsFor(phase: FasesPhase | undefined): string[] {
   if (!phase) return [];
   return [...new Set(phase.cards.filter((card) => !card.omission).flatMap((card) => card.task.materials.filter((id) => id !== "device").map((id) => MATERIALS[id].label)))];
 }
-export type FilmingChoice = "external" | "none";
-export const FILMING_RECORDING: Record<FilmingChoice, string> = {
-  external: "Filmagem externa declarada pela aplicadora (celular de apoio). O vídeo não está neste registro; conferir arquivo, áudio e enquadramento no aparelho de gravação.",
-  none: "Sem filmagem, declarado pela aplicadora. Registro apenas pelas marcações e notas desta tela.",
-};
+/** Modo Fases não usa câmera: o resultado vem do registro da aplicadora. */
+export const APPLICATOR_RECORDING = "Sem vídeo: modo Fases sem câmera. O resultado se baseia no registro da aplicadora (marcações e notas desta tela).";
 export const FASES_END = {
   time: "Limite de 10 minutos atingido; tarefas restantes não aplicadas.",
   hidden: "Coleta encerrada ao sair da aba; não continuar tarefas fora do cronômetro.",

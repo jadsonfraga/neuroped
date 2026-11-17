@@ -314,7 +314,7 @@ export default function PreConsultaObs10Page() {
   const tabsLocked = media.pending || starting.current || importBusy || easyProgress > 0 || fasesState.locked;
   const trackTabs = (
     <div className="obs10-tracks obs10-no-print" role="tablist" aria-label="Modo de aplicação" data-testid="obs10-track-tabs">
-      <button type="button" role="tab" aria-selected={fases} className={fases ? "" : "obs10-track-fases"} data-testid="obs10-fases-tab" disabled={tabsLocked} onClick={() => { setTrack("fases"); setMessage(""); }}><strong>🗺️ Fases · mais simples</strong><small>Cartão por cartão, um toque por resposta. Preparo em uma tela e entrega em um minuto.</small></button>
+      <button type="button" role="tab" aria-selected={fases} className={fases ? "" : "obs10-track-fases"} data-testid="obs10-fases-tab" disabled={tabsLocked} onClick={() => { setTrack("fases"); setMessage(""); }}><strong>🗺️ Fases · mais simples</strong><small>Sem câmera. Cartão por cartão, um toque por resposta; o resultado sai do registro da aplicadora.</small></button>
       <button type="button" role="tab" aria-selected={easy} className={easy ? "" : "obs10-track-easy"} data-testid="obs10-easy-tab" disabled={tabsLocked} onClick={() => { setTrack("easy"); setMessage("Modo Fácil: informe a idade em anos, leia o enunciado e deixe a criança tocar na tela. O aplicativo registra certo ou errado; toque em Próximo para liberar cada novo item e veja o resultado no fim."); }}><strong>🎮 Modo Fácil · joguinho</strong><small>Tudo na tela, de 1 a 19 anos. A criança toca, o jogo registra e Próximo libera o item seguinte. Certo/errado no fim.</small></button>
       <button type="button" role="tab" aria-selected={track === "guided"} disabled={tabsLocked} onClick={() => { setTrack("guided"); setMessage(""); }}><strong>Guia da assistente</strong><small>Primeira aplicação: preparar, ensaiar, aplicar, revisar e entregar, do acolhimento à entrega.</small></button>
       <button type="button" role="tab" aria-selected={direct} disabled={tabsLocked} onClick={() => { setTrack("direct"); setMessage("Modo direto: sem guia, kit item a item, checklist ou ensaio. Informe a idade e inicie. O registro declara que o preparo guiado foi dispensado."); }}><strong>Direto ao teste</strong><small>Aplicadora experiente: idade, câmera opcional e início imediato.</small></button>
@@ -329,7 +329,7 @@ export default function PreConsultaObs10Page() {
           <div>
             <div className="obs10-eyebrow">NEUROPED · OBS-10 · FASES</div>
             <h1>{OBS10_TITLE}</h1>
-            <p>Seis fases curtas. Um cartão por vez. Um toque para registrar. Você aplica e registra; o médico interpreta.</p>
+            <p>Seis fases curtas, sem câmera. Um cartão por vez, um toque para registrar. Seu registro vira o resultado; o médico interpreta.</p>
           </div>
         </header>
         {stage === "setup" && !fasesState.locked && trackTabs}

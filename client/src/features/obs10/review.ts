@@ -1,23 +1,24 @@
 import { PHASES, clock } from "./protocol";
 import { MATERIALS, PRACTICAL_TASKS, taskOmission } from "./practical";
-import { observationIssues, type SessionRecord } from "./session";
+import { applicatorRecordOf, observationIssues, type SessionRecord } from "./session";
 
 /** Documentation coverage only; never a clinical score or an assessment of the child. */
 export function reviewSession(record: SessionRecord) {
   const tasks = PRACTICAL_TASKS[record.context.bandId] ?? [];
   const months = record.context.correctedMonths ?? record.context.chronologicalMonths;
+  const scope = { applicatorRecord: applicatorRecordOf(record) };
   const blocks = PHASES.map((phase, index) => {
     const expected = tasks.filter((task) => task.phase === index);
     const entries = record.observations.filter((entry) => entry.phase === index);
     return {
       index, title: phase.title, icon: phase.icon,
       recorded: entries.length,
-      pending: entries.filter((entry) => observationIssues(entry).length > 0).length,
+      pending: entries.filter((entry) => observationIssues(entry, scope).length > 0).length,
       unmarked: expected.filter((task) => !entries.some((entry) => entry.id === `guided-${task.id}`)),
       freeRecords: entries.filter((entry) => !entry.id.startsWith("guided-")).length,
     };
   });
-  const warnings = record.observations.flatMap((entry) => observationIssues(entry).map((message) => ({
+  const warnings = record.observations.flatMap((entry) => observationIssues(entry, scope).map((message) => ({
     id: `${entry.id}-${message}`, phase: entry.phase, task: entry.task || "Registro sem tarefa", message,
   })));
   for (const entry of record.observations) {

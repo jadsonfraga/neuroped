@@ -65,7 +65,7 @@ export function ModelOnPaper({ model }: { model: PaperModel }) {
     <p>Depois ofereça outra folha à criança. Esta imagem orienta você; não substitui a demonstração em papel. Não desenhe na folha da criança nem corrija o traçado.</p>
   </div>;
 }
-export function TaskResources({ task, bandId, kit, screenAllowed = false }: { task: PracticalTask; bandId: string; kit: Partial<Record<MaterialId, "ready" | "missing">>; screenAllowed?: boolean }) {
+export function TaskResources({ task, bandId, kit, screenAllowed = false, showCamera = true }: { task: PracticalTask; bandId: string; kit: Partial<Record<MaterialId, "ready" | "missing">>; screenAllowed?: boolean; showCamera?: boolean }) {
   const plan = framePlan(task, bandId);
   return <section className="obs10-frame-section" aria-label="Materiais desta tarefa" data-testid="obs10-frame-resources">
     <div className="obs10-frame-section-title"><span aria-hidden="true">1</span>Pegue e prepare</div>
@@ -76,7 +76,7 @@ export function TaskResources({ task, bandId, kit, screenAllowed = false }: { ta
       <details><summary>Como preparar e substituir com segurança</summary><p>{material.detail}</p><p><strong>Substituto:</strong> {material.substitute}</p>{material.id === "book" && <p>Uma cena impressa substitui somente apontar/descrever figuras. Para folhear ou virar páginas, é necessário livro físico.</p>}</details>
     </article>)}</div> : <p>Não precisa pegar um objeto para esta proposta. Siga a interação ou o movimento descrito abaixo.</p>}
     {plan.furniture && <p>{plan.furniture}</p>}
-    <p className="obs10-frame-camera"><strong>Câmera:</strong> {plan.camera}</p>
+    {showCamera && <p className="obs10-frame-camera"><strong>Câmera:</strong> {plan.camera}</p>}
     {plan.child && <details open={screenAllowed}><summary>Ver o recurso desta tarefa para a criança</summary><ChildPrintout resource={plan.child} printable={false} screen={screenAllowed} /></details>}
     {plan.model && <ModelOnPaper model={plan.model} />}
     {task.title === "Folheie o livro" && <p className="obs10-caution"><strong>Livro físico obrigatório nesta tarefa.</strong> Cenas avulsas e tela não permitem observar o ato de virar páginas.</p>}
