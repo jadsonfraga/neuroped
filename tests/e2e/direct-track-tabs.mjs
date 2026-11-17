@@ -53,7 +53,8 @@ try {
 
   // OBS-10
   await open("avaliacao-pre-consulta-faixa-etaria", "obs10-track-tabs");
-  assert.equal(await tab("Guia da assistente").getAttribute("aria-selected"), "true", "OBS-10 abre no modo guiado");
+  assert.equal(await tab("🗺️ Fases").getAttribute("aria-selected"), "true", "OBS-10 abre no modo Fases");
+  await tab("Guia da assistente").click();
   assert.equal(await page.getByTestId("obs10-first-time").count(), 1, "guia de primeira vez visível no modo guiado");
   await tab("Direto ao teste").click();
   await page.getByTestId("obs10-direct-start").waitFor();

@@ -113,7 +113,7 @@ async function runTask(i, opts = {}) {
 try {
   await page.goto(`${server.origin}/#/avaliacao-pre-consulta-faixa-etaria`);
   await page.locator("#login-email").fill(SYNTHETIC_CREDENTIALS.email); await page.locator("#login-password").fill(SYNTHETIC_CREDENTIALS.password);
-  await page.locator('[data-testid="login-form"] button[type="submit"]').click(); await page.getByTestId("obs10-workspace").waitFor();
+  await page.locator('[data-testid="login-form"] button[type="submit"]').click(); await page.getByTestId("obs10-workspace").waitFor(); await page.getByRole("tab", { name: /^Guia da assistente/ }).click(); // Fases é o padrão; o tablet parte do Guia.
   await open(); await screen("01-preparacao-tablet");
   assert.equal(await w.getByTestId("obs10-station-journey").count(), 1);
   assert.equal(await w.getByTestId("obs10-station-journey").locator('[data-station-state="current"]').first().getAttribute("aria-current"), "step");

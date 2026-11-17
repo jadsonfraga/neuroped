@@ -15,8 +15,9 @@ export interface SessionContext {
   familyReport: string;
   proneAllowed: boolean;
   missingMaterials?: string[];
-  /** "direct": aplicadora experiente iniciou sem guia, kit item a item, checklist ou ensaio. Ausente = preparação guiada. */
-  preparation?: "direct";
+  /** "direct": aplicadora experiente iniciou sem guia, kit item a item, checklist ou ensaio.
+   * "fases": modo Fases, com preparo resumido em uma tela. Ausente = preparação guiada. */
+  preparation?: "direct" | "fases";
 }
 export interface Observation {
   id: string;
@@ -104,6 +105,7 @@ export function exportFilename(code: string, extension: "txt" | "json" | "md" | 
 }
 const textOrMissing = (s: string) => s.trim() || "Não informado";
 export const PREPARATION_DIRECT_LINE = "Preparação: modo direto; guia, kit item a item, checklist de segurança e ensaio dispensados pela aplicadora experiente, que responde pelo preparo.";
+export const PREPARATION_FASES_LINE = "Preparação: modo Fases; idade, duas confirmações de segurança e a forma de filmagem declaradas pela aplicadora; kit não conferido item a item e ensaio dispensado. Categorias marcadas com um toque; descrições literais somente quando digitadas.";
 export function makeReport(record: SessionRecord, signature: string = LEGACY_AUTHOR_SIGNATURE): string {
   const { context: c, observations } = record;
   const band = AGE_BANDS.find((b) => b.id === c.bandId);
@@ -113,7 +115,7 @@ export function makeReport(record: SessionRecord, signature: string = LEGACY_AUT
     `Código: ${textOrMissing(c.code)}`,
     `Sessão: ${record.sessionId || "Não informada (registro anterior)"}`,
     `Materiais ausentes referidos: ${c.missingMaterials?.join(", ") || "Nenhum informado"}`,
-    ...(c.preparation === "direct" ? [PREPARATION_DIRECT_LINE] : []),
+    ...(c.preparation === "direct" ? [PREPARATION_DIRECT_LINE] : c.preparation === "fases" ? [PREPARATION_FASES_LINE] : []),
     `Idade cronológica: ${c.chronologicalMonths} meses | Corrigida: ${c.correctedMonths === null ? "não utilizada" : `${c.correctedMonths} meses, informada pela equipe`}`,
     `Ficha aplicada: ${band?.label ?? "Não informada"}`,
     `Escolaridade: ${textOrMissing(c.schooling)} | Idioma/comunicação: ${textOrMissing(c.language)}`,

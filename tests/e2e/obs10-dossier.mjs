@@ -34,6 +34,7 @@ try {
   await page.locator('[data-testid="login-form"] button[type="submit"]').click();
   await page.getByTestId("obs10-workspace").waitFor({ timeout: 20000 });
   await page.waitForFunction(() => { let n = document.querySelector('[data-testid="obs10-workspace"]'); while (n) { if (Number(getComputedStyle(n).opacity) < .99) return false; n = n.parentElement; } return true; });
+  await page.getByRole("tab", { name: /^Guia da assistente/ }).click(); // Fases é o padrão; estes cenários são do Guia.
   // Journey map and readiness list explain what blocks the start before anything is filled.
   assert.equal(await page.getByTestId("obs10-journey").locator("li").count(), 4);
   assert.match(await page.getByTestId("obs10-journey").locator('[aria-current="step"]').textContent(), /Preparar/);

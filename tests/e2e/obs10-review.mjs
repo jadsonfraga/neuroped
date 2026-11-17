@@ -52,6 +52,7 @@ try {
   await page.locator('[data-testid="login-form"] button[type="submit"]').click();
   await page.getByTestId("obs10-workspace").waitFor({ timeout: 20000 });
   await page.waitForFunction(() => { let n = document.querySelector('[data-testid="obs10-workspace"]'); while (n) { if (Number(getComputedStyle(n).opacity) < .99) return false; n = n.parentElement; } return true; });
+  await page.getByRole("tab", { name: /^Guia da assistente/ }).click(); // Fases é o padrão; estes cenários são do Guia.
   await prepare();
   await page.clock.install();
   await button("Iniciar aplicação · 10 minutos").click();

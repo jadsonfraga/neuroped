@@ -1,0 +1,110 @@
+/* OBS-10 · modo Fases. Escopo .obs10 .fases; tokens do obs10.css. Todas as opções de resposta têm o mesmo
+   peso visual: cor não sugere certo/errado. Animações curtas, removidas com movimento reduzido. */
+.obs10 .fases{display:block;margin-top:16px;font-size:1.05rem;min-width:0;overflow-wrap:anywhere}
+.obs10 .fases h2{font-size:1.35rem;margin:0}
+.obs10 .fases :is(button,summary){min-height:52px}
+.obs10 .fases-intro,.obs10 .fases-finish{display:flex;align-items:center;gap:16px;padding:20px;border:1px solid var(--o-line);border-radius:22px;background:linear-gradient(120deg,var(--o-lilac),var(--o-paper) 65%,var(--o-mint))}
+.obs10 .fases-intro p,.obs10 .fases-finish p{color:var(--o-muted);margin-top:6px}
+.obs10 .fases-badge{display:grid;place-items:center;flex-shrink:0;width:64px;height:64px;border-radius:20px;background:var(--o-paper);font-size:2.2rem;box-shadow:0 6px 18px hsl(var(--foreground)/.07)}
+.obs10 .fases-howto{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;list-style:none;padding:0!important;margin:14px 0}
+.obs10 .fases-howto>li{display:flex;align-items:center;gap:10px;margin:0;padding:12px 14px;border:1px solid var(--o-line);border-radius:16px;background:var(--o-paper);font-weight:650;font-size:.95rem}
+.obs10 .fases-howto span,.obs10 .fases-step legend>span{display:grid;place-items:center;flex-shrink:0;width:32px;height:32px;border-radius:11px;background:var(--o-lilac);color:var(--o-primary);font-weight:800}
+.obs10 .fases-setup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.obs10 .fases-step{border:1px solid var(--o-line);border-radius:20px;background:var(--o-paper);padding:6px 18px 18px;margin:0;min-width:0}
+.obs10 .fases-step legend{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.1rem;padding:0 6px}
+.obs10 .fases-toggle{display:flex;align-items:center;justify-content:flex-start;gap:12px;width:100%;margin-top:10px;padding:12px 14px;text-align:left;border-radius:16px}
+.obs10 .fases-toggle>span:first-child{font-size:1.6rem}
+.obs10 .fases-toggle small{display:block;color:var(--o-muted);font-weight:500;font-size:.85rem;margin-top:2px}
+.obs10 .fases-toggle[aria-pressed=true]{border:2px solid var(--o-primary);background:var(--o-mint)}
+.obs10 .fases-toggle[aria-pressed=true] strong::after{content:" ✓";color:var(--o-primary)}
+.obs10 .fases-filming{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.obs10 .fases-filming .fases-toggle{flex-direction:column;align-items:flex-start;gap:4px}
+.obs10 .fases-kit{margin:16px 0;padding:16px 18px;border:1px solid var(--o-line);border-radius:20px;background:var(--o-paper)}
+.obs10 .fases-kit h3{margin:0 0 10px}
+.obs10 .fases-kit ul{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;list-style:none;padding:0!important;margin:0 0 8px}
+.obs10 .fases-kit li{display:flex;flex-direction:column;gap:2px;margin:0;padding:10px;border:1px solid var(--o-line);border-radius:14px;background:var(--o-bg);font-size:.88rem;font-weight:650;line-height:1.35}
+.obs10 .fases-kit li .obs10-picture{height:56px;margin-bottom:4px}
+.obs10 .fases-kit small{color:var(--o-muted);font-weight:500}
+.obs10 .fases-go{width:100%;min-height:60px!important;margin:14px 0 8px;font-size:1.15rem;border-radius:18px}
+.obs10 .fases-missing{font-weight:700;color:var(--o-muted);text-align:center}
+.obs10 .fases-hud{position:sticky;top:8px;z-index:20;display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:10px 14px;background:var(--o-paper);border:1px solid var(--o-line);border-radius:18px;box-shadow:0 8px 30px hsl(var(--foreground)/.09)}
+.obs10 .fases-hud .obs10-progress{flex:1 1 140px;margin:0;width:auto}
+.obs10 .fases-hud .obs10-danger{margin-left:0}
+.obs10 .fases-clock{display:flex;align-items:baseline;gap:6px;color:var(--o-primary);background:var(--o-lilac);padding:4px 12px;border-radius:12px;font-weight:800}
+.obs10 .fases-clock>span{font-size:1.6rem;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+.obs10 .fases-clock.is-ending{color:var(--o-danger);background:var(--o-danger-bg)}
+.obs10 .fases-band{font-weight:700;font-size:.9rem}
+.obs10 .fases-path ol{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;list-style:none;padding:0!important;margin:14px 0;position:relative}
+.obs10 .fases-path li{margin:0;min-width:0}
+.obs10 .fases-path :is(button,div){display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;padding:8px 4px;border:1px solid var(--o-line);border-radius:16px;background:var(--o-paper);font-size:.8rem;text-align:center}
+.obs10 .fases-node{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--o-bg);border:2px solid var(--o-line);font-size:1.3rem;font-weight:800}
+.obs10 .fases-path small{color:var(--o-muted);font-variant-numeric:tabular-nums}
+.obs10 .fases-path .is-current :is(button,div){border:2px solid var(--o-primary);background:var(--o-lilac)}
+.obs10 .fases-path .is-current .fases-node{border-color:var(--o-primary);animation:fases-pulse 1.6s ease-in-out infinite}
+.obs10 .fases-path .is-done .fases-node{background:var(--o-primary);border-color:var(--o-primary);color:hsl(var(--primary-foreground))}
+.obs10 .fases-hint{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:10px 14px;border-radius:14px;background:var(--o-cream);border:1px solid var(--o-line);font-size:.92rem;margin-bottom:12px}
+.obs10 .fases-hint button{margin-left:auto}
+.obs10 .fases-card,.obs10 .fases-interlude{padding:20px;border:1px solid var(--o-line);border-radius:24px;background:var(--o-paper);box-shadow:0 6px 24px hsl(var(--foreground)/.03);animation:fases-in .22s ease-out}
+.obs10 .fases-card-top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;font-size:.85rem;color:var(--o-muted);margin-bottom:10px}
+.obs10 .fases-chip{display:inline-block;border-radius:999px;padding:4px 12px;background:var(--o-lilac);color:var(--o-primary);font-weight:800}
+.obs10 .fases-card>h2{font-size:1.45rem;outline-offset:3px;margin-bottom:10px}
+.obs10 .fases-card>.obs10-picture{height:170px;max-width:400px;margin:0 auto 12px;background:var(--o-bg);border-radius:17px}
+.obs10 .fases-pick{font-size:.95rem;margin:6px 0 10px}
+.obs10 .fases-say>p{font-size:1.25rem}
+.obs10 .fases-steps{margin:12px 0;padding-left:22px!important;font-size:.95rem}
+.obs10 .fases-steps li+li{margin-top:4px}
+.obs10 .fases-observe{padding:12px 14px;border-radius:14px;background:var(--o-mint);font-size:.95rem}
+.obs10 .fases-flag{margin-top:10px!important;padding:10px 12px;border-radius:12px;background:var(--o-cream);font-size:.9rem}
+.obs10 .fases-note{margin-top:14px!important}
+.obs10 .fases-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0 8px}
+.obs10 .fases-choices button{justify-content:flex-start;gap:10px;min-height:64px;font-size:1.05rem;border-width:2px;border-radius:18px;text-align:left}
+.obs10 .fases-choices button>span{font-size:1.5rem}
+.obs10 .fases-choices button:active:not(:disabled){transform:scale(.98)}
+.obs10 .fases-choices .fases-back{grid-column:1/-1;min-height:48px;font-size:.92rem;border-width:1px;justify-content:center;background:transparent}
+.obs10 .fases-sub-title{grid-column:1/-1;font-weight:800;outline-offset:3px}
+.obs10 .fases-more{margin-top:10px;border-top:1px solid var(--o-line)}
+.obs10 .fases-saved{margin-top:10px!important;padding:10px 12px;border-radius:12px;background:var(--o-bg);font-size:.9rem}
+.obs10 .fases-nav{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.obs10 .fases-nav>button{flex:1 1 160px}
+.obs10 .fases-omit{padding:16px;border-radius:16px;background:var(--o-cream);border:1px solid var(--o-line)}
+.obs10 .fases-omit p{margin-top:6px}
+.obs10 .fases-status{min-height:1.5em;margin-top:10px!important;font-size:.9rem;color:var(--o-muted)}
+.obs10 .fases-interlude{text-align:center}
+.obs10 .fases-interlude>h2{justify-content:center;outline-offset:3px;margin-bottom:6px}
+.obs10 .fases-interlude>p{color:var(--o-muted)}
+.obs10 .fases-burst{font-size:3.6rem;line-height:1;animation:fases-pop .45s cubic-bezier(.2,1.6,.4,1)}
+.obs10 .fases-next{margin:16px auto;max-width:620px;padding:14px 16px;border-radius:16px;background:var(--o-bg);border:1px solid var(--o-line);text-align:left}
+.obs10 .fases-next p{font-size:.92rem;margin-top:6px}
+.obs10 .fases-finish h2{outline-offset:3px}
+.obs10 .fases-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}
+.obs10 .fases-stats>div{padding:14px;border:1px solid var(--o-line);border-radius:16px;background:var(--o-paper);text-align:center}
+.obs10 .fases-stats dt{font-size:.82rem;color:var(--o-muted);font-weight:650}
+.obs10 .fases-stats dd{margin:4px 0 0;font-size:1.5rem;font-weight:800;font-variant-numeric:tabular-nums}
+.obs10 .fases-deliver{padding:18px;border:2px solid var(--o-primary);border-radius:20px;background:var(--o-paper)}
+.obs10 .fases-deliver h3{margin-top:0}
+.obs10 .fases-deliver label{max-width:420px}
+.obs10 .fases-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.obs10 .fases-actions>button{flex:1 1 200px}
+.obs10 .fases-notes,.obs10 .fases-report{margin-top:14px;padding:4px 16px 14px;border:1px solid var(--o-line);border-radius:18px;background:var(--o-paper)}
+.obs10 .fases-report pre{white-space:pre-wrap;overflow-wrap:anywhere;font-family:inherit;font-size:.84rem;line-height:1.7;max-height:420px;overflow:auto;background:var(--o-bg);padding:14px;border-radius:12px;margin:8px 0 0}
+.obs10 .fases-restart{margin-top:16px}
+@keyframes fases-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes fases-pop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes fases-pulse{0%,100%{box-shadow:0 0 0 0 hsl(var(--primary)/.35)}50%{box-shadow:0 0 0 7px hsl(var(--primary)/0)}}
+@media(max-width:900px){.obs10 .fases-setup{grid-template-columns:1fr}.obs10 .fases-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){
+  .obs10 .fases-howto{grid-template-columns:1fr}
+  .obs10 .fases-filming{grid-template-columns:1fr}
+  .obs10 .fases-choices{grid-template-columns:1fr}
+  .obs10 .fases-path ol{gap:4px}
+  .obs10 .fases-path :is(button,div){padding:6px 2px;border-radius:12px}
+  .obs10 .fases-node{width:32px;height:32px;font-size:1.05rem}
+  .obs10 .fases-node-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .obs10 .fases-hud{gap:8px;padding:8px 10px}
+  .obs10 .fases-hud>button{flex:1 1 auto}
+  .obs10 .fases-card,.obs10 .fases-interlude{padding:14px;border-radius:18px}
+  .obs10 .fases-card>.obs10-picture{height:130px}
+  .obs10 .fases-intro,.obs10 .fases-finish{padding:14px;gap:12px}
+}
+@media(prefers-reduced-motion:reduce){.obs10 .fases *,.obs10 .fases-card,.obs10 .fases-interlude{animation:none!important;transition:none!important}}
+@media print{.obs10 .fases{display:none!important}}
