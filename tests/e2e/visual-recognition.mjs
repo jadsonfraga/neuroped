@@ -23,8 +23,8 @@ async function screen(name,child=false){
  assert.deepEqual(audit.violations.map(v=>({id:v.id,targets:v.nodes.map(n=>n.target)})),[],name);
  await page.screenshot({path:`${dir}/${name}.png`,fullPage:!child});screens.push(name);
 }
-async function configure(mode="receptivo",count="6",choices="2"){
- await w.getByLabel("Anos completos",{exact:true}).fill("5");
+async function configure(mode="receptivo",count="6",choices="2",years="5"){
+ await w.getByLabel("Anos completos",{exact:true}).fill(years);
  await w.getByLabel("Meses adicionais",{exact:true}).fill("0");
  await w.getByLabel("Modalidade",{exact:true}).selectOption(mode);
  if(mode!=="nomeacao")await w.getByLabel("Alternativas por tela",{exact:true}).selectOption(choices);
@@ -127,29 +127,54 @@ try{
  await button("Nova sessão").click();await configure("pareamento");await presentAndRespond("pareamento",{capture:true});await button("Registrar e continuar").click();
  await button("Não aplicar este item").click();await w.getByLabel("Familiaridade com o item",{exact:true}).selectOption("incerta");await w.getByLabel("Ajuda, interferentes ou motivo de não aplicação",{exact:true}).fill("Interrupção fictícia por cansaço; não interpretar como erro.");await button("Registrar e continuar").click();
  await button("Revisar registros").click();record=await exportRecord("09-matching-and-not-applied");assert.equal(record.ledger[1].response.outcome,"nao_aplicado");
- const tamperedContext=await browser.newContext({viewport:{width:1180,height:920},serviceWorkers:"block"});
- await tamperedContext.addInitScript(storage=>{for(const [key,value] of Object.entries(storage))localStorage.setItem(key,value);},ACCEPTED_FIRST_VISIT_STORAGE);
- let corruptedResponses=0;
- await tamperedContext.route("**/recognition-v2/*.svg",route=>(corruptedResponses++,route.fulfill({status:200,contentType:"image/svg+xml",body:'<svg xmlns="http://www.w3.org/2000/svg"><circle r="1"/></svg>'}))); 
- const tamperedPage=await tamperedContext.newPage(),tamperedErrors=[];
- tamperedPage.on("pageerror",error=>tamperedErrors.push(error.message));
- await tamperedPage.goto(`${server.origin}/#/testes-reconhecimento`);
- await tamperedPage.locator("#login-email").fill(SYNTHETIC_CREDENTIALS.email);await tamperedPage.locator("#login-password").fill(SYNTHETIC_CREDENTIALS.password);
- await tamperedPage.locator('[data-testid="login-form"] button[type="submit"]').click();
- const tamperedW=tamperedPage.locator(".rv-workspace");await tamperedW.waitFor();
- await tamperedW.getByLabel("Anos completos",{exact:true}).fill("5");
- await tamperedW.getByLabel("Meses adicionais",{exact:true}).fill("0");
- for(const box of await tamperedW.locator('.rv-preflight input[type="checkbox"]').all())await box.check();
- await tamperedW.getByRole("button",{name:"Verificar banco e iniciar",exact:true}).click();
- await tamperedW.locator(".rv-message").filter({hasText:/divergente/}).waitFor({timeout:45000});
- assert.equal(await tamperedW.locator(".rv-run").count(),0,"integrity failure blocks a clean session before presentation");
- assert.ok(corruptedResponses>0,"corrupted responses reached the clean browser");
- await tamperedPage.screenshot({path:dir+"/10-corrupted-image-blocked.png",fullPage:true});
- assert.deepEqual(tamperedErrors,[]);
- await tamperedContext.close();
+ // Banco kawaii (padrão até 4 anos): catálogo próprio, figuras novas e estilo registrado.
+ await button("Nova sessão").click();
+ await w.getByLabel("Anos completos",{exact:true}).fill("3");
+ await w.getByLabel("Meses adicionais",{exact:true}).fill("0");
+ assert.match(await w.getByLabel("Estilo das figuras",{exact:true}).locator("option:checked").innerText(),/Kawaii/,"3 anos começa no estilo kawaii");
+ await page.locator(".rv-catalog").evaluate(element=>{element.style.maxHeight="none";element.style.overflow="visible";});
+ const kawaiiSources=await w.locator(".rv-catalog img").evaluateAll(images=>images.map(image=>image.getAttribute("src")??""));
+ assert.ok(kawaiiSources.length>=55,`catálogo kawaii de 3 anos ampliado (${kawaiiSources.length})`);
+ assert.ok(kawaiiSources.every(src=>/\/recognition-v3\//.test(src)),"catálogo de 3 anos usa somente o banco kawaii");
+ for(const img of await w.locator(".rv-catalog img").all())assert.equal(await img.evaluate(element=>element.complete&&element.naturalWidth>0),true,"every kawaii symbol loads");
+ for(const label of ["Pintinho","Urso","Copo","Mamadeira","Balão"])assert.ok(await w.locator(".rv-catalog-label",{hasText:label}).count()>=1,`figura nova disponível: ${label}`);
+ await w.locator(".rv-catalog").screenshot({path:`${dir}/09b-kawaii-3-anos.png`});screens.push("09b-kawaii-3-anos");
+ await page.locator(".rv-catalog").evaluate(element=>{element.style.maxHeight="";element.style.overflow="";});
+ await screen("09c-preparation-kawaii");
+ await w.getByLabel("Estilo das figuras",{exact:true}).selectOption("sobrio");
+ assert.ok((await w.locator(".rv-catalog img").evaluateAll(images=>images.map(image=>image.getAttribute("src")??""))).every(src=>/\/recognition-v2\//.test(src)),"troca manual para o banco sóbrio");
+ assert.equal(await w.locator(".rv-catalog-label",{hasText:"Pintinho"}).count(),0,"figura exclusiva do kawaii sai no estilo sóbrio");
+ await w.getByLabel("Estilo das figuras",{exact:true}).selectOption("auto");
+ await configure("receptivo","6","2","3");
+ await presentAndRespond("receptivo");await button("Registrar e continuar").click();
+ await button("Revisar registros").click();record=await exportRecord("09d-kawaii-session");
+ assert.equal(record.config.artStyle,"kawaii");assert.equal(record.ledger[0].trial.artStyle,"kawaii");assert.match(record.report,/Figuras: Kawaii/);
+ // Integridade fail-closed nos dois bancos: figura adulterada bloqueia a sessão antes da apresentação.
+ for(const [bank,years] of [["recognition-v2","5"],["recognition-v3","3"]]){
+  const tamperedContext=await browser.newContext({viewport:{width:1180,height:920},serviceWorkers:"block"});
+  await tamperedContext.addInitScript(storage=>{for(const [key,value] of Object.entries(storage))localStorage.setItem(key,value);},ACCEPTED_FIRST_VISIT_STORAGE);
+  let corruptedResponses=0;
+  await tamperedContext.route(`**/${bank}/*.svg`,route=>(corruptedResponses++,route.fulfill({status:200,contentType:"image/svg+xml",body:'<svg xmlns="http://www.w3.org/2000/svg"><circle r="1"/></svg>'})));
+  const tamperedPage=await tamperedContext.newPage(),tamperedErrors=[];
+  tamperedPage.on("pageerror",error=>tamperedErrors.push(error.message));
+  await tamperedPage.goto(`${server.origin}/#/testes-reconhecimento`);
+  await tamperedPage.locator("#login-email").fill(SYNTHETIC_CREDENTIALS.email);await tamperedPage.locator("#login-password").fill(SYNTHETIC_CREDENTIALS.password);
+  await tamperedPage.locator('[data-testid="login-form"] button[type="submit"]').click();
+  const tamperedW=tamperedPage.locator(".rv-workspace");await tamperedW.waitFor();
+  await tamperedW.getByLabel("Anos completos",{exact:true}).fill(years);
+  await tamperedW.getByLabel("Meses adicionais",{exact:true}).fill("0");
+  for(const box of await tamperedW.locator('.rv-preflight input[type="checkbox"]').all())await box.check();
+  await tamperedW.getByRole("button",{name:"Verificar banco e iniciar",exact:true}).click();
+  await tamperedW.locator(".rv-message").filter({hasText:/divergente/}).waitFor({timeout:45000});
+  assert.equal(await tamperedW.locator(".rv-run").count(),0,`${bank}: integrity failure blocks a clean session before presentation`);
+  assert.ok(corruptedResponses>0,`${bank}: corrupted responses reached the clean browser`);
+  await tamperedPage.screenshot({path:`${dir}/10-corrupted-image-blocked-${bank}.png`,fullPage:true});
+  assert.deepEqual(tamperedErrors,[]);
+  await tamperedContext.close();
+ }
  assert.deepEqual(errors,[]);
- await writeFile(`${dir}/result.json`,JSON.stringify({status:"passed",screens,bank:89,syntheticOnly:true,modes:3,offlineDuringSession:true,historyVerified:true,phoneLayoutVerified:true,threeChoiceGeometryVerified:true,cleanContextIntegrityVerified:true},null,2));
- console.log('VISUAL_RECOGNITION_E2E_PASS: tablet, mobile, 89 stimuli, modes, offline, correction and integrity.');
+ await writeFile(`${dir}/result.json`,JSON.stringify({status:"passed",screens,bank:89,kawaiiBank:true,syntheticOnly:true,modes:3,offlineDuringSession:true,historyVerified:true,phoneLayoutVerified:true,threeChoiceGeometryVerified:true,cleanContextIntegrityVerified:true},null,2));
+ console.log('VISUAL_RECOGNITION_E2E_PASS: tablet, mobile, 89 sober stimuli, kawaii bank (3 anos), modes, offline, correction and integrity in both banks.');
 }catch(error){
  await page.screenshot({path:dir+"/failure.png",fullPage:true});
  await writeFile(dir+"/failure.txt",String(error.stack||error));

@@ -35,11 +35,11 @@ export default function TrialStage({trial,urls,onEvent,onFinish,autoFinishOnTap=
   return createPortal(<dialog ref={ref} className="rv-child-dialog" aria-label="Apresentação de figuras" onCancel={e=>{e.preventDefault();finish();}}>
     <div className="rv-child-toolbar"><button type="button" onClick={()=>finish()}>← Voltar ao aplicador</button><span>Olhar com calma</span></div>
     {broken?<div className="rv-child-error" role="alert"><p>Não foi possível mostrar as figuras.</p><button type="button" onClick={()=>finish()}>Voltar ao aplicador</button></div>:<div className={`rv-child-content ${trial.mode==="pareamento"?"rv-with-model":""}`}>
-      {trial.mode==="pareamento" && <div className="rv-model" aria-label="Modelo que permanece visível"><Stimulus id={trial.targetId} urls={urls} child onError={error}/></div>}
+      {trial.mode==="pareamento" && <div className="rv-model" aria-label="Modelo que permanece visível"><Stimulus id={trial.targetId} urls={urls} artStyle={trial.artStyle} child onError={error}/></div>}
       <div className={`rv-child-grid rv-options-${trial.optionIds.length}`}>
         {trial.optionIds.map((id,index)=>{
           const nameTarget=trial.mode==="nomeacao" && target.art==="opposite" && id===trial.targetId;
-          return trial.mode==="nomeacao"?<div key={id} className={`rv-picture ${nameTarget?"rv-naming-target":""}`} aria-label={`Figura ${index+1}${nameTarget?", destacada":""}`}><Stimulus id={id} urls={urls} child onError={error}/></div>:<button key={id} type="button" aria-label={`Selecionar figura ${index+1}`} aria-pressed={selected===id} className={`rv-picture ${selected===id?"rv-chosen":""}`} onClick={()=>{if(broken)return;setSelected(id);event("toque",id);if(autoFinishOnTap)finish();}}><Stimulus id={id} urls={urls} child onError={error}/></button>;
+          return trial.mode==="nomeacao"?<div key={id} className={`rv-picture ${nameTarget?"rv-naming-target":""}`} aria-label={`Figura ${index+1}${nameTarget?", destacada":""}`}><Stimulus id={id} urls={urls} artStyle={trial.artStyle} child onError={error}/></div>:<button key={id} type="button" aria-label={`Selecionar figura ${index+1}`} aria-pressed={selected===id} className={`rv-picture ${selected===id?"rv-chosen":""}`} onClick={()=>{if(broken)return;setSelected(id);event("toque",id);if(autoFinishOnTap)finish();}}><Stimulus id={id} urls={urls} artStyle={trial.artStyle} child onError={error}/></button>;
         })}
       </div>
     </div>}

@@ -2,15 +2,15 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { readFileSync, readdirSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { ITEMS, COLORS, PAIRS, CATEGORIES, VERSION, ageInMonths, bandFor, eligibleItems, buildPlan, makeTrial, emptyDraft, observe, problems, activeObservations, reportText, itemFor, easyPlanSettings, easyPlanSelection, easyPlanCount, type Config, type Draft, type StageEvent } from "../../client/src/features/visual-recognition/model.ts";
+import { ITEMS, COLORS, PAIRS, CATEGORIES, VERSION, ageInMonths, bandFor, eligibleItems, buildPlan, makeTrial, emptyDraft, observe, problems, activeObservations, reportText, itemFor, easyPlanSettings, easyPlanSelection, easyPlanCount, hasArt, type Config, type Draft, type StageEvent } from "../../client/src/features/visual-recognition/model.ts";
 const events:StageEvent[]=[{kind:"apresentado",at:"2026-09-23T12:00:00Z"},{kind:"encerrado",at:"2026-09-23T12:00:01Z"}];
-const base:Config={ageMonths:60,mode:"receptivo",choices:2,count:12,selectedIds:ITEMS.filter(item=>item.minMonths<=60).map(item=>item.id),seed:17756,distractors:"distantes",contextAcknowledged:true,conditions:[]};
+const base:Config={ageMonths:60,mode:"receptivo",choices:2,count:12,selectedIds:ITEMS.filter(item=>item.minMonths<=60&&hasArt(item,"sobrio")).map(item=>item.id),seed:17756,distractors:"distantes",contextAcknowledged:true,conditions:[]};
 const answered=():Draft=>({...emptyDraft(),outcome:"correspondente",channel:"apontar",familiarity:"conhecida"});
 const root=new URL("../../client/public/recognition-v2/",import.meta.url);
 
 test("banco completo, IDs únicos, licença e hashes de cada figura local",()=>{
  const manifest=JSON.parse(readFileSync(new URL("manifest.json",root),"utf8"));
- assert.equal(manifest.items.length,58);assert.equal(ITEMS.length,89);assert.equal(COLORS.length,11);assert.equal(PAIRS.length,10);
+ assert.equal(manifest.items.length,58);assert.equal(ITEMS.length,105,"58 figuras sóbrias + 16 exclusivas do banco kawaii + 11 cores + 20 opostos");assert.equal(COLORS.length,11);assert.equal(PAIRS.length,10);
  assert.equal(new Set(ITEMS.map(item=>item.id)).size,ITEMS.length);
  assert.deepEqual([...new Set(ITEMS.map(item=>item.category))].sort(),Object.keys(CATEGORIES).sort());
  assert.match(readFileSync(new URL("LICENSE.txt",root),"utf8"),/by-sa\/4\.0/);
@@ -47,14 +47,16 @@ test("roteiro determinístico, diversidade de categorias, alvo único e alternat
  }
 });
 test("posição do alvo balanceada, sem primeira alternativa sistemática",()=>{
- const pool=ITEMS.filter(item=>item.category==="animais");
+ for(const style of ["sobrio","kawaii"] as const){
+ const pool=ITEMS.filter(item=>item.category==="animais"&&hasArt(item,style));
  for(let seed=0;seed<30;seed++)for(const choices of [2,3,4]){
   const positions=Array(choices).fill(0);
   for(let index=0;index<choices*5;index++){
-   const trial=makeTrial(pool[index%pool.length].id,"receptivo",pool,choices,seed,index);
+   const trial=makeTrial(pool[index%pool.length].id,"receptivo",pool,choices,seed,index,style);assert.equal(trial.artStyle,style);
    assert.equal(trial.optionIds.length,choices);positions[trial.optionIds.indexOf(trial.targetId)]++;
   }
   assert.deepEqual(positions,Array(choices).fill(5));
+ }
  }
 });
 test("pares completos e contexto obrigatório; não há massa inferida pelo tamanho",()=>{
@@ -136,9 +138,14 @@ test("categoria sem par não trava o roteiro, 'distantes' prefere outra categori
    if(settings.distractors==="categoria"&&cfg.selectedIds.map(itemFor).filter(item=>item.id!==target.id&&item.category===target.category).length>=foils.length)assert.ok(foils.every(item=>item.category===target.category),`${months}/${seed}/${target.id}`);
   }
  }
- // Nota do Modo Fácil promete o que o jogo tem: 12–23 meses = 7 figuras elegíveis, não 8.
- for(const months of [12,17,23]){assert.equal(easyPlanCount(months),7);assert.equal(easyPlanSelection(months).length,7);}
+ // Nota do Modo Fácil promete o que o jogo tem. Banco sóbrio aos 12–23 meses: 7 figuras
+ // elegíveis, não 8. Banco kawaii (padrão até 4 anos), com copo e mamadeira: 8 de 9.
+ for(const months of [12,17,23]){
+  assert.equal(easyPlanCount(months,"sobrio"),7);assert.equal(easyPlanSelection(months,"sobrio").length,7);
+  assert.equal(easyPlanCount(months),8);assert.equal(easyPlanSelection(months).length,9);
+ }
  for(const months of [24,48,84,200])assert.equal(easyPlanCount(months),Math.min(easyPlanSettings(months).count,easyPlanSelection(months).length));
  const workspace=readFileSync(new URL("../../client/src/features/visual-recognition/Workspace.tsx",import.meta.url),"utf8");
- assert.ok(workspace.includes("${easyPlanCount(age)} figuras para reconhecer")&&workspace.includes("const ids=easyPlanSelection(age);"),"nota e seleção do Modo Fácil usam a mesma fonte");
+ assert.ok(workspace.includes("${easyPlanCount(age,artStyle)} figuras para reconhecer")&&workspace.includes("const ids=easyPlanSelection(age,easyStyle);"),"nota e seleção do Modo Fácil usam a mesma fonte");
+ assert.ok(workspace.includes("const artStyle:ArtStyle=styleChoice===\"auto\"?defaultArtStyle(displayAge):styleChoice;")&&workspace.includes("const easyStyle:ArtStyle=styleChoice===\"auto\"?defaultArtStyle(age):styleChoice;"),"nota e jogo usam o mesmo estilo de figuras");
 });
