@@ -10,7 +10,14 @@
 //
 import { execFileSync } from "node:child_process";
 
-const ALLOWLIST = [];
+const ALLOWLIST = [
+  {
+    ghsa: "GHSA-fc5q-39xc-vjpf",
+    packageName: "picomatch",
+    reason: "ReDoS por extglobs repetidos; nenhuma versao corrigida publicada (<=4.0.7). Uso apenas em ferramentas de build (Tailwind/chokidar/micromatch, Vite/tinyglobby, ESLint) com padroes do proprio repositorio; ausente do bundle publicado e das Functions. Decisao do responsavel em 17/11/2026; registro em docs/audits/SECURITY_EXCEPTION_GHSA-fc5q-39xc-vjpf_2026-11-17.md.",
+    expiresOn: "2026-12-01",
+  },
+];
 
 const today = new Date().toISOString().slice(0, 10);
 const exceptions = ALLOWLIST.filter((entry) => entry.expiresOn >= today);
