@@ -20,11 +20,24 @@ test("gate: nenhuma high/critical fora da allowlist ativa no grafo atual", () =>
   assert.doesNotMatch(stdout, /GHSA-86w9-cpqp-85rv/);
 });
 
+// Única exceção ativa: GHSA-fc5q-39xc-vjpf (picomatch, sem versão corrigida publicada), decidida pelo
+// responsável em 17/11/2026, restrita ao pacote e ao advisory, com validade curta e registro em docs/audits.
+const ALLOWLIST_BLOCK = /const ALLOWLIST = \[[\s\S]*?\n\];/;
+const PICOMATCH_EXCEPTION = /\{\s*ghsa: "GHSA-fc5q-39xc-vjpf",\s*packageName: "picomatch",\s*reason: "[^"]{80,}",\s*expiresOn: "2026-12-01",\s*\},/;
+
 test("gate: excecao obsoleta de node-forge foi removida", () => {
   const source = readFileSync(GATE, "utf8");
   assert.doesNotMatch(source, /GHSA-86w9-cpqp-85rv/);
   assert.doesNotMatch(source, /packageName: "node-forge"/);
-  assert.match(source, /const ALLOWLIST = \[\];/);
+});
+
+test("gate: allowlist contém só a exceção temporária de picomatch, com validade curta e registro", () => {
+  const source = readFileSync(GATE, "utf8");
+  const block = source.match(ALLOWLIST_BLOCK)?.[0] ?? "";
+  assert.ok(block, "allowlist localizada");
+  assert.equal((block.match(/ghsa:/g) ?? []).length, 1, "uma única exceção");
+  assert.match(block, PICOMATCH_EXCEPTION);
+  assert.ok(readdirSync("docs/audits").includes("SECURITY_EXCEPTION_GHSA-fc5q-39xc-vjpf_2026-11-17.md"), "decisão registrada em docs/audits");
 });
 
 test("gate: node-forge corrigido permanece travado no lockfile (>= 1.4.2)", () => {
@@ -43,8 +56,7 @@ test("gate: node-forge corrigido permanece travado no lockfile (>= 1.4.2)", () =
 // lugar do `npm audit`. O gate publicado não ganha entrada nenhuma.
 function runGateWithSyntheticAudit(expiresOn) {
   const source = readFileSync(GATE, "utf8");
-  const allowlist = "const ALLOWLIST = [];";
-  assert.equal(source.split(allowlist).length, 2, "allowlist localizada uma única vez");
+  assert.equal((source.match(new RegExp(ALLOWLIST_BLOCK.source, "g")) ?? []).length, 1, "allowlist localizada uma única vez");
   const npmCall = /raw = execFileSync\(isWindows \? "npm\.cmd" : "npm", \["audit"[\s\S]*?\}\);/;
   assert.match(source, npmCall, "chamada do npm audit localizada");
   const report = {
@@ -56,7 +68,7 @@ function runGateWithSyntheticAudit(expiresOn) {
     },
   };
   const patched = source
-    .replace(allowlist, `const ALLOWLIST = [{ ghsa: "GHSA-test-0000-0000", packageName: "pacote-sintetico", reason: "teste", expiresOn: "${expiresOn}" }];`)
+    .replace(ALLOWLIST_BLOCK, `const ALLOWLIST = [{ ghsa: "GHSA-test-0000-0000", packageName: "pacote-sintetico", reason: "teste", expiresOn: "${expiresOn}" }];`)
     .replace(npmCall, `raw = ${JSON.stringify(JSON.stringify(report))};`);
   const dir = mkdtempSync(join(tmpdir(), "npm-audit-gate-"));
   const file = join(dir, "gate.mjs");
