@@ -47,7 +47,7 @@ jobs:
         with:
           ref: ${{ github.event_name == 'pull_request' && github.sha || github.event_name == 'push' && github.sha || github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || 'main' }}
           persist-credentials: false
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
       - name: Reconciliar todas as fontes autorais sem alterar identidade

@@ -57,7 +57,7 @@ jobs:
           [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
 
       - name: Configurar Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: npm
@@ -182,7 +182,7 @@ jobs:
           [ -n "$VERCEL_ORG_ID" ] || { echo "::error::VERCEL_ORG_ID ausente"; exit 1; }
 
       - name: Configurar Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: npm
