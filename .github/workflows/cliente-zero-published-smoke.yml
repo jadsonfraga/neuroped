@@ -100,7 +100,7 @@ jobs:
 
       - name: Upload report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cliente-zero-smoke-${{ github.run_id }}
           path: artifacts/ops/cliente-zero-smoke.json

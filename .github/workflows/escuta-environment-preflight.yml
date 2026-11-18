@@ -39,7 +39,7 @@ jobs:
           }catch(error){report.vercel={error:error.name==='TimeoutError'?'TIMEOUT':error.message};process.exitCode=2;}
           mkdirSync('artifacts',{recursive:true});writeFileSync('artifacts/environment-preflight.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
           NODE
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: escuta-environment-${{ github.run_id }}
