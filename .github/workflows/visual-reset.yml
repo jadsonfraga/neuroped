@@ -120,7 +120,7 @@ jobs:
         run: node scripts/audit-assistance-states.mjs
       - name: Publish visual evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: visual-floor-${{ github.event.pull_request.head.sha }}
           if-no-files-found: error
