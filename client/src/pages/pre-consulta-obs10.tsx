@@ -26,6 +26,7 @@ import EasyGame, { type EasyStep } from "@/components/jogo-facil/EasyGame";
 import { buildObjectiveSteps, objectiveNature } from "@/components/jogo-facil/ObjectiveStep";
 import { OBJECTIVE_MAX_YEARS, OBJECTIVE_MIN_YEARS, objectiveBandForYears } from "@/components/jogo-facil/objectiveBank";
 import { issuerSignatureLine, useIssuer } from "@/lib/issuer";
+import FasesMode, { type FasesState } from "@/features/obs10/fases/FasesMode";
 import "@/features/obs10/obs10.css";
 
 const CHECKS = [
@@ -88,7 +89,10 @@ export default function PreConsultaObs10Page() {
   const monotonicStart = useRef<number | null>(null);
   const lastElapsed = useRef(0);
   const [stage, setStage] = useState<"setup" | "running" | "finished">("setup");
-  const [track, setTrack] = useState<"easy" | "guided" | "direct">("guided");
+  // Fases é a entrada padrão: preparo em uma tela, um toque por cartão e entrega em um minuto.
+  const [track, setTrack] = useState<"fases" | "easy" | "guided" | "direct">("fases");
+  const [fasesState, setFasesState] = useState<FasesState>({ dirty: false, locked: false });
+  const fases = track === "fases";
   const direct = track === "direct";
   const easy = track === "easy";
   const [easyProgress, setEasyProgress] = useState(0);
@@ -129,7 +133,7 @@ export default function PreConsultaObs10Page() {
     lastElapsed.current = current;
     return current;
   }, []);
-  useExitGuard(easyProgress > 0 || Boolean(workClock.phase) || pilot.logs.length > 0 || stage !== "setup" || media.pending || Boolean(years || months || context.code || context.schooling || context.language || context.adaptations || context.conditions || context.familyReport));
+  useExitGuard(fasesState.dirty || easyProgress > 0 || Boolean(workClock.phase) || pilot.logs.length > 0 || stage !== "setup" || media.pending || Boolean(years || months || context.code || context.schooling || context.language || context.adaptations || context.conditions || context.familyReport));
 
   const finish = useCallback((reason: string) => {
     if (ended.current || started.current === null) return;
@@ -307,13 +311,34 @@ export default function PreConsultaObs10Page() {
     window.setTimeout(() => document.querySelector(".obs10-records")?.scrollIntoView({ block: "start", behavior: "auto" }), 0);
   }
 
+  const tabsLocked = media.pending || starting.current || importBusy || easyProgress > 0 || fasesState.locked;
   const trackTabs = (
     <div className="obs10-tracks obs10-no-print" role="tablist" aria-label="Modo de aplicação" data-testid="obs10-track-tabs">
-      <button type="button" role="tab" aria-selected={easy} className={easy ? "" : "obs10-track-easy"} data-testid="obs10-easy-tab" disabled={media.pending || starting.current || importBusy || easyProgress > 0} onClick={() => { setTrack("easy"); setMessage("Modo Fácil: informe a idade em anos, leia o enunciado e deixe a criança tocar na tela. O aplicativo registra certo ou errado; toque em Próximo para liberar cada novo item e veja o resultado no fim."); }}><strong>🎮 Modo Fácil · joguinho</strong><small>Tudo na tela, de 1 a 19 anos. A criança toca, o jogo registra e Próximo libera o item seguinte. Certo/errado no fim.</small></button>
-      <button type="button" role="tab" aria-selected={track === "guided"} disabled={media.pending || starting.current || importBusy || easyProgress > 0} onClick={() => { setTrack("guided"); setMessage(""); }}><strong>Guia da assistente</strong><small>Primeira aplicação: preparar, ensaiar, aplicar, revisar e entregar, do acolhimento à entrega.</small></button>
-      <button type="button" role="tab" aria-selected={direct} disabled={media.pending || starting.current || importBusy || easyProgress > 0} onClick={() => { setTrack("direct"); setMessage("Modo direto: sem guia, kit item a item, checklist ou ensaio. Informe a idade e inicie. O registro declara que o preparo guiado foi dispensado."); }}><strong>Direto ao teste</strong><small>Aplicadora experiente: idade, câmera opcional e início imediato.</small></button>
+      <button type="button" role="tab" aria-selected={fases} className={fases ? "" : "obs10-track-fases"} data-testid="obs10-fases-tab" disabled={tabsLocked} onClick={() => { setTrack("fases"); setMessage(""); }}><strong>🗺️ Fases · mais simples</strong><small>Sem câmera. Cartão por cartão, um toque por resposta; o resultado sai do registro da aplicadora.</small></button>
+      <button type="button" role="tab" aria-selected={easy} className={easy ? "" : "obs10-track-easy"} data-testid="obs10-easy-tab" disabled={tabsLocked} onClick={() => { setTrack("easy"); setMessage("Modo Fácil: informe a idade em anos, leia o enunciado e deixe a criança tocar na tela. O aplicativo registra certo ou errado; toque em Próximo para liberar cada novo item e veja o resultado no fim."); }}><strong>🎮 Modo Fácil · joguinho</strong><small>Tudo na tela, de 1 a 19 anos. A criança toca, o jogo registra e Próximo libera o item seguinte. Certo/errado no fim.</small></button>
+      <button type="button" role="tab" aria-selected={track === "guided"} disabled={tabsLocked} onClick={() => { setTrack("guided"); setMessage(""); }}><strong>Guia da assistente</strong><small>Primeira aplicação: preparar, ensaiar, aplicar, revisar e entregar, do acolhimento à entrega.</small></button>
+      <button type="button" role="tab" aria-selected={direct} disabled={tabsLocked} onClick={() => { setTrack("direct"); setMessage("Modo direto: sem guia, kit item a item, checklist ou ensaio. Informe a idade e inicie. O registro declara que o preparo guiado foi dispensado."); }}><strong>Direto ao teste</strong><small>Aplicadora experiente: idade, câmera opcional e início imediato.</small></button>
     </div>
   );
+  if (fases) {
+    // Modo Fases: os mesmos cartões e o mesmo registro do Guia, em sequência de fases com um toque por cartão.
+    return (
+      <div className="obs10" data-testid="obs10-workspace">
+        <header className="obs10-hero obs10-no-print">
+          <div className="obs10-mascot" aria-hidden="true">🗺️<span>✦</span></div>
+          <div>
+            <div className="obs10-eyebrow">NEUROPED · OBS-10 · FASES</div>
+            <h1>{OBS10_TITLE}</h1>
+            <p>Seis fases curtas, sem câmera. Um cartão por vez, um toque para registrar. Seu registro vira o resultado; o médico interpreta.</p>
+          </div>
+        </header>
+        {stage === "setup" && !fasesState.locked && trackTabs}
+        {message && <p role="status" className="obs10-notice">{message}</p>}
+        <FasesMode signature={signature} onState={setFasesState} />
+        <footer className="obs10-footer obs10-no-print"><details><summary>Fontes, versão e limites clínicos</summary><p>OBS-10 v{OBS10_VERSION} · Roteiro autoral não validado como teste diagnóstico. Registro observacional para revisão médica: não é laudo, escore, norma ou diagnóstico. Força, tônus, reflexos e exame neurológico completo não são examinados.</p>{SOURCES.map(([label, href]) => <p key={href}><a href={href} target="_blank" rel="noreferrer">{label}</a></p>)}</details><p>{signature}</p></footer>
+      </div>
+    );
+  }
   if (easy) {
     // Modo Fácil objetivo: dez itens do banco graduado (1 a 19 anos), todos na
     // tela. Sem câmera, kit, checklist ou tarefa com objeto: a criança toca,

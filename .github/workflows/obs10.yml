@@ -20,6 +20,7 @@ on:
       - 'tests/unit/obs10-pilot-aggregate.test.ts'
       - 'tests/unit/obs10-orientation.test.ts'
       - 'tests/unit/obs10-agreement.test.ts'
+      - 'tests/unit/obs10-fases.test.ts'
       - 'tests/e2e/obs10.mjs'
       - 'tests/e2e/obs10-practical.mjs'
       - 'tests/e2e/obs10-review.mjs'
@@ -27,8 +28,10 @@ on:
       - 'tests/e2e/obs10-media-regressions.mjs'
       - 'tests/e2e/obs10-dossier.mjs'
       - 'tests/e2e/obs10-agreement.mjs'
+      - 'tests/e2e/obs10-fases.mjs'
       - 'docs/features/obs10.md'
       - 'docs/features/obs10-agreement.md'
+      - 'docs/features/obs10-fases.md'
       - 'docs/audits/obs10-v13-pilot.md'
       - 'docs/audits/obs10-media-regressions.md'
       - '.github/workflows/obs10.yml'
@@ -51,6 +54,7 @@ on:
       - 'tests/unit/obs10-pilot-aggregate.test.ts'
       - 'tests/unit/obs10-orientation.test.ts'
       - 'tests/unit/obs10-agreement.test.ts'
+      - 'tests/unit/obs10-fases.test.ts'
       - 'tests/e2e/obs10.mjs'
       - 'tests/e2e/obs10-practical.mjs'
       - 'tests/e2e/obs10-review.mjs'
@@ -58,6 +62,7 @@ on:
       - 'tests/e2e/obs10-media-regressions.mjs'
       - 'tests/e2e/obs10-dossier.mjs'
       - 'tests/e2e/obs10-agreement.mjs'
+      - 'tests/e2e/obs10-fases.mjs'
       - '.github/workflows/obs10.yml'
 permissions:
   contents: read
@@ -80,7 +85,7 @@ jobs:
       - name: TypeScript and lint
         run: |
           npm run check
-          npx eslint client/src/features/obs10/*.{ts,tsx} client/src/pages/pre-consulta-obs10.tsx tests/unit/obs10*.test.ts --max-warnings=0
+          npx eslint client/src/features/obs10/*.{ts,tsx} client/src/features/obs10/fases/*.{ts,tsx} client/src/pages/pre-consulta-obs10.tsx tests/unit/obs10*.test.ts --max-warnings=0
       - name: Age, clock, factual reporting, authorization and existing regressions
         run: |
           node --import tsx tests/unit/obs10.test.ts
@@ -92,6 +97,7 @@ jobs:
           node --import tsx tests/unit/obs10-pilot-aggregate.test.ts
           node --import tsx tests/unit/obs10-orientation.test.ts
           node --import tsx tests/unit/obs10-agreement.test.ts
+          node --import tsx --test tests/unit/obs10-fases.test.ts
           node --import tsx tests/unit/featured-navigation.test.ts
           npm run test:sonda
           npm run audit:navigation
@@ -133,6 +139,10 @@ jobs:
         env:
           OBS10_AGREEMENT_ARTIFACT_DIR: /tmp/obs10-agreement
         run: node tests/e2e/obs10-agreement.mjs
+      - name: Fases mode, one tap per card, delivery and reopening in the full review
+        env:
+          OBS10_FASES_ARTIFACT_DIR: /tmp/obs10-fases
+        run: node tests/e2e/obs10-fases.mjs
       - name: Preserve synthetic screenshots and results
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -147,5 +157,6 @@ jobs:
             /tmp/obs10-media-regressions
             /tmp/obs10-dossier
             /tmp/obs10-agreement
+            /tmp/obs10-fases
           if-no-files-found: ignore
           retention-days: 7

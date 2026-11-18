@@ -25,6 +25,7 @@ async function runCase(name, test) {
     await p.locator("#login-password").fill(SYNTHETIC_CREDENTIALS.password);
     await p.locator('[data-testid="login-form"] button[type="submit"]').click();
     await p.getByTestId("obs10-workspace").waitFor({ timeout: 20000 });
+    await p.getByRole("tab", { name: /^Guia da assistente/ }).click(); // Fases é o padrão; estes cenários são do Guia.
     await test(p);
     results.push({ name, passed: true });
   } catch (e) {

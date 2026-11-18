@@ -145,7 +145,7 @@ try {
 
   // OBS-10: Modo Fácil objetivo. 1 ano tem duas opções; 12 anos joga com texto.
   await open("avaliacao-pre-consulta-faixa-etaria", "obs10-track-tabs");
-  assert.equal(await tab("^Guia da assistente").getAttribute("aria-selected"), "true", "guiado continua padrão");
+  assert.equal(await tab("^🗺️ Fases").getAttribute("aria-selected"), "true", "Fases é o padrão do OBS-10");
   await page.getByTestId("obs10-easy-tab").click();
   await page.getByTestId("obs10-easy-start").waitFor();
   assert.equal(await page.getByTestId("obs10-first-time").count(), 0, "sem guia de primeira vez");

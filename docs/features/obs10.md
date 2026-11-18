@@ -2,7 +2,7 @@
 
 **Versão da interface 1.6.1 · 18/09/2026.** Origem: issue #893 / PR #894. Segunda rodada: issue #895 / PR #896.
 
-Rota: `/#/avaliacao-pre-consulta-faixa-etaria`. Acesso nos destaques e em **PRÉ-CONSULTA GUIADA → Avaliação de Pré-Consulta por Faixa Etária**. A Sonda Dez permanece independente.
+Rota: `/#/avaliacao-pre-consulta-faixa-etaria`. **Desde 17/11/2026 a rota abre no modo Fases** (preparo em uma tela, um toque por cartão, entrega em um minuto; ver `docs/features/obs10-fases.md`). Este guia descreve o **Guia da assistente**, que segue disponível na aba ao lado para primeira aplicação, câmera integrada e revisão completa. Acesso nos destaques e em **PRÉ-CONSULTA GUIADA → Avaliação de Pré-Consulta por Faixa Etária**. A Sonda Dez permanece independente.
 
 ## 1. Antes da criança chegar: idade e kit
 

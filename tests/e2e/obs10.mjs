@@ -53,6 +53,8 @@ try {
     while (node) { if (Number(getComputedStyle(node).opacity) < .99) return false; node = node.parentElement; }
     return true;
   });
+  assert.equal(await page.getByRole("tab", { name: /^🗺️ Fases/ }).getAttribute("aria-selected"), "true", "Fases é o padrão");
+  await page.getByRole("tab", { name: /^Guia da assistente/ }).click();
   assert.equal(await button("Iniciar aplicação · 10 minutos").isDisabled(), true);
   await page.getByText("Consultar material por faixa etária", { exact: true }).click();
   assert.equal(await page.locator(".obs10-age-tabs button").count(), 13);

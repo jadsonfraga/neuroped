@@ -58,7 +58,7 @@ async function codeSession(code, categories, file) {
 try {
   await page.goto(`${server.origin}/#/avaliacao-pre-consulta-faixa-etaria`);
   await page.locator("#login-email").fill(SYNTHETIC_CREDENTIALS.email); await page.locator("#login-password").fill(SYNTHETIC_CREDENTIALS.password);
-  await page.locator('[data-testid="login-form"] button[type="submit"]').click(); await page.getByTestId("obs10-workspace").waitFor();
+  await page.locator('[data-testid="login-form"] button[type="submit"]').click(); await page.getByTestId("obs10-workspace").waitFor(); await page.getByRole("tab", { name: /^Guia da assistente/ }).click(); // Fases é o padrão; o tablet parte do Guia.
   // Two observers code the same synthetic session: they agree on the first card and diverge on the second.
   await codeSession("PAR-01", ["Na proposta inicial", "Após repetição"], "observador-a.json");
   await codeSession("PAR-01", ["Na proposta inicial", "Com apoio habitual"], "observador-b.json");

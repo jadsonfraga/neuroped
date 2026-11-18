@@ -2,6 +2,7 @@ import { LEGACY_AUTHOR_SIGNATURE } from "../../lib/issuerSignature";
 import type { EvidenceBundle } from "./evidence";
 import type { PilotRecord } from "./pilot";
 import { AGE_BANDS, OUTCOMES, PHASES, clock, type Outcome } from "./protocol";
+import { applicatorResultText } from "./fases/result";
 
 export interface SessionContext {
   code: string;
@@ -15,8 +16,9 @@ export interface SessionContext {
   familyReport: string;
   proneAllowed: boolean;
   missingMaterials?: string[];
-  /** "direct": aplicadora experiente iniciou sem guia, kit item a item, checklist ou ensaio. Ausente = preparação guiada. */
-  preparation?: "direct";
+  /** "direct": aplicadora experiente iniciou sem guia, kit item a item, checklist ou ensaio.
+   * "fases": modo Fases, com preparo resumido em uma tela. Ausente = preparação guiada. */
+  preparation?: "direct" | "fases";
 }
 export interface Observation {
   id: string;
@@ -78,13 +80,17 @@ export function validCorrectedAge(chronological: number | null, corrected: strin
 export function emptyObservation(id: string, phase: number, second: number): Observation {
   return { id, phase, task: "", response: "", outcome: "", assistance: "", quality: "", clip: "", videoTime: "", applicationSecond: second };
 }
-export function observationIssues(o: Observation): string[] {
+/** Registro da aplicadora (modo Fases, sem vídeo): a base é a categoria declarada por ela. Descrição literal é
+ * opcional e qualidade audiovisual não se aplica; nada é preenchido no lugar delas. */
+export interface IssueScope { applicatorRecord?: boolean }
+export const applicatorRecordOf = (record: Pick<SessionRecord, "context">): boolean => record.context.preparation === "fases";
+export function observationIssues(o: Observation, scope: IssueScope = {}): string[] {
   const issues: string[] = [];
   if (!o.task.trim()) issues.push("Informe a tarefa.");
-  if (!o.response.trim()) issues.push("Descreva o fato ou a limitação; não complete por suposição.");
+  if (!scope.applicatorRecord && !o.response.trim()) issues.push("Descreva o fato ou a limitação; não complete por suposição.");
   if (!o.outcome) issues.push("Selecione a categoria observada.");
   if (["V", "M", "A", "NA"].includes(o.outcome) && !o.assistance.trim()) issues.push("Descreva repetição, ajuda, adaptação ou motivo da não aplicação.");
-  if (o.outcome && o.outcome !== "NA" && !o.quality) issues.push("Confira a qualidade audiovisual ou marque não avaliável.");
+  if (!scope.applicatorRecord && o.outcome && o.outcome !== "NA" && !o.quality) issues.push("Confira a qualidade audiovisual ou marque não avaliável.");
   if (o.videoTime.trim() && !/^(?:[0-5]?[0-9]):[0-5][0-9]$/.test(o.videoTime.trim())) issues.push("Use minuto:segundo, por exemplo 01:20; não use horário da aplicação como trecho verificado.");
   if (o.videoTime.trim() && !o.clip.trim()) issues.push("Identifique o clipe ao informar um tempo no vídeo.");
   return issues;
@@ -104,16 +110,19 @@ export function exportFilename(code: string, extension: "txt" | "json" | "md" | 
 }
 const textOrMissing = (s: string) => s.trim() || "Não informado";
 export const PREPARATION_DIRECT_LINE = "Preparação: modo direto; guia, kit item a item, checklist de segurança e ensaio dispensados pela aplicadora experiente, que responde pelo preparo.";
+export const PREPARATION_FASES_LINE = "Preparação: modo Fases, sem câmera; idade e duas confirmações de segurança declaradas pela aplicadora; kit não conferido item a item e ensaio dispensado. O resultado se baseia no registro da aplicadora: categorias marcadas com um toque; descrição literal somente quando digitada.";
 export function makeReport(record: SessionRecord, signature: string = LEGACY_AUTHOR_SIGNATURE): string {
   const { context: c, observations } = record;
   const band = AGE_BANDS.find((b) => b.id === c.bandId);
+  const applicator = applicatorRecordOf(record);
+  const scope: IssueScope = { applicatorRecord: applicator };
   const lines = [
     `NEUROPED OBS-10 · v${record.version}`,
     "REGISTRO OBSERVACIONAL PARA REVISÃO MÉDICA — NÃO É LAUDO NEM DIAGNÓSTICO",
     `Código: ${textOrMissing(c.code)}`,
     `Sessão: ${record.sessionId || "Não informada (registro anterior)"}`,
     `Materiais ausentes referidos: ${c.missingMaterials?.join(", ") || "Nenhum informado"}`,
-    ...(c.preparation === "direct" ? [PREPARATION_DIRECT_LINE] : []),
+    ...(c.preparation === "direct" ? [PREPARATION_DIRECT_LINE] : c.preparation === "fases" ? [PREPARATION_FASES_LINE] : []),
     `Idade cronológica: ${c.chronologicalMonths} meses | Corrigida: ${c.correctedMonths === null ? "não utilizada" : `${c.correctedMonths} meses, informada pela equipe`}`,
     `Ficha aplicada: ${band?.label ?? "Não informada"}`,
     `Escolaridade: ${textOrMissing(c.schooling)} | Idioma/comunicação: ${textOrMissing(c.language)}`,
@@ -123,23 +132,24 @@ export function makeReport(record: SessionRecord, signature: string = LEGACY_AUT
     `Duração da aplicação: ${clock(record.durationSeconds)}. Encerramento: ${record.endReason || "em andamento"}.`,
     `Captação: ${record.recording}`,
     ...(record.importedForReview ? ["JSON reaberto apenas para revisão. O JSON não reabre vídeo. Arquivos associados separadamente e posições do reprodutor constam na seção de evidências; não houve transmissão ou análise automática.", `Captação descrita no registro de origem (não verificada nesta sessão): ${record.sourceRecording || "Não informada"}`] : []),
-    "Os horários do cronômetro são da aplicação, não comprovam um trecho de vídeo. Clipe/tempo abaixo são referências digitadas pela aplicadora, ainda não verificadas.",
+    applicator ? "Sem vídeo neste modo: cada tarefa abaixo vale pela categoria declarada pela aplicadora; horários são os da marcação na aplicação." : "Os horários do cronômetro são da aplicação, não comprovam um trecho de vídeo. Clipe/tempo abaixo são referências digitadas pela aplicadora, ainda não verificadas.",
     "",
+    ...(applicator ? [applicatorResultText(record), ""] : []),
   ];
   PHASES.forEach((p, index) => {
     lines.push(`${index + 1}. ${p.title.toUpperCase()}`);
     const entries = observations.filter((o) => o.phase === index && (o.task.trim() || o.response.trim() || o.outcome));
     if (!entries.length) lines.push("Sem registro de aplicação; não concluir que a habilidade está ausente ou preservada.");
     entries.forEach((o) => {
-      lines.push(`Tarefa: ${textOrMissing(o.task)}`, `Fato/resposta literal: ${textOrMissing(o.response)}`,
+      lines.push(`Tarefa: ${textOrMissing(o.task)}`, `Fato/resposta literal: ${o.response.trim() || (applicator ? "não descrito; vale a categoria declarada pela aplicadora" : "Não informado")}`,
         `Resposta: ${OUTCOMES.find((x) => x.id === o.outcome)?.label ?? "Não classificada"}`,
         `Ajuda/adaptação/motivo da não aplicação: ${textOrMissing(o.assistance)}`,
-        `Qualidade referida pela aplicadora: ${o.quality || "Não verificada"}`,
-        `Referência audiovisual informada: clipe ${textOrMissing(o.clip)} · ${textOrMissing(o.videoTime)}`,
+        ...(applicator ? [] : [`Qualidade referida pela aplicadora: ${o.quality || "Não verificada"}`,
+          `Referência audiovisual informada: clipe ${textOrMissing(o.clip)} · ${textOrMissing(o.videoTime)}`]),
         o.recordedAfterEnd ? "Anotação realizada após o encerramento; não atribuir este horário à execução da tarefa." : `Registro iniciado aos ${clock(o.applicationSecond)} da aplicação.`,
         ...(o.editedAfterEnd ? ["Descrição complementada ou corrigida após a coleta; o horário e a origem da anotação inicial foram preservados."] : []),
         ...(o.modelInInstruction ? ["Esta tarefa inclui modelo na proposta inicial; não confundir cópia/execução após modelo previsto com produção espontânea."] : []),
-        ...observationIssues(o).map((issue) => `Registro incompleto: ${issue}`));
+        ...observationIssues(o, scope).map((issue) => `Registro incompleto: ${issue}`));
     });
     lines.push("");
   });

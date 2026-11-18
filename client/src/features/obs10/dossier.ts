@@ -1,7 +1,7 @@
 import { LEGACY_AUTHOR_SIGNATURE } from "../../lib/issuerSignature";
 import { AGE_BANDS, APPLICATION_RULES, OBS10_VERSION, OUTCOMES, PHASES, clock, type AgeBand, type Outcome } from "./protocol";
 import { KITS, MATERIALS, PRACTICAL_TASKS, getTaskBudget, taskOmission, type PracticalTask } from "./practical";
-import { observationIssues, type Observation, type SessionRecord } from "./session";
+import { applicatorRecordOf, observationIssues, type IssueScope, type Observation, type SessionRecord } from "./session";
 import { mediaClock, momentChanged, reviewChanged } from "./evidence";
 
 /** Prose-ready wording for each category: behaviour observed, never a score. */
@@ -27,7 +27,7 @@ export function ageText(months: number): string {
 function bandOf(record: SessionRecord): AgeBand | undefined {
   return AGE_BANDS.find((b) => b.id === record.context.bandId);
 }
-function observedLines(o: Observation, prefix = "Observado"): string[] {
+function observedLines(o: Observation, scope: IssueScope, prefix = "Observado"): string[] {
   const outcome = o.outcome ? OUTCOME_PROSE[o.outcome] : "categoria não marcada";
   const parts = [`${prefix}: ${outcome}.`];
   if (o.response.trim()) parts.push(`Descrição literal da aplicadora: ${quote(o.response)}`);
@@ -37,7 +37,7 @@ function observedLines(o: Observation, prefix = "Observado"): string[] {
   parts.push(o.recordedAfterEnd ? "Anotação feita após o encerramento; não atribuir este horário à execução." : `Registro iniciado aos ${clock(o.applicationSecond)} da aplicação.`);
   if (o.editedAfterEnd) parts.push("Descrição complementada após a coleta; origem preservada.");
   if (o.modelInInstruction) parts.push("A proposta inclui demonstração: não descrever como produção espontânea.");
-  const issues = observationIssues(o);
+  const issues = observationIssues(o, scope);
   if (issues.length) parts.push(`Registro incompleto: ${issues.join(" ")}`);
   return [parts.join(" ")];
 }
@@ -51,7 +51,7 @@ function proposalLine(task: PracticalTask, record: SessionRecord, months: number
   const head = `- **Proposta:** ${task.title}. Comando: ${quote(task.say)}${flags.length ? ` (${flags.join("; ")})` : ""}`;
   const entry = record.observations.find((o) => o.id === `guided-${task.id}`);
   if (!entry) return [head, "  Sem observação registrada para esta proposta. Não presumir aplicação, ausência ou presença da habilidade."];
-  return [head, `  ${observedLines(entry).join(" ")}`];
+  return [head, `  ${observedLines(entry, { applicatorRecord: applicatorRecordOf(record) }).join(" ")}`];
 }
 /**
  * Markdown handed to the physician's own writing assistant, outside this app.
@@ -84,7 +84,8 @@ export function makeDossier(record: SessionRecord, signature: string = LEGACY_AU
     `- Condições do dia (sono, fome, dor, doença, medicação e horário): ${orMissing(c.conditions)}.`,
     `- Posição de bruços: ${c.proneAllowed ? "autorizada pelo médico, somente acordado e tolerado" : "não autorizada; propostas em prono omitidas"}.`,
     `- Materiais declarados ausentes: ${c.missingMaterials?.length ? c.missingMaterials.join(", ") : "nenhum"}.`,
-    ...(c.preparation === "direct" ? ["- Preparação: modo direto; guia, kit item a item, checklist de segurança e ensaio dispensados pela aplicadora experiente."] : []),
+    ...(c.preparation === "direct" ? ["- Preparação: modo direto; guia, kit item a item, checklist de segurança e ensaio dispensados pela aplicadora experiente."]
+      : c.preparation === "fases" ? ["- Preparação: modo Fases, sem câmera; resultado baseado no registro da aplicadora (categorias marcadas com um toque); kit não conferido item a item."] : []),
     `- Duração da observação: ${clock(record.durationSeconds)} de até 10:00. Encerramento: ${sentence(record.endReason || "em andamento")}`,
     `- Captação: ${sentence(record.recording)}`,
     ...(record.importedForReview ? [`- Registro reaberto de arquivo exportado; captação de origem declarada, não verificada: ${record.sourceRecording || "não informada"}.`] : []),
@@ -101,7 +102,7 @@ export function makeDossier(record: SessionRecord, signature: string = LEGACY_AU
     lines.push("", `### Bloco ${index + 1} · ${phase.title} (${clock(phase.start)}–${clock(phase.end)})`);
     for (const task of tasks.filter((t) => t.phase === index)) lines.push(...proposalLine(task, record, months));
     const free = record.observations.filter((o) => o.phase === index && !o.id.startsWith("guided-") && (o.task.trim() || o.response.trim() || o.outcome));
-    for (const o of free) lines.push(`- **Registro livre da aplicadora:** ${orMissing(o.task)}.`, `  ${observedLines(o).join(" ")}`);
+    for (const o of free) lines.push(`- **Registro livre da aplicadora:** ${orMissing(o.task)}.`, `  ${observedLines(o, { applicatorRecord: applicatorRecordOf(record) }).join(" ")}`);
   });
   if (c.chronologicalMonths >= 72) {
     const interval = record.encodingSecond !== null && record.recallSecond !== null && record.recallSecond >= record.encodingSecond ? `${record.recallSecond - record.encodingSecond} segundos` : "não medido";
@@ -123,7 +124,7 @@ export function makeDossier(record: SessionRecord, signature: string = LEGACY_AU
   });
   const notShown = record.observations.filter((o) => o.outcome === "ND" || o.outcome === "R" || o.outcome === "NA");
   if (notShown.length) lines.push(`- Não demonstrado, recusado ou não aplicado: ${notShown.map((o) => `${orMissing(o.task)} (${OUTCOMES.find((x) => x.id === o.outcome)?.label})`).join("; ")}.`);
-  const incomplete = record.observations.filter((o) => observationIssues(o).length);
+  const incomplete = record.observations.filter((o) => observationIssues(o, { applicatorRecord: applicatorRecordOf(record) }).length);
   if (incomplete.length) lines.push(`- Registros incompletos, a esclarecer com a aplicadora: ${incomplete.map((o) => orMissing(o.task)).join("; ")}.`);
   if (record.durationSeconds < 600 && record.endReason) lines.push(`- Observação encerrada antes dos dez minutos: ${sentence(record.endReason)}`);
   lines.push(`- ${NOT_EXAMINED}`);

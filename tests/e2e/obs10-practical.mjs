@@ -31,6 +31,7 @@ async function login() {
     while (el) { if (Number(getComputedStyle(el).opacity) < .99) return false; el = el.parentElement; }
     return true;
   });
+  await page.getByRole("tab", { name: /^Guia da assistente/ }).click(); // Fases é o padrão; estes cenários são do Guia.
 }
 async function prepare(y, m = 0) {
   await page.getByLabel("Anos completos", { exact: true }).fill(String(y));
