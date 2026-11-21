@@ -1,22 +1,33 @@
 // ============================================================
 // Exportador de AUDITORIA das escalas autorais (J26-xxx).
-// Junta metadados (escalasAutorais.ts) + itens interativos
-// (interactiveScaleItems.ts) por id e emite:
+// Junta metadados (catálogo de scaleFilter.ts + escalasAutorais.ts) + itens
+// interativos (interactiveScaleItems.ts) por id e emite:
 //   1) docs/audit/escalas-autorais-auditoria.md  (leitura/revisão)
 //   2) docs/audit/escalas-autorais-itens.csv      (edição item a item)
 //   3) docs/audit/escalas-autorais-faixas.csv     (revisão dos cortes)
-// Uso:  npx tsx scripts/audit-scales-export.mts
+// Uso:  npm run audit:scales:export   (ou: node --import tsx scripts/audit-scales-export.mts)
+// AUDIT_SCALES_OUT_DIR (opcional) grava em outro diretório; usado pelo teste.
+// Sai com código 1 se alguma escala com itens não tiver metadados no catálogo.
 // NÃO altera nenhum dado de produção — só lê e exporta.
 // ============================================================
 import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { escalasAutoraisDrJadson } from "../client/src/data/escalasAutorais.ts";
 import { interactiveScaleItems } from "../client/src/data/interactiveScaleItems.ts";
+import { allScalesComFichas, scales as escalasCatalogoMestre } from "../client/src/data/scaleFilter.ts";
+import { itemText } from "../client/src/components/GenericScale.tsx";
 
-const OUT = resolve(process.cwd(), "docs/audit");
+const OUT = resolve(process.cwd(), process.env.AUDIT_SCALES_OUT_DIR || "docs/audit");
 mkdirSync(OUT, { recursive: true });
 
-const byId = new Map(escalasAutoraisDrJadson.map((s) => [s.id, s]));
+// Base: catálogo completo deduplicado (allScalesComFichas), que cobre as escalas de
+// todos os catálogos com itens interativos. Por cima, os instrumentos publicados
+// (scales: ace, gad7...) e, por último, as autorais, que prevalecem.
+const byId = new Map<string, any>([
+  ...allScalesComFichas.map((s) => [s.id, s] as const),
+  ...escalasCatalogoMestre.map((s) => [s.id, s] as const),
+  ...escalasAutoraisDrJadson.map((s) => [s.id, s] as const),
+]);
 
 // CSV helper (escapa aspas/; e quebras de linha)
 const cell = (v: unknown) => {
@@ -63,7 +74,9 @@ for (const id of ids) {
 
   def.domains.forEach((d, di) => {
     if (def.domains.length > 1) md.push(`### Domínio: ${d.name}`);
-    d.items.forEach((it, ii) => {
+    d.items.forEach((item, ii) => {
+      // Itens podem ser string ou objeto { text, emoji?, example?, ... }: exporta só o texto.
+      const it = itemText(item);
       md.push(`${ii + 1}. ${it}`);
       itemRows.push(row([id, nome, faixa, d.name, ii + 1, it, "", ""]));
     });
@@ -89,3 +102,4 @@ console.log(`  • escalas-autorais-auditoria.md  (${md.length} linhas)`);
 console.log(`  • escalas-autorais-itens.csv     (${itemRows.length - 1} itens)`);
 console.log(`  • escalas-autorais-faixas.csv    (${bandRows.length - 1} faixas)`);
 if (semMeta) console.log(`  ⚠ ${semMeta} escala(s) com itens mas SEM metadados no catálogo autoral.`);
+if (semMeta) process.exitCode = 1; // metadado ausente passa a falhar o export
