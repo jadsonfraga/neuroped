@@ -12656,7 +12656,27 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 ## rcads — RCADS
 - **Nome completo:** Revised Children's Anxiety and Depression Scale
 - **Faixa etária:** 96–216 meses  |  **Respondente:** autoaplicavel, pais, crianca  |  **Tempo:** 10 min
-- **Descrição:** 47 itens cobrindo 6 subescalas baseadas no DSM (ansiedade e depressão).
+- **Descrição:** Ansiedade (generalizada, separação, pânico, social, fobia) + Depressão.
+Respondentes: Criança (8+) e Pais (5+). 47 itens. Mais abrangente que SCARED.
+
+EXEMPLOS:
+1. ANSIEDADE GENERALIZADA — "Você se preocupa muito?"
+   📌 Escala: Nunca (0) → Às vezes (1) → Frequentemente (2) → Sempre (3)
+
+2. TRANSTORNO DE PÂNICO — "Você sente desconforto no peito quando fica nervoso?"
+   📌 Exemplo: Palpitações, tremores, falta de ar, tonturas
+
+3. DEPRESSÃO — "Você se sente triste ou infeliz?"
+   📌 Exemplo: Apatia, isolamento, perda de interesse, choro
+
+4. FOBIA SOCIAL — "Você tem medo de falar em apresentação?"
+   📌 Exemplo: Recusa participar, muito nervoso, quer sair da aula
+
+AUTORRELATO VS PAIS:
+Crianças frequentemente mascaram ansiedade em casa (aparentam estar bem)
+Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
+→ Compare: Se pais marcam 15 mas criança marca 40 = criança está mascando
+→ Confie mais no autorrelato em adolescentes
 - **Opções de resposta:** `0=Nunca/quase nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
 - **Itens:** 30  |  **Domínios:** 6
 

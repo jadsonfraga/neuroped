@@ -40,5 +40,5 @@ test("export: toda escala com itens tem metadados, faixa etária e texto de item
 
 test("export: metadado ausente faz o comando falhar, em vez de só avisar", () => {
   const source = readFileSync(SCRIPT, "utf8");
-  assert.match(source, /if \(semMeta\) process\.exitCode = 1;/);
+  assert.match(source, /if \(semMeta\) \{[\s\S]*?process\.exitCode = 1;/);
 });
