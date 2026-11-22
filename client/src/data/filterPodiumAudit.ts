@@ -250,6 +250,10 @@ export function auditPodium(input: PodiumAuditInput): PodiumAudit {
   }
 
   // Redundância resolvida pelo motor: transparente para a pessoa que avalia.
+  const scaleName = (id: string) =>
+    candidates.find((m) => m.scale.id === id)?.scale.name ??
+    TRIO.map((slot) => podium.podium[slot]).find((m) => m?.scale.id === id)?.scale.name ??
+    id;
   for (const decision of podium.redundancy as RedundancyDecision[]) {
     if (decision.action === "kept_justified") {
       const parts = [
@@ -258,12 +262,12 @@ export function auditPodium(input: PodiumAuditInput): PodiumAudit {
       ];
       gaps.push({
         kind: "redundancia",
-        message: `Mesmo grupo de redundância mantido com justificativa: a segunda escala cobre ${parts.join(" e ")} que a outra não cobre.`,
+        message: `${scaleName(decision.removedId)} mede algo próximo de ${scaleName(decision.keptId)}, mas permanece porque é a única do trio que cobre ${parts.join(" e ")}.`,
       });
     } else if (decision.action === "dropped") {
       gaps.push({
         kind: "redundancia",
-        message: "Uma escala do mesmo grupo de redundância foi removida do trio: uma forma basta. Confirme a idade exata para escolher a forma adequada.",
+        message: `${scaleName(decision.removedId)} saiu do trio porque repetiria a pergunta clínica de ${scaleName(decision.keptId)} pelo mesmo informante, e não havia escala segura de outro construto para a vaga.`,
       });
     }
   }

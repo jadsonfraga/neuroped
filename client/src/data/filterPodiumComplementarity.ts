@@ -1,5 +1,6 @@
 import { getImplementationStatus, scaleCoversSelectedSignalExactly, type RefinedScaleMatch } from "./advancedFilterLogic";
-import { fitsSelectedAge, scaleAgeFit } from "./scaleAgeFit";
+import { ageSpecificityBonus, fitsSelectedAge, scaleAgeFit } from "./scaleAgeFit";
+import { familyOverflow, informantClass, repetitiveByFamily, sameInstrumentFamily } from "./scaleConstructFamily";
 
 /**
  * Âncoras funcionais existentes: EAF-NEXUS (preferida ≥2a) e EFDI-V/NV (alternativa precoce).
@@ -36,29 +37,60 @@ function deduplicate(matches: RefinedScaleMatch[]): RefinedScaleMatch[] {
   });
 }
 
-/** Grupo explicitamente curado prevalece; domínio + tags exigem corroborar afinidade. */
+const normalizeTag = (tag: string) =>
+  tag.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
+
+/**
+ * Par repetitivo: gastaria duas vagas do trio na mesma pergunta clínica.
+ * Grupo curado prevalece; depois, identidade de instrumento pelo mesmo
+ * informante (edição, forma curta/longa, faixa etária vizinha, módulo da
+ * mesma bateria, dois inventários amplos — ver scaleConstructFamily); por
+ * fim, domínio + modalidade + sinais em comum. Mesma família por informantes
+ * diferentes (pais × professor) NÃO é repetição: é outra perspectiva.
+ */
 export function sameClinicalConstruct(a: RefinedScaleMatch, b: RefinedScaleMatch): boolean {
   if (a.scale.id === b.scale.id) return true;
   if (isFunctionalAnchor(a.scale.id) && isFunctionalAnchor(b.scale.id)) return true;
   if (a.scale.overlapGroup && a.scale.overlapGroup === b.scale.overlapGroup) return true;
+  if (repetitiveByFamily(a.scale, b.scale)) return true;
   if (!a.scale.primaryDomain || a.scale.primaryDomain !== b.scale.primaryDomain) return false;
   if (a.applicationMode !== b.applicationMode) return false;
-  const tagsA = new Set((a.scale.signalTags ?? []).map((tag) => tag.trim().toLocaleLowerCase("pt-BR")));
-  const tagsB = new Set((b.scale.signalTags ?? []).map((tag) => tag.trim().toLocaleLowerCase("pt-BR")));
+  const tagsA = new Set((a.scale.signalTags ?? []).map(normalizeTag));
+  const tagsB = new Set((b.scale.signalTags ?? []).map(normalizeTag));
   if (tagsA.size < 2 || tagsB.size < 2) return false;
   let common = 0;
   for (const tag of tagsA) if (tagsB.has(tag)) common++;
   return common >= 2 && common / Math.min(tagsA.size, tagsB.size) >= 0.6;
 }
 
-function repeatPairs(items: RefinedScaleMatch[]): number {
+/**
+ * Medida de repetição do trio: pares do mesmo construto + família que ocupa
+ * as três vagas (mesmo com informantes diferentes, o trio não teria outro
+ * construto). Zero = três escalas que se complementam.
+ */
+export function repetitionCount(items: RefinedScaleMatch[]): number {
   let count = 0;
   for (let i = 0; i < items.length; i++) {
     for (let j = i + 1; j < items.length; j++) {
       if (sameClinicalConstruct(items[i], items[j])) count++;
     }
   }
-  return count;
+  return count + familyOverflow(items.map((m) => m.scale));
+}
+const repeatPairs = repetitionCount;
+
+/**
+ * Ganho de complementaridade do trio: informantes e famílias distintos.
+ * Peso de DESEMPATE entre composições com a mesma cobertura de queixas e
+ * sinais; nunca supera cobertura nem a penalidade de repetição.
+ */
+export function complementarityGain(items: RefinedScaleMatch[]): number {
+  const informants = new Set(items.map((m) => informantClass(m.scale)));
+  let distinctFamilies = 0;
+  items.forEach((m, index) => {
+    if (items.slice(0, index).every((other) => !sameInstrumentFamily(other.scale, m.scale))) distinctFamilies++;
+  });
+  return Math.max(0, informants.size - 1) + Math.max(0, distinctFamilies - 1);
 }
 
 export function refineFunctionalComplementarity({
@@ -120,7 +152,10 @@ export function refineFunctionalComplementarity({
       keepOuro * 5_000 +
       currentRetained * 2_000 -
       repeatPairs(arr) * 12_000 +
-      arr.reduce((sum, m) => sum + m.relevanceScore, 0);
+      // Em faixa, cobrir a faixa INTEIRA pesa mais que diversificar informante.
+      arr.filter((m) => ageBand !== null && scaleAgeFit(m.scale, { exactAge: null, ageBand }) === "full").length * 2_000 +
+      complementarityGain(arr) * 1_500 +
+      arr.reduce((sum, m) => sum + m.relevanceScore + ageSpecificityBonus(m.scale, { exactAge: ageMonths, ageBand }), 0);
   };
 
   let chosen = [...original];
@@ -279,7 +314,7 @@ export interface RedundancyResolutionInput extends MedalTrio {
 /**
  * Resolve a redundância de construto que sobra no pódio.
  *
- * Duas medalhas do mesmo grupo de redundância (overlapGroup ou mesmo construto)
+ * Duas medalhas que repetem a mesma pergunta clínica (sameClinicalConstruct)
  * só podem ocupar vagas diferentes com justificativa explícita. Para Prata e
  * Bronze, em ordem de prioridade, esta rotina:
  *  1. troca a medalha redundante por candidata elegível de OUTRO construto que
@@ -305,22 +340,44 @@ export function resolveRedundantMedals({
     if (!current || !trio.ouro) continue;
     const kept = [trio.ouro, slot === "bronze" ? trio.prata : undefined]
       .filter((m): m is RefinedScaleMatch => Boolean(m) && m !== current);
-    const conflicting = kept.find((other) => other.scale.id !== current.scale.id && sameClinicalConstruct(other, current));
+    // Bronze da mesma família de Ouro e Prata (mesmo com informantes
+    // diferentes) deixaria o trio sem outro construto: também é conflito.
+    const conflicting =
+      kept.find((other) => other.scale.id !== current.scale.id && sameClinicalConstruct(other, current)) ??
+      (slot === "bronze" && kept.length === 2 && familyOverflow([...kept, current].map((m) => m.scale)) > 0
+        ? kept[0]
+        : undefined);
     if (!conflicting) continue;
+    // Demais medalhas do trio, inclusive a de vaga POSTERIOR (ao revisar a
+    // Prata, o Bronze conta): a substituta não pode repetir nenhuma delas e a
+    // justificativa de cobertura única considera o trio inteiro.
+    const others = [trio.ouro, trio.prata, trio.bronze]
+      .filter((m): m is RefinedScaleMatch => Boolean(m) && m !== current);
+    const conflictsWithTrio = (m: RefinedScaleMatch) =>
+      others.some((other) => sameClinicalConstruct(other, m)) ||
+      (others.length === 2 && familyOverflow([...others, m].map((x) => x.scale)) > 0);
 
-    const before = coveredBy([...kept, current]);
-    const keptIds = new Set([...kept, current].map((m) => m.scale.id));
-    const keptBurden = kept.reduce((sum, m) => sum + countQuestions(m), 0);
+    const before = coveredBy([...others, current]);
+    // Nenhuma substituta pode repetir QUALQUER medalha do trio atual — inclusive
+    // a de uma vaga posterior (trocar Prata não pode copiar o Bronze).
+    const keptIds = new Set(
+      [trio.ouro, trio.prata, trio.bronze]
+        .filter((m): m is RefinedScaleMatch => Boolean(m))
+        .map((m) => m.scale.id),
+    );
+    // Carga de TODAS as outras medalhas do trio (inclusive vaga posterior):
+    // trocar Prata não pode estourar o teto somado ao Bronze.
+    const keptBurden = others.reduce((sum, m) => sum + countQuestions(m), 0);
     const replacement = candidates
       .filter((m) =>
         !keptIds.has(m.scale.id) &&
         eligible(m) &&
         getImplementationStatus(m.scale) === "complete" &&
-        kept.every((other) => !sameClinicalConstruct(other, m)) &&
+        !conflictsWithTrio(m) &&
         m.relevanceScore >= current.relevanceScore - 20 &&
         keptBurden + countQuestions(m) <= questionCap)
       .find((m) => {
-        const after = coveredBy([...kept, m]);
+        const after = coveredBy([...others, m]);
         return [...before.queixas].every((q) => after.queixas.has(q)) &&
           [...before.signals].every((s) => after.signals.has(s));
       });
@@ -330,10 +387,11 @@ export function resolveRedundantMedals({
       continue;
     }
 
-    // Sem alternativa de outro construto: mantém só se a medalha cobre algo único.
-    const others = coveredBy(kept);
-    const uniqueComplaints = selectedQueixas.filter((q) => before.queixas.has(q) && !others.queixas.has(q));
-    const uniqueSignals = selectedSignals.filter((s) => before.signals.has(s) && !others.signals.has(s));
+    // Sem alternativa de outro construto: mantém só se a medalha cobre algo
+    // que NENHUMA outra medalha do trio cobre.
+    const othersCoverage = coveredBy(others);
+    const uniqueComplaints = selectedQueixas.filter((q) => before.queixas.has(q) && !othersCoverage.queixas.has(q));
+    const uniqueSignals = selectedSignals.filter((s) => before.signals.has(s) && !othersCoverage.signals.has(s));
     if (uniqueComplaints.length > 0 || uniqueSignals.length > 0) {
       decisions.push({ slot, action: "kept_justified", removedId: current.scale.id, keptId: conflicting.scale.id, uniqueComplaints, uniqueSignals });
       continue;
@@ -341,5 +399,7 @@ export function resolveRedundantMedals({
     trio = { ...trio, [slot]: undefined };
     decisions.push({ slot, action: "dropped", removedId: current.scale.id, keptId: conflicting.scale.id });
   }
+  // Sem vaga vazia no meio: Bronze sobe para Prata quando a Prata saiu.
+  if (!trio.prata && trio.bronze) trio = { ...trio, prata: trio.bronze, bronze: undefined };
   return { trio, decisions };
 }

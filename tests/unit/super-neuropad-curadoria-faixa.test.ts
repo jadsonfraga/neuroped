@@ -163,3 +163,32 @@ test("reconciliação 22/11/2026 (v2026-11-22.4): +50 % nos mundos centrais e la
     assert.ok(item.kind === "toque" && item.stimulus!.split(" ").filter((token) => token === "7A").length === Number(item.answer), `${years} anos: gabarito da fileira`);
   }
 });
+
+test("refino 22/11/2026 (v2026-11-22.5): tela sem teto antigo, partida inteira legível no PDF e faixa de origem coerente com a idade", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { pdfLossless, isJudged } = await import("../../client/src/features/super-neuropad/model");
+  const { SONDA_DEZ_PROTOCOL } = await import("../../client/src/data/sondaDezProtocol");
+  const { AGE_BANDS } = await import("../../client/src/features/obs10/protocol");
+  const page = readFileSync("client/src/pages/super-neuropad-game.tsx", "utf8");
+  assert.doesNotMatch(page, /até 45 min|35 min aos 3/, "selo de tempo da preparação acompanha o teto atual");
+  for (const years of YEARS) {
+    for (const phaseId of PHASE_ORDER) {
+      for (const item of GAME_BANK[years][phaseId]) {
+        const textos = [item.prompt, "stimulus" in item ? item.stimulus ?? "" : "", isJudged(item) ? item.expected : "", item.kind === "toque" ? item.options.map((option) => option.label).join(" ") : ""];
+        for (const texto of textos) assert.ok(pdfLossless(texto), `${item.id}: perde conteúdo no PDF (${texto})`);
+        if (/piso|faixa anterior|faixa seguinte|banco objetivo|Bateria/.test(item.ref)) continue;
+        const meses = years * 12;
+        const sonda = item.ref.match(/^Sonda 10 · (\d+–\d+ (?:meses|anos)) · /);
+        if (sonda) {
+          const faixa = SONDA_DEZ_PROTOCOL.find((band) => band.label === sonda[1]);
+          assert.ok(faixa && meses >= faixa.minMonths && meses <= faixa.maxMonths, `${item.id}: Sonda 10 ${sonda[1]} aos ${years} anos`);
+        }
+        const obs = item.ref.match(/^OBS-10 · ([^·]+?) · /);
+        if (obs && !/6–17|6–11/.test(obs[1])) {
+          const faixa = AGE_BANDS.find((band) => band.label === obs[1].trim());
+          assert.ok(faixa && meses >= faixa.min && meses < faixa.max, `${item.id}: OBS-10 ${obs[1]} aos ${years} anos`);
+        }
+      }
+    }
+  }
+});

@@ -3,7 +3,7 @@ import { getClinicalTiers, type ClinicalTierRule } from "./clinicalRanking";
 import { getDeliveredInteractiveItemCount, type Respondente } from "./scaleFilter";
 import { enforcePodiumHardCap } from "./podiumHardCap";
 import { refineFunctionalComplementarity, resolveRedundantMedals, type RedundancyDecision } from "./filterPodiumComplementarity";
-import { scaleAgeFit } from "./scaleAgeFit";
+import { scaleAgeFit, ageSpecificityBonus } from "./scaleAgeFit";
 import { SONDA_DEZ_PROTOCOL } from "./sondaDezProtocol";
 
 // Limite total do pódio: a soma VERIFICADA de perguntas de Ouro + Prata + Bronze
@@ -259,6 +259,9 @@ export function selectPodiumDetailed(
     // Uma escala cuja faixa NÃO contém a idade exata só deve medalhar na falta
     // de alternativa; idem para recomendações sem nada aplicável no app.
     const ageFitBonus = containsAge(match) ? 14 : 0;
+    // Instrumento desenhado para a janela etária da criança desempata a favor
+    // dele sobre o de faixa ampla (0–4; nunca vence cobertura nem curadoria).
+    const ageSpecificity = ageSpecificityBonus(match.scale, ageSelection);
     // Cobertura integral da faixa selecionada (auditoria semanal, P2): mesmo
     // desenho do ageFitBonus — preferência forte, com fallback natural quando
     // nenhuma candidata cobre a faixa toda.
@@ -278,6 +281,7 @@ export function selectPodiumDetailed(
       signalBonus +
       signalHitBonus +
       ageFitBonus +
+      ageSpecificity +
       applicableBonus +
       confidenceBonus +
       coverageGain(match, coveredQueixas) * coverageWeight +

@@ -35,6 +35,24 @@ export function scaleAgeFit(
   return scale.ageMin <= age && scale.ageMax >= age ? "exact" : "none";
 }
 
+/**
+ * Especificidade etária (0–4) como DESEMPATE: entre instrumentos que contêm a
+ * idade EXATA, prefere o desenhado para aquela janela (ex.: marcos de 6 meses)
+ * ao de faixa ampla (0–18 anos). Fora da idade, sem idade exata ou em modo
+ * faixa, vale 0 — nunca relaxa a trava de idade nem cria norma.
+ */
+export function ageSpecificityBonus(
+  scale: { ageMin: number; ageMax: number },
+  selection: AgeSelection,
+): number {
+  if (selection.ageBand) return 0;
+  if (scaleAgeFit(scale, selection) !== "exact") return 0;
+  const span = scale.ageMax - scale.ageMin;
+  if (span <= 24) return 4;
+  if (span <= 72) return 2;
+  return 0;
+}
+
 /** Encaixe aceitável como BLOQUEIO (não exclusão por preferência): sobreposição ou idade contida. */
 export function fitsSelectedAge(fit: ScaleAgeFit): boolean {
   return fit !== "none";

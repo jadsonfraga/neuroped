@@ -76,6 +76,7 @@ import {
   gameItemsFor,
   judgeShortcut,
   phaseById,
+  SESSION_LIMIT_SECONDS,
   sessionLimitSeconds,
   phaseStatusText,
   recordBuild,
@@ -1225,7 +1226,7 @@ export default function SuperNeuroPadGamePage() {
                 <span className="snp-chip">v{SUPER_NEUROPAD_VERSION}</span>
                 <span className="snp-chip">{PHASES.length} mundos · 50 desafios distribuídos por idade</span>
                 <span className="snp-chip">{DESAFIOS_DISPONIVEIS_POR_IDADE} desafios obrigatórios · modo {gameProfile?.label ?? "aventura"}</span>
-                <span className="snp-chip">até 45 min (30 min aos 2 anos, 35 min aos 3)</span>
+                <span className="snp-chip">até {Math.round(SESSION_LIMIT_SECONDS / 60)} min</span>
                 <span className="snp-chip">sem câmera · sem material externo</span>
               </div>
             )}
