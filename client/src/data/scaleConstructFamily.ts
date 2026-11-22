@@ -101,7 +101,7 @@ const STOPWORDS = new Set(["a", "o", "as", "os", "de", "da", "do", "das", "dos",
 function normalizeText(value: string): string {
   return value
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLocaleLowerCase("pt-BR");
 }
 
@@ -146,10 +146,11 @@ function sameNameFamily(a: ScaleLike, b: ScaleLike): boolean {
 /** Mesmo instrumento ou mesmo construto curado, independentemente do informante. */
 export function sameInstrumentFamily(a: ScaleLike, b: ScaleLike): boolean {
   if (a.id === b.id) return true;
+  // Grupo de redundância declarado no catálogo prevalece sobre qualquer inferência.
+  if (a.overlapGroup && a.overlapGroup === b.overlapGroup) return true;
   const ca = CURATED_FAMILY[a.id];
   const cb = CURATED_FAMILY[b.id];
   if (ca && cb) return ca === cb;
-  if (a.overlapGroup && a.overlapGroup === b.overlapGroup) return true;
   return sameNameFamily(a, b);
 }
 

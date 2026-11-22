@@ -66,6 +66,24 @@ Dois defeitos antigos, que só apareciam quando a troca de Prata acontecia:
 
 Com Prata removida, o Bronze sobe para a vaga, sem buraco no meio do pódio.
 
+## Rodada de refinamento
+
+Revisão crítica do próprio diff, com quatro correções:
+
+1. **Trio inteiro na resolução de redundância.** Ao revisar a Prata, a rotina ignorava o
+   Bronze. Ela podia manter a Prata repetitiva como "única" numa queixa que o Bronze
+   também cobria, e podia escolher substituta repetitiva com o Bronze. Cobertura,
+   justificativa, conflito e carga passam a considerar as demais medalhas do trio.
+2. **Texto da auditoria.** "Uma forma basta" e "confirme a idade exata" só valem para
+   formas do mesmo instrumento. A remoção agora também ocorre entre instrumentos
+   diferentes do mesmo construto. A mensagem nomeia as duas escalas e diz o motivo.
+3. **Precedência.** O `overlapGroup` declarado no catálogo vale antes da tabela curada.
+4. **Acentos.** A faixa de acentos usa escapes `\u0300-\u036f`, não caracteres
+   combinantes invisíveis no código-fonte.
+
+Os testes novos (seções 7c e 7d) falham no código anterior e passam nesta versão. A
+matriz abaixo repete os mesmos números, porque esses casos de borda não surgem nela.
+
 ## Resultado (mesma matriz e mesma régua nos dois motores)
 
 | Medida | `main` | Esta branch |

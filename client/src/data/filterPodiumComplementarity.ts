@@ -314,7 +314,7 @@ export interface RedundancyResolutionInput extends MedalTrio {
 /**
  * Resolve a redundância de construto que sobra no pódio.
  *
- * Duas medalhas do mesmo grupo de redundância (overlapGroup ou mesmo construto)
+ * Duas medalhas que repetem a mesma pergunta clínica (sameClinicalConstruct)
  * só podem ocupar vagas diferentes com justificativa explícita. Para Prata e
  * Bronze, em ordem de prioridade, esta rotina:
  *  1. troca a medalha redundante por candidata elegível de OUTRO construto que
@@ -348,11 +348,16 @@ export function resolveRedundantMedals({
         ? kept[0]
         : undefined);
     if (!conflicting) continue;
-    const conflictsWith = (other: RefinedScaleMatch, m: RefinedScaleMatch) =>
-      sameClinicalConstruct(other, m) ||
-      (slot === "bronze" && kept.length === 2 && familyOverflow([...kept, m].map((x) => x.scale)) > 0);
+    // Demais medalhas do trio, inclusive a de vaga POSTERIOR (ao revisar a
+    // Prata, o Bronze conta): a substituta não pode repetir nenhuma delas e a
+    // justificativa de cobertura única considera o trio inteiro.
+    const others = [trio.ouro, trio.prata, trio.bronze]
+      .filter((m): m is RefinedScaleMatch => Boolean(m) && m !== current);
+    const conflictsWithTrio = (m: RefinedScaleMatch) =>
+      others.some((other) => sameClinicalConstruct(other, m)) ||
+      (others.length === 2 && familyOverflow([...others, m].map((x) => x.scale)) > 0);
 
-    const before = coveredBy([...kept, current]);
+    const before = coveredBy([...others, current]);
     // Nenhuma substituta pode repetir QUALQUER medalha do trio atual — inclusive
     // a de uma vaga posterior (trocar Prata não pode copiar o Bronze).
     const keptIds = new Set(
@@ -362,19 +367,17 @@ export function resolveRedundantMedals({
     );
     // Carga de TODAS as outras medalhas do trio (inclusive vaga posterior):
     // trocar Prata não pode estourar o teto somado ao Bronze.
-    const keptBurden = [trio.ouro, trio.prata, trio.bronze]
-      .filter((m): m is RefinedScaleMatch => Boolean(m) && m !== current)
-      .reduce((sum, m) => sum + countQuestions(m), 0);
+    const keptBurden = others.reduce((sum, m) => sum + countQuestions(m), 0);
     const replacement = candidates
       .filter((m) =>
         !keptIds.has(m.scale.id) &&
         eligible(m) &&
         getImplementationStatus(m.scale) === "complete" &&
-        kept.every((other) => !conflictsWith(other, m)) &&
+        !conflictsWithTrio(m) &&
         m.relevanceScore >= current.relevanceScore - 20 &&
         keptBurden + countQuestions(m) <= questionCap)
       .find((m) => {
-        const after = coveredBy([...kept, m]);
+        const after = coveredBy([...others, m]);
         return [...before.queixas].every((q) => after.queixas.has(q)) &&
           [...before.signals].every((s) => after.signals.has(s));
       });
@@ -384,10 +387,11 @@ export function resolveRedundantMedals({
       continue;
     }
 
-    // Sem alternativa de outro construto: mantém só se a medalha cobre algo único.
-    const others = coveredBy(kept);
-    const uniqueComplaints = selectedQueixas.filter((q) => before.queixas.has(q) && !others.queixas.has(q));
-    const uniqueSignals = selectedSignals.filter((s) => before.signals.has(s) && !others.signals.has(s));
+    // Sem alternativa de outro construto: mantém só se a medalha cobre algo
+    // que NENHUMA outra medalha do trio cobre.
+    const othersCoverage = coveredBy(others);
+    const uniqueComplaints = selectedQueixas.filter((q) => before.queixas.has(q) && !othersCoverage.queixas.has(q));
+    const uniqueSignals = selectedSignals.filter((s) => before.signals.has(s) && !othersCoverage.signals.has(s));
     if (uniqueComplaints.length > 0 || uniqueSignals.length > 0) {
       decisions.push({ slot, action: "kept_justified", removedId: current.scale.id, keptId: conflicting.scale.id, uniqueComplaints, uniqueSignals });
       continue;

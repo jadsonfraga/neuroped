@@ -30,6 +30,7 @@ import {
   sameInstrumentFamily,
 } from "../../client/src/data/scaleConstructFamily.ts";
 import { ageSpecificityBonus } from "../../client/src/data/scaleAgeFit.ts";
+import { auditPodium } from "../../client/src/data/filterPodiumAudit.ts";
 
 const catalog = mergeFilterableCatalog(allScales);
 const byId = new Map(catalog.map((s) => [s.id, s]));
@@ -168,6 +169,69 @@ assert.ok(checked > 300, `cenários avaliados: ${checked}`);
   assert.ok(!cap.includes("longo-c"), `teto somado ao Bronze: ${cap.join(", ")}`);
   assert.ok(cap.length * 40 <= 100, "cada escala sintética tem 40 itens: no máximo duas cabem no teto");
   assert.equal(sameClinicalConstruct(ouro, prata), true);
+}
+
+// 7c. Justificativa e troca consideram o trio inteiro, inclusive a vaga posterior.
+{
+  const mk = (id: string, relevanceScore: number, queixas: string[], overlapGroup: string): RefinedScaleMatch => ({
+    scale: {
+      id, name: `Escala ${id}`, fullName: id, ageMin: 0, ageMax: 216, queixas, respondente: ["pais"],
+      prioridade: "triagem", tempo: "5 min", description: "20 itens de registro sintético",
+      implementationStatus: "complete", appRoute: `/generic-scale/${id}`, overlapGroup,
+    },
+    relevanceScore, clinicalReason: "Cenário sintético", warningFlags: [], tier: "gold",
+    confidenceLevel: 85, implementationStatus: "complete", implementationLabel: "Aplicação completa",
+    applicationMode: "questionario_pais", licenseRestricted: false,
+  });
+  const countQuestions = () => 20;
+  // A Prata repete o Ouro e a "queixa única" dela (sono) já é coberta pelo Bronze:
+  // não há justificativa para manter a repetição.
+  const ouro = mk("o", 95, ["tdah"], "g1");
+  const prata = mk("p", 92, ["tdah", "sono"], "g1");
+  const bronze = mk("b", 90, ["sono"], "g2");
+  const justified = resolveRedundantMedals({
+    ouro, prata, bronze, candidates: [ouro, prata, bronze],
+    selectedQueixas: ["tdah", "sono"], selectedSignals: [],
+    eligible: () => true, questionCap: 100, countQuestions,
+  });
+  assert.ok(
+    !justified.decisions.some((d) => d.action === "kept_justified"),
+    "cobertura já presente no Bronze não justifica manter a Prata repetitiva",
+  );
+  assert.deepEqual(
+    [justified.trio.ouro, justified.trio.prata, justified.trio.bronze].filter(Boolean).map((m) => m!.scale.id),
+    ["o", "b"],
+  );
+  // A substituta da Prata não pode repetir o Bronze.
+  const twinOfBronze = mk("t", 91, ["tdah"], "g2");
+  const other = mk("x", 85, ["tdah"], "g3");
+  const swap = resolveRedundantMedals({
+    ouro, prata: mk("p2", 92, ["tdah"], "g1"), bronze, candidates: [ouro, twinOfBronze, other, bronze],
+    selectedQueixas: ["tdah", "sono"], selectedSignals: [],
+    eligible: () => true, questionCap: 100, countQuestions,
+  });
+  const swapIds = [swap.trio.ouro, swap.trio.prata, swap.trio.bronze].filter(Boolean).map((m) => m!.scale.id);
+  assert.ok(!swapIds.includes("t"), `substituta não repete o Bronze: ${swapIds.join(", ")}`);
+  assert.deepEqual(swapIds, ["o", "x", "b"]);
+  assert.equal(repetitionCount([swap.trio.ouro!, swap.trio.prata!, swap.trio.bronze!]), 0);
+}
+
+// 7d. A explicação na tela nomeia as escalas e não presume "outra forma do mesmo instrumento".
+{
+  const decisionPodium = podiumFor(["dor"], 6, "clinico");
+  const audit = auditPodium({
+    podium: decisionPodium.detail,
+    candidates: decisionPodium.matches,
+    selectedQueixas: ["dor"],
+    selectedSignals: [],
+    selection: { exactAge: 6, ageBand: null },
+  });
+  const redundancy = audit.gaps.filter((gap) => gap.kind === "redundancia");
+  assert.ok(redundancy.length > 0, "a remoção por repetição aparece na auditoria");
+  for (const gap of redundancy) {
+    assert.doesNotMatch(gap.message, /uma forma basta/);
+    assert.match(gap.message, /FLACC|COMFORT-B|CHEOPS|CRIES/, `cita as escalas: ${gap.message}`);
+  }
 }
 
 // 8. Especificidade etária: desempate, nunca trava.
