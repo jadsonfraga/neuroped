@@ -8,6 +8,7 @@ import { downloadTextDocument, safeTextFilename } from "@/lib/shareText";
 import { formatClinicalDateTime, localIsoDate } from "@/lib/clinicalDate";
 import { DESCRIPTIVE_NOTICE } from "@/lib/descriptiveNotice";
 import { Stimulus as VrStimulus } from "@/features/visual-recognition/Stimulus";
+import { ART_STYLES, defaultArtStyle, type ArtStyle } from "@/features/visual-recognition/model";
 import type { Option } from "@/features/super-neuropad/model";
 import {
   NV_BREAK_EVERY,
@@ -22,6 +23,7 @@ import {
   nvOptionOrders,
   nvRecord,
   nvReportText,
+  nvSpokenPrompt,
   nvSummary,
   type NvRecord,
   type NvYears,
@@ -58,12 +60,12 @@ function systemPrefersCalm(): boolean {
   }
 }
 
-function OptionArt({ option }: { option: Option }) {
+function OptionArt({ option, artStyle }: { option: Option; artStyle: ArtStyle }) {
   if (option.vr) {
     // `child` evita que o texto alternativo da figura entregue a resposta.
     return (
       <span className="block h-28 w-28 sm:h-36 sm:w-36">
-        <VrStimulus id={option.vr} child />
+        <VrStimulus id={option.vr} child artStyle={artStyle} />
       </span>
     );
   }
@@ -111,11 +113,16 @@ export default function SuperNeuroPadNaoVerbalPage() {
   // Avanço pendente durante a festa (1,3 s): cancelado ao encerrar; suspenso na pausa.
   const pendingAdvance = useRef<number | null>(null);
   const advanceOnResume = useRef(false);
+  // Timers curtos (fim do balanço e saída do treino), limpos ao sair da aba.
+  const wiggleTimer = useRef<number | null>(null);
+  const warmupTimer = useRef<number | null>(null);
 
   useEffect(() => setCalm(systemPrefersCalm()), []);
   useEffect(() => () => {
     cancel();
     if (pendingAdvance.current) window.clearTimeout(pendingAdvance.current);
+    if (wiggleTimer.current) window.clearTimeout(wiggleTimer.current);
+    if (warmupTimer.current) window.clearTimeout(warmupTimer.current);
   }, [cancel]);
   // Cada tela nova começa no topo: o mascote e o desafio precisam estar à vista da criança.
   useEffect(() => {
@@ -123,6 +130,8 @@ export default function SuperNeuroPadNaoVerbalPage() {
   }, [screen, index]);
 
   const mascot = MASCOTS[mascotIndex];
+  // Mesma regra do Reconhecimento Visual: figuras kawaii até 4 anos (59 meses), sóbrias a partir de 5.
+  const artStyle: ArtStyle = years ? defaultArtStyle(years * 12) : "sobrio";
   const challenges = useMemo(() => (years ? nvChallengesFor(years) : []), [years]);
   const orders = useMemo(() => nvOptionOrders(challenges, seed), [challenges, seed]);
   const current = challenges[index];
@@ -147,7 +156,7 @@ export default function SuperNeuroPadNaoVerbalPage() {
     } else {
       setRevealed(true);
       shownAt.current = Date.now();
-      say(current.item.prompt);
+      say(nvSpokenPrompt(current.item.prompt));
     }
   }, [screen, index, current, say]);
 
@@ -159,7 +168,7 @@ export default function SuperNeuroPadNaoVerbalPage() {
       // O tempo de resposta começa agora: pausas feitas durante a prévia não contam.
       shownAt.current = Date.now();
       pausedTotal.current = 0;
-      if (current) say(current.item.prompt);
+      if (current) say(nvSpokenPrompt(current.item.prompt));
       return;
     }
     const timer = window.setTimeout(() => setPreviewLeft((left) => left - 1), 1000);
@@ -175,7 +184,8 @@ export default function SuperNeuroPadNaoVerbalPage() {
       setWiggle(true);
       sound(playJump);
       say("Olha aqui! Toque em um!");
-      window.setTimeout(() => setWiggle(false), 1800);
+      if (wiggleTimer.current) window.clearTimeout(wiggleTimer.current);
+      wiggleTimer.current = window.setTimeout(() => { wiggleTimer.current = null; setWiggle(false); }, 1800);
     }, NV_IDLE_SECONDS * 1000);
     return () => window.clearTimeout(timer);
   }, [screen, revealed, paused, chosen, index, wiggle, say, sound]);
@@ -221,10 +231,15 @@ export default function SuperNeuroPadNaoVerbalPage() {
   };
 
   const repeatPrompt = () => {
-    if (!current) return;
-    repeats.current += 1;
+    if (!current || chosen !== null) return;
     sound(softTap);
-    if (voiceOn) speak(current.item.prompt, 0.78);
+    // Na prévia de memória o enunciado ainda não foi dado: só reforça o "olha bem", sem contar repetição.
+    if (!revealed) {
+      if (voiceOn) speak("Olha bem!", 0.78);
+      return;
+    }
+    repeats.current += 1;
+    if (voiceOn) speak(nvSpokenPrompt(current.item.prompt), 0.78);
   };
 
   const clearPendingAdvance = () => {
@@ -282,7 +297,7 @@ export default function SuperNeuroPadNaoVerbalPage() {
     say(`Oi! Eu sou o ${mascot.name}! Toque na estrela!`);
   };
 
-  const report = useMemo(() => (years ? nvReportText(records, years, DESCRIPTIVE_NOTICE, generatedAt) : ""), [records, years, generatedAt]);
+  const report = useMemo(() => (years ? nvReportText(records, years, DESCRIPTIVE_NOTICE, generatedAt, ART_STYLES[artStyle]) : ""), [records, years, generatedAt, artStyle]);
   const summary = useMemo(() => nvSummary(records), [records]);
 
   const stickerShelf = (
@@ -315,7 +330,7 @@ export default function SuperNeuroPadNaoVerbalPage() {
                 </button>
               ))}
             </div>
-            {years && <p className="mt-2 text-sm font-semibold text-slate-600">{challenges.length} desafios do banco do Super NeuroPad Game de {years} anos, só de tocar ou apontar.</p>}
+            {years && <p className="mt-2 text-sm font-semibold text-slate-600">{challenges.length} desafios do banco do Super NeuroPad Game de {years} anos, só de tocar ou apontar. Figuras: {ART_STYLES[artStyle]}.</p>}
           </section>
 
           <section className="rounded-3xl border-4 border-slate-800 bg-white p-5" aria-labelledby="nv-amigo">
@@ -361,7 +376,12 @@ export default function SuperNeuroPadNaoVerbalPage() {
         <button
           type="button"
           aria-label="Estrela de treino"
-          onClick={() => { sound(playCoin); party(); window.setTimeout(() => { setScreen("desafio"); }, 900); }}
+          onClick={() => {
+            if (warmupTimer.current) return; // toques repetidos na estrela não agendam outra saída
+            sound(playCoin);
+            party();
+            warmupTimer.current = window.setTimeout(() => { warmupTimer.current = null; setScreen("desafio"); }, 900);
+          }}
           className="nv-card nv-pop-in nv-float flex h-48 w-48 items-center justify-center bg-amber-200 text-9xl"
         >
           <span aria-hidden="true">⭐</span>
@@ -418,7 +438,7 @@ export default function SuperNeuroPadNaoVerbalPage() {
         <div className="mx-auto max-w-4xl space-y-5">
           <h1 className="text-2xl font-black">{NV_TITLE} · registro da aplicação</h1>
           <p className="text-sm font-semibold text-slate-600">{years} anos · {generatedAt} · {DESCRIPTIVE_NOTICE}</p>
-          <p className="text-xs font-bold text-slate-600">{NV_PROVENANCE}</p>
+          <p className="text-xs font-bold text-slate-600">{NV_PROVENANCE} · Figuras: {ART_STYLES[artStyle]}</p>
           <p className="rounded-2xl border-2 border-amber-500 bg-amber-50 px-3 py-2 text-sm font-bold text-amber-900">{NV_VALIDATION_STATUS}</p>
           <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {(["acerto", "erro", "sem_resposta", "recusa"] as const).map((status) => (
@@ -487,7 +507,7 @@ export default function SuperNeuroPadNaoVerbalPage() {
         <div className="max-w-xl rounded-3xl border-4 border-slate-800 bg-white px-3 py-2 text-center text-xl font-black sm:px-4 sm:py-3 sm:text-3xl">
           {revealed ? item.prompt : "Olha bem!"}
         </div>
-        <button type="button" onClick={repeatPrompt} aria-label="Ouvir o desafio de novo" className="nv-card flex h-16 w-16 shrink-0 items-center justify-center bg-amber-200">
+        <button type="button" onClick={repeatPrompt} disabled={chosen !== null} aria-label="Ouvir o desafio de novo" className="nv-card flex h-16 w-16 shrink-0 items-center justify-center bg-amber-200 disabled:opacity-40">
           <Ear className="h-8 w-8" />
         </button>
       </div>
@@ -502,7 +522,7 @@ export default function SuperNeuroPadNaoVerbalPage() {
       {revealed && (
         <>
           {item.stimulusVr && (
-            <div className="mt-4 flex justify-center"><span className="nv-pop-in block h-32 w-32 rounded-3xl border-4 border-slate-800 bg-white p-2"><VrStimulus id={item.stimulusVr} child /></span></div>
+            <div className="mt-4 flex justify-center"><span className="nv-pop-in block h-32 w-32 rounded-3xl border-4 border-slate-800 bg-white p-2"><VrStimulus id={item.stimulusVr} child artStyle={artStyle} /></span></div>
           )}
           {item.stimulus && <p className="nv-pop-in mt-4 text-center text-5xl font-black sm:text-6xl" aria-label={`Modelo: ${item.stimulus}`}>{item.stimulus}</p>}
           <div role="group" aria-label="Figuras para tocar" className={`mx-auto mt-6 grid w-full max-w-4xl flex-1 content-center gap-4 ${order.length <= 2 ? "grid-cols-2" : order.length === 3 ? "grid-cols-3" : "grid-cols-2 sm:grid-cols-4"}`}>
@@ -516,7 +536,7 @@ export default function SuperNeuroPadNaoVerbalPage() {
                 style={{ animationDelay: `${position * 0.18}s` }}
                 className={`nv-card nv-pop-in flex min-h-40 items-center justify-center p-3 ${option.vr ? "bg-white" : CARD_TINTS[position % CARD_TINTS.length]} ${wiggle ? "nv-wiggle" : ""} ${chosen === position ? "nv-chosen bg-amber-300" : ""} ${chosen !== null && chosen !== position ? "grayscale" : ""}`}
               >
-                <OptionArt option={option} />
+                <OptionArt option={option} artStyle={artStyle} />
               </button>
             ))}
           </div>

@@ -23,7 +23,7 @@ import {
 
 export const NV_TITLE = "SuperNeuroPad Não Verbal";
 /** Versão desta seleção (regras de filtro, limites e sessão). */
-export const NV_VERSION = "2026-11-22.1";
+export const NV_VERSION = "2026-11-22.2";
 /** Versão do banco do Super NeuroPad Game de onde os itens são tirados. */
 export const NV_BANK_VERSION = SUPER_NEUROPAD_VERSION;
 /** Status de validação, mostrado na UI e no registro (AGENTS.md: verdade clínica). */
@@ -58,6 +58,22 @@ function optionIsNonVerbal(option: Option): boolean {
 function stimulusIsNonVerbal(text: string | undefined): boolean {
   if (!text) return true;
   return !/[A-Za-zÀ-ÿ]{2,}/.test(text);
+}
+
+/**
+ * Texto que a voz lê. O enunciado mostrado pode trazer figuras (🐸🐸🐸) e sinais
+ * (4 + 3 = ?), que a voz sintetizada leria como nomes de emoji ou símbolos soltos.
+ * A tela continua mostrando o enunciado original.
+ */
+export function nvSpokenPrompt(prompt: string): string {
+  return prompt
+    .replace(/\p{Extended_Pictographic}|\u{FE0F}|\u{200D}|\p{Emoji_Modifier}/gu, " ")
+    .replace(/\s*=\s*\?/g, " é igual a quanto?")
+    .replace(/(\d)\s*\+\s*(?=\d)/g, "$1 mais ")
+    .replace(/(\d)\s*[−-]\s*(?=\d)/g, "$1 menos ")
+    .replace(/\s+([?.!,])/g, "$1")
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }
 
 export function isNonVerbalItem(item: unknown): item is TouchItem {
@@ -209,13 +225,15 @@ export function nvSummary(records: readonly NvRecord[]): NvSummary {
 }
 
 /** Texto para a aplicadora copiar no prontuário: descritivo, sem classificação. */
-export function nvReportText(records: readonly NvRecord[], years: number, notice: string, generatedAt: string): string {
+/** `figureStyle`: estilo das figuras realmente mostradas (kawaii até 4 anos, sóbrio a partir de 5). */
+export function nvReportText(records: readonly NvRecord[], years: number, notice: string, generatedAt: string, figureStyle?: string): string {
   const summary = nvSummary(records);
   const lines = [
     `${NV_TITLE} — registro da aplicação`,
     `Versão: ${NV_PROVENANCE}`,
     `Status: ${NV_VALIDATION_STATUS}`,
     `Idade informada: ${years} anos · Gerado em ${generatedAt}`,
+    ...(figureStyle ? [`Figuras: ${figureStyle}`] : []),
     `Desafios aplicados: ${summary.total}`,
     `Tocou na figura esperada: ${summary.counts.acerto} · Tocou em outra figura: ${summary.counts.erro} · Sem resposta: ${summary.counts.sem_resposta} · Recusou: ${summary.counts.recusa}`,
     `Mediana do tempo até o toque: ${summary.medianSeconds === null ? "—" : `${summary.medianSeconds} s`}`,

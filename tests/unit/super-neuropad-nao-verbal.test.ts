@@ -13,6 +13,7 @@ import {
   nvOptionOrders,
   nvRecord,
   nvReportText,
+  nvSpokenPrompt,
   nvSummary,
 } from "../../client/src/features/super-neuropad-nao-verbal/model";
 
@@ -115,4 +116,26 @@ test("registro e resumo são descritivos e contam cada situação", () => {
   assert.ok(text.includes(NV_VALIDATION_STATUS), "registro sem status de validação");
   assert.match(NV_VALIDATION_STATUS, /não validada/);
   assert.ok(!/\b(diagn[oó]stic|normal|alterad|atraso|risco|TEA|autis)/i.test(text.replace(NOTICE, "").replace(NV_VALIDATION_STATUS, "")), "texto não pode classificar");
+});
+
+test("a voz lê o enunciado sem nomes de emoji nem símbolos soltos; a tela mantém o original", () => {
+  assert.equal(nvSpokenPrompt("Quantos sapos? 🐸🐸🐸🐸🐸"), "Quantos sapos?");
+  assert.equal(nvSpokenPrompt("4 + 3 = ?"), "4 mais 3 é igual a quanto?");
+  assert.equal(nvSpokenPrompt("6 − 2 = ?"), "6 menos 2 é igual a quanto?");
+  assert.equal(nvSpokenPrompt("Toque no olho 👁️."), "Toque no olho.");
+  for (const years of NV_YEARS) {
+    for (const { item } of nvChallengesFor(years)) {
+      const spoken = nvSpokenPrompt(item.prompt);
+      assert.ok(spoken.length > 0, `${item.id}: enunciado falado vazio`);
+      assert.doesNotMatch(spoken, /\p{Extended_Pictographic}|[=+−]/u, `${item.id}: ${spoken}`);
+    }
+  }
+});
+
+test("o registro informa o estilo das figuras mostradas quando a aba o passa", () => {
+  const challenge = nvChallengesFor(3)[0];
+  const order = nvOptionOrders([challenge], 1)[0];
+  const record = nvRecord(challenge, order, order[0], { seconds: 2, repeats: 0, attentionCalls: 0 });
+  assert.match(nvReportText([record], 3, NOTICE, "22/11/2026 14:00", "Kawaii · 1 a 4 anos"), /^Figuras: Kawaii · 1 a 4 anos$/m);
+  assert.doesNotMatch(nvReportText([record], 3, NOTICE, "22/11/2026 14:00"), /^Figuras:/m);
 });
