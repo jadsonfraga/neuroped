@@ -688,3 +688,22 @@
   --pant-render-color-86: #fff;
   --pant-render-color-87: #fff0f0;
 }
+
+/* ====================================================
+   SUPERNEUROPAD NÃO VERBAL — cores da aba para crianças pequenas
+   Fundo claro fixo (a criança vê a mesma tela no claro e no escuro).
+   ==================================================== */
+:root {
+  --nv-ink: #1f2937;
+  --nv-paper: #fffaf0;
+  --nv-glow-sun: rgba(255, 214, 102, 0.45);
+  --nv-glow-sky: rgba(129, 212, 250, 0.45);
+  --nv-glow-grass: rgba(165, 214, 167, 0.5);
+  --nv-focus: #2563eb;
+  --nv-highlight: #f59e0b;
+  --nv-bubble-rim: rgba(255, 255, 255, 0.9);
+  --nv-bubble-shine: rgba(255, 255, 255, 0.95);
+  --nv-bubble-sky: rgba(147, 197, 253, 0.55);
+  --nv-bubble-lilac: rgba(196, 181, 253, 0.5);
+  --nv-bubble-shadow: rgba(59, 130, 246, 0.25);
+}

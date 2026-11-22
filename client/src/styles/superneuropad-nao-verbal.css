@@ -3,22 +3,22 @@
 
 .nv-stage {
   background:
-    radial-gradient(circle at 15% 20%, rgba(255, 214, 102, 0.45), transparent 40%),
-    radial-gradient(circle at 85% 15%, rgba(129, 212, 250, 0.45), transparent 42%),
-    radial-gradient(circle at 50% 95%, rgba(165, 214, 167, 0.5), transparent 45%),
-    #fffaf0;
-  color: #1f2937;
+    radial-gradient(circle at 15% 20%, var(--nv-glow-sun), transparent 40%),
+    radial-gradient(circle at 85% 15%, var(--nv-glow-sky), transparent 42%),
+    radial-gradient(circle at 50% 95%, var(--nv-glow-grass), transparent 45%),
+    var(--nv-paper);
+  color: var(--nv-ink);
 }
 
 .nv-card {
-  border: 5px solid #1f2937;
+  border: 5px solid var(--nv-ink);
   border-radius: 1.75rem;
-  box-shadow: 0 8px 0 #1f2937;
+  box-shadow: 0 8px 0 var(--nv-ink);
   transition: transform 0.15s ease;
   touch-action: manipulation;
 }
-.nv-card:active { transform: translateY(4px) scale(0.98); box-shadow: 0 4px 0 #1f2937; }
-.nv-card:focus-visible { outline: 5px solid #2563eb; outline-offset: 4px; }
+.nv-card:active { transform: translateY(4px) scale(0.98); box-shadow: 0 4px 0 var(--nv-ink); }
+.nv-card:focus-visible { outline: 5px solid var(--nv-focus); outline-offset: 4px; }
 
 @keyframes nv-pop-in {
   0% { opacity: 0; transform: scale(0.3) rotate(-8deg); }
@@ -64,9 +64,9 @@
 .nv-chosen { animation: nv-chosen 0.5s ease-out both; }
 .nv-bubble {
   border-radius: 9999px;
-  border: 4px solid rgba(255, 255, 255, 0.9);
-  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.95), rgba(147, 197, 253, 0.55) 45%, rgba(196, 181, 253, 0.5));
-  box-shadow: 0 6px 18px rgba(59, 130, 246, 0.25);
+  border: 4px solid var(--nv-bubble-rim);
+  background: radial-gradient(circle at 30% 30%, var(--nv-bubble-shine), var(--nv-bubble-sky) 45%, var(--nv-bubble-lilac));
+  box-shadow: 0 6px 18px var(--nv-bubble-shadow);
   animation: nv-float 3s ease-in-out infinite;
 }
 .nv-bubble--popped { animation: nv-pop 0.35s ease-out forwards; pointer-events: none; }
@@ -78,7 +78,7 @@
 .nv-calm .nv-chosen,
 .nv-calm .nv-bubble { animation: none !important; }
 .nv-calm .nv-wiggle,
-.nv-calm .nv-chosen { outline: 6px solid #f59e0b; outline-offset: 4px; }
+.nv-calm .nv-chosen { outline: 6px solid var(--nv-highlight); outline-offset: 4px; }
 
 @media (prefers-reduced-motion: reduce) {
   .nv-pop-in, .nv-float, .nv-wiggle, .nv-dance, .nv-chosen, .nv-bubble { animation: none !important; }
