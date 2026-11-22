@@ -49,7 +49,7 @@ async function screen(name) {
 async function waitScreen(value) {
   await page.locator(`[data-testid="super-neuropad-game"][data-screen="${value}"]`).waitFor({ timeout: 15000 });
 }
-const ITEMS_BY_WORLD = [7, 8, 10, 9, 8, 8]; // idade 7: catálogo obrigatório completo (curadoria por faixa de 22/11/2026)
+const ITEMS_BY_WORLD = [8, 8, 9, 8, 8, 9]; // idade 7: catálogo obrigatório completo (curadoria por faixa de 22/11/2026, lacunas v2026-11-22.4)
 const WORLDS = 6;
 const TOTAL = ITEMS_BY_WORLD.reduce((sum, count) => sum + count, 0);
 /** Tipo do desafio visível: toque (opções), montar (letras) ou julgado (fala/ação). */
@@ -398,8 +398,8 @@ try {
   const partialText = pdfText(`${dir}/partial.pdf`);
   if (partialText) assert.match(partialText.replace(/\s+/g, " "), /não aplicado/i, "PDF parcial informa o mundo não aplicado");
 
-  // 3 anos: bateria dedicada (4 por mundo) + complemento curado; a Vila tem 7 e começa por um item de relato do cuidador.
-  const VILA_3_ANOS = 7;
+  // 3 anos: bateria dedicada (4 por mundo) + complemento curado; a Vila tem 8 e começa por um item de relato do cuidador.
+  const VILA_3_ANOS = 8;
   await button("Nova partida").click();
   await waitScreen("setup");
   await page.getByRole("group", { name: "Idade em anos" }).getByRole("button", { name: "3", exact: true }).click();

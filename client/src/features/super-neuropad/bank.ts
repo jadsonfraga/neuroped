@@ -957,6 +957,19 @@ const SPONTANEOUS_REQUEST = (band: string): Draft<DoItem> => fazer("sonda10", SO
   "Ao longo do jogo, observe e registre: ela pede alguma coisa por conta própria?",
   "Faz pelo menos um pedido espontâneo (palavra, som ou gesto acompanhado de olhar)", { seconds: 8 });
 
+// Lacunas fechadas na reconciliação de 22/11/2026 (v2026-11-22.4): construtos da Sonda 10/OBS-10 que nenhum
+// item do jogo aplicava — iniciativa social espontânea, reciprocidade de conversa, ironia (8–11), atenção
+// seletiva (12–17) e seguimento ocular do núcleo motor da OBS-10 (bandas de 5 anos em diante).
+const EYE_TRACK = (band: string): Draft<DoItem> => fazer("obs10", MOTOR(band),
+  "Segure o seu dedo a uns 40 cm do rosto da criança: “Siga o meu dedo só com os olhos.” Mova devagar para os lados e depois para cima e para baixo.",
+  "Acompanha o dedo com os olhos nas duas direções, sem perder o alvo e sem precisar virar a cabeça", { stimulus: "👉", seconds: 20 });
+const SOCIAL_INITIATIVE: Draft<DoItem> = fazer("sonda10", SONDA("3–4 anos", "interação espontânea"),
+  "Fique 10 segundos perto da criança, em silêncio e com cara de interesse, sem fazer pergunta.",
+  "Puxa conversa ou brincadeira por iniciativa própria (mostra, comenta, convida)", { seconds: 15 });
+const RECIPROCITY = (ref: string, comment: string): Draft<SpeakItem> => fala("sonda10", ref,
+  `Comente: “${comment}” e espere 5 segundos, sem perguntar nada.`,
+  "Continua o assunto por conta própria: comenta ou pergunta sobre o que você disse, sem mudar para um tema só dela", { seconds: 20 });
+
 function curatedOptional(years: number): Partial<Record<PhaseId, Draft<Item>[]>> {
   if (years === 2) {
     const m = "24–35 meses";
@@ -1002,6 +1015,7 @@ function curatedOptional(years: number): Partial<Record<PhaseId, Draft<Item>[]>>
         tg(ASK_HELP("3–4 anos", 10), "interacao_social"),
         tg(fazer("obs10", OBS("3 anos", "retomar e encerrar (aviso e escolha)"), "Avise que a brincadeira vai acabar e ofereça a escolha: “O que guardamos primeiro: a bola ou o carro?”",
           "Aceita o aviso e faz uma escolha (fala, aponta ou toca)", { stimulus: "⚽ 🚗", seconds: 15 }), "interacao_social"),
+        tg(SOCIAL_INITIATIVE, "interacao_social"),
       ],
       olhos: [tg(SHOW_SHARE("3–4 anos"), "atencao_conjunta")],
       numeros: [tg(SPONTANEOUS_REQUEST("3–4 anos"), "linguagem_expressiva")],
@@ -1022,6 +1036,7 @@ function curatedOptional(years: number): Partial<Record<PhaseId, Draft<Item>[]>>
       fala("obs10", OBS("4 anos", "interagir e conversar"), "Pergunte: “Teve alguma coisa que deixou você preocupado ou chateado?”", "Responde de forma compreensível (vale “não”); acolha sem insistir"),
       ASK_HELP("3–4 anos", 10),
       fala("obs10", OBS("4 anos", "retomar e encerrar"), "No fim, pergunte: “Qual parte você mais gostou?”", "Diz ou mostra uma parte (aceitar não responder)", { seconds: 15 }),
+      SOCIAL_INITIATIVE,
     ],
     memoria: [
       DOG_CLAP("3–4 anos", ["gato", "CACHORRO", "bola", "casa", "CACHORRO"]),
@@ -1042,6 +1057,7 @@ function curatedOptional(years: number): Partial<Record<PhaseId, Draft<Item>[]>>
         "Responde de forma compreensível (vale “não”); silêncio não quer dizer que nada atrapalha — registre como respondeu"),
       fala("sonda10", SONDA("5–7 anos", "narrativa + inferência"), "Mostre a cena: “O que está acontecendo? Por quê? O que vai acontecer depois?”",
         "Diz o que acontece (chuva, guarda-chuva), dá um porquê e prevê algo plausível", { stimulus: "🌧️ 🧒 ☂️", seconds: 30 }),
+      RECIPROCITY(SONDA("5–7 anos", "conversação (reciprocidade)"), "Eu tenho um cachorro."),
     ],
     memoria: [
       fala("obs10", OBS("5 anos", "linguagem e raciocínio (reconto)"), "Conte: “Um gato ficou preso numa árvore. Uma pessoa trouxe uma escada e ajudou o gato a descer.” Pergunte: “O que aconteceu?” e “Como ele desceu?”",
@@ -1053,13 +1069,14 @@ function curatedOptional(years: number): Partial<Record<PhaseId, Draft<Item>[]>>
       fazer("sonda10", SONDA("5–7 anos", "compreensão (antes/depois, 2 etapas)"), "Diga uma vez: “Antes de pôr a mão na cabeça, toque o nariz.”",
         "Toca o nariz primeiro e depois põe a mão na cabeça", { seconds: 15 }),
     ],
-    corpo: [ARMS("5 anos"), FINGER_NOSE("5 anos"), copyShape("5 anos", "circulo", "o círculo", "Desenha uma forma fechada e arredondada")],
+    corpo: [ARMS("5 anos"), FINGER_NOSE("5 anos"), EYE_TRACK("5 anos"), copyShape("5 anos", "circulo", "o círculo", "Desenha uma forma fechada e arredondada")],
   };
   if (years <= 7) return {
     vila: [
       fala("obs10", OBS("6–8 anos", "interagir e conversar"), "Pergunte: “O que está mais difícil na escola ou em casa?”", "Responde de forma compreensível, dentro do assunto (vale “nada”)"),
       fala("sonda10", SONDA("5–7 anos", "narrativa + inferência (antecipação)"), "Volte à cena da chuva e pergunte: “E o que vai acontecer depois?”",
         "Antecipa algo plausível (vai se molhar menos, vai chegar em casa, a chuva vai passar)", { stimulus: "🌧️ 🧒 ☂️" }),
+      RECIPROCITY(SONDA("5–7 anos", "conversação (reciprocidade)"), "No fim de semana eu fui a uma festa."),
     ],
     memoria: [
       fazer("sonda10", SONDA("5–7 anos", "compreensão + memória operacional"), "Diga uma vez: “Escuta tudo antes de começar: antes de bater palma, toque o nariz; depois, ponha a mão na cabeça.”",
@@ -1072,6 +1089,7 @@ function curatedOptional(years: number): Partial<Record<PhaseId, Draft<Item>[]>>
       fazer("obs10", HANDS("6–8 anos"), "Demonstre e peça: “Toque o polegar em cada dedo, do indicador ao mindinho.” Uma mão, depois a outra.",
         "Faz a sequência completa nas duas mãos sem pular dedo", { stimulus: "🖐️", seconds: 30 }),
       WALK_TURN("6–8 anos"),
+      EYE_TRACK("6–8 anos"),
     ],
   };
   if (years <= 11) {
@@ -1082,6 +1100,9 @@ function curatedOptional(years: number): Partial<Record<PhaseId, Draft<Item>[]>>
           ? fala("obs10", OBS(obsBand, "interagir e conversar"), "Pergunte: “O que está mais difícil na escola ou em casa?”", "Responde de forma compreensível, dentro do assunto (vale “nada”)")
           : fala("obs10", OBS(obsBand, "interagir e conversar"), "Pergunte: “Alguma preocupação tem atrapalhado o sono, o estudo ou a convivência?”",
             "Responde de forma compreensível (vale “não”); ofereça conversa reservada com o médico, sem aprofundar na hora"),
+        RECIPROCITY(SONDA("8–11 anos", "pragmática espontânea (reciprocidade)"), "No fim de semana eu fui à praia."),
+        fala("sonda10", SONDA("8–11 anos", "inferência social (ironia)"), "Diga: “O aluno chegou atrasado de novo e a professora disse: ‘Que beleza, pontual como sempre!’” Pergunte: “Ela estava elogiando?”",
+          "Diz que não: ela estava brava ou chamando a atenção (percebe a ironia)", { seconds: 25 }),
       ],
       memoria: [
         fazer("sonda10", SONDA("8–11 anos", "memória operacional"), "Diga uma vez, sem repetir: “Faça na ordem que eu falar: toque o nariz, bata palma, ponha a mão na cabeça e toque o joelho.”",
@@ -1097,7 +1118,7 @@ function curatedOptional(years: number): Partial<Record<PhaseId, Draft<Item>[]>>
           : fala("obs10", OBS(obsBand, "linguagem e raciocínio"), "Pergunte: “Como você organizaria a mochila para amanhã?”",
             "Descreve passos numa ordem que faz sentido (ver as aulas, separar o material, conferir)", { seconds: 30 }),
       ],
-      corpo: [ARMS(obsBand), FINGER_NOSE(obsBand)],
+      corpo: [ARMS(obsBand), FINGER_NOSE(obsBand), EYE_TRACK(obsBand)],
     };
   }
   return {
@@ -1118,8 +1139,11 @@ function curatedOptional(years: number): Partial<Record<PhaseId, Draft<Item>[]>>
           "Diz “rei – rio – voz – mão – dia”", { stimulus: "🗣️ ↩" })
         : fala("sonda10", SONDA("12–17 anos", "memória operacional verbal (próximo passo)"), "Diga, uma palavra por segundo: “Repita ao contrário: flor – rio – céu – pá.”",
           "Diz “pá – céu – rio – flor”", { stimulus: "🗣️ ↩" }),
+      // Sonda 10 (12–17) "atenção seletiva": a grade autoral vira uma fileira na tela; só letras e números (legível no PDF).
+      toque("sonda10", SONDA("12–17 anos", "atenção seletiva"), "Olhe a fileira com calma. Quantas vezes aparece exatamente 7A (o 7 antes do A)?",
+        ["5", "6", "7", "8"].map((value) => opt(value)), "6", { stimulus: "7A 1A 7B 7A A7 7A 1B 7A 7B 7A 1A 7A", seconds: 25 }),
     ],
-    corpo: [ARMS("12–17 anos"), FINGER_NOSE("12–17 anos")],
+    corpo: [ARMS("12–17 anos"), FINGER_NOSE("12–17 anos"), EYE_TRACK("12–17 anos")],
   };
 }
 
