@@ -152,6 +152,8 @@ export function refineFunctionalComplementarity({
       keepOuro * 5_000 +
       currentRetained * 2_000 -
       repeatPairs(arr) * 12_000 +
+      // Em faixa, cobrir a faixa INTEIRA pesa mais que diversificar informante.
+      arr.filter((m) => ageBand !== null && scaleAgeFit(m.scale, { exactAge: null, ageBand }) === "full").length * 2_000 +
       complementarityGain(arr) * 1_500 +
       arr.reduce((sum, m) => sum + m.relevanceScore + ageSpecificityBonus(m.scale, { exactAge: ageMonths, ageBand }), 0);
   };

@@ -47,6 +47,12 @@ famílias distintos. A resolução final troca a medalha repetitiva por outra se
 mantém só com justificativa de cobertura única ou remove. O pódio não preenche vaga
 por obrigação.
 
+Em modo faixa, a composição dá mais peso à medalha que cobre a faixa inteira do que
+à diversidade de informante. Sem isso, a troca de uma medalha repetitiva podia trazer
+substituta de cobertura parcial: a métrica `band_medals_full_pct` caía de 89,2% para
+89,1%, abaixo do piso do guarda de CI. Com a regra, ela fica em 89,2%, igual à `main`,
+e o número de medalhas com cobertura parcial cai de 708 para 700.
+
 Desempate etário (`ageSpecificityBonus`, 0–4 pontos): entre escalas que contêm a idade
 **exata**, prefere a desenhada para aquela janela (ex.: marcos de 6 meses, IPN-TEA
 9–12 anos) à de 0–18 anos. Em modo faixa vale 0. Nunca relaxa a trava de idade.
