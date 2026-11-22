@@ -9,6 +9,7 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { interactiveScaleItems } from "../../client/src/data/interactiveScaleItems.ts";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const tsxLoader = pathToFileURL(
@@ -20,6 +21,11 @@ const exporters = [
     script: "scripts/audit-scales-export.mts",
     outDir: "docs/audit",
     minFiles: 3,
+    // Uma seção "## <id> — " por escala com itens interativos: nenhuma omitida nem duplicada.
+    sections: {
+      file: "escalas-autorais-auditoria.md",
+      ids: Object.keys(interactiveScaleItems).sort(),
+    },
   },
   {
     script: "scripts/extract-escalas-completas.mts",
@@ -28,7 +34,7 @@ const exporters = [
   },
 ];
 
-for (const { script, outDir, minFiles } of exporters) {
+for (const { script, outDir, minFiles, sections } of exporters) {
   const work = mkdtempSync(join(tmpdir(), "np-scale-export-"));
   try {
     const run = spawnSync(
@@ -63,6 +69,20 @@ for (const { script, outDir, minFiles } of exporters) {
       assert.ok(
         !text.includes("(sem metadados)"),
         `${script} → ${f}: contém "(sem metadados)"`,
+      );
+    }
+    if (sections) {
+      const got = [
+        ...readFileSync(join(work, outDir, sections.file), "utf8").matchAll(
+          /^## (\S+) — /gm,
+        ),
+      ]
+        .map((m) => m[1])
+        .sort();
+      assert.deepEqual(
+        got,
+        sections.ids,
+        `${script} → ${sections.file}: seções diferentes das ${sections.ids.length} escalas com itens interativos`,
       );
     }
     console.log(

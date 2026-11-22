@@ -5,7 +5,7 @@
 //   1) docs/audit/escalas-autorais-auditoria.md  (leitura/revisão)
 //   2) docs/audit/escalas-autorais-itens.csv      (edição item a item)
 //   3) docs/audit/escalas-autorais-faixas.csv     (revisão dos cortes)
-// Uso:  npx tsx scripts/audit-scales-export.mts
+// Uso:  npm run audit:scales:export   (ou: npx tsx scripts/audit-scales-export.mts)
 // NÃO altera nenhum dado de produção — só lê e exporta.
 // ============================================================
 import { mkdirSync, writeFileSync } from "node:fs";
