@@ -38,10 +38,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: npm
@@ -66,13 +66,13 @@ jobs:
       - name: Preserve source snapshot without credentials
         if: always()
         run: git archive --format=zip HEAD -o /tmp/escuta-current-source.zip
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: escuta-cloud-acceptance-${{ github.run_id }}
           path: artifacts/escuta-cloud/
           retention-days: 7
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: escuta-current-source-${{ github.run_id }}

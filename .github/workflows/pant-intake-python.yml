@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - uses: actions/setup-python@v5
@@ -50,7 +50,7 @@ jobs:
           test -f tests/test_pant_adapter.py
           python -m unittest discover -s tests -v
       - name: Pacote de codigo sem dados clinicos
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: neuroped-pant-intake-source
           path: tools/pant_intake

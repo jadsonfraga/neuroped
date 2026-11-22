@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -65,7 +65,7 @@ jobs:
             console.log(fs.readFileSync("artifacts/appointments-evidence/summary.md", "utf8"));
           '
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: appointments-patient-id-evidence
           path: artifacts/appointments-evidence/

@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
       - name: Inspect canonical schema and configuration presence without reading patient content
@@ -47,7 +47,7 @@ jobs:
           }catch(e){report.status='blocked';report.reason=e.message;process.exitCode=1;}
           mkdirSync('artifacts',{recursive:true});writeFileSync('artifacts/production-readiness.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
           NODE
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: escuta-production-readiness-${{ github.run_id }}

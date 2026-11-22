@@ -53,7 +53,7 @@ jobs:
           fetch-depth: 0
 
       - name: Configurar Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: npm
@@ -260,7 +260,7 @@ jobs:
         run: npm run verify
 
       - name: Preservar artefato auditável da execução
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: inventario-autoral-${{ env.NEUROPED_GENERATION_DATE }}-${{ github.run_attempt }}
           path: ${{ steps.verify.outputs.file }}

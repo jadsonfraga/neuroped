@@ -24,10 +24,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: npm
@@ -44,14 +44,14 @@ jobs:
         run: npm run test:e2e:super-neuropad-draft
       - name: Prove age-adjusted clinical circuit and non-blocking documentary matrix
         run: npm run test:e2e:super-neuropad-circuit
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: super-neuropad-circuit-proof
           path: /tmp/super-neuropad-circuit-sufficiency
           if-no-files-found: warn
           retention-days: 7
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: super-neuropad-proof
@@ -68,7 +68,7 @@ jobs:
         env:
           SUPER_NEUROPAD_TEST_MODE: local
           SUPER_NEUROPAD_ARTIFACT_DIR: /tmp/super-neuropad-game-local
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: super-neuropad-local-proof

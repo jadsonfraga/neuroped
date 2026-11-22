@@ -46,7 +46,7 @@ jobs:
 
       - name: Checkout protected main without credentials
         if: steps.gemini_auth.outputs.configured == 'true'
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: main
           fetch-depth: 0
@@ -54,7 +54,7 @@ jobs:
 
       - name: Configure Node.js 24
         if: steps.gemini_auth.outputs.configured == 'true'
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version: '24'
           cache: npm

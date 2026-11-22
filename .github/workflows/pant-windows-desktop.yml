@@ -21,7 +21,7 @@ jobs:
         working-directory: tools/pant_intake
         shell: pwsh
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - uses: actions/setup-python@v5
@@ -65,13 +65,13 @@ jobs:
           (Get-FileHash release/NeuroPedFluxo.exe -Algorithm SHA256).Hash | Set-Content release/EXECUTAVEL_SHA256.txt
           git rev-parse HEAD | Set-Content release/BUILD_COMMIT.txt
           if ($LASTEXITCODE -ne 0) { throw 'Missing source revision' }
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: NeuroPed-Fluxo-Desktop-1.1.0-Windows-x64
           path: tools/pant_intake/release/
           if-no-files-found: error
           retention-days: 14
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: NeuroPed-Fluxo-Desktop-source-1.1.0
           path: |
