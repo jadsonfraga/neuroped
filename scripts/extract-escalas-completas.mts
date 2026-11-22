@@ -381,8 +381,9 @@ for (const [id, raw] of Object.entries(allInteractive)) {
     for (const dom of def.domains) {
       if (def.domains.length > 1) md.push(`#### Domínio: ${dom.name}`);
       if (dom.items && Array.isArray(dom.items)) {
-        dom.items.forEach((it: string, i: number) => {
-          md.push(`${i + 1}. ${it}`);
+        dom.items.forEach((it: any, i: number) => {
+          // Itens podem ser texto simples ou objeto { text, emoji?, example?, ... }.
+          md.push(`${i + 1}. ${typeof it === "string" ? it : (it.text ?? JSON.stringify(it))}`);
         });
       }
       md.push("");

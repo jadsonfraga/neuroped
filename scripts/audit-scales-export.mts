@@ -6,7 +6,6 @@
 //   2) docs/audit/escalas-autorais-itens.csv      (edição item a item)
 //   3) docs/audit/escalas-autorais-faixas.csv     (revisão dos cortes)
 // Uso:  npm run audit:scales:export   (ou: npx tsx scripts/audit-scales-export.mts)
-// AUDIT_SCALES_OUT_DIR (opcional) grava em outro diretório; usado pelo teste.
 // NÃO altera nenhum dado de produção — só lê e exporta.
 // ============================================================
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -15,7 +14,7 @@ import { escalasAutoraisDrJadson } from "../client/src/data/escalasAutorais.ts";
 import { allScalesComFichas as escalasCatalogoMestre } from "../client/src/data/scaleFilter.ts";
 import { interactiveScaleItems } from "../client/src/data/interactiveScaleItems.ts";
 
-const OUT = resolve(process.cwd(), process.env.AUDIT_SCALES_OUT_DIR || "docs/audit");
+const OUT = resolve(process.cwd(), "docs/audit");
 mkdirSync(OUT, { recursive: true });
 
 // Autorais prevalecem; as demais (publicadas, importadas, complementares) vêm do
