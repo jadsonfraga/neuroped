@@ -48,6 +48,7 @@ for (const [a, b, why] of [
   ["flacc", "rflacc", "versão revisada"],
   ["nrs-pain", "fps-r", "mesmo construto (intensidade de dor) por autorrelato"],
   ["flacc", "comfort-b", "mesmo construto (dor comportamental) por observação"],
+  ["faces", "nrs-pain", "intensidade de dor relatada pela criança (FACES cadastrada como questionário de pais)"],
   ["j26-001", "j26-002", "mesmo protocolo em faixas etárias vizinhas"],
   ["na-funcoes-executivas-ampliado-pais", "na-funcoes-executivas-casa-pais", "duas formas de funções executivas para pais"],
   ["na-qualidade-vida-pais", "na-qualidade-vida-epilepsia", "qualidade de vida genérica e específica para pais"],
@@ -78,6 +79,7 @@ for (const [a, b] of [
   ["na-ansiedade-seguimento-pais", "na-toc-seguimento-pais"],
   ["cries", "cries13"], // dor neonatal × trauma (siglas iguais, instrumentos diferentes)
   ["gad7", "gad7-cuidador"], // ansiedade da criança × do cuidador
+  ["faces", "flacc"], // autorrelato de intensidade × observação do comportamento
 ] as const) {
   assert.equal(repetitiveByFamily(scale(a), scale(b)), false, `${a} × ${b} são construtos distintos`);
 }
@@ -130,6 +132,9 @@ assert.ok(checked > 300, `cenários avaliados: ${checked}`);
   const pain = podiumFor(["dor"], 6, "clinico").trio.map((m) => m.scale.id);
   const behavioral = pain.filter((id) => ["flacc", "rflacc", "comfort-b", "cheops", "cries"].includes(id));
   assert.equal(behavioral.length, 1, `dor aos 6 meses: uma escala comportamental basta (${pain.join(", ")})`);
+  const intensity = ["eva-ped", "vas-pain", "nrs-pain", "wongbaker", "fps-r", "faces"];
+  const pain12 = podiumFor(["dor"], 144).trio.map((m) => m.scale.id);
+  assert.ok(pain12.filter((id) => intensity.includes(id)).length <= 1, `dor aos 12 anos: uma escala de intensidade basta (${pain12.join(", ")})`);
   const sleep = podiumFor(["sono"], 12, "pais").trio.map((m) => m.scale.id);
   assert.ok(!(sleep.includes("bisq") && sleep.includes("bisq-r")), `sono aos 12 meses: BISQ e BISQ-R não dividem o pódio (${sleep.join(", ")})`);
 }
