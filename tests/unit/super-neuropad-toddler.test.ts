@@ -69,8 +69,8 @@ test("contagem e duração: núcleo dedicado preservado e partida de 50 itens de
     for (const phaseId of PHASE_ORDER) assert.ok(estimate.byPhase[phaseId] > 0, `${years}/${phaseId}: ${estimate.byPhase[phaseId]}s`);
   }
   assert.equal(sessionLimitSeconds(2), 1800);
-  assert.equal(sessionLimitSeconds(3), 2100);
-  assert.equal(sessionLimitSeconds(4), 2700);
+  assert.equal(sessionLimitSeconds(3), 1800);
+  assert.equal(sessionLimitSeconds(4), 1800);
 });
 
 test("os seis domínios estão cobertos, cada mundo tem um domínio principal, e as habilidades-chave por idade existem", () => {

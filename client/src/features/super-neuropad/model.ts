@@ -53,7 +53,7 @@ export type { ToddlerDomain };
 export { buildMatches, isJudged, itemExpected, KIND_LABELS, ORIGIN_LABELS, ORIGIN_ORDER, ORIGIN_ROUTES, MAX_AGE_YEARS, MIN_AGE_YEARS, PHASE_ORDER, YEARS, itemsPerPhase };
 export type { BuildItem, DoItem, Item, JudgedItem, Option, OriginId, PhaseId, ShapeId, SpeakItem, TouchItem };
 
-export const SUPER_NEUROPAD_VERSION = "2026-10-21.1";
+export const SUPER_NEUROPAD_VERSION = "2026-11-22.1";
 export const SUPER_NEUROPAD_TITLE = "Super NeuroPad Game";
 export const SUPER_NEUROPAD_ROUTE = "/super-neuropad-game";
 export const SUPER_NEUROPAD_NATURE =
@@ -64,16 +64,14 @@ export const SUPER_NEUROPAD_SOURCES = [
   "Teste de Reconhecimento Visual (reconhecer, parear e nomear figuras, cores e conceitos por idade)",
   "Avaliação Cognitiva Infantil · Testes Cognitivos por Faixa Etária (visual, fala/leitura, letras/escrita e números)",
 ] as const;
-/** Teto amplo da sessão inteira; os 50 desafios obrigatórios precisam caber sem punição. */
-export const SESSION_LIMIT_SECONDS = 45 * 60;
+/** Teto da sessão inteira (v2026-11-22.1): 30 minutos em todas as idades; os 50 desafios cabem com folga, travado por teste. */
+export const SESSION_LIMIT_SECONDS = 30 * 60;
 /** Faixas com bateria dedicada (2 e 3 anos): mundos por domínio, tetos menores. */
 export function isToddlerYears(years: number): boolean {
   return years === 2 || years === 3;
 }
-/** Teto por idade, dimensionado para a bateria obrigatória de 50 desafios. */
-export function sessionLimitSeconds(years: number): number {
-  if (years === 2) return 30 * 60;
-  if (years === 3) return 35 * 60;
+/** Teto por idade: o mesmo para todas (30 min), dimensionado para a bateria de 50 desafios. */
+export function sessionLimitSeconds(_years: number): number {
   return SESSION_LIMIT_SECONDS;
 }
 

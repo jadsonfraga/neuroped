@@ -1,7 +1,7 @@
 # Super NeuroPad Game
 
 Aba em destaque (`/super-neuropad-game`): **avaliação única de pré-consulta**, aplicada pela
-aplicadora junto com a criança, sem câmera e sem instrumento externo, com teto de 30 a 45 minutos conforme a idade.
+aplicadora junto com a criança, sem câmera e sem instrumento externo, com teto de 30 minutos em todas as idades (desde a v2026-11-22.1).
 Integra os elementos da Sonda 10, da Observa 10 (OBS-10), do Reconhecimento Visual e da
 Avaliação Cognitiva Infantil. As quatro abas continuam existindo, com os seus bancos
 intactos; o jogo **lê** os bancos delas e não os modifica.
@@ -62,28 +62,28 @@ Contagens geradas do banco efetivo (`GAME_BANK`); tempo por `estimateBandSeconds
 
 | Idade | Itens (por mundo) | Sonda 10 | OBS-10 | Rec. visual | Cognitiva | Tipos (toque/fala/ação/montar) | Com gesto | Tempo estimado |
 |---|---|---|---|---|---|---|---|---|
-| 2 anos | 50 (3/20/10/11/3/3) | 18 | 9 | 7 | 16 | 30/9/11/0 | 1 | 23.2 min |
-| 3 anos | 50 (4/14/13/11/4/4) | 20 | 10 | 4 | 16 | 24/12/14/0 | 1 | 24.2 min |
-| 4 anos | 50 (4/16/14/8/4/4) | 13 | 13 | 8 | 16 | 31/15/4/0 | 0 | 23.1 min |
-| 5 anos | 50 (4/11/19/8/4/4) | 14 | 13 | 7 | 16 | 36/8/5/1 | 0 | 23.6 min |
-| 6 anos | 50 (5/9/18/8/5/5) | 16 | 14 | 5 | 15 | 31/12/5/2 | 0 | 19.6 min |
-| 7 anos | 50 (5/10/16/9/5/5) | 13 | 15 | 6 | 16 | 32/12/4/2 | 0 | 19.1 min |
-| 8 anos | 50 (6/9/15/8/6/6) | 18 | 14 | 4 | 14 | 29/15/5/1 | 0 | 21.4 min |
-| 9 anos | 50 (6/9/14/9/6/6) | 16 | 16 | 4 | 14 | 29/15/5/1 | 0 | 21.5 min |
-| 10 anos | 50 (6/9/15/8/6/6) | 19 | 13 | 4 | 14 | 29/15/5/1 | 0 | 21.9 min |
-| 11 anos | 50 (6/9/14/9/6/6) | 18 | 14 | 4 | 14 | 29/15/5/1 | 0 | 21.9 min |
-| 12 anos | 50 (6/8/16/8/6/6) | 18 | 13 | 3 | 16 | 27/16/5/2 | 0 | 23.2 min |
-| 13 anos | 50 (6/8/17/7/6/6) | 16 | 16 | 3 | 15 | 27/16/5/2 | 0 | 23.4 min |
-| 14 anos | 50 (6/8/16/8/6/6) | 18 | 13 | 3 | 16 | 27/16/5/2 | 0 | 23.7 min |
-| 15 anos | 50 (6/8/16/8/6/6) | 15 | 16 | 3 | 16 | 27/16/5/2 | 0 | 23.7 min |
-| 16 anos | 50 (6/8/16/8/6/6) | 18 | 13 | 3 | 16 | 27/16/5/2 | 0 | 23.7 min |
-| 17 anos | 50 (6/8/16/8/6/6) | 15 | 16 | 3 | 16 | 27/16/5/2 | 0 | 23.7 min |
+| 2 anos | 50 (6/14/10/11/5/4) | 20 | 11 | 4 | 15 | 24/11/15/0 | 3 | 23.9 min |
+| 3 anos | 50 (7/15/7/9/7/5) | 25 | 10 | 5 | 10 | 18/15/17/0 | 3 | 25.7 min |
+| 4 anos | 50 (7/12/10/9/6/6) | 15 | 16 | 6 | 13 | 26/16/8/0 | 0 | 24.5 min |
+| 5 anos | 50 (6/9/12/9/7/7) | 14 | 18 | 6 | 12 | 29/12/9/0 | 0 | 25.5 min |
+| 6 anos | 50 (6/9/12/9/7/7) | 15 | 17 | 5 | 13 | 27/12/9/2 | 0 | 20.6 min |
+| 7 anos | 50 (6/9/12/9/7/7) | 14 | 17 | 5 | 14 | 27/13/8/2 | 0 | 20.2 min |
+| 8 anos | 50 (7/9/9/8/9/8) | 19 | 15 | 4 | 12 | 23/18/8/1 | 0 | 22.7 min |
+| 9 anos | 50 (7/8/9/9/9/8) | 18 | 17 | 3 | 12 | 23/18/8/1 | 0 | 22.8 min |
+| 10 anos | 50 (7/9/9/8/9/8) | 19 | 15 | 4 | 12 | 23/18/8/1 | 0 | 23.3 min |
+| 11 anos | 50 (7/8/9/9/9/8) | 19 | 16 | 3 | 12 | 23/18/8/1 | 0 | 23.1 min |
+| 12 anos | 50 (8/8/9/8/9/8) | 19 | 15 | 3 | 13 | 20/21/7/2 | 0 | 24.5 min |
+| 13 anos | 50 (8/8/9/8/9/8) | 17 | 18 | 3 | 12 | 20/21/7/2 | 0 | 24.6 min |
+| 14 anos | 50 (8/8/9/8/9/8) | 19 | 15 | 3 | 13 | 20/21/7/2 | 0 | 24.9 min |
+| 15 anos | 50 (8/8/9/8/9/8) | 16 | 18 | 3 | 13 | 20/21/7/2 | 0 | 24.9 min |
+| 16 anos | 50 (8/8/9/8/9/8) | 19 | 15 | 3 | 13 | 20/21/7/2 | 0 | 25.1 min |
+| 17 anos | 50 (8/8/9/8/9/8) | 16 | 18 | 3 | 13 | 20/21/7/2 | 0 | 25.2 min |
 
 **Tempo estimado**: toque 12 s (+1 s a cada 25 caracteres de leitura, máx. +25 s), fala 20 s,
 ação 25 s, montar 30 s + 2 s por letra (ou o tempo próprio do item); fator de criança pequena
 ×1,5 até 3 anos e ×1,25 até 5; 10 % de folga para repetições; preparação 60 s, 15 s de
 apresentação por mundo, 5 s por exposição de memória e pausa planejada de 90 s até 5 anos.
-O teste exige a estimativa dentro do teto da idade (30 min aos 2 anos, 35 min aos 3 anos, 45 min nas demais);
+O teste exige a estimativa dentro do teto (30 min em todas as idades desde a v2026-11-22.1; antes, 30/35/45 min);
 a tela de preparação mostra a estimativa. Outro teste confere esta tabela contra o banco, para ela não defasar.
 
 **Ampliação dos 8 a 17 anos (2026-10-12).** A partir dos 8 anos entra um sexto desafio em cada
@@ -96,7 +96,7 @@ semântica (animais em 60 s, com piso autoral crescente de 8 a 13), cálculo men
 (equilíbrio sem visão, saltos em um pé, polichinelo, dupla tarefa). As semelhanças de 12–17 também
 passaram a subir de abstração com a idade (transporte → medida → obra de arte). Os pisos de
 fluência e os critérios são **conservadores e autorais, para déficit grosseiro**: não são norma, e a
-leitura final continua sendo do médico. O teto por idade segue travado por teste (estimativa máxima atual: 23,7 min).
+leitura final continua sendo do médico. O teto segue travado por teste (30 min; estimativa máxima atual: 25,7 min, aos 3 anos).
 
 **Critérios de calibração** (sem norma, sem inflar escore, sem mudar corte):
 
@@ -339,7 +339,7 @@ resposta ao nome, imitação, interesse por crianças, perda de habilidades).
 | 🏠 Casinha do Faz de Conta | Brincar simbólico | dar comida ao bebê, telefone de mentira, interesse por crianças (relato ⚠, conta em interação social) | cuidar do bebê, sequência de faz de conta, objeto como outro, faz de conta com papéis (relato ⚠) |
 
 - **Contagem e tempo do núcleo:** 2 anos = 18 itens e 3 anos = 24 itens no banco dedicado.
-  Na partida efetiva, ambos recebem 50 desafios; estimativas de 23,2 e 24,2 min, com tetos de 30 e 35 min. Pausa planejada mantida.
+  Na partida efetiva, ambos recebem 50 desafios; estimativas de 23,9 e 25,7 min, com teto de 30 min (v2026-11-22.1). Pausa planejada mantida.
 - **Registro:** o mesmo modelo binário do jogo (Cumpre / Não cumpre, mais "não respondeu" e
   "recusou" à parte) e o campo de observações da sessão. Itens de **relato do cuidador** começam
   com "Relato do cuidador — pergunte:" e o critério termina em "(relato do cuidador)".
@@ -654,7 +654,17 @@ O catálogo de 50 por idade foi integrado à partida efetiva. O núcleo autoral 
 | 6 e 7 anos | 30 | 20 | 50 |
 | 8 a 17 anos | 36 | 14 | 50 |
 
-**De onde vêm os opcionais.** São itens dos bancos de origem da idade que ainda não estão na bateria: Reconhecimento Visual (`visual-recognition/model`), Avaliação Cognitiva Infantil (`cognitive-age/bank`) e banco objetivo compartilhado da Sonda 10/OBS-10 (`objectiveBank`). **Nenhum item foi criado para a extensão.** Cada opcional mantém a referência exata do banco de origem. A seleção alterna entre domínios, aplica elegibilidade e graduação visual por idade e exclui tarefas e conceitos já apresentados; a inclusão do banco visual permite completar os 50 aos 5 anos sem repetição de conceito (`OPTIONAL_BANK` em `bank.ts`). Os 14 itens autorais da PR #1195 para 8–17 anos **não** entram aqui; dependem de revisão clínica própria.
+**De onde vêm os opcionais.** São itens dos bancos de origem da idade que ainda não estão na bateria (desde a v2026-11-22.1, a curadoria da faixa descrita abaixo entra antes): Reconhecimento Visual (`visual-recognition/model`), Avaliação Cognitiva Infantil (`cognitive-age/bank`) e banco objetivo compartilhado da Sonda 10/OBS-10 (`objectiveBank`). **Nenhum item foi criado para a extensão.** Cada opcional mantém a referência exata do banco de origem. A seleção alterna entre domínios, aplica elegibilidade e graduação visual por idade e exclui tarefas e conceitos já apresentados; a inclusão do banco visual permite completar os 50 aos 5 anos sem repetição de conceito (`OPTIONAL_BANK` em `bank.ts`). Os 14 itens autorais da PR #1195 para 8–17 anos **não** entram aqui; dependem de revisão clínica própria.
+
+**Curadoria por faixa etária (v2026-11-22.1).** A medição da composição mostrou que o complemento caía todo em Olhos, Palavras e Números (bancos visual, cognitivo e objetivo), enquanto Vila, Memória e Corpo ficavam só com a bateria principal; aos 2 anos havia 20 itens em Olhos e 3 em Vila, Memória e Corpo. A seleção agora:
+
+1. **Entra primeiro a curadoria da faixa** (`curatedOptionalDrafts` em `bank.ts`): tarefas dos roteiros da Sonda 10 (`sondaDezProtocol`) e do OBS-10 (`obs10/protocol`) da própria faixa, nos domínios centrais — interação e comunicação (Vila), memória e funções executivas (Memória), motor e mãos (Corpo) —, adaptadas para a tela ou para a sala, sem objeto externo. A referência leva o sufixo "curadoria da faixa (complemento)". Aos 2–3 anos o item curado recebe o domínio do mundo na bateria dedicada (interação social, atenção, brincar simbólico etc.). Exemplos: pedir ajuda diante da bola presa na caixa (Sonda 10, 24–47 meses), atenção sustentada auditiva e troca de regra SOL/LUA (Sonda 10, 3–7 anos), ordem de 4 etapas e planejamento com imprevisto (Sonda 10, 8–11 anos), mudança de duração do trabalho e troca de regra DIREITA/ESQUERDA (Sonda 10, 12–17 anos), braços estendidos e dedo–nariz do núcleo motor (OBS-10, 5 anos em diante).
+2. **Regras de saída no restante do complemento:** aos 2–3 anos não entra item que pede letra ou numeral (o aviso de idade da auditoria de 21/10/2026 continua valendo para qualquer item desse tipo); nenhum mundo passa de 9 itens (50 ÷ 6, arredondado para cima) enquanto houver alternativa. O teto por mundo só é relaxado quando o banco da faixa não fecha 50 sem ele — hoje isso ocorre aos 2–7 anos em Olhos e Palavras, porque os roteiros dessas idades têm poucas tarefas centrais que dispensam objeto.
+3. **Sem repetição:** item curado que repetisse tarefa ou conceito da bateria interrompe a montagem do banco (erro de build), e o restante continua deduplicado por tarefa, conceito e referência.
+
+Efeito medido (itens por mundo, Vila/Olhos/Palavras/Números/Memória/Corpo): 2 anos de 3/20/10/11/3/3 para 6/14/10/11/5/4; 5 anos de 4/11/19/8/4/4 para 6/9/12/9/7/7; 8 anos de 6/9/15/8/6/6 para 7/9/9/8/9/8; 12–17 anos de 6/8/16/8/6/6 para 8/8/9/8/9/8. O núcleo (bateria principal) não mudou: a impressão digital `tests/fixtures/golden-descritivo.json` só alterou o tempo estimado e o teto. Contrato travado em `tests/unit/super-neuropad-curadoria-faixa.test.ts`.
+
+**Pendente externo.** Os itens curados são adaptações operacionais dos roteiros e exigem a mesma revisão médica item a item dos demais complementares antes de produção ampla.
 
 **Na tela.** O painel "Desafios opcionais · N anos" aparece na preparação e nos resultados, recolhido por padrão. Não aparece durante a partida. Ele informa "50 disponíveis: X na bateria principal + Y opcionais", a estimativa de tempo dos opcionais (sem pausas nem adaptações) e a orientação de interromper diante de cansaço ou recusa. Usa os mesmos componentes da partida (toque, fala ou ação, montar palavra), com "Repeti o comando", "Não respondeu" e "Recusou". Também tem seletor do desafio, anterior/próximo, "Pausar opcionais" e "Recolher opcionais". Nenhum controle do painel fica desabilitado.
 

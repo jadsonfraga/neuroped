@@ -38,7 +38,7 @@ test("migração: núcleo autoral preservado e os 50 desafios integram a partida
   const nucleos = YEARS.map((years) => bandItemCount(String(years)));
   assert.deepEqual(nucleos, [18, 24, 24, 24, 30, 30, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36]);
   for (const years of YEARS) {
-    const limite = years === 2 ? 30 * 60 : years === 3 ? 35 * 60 : 45 * 60;
+    const limite = 30 * 60;
     assert.equal(gameBandItemCount(String(years)), 50, `${years} anos: partida obrigatória completa`);
     assert.equal(sessionLimitSeconds(years), limite, `${years} anos: limite da sessão ampliada`);
     assert.ok(estimateBandSeconds(years).totalSeconds <= limite, `${years} anos: estimativa dentro do limite`);
@@ -54,7 +54,7 @@ test("extensão: opcionais vêm dos bancos de origem da idade, sem itens criados
     const seen = new Set<string>();
     for (const { item, phaseId } of opcionaisDaIdade(years)) {
       assert.equal(itemProvenance(item), "banco_de_origem", `${item.id}: sem item autoral`);
-      assert.match(item.ref, new RegExp(`^(Cognitivos ${years} anos · |Sonda 10 · banco objetivo |OBS-10 · banco objetivo |Reconhecimento visual · reconhecer · )`), `${item.id}: referência do banco de origem da idade`);
+      assert.match(item.ref, new RegExp(`^(Cognitivos ${years} anos · |Sonda 10 · banco objetivo |OBS-10 · banco objetivo |Reconhecimento visual · reconhecer · |(Sonda 10|OBS-10) · .+ · curadoria da faixa \\(complemento\\)$)`), `${item.id}: referência do banco de origem da idade`);
       assert.ok(["cognitivo", "sonda10", "obs10", "visual"].includes(item.origin), `${item.id}: origem`);
       assert.ok(PHASE_ORDER.includes(phaseId), `${item.id}: mundo de agrupamento`);
       assert.ok(!mainTasks.has(sameTask(item)), `${item.id}: não repete tarefa da bateria (${item.prompt})`);
@@ -201,19 +201,21 @@ test("auditoria 21/10/2026: pausas excluem o intervalo e retomam o tempo ativo d
   assert.equal(activeClockSeconds(clock, 56_000), 25, "5 segundos ativos são somados após retomar");
 });
 
-test("auditoria 21/10/2026: letra e numeral aos 2–3 anos levam aviso de idade; o item continua disponível", () => {
-  const letra = opcionaisDaIdade(2).find((entry) => /Toque na LETRA/.test(entry.item.prompt));
-  assert.ok(letra, "2 anos: o item de letra segue disponível");
+test("curadoria 22/11/2026: aos 2–3 anos o complemento não pede letra nem numeral; o aviso de idade continua valendo", () => {
+  for (const years of [2, 3]) {
+    const pedem = opcionaisDaIdade(years).filter((entry) => avisoDeIdade(years, entry.item) !== null);
+    assert.deepEqual(pedem.map((entry) => entry.item.prompt), [], `${years} anos: sem letra ou numeral no complemento`);
+  }
+  const base = opcionaisDaIdade(2).find((entry) => entry.item.kind === "toque")!;
+  const letra = { ...base, item: { ...base.item, prompt: "Toque na LETRA A.", options: [{ art: "A", label: "A" }, { art: "B", label: "B" }], answer: "A" } as Item };
   assert.match(avisoDeIdade(2, letra.item) ?? "", /não é marco universal aos 2 anos/);
   const cachorro = opcionaisDaIdade(2).find((entry) => entry.item.prompt === "Toque no cachorro.");
-  assert.equal(avisoDeIdade(2, cachorro!.item), null, "item de figura não leva aviso");
-  const numeral = opcionaisDaIdade(3).find((entry) => /Quantas maçãs\? Toque no número/.test(entry.item.prompt));
-  assert.ok(avisoDeIdade(3, numeral!.item), "3 anos: numeral leva aviso");
+  if (cachorro) assert.equal(avisoDeIdade(2, cachorro.item), null, "item de figura não leva aviso");
   for (const years of YEARS.filter((value) => value > 3)) {
     assert.ok(opcionaisDaIdade(years).every((entry) => avisoDeIdade(years, entry.item) === null), `${years} anos: sem aviso de letramento`);
   }
-  const texto = textoOpcionais(2, registrarOpcional({}, record(letra.item, letra.phaseId)), "21/10/2026 10:00");
-  assert.match(texto, /Aviso de idade: reconhecer letras ou números não é marco universal aos 2 anos/);
+  const texto = textoOpcionais(2, registrarOpcional({}, record(base.item, base.phaseId)), "22/11/2026 10:00");
+  assert.doesNotMatch(texto, /Aviso de idade/, "complemento dos 2 anos não leva aviso de letramento");
   assert.doesNotMatch(texto, /\bnível|\bcortes?\b|percentil|escore|pontuação|alerta|triagem|esperado para|limiar|normativ|\bobservar\b|dentro do esperado/i);
 });
 
