@@ -11,6 +11,7 @@
  * tocada). Não há classificação, ponto de corte nem hipótese diagnóstica.
  */
 import {
+  SUPER_NEUROPAD_VERSION,
   gameItemsFor,
   optionOrder,
   phaseById,
@@ -21,6 +22,14 @@ import {
 } from "@/features/super-neuropad/model";
 
 export const NV_TITLE = "SuperNeuroPad Não Verbal";
+/** Versão desta seleção (regras de filtro, limites e sessão). */
+export const NV_VERSION = "2026-11-22.1";
+/** Versão do banco do Super NeuroPad Game de onde os itens são tirados. */
+export const NV_BANK_VERSION = SUPER_NEUROPAD_VERSION;
+/** Status de validação, mostrado na UI e no registro (AGENTS.md: verdade clínica). */
+export const NV_VALIDATION_STATUS =
+  "Seleção em validação clínica: não validada, sem normas nem pontos de corte. Registro observacional de tarefas lúdicas, não é teste psicométrico.";
+export const NV_PROVENANCE = `${NV_TITLE} v${NV_VERSION} · itens do banco Super NeuroPad Game v${NV_BANK_VERSION}`;
 export const NV_YEARS = [2, 3, 4, 5, 6] as const;
 export type NvYears = (typeof NV_YEARS)[number];
 /** Sessão curta: atenção de criança pequena. */
@@ -204,6 +213,8 @@ export function nvReportText(records: readonly NvRecord[], years: number, notice
   const summary = nvSummary(records);
   const lines = [
     `${NV_TITLE} — registro da aplicação`,
+    `Versão: ${NV_PROVENANCE}`,
+    `Status: ${NV_VALIDATION_STATUS}`,
     `Idade informada: ${years} anos · Gerado em ${generatedAt}`,
     `Desafios aplicados: ${summary.total}`,
     `Tocou na figura esperada: ${summary.counts.acerto} · Tocou em outra figura: ${summary.counts.erro} · Sem resposta: ${summary.counts.sem_resposta} · Recusou: ${summary.counts.recusa}`,

@@ -5,6 +5,8 @@ import {
   isNonVerbalItem,
   isNumericItem,
   NV_MAX_NUMERIC,
+  NV_PROVENANCE,
+  NV_VALIDATION_STATUS,
   NV_SESSION_MAX,
   NV_YEARS,
   nvChallengesFor,
@@ -109,5 +111,8 @@ test("registro e resumo são descritivos e contam cada situação", () => {
   const text = nvReportText(records, 3, NOTICE, "22/11/2026 10:00");
   assert.match(text, /Idade informada: 3 anos/);
   assert.ok(text.includes(NOTICE));
-  assert.ok(!/\b(diagn[oó]stic|normal|alterad|atraso|risco|TEA|autis)/i.test(text.replace(NOTICE, "")), "texto não pode classificar");
+  assert.ok(text.includes(NV_PROVENANCE), "registro sem versão");
+  assert.ok(text.includes(NV_VALIDATION_STATUS), "registro sem status de validação");
+  assert.match(NV_VALIDATION_STATUS, /não validada/);
+  assert.ok(!/\b(diagn[oó]stic|normal|alterad|atraso|risco|TEA|autis)/i.test(text.replace(NOTICE, "").replace(NV_VALIDATION_STATUS, "")), "texto não pode classificar");
 });

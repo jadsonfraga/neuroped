@@ -13,6 +13,8 @@ import {
   NV_BREAK_EVERY,
   NV_IDLE_SECONDS,
   NV_PREVIEW_SECONDS,
+  NV_PROVENANCE,
+  NV_VALIDATION_STATUS,
   NV_STATUS_LABELS,
   NV_TITLE,
   NV_YEARS,
@@ -106,9 +108,15 @@ export default function SuperNeuroPadNaoVerbalPage() {
   const pausedTotal = useRef(0);
   const repeats = useRef(0);
   const attentionCalls = useRef(0);
+  // Avanço pendente durante a festa (1,3 s): cancelado ao encerrar; suspenso na pausa.
+  const pendingAdvance = useRef<number | null>(null);
+  const advanceOnResume = useRef(false);
 
   useEffect(() => setCalm(systemPrefersCalm()), []);
-  useEffect(() => () => cancel(), [cancel]);
+  useEffect(() => () => {
+    cancel();
+    if (pendingAdvance.current) window.clearTimeout(pendingAdvance.current);
+  }, [cancel]);
   // Cada tela nova começa no topo: o mascote e o desafio precisam estar à vista da criança.
   useEffect(() => {
     try { window.scrollTo({ top: 0, behavior: "auto" }); } catch { /* sem janela */ }
@@ -148,7 +156,9 @@ export default function SuperNeuroPadNaoVerbalPage() {
     if (screen !== "desafio" || revealed || paused) return;
     if (previewLeft <= 0) {
       setRevealed(true);
+      // O tempo de resposta começa agora: pausas feitas durante a prévia não contam.
       shownAt.current = Date.now();
+      pausedTotal.current = 0;
       if (current) say(current.item.prompt);
       return;
     }
@@ -201,7 +211,10 @@ export default function SuperNeuroPadNaoVerbalPage() {
       setChosen(position);
       sound(playCoin);
       party();
-      window.setTimeout(advance, 1300);
+      pendingAdvance.current = window.setTimeout(() => {
+        pendingAdvance.current = null;
+        advance();
+      }, 1300);
     } else {
       advance();
     }
@@ -210,8 +223,14 @@ export default function SuperNeuroPadNaoVerbalPage() {
   const repeatPrompt = () => {
     if (!current) return;
     repeats.current += 1;
-    softTap();
+    sound(softTap);
     if (voiceOn) speak(current.item.prompt, 0.78);
+  };
+
+  const clearPendingAdvance = () => {
+    if (pendingAdvance.current) window.clearTimeout(pendingAdvance.current);
+    pendingAdvance.current = null;
+    advanceOnResume.current = false;
   };
 
   const togglePause = () => {
@@ -219,8 +238,17 @@ export default function SuperNeuroPadNaoVerbalPage() {
       if (pausedAt.current) pausedTotal.current += Date.now() - pausedAt.current;
       pausedAt.current = null;
       setPaused(false);
+      if (advanceOnResume.current) {
+        advanceOnResume.current = false;
+        advance();
+      }
     } else {
       cancel();
+      if (pendingAdvance.current) {
+        window.clearTimeout(pendingAdvance.current);
+        pendingAdvance.current = null;
+        advanceOnResume.current = true;
+      }
       pausedAt.current = Date.now();
       setPaused(true);
     }
@@ -228,12 +256,15 @@ export default function SuperNeuroPadNaoVerbalPage() {
 
   const finishNow = () => {
     cancel();
+    clearPendingAdvance();
+    setPaused(false);
     setGeneratedAt(formatClinicalDateTime());
     setScreen(records.length ? "fim" : "inicio");
   };
 
   const restart = () => {
     cancel();
+    clearPendingAdvance();
     setRecords([]);
     setIndex(0);
     setSeed(Date.now() % 100000);
@@ -268,6 +299,8 @@ export default function SuperNeuroPadNaoVerbalPage() {
           <header className="text-center">
             <div className="text-7xl nv-float" aria-hidden="true">{mascot.emoji}</div>
             <h1 className="mt-2 text-3xl font-black sm:text-4xl">{NV_TITLE}</h1>
+            <p className="mt-2 text-xs font-bold text-slate-600">{NV_PROVENANCE}</p>
+            <p className="mx-auto mt-2 max-w-2xl rounded-2xl border-2 border-amber-500 bg-amber-50 px-3 py-2 text-sm font-bold text-amber-900">{NV_VALIDATION_STATUS}</p>
             <p className="mt-2 text-base font-semibold text-slate-700">
               Brincadeira de tocar em figuras para crianças pequenas que ainda não respondem falando. Até 12 desafios curtos, com voz, sons, animações, figurinhas e pausa das bolhas.
             </p>
@@ -277,7 +310,7 @@ export default function SuperNeuroPadNaoVerbalPage() {
             <h2 id="nv-idade" className="text-lg font-black">1. Idade da criança</h2>
             <div className="mt-3 flex flex-wrap gap-2">
               {NV_YEARS.map((y) => (
-                <button key={y} type="button" aria-pressed={years === y} onClick={() => { softTap(); setYears(y); }} className={`rounded-2xl border-4 border-slate-800 px-5 py-3 text-xl font-black ${years === y ? "bg-amber-300" : "bg-white"}`}>
+                <button key={y} type="button" aria-pressed={years === y} onClick={() => { sound(softTap); setYears(y); }} className={`rounded-2xl border-4 border-slate-800 px-5 py-3 text-xl font-black ${years === y ? "bg-amber-300" : "bg-white"}`}>
                   {y} anos
                 </button>
               ))}
@@ -289,7 +322,7 @@ export default function SuperNeuroPadNaoVerbalPage() {
             <h2 id="nv-amigo" className="text-lg font-black">2. Amigo da brincadeira</h2>
             <div className="mt-3 flex flex-wrap gap-3">
               {MASCOTS.map((m, i) => (
-                <button key={m.name} type="button" aria-pressed={mascotIndex === i} aria-label={m.name} onClick={() => { softTap(); setMascotIndex(i); }} className={`flex h-20 w-20 items-center justify-center rounded-full border-4 border-slate-800 text-5xl ${mascotIndex === i ? "bg-sky-200" : "bg-white"}`}>
+                <button key={m.name} type="button" aria-pressed={mascotIndex === i} aria-label={m.name} onClick={() => { sound(softTap); setMascotIndex(i); }} className={`flex h-20 w-20 items-center justify-center rounded-full border-4 border-slate-800 text-5xl ${mascotIndex === i ? "bg-sky-200" : "bg-white"}`}>
                   <span aria-hidden="true">{m.emoji}</span>
                 </button>
               ))}
@@ -357,7 +390,7 @@ export default function SuperNeuroPadNaoVerbalPage() {
           ))}
         </div>
         <div className="relative z-10 flex justify-center">
-          <button type="button" onClick={() => { softTap(); setScreen("desafio"); }} className={`nv-card flex items-center gap-2 px-6 py-4 text-xl font-black ${allPopped ? "bg-emerald-300 nv-pop-in" : "bg-white"}`}>
+          <button type="button" onClick={() => { sound(softTap); setScreen("desafio"); }} className={`nv-card flex items-center gap-2 px-6 py-4 text-xl font-black ${allPopped ? "bg-emerald-300 nv-pop-in" : "bg-white"}`}>
             <Play className="h-6 w-6" /> {allPopped ? "Vamos continuar!" : "Continuar"}
           </button>
         </div>
@@ -372,7 +405,7 @@ export default function SuperNeuroPadNaoVerbalPage() {
         <div className="text-8xl nv-dance" aria-hidden="true">{mascot.emoji}</div>
         <h1 className="text-center text-4xl font-black">Você conseguiu! 🎉</h1>
         <div className="max-w-xl rounded-3xl border-4 border-slate-800 bg-white p-4">{stickerShelf}</div>
-        <button type="button" onClick={() => { softTap(); cancel(); setScreen("aplicadora"); }} className="nv-card flex items-center gap-2 bg-sky-200 px-6 py-4 text-lg font-black">
+        <button type="button" onClick={() => { sound(softTap); cancel(); setScreen("aplicadora"); }} className="nv-card flex items-center gap-2 bg-sky-200 px-6 py-4 text-lg font-black">
           <Hand className="h-6 w-6" /> Área da aplicadora
         </button>
       </div>
@@ -385,6 +418,8 @@ export default function SuperNeuroPadNaoVerbalPage() {
         <div className="mx-auto max-w-4xl space-y-5">
           <h1 className="text-2xl font-black">{NV_TITLE} · registro da aplicação</h1>
           <p className="text-sm font-semibold text-slate-600">{years} anos · {generatedAt} · {DESCRIPTIVE_NOTICE}</p>
+          <p className="text-xs font-bold text-slate-600">{NV_PROVENANCE}</p>
+          <p className="rounded-2xl border-2 border-amber-500 bg-amber-50 px-3 py-2 text-sm font-bold text-amber-900">{NV_VALIDATION_STATUS}</p>
           <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {(["acerto", "erro", "sem_resposta", "recusa"] as const).map((status) => (
               <div key={status} className="rounded-2xl border-2 border-slate-300 p-3">

@@ -83,7 +83,61 @@ async function run(viewport, tag, years) {
   }
 }
 
+/** Encerrar e pausar durante a festa (1,3 s) não podem avançar a sessão sozinhos. */
+async function controlsDuringCelebration() {
+  const context = await browser.newContext({ viewport: { width: 1180, height: 900 }, reducedMotion: "reduce" });
+  await context.addInitScript((storage) => { for (const [key, value] of Object.entries(storage)) localStorage.setItem(key, value); }, ACCEPTED_FIRST_VISIT_STORAGE);
+  await context.addInitScript(() => { try { delete window.speechSynthesis; } catch { /* ignora */ } });
+  const page = await context.newPage();
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  try {
+    await page.goto(`${server.origin}/#/super-neuropad-nao-verbal`);
+    await page.waitForLoadState("networkidle");
+    if (await page.locator("#login-email").count()) {
+      await page.locator("#login-email").fill(SYNTHETIC_CREDENTIALS.email);
+      await page.locator("#login-password").fill(SYNTHETIC_CREDENTIALS.password);
+      await page.locator('[data-testid="login-form"] button[type="submit"]').click();
+    }
+    await page.getByRole("heading", { name: "SuperNeuroPad Não Verbal" }).waitFor({ timeout: 20000 });
+    assert.ok(await page.getByText(/não validada/).count(), "status de validação na tela inicial");
+    await page.getByRole("button", { name: "2 anos", exact: true }).click();
+    await page.getByRole("button", { name: "Começar" }).click();
+    await page.getByRole("button", { name: "Estrela de treino" }).click();
+    const group = page.getByRole("group", { name: "Figuras para tocar" });
+    const counter = page.getByText(/^\d+ de \d+$/);
+    // Pausa durante a festa: não avança; ao voltar, segue para o próximo.
+    await group.waitFor();
+    await group.getByRole("button").first().click();
+    await page.getByRole("button", { name: "Pausar" }).click();
+    await page.waitForTimeout(2000);
+    assert.equal(await counter.textContent(), "1 de 12", "avançou durante a pausa");
+    await page.getByRole("button", { name: "Voltar" }).last().click();
+    await page.waitForTimeout(500);
+    assert.equal(await counter.textContent(), "2 de 12", "não avançou ao voltar da pausa");
+    // Encerrar durante a festa do 4º desafio (o que antecede as bolhas): fica no fim, sem voltar para as bolhas.
+    for (const n of [2, 3]) {
+      await group.getByRole("button").first().click();
+      await page.waitForTimeout(1600);
+      assert.equal(await counter.textContent(), `${n + 1} de 12`);
+    }
+    await group.getByRole("button").first().click();
+    await page.getByRole("navigation", { name: "Controles da aplicadora" }).getByRole("button", { name: "Encerrar", exact: true }).click();
+    await page.waitForTimeout(2000);
+    assert.ok(await page.getByRole("heading", { name: /Você conseguiu/ }).count(), "saiu da tela de fim");
+    await page.getByRole("button", { name: "Área da aplicadora" }).click();
+    assert.equal(await page.getByRole("button", { name: "Bolha 1" }).count(), 0, "voltou para as bolhas depois de encerrar");
+    assert.equal(await page.locator("tbody tr").count(), 4, "registro após encerrar");
+    assert.ok(await page.getByText(/não validada/).count(), "status de validação no registro");
+    assert.deepEqual(errors, [], "erros de página");
+    console.log("✓ pausar e encerrar durante a festa não avançam a sessão sozinhos");
+  } finally {
+    await context.close();
+  }
+}
+
 try {
+  await controlsDuringCelebration();
   await run({ width: 390, height: 844 }, "celular", 3);
   await run({ width: 1180, height: 900 }, "desktop", 5);
 } finally {
