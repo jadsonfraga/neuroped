@@ -63,7 +63,8 @@ test("extensão: opcionais vêm dos bancos de origem da idade, sem itens criados
       seen.add(sameTask(item));
       if (item.kind === "toque") assert.ok(item.options.some((option) => option.label === item.answer), `${item.id}: resposta entre as opções`);
     }
-    assert.ok(opcionaisDaIdade(years).some(({ item }) => item.origin === "visual"), `${years}: inclui tarefa visual elegível para a idade`);
+    // Política de 22/11/2026: Reconhecimento Visual no complemento só até 7 anos (dos 8 em diante a bateria já tem o item da idade).
+    assert.equal(opcionaisDaIdade(years).some(({ item }) => item.origin === "visual"), years <= 7, `${years}: tarefa visual no complemento só até 7 anos`);
   }
 });
 

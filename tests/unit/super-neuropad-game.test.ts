@@ -206,11 +206,11 @@ test("resumo conta acertos por mundo e no total, com completude", () => {
   assert.equal(perfect.hits, 50);
   assert.equal(perfect.total, 50);
   assert.equal(perfect.complete, true);
-  assert.deepEqual(perfect.phases.map((phase) => phase.hits), [7, 9, 9, 7, 9, 9]);
+  assert.deepEqual(perfect.phases.map((phase) => phase.hits), [7, 6, 10, 10, 9, 8]);
 
   const young = summarize(play(4));
   assert.equal(young.total, 50);
-  assert.deepEqual(young.phases.map((phase) => phase.total), [7, 12, 9, 9, 6, 7]);
+  assert.deepEqual(young.phases.map((phase) => phase.total), [7, 16, 9, 6, 6, 6]);
 
   const mixed = summarize(play(6, (index) => (index % 5 === 0 ? "erro" : index % 5 === 1 ? "sem_resposta" : index % 5 === 2 ? "recusa" : "acerto")));
   assert.deepEqual(
@@ -220,7 +220,7 @@ test("resumo conta acertos por mundo e no total, com completude", () => {
     ),
     [20, 10, 10, 10],
   );
-  assert.deepEqual(mixed.phases.map((phase) => phase.total), [6, 9, 11, 9, 7, 8]);
+  assert.deepEqual(mixed.phases.map((phase) => phase.total), [7, 8, 9, 10, 8, 8]);
 
   const partial = play(2);
   partial.answers = partial.answers.slice(0, 7);
@@ -244,7 +244,7 @@ test("mundo pulado: aparece como não aplicado com motivo; partida fica incomple
   const corpo = summary.phases.find((phase) => phase.phase.id === "corpo")!;
   assert.equal(corpo.applied, false);
   assert.equal(corpo.skipReason, "Criança cansada ou sem colaboração");
-  assert.equal(summary.hits, 43, "os mundos aplicados continuam contados");
+  assert.equal(summary.hits, 44, "os mundos aplicados continuam contados");
   for (const output of [buildGameBrief(session), buildGameReport(session), JSON.stringify(buildGameDocSpec(session, ISSUER, "30/09/2026 14:00"))]) {
     assert.match(output, /não aplicado — Criança cansada|Não aplicado - motivo: Criança cansada|não aplicado — Criança cansada/i);
     assert.match(output, /sem classificação/i);
@@ -270,9 +270,9 @@ test("cores da resposta: azul acertou, vermelho errou, cinza neutro para não re
   }
   const vila = worlds[0].rich!;
   const prompts = vila.filter((line) => /^\d+\. /.test(line.text));
-  assert.ok(prompts.length === 6 && prompts.every((line) => line.bold && !line.tone), "enunciado em negrito, sem cor");
+  assert.ok(prompts.length === 7 && prompts.every((line) => line.bold && !line.tone), "enunciado em negrito, sem cor");
   const answers = vila.filter((line) => line.text.startsWith("   Resposta da criança: "));
-  assert.deepEqual(answers.map((line) => [line.bold, line.tone]), [[true, "correct"], [true, "wrong"], [true, "neutral"], [true, "neutral"], [true, "correct"], [true, "correct"]]);
+  assert.deepEqual(answers.map((line) => [line.bold, line.tone]), [[true, "correct"], [true, "wrong"], [true, "neutral"], [true, "neutral"], [true, "correct"], [true, "correct"], [true, "correct"]]);
   const results = vila.filter((line) => line.text.startsWith("   Resultado: "));
   assert.deepEqual(results.slice(0, 4).map((line) => line.text.split(" - ")[0].trim()), ["Resultado: Acertou", "Resultado: Errou", "Resultado: Não respondeu", "Resultado: Recusou"], "a cor nunca é o único sinal");
   assert.ok(results.every((line) => !line.tone && !line.bold));
@@ -354,7 +354,7 @@ test("relatório e PDF: metadados, o que foi testado por instrumento, contagem b
   assert.match(spec.sections[1].body, /Sonda 10 \(\/testes-diretos\): \d+ item\(ns\) previstos para 7 anos/);
   assert.match(spec.sections[1].body, /Reconhecimento visual \(\/testes-reconhecimento\)/);
   assert.match(spec.sections[2].body, /TOTAL: 47 acertos em 50 itens previstos \(50 registrados\)\./);
-  assert.match(spec.sections[2].body, /Mundo 1 - Vila da Conversa \(Interação e comunicação\): \d\/6 acertos, \d erros, \d sem resposta, \d recusa\(s\)/);
+  assert.match(spec.sections[2].body, /Mundo 1 - Vila da Conversa \(Interação e comunicação\): \d\/7 acertos, \d erros, \d sem resposta, \d recusa\(s\)/);
   assert.match(spec.sections[3].body, /Itens registrados como não acertados \(3\)/);
   const bodies = spec.sections.map((section) => section.body).join("\n");
   for (const entry of session.answers) {
@@ -455,7 +455,7 @@ test("resumo para o prontuário é prosa curta com idade, contagem, mundos, iten
   const session = { ...play(6, (index) => (index === 1 ? "erro" : index === 13 ? "sem_resposta" : "acerto")), observations: "Colaborou bem" };
   const brief = buildGameBrief(session, new Date("2026-09-30T12:00:00Z"));
   assert.match(brief, /^Registro lúdico de pré-consulta \(Super NeuroPad Game, 6 anos\) em 30\/09\/2026: partida completa, 50 de 50 itens registrados; 48 acertos, 1 erros, 1 sem resposta, 0 recusas\./);
-  assert.match(brief, /Por mundo: Vila da Conversa 5\/6, Floresta dos Olhos 8\/9, Ilha das Palavras 11\/11, Montanha dos Números 9\/9, Caverna da Memória 7\/7, Torre do Corpo 8\/8\./);
+  assert.match(brief, /Por mundo: Vila da Conversa 6\/7, Floresta dos Olhos 7\/8, Ilha das Palavras 9\/9, Montanha dos Números 10\/10, Caverna da Memória 8\/8, Torre do Corpo 8\/8\./);
   assert.match(brief, /Itens não acertados: .*\(errou; .*\); .*\(não respondeu; .*\)\./);
   assert.match(brief, /Observações da aplicadora: Colaborou bem\./);
   assert.match(brief, /Registro descritivo; sem classificação\. Interpretação a cargo do profissional\.$/);

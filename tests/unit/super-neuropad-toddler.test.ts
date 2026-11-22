@@ -105,7 +105,7 @@ test("relatório, resumo, prontuário, bloco estruturado e PDF mostram a contage
   const session = play(2, (item) => (/resposta ao nome|apontar/.test(item.ref) ? "erro" : "acerto"));
   const summary = summarize(session);
   assert.equal(summary.domains.length, 6);
-  assert.equal(summary.domains.find((entry) => entry.domain === "atencao_conjunta")!.hits, 1);
+  assert.equal(summary.domains.find((entry) => entry.domain === "atencao_conjunta")!.hits, 3, "2 erros planejados (nome e apontar) entre 5 itens do domínio: 3 da bateria + 2 do complemento");
   assert.ok(summary.domains.every((entry) => !("level" in entry)));
   assert.ok(!("redFlags" in summary));
   const report = buildGameReport(session);
@@ -114,7 +114,7 @@ test("relatório, resumo, prontuário, bloco estruturado e PDF mostram a contage
   const rows = JSON.stringify(buildPatientRecordItems(session));
   const structured = buildStructuredLines(session).join("\n");
   assert.match(report, /CONTAGEM POR DOMÍNIO \(BATERIA 2–3 ANOS\)/);
-  assert.match(report, /Atenção conjunta: 1\/3 cumpre/);
+  assert.match(report, /Atenção conjunta: 3\/5 cumpre/);
   for (const output of [report, brief, pdf, rows, structured]) assert.doesNotMatch(output, /sinal de alerta|encaminhar avalia|^ALERTA /im);
   assert.match(structured, /^DOMINIO_2_3 /m);
   assert.doesNotMatch(structured, /"nivel"/);

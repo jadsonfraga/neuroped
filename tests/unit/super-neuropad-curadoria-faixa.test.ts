@@ -1,14 +1,17 @@
-// Curadoria por faixa etária (v2026-11-22.1): teto de 30 min, complemento com Sonda 10/OBS-10 nos domínios
-// centrais, regras de saída (letra/numeral aos 2–3 anos, teto por mundo) e núcleo intacto.
+// Curadoria por faixa etária (v2026-11-22.3): teto de 30 min; complemento com o melhor dos quatro blocos
+// (Sonda 10, OBS-10, Reconhecimento Visual e Avaliação Cognitiva) sob uma política por idade pensada para
+// crianças em geral atípicas: limite por tipo de tarefa, sem repetir palavra-alvo nem texto, domínio certo
+// aos 2–3 anos e núcleo intacto.
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  conceptKey, CURADORIA_BANCOS, curatedOptionalDrafts, CURADORIA_SUFIXO, GAME_BANK, INTEGRATED_BANK, MAX_POR_MUNDO, OPTIONAL_BANK, PHASE_ORDER, pedeLetraOuNumeral, YEARS,
+  alvosDaTarefa, conceptKey, CURADORIA_BANCOS, curatedOptionalDrafts, CURADORIA_SUFIXO, GAME_BANK, INTEGRATED_BANK, limitesDaIdade,
+  OPTIONAL_BANK, PHASE_ORDER, pedeLetraOuNumeral, tipoTarefa, YEARS, type TipoTarefa,
 } from "../../client/src/features/super-neuropad/bank";
 import { estimateBandSeconds, itemProvenance, SESSION_LIMIT_SECONDS, sessionLimitSeconds } from "../../client/src/features/super-neuropad/model";
 
-const CENTRAIS = ["vila", "memoria", "corpo"] as const;
 const curados = (years: number) => OPTIONAL_BANK[years].filter(({ item }) => item.ref.endsWith(` · ${CURADORIA_SUFIXO}`));
+const porMundo = (years: number) => PHASE_ORDER.map((phaseId) => GAME_BANK[years][phaseId].length).join("/");
 
 test("teto de 30 minutos em todas as idades, com a estimativa dos 50 desafios dentro dele", () => {
   assert.equal(SESSION_LIMIT_SECONDS, 30 * 60);
@@ -20,62 +23,107 @@ test("teto de 30 minutos em todas as idades, com a estimativa dos 50 desafios de
   }
 });
 
-test("curadoria: cada idade recebe itens da Sonda 10/OBS-10 nos mundos centrais, rastreáveis e sem item autoral", () => {
+test("curadoria dos roteiros: Sonda 10/OBS-10 em toda idade, rastreável, sem item autoral nem objeto externo", () => {
   for (const years of YEARS) {
     const lista = curados(years);
     assert.equal(lista.length, curatedOptionalDrafts(years).length, `${years} anos: toda a curadoria entra no complemento`);
     assert.ok(lista.length >= 4, `${years} anos: curadoria presente (${lista.length})`);
-    for (const { item, phaseId } of lista) {
+    for (const { item } of lista) {
       assert.ok(["sonda10", "obs10"].includes(item.origin), `${item.id}: origem Sonda 10 ou OBS-10`);
       assert.match(item.ref, /^(Sonda 10|OBS-10) · /, `${item.id}: referência ao roteiro`);
       assert.equal(itemProvenance(item), "banco_de_origem", `${item.id}: não é item autoral`);
-      assert.ok((CENTRAIS as readonly string[]).includes(phaseId) || phaseId === "palavras", `${item.id}: mundo central (${phaseId})`);
       assert.doesNotMatch(item.prompt, /\b(lápis|papel|folha|fichas?|cartões|blocos?)\b/i, `${item.id}: sem objeto fora do aplicativo`);
     }
-    for (const phaseId of CENTRAIS) {
+    for (const phaseId of ["vila", "memoria", "corpo"] as const) {
       assert.ok(GAME_BANK[years][phaseId].length > INTEGRATED_BANK[years][phaseId].length, `${years} anos/${phaseId}: complemento chega ao mundo central`);
     }
   }
 });
 
-test("curadoria não repete tarefa nem conceito da bateria nem de outro complemento", () => {
+test("política por idade: nenhum tipo de tarefa passa do limite da idade no complemento", () => {
   for (const years of YEARS) {
+    const limites = limitesDaIdade(years);
+    const contagem: Partial<Record<TipoTarefa, number>> = {};
+    for (const { item } of OPTIONAL_BANK[years]) contagem[tipoTarefa(item)] = (contagem[tipoTarefa(item)] ?? 0) + 1;
+    for (const [tipo, total] of Object.entries(contagem) as Array<[TipoTarefa, number]>) {
+      const limite = limites[tipo];
+      if (limite !== undefined) assert.ok(total <= limite, `${years} anos: ${tipo} ${total} > ${limite}`);
+    }
+  }
+});
+
+test("adequação à idade: sem letra/numeral aos 2–3; sem leitura de palavra antes dos 6; sem minúscula fora dos 6; sem nomear cor antes dos 4", () => {
+  for (const years of YEARS) {
+    const tipos = OPTIONAL_BANK[years].map(({ item }) => tipoTarefa(item));
+    if (years <= 3) assert.deepEqual(OPTIONAL_BANK[years].filter(({ item }) => pedeLetraOuNumeral(item)).map(({ item }) => item.prompt), [], `${years} anos`);
+    if (years <= 5) assert.ok(!tipos.includes("leitura") && !tipos.includes("ortografia"), `${years} anos: sem leitura`);
+    if (years !== 6) assert.ok(!tipos.includes("letra_minuscula"), `${years} anos: sem minúscula`);
+    if (years <= 3) assert.ok(!tipos.includes("cor_nomear") && !tipos.includes("quantidade_menos") && !tipos.includes("pareamento"), `${years} anos`);
+  }
+});
+
+test("sem redundância: nenhuma palavra-alvo nem texto lido se repete entre o complemento e a bateria", () => {
+  for (const years of YEARS) {
+    const vistos = new Set(PHASE_ORDER.flatMap((phaseId) => INTEGRATED_BANK[years][phaseId].flatMap(alvosDaTarefa)));
     const principal = new Set(PHASE_ORDER.flatMap((phaseId) => INTEGRATED_BANK[years][phaseId].map(conceptKey)));
-    const vistos = new Set<string>();
     for (const { item } of OPTIONAL_BANK[years]) {
-      const chave = conceptKey(item);
-      if (item.ref.endsWith(CURADORIA_SUFIXO)) assert.ok(!principal.has(chave), `${item.id}: conceito já na bateria (${item.prompt})`);
-      vistos.add(chave);
+      for (const alvo of alvosDaTarefa(item)) {
+        assert.ok(!vistos.has(alvo), `${item.id}: alvo repetido "${alvo}" (${item.prompt})`);
+        vistos.add(alvo);
+      }
+      assert.ok(!principal.has(conceptKey(item)), `${item.id}: conceito já na bateria (${item.prompt})`);
     }
-    assert.ok(curados(years).every(({ item }) => vistos.has(conceptKey(item))));
   }
+  // Casos concretos da revisão de 22/11/2026.
+  const doisAnos = OPTIONAL_BANK[2].map(({ item }) => item.prompt).join(" | ");
+  assert.ok((doisAnos.match(/avião/gi) ?? []).length <= 1, "2 anos: avião uma vez só");
+  assert.ok(OPTIONAL_BANK[8].filter(({ item }) => tipoTarefa(item) === "ortografia").length <= 1, "8 anos: um item de ortografia");
 });
 
-test("regras de saída: aos 2–3 anos nenhum complemento pede letra ou numeral; o item curado leva o domínio do mundo", () => {
+test("2–3 anos: cada complemento cai no mundo do seu domínio e leva esse domínio (entra no resumo por domínio)", () => {
   for (const years of [2, 3]) {
-    const pedem = OPTIONAL_BANK[years].filter(({ item }) => pedeLetraOuNumeral(item));
-    assert.deepEqual(pedem.map(({ item }) => item.prompt), [], `${years} anos`);
-    for (const { item, phaseId } of curados(years)) {
+    for (const { item, phaseId } of OPTIONAL_BANK[years]) {
       const dominio = INTEGRATED_BANK[years][phaseId][0].domain;
-      assert.ok(dominio, `${years}/${phaseId}: mundo da bateria dedicada tem domínio`);
-      assert.equal(item.domain, dominio, `${item.id}: domínio igual ao do mundo`);
+      assert.ok(dominio, `${years}/${phaseId}`);
+      assert.equal(item.domain, dominio, `${item.id}: domínio do mundo (${item.prompt})`);
+      const tipo = tipoTarefa(item);
+      if (tipo === "nomeacao" || tipo === "vr_nomear") {
+        assert.equal(phaseId, "numeros", `${item.id}: nomear é linguagem expressiva`);
+        assert.match(item.kind === "fala" ? item.expected : "", /aproximação da palavra ou onomatopeia/, `${item.id}: aceita fala emergente`);
+      }
+      if (["figura", "vr_reconhecer", "quantidade", "forma", "cor"].includes(tipo)) assert.equal(phaseId, "palavras", `${item.id}: figura/conceito é linguagem receptiva`);
     }
+    assert.ok(GAME_BANK[years].numeros.filter((item) => /quant|tem mais|tem menos|onde tem/i.test(item.prompt)).length === 0, `${years} anos: sem quantidade no mundo da fala`);
   }
-  assert.equal(pedeLetraOuNumeral({ kind: "toque", prompt: "Toque na LETRA A.", options: [], answer: "A", origin: "cognitivo", ref: "x" } as never), true);
-  assert.equal(pedeLetraOuNumeral({ kind: "toque", prompt: "Toque no cachorro.", options: [], answer: "cachorro", origin: "visual", ref: "x" } as never), false);
 });
 
-test("equilíbrio: dos 8 aos 17 anos nenhum mundo passa do teto por mundo e os mundos centrais ficam acima do núcleo", () => {
-  assert.equal(MAX_POR_MUNDO, 9);
-  for (const years of YEARS.filter((value) => value >= 8)) {
-    for (const phaseId of PHASE_ORDER) assert.ok(GAME_BANK[years][phaseId].length <= MAX_POR_MUNDO, `${years}/${phaseId}: ${GAME_BANK[years][phaseId].length}`);
+test("Reconhecimento Visual e Avaliação Cognitiva: entram até 7 anos pela curadoria dos bancos; dos 8 em diante só a Avaliação Cognitiva", () => {
+  for (const years of YEARS) {
+    const ids = new Set(CURADORIA_BANCOS[years]);
+    const refs = OPTIONAL_BANK[years].filter(({ item }) => ids.has(item.id)).map(({ item }) => item.ref);
+    assert.ok(refs.some((ref) => new RegExp(`^Cognitivos ${years} anos · `).test(ref)), `${years} anos: Avaliação Cognitiva da idade`);
+    const visual = OPTIONAL_BANK[years].filter(({ item }) => item.origin === "visual");
+    if (years <= 7) {
+      assert.ok(refs.some((ref) => /^Reconhecimento visual · nomear · /.test(ref)), `${years} anos: nomear`);
+      assert.ok(visual.length >= 2, `${years} anos: Reconhecimento Visual presente`);
+    } else {
+      assert.equal(visual.length, 0, `${years} anos: sem Reconhecimento Visual de teto no complemento`);
+    }
+    if (years >= 4 && years <= 5) assert.ok(refs.some((ref) => /^Reconhecimento visual · parear · /.test(ref)), `${years} anos: parear como piso`);
+    if (years >= 5 && years <= 7) assert.ok(refs.some((ref) => /conceito contextualizado/.test(ref)), `${years} anos: conceito contextualizado`);
   }
-  // Medição de referência da curadoria (itens por mundo); muda só com revisão deliberada da composição.
-  const porMundo = (years: number) => PHASE_ORDER.map((phaseId) => GAME_BANK[years][phaseId].length).join("/");
-  assert.equal(porMundo(2), "6/13/10/12/5/4");
-  assert.equal(porMundo(5), "6/9/11/9/7/8");
-  assert.equal(porMundo(8), "7/9/9/7/9/9");
-  assert.equal(porMundo(17), "8/8/9/7/9/9");
+});
+
+test("equilíbrio: nenhum mundo passa de 11 a partir dos 6 anos; composição de referência registrada", () => {
+  // Dos 8 aos 17, a Floresta dos Olhos fica no núcleo (6) de propósito: não há tarefa visual que não seja de teto.
+  for (const years of YEARS.filter((value) => value >= 6)) {
+    for (const phaseId of PHASE_ORDER) assert.ok(GAME_BANK[years][phaseId].length <= 11, `${years}/${phaseId}: ${GAME_BANK[years][phaseId].length}`);
+  }
+  // Medição da revisão de 22/11/2026; muda só com revisão deliberada.
+  assert.equal(porMundo(2), "7/5/21/6/6/5");
+  assert.equal(porMundo(5), "6/14/7/8/8/7");
+  assert.equal(porMundo(8), "7/6/10/10/9/8");
+  assert.equal(porMundo(17), "8/6/9/9/9/9");
 });
 
 test("núcleo intacto: a bateria principal mantém contagens e ids canônicos", () => {
@@ -84,30 +132,6 @@ test("núcleo intacto: a bateria principal mantém contagens e ids canônicos", 
   for (const years of YEARS) {
     for (const phaseId of PHASE_ORDER) {
       INTEGRATED_BANK[years][phaseId].forEach((item, index) => assert.equal(item.id, `${years}.${phaseId}.${index + 1}`));
-    }
-  }
-});
-
-test("curadoria dos bancos: Reconhecimento Visual (parear, nomear, conceito) e Avaliação Cognitiva entram em toda idade, sem repetir a bateria", () => {
-  for (const years of YEARS) {
-    const ids = new Set(CURADORIA_BANCOS[years]);
-    const lista = OPTIONAL_BANK[years].filter(({ item }) => ids.has(item.id));
-    assert.equal(lista.length, ids.size, `${years} anos: ids da curadoria existem no complemento`);
-    const refs = lista.map(({ item }) => item.ref);
-    assert.ok(refs.some((ref) => /^Reconhecimento visual · nomear · /.test(ref)), `${years} anos: nomear do Reconhecimento Visual`);
-    assert.ok(refs.some((ref) => new RegExp(`^Cognitivos ${years} anos · `).test(ref)), `${years} anos: item da Avaliação Cognitiva da idade`);
-    if (years >= 4) assert.ok(refs.some((ref) => /^Reconhecimento visual · parear · /.test(ref)), `${years} anos: parear`);
-    if (years >= 5) assert.ok(refs.some((ref) => /^Reconhecimento visual · conceito contextualizado · /.test(ref)), `${years} anos: conceito contextualizado`);
-    if (years >= 4) {
-      for (const dominio of ["fala/leitura", "números", "letras/escrita"]) {
-        assert.ok(refs.some((ref) => ref.startsWith(`Cognitivos ${years} anos · ${dominio} `)), `${years} anos: domínio cognitivo ${dominio}`);
-      }
-    }
-    const principal = PHASE_ORDER.flatMap((phaseId) => INTEGRATED_BANK[years][phaseId]);
-    for (const { item } of lista) {
-      assert.ok(!principal.some((entry) => entry.ref === item.ref), `${item.id}: referência já aplicada na bateria`);
-      assert.ok(!principal.map(conceptKey).includes(conceptKey(item)), `${item.id}: conceito já aplicado na bateria`);
-      if (years <= 3) assert.equal(item.domain, INTEGRATED_BANK[years][PHASE_ORDER.find((phaseId) => GAME_BANK[years][phaseId].some((entry) => entry.id === item.id))!][0].domain, `${item.id}: domínio do mundo`);
     }
   }
 });

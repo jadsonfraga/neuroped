@@ -948,7 +948,14 @@ const WALK_TURN = (band: string): Draft<DoItem> => fazer("obs10", MOTOR(band), "
   "Vai, vira e volta sem cair", { stimulus: "🏃", seconds: 25 });
 const DOG_CLAP = (band: string, words: string[]): Draft<DoItem> => fazer("sonda10", SONDA(band, "atenção sustentada (adaptada, auditiva)"),
   `Diga: “Bata palma só quando eu falar CACHORRO.” Fale devagar, 2–3 segundos entre as palavras: ${words.join(" – ")}.`,
-  `Bate palma só nas ${NUM_WORDS[words.filter((word) => word === "CACHORRO").length]} vezes do CACHORRO`, { stimulus: "👏 🐶", seconds: 15 + words.length * 2 });
+  `Bate palma só nas ${["zero", "uma", "duas", "três", "quatro", "cinco"][words.filter((word) => word === "CACHORRO").length]} vezes do CACHORRO`, { stimulus: "👏 🐶", seconds: 15 + words.length * 2 });
+
+const SHOW_SHARE = (band: string): Draft<DoItem> => fazer("sonda10", SONDA(band, "atenção conjunta + gesto (mostrar)"),
+  "Mostre uma figura nova e espere 10 segundos sem falar, dando a chance de a criança apontar ou mostrar para você.",
+  "Aponta ou mostra a figura olhando para você (compartilha o interesse)", { stimulus: "🎈 🐶", seconds: 18 });
+const SPONTANEOUS_REQUEST = (band: string): Draft<DoItem> => fazer("sonda10", SONDA(band, "linguagem expressiva (pedido espontâneo)"),
+  "Ao longo do jogo, observe e registre: ela pede alguma coisa por conta própria?",
+  "Faz pelo menos um pedido espontâneo (palavra, som ou gesto acompanhado de olhar)", { seconds: 8 });
 
 function curatedOptional(years: number): Partial<Record<PhaseId, Draft<Item>[]>> {
   if (years === 2) {
@@ -960,18 +967,30 @@ function curatedOptional(years: number): Partial<Record<PhaseId, Draft<Item>[]>>
         tg(ASK_HELP(m, 10), "interacao_social"),
         tg(fazer("obs10", OBS(m, "retomar e encerrar (aviso de troca)"), "Avise: “Agora vamos trocar de brincadeira.” Observe a reação à troca.",
           "Aceita a troca, ou mostra desagrado e se recupera com sua ajuda (registre como foi)", { seconds: 15 }), "interacao_social"),
+        tg(fazer("sonda10", SONDA("12–23 meses", "imitação + gestos (piso da faixa anterior)"), "Diga “Faz igual!” e mande um beijo; depois dê tchau.",
+          "Imita pelo menos 1 dos 2 gestos", { stimulus: "😘 👋", seconds: 15 }), "interacao_social"),
+      ],
+      olhos: [
+        tg(SHOW_SHARE(m), "atencao_conjunta"),
+        tg(fazer("sonda10", SONDA(m, "atenção conjunta + gesto (segunda oportunidade)"), "Do outro lado da tela, aponte para o sapo e diga: “Olha!”",
+          "Segue o seu apontar até o sapo", { stimulus: "🐸", seconds: 15 }), "atencao_conjunta"),
       ],
       palavras: [
         tg(fazer("sonda10", SONDA(m, "compreensão verbal"), "Mostre as figuras e diga uma vez, sem gesto: “Pega a colher e dá para o bebê.”",
           "Faz as 2 ações (toca a colher e depois o bebê, ou faz de conta de dar comida)", { stimulus: "🥄 👶 ⚽", seconds: 15 }), "linguagem_receptiva"),
       ],
+      numeros: [tg(SPONTANEOUS_REQUEST(m), "linguagem_expressiva")],
       memoria: [
+        tg(fazer("obs10", OBS(m, "acolher (exploração livre)"), "Numa pausa, deixe a criança explorar a tela livremente por 30 segundos, sem comandos.",
+          "Fica explorando por boa parte dos 30 segundos, sem sair a todo momento (registre como foi)", { seconds: 35 }), "atencao"),
         tg(fazer("sonda10", SONDA(m, "memória inicial (sequência)"), "Diga: “Primeiro toque no carro, depois na bola.”", "Toca os dois na ordem pedida", { stimulus: "⚽ 🚗 🧸", seconds: 15 }), "atencao"),
         tg(toque("sonda10", SONDA(m, "memória inicial (visual)"), "Toque na figura que você VIU", [opt("🐶"), opt("🚗")], "cachorro", { preview: "🐶", big: true }), "atencao"),
       ],
       corpo: [
         tg(fala("obs10", OBS(m, "interagir e conversar (faz de conta)"), "Mostre o bebê: “Ele quer dormir. O que a gente faz?”",
           "Propõe ou faz de conta pôr o bebê para dormir (ninar, deitar, cobrir)", { stimulus: "👶 🛏️", gesture: "Aceita só fazer de conta, sem falar", seconds: 15 }), "brincar_simbolico"),
+        tg(fazer("sonda10", SONDA("12–23 meses", "brincadeira funcional (piso da faixa anterior)"), "Mostre o carro, passe o dedo nele fazendo “vrum!” e diga: “Agora você!”",
+          "Faz o carro “andar” com o dedo ou faz o som do carro", { stimulus: "🚗", seconds: 15 }), "brincar_simbolico"),
       ],
     };
   }
@@ -984,10 +1003,13 @@ function curatedOptional(years: number): Partial<Record<PhaseId, Draft<Item>[]>>
         tg(fazer("obs10", OBS("3 anos", "retomar e encerrar (aviso e escolha)"), "Avise que a brincadeira vai acabar e ofereça a escolha: “O que guardamos primeiro: a bola ou o carro?”",
           "Aceita o aviso e faz uma escolha (fala, aponta ou toca)", { stimulus: "⚽ 🚗", seconds: 15 }), "interacao_social"),
       ],
+      olhos: [tg(SHOW_SHARE("3–4 anos"), "atencao_conjunta")],
+      numeros: [tg(SPONTANEOUS_REQUEST("3–4 anos"), "linguagem_expressiva")],
       memoria: [
+        // Aos 3 anos a regra SOL/LUA fica para os 4: a bateria já tem espera e estátua; aqui, piso de sequência.
         tg(DOG_CLAP("3–4 anos", ["gato", "CACHORRO", "bola", "CACHORRO", "casa"]), "atencao"),
         tg(toque("sonda10", SONDA("3–4 anos", "memória (visual)"), "Toque na figura que você VIU", [opt("🐶"), opt("🐱"), opt("🚗")], "cachorro", { preview: "🐶 🍌", big: true }), "atencao"),
-        tg(sunMoon(SONDA("3–4 anos", "inibição"), ["SOL", "LUA", "SOL", "LUA"], "bata palma"), "atencao"),
+        tg(fazer("sonda10", SONDA("24–35 meses", "memória inicial (sequência, piso)"), "Diga: “Primeiro toque no carro, depois na bola.”", "Toca os dois na ordem pedida", { stimulus: "⚽ 🚗 🧸", seconds: 15 }), "atencao"),
       ],
       corpo: [
         tg(fala("sonda10", SONDA("3–4 anos", "brincadeira simbólica"), "Mostre a figura: “O bebê está com frio. O que a gente faz?”",
@@ -1003,8 +1025,14 @@ function curatedOptional(years: number): Partial<Record<PhaseId, Draft<Item>[]>>
     ],
     memoria: [
       DOG_CLAP("3–4 anos", ["gato", "CACHORRO", "bola", "casa", "CACHORRO"]),
-      fala("sonda10", SONDA("3–4 anos", "inibição + troca de regra"), "Diga: “Agora vamos inverter: LUA = bata palma; SOL = mãos paradas.” Sequência: LUA – SOL – LUA – SOL",
+      fala("sonda10", SONDA("3–4 anos", "inibição + troca de regra"), "Só se a criança entendeu a regra SOL/LUA (senão, registre “não aplicado”): “Agora vamos inverter: LUA = bata palma; SOL = mãos paradas.” Sequência: LUA – SOL – LUA – SOL",
         "Acerta as 4 com a regra nova (palma só na LUA)", { stimulus: "🌙 ☀️", seconds: 30 }),
+    ],
+    palavras: [
+      fala("obs10", OBS("4 anos", "linguagem e raciocínio"), "Mostre o guarda-chuva e pergunte: “Para que serve um guarda-chuva?”",
+        "Diz uma função plausível (proteger da chuva, não molhar)", { stimulus: "☂️", gesture: "Aceita mostrar com gesto a função (abrir sobre a cabeça)", seconds: 15 }),
+      fala("sonda10", SONDA("3–4 anos", "expressivo + amostra de fala"), "Mostre a cena e pergunte: “O que está acontecendo?”",
+        "Descreve a cena numa frase de 3 palavras ou mais (ex.: “o menino tá jogando bola”); anote a frase dita", { stimulus: "🧒 ⚽ 🐶", seconds: 20 }),
     ],
     corpo: [WALK_TURN("4 anos"), copyShape("4 anos", "circulo", "o círculo", "Desenha uma forma fechada e arredondada")],
   };
@@ -1018,21 +1046,27 @@ function curatedOptional(years: number): Partial<Record<PhaseId, Draft<Item>[]>>
     memoria: [
       fala("obs10", OBS("5 anos", "linguagem e raciocínio (reconto)"), "Conte: “Um gato ficou preso numa árvore. Uma pessoa trouxe uma escada e ajudou o gato a descer.” Pergunte: “O que aconteceu?” e “Como ele desceu?”",
         "Reconta o essencial (gato preso, alguém ajudou) e diz que desceu pela escada", { seconds: 30 }),
-      fala("sonda10", SONDA("5–7 anos", "flexibilidade cognitiva"), "Diga: “Agora mudou: LUA = bata na mesa; SOL = mãos paradas.” Sequência: LUA – SOL – SOL – LUA",
+      fala("sonda10", SONDA("5–7 anos", "flexibilidade cognitiva"), "Só se a criança entendeu a regra SOL/LUA (senão, registre “não aplicado”): “Agora mudou: LUA = bata na mesa; SOL = mãos paradas.” Sequência: LUA – SOL – SOL – LUA",
         "Acerta as 4 com a regra nova (reage só na LUA)", { stimulus: "🌙 ☀️", seconds: 30 }),
       fazer("sonda10", SONDA("5–7 anos", "compreensão + memória operacional"), "Diga uma vez: “Escuta tudo antes de começar: bata palma, depois ponha a mão na cabeça e depois na barriga.”",
         "Faz as 3 ações na ordem pedida", { seconds: 20 }),
+      fazer("sonda10", SONDA("5–7 anos", "compreensão (antes/depois, 2 etapas)"), "Diga uma vez: “Antes de pôr a mão na cabeça, toque o nariz.”",
+        "Toca o nariz primeiro e depois põe a mão na cabeça", { seconds: 15 }),
     ],
     corpo: [ARMS("5 anos"), FINGER_NOSE("5 anos"), copyShape("5 anos", "circulo", "o círculo", "Desenha uma forma fechada e arredondada")],
   };
   if (years <= 7) return {
     vila: [
       fala("obs10", OBS("6–8 anos", "interagir e conversar"), "Pergunte: “O que está mais difícil na escola ou em casa?”", "Responde de forma compreensível, dentro do assunto (vale “nada”)"),
+      fala("sonda10", SONDA("5–7 anos", "narrativa + inferência (antecipação)"), "Volte à cena da chuva e pergunte: “E o que vai acontecer depois?”",
+        "Antecipa algo plausível (vai se molhar menos, vai chegar em casa, a chuva vai passar)", { stimulus: "🌧️ 🧒 ☂️" }),
     ],
     memoria: [
       fazer("sonda10", SONDA("5–7 anos", "compreensão + memória operacional"), "Diga uma vez: “Escuta tudo antes de começar: antes de bater palma, toque o nariz; depois, ponha a mão na cabeça.”",
         "Faz na ordem: nariz, palma, cabeça", { seconds: 20 }),
       DOG_CLAP("5–7 anos", ["gato", "CACHORRO", "bola", "casa", "CACHORRO", "pato", "sol", "CACHORRO", "mesa", "CACHORRO"]),
+      fala("obs10", OBS("6–8 anos", "linguagem e raciocínio (memória recente)"), "Pergunte: “O que você fez antes de chegar aqui hoje?”",
+        "Conta pelo menos uma coisa que fez antes de chegar (confira com o acompanhante, se possível)", { seconds: 20 }),
     ],
     corpo: [
       fazer("obs10", HANDS("6–8 anos"), "Demonstre e peça: “Toque o polegar em cada dedo, do indicador ao mindinho.” Uma mão, depois a outra.",
@@ -1054,7 +1088,7 @@ function curatedOptional(years: number): Partial<Record<PhaseId, Draft<Item>[]>>
           "Faz as 4 ações na ordem pedida", { seconds: 25 }),
         years <= 9
           ? fala("sonda10", SONDA("8–11 anos", "planejamento"), "Diga: “Você precisa sair de casa às 7h30. Em que ordem faz: tomar café, pegar a mochila, tomar banho, vestir o uniforme?”",
-            "Dá uma ordem viável sem esquecer nenhuma etapa (mochila por último)", { seconds: 35 })
+            "Dá uma ordem viável (banho antes de vestir o uniforme) sem esquecer nenhuma das 4 etapas", { seconds: 35 })
           : fala("sonda10", SONDA("8–11 anos", "planejamento + imprevisto"), "Continue a rotina das 7h30: “O uniforme ainda está molhado. O que muda?”",
             "Propõe um ajuste viável (outra roupa, secar, avisar um adulto) sem desistir da saída", { seconds: 30 }),
         years <= 9
@@ -1078,8 +1112,12 @@ function curatedOptional(years: number): Partial<Record<PhaseId, Draft<Item>[]>>
         "Reorganiza a noite (encurta ou move o tempo livre, ajusta horários) sem deixar de lado a prova", { seconds: 35 }),
       fala("sonda10", SONDA("12–17 anos", "troca de regra"), "Diga: “Agora mudou: DIREITA continua DIREITA; ESQUERDA continua ESQUERDA.” Sequência: ESQUERDA – DIREITA – DIREITA – ESQUERDA",
         "Acerta as 4 com a regra nova", { seconds: 25 }),
-      fala("obs10", OBS("12–17 anos", "linguagem e raciocínio"), "Pergunte: “Como você dividiria três tarefas escolares para terminar hoje?”",
-        "Divide as tarefas em ordem ou horário que faz sentido (prioridade, tempo de cada uma)", { seconds: 30 }),
+      // Sonda 10 (12–17): ordem inversa com 3 a 5 palavras. A bateria aplica 3 (12–14) ou 4 (15–17); aqui, o passo seguinte.
+      years >= 15
+        ? fala("sonda10", SONDA("12–17 anos", "memória operacional verbal (próximo passo)"), "Só se acertou a ordem inversa anterior. Diga, uma palavra por segundo: “Repita ao contrário: dia – mão – voz – rio – rei.”",
+          "Diz “rei – rio – voz – mão – dia”", { stimulus: "🗣️ ↩" })
+        : fala("sonda10", SONDA("12–17 anos", "memória operacional verbal (próximo passo)"), "Só se acertou a ordem inversa anterior. Diga, uma palavra por segundo: “Repita ao contrário: flor – rio – céu – pá.”",
+          "Diz “pá – céu – rio – flor”", { stimulus: "🗣️ ↩" }),
     ],
     corpo: [ARMS("12–17 anos"), FINGER_NOSE("12–17 anos")],
   };
@@ -1106,6 +1144,104 @@ export function pedeLetraOuNumeral(item: AnyDraft | Item): boolean {
 /** Nenhum mundo passa disto no complemento (50 ÷ 6 arredondado para cima), salvo se o banco não fechar 50. */
 export const MAX_POR_MUNDO = Math.ceil(DESAFIOS_DISPONIVEIS_POR_IDADE / PHASE_ORDER.length);
 
+// ─────────────────────────────── política de seleção por idade (v2026-11-22.3) ───────────────────────────────
+// Revisão idade por idade para crianças em geral atípicas: cada tarefa do complemento recebe um tipo e cada
+// idade tem limite por tipo (0 = não entra). O limite vale para o complemento inteiro (curadoria + preenchimento)
+// e nunca é relaxado para fechar 50. Tipos sem limite na tabela ficam livres.
+export type TipoTarefa =
+  | "vr_reconhecer" | "vr_parear" | "vr_nomear" | "vr_conceito" | "montar" | "fonologia" | "letra" | "leitura"
+  | "letra_minuscula" | "ortografia" | "gramatica" | "numeral" | "quantidade" | "quantidade_menos" | "pareamento" | "forma" | "cor" | "cor_nomear" | "negacao" | "nomeacao" | "sequencia" | "figura" | "roteiro";
+
+export function tipoTarefa(draft: AnyDraft | Item): TipoTarefa {
+  if (draft.origin === "visual") {
+    if (/ · parear · /.test(draft.ref)) return "vr_parear";
+    if (/ · nomear · /.test(draft.ref)) return "vr_nomear";
+    if (/conceito contextualizado/.test(draft.ref)) return "vr_conceito";
+    return draft.kind === "toque" && /^Mostre: (vermelho|azul|amarelo|verde|laranja|roxo|rosa|preto|branco|marrom|cinza)\.?$/i.test(draft.prompt) ? "cor" : "vr_reconhecer";
+  }
+  if (draft.kind === "montar") return "montar";
+  if (draft.kind === "fazer" || draft.origin === "sonda10" && !/banco objetivo/.test(draft.ref) || draft.origin === "obs10" && !/banco objetivo/.test(draft.ref)) return "roteiro";
+  const p = plain(draft.prompt);
+  const resposta = draft.kind === "toque" ? plain(draft.answer) : plain(draft.expected);
+  if (/minuscula/.test(p)) return "letra_minuscula";
+  if (/comeca com [a-z]\b/.test(p)) return "letra";
+  if (/silaba|partes tem|rima|com que som/.test(p)) return "fonologia";
+  if (/vem depois|vem a seguir|completa a sequencia|esta faltando/.test(p) && !/\bnumero\b/.test(p)) return "sequencia";
+  if (/\bletra\b|minuscula|maiuscula/.test(p) || (draft.kind === "toque" && /^[a-z]$/.test(resposta))) return "letra";
+  if (/escrita (certa|errada)|acento|plural/.test(p)) return "ortografia";
+  if (/frase (esta|e) (certa|correta)|frase esta correta|virgula|voz passiva|conectivo|complete: |maiuscula/.test(p)) return "gramatica";
+  if (/\bleia\b|escrit[ao]|qual palavra e|em voz alta/.test(p)) return "leitura";
+  if (/\bNÃO\b/.test(draft.prompt)) return "negacao";
+  if (/\d|\bnumero|\bquant[ao]s\b|\bconte\b|\b(dois|duas|tres|quatro|cinco)\b/.test(p)) return "numeral";
+  if (/\bonde tem\b/.test(p)) return /\bmenos\b/.test(p) ? "quantidade_menos" : "quantidade";
+  if (/\bcor\b|vermelh|azul|amarel|verde/.test(p)) return draft.kind === "fala" ? "cor_nomear" : "cor";
+  if (/circulo|quadrado|triangulo|estrela|losango|\bforma\b/.test(p) || (/igual a esta|igual a este/.test(p) && /circulo|quadrado|triangulo|estrela|losango/.test(resposta))) return "forma";
+  if (draft.kind === "fala") return "nomeacao";
+  if (/igual a est|igual ao modelo/.test(p)) return "pareamento";
+  return "figura";
+}
+
+/** Limite por tipo no complemento de cada idade. Ausente = livre; 0 = não entra. */
+export function limitesDaIdade(years: number): Partial<Record<TipoTarefa, number>> {
+  return { letra_minuscula: years === 6 ? 1 : 0, quantidade_menos: years === 4 ? 1 : 0, ortografia: years <= 5 ? 0 : years <= 7 ? 2 : 1, gramatica: years <= 6 ? 0 : 1, pareamento: years <= 3 ? 0 : years <= 5 ? 2 : 1, ...limitesBase(years) };
+}
+
+function limitesBase(years: number): Partial<Record<TipoTarefa, number>> {
+  if (years === 2) return { vr_parear: 0, vr_conceito: 0, vr_reconhecer: 6, vr_nomear: 2, nomeacao: 4, montar: 0, fonologia: 0, letra: 0, leitura: 0, numeral: 0, quantidade: 1, forma: 0, cor: 0, cor_nomear: 0, negacao: 0 };
+  if (years === 3) return { vr_parear: 0, vr_conceito: 0, vr_reconhecer: 8, vr_nomear: 2, nomeacao: 4, montar: 0, fonologia: 0, letra: 0, leitura: 0, numeral: 0, quantidade: 2, forma: 1, cor: 1, cor_nomear: 0, negacao: 0 };
+  if (years === 4) return { vr_parear: 1, vr_conceito: 0, vr_reconhecer: 7, vr_nomear: 2, nomeacao: 3, montar: 0, fonologia: 1, letra: 1, leitura: 0, numeral: 2, quantidade: 1, forma: 1, cor: 1, cor_nomear: 0, negacao: 1 };
+  if (years === 5) return { vr_parear: 1, vr_conceito: 1, vr_reconhecer: 6, vr_nomear: 1, nomeacao: 1, montar: 0, fonologia: 4, letra: 1, leitura: 0, numeral: 4, quantidade: 1, forma: 1, cor: 0, cor_nomear: 0, negacao: 1 };
+  if (years <= 7) return { vr_parear: 0, vr_conceito: 1, vr_reconhecer: 1, vr_nomear: 1, nomeacao: 0, montar: 1, fonologia: years === 6 ? 3 : 2, letra: years === 6 ? 2 : 1, leitura: 3, numeral: 5, quantidade: 0, forma: 0, cor: 0, cor_nomear: 0, negacao: 1 };
+  // 8–17: o Reconhecimento Visual da idade já está na bateria; parear e nomear objeto comum aqui seriam teto.
+  return { vr_parear: 0, vr_conceito: 0, vr_reconhecer: 0, vr_nomear: 0, nomeacao: 0, montar: 1, fonologia: 1, letra: 0, quantidade: 0, forma: 0, cor: 0, cor_nomear: 0, negacao: 1 };
+}
+
+/** Palavras-alvo da tarefa (resposta pedida e palavra em destaque), para não repetir o mesmo conteúdo. */
+export function alvosDaTarefa(draft: AnyDraft | Item): string[] {
+  if (tipoTarefa(draft) === "roteiro") return [];
+  const stem = (word: string) => word.replace(/s$/, "");
+  const out = new Set<string>();
+  const add = (text: string) => plain(text).replace(/[^\p{L}\s-]/gu, " ").split(/\s+/).map((word) => word.replace(/-/g, "")).filter((word) => word.length >= 3).forEach((word) => out.add(stem(word)));
+  if (draft.kind === "montar") add(draft.word);
+  else if (draft.kind === "toque") add(draft.answer.replace(/×\d+/g, ""));
+  else add((draft.expected.match(/[“"]([^”"]+)[”"]/)?.[1] ?? draft.expected.split(/[ (,]/)[0]));
+  for (const token of draft.prompt.match(/\b[A-ZÀ-Ú][A-ZÀ-Ú-]{2,}\b/g) ?? []) if (!/^(NÃO|MAIS|MENOS|UMA|UM|DOIS|SOL|LUA|AGORA|VIU|DIA|NOITE)$/.test(token)) add(token);
+  // Mesmo texto lido = mesma base: duas perguntas sobre o mesmo trecho contariam o mesmo déficit duas vezes.
+  const trecho = draft.prompt.match(/^Leia:\s*['"“]?([^.?!]+)/)?.[1] ?? ("stimulus" in draft && draft.stimulus && draft.stimulus.length > 40 ? draft.stimulus.split(/[.?!]/)[0] : "");
+  if (trecho) out.add(`txt:${plain(trecho).split(" ").slice(0, 5).join(" ")}`);
+  // Numeral: a resposta numérica também é alvo (duas contagens que dão 4 são a mesma tarefa).
+  if (draft.kind === "toque" && tipoTarefa(draft) === "numeral" && /^\d+$/.test(draft.answer.trim()) && /quant[ao]s|toque no numero|\bconte\b/.test(plain(draft.prompt))) out.add(`#${draft.answer.trim()}`);
+  return [...out].filter((word) => !/^(onde|esta|toque|mostre|qual|figura|igual)$/.test(word));
+}
+
+/** Intercala as categorias do Reconhecimento Visual (animais, frutas, objetos, veículos…) para variar o conteúdo. */
+function interleaveByCategory<T extends { category: string }>(items: T[], offset: number): T[] {
+  const byCategory = new Map<string, T[]>();
+  for (const item of items) byCategory.set(item.category, [...(byCategory.get(item.category) ?? []), item]);
+  const lists = [...byCategory.values()].map((list) => list.map((_, index) => list[(offset + index) % list.length]));
+  const out: T[] = [];
+  for (let round = 0; out.length < items.length; round++) for (const list of lists) if (list[round]) out.push(list[round]);
+  return out;
+}
+
+/** Aos 2–3 anos cada mundo é um domínio: figura e conceito → linguagem receptiva; nomear → expressiva. */
+function phaseForToddler(draft: AnyDraft): PhaseId | null {
+  const tipo = tipoTarefa(draft);
+  if (tipo === "nomeacao" || tipo === "vr_nomear") return "numeros";
+  if (["figura", "vr_reconhecer", "quantidade", "forma", "cor"].includes(tipo)) return "palavras";
+  return null;
+}
+
+/** Na nomeação aos 2–3 anos vale aproximação da palavra ou onomatopeia (fala emergente, comum no atípico). */
+function adaptToddler(draft: AnyDraft, phaseId: PhaseId, years: number): AnyDraft {
+  const domain = INTEGRATED_BANK[years][phaseId][0]?.domain;
+  const withDomain = { ...draft, ...(domain ? { domain } : {}) } as AnyDraft;
+  if (withDomain.kind === "fala" && phaseId === "numeros" && !/aproxima/.test(withDomain.expected)) {
+    return { ...withDomain, expected: `${withDomain.expected} (aos ${years} anos, aceitar aproximação da palavra ou onomatopeia)` } as AnyDraft;
+  }
+  return withDomain;
+}
+
 /**
  * Curadoria dos bancos de tarefa (v2026-11-22.2): garante na idade uma tarefa de cada modalidade do
  * Reconhecimento Visual (parear, nomear, conceito contextualizado) e um item de cada domínio da Avaliação
@@ -1118,7 +1254,7 @@ function curatedBankGroups(years: number): Array<Array<{ draft: AnyDraft; phaseI
   const toddler = years <= 3;
   const seed = (index: number) => years * 1000 + 500 + index;
   const groups: Array<Array<{ draft: AnyDraft; phaseId: PhaseId }>> = [];
-  const symbols = (mode: "pareamento" | "nomeacao") => eligibleItems(months, mode).filter((entry) => !entry.context && !entry.pair);
+  const symbols = (mode: "pareamento" | "nomeacao") => interleaveByCategory(eligibleItems(months, mode).filter((entry) => !entry.context && !entry.pair), years * 5);
   if (!toddler) {
     const offset = (years * 5) % Math.max(1, symbols("pareamento").length);
     const pares = symbols("pareamento");
@@ -1145,13 +1281,12 @@ function curatedBankGroups(years: number): Array<Array<{ draft: AnyDraft; phaseI
     ? [["visual", "palavras"], ["leitura", "numeros"]]
     : [["visual", "olhos"], ["leitura", "palavras"], ["escrita", "corpo"], ["aritmetica", "numeros"]];
   for (const [domain, phaseId] of domains) {
-    groups.push((COGNITIVE_BANK[years]?.[domain] ?? []).map((_, index) => ({ draft: cogAt(years, domain, index), phaseId })));
+    groups.push((COGNITIVE_BANK[years]?.[domain] ?? []).map((_, index) => {
+      const draft = cogAt(years, domain, index);
+      return { draft, phaseId: domain === "escrita" && draft.kind !== "montar" ? "palavras" as PhaseId : phaseId };
+    }));
   }
-  if (!toddler) return groups;
-  return groups.map((group) => group.map((entry) => {
-    const domain = INTEGRATED_BANK[years][entry.phaseId][0]?.domain;
-    return domain ? { ...entry, draft: { ...entry.draft, domain } as AnyDraft } : entry;
-  }));
+  return groups;
 }
 
 /** Ids dos complementos que vieram da curadoria dos bancos (Reconhecimento Visual e Avaliação Cognitiva). */
@@ -1176,10 +1311,8 @@ function buildOptional(): Record<number, OptionalItem[]> {
     }
     // Inclui tarefas visuais do manifesto da idade e preserva graduação e distratores da fonte original.
     // A seleção continua sujeita à deduplicação de tarefa, conceito e referência logo abaixo.
-    const visualTargets = eligibleItems(years * 12, "receptivo").filter((entry) => !entry.context);
-    const visualOffset = (years * 7) % visualTargets.length;
-    queues.push(visualTargets.map((_, index) => {
-      const target = visualTargets[(visualOffset + index) % visualTargets.length];
+    const visualTargets = interleaveByCategory(eligibleItems(years * 12, "receptivo").filter((entry) => !entry.context), years * 7);
+    queues.push(visualTargets.map((target, index) => {
       const draft = vrShow(years, target.id, years * 1000 + index);
       draft.ref = draft.ref.replace(/\(\d+ opções,/, `(${draft.options.length} opções,`);
       return { draft, phaseId: "olhos" };
@@ -1188,11 +1321,29 @@ function buildOptional(): Record<number, OptionalItem[]> {
     const pickedKeys = new Set<string>();
     const pickedIds = new Set<AnyDraft>();
     const perPhase = Object.fromEntries(PHASE_ORDER.map((phaseId) => [phaseId, INTEGRATED_BANK[years][phaseId].length])) as Record<PhaseId, number>;
+    const limites = limitesDaIdade(years);
+    const porTipo: Partial<Record<TipoTarefa, number>> = {};
+    const usedTargets = new Set(main.flatMap(alvosDaTarefa));
+    const pickedTargets = new Set<string>();
     const take = (candidate: { draft: AnyDraft; phaseId: PhaseId }, keys: string[]) => {
       picked.push(candidate);
       pickedIds.add(candidate.draft);
       keys.forEach((key) => pickedKeys.add(key));
       perPhase[candidate.phaseId] += 1;
+      const tipo = tipoTarefa(candidate.draft);
+      porTipo[tipo] = (porTipo[tipo] ?? 0) + 1;
+      alvosDaTarefa(candidate.draft).forEach((alvo) => pickedTargets.add(alvo));
+    };
+    const withinLimit = (draft: AnyDraft) => {
+      const tipo = tipoTarefa(draft);
+      return limites[tipo] === undefined || (porTipo[tipo] ?? 0) < limites[tipo]!;
+    };
+    const repeatsTarget = (draft: AnyDraft) => alvosDaTarefa(draft).some((alvo) => usedTargets.has(alvo) || pickedTargets.has(alvo));
+    /** Aos 2–3 anos, leva a tarefa ao mundo do domínio certo (ou descarta, se não cabe em nenhum). */
+    const route = (candidate: { draft: AnyDraft; phaseId: PhaseId }) => {
+      if (years > 3) return candidate;
+      const phaseId = phaseForToddler(candidate.draft);
+      return phaseId ? { phaseId, draft: adaptToddler(candidate.draft, phaseId, years) } : null;
     };
     // Curadoria da faixa (Sonda 10 e OBS-10 nos domínios centrais) entra primeiro, sem repetir a bateria.
     for (const candidate of curatedOptionalDrafts(years)) {
@@ -1206,9 +1357,11 @@ function buildOptional(): Record<number, OptionalItem[]> {
     // Curadoria dos bancos de tarefa: uma tarefa por grupo (modalidade visual ou domínio cognitivo).
     const fromBanks = new Set<AnyDraft>();
     for (const group of curatedBankGroups(years)) {
-      const candidate = group.find(({ draft }) => {
+      const candidate = group.map(route).find((entry): entry is { draft: AnyDraft; phaseId: PhaseId } => {
+        if (!entry) return false;
+        const { draft } = entry;
         const keys = [taskKey(draft), conceptKey(draft)];
-        return !outOfBand(draft) && !isUsed(draft.ref) && !keys.some((key) => usedKeys.has(key) || pickedKeys.has(key));
+        return !outOfBand(draft) && withinLimit(draft) && !repeatsTarget(draft) && !isUsed(draft.ref) && !keys.some((key) => usedKeys.has(key) || pickedKeys.has(key));
       });
       if (!candidate || picked.length >= need) continue;
       take(candidate, [taskKey(candidate.draft), conceptKey(candidate.draft)]);
@@ -1217,16 +1370,20 @@ function buildOptional(): Record<number, OptionalItem[]> {
     // Primeiras passadas: só conceitos distintos entre si e da bateria. Depois: se o banco da idade não tem
     // conceitos distintos suficientes para chegar a 50, completa com a mesma tarefa em outra redação
     // (nunca a mesma tarefa idêntica); `conceitosRepetidosNosOpcionais` informa quantos casos restam.
-    for (const [strict, capped] of [[true, true], [false, true], [true, false], [false, false]] as const) {
-      for (let round = 0; picked.length < need && queues.some((queue) => queue.length > round); round++) {
-        for (const queue of queues) {
+    const routedQueues = queues.map((queue) => queue.map(route).filter((entry): entry is { draft: AnyDraft; phaseId: PhaseId } => entry !== null));
+    const pickedSources = new Set<string>();
+    for (const [strict, capped] of [[true, true], [true, false], [false, true], [false, false]] as const) {
+      for (let round = 0; picked.length < need && routedQueues.some((queue) => queue.length > round); round++) {
+        for (const queue of routedQueues) {
           const candidate = queue[round];
-          if (!candidate || picked.length >= need || pickedIds.has(candidate.draft) || outOfBand(candidate.draft)) continue;
+          if (!candidate || picked.length >= need || pickedSources.has(candidate.draft.ref) || outOfBand(candidate.draft) || !withinLimit(candidate.draft)) continue;
+          if (repeatsTarget(candidate.draft)) continue;
           if (capped && perPhase[candidate.phaseId] >= MAX_POR_MUNDO) continue;
           const keys = [taskKey(candidate.draft), conceptKey(candidate.draft)];
           const blocked = strict ? keys : keys.slice(0, 1);
           if (isUsed(candidate.draft.ref) || blocked.some((key) => usedKeys.has(key) || pickedKeys.has(key))) continue;
           take(candidate, keys);
+          pickedSources.add(candidate.draft.ref);
         }
       }
     }

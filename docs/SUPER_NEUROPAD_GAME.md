@@ -62,22 +62,22 @@ Contagens geradas do banco efetivo (`GAME_BANK`); tempo por `estimateBandSeconds
 
 | Idade | Itens (por mundo) | Sonda 10 | OBS-10 | Rec. visual | Cognitiva | Tipos (toque/fala/ação/montar) | Com gesto | Tempo estimado |
 |---|---|---|---|---|---|---|---|---|
-| 2 anos | 50 (6/13/10/12/5/4) | 20 | 10 | 5 | 15 | 23/12/15/0 | 3 | 24.1 min |
-| 3 anos | 50 (7/15/7/9/7/5) | 24 | 10 | 6 | 10 | 17/16/17/0 | 3 | 25.9 min |
-| 4 anos | 50 (7/12/9/9/6/7) | 14 | 16 | 7 | 13 | 25/17/8/0 | 0 | 24.7 min |
-| 5 anos | 50 (6/9/11/9/7/8) | 14 | 17 | 8 | 11 | 28/13/9/0 | 0 | 26.0 min |
-| 6 anos | 50 (6/9/11/9/7/8) | 15 | 16 | 6 | 13 | 26/13/9/2 | 0 | 21.0 min |
-| 7 anos | 50 (6/10/10/9/7/8) | 13 | 17 | 7 | 13 | 26/14/8/2 | 0 | 20.6 min |
-| 8 anos | 50 (7/9/9/7/9/9) | 18 | 14 | 5 | 13 | 22/19/8/1 | 0 | 23.2 min |
-| 9 anos | 50 (7/8/9/8/9/9) | 16 | 17 | 4 | 13 | 22/19/8/1 | 0 | 23.3 min |
-| 10 anos | 50 (7/9/9/7/9/9) | 18 | 14 | 5 | 13 | 22/19/8/1 | 0 | 23.6 min |
-| 11 anos | 50 (7/8/9/8/9/9) | 17 | 16 | 4 | 13 | 22/19/8/1 | 0 | 23.6 min |
-| 12 anos | 50 (8/8/9/7/9/9) | 19 | 14 | 4 | 13 | 19/22/7/2 | 0 | 24.9 min |
-| 13 anos | 50 (8/8/9/7/9/9) | 15 | 18 | 4 | 13 | 19/22/7/2 | 0 | 25.0 min |
-| 14 anos | 50 (8/8/9/7/9/9) | 19 | 14 | 4 | 13 | 19/22/7/2 | 0 | 25.3 min |
-| 15 anos | 50 (8/8/9/7/9/9) | 15 | 18 | 4 | 13 | 19/22/7/2 | 0 | 25.3 min |
-| 16 anos | 50 (8/8/9/7/9/9) | 19 | 14 | 4 | 13 | 19/22/7/2 | 0 | 25.5 min |
-| 17 anos | 50 (8/8/9/7/9/9) | 15 | 18 | 4 | 13 | 19/22/7/2 | 0 | 25.6 min |
+| 2 anos | 50 (7/5/21/6/6/5) | 24 | 14 | 6 | 6 | 19/10/21/0 | 3 | 24.4 min |
+| 3 anos | 50 (7/5/18/8/7/5) | 24 | 11 | 10 | 5 | 17/13/20/0 | 3 | 24.9 min |
+| 4 anos | 50 (7/16/9/6/6/6) | 13 | 13 | 12 | 12 | 23/19/8/0 | 1 | 24.8 min |
+| 5 anos | 50 (6/14/7/8/8/7) | 12 | 15 | 11 | 12 | 27/13/10/0 | 0 | 26.1 min |
+| 6 anos | 50 (7/8/9/10/8/8) | 15 | 17 | 5 | 13 | 24/16/9/1 | 0 | 20.9 min |
+| 7 anos | 50 (7/8/10/9/8/8) | 15 | 16 | 5 | 14 | 24/16/8/2 | 0 | 20.9 min |
+| 8 anos | 50 (7/6/10/10/9/8) | 20 | 16 | 1 | 13 | 23/18/8/1 | 0 | 22.8 min |
+| 9 anos | 50 (7/6/10/10/9/8) | 18 | 17 | 1 | 14 | 23/18/8/1 | 0 | 23.0 min |
+| 10 anos | 50 (7/6/11/9/9/8) | 20 | 15 | 1 | 14 | 23/18/8/1 | 0 | 23.4 min |
+| 11 anos | 50 (7/6/10/10/9/8) | 18 | 16 | 1 | 15 | 23/18/8/1 | 0 | 23.1 min |
+| 12 anos | 50 (8/6/9/9/9/9) | 21 | 14 | 1 | 14 | 21/20/7/2 | 0 | 24.3 min |
+| 13 anos | 50 (8/6/9/9/9/9) | 19 | 17 | 1 | 13 | 21/20/7/2 | 0 | 24.4 min |
+| 14 anos | 50 (8/6/9/9/9/9) | 21 | 14 | 1 | 14 | 21/20/7/2 | 0 | 24.8 min |
+| 15 anos | 50 (8/6/9/9/9/9) | 19 | 17 | 1 | 13 | 21/20/7/2 | 0 | 24.7 min |
+| 16 anos | 50 (8/6/9/9/9/9) | 21 | 14 | 1 | 14 | 21/20/7/2 | 0 | 24.8 min |
+| 17 anos | 50 (8/6/9/9/9/9) | 19 | 17 | 1 | 13 | 21/20/7/2 | 0 | 24.9 min |
 
 **Tempo estimado**: toque 12 s (+1 s a cada 25 caracteres de leitura, máx. +25 s), fala 20 s,
 ação 25 s, montar 30 s + 2 s por letra (ou o tempo próprio do item); fator de criança pequena
@@ -96,7 +96,7 @@ semântica (animais em 60 s, com piso autoral crescente de 8 a 13), cálculo men
 (equilíbrio sem visão, saltos em um pé, polichinelo, dupla tarefa). As semelhanças de 12–17 também
 passaram a subir de abstração com a idade (transporte → medida → obra de arte). Os pisos de
 fluência e os critérios são **conservadores e autorais, para déficit grosseiro**: não são norma, e a
-leitura final continua sendo do médico. O teto segue travado por teste (30 min; estimativa máxima atual: 26,0 min, aos 5 anos).
+leitura final continua sendo do médico. O teto segue travado por teste (30 min; estimativa máxima atual: 26,1 min, aos 5 anos).
 
 **Critérios de calibração** (sem norma, sem inflar escore, sem mudar corte):
 
@@ -339,7 +339,7 @@ resposta ao nome, imitação, interesse por crianças, perda de habilidades).
 | 🏠 Casinha do Faz de Conta | Brincar simbólico | dar comida ao bebê, telefone de mentira, interesse por crianças (relato ⚠, conta em interação social) | cuidar do bebê, sequência de faz de conta, objeto como outro, faz de conta com papéis (relato ⚠) |
 
 - **Contagem e tempo do núcleo:** 2 anos = 18 itens e 3 anos = 24 itens no banco dedicado.
-  Na partida efetiva, ambos recebem 50 desafios; estimativas de 24,1 e 25,9 min, com teto de 30 min (v2026-11-22.2). Pausa planejada mantida.
+  Na partida efetiva, ambos recebem 50 desafios; estimativas de 24,4 e 24,9 min, com teto de 30 min (v2026-11-22.3). Pausa planejada mantida.
 - **Registro:** o mesmo modelo binário do jogo (Cumpre / Não cumpre, mais "não respondeu" e
   "recusou" à parte) e o campo de observações da sessão. Itens de **relato do cuidador** começam
   com "Relato do cuidador — pergunte:" e o critério termina em "(relato do cuidador)".
@@ -659,11 +659,21 @@ O catálogo de 50 por idade foi integrado à partida efetiva. O núcleo autoral 
 **Curadoria por faixa etária (v2026-11-22.1).** A medição da composição mostrou que o complemento caía todo em Olhos, Palavras e Números (bancos visual, cognitivo e objetivo), enquanto Vila, Memória e Corpo ficavam só com a bateria principal; aos 2 anos havia 20 itens em Olhos e 3 em Vila, Memória e Corpo. A seleção agora:
 
 1. **Entra primeiro a curadoria da faixa** (`curatedOptionalDrafts` em `bank.ts`): tarefas dos roteiros da Sonda 10 (`sondaDezProtocol`) e do OBS-10 (`obs10/protocol`) da própria faixa, nos domínios centrais — interação e comunicação (Vila), memória e funções executivas (Memória), motor e mãos (Corpo) —, adaptadas para a tela ou para a sala, sem objeto externo. A referência leva o sufixo "curadoria da faixa (complemento)". Aos 2–3 anos o item curado recebe o domínio do mundo na bateria dedicada (interação social, atenção, brincar simbólico etc.). Exemplos: pedir ajuda diante da bola presa na caixa (Sonda 10, 24–47 meses), atenção sustentada auditiva e troca de regra SOL/LUA (Sonda 10, 3–7 anos), ordem de 4 etapas e planejamento com imprevisto (Sonda 10, 8–11 anos), mudança de duração do trabalho e troca de regra DIREITA/ESQUERDA (Sonda 10, 12–17 anos), braços estendidos e dedo–nariz do núcleo motor (OBS-10, 5 anos em diante).
-2. **Depois, a curadoria dos bancos de tarefa (v2026-11-22.2)** (`curatedBankGroups` em `bank.ts`; ids em `CURADORIA_BANCOS`): uma tarefa de cada modalidade do Reconhecimento Visual — parear (a partir de 4 anos), nomear (todas as idades) e conceito contextualizado (a partir de 5 anos) — e um item de cada domínio da Avaliação Cognitiva Infantil da idade (visual, fala/leitura, letras/escrita e números) que a bateria ainda não aplica. Cada grupo é uma fila: entra o primeiro candidato que não repete tarefa, conceito nem referência, com a referência exata do banco de origem. Aos 2–3 anos entram só a figura da Avaliação Cognitiva (linguagem receptiva) e a nomeação (linguagem expressiva), com o domínio do mundo; pareamento, escrita e numeral ficam de fora. Dos 8 anos em diante os 4 itens visuais da Avaliação Cognitiva já estão na bateria, por isso esse domínio não aparece no complemento.
+2. **Depois, a curadoria dos bancos de tarefa (v2026-11-22.2)** (`curatedBankGroups` em `bank.ts`; ids em `CURADORIA_BANCOS`): uma tarefa de cada modalidade do Reconhecimento Visual — parear (4–5 anos), nomear (2–7 anos) e conceito contextualizado (5–7 anos) — e um item de cada domínio da Avaliação Cognitiva Infantil da idade (visual, fala/leitura, letras/escrita e números) que a bateria ainda não aplica. Cada grupo é uma fila: entra o primeiro candidato que não repete tarefa, conceito nem referência, com a referência exata do banco de origem. Aos 2–3 anos entram só a figura da Avaliação Cognitiva (linguagem receptiva) e a nomeação (linguagem expressiva), com o domínio do mundo; pareamento, escrita e numeral ficam de fora. Dos 8 anos em diante os 4 itens visuais da Avaliação Cognitiva já estão na bateria, por isso esse domínio não aparece no complemento.
 3. **Regras de saída no restante do complemento:** aos 2–3 anos não entra item que pede letra ou numeral (o aviso de idade da auditoria de 21/10/2026 continua valendo para qualquer item desse tipo); nenhum mundo passa de 9 itens (50 ÷ 6, arredondado para cima) enquanto houver alternativa. O teto por mundo só é relaxado quando o banco da faixa não fecha 50 sem ele — hoje isso ocorre aos 2–7 anos em Olhos e Palavras, porque os roteiros dessas idades têm poucas tarefas centrais que dispensam objeto.
 4. **Sem repetição:** item curado que repetisse tarefa ou conceito da bateria interrompe a montagem do banco (erro de build), e o restante continua deduplicado por tarefa, conceito e referência.
 
-Efeito medido (itens por mundo, Vila/Olhos/Palavras/Números/Memória/Corpo): 2 anos de 3/20/10/11/3/3 para 6/13/10/12/5/4; 5 anos de 4/11/19/8/4/4 para 6/9/11/9/7/8; 8 anos de 6/9/15/8/6/6 para 7/9/9/7/9/9; 12–17 anos de 6/8/16/8/6/6 para 8/8/9/7/9/9. O núcleo (bateria principal) não mudou: a impressão digital `tests/fixtures/golden-descritivo.json` só alterou o tempo estimado e o teto. Contrato travado em `tests/unit/super-neuropad-curadoria-faixa.test.ts`.
+Efeito medido (itens por mundo, Vila/Olhos/Palavras/Números/Memória/Corpo): 2 anos de 3/20/10/11/3/3 para 7/5/21/6/6/5 (na Ilha do Escutar ficam as tarefas de figura, o formato mais acessível nessa idade); 5 anos de 4/11/19/8/4/4 para 6/14/7/8/8/7; 8 anos de 6/9/15/8/6/6 para 7/6/10/10/9/8; 12–17 anos de 6/8/16/8/6/6 para 8/6/9/9/9/9. O núcleo (bateria principal) não mudou: a impressão digital `tests/fixtures/golden-descritivo.json` só alterou o tempo estimado e o teto. Contrato travado em `tests/unit/super-neuropad-curadoria-faixa.test.ts`.
+
+**Revisão idade por idade (v2026-11-22.3).** Revisão do complemento das 16 idades pensando em crianças em geral atípicas. Problemas encontrados e correções:
+
+- *2–3 anos:* o preenchimento ia para mundos de outro domínio (ex.: 7 tarefas de quantidade na "Montanha das Palavrinhas", que é linguagem expressiva; 10 de apontar figura na "Floresta do Olhar", que é atenção conjunta) e sem domínio marcado — fora do resumo por domínio. Agora cada tarefa vai ao mundo do seu domínio (figura/conceito → linguagem receptiva; nomear → expressiva) e leva esse domínio; o que não cabe em nenhum (pareamento perceptivo, sequência, numeral) não entra. Na nomeação vale aproximação da palavra ou onomatopeia. Entraram tarefas de piso dos roteiros: imitação e brincadeira funcional (Sonda 10, 12–23 meses), segunda oportunidade de seguir o apontar e oportunidade de mostrar (atenção conjunta), pedido espontâneo, exploração livre de 30 s (OBS-10). Aos 3 anos a regra SOL/LUA saiu (fica para os 4; a bateria já tem espera e estátua) e entrou a sequência de 2 passos.
+- *4–5 anos:* excesso de letra e numeral (aos 4, 4 de letra e 5 de numeral; aos 5, leitura de palavra e minúscula antes da alfabetização). Agora: no máximo 1 letra, 2 (4 anos) ou 4 (5 anos) numerais, nenhuma leitura de palavra; consciência fonológica (rima, sílaba, som inicial) até 4 itens aos 5 anos. Entraram "Para que serve um guarda-chuva?" (OBS-10, 4 anos), descrição de cena (Sonda 10, 3–4 anos) e ordem com antes/depois de 2 etapas (Sonda 10, 5–7 anos). A inversão SOL/LUA só é aplicada se a criança entendeu a regra.
+- *6–7 anos:* a mesma palavra aparecia em várias tarefas (GATO 3×, JANELA 2×) e havia dois "montar palavra". Agora palavra-alvo e texto lido nunca se repetem; 1 montar; ortografia até 2. Entraram a antecipação da cena da chuva (Sonda 10) e "O que você fez antes de chegar aqui?" (OBS-10, tarefa intercalada antes da evocação).
+- *8–17 anos:* o Reconhecimento Visual do complemento era de teto (parear, nomear "banana", "quente/frio" aos 17). Ele sai do complemento a partir dos 8 (a bateria já tem o item visual da idade); a Floresta dos Olhos fica no núcleo (6). Ortografia e gramática limitadas a 1 cada; duas perguntas sobre o mesmo texto não entram juntas. Aos 12–17, o terceiro item de planejamento foi trocado pelo passo seguinte da ordem inversa de palavras (Sonda 10, 3 a 5 palavras), aplicado só se a criança acertou o anterior.
+- *Detalhes:* "duas vezes" (concordância) e critério do planejamento das 7h30 sem exigir "mochila por último".
+
+A política está em `bank.ts` (`tipoTarefa`, `limitesDaIdade`, `alvosDaTarefa`): os limites por tipo valem para todo o complemento e nunca são relaxados para fechar 50; quando o banco da idade não fecha 50, completa-se com o formato mais acessível da idade (o "reconhecer" do Reconhecimento Visual até 5 anos) ou com tarefa do roteiro da faixa. Inventário completo do complemento por idade, para a revisão médica: `docs/audits/SUPER_NEUROPAD_CURADORIA_2026-11-22.md`.
 
 **Pendente externo.** Os itens curados são adaptações operacionais dos roteiros e exigem a mesma revisão médica item a item dos demais complementares antes de produção ampla.
 
