@@ -136,3 +136,30 @@ Dois achados:
    IPN-EPI/SEG com a queixa sono. Antes ela saía para a âncora funcional e a BISQ-R
    repetitiva ficava. **Decisão clínica pendente:** confirmar se os módulos IPN-EPI/SEG
    devem continuar marcados para sono. Se não, a SWYC BPSC assume a vaga.
+
+## Decisão: instrumento de epilepsia ancorado na epilepsia
+
+Pedido do responsável clínico: decidir a marcação de sono da bateria IPN-EPI/SEG.
+
+**Decisão.** A bateria não perde a marcação: o motor passa a ancorar instrumentos de
+epilepsia na própria epilepsia (`CONDITION_ANCHORED_DOMAINS`, o mesmo mecanismo já
+usado para a PC). Sono, ansiedade, aprendizagem, atraso e depressão sozinhos não trazem
+instrumento de epilepsia. Com epilepsia marcada, as coberturas secundárias voltam a
+valer e a bateria complementa a escala da outra queixa. Funcionalidade, efeitos de
+medicação, neonatal e PC continuam abertos, como na âncora da PC, para não fechar o HINE
+nem os efeitos dos antiepilépticos.
+
+| Caso (sintético) | Antes | Depois |
+|---|---|---|
+| Sono, 15 meses | BISQ + IPN-EPI/SEG Anamnese + EFDI | BISQ + EFDI + SWYC BPSC |
+| Sono + epilepsia, 15 meses | BISQ + IPN-EPI/SEG Anamnese + EFDI | igual |
+| Depressão, 14 anos | NDDI-E entre as candidatas | NDDI-E fora |
+| PC, 6 meses; neonatal, 2 meses | HINE disponível | igual |
+
+**Guarda de métricas.** O piso de `band_medals_full_pct` passa de 89,2% para 89,0%. As 51
+medalhas que deixaram de cobrir a faixa inteira eram todas módulos IPN-EPI/SEG (0–215 m)
+em sono e ansiedade sem epilepsia, trocados por instrumentos da janela etária (SWYC). Das
+562 medalhas parciais restantes, só 1 tinha alternativa integral fora da curadoria clínica:
+compensar exigiria desfazer a curadoria. Em troca, o guarda ganha o invariante
+`anchored_outside_condition = 0`, que trava a regressão clínica real. Os demais pisos e
+invariantes de segurança não mudaram.

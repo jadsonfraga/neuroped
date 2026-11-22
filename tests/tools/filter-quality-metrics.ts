@@ -17,6 +17,7 @@ import {
   scaleCoversSelectedSignalExactly,
   getImplementationStatus,
   isAcuteRiskContext,
+  outsideConditionAnchor,
   type RefinedScaleMatch,
 } from "../../client/src/data/advancedFilterLogic.ts";
 import { selectCuratedTiers, selectPodium, PODIUM_QUESTION_CAP, estimatedQuestionCount } from "../../client/src/data/filterPodium.ts";
@@ -114,6 +115,7 @@ interface Acc {
   signalContextsCoveredWhenSafeCandidate: number;
   acuteContexts: number;
   acuteBroadbandViolations: number;
+  anchoredOutsideCondition: number;
   curatedCount: number;
 }
 
@@ -123,7 +125,7 @@ const acc: Acc = {
   bandNoOverlapViolations: 0, bandMedals: 0, bandMedalsFull: 0, bandMedalsPartial: 0,
   respondentViolations: 0, redundantPairs: 0, contextsWithRedundantPair: 0, capViolations: 0,
   complaintsSelected: 0, complaintsCovered: 0, signalContexts: 0, signalContextsCovered: 0,
-  signalContextsWithSafeCandidate: 0, signalContextsCoveredWhenSafeCandidate: 0, acuteContexts: 0, acuteBroadbandViolations: 0, curatedCount: 0,
+  signalContextsWithSafeCandidate: 0, signalContextsCoveredWhenSafeCandidate: 0, acuteContexts: 0, acuteBroadbandViolations: 0, anchoredOutsideCondition: 0, curatedCount: 0,
 };
 
 for (const c of contexts) {
@@ -160,6 +162,8 @@ for (const c of contexts) {
   for (const m of medals) {
     acc.medals++;
     if (getImplementationStatus(m.scale) !== "complete") acc.medalsNotApplicable++;
+    // Instrumento ancorado numa condição (ex.: bateria de epilepsia) só medalha com a condição marcada.
+    if (outsideConditionAnchor(m.scale, c.queixas)) acc.anchoredOutsideCondition++;
     if (c.exactAge !== null && !containsExact(m.scale, c.exactAge)) acc.exactAgeViolations++;
     if (c.band) {
       acc.bandMedals++;
@@ -226,6 +230,7 @@ const report = {
   signal_covered_when_safe_candidate_pct: pct(acc.signalContextsCoveredWhenSafeCandidate, acc.signalContextsWithSafeCandidate),
   acute_contexts: acc.acuteContexts,
   acute_broadband_violations: acc.acuteBroadbandViolations,
+  anchored_outside_condition: acc.anchoredOutsideCondition,
   curated_contexts: acc.curatedCount,
 };
 
