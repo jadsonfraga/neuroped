@@ -1,7 +1,7 @@
 {
   "_meta": {
     "titulo": "NeuroPed — Extração Completa de Escalas (Uso Interno)",
-    "geradoEm": "2026-11-22T11:43:48.977Z",
+    "geradoEm": "2026-11-22T12:17:10.936Z",
     "totalEscalasCatalogo": 846,
     "totalEscalasPANT": 100,
     "totalInterativasCompletas": 355,
@@ -1275,7 +1275,7 @@
       ],
       "prioridade": "triagem",
       "tempo": "10 min",
-      "description": "Ansiedade (generalizada, separação, pânico, social, fobia) + Depressão.\nRespondentes: Criança (8+) e Pais (5+). 47 itens. Mais abrangente que SCARED.\n\nEXEMPLOS:\n1. ANSIEDADE GENERALIZADA — \"Você se preocupa muito?\"\n   📌 Escala: Nunca (0) → Às vezes (1) → Frequentemente (2) → Sempre (3)\n\n2. TRANSTORNO DE PÂNICO — \"Você sente desconforto no peito quando fica nervoso?\"\n   📌 Exemplo: Palpitações, tremores, falta de ar, tonturas\n\n3. DEPRESSÃO — \"Você se sente triste ou infeliz?\"\n   📌 Exemplo: Apatia, isolamento, perda de interesse, choro\n\n4. FOBIA SOCIAL — \"Você tem medo de falar em apresentação?\"\n   📌 Exemplo: Recusa participar, muito nervoso, quer sair da aula\n\nAUTORRELATO VS PAIS:\nCrianças frequentemente mascaram ansiedade em casa (aparentam estar bem)\nAutorrelato adolescente é MAIS CONFIÁVEL que relato de pais\n→ Compare: Se pais marcam 15 mas criança marca 40 = criança está mascando\n→ Confie mais no autorrelato em adolescentes",
+      "description": "Ansiedade (generalizada, separação, pânico, social, fobia) + Depressão.\nRespondentes: Criança (8+) e Pais (5+). 47 itens. Mais abrangente que SCARED.\n\nEXEMPLOS:\n1. ANSIEDADE GENERALIZADA — \"Você se preocupa muito?\"\n   📌 Escala: Nunca (0) → Às vezes (1) → Frequentemente (2) → Sempre (3)\n\n2. TRANSTORNO DE PÂNICO — \"Você sente desconforto no peito quando fica nervoso?\"\n   📌 Exemplo: Palpitações, tremores, falta de ar, tonturas\n\n3. DEPRESSÃO — \"Você se sente triste ou infeliz?\"\n   📌 Exemplo: Apatia, isolamento, perda de interesse, choro\n\n4. FOBIA SOCIAL — \"Você tem medo de falar em apresentação?\"\n   📌 Exemplo: Recusa participar, muito nervoso, quer sair da aula\n\nAUTORRELATO VS PAIS:\nCrianças frequentemente mascaram ansiedade em casa (aparentam estar bem)\nAutorrelato adolescente é MAIS CONFIÁVEL que relato de pais\n→ Compare: Se pais marcam 15 mas criança marca 40 = criança está mascarando\n→ Confie mais no autorrelato em adolescentes",
       "signalTags": [
         "ansiedade",
         "depressão",

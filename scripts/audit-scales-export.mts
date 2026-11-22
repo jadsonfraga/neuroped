@@ -1,30 +1,37 @@
 // ============================================================
-// Exportador de AUDITORIA das escalas com itens interativos (autorais e publicadas).
-// Junta metadados (escalasAutorais.ts + scaleFilter.ts) + itens interativos
-// (interactiveScaleItems.ts) e as escalas do motor runner (interactiveScales.ts,
-// itens com opções próprias e faixas por pontos) e emite:
+// Exportador de AUDITORIA das escalas com itens interativos.
+// Junta metadados (escalasAutorais.ts + catálogo de scaleFilter.ts) + itens
+// interativos (interactiveScaleItems.ts) por id, mais as escalas do motor runner
+// (interactiveScales.ts: opções por item, faixas por pontos), e emite:
 //   1) docs/audit/escalas-autorais-auditoria.md  (leitura/revisão)
 //   2) docs/audit/escalas-autorais-itens.csv      (edição item a item)
 //   3) docs/audit/escalas-autorais-faixas.csv     (revisão dos cortes)
+// Os nomes dos arquivos são históricos: o conteúdo cobre todas as escalas com
+// itens interativos (autorais NEXUS, instrumentos publicados e demais catálogos).
 // Uso:  npm run audit:scales:export   (ou: npx tsx scripts/audit-scales-export.mts)
-// NÃO altera nenhum dado de produção — só lê e exporta.
+// NEUROPED_GENERATION_DATE (AAAA-MM-DD, opcional) fixa a data do cabeçalho.
+// NÃO altera nenhum dado de produção — só lê e exporta. Exporta apenas o que
+// está declarado no código: nada é inferido ou completado.
 // ============================================================
 import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { escalasAutoraisDrJadson } from "../client/src/data/escalasAutorais.ts";
-import { allScalesComFichas as escalasCatalogoMestre } from "../client/src/data/scaleFilter.ts";
-import { interactiveScaleItems } from "../client/src/data/interactiveScaleItems.ts";
+import { allScalesComFichas as escalasCatalogoMestre, scales as instrumentosPublicados, type ScaleEntry } from "../client/src/data/scaleFilter.ts";
+import { interactiveScaleItems, type InteractiveScaleDef } from "../client/src/data/interactiveScaleItems.ts";
 import { interactiveScales } from "../client/src/data/interactiveScales.ts";
+import { itemExample, itemReversed, itemResponseType, itemSentinel, itemText, type ScaleItem } from "../client/src/components/GenericScale.tsx";
 
 const OUT = resolve(process.cwd(), "docs/audit");
 mkdirSync(OUT, { recursive: true });
 
 // Autorais prevalecem; as demais (publicadas, importadas, complementares) vêm do
 // catálogo agregado de scaleFilter.ts (allScalesComFichas, antes do filtro de aplicabilidade).
-const byId = new Map<string, any>([
+const byId = new Map<string, ScaleEntry>([
   ...escalasCatalogoMestre.map((s) => [s.id, s] as const),
   ...escalasAutoraisDrJadson.map((s) => [s.id, s] as const),
 ]);
+const autorais = new Set(escalasAutoraisDrJadson.map((s) => s.id));
+const publicados = new Set(instrumentosPublicados.map((s) => s.id));
 
 // CSV helper (escapa aspas/; e quebras de linha)
 const cell = (v: unknown) => {
@@ -33,29 +40,51 @@ const cell = (v: unknown) => {
 };
 const row = (cols: unknown[]) => cols.map(cell).join(";");
 
+/** Direção declarada na definição; ausente fica explícito, sem supor. */
+const DIRECAO: Record<string, string> = { higher_worse: "maior=pior", higher_better: "maior=melhor" };
+const direcao = (def: InteractiveScaleDef) => (def.scoreDirection ? DIRECAO[def.scoreDirection] : "não declarada");
+/** Como o resultado é interpretado no app: faixas por %, corte oficial por domínio ou só descritivo. */
+const interpretacao = (def: InteractiveScaleDef) =>
+  def.descriptiveDomainSummary
+    ? "descritiva (sem ponto de corte; soma e média por domínio)"
+    : def.domainCutoff
+      ? `corte oficial por domínio (escore ≥ ${def.domainCutoff.minScore}: ${def.domainCutoff.positive.classification}; abaixo: ${def.domainCutoff.negative.classification})`
+      : "faixas por % do escore máximo";
+/** Opções com a pontuação efetivamente usada (optionPoints; padrão = índice). */
+const opcoes = (labels: string[], points?: number[]) => labels.map((l, i) => `${points?.[i] ?? i}=${l}`);
+/** Opções próprias do item (substituem as da escala), quando houver. */
+const opcoesProprias = (item: ScaleItem): string[] =>
+  typeof item !== "string" && item.responseType !== "text" && item.options?.length ? opcoes(item.options, item.optionPoints) : [];
+const sentinela = (item: ScaleItem, labels: string[]) => {
+  const s = itemSentinel(item);
+  if (!s) return "";
+  const own = typeof item !== "string" && item.responseType !== "text" && item.options?.length ? item.options : labels;
+  return `${s.label} (se resposta: ${s.positiveOptionIndexes.map((i) => own[i] ?? `opção ${i}`).join(" / ")})`;
+};
+
 const ids = Object.keys(interactiveScaleItems).sort((a, b) => a.localeCompare(b));
-// Escalas do motor runner que não têm definição em interactiveScaleItems.
+// Escalas do motor runner sem definição em interactiveScaleItems.
 const runnerIds = Object.keys(interactiveScales)
   .filter((id) => !(id in interactiveScaleItems))
   .sort((a, b) => a.localeCompare(b));
-
-const DIRECAO: Record<string, string> = { higher_worse: "maior = pior", higher_better: "maior = melhor" };
+const nAutorais = ids.filter((id) => autorais.has(id)).length;
+const nPublicados = ids.filter((id) => !autorais.has(id) && publicados.has(id)).length;
 
 const md: string[] = [];
 const itemRows: string[] = [
-  row(["id", "escala", "faixa_idade", "dominio", "n_item", "texto_item", "APROVAR? (s/n)", "TEXTO_CORRIGIDO"]),
+  row(["id", "escala", "faixa_idade", "dominio", "n_item", "texto_item", "tipo_resposta", "invertido", "opcoes_proprias", "sentinela", "exemplo", "APROVAR? (s/n)", "TEXTO_CORRIGIDO"]),
 ];
 const bandRows: string[] = [
-  row(["id", "escala", "direcao_escore", "minPct", "classificacao", "cor", "descricao", "APROVAR? (s/n)", "faixa_pontos"]),
+  row(["id", "escala", "direcao_escore", "interpretacao", "minPct", "classificacao", "cor", "descricao", "APROVAR? (s/n)"]),
 ];
 
-md.push("# Auditoria — Escalas com itens interativos (autorais e publicadas)\n");
-md.push(`> Gerado em ${new Date().toISOString().slice(0, 10)} a partir do código-fonte.`);
+const geradoEm = process.env.NEUROPED_GENERATION_DATE || new Date().toISOString().slice(0, 10);
+md.push("# Auditoria — Escalas com itens interativos (NeuroPed)\n");
+md.push(`> Gerado em ${geradoEm} a partir do código-fonte.`);
 md.push("> **Conteúdo gerado por IA — requer validação clínica antes de qualquer uso.**");
-md.push(
-  `> Total: **${ids.length + runnerIds.length} escalas** com itens interativos (${ids.length} com faixas em % do máximo e ${runnerIds.length} do motor runner, com faixas por pontos).\n`,
-);
-md.push("Para cada escala: confira os **itens**, as **opções de resposta** e as **faixas de corte**.");
+md.push(`> Total: **${ids.length + runnerIds.length} escalas** com itens interativos: ${nAutorais} autorais NEXUS, ${nPublicados} instrumentos publicados, ${ids.length - nAutorais - nPublicados} de outros catálogos e ${runnerIds.length} do motor runner (faixas por pontos).\n`);
+md.push("Para cada escala: confira os **itens**, as **opções de resposta** (com a pontuação usada), a **direção do escore** e as **faixas de corte**.");
+md.push("Marcadores nos itens: _invertido_ (pontuação espelhada), _resposta livre_ (texto, não pontua), _opções próprias_ (substituem as da escala), _sentinela_ (alerta de segurança). O exemplo é o texto mostrado à família.");
 md.push("Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.\n");
 md.push("---\n");
 
@@ -68,7 +97,6 @@ for (const id of ids) {
   const nome = meta?.name ?? `(sem metadados) ${id}`;
   const faixa = meta ? `${meta.ageMin}–${meta.ageMax} meses` : "?";
   const nItems = def.domains.reduce((s, d) => s + d.items.length, 0);
-  const direcao = DIRECAO[def.scoreDirection ?? ""] ?? "não declarada";
 
   md.push(`## ${id} — ${nome}`);
   if (meta) {
@@ -76,32 +104,40 @@ for (const id of ids) {
     md.push(`- **Faixa etária:** ${faixa}  |  **Respondente:** ${(meta.respondente ?? []).join(", ")}  |  **Tempo:** ${meta.tempo ?? "?"}`);
     md.push(`- **Descrição:** ${meta.description ?? "—"}`);
   }
-  md.push(`- **Opções de resposta:** ${def.labels.map((l, i) => `\`${i}=${l}\``).join("  ")}`);
-  md.push(`- **Itens:** ${nItems}  |  **Domínios:** ${def.domains.length}  |  **Direção do escore:** ${direcao}\n`);
+  md.push(`- **Opções de resposta (pontos=rótulo):** ${opcoes(def.labels, def.optionPoints).map((o) => `\`${o}\``).join("  ")}`);
+  md.push(`- **Direção do escore:** ${direcao(def)}  |  **Interpretação:** ${interpretacao(def)}`);
+  md.push(`- **Itens:** ${nItems}  |  **Domínios:** ${def.domains.length}\n`);
 
-  def.domains.forEach((d, di) => {
+  def.domains.forEach((d) => {
     if (def.domains.length > 1) md.push(`### Domínio: ${d.name}`);
-    d.items.forEach((it, ii) => {
-      // Itens podem ser texto simples ou objeto { text, emoji?, example?, ... }.
-      const texto = typeof it === "string" ? it : it.text;
+    d.items.forEach((item, ii) => {
+      const texto = itemText(item);
       if (!texto?.trim()) itemSemTexto++;
-      md.push(`${ii + 1}. ${texto}`);
-      itemRows.push(row([id, nome, faixa, d.name, ii + 1, texto, "", ""]));
+      const livre = itemResponseType(item) === "text";
+      const invertido = itemReversed(item);
+      const proprias = opcoesProprias(item);
+      const alerta = sentinela(item, def.labels);
+      const exemplo = itemExample(item) ?? "";
+      const marcas = [invertido && "_invertido_", livre && "_resposta livre_", proprias.length && `_opções próprias: ${proprias.join("; ")}_`, alerta && `_sentinela: ${alerta}_`].filter(Boolean);
+      md.push(`${ii + 1}. ${texto}${marcas.length ? ` — ${marcas.join(" · ")}` : ""}`);
+      if (exemplo) md.push(`   - Exemplo: ${exemplo}`);
+      itemRows.push(row([id, nome, faixa, d.name, ii + 1, texto, livre ? "texto" : "escolha", invertido ? "s" : "n", proprias.join(" | "), alerta, exemplo, "", ""]));
     });
     md.push("");
   });
 
-  md.push(`**Faixas de interpretação** (${def.totalLabel ?? "escore total"}):\n`);
+  md.push(`**Faixas de interpretação** (${def.totalLabel ?? "escore total"}; direção: ${direcao(def)}):\n`);
   md.push("| ≥ % do máx. | Classificação | Cor | Descrição |");
   md.push("| ---: | --- | --- | --- |");
   for (const b of def.bands) {
     md.push(`| ${b.minPct}% | ${b.classification} | ${b.color} | ${b.description} |`);
-    bandRows.push(row([id, nome, direcao, b.minPct, b.classification, b.color, b.description, "", ""]));
+    bandRows.push(row([id, nome, direcao(def), interpretacao(def), b.minPct, b.classification, b.color, b.description, ""]));
   }
   md.push("\n---\n");
 }
 
-// Motor runner: cada item tem as próprias opções; faixas são por pontos (min–max).
+// Motor runner: cada item tem as próprias opções (valor=rótulo); faixas por pontos (min–max).
+// Não há scoreDirection nessas definições: a direção fica "não declarada", sem supor.
 for (const id of runnerIds) {
   const def = interactiveScales[id];
   const nome = def.name;
@@ -109,20 +145,22 @@ for (const id of runnerIds) {
   md.push(`## ${id} — ${nome}`);
   md.push(`- **Nome completo:** ${def.fullName}`);
   md.push(`- **Faixa etária:** ${faixa}  |  **Respondente:** ${def.respondent}`);
-  md.push(`- **Itens:** ${def.items.length}  |  **Motor:** runner (opções por item, faixas por pontos)\n`);
+  md.push(`- **Direção do escore:** não declarada  |  **Interpretação:** faixas por pontos (motor runner)`);
+  md.push(`- **Itens:** ${def.items.length}\n`);
   def.items.forEach((it, ii) => {
     if (!it.text?.trim()) itemSemTexto++;
-    md.push(`${ii + 1}. ${it.text}`);
-    md.push(`   - Opções: ${it.options.map((o) => `\`${o.value}=${o.label}\``).join("  ")}`);
-    itemRows.push(row([id, nome, faixa, "", ii + 1, it.text, "", ""]));
+    const proprias = it.options.map((o) => `${o.value}=${o.label}`);
+    md.push(`${ii + 1}. ${it.text} — _opções próprias: ${proprias.join("; ")}_`);
+    if (it.example) md.push(`   - Exemplo: ${it.example}`);
+    itemRows.push(row([id, nome, faixa, "", ii + 1, it.text, "escolha", "n", proprias.join(" | "), "", it.example ?? "", "", ""]));
   });
   md.push("");
-  md.push("**Faixas de interpretação** (pontos):\n");
+  md.push("**Faixas de interpretação** (pontos; direção: não declarada):\n");
   md.push("| Pontos | Classificação | Tom | Descrição |");
   md.push("| ---: | --- | --- | --- |");
   for (const b of def.bands) {
     md.push(`| ${b.min}–${b.max} | ${b.risk} | ${b.tone} | ${b.description} |`);
-    bandRows.push(row([id, nome, "faixa por pontos", "", b.risk, b.tone, b.description, "", `${b.min}–${b.max}`]));
+    bandRows.push(row([id, nome, "não declarada", `faixa por pontos: ${b.min}–${b.max}`, "", b.risk, b.tone, b.description, ""]));
   }
   md.push("\n---\n");
 }
