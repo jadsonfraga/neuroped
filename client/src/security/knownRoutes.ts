@@ -153,6 +153,7 @@ export const KNOWN_ROUTE_PATTERNS: readonly string[] = [
   "/sobre",
   "/sobre-neuroped",
   "/super-neuropad-game",
+  "/super-neuropad-nao-verbal",
   "/tde2",
   "/tea",
   "/tea-comportamentos",

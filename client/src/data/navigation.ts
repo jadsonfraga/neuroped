@@ -70,6 +70,14 @@ const superNeuroPadNavigation: NavItem = {
   description: "Pré-consulta integrada · 6 mundos · 2 a 17 anos · até 20 min · PDF",
 };
 
+const superNeuroPadNaoVerbalNavigation: NavItem = {
+  href: "/super-neuropad-nao-verbal",
+  label: "SuperNeuroPad Não Verbal",
+  icon: Gamepad2,
+  tone: "priority",
+  description: "Tocar em figuras · 2 a 6 anos · sem fala · até 12 desafios",
+};
+
 const arenaNavigation: NavItem = {
   href: "/neuropad-arena",
   label: "Arena · NeuroPad",
@@ -229,7 +237,7 @@ export const featuredNavigation: NavItem[] = [
 ];
 
 export const navSections: NavSection[] = [
-  { title: "PRÉ-CONSULTA GUIADA", items: [superNeuroPadNavigation, arenaNavigation, obs10Navigation] },
+  { title: "PRÉ-CONSULTA GUIADA", items: [superNeuroPadNavigation, arenaNavigation, superNeuroPadNaoVerbalNavigation, obs10Navigation] },
   {
     title: "",
     items: [{ href: "/", label: "Início", icon: Home }],
