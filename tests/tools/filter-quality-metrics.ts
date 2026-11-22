@@ -17,6 +17,7 @@ import {
   scaleCoversSelectedSignalExactly,
   getImplementationStatus,
   isAcuteRiskContext,
+  outsideConditionAnchor,
   type RefinedScaleMatch,
 } from "../../client/src/data/advancedFilterLogic.ts";
 import { selectCuratedTiers, selectPodium, PODIUM_QUESTION_CAP, estimatedQuestionCount } from "../../client/src/data/filterPodium.ts";
@@ -114,6 +115,11 @@ interface Acc {
   signalContextsCoveredWhenSafeCandidate: number;
   acuteContexts: number;
   acuteBroadbandViolations: number;
+  anchoredOutsideCondition: number;
+  unaffectedBandMedals: number;
+  unaffectedBandMedalsFull: number;
+  affectedBandMedals: number;
+  affectedBandMedalsFull: number;
   curatedCount: number;
 }
 
@@ -123,7 +129,8 @@ const acc: Acc = {
   bandNoOverlapViolations: 0, bandMedals: 0, bandMedalsFull: 0, bandMedalsPartial: 0,
   respondentViolations: 0, redundantPairs: 0, contextsWithRedundantPair: 0, capViolations: 0,
   complaintsSelected: 0, complaintsCovered: 0, signalContexts: 0, signalContextsCovered: 0,
-  signalContextsWithSafeCandidate: 0, signalContextsCoveredWhenSafeCandidate: 0, acuteContexts: 0, acuteBroadbandViolations: 0, curatedCount: 0,
+  signalContextsWithSafeCandidate: 0, signalContextsCoveredWhenSafeCandidate: 0, acuteContexts: 0, acuteBroadbandViolations: 0, anchoredOutsideCondition: 0, unaffectedBandMedals: 0, unaffectedBandMedalsFull: 0,
+  affectedBandMedals: 0, affectedBandMedalsFull: 0, curatedCount: 0,
 };
 
 for (const c of contexts) {
@@ -157,15 +164,29 @@ for (const c of contexts) {
     if (matches.some((m) => m.isBroadbandFallback)) acc.acuteBroadbandViolations++;
   }
   let redundantInContext = 0;
+  // Contexto AFETADO por âncora de condição: alguma escala que casaria pela queixa
+  // foi excluída só pela âncora (ex.: bateria de epilepsia para sono). Os demais
+  // contextos têm pódio idêntico ao de antes da âncora e guardam piso próprio.
+  const anchorAffected = c.queixas.length > 0 && catalog.some((s) =>
+    s.queixas.some((q) => c.queixas.includes(q)) && outsideConditionAnchor(s, c.queixas));
   for (const m of medals) {
     acc.medals++;
     if (getImplementationStatus(m.scale) !== "complete") acc.medalsNotApplicable++;
+    // Instrumento ancorado numa condição (ex.: bateria de epilepsia) só medalha com a condição marcada.
+    if (outsideConditionAnchor(m.scale, c.queixas)) acc.anchoredOutsideCondition++;
     if (c.exactAge !== null && !containsExact(m.scale, c.exactAge)) acc.exactAgeViolations++;
     if (c.band) {
       acc.bandMedals++;
       if (!overlapsBand(m.scale, c.band)) acc.bandNoOverlapViolations++;
       if (coversBand(m.scale, c.band)) acc.bandMedalsFull++;
       else acc.bandMedalsPartial++;
+      if (anchorAffected) {
+        acc.affectedBandMedals++;
+        if (coversBand(m.scale, c.band)) acc.affectedBandMedalsFull++;
+      } else {
+        acc.unaffectedBandMedals++;
+        if (coversBand(m.scale, c.band)) acc.unaffectedBandMedalsFull++;
+      }
     }
     if (c.respondente && c.respondente !== "teste_direto_crianca" && !m.scale.respondente.includes(c.respondente as never)) {
       acc.respondentViolations++;
@@ -226,6 +247,9 @@ const report = {
   signal_covered_when_safe_candidate_pct: pct(acc.signalContextsCoveredWhenSafeCandidate, acc.signalContextsWithSafeCandidate),
   acute_contexts: acc.acuteContexts,
   acute_broadband_violations: acc.acuteBroadbandViolations,
+  anchored_outside_condition: acc.anchoredOutsideCondition,
+  band_medals_full_unaffected_pct: pct(acc.unaffectedBandMedalsFull, acc.unaffectedBandMedals),
+  band_medals_full_anchor_affected_pct: pct(acc.affectedBandMedalsFull, acc.affectedBandMedals),
   curated_contexts: acc.curatedCount,
 };
 

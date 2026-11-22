@@ -573,6 +573,14 @@ export function clinicalHardBlock(
  */
 export const CONDITION_ANCHORED_DOMAINS: Record<string, readonly string[]> = {
   pc: ["pc", "motor", "funcionalidade"],
+  // Instrumentos de epilepsia (bateria IPN-EPI/SEG, NDDI-E) também pontuam sono,
+  // aprendizagem, ansiedade, atraso e depressão NO CONTEXTO da epilepsia. Sozinhas,
+  // essas queixas não trazem instrumento de epilepsia (teste em produção: anamnese
+  // de epilepsia no pódio de sono aos 15 meses). Com epilepsia marcada, as
+  // coberturas secundárias continuam valendo. Funcionalidade acompanha a condição,
+  // como na PC; efeitos de medicação, neonatal e PC mantêm acesso a efeitos de
+  // antiepilépticos e ao HINE (exame neurológico do lactente).
+  epilepsia: ["epilepsia", "funcionalidade", "efeitos", "neonatal", "pc"],
 };
 
 export function outsideConditionAnchor(scale: ScaleEntry, queixas: readonly string[]): boolean {
