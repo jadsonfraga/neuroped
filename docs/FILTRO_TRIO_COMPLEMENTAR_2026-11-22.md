@@ -156,7 +156,17 @@ nem os efeitos dos antiepilépticos.
 | Depressão, 14 anos | NDDI-E entre as candidatas | NDDI-E fora |
 | PC, 6 meses; neonatal, 2 meses | HINE disponível | igual |
 
-**Guarda de métricas.** O piso de `band_medals_full_pct` passa de 89,2% para 89,0%. As 51
+**Guarda de métricas.** A cobertura integral da faixa passa a ser travada em dois grupos
+de contextos, cada um no seu valor atual (achado P1 da revisão automática: baixar só o piso
+global deixaria passar regressão em contexto alheio à âncora):
+
+| Grupo | Piso | Por quê |
+|---|---:|---|
+| Contextos sem efeito de âncora | 88,1% | Candidatas e pódio idênticos aos de antes; o piso no valor atual reprova qualquer regressão alheia |
+| Contextos em que a âncora removeu instrumento | 90,1% | Valor atual após a troca |
+| Total geral | 89,0% | Antes 89,2%; a diferença vem só das trocas abaixo |
+
+O total geral cai de 89,2% para 89,0%. As 51
 medalhas que deixaram de cobrir a faixa inteira eram todas módulos IPN-EPI/SEG (0–215 m)
 em sono e ansiedade sem epilepsia, trocados por instrumentos da janela etária (SWYC). Das
 562 medalhas parciais restantes, só 1 tinha alternativa integral fora da curadoria clínica:
