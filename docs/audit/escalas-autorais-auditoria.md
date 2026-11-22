@@ -1,8 +1,8 @@
-# Auditoria — Escalas Autorais Dr. Jadson (J26-xxx)
+# Auditoria — Escalas com itens interativos (autorais e publicadas)
 
-> Gerado em 2026-11-21 a partir do código-fonte.
+> Gerado em 2026-11-22 a partir do código-fonte.
 > **Conteúdo gerado por IA — requer validação clínica antes de qualquer uso.**
-> Total: **337 escalas** com itens interativos.
+> Total: **354 escalas** com itens interativos (337 com faixas em % do máximo e 17 do motor runner, com faixas por pontos).
 
 Para cada escala: confira os **itens**, as **opções de resposta** e as **faixas de corte**.
 Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
@@ -14,7 +14,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 144–216 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 5 min
 - **Descrição:** 10 categorias de experiências adversas na infância. Em pediatria, aplicável a adolescentes. Forte preditor de desfechos em saúde.
 - **Opções de resposta:** `0=Não`  `1=Sim`
-- **Itens:** 10  |  **Domínios:** 3
+- **Itens:** 10  |  **Domínios:** 3  |  **Direção do escore:** maior = pior
 
 ### Domínio: Abuso
 1. Abuso emocional recorrente (humilhações, ameaças)
@@ -47,7 +47,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 60–215 meses  |  **Respondente:** pais, professor  |  **Tempo:** Não aferido
 - **Descrição:** monitorar atenção cotidiana, organização, impulsividade e autorregulação funcional em casa ou na escola Janela: últimos 7 dias. Instrumento clínico autoral de monitorização NeuroPed SDG. Não é teste psicométrico validado e não deve ser usado isoladamente para diagnóstico, indicação terapêutica ou perícia. Não há pontos de corte diagnósticos nem classificação de gravidade validada.
 - **Opções de resposta:** `0=0 — não ocorreu/sem dificuldade`  `1=1 — leve ou ocasional`  `2=2 — frequente ou com impacto`  `3=3 — muito frequente/intenso ou difícil de contornar`
-- **Itens:** 12  |  **Domínios:** 2
+- **Itens:** 12  |  **Domínios:** 2  |  **Direção do escore:** maior = pior
 
 ### Domínio: Atenção/organização
 1. Perde o fio da atividade e precisa ser chamado de volta para continuar.
@@ -78,7 +78,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–215 meses  |  **Respondente:** pais  |  **Tempo:** 15–20 min
 - **Descrição:** Inventário de observação respondido pela família: 56 itens em 10 áreas (intelectual, interesses por área, criatividade, motivação, liderança, artes, motor, emoções, jeito de aprender e pontos para conversar com o médico), com espaço para exemplos. Mostra só soma e média por área, sem ponto de corte e sem diagnóstico.
 - **Opções de resposta:** `0=Nunca / quase nunca`  `1=Às vezes`  `2=Com frequência`  `3=Quase sempre`
-- **Itens:** 66  |  **Domínios:** 10
+- **Itens:** 66  |  **Domínios:** 10  |  **Direção do escore:** maior = melhor
 
 ### Domínio: 1. Capacidade intelectual geral
 1. Aprende coisas novas com poucas explicações e lembra delas depois.
@@ -179,7 +179,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–216 meses  |  **Respondente:** clinico  |  **Tempo:** 10 min
 - **Descrição:** 12 itens avaliando movimentos involuntários — discinesia tardia.
 - **Opções de resposta:** `0=0 · Nenhum`  `1=1 · Mínimo`  `2=2 · Leve`  `3=3 · Moderado`  `4=4 · Grave`
-- **Itens:** 12  |  **Domínios:** 5
+- **Itens:** 12  |  **Domínios:** 5  |  **Direção do escore:** maior = pior
 
 ### Domínio: Movimentos faciais e orais
 1. Músculos da expressão facial
@@ -216,7 +216,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–1 meses  |  **Respondente:** clinico  |  **Tempo:** 1 min
 - **Descrição:** Avalia vitalidade do recém-nascido no 1º e 5º minuto de vida: aparência, pulso, grimacea, atividade e respiração.
 - **Opções de resposta:** `0=0 ponto`  `1=1 ponto`  `2=2 pontos`
-- **Itens:** 5  |  **Domínios:** 1
+- **Itens:** 5  |  **Domínios:** 1  |  **Direção do escore:** maior = melhor
 
 1. Frequência cardíaca — 0: ausente · 1: menor que 100 bpm · 2: 100 bpm ou mais
 2. Esforço respiratório — 0: ausente · 1: irregular ou choro fraco · 2: choro forte, respiração regular
@@ -239,7 +239,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 144–216 meses  |  **Respondente:** autoaplicavel, pais  |  **Tempo:** 3–5 min
 - **Descrição:** Rastreio rápido (10 itens) de traços do espectro autista em adolescentes. Corte ≥6/10 sugere encaminhamento para avaliação.
 - **Opções de resposta:** `0=Não / discordo`  `1=Sim / concordo`
-- **Itens:** 10  |  **Domínios:** 1
+- **Itens:** 10  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Percebe pequenos sons, padrões ou detalhes que a maioria das pessoas não nota
 2. Tende a focar tanto em detalhes que perde a visão do todo
@@ -267,7 +267,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 120–216 meses  |  **Respondente:** clinico  |  **Tempo:** 2 min
 - **Descrição:** 4 perguntas de triagem rápida de risco suicida em emergência.
 - **Opções de resposta:** `0=Não`  `1=Sim`
-- **Itens:** 4  |  **Domínios:** 1
+- **Itens:** 4  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Nas últimas semanas, você desejou estar morto(a)?
 2. Nas últimas semanas, você sentiu que você ou sua família estariam melhor se você estivesse morto(a)?
@@ -288,7 +288,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 18–216 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 10–15 min
 - **Descrição:** Triagem e acompanhamento de sinais do espectro autista em 4 domínios (comunicação, sociabilidade, consciência sensorial/cognitiva, saúde/comportamento). Formato de monitoramento preenchível.
 - **Opções de resposta:** `0=Não`  `1=Às vezes`  `2=Sim`
-- **Itens:** 76  |  **Domínios:** 4
+- **Itens:** 76  |  **Domínios:** 4  |  **Direção do escore:** maior = pior
 
 ### Domínio: I. Fala / Linguagem / Comunicação
 1. Sabe o próprio nome
@@ -389,7 +389,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–215 meses  |  **Respondente:** pais, clinico  |  **Tempo:** Não aferido
 - **Descrição:** Monitor medicamentoso por perfil: tolerabilidade e lacunas de benefício funcional devem ser lidas separadamente. Monitorar tolerabilidade, efeitos adversos observáveis e benefício funcional após início ou ajuste de tratamento medicamentoso. Janela: últimos 7 dias. Aplicável da primeira infância à adolescência somente quando o item for observável e pertinente ao nível de desenvolvimento. Quando não houver aplicabilidade ou observabilidade suficiente, marque NO. Cuidador e clínico registram separadamente. Instrumento clínico autoral de monitorização NeuroPed SDG. Não é teste psicométrico validado e não deve ser usado isoladamente para diagnóstico, indicação terapêutica ou perícia. Não há pontos de corte diagnósticos nem classificação de gravidade validada.
 - **Opções de resposta:** `0=0 — ausente ou sem mudança desfavorável`  `1=1 — presente, sem repercussão funcional relevante`  `2=2 — repercussão funcional moderada ou necessidade clara de ajuste/supervisão`  `3=3 — repercussão funcional importante, limitante ou com risco`  `4=NO — não observado/não aplicável/informação insuficiente`
-- **Itens:** 24  |  **Domínios:** 5
+- **Itens:** 24  |  **Domínios:** 5  |  **Direção do escore:** maior = pior
 
 ### Domínio: A. Funções vegetativas e gastrointestinais
 1. O apetite reduziu de forma que mudou a ingestão habitual.
@@ -438,7 +438,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–216 meses  |  **Respondente:** clinico  |  **Tempo:** 5 min
 - **Descrição:** 4 itens de avaliação global e objetiva de acatisia.
 - **Opções de resposta:** `0=0 - ausente`  `1=1 - leve`  `2=2 - moderado`  `3=3 - intenso`
-- **Itens:** 4  |  **Domínios:** 1
+- **Itens:** 4  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Movimentos inquietos observáveis
 2. Sensação subjetiva de inquietude
@@ -461,7 +461,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–216 meses  |  **Respondente:** pais, autoaplicavel  |  **Tempo:** 5 min
 - **Descrição:** 5 perguntas-chave para triagem de distúrbios do sono.
 - **Opções de resposta:** `0=Ausente / normal`  `1=Leve / ocasional`  `2=Claro / frequente`
-- **Itens:** 5  |  **Domínios:** 1
+- **Itens:** 5  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. B - Dificuldade para iniciar o sono ou resistência para dormir
 2. E - Sonolência diurna excessiva
@@ -485,7 +485,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–36 meses  |  **Respondente:** pais  |  **Tempo:** 5 min
 - **Descrição:** Triagem breve de padrões de sono em lactentes.
 - **Opções de resposta:** `0=Ausente / normal`  `1=Leve / ocasional`  `2=Claro / frequente`
-- **Itens:** 8  |  **Domínios:** 2
+- **Itens:** 8  |  **Domínios:** 2  |  **Direção do escore:** maior = pior
 
 ### Domínio: Sono noturno
 1. Latência para dormir prolongada
@@ -515,7 +515,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–36 meses  |  **Respondente:** pais  |  **Tempo:** 5 min
 - **Descrição:** Problemas de sono em bebês/crianças pequenas (relato pais).
 - **Opções de resposta:** `0=Nunca ou raramente`  `1=Às vezes (1–2x/semana)`  `2=Frequentemente (3–4x/semana)`  `3=Quase sempre (diariamente)`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Demora mais de 30 minutos para adormecer à noite.
 2. Só adormece com ajuda intensa (colo, embalo, peito/mamadeira, carro).
@@ -542,7 +542,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–204 meses  |  **Respondente:** pais  |  **Tempo:** 5–10 min
 - **Descrição:** Avaliação de sintomas de disfunção intestinal e vesical combinados.
 - **Opções de resposta:** `0=Nunca ou raramente`  `1=Às vezes (1–2x/semana)`  `2=Frequentemente (3–4x/semana)`  `3=Quase sempre (diariamente)`
-- **Itens:** 10  |  **Domínios:** 2
+- **Itens:** 10  |  **Domínios:** 2  |  **Direção do escore:** maior = pior
 
 ### Domínio: Bexiga
 1. Escapes de urina durante o dia (calcinha/cueca úmida ou molhada).
@@ -574,7 +574,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–216 meses  |  **Respondente:** pais, autoaplicavel  |  **Tempo:** 2 min
 - **Descrição:** 7 tipos de fezes ilustrados para avaliação de constipação e diarreia. Adaptada com figuras para crianças a partir de 4 anos.
 - **Opções de resposta:** `0=Tipo 1 — bolinhas duras separadas, difíceis de eliminar`  `1=Tipo 2 — em forma de salsicha, mas com grumos/endurecida`  `2=Tipo 3 — como salsicha, com rachaduras na superfície`  `3=Tipo 4 — como salsicha ou cobra, lisa e macia`  `4=Tipo 5 — pedaços macios com bordas nítidas`  `5=Tipo 6 — pedaços pastosos com bordas irregulares`  `6=Tipo 7 — totalmente líquida, sem pedaços sólidos`
-- **Itens:** 1  |  **Domínios:** 1
+- **Itens:** 1  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Tipo habitual das fezes
 
@@ -593,7 +593,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 192–216 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 10–15 min
 - **Descrição:** Instrumento exploratório autoral do Dr. Jadson Fraga, inspirado nos domínios do CAT-Q, para avaliar o uso de estratégias de camuflagem (compensação, assimilação e disfarce) em pessoas com características do Transtorno do Espectro Autista. Composto por 24 itens autoaplicáveis em escala Likert de 5 pontos, distribuídos em três domínios de 8 itens. Destina-se a adolescentes a partir de 16 anos e adultos, com ou sem diagnóstico de TEA, em contexto clínico, de triagem e pesquisa.…
 - **Opções de resposta:** `0=Nunca`  `1=Raramente`  `2=Às vezes`  `3=Frequentemente`  `4=Sempre`
-- **Itens:** 24  |  **Domínios:** 3
+- **Itens:** 24  |  **Domínios:** 3  |  **Direção do escore:** maior = pior
 
 ### Domínio: COMPENSAÇÃO (itens 1 a 8)
 1. Eu ensaio mentalmente o que vou dizer antes de iniciar uma conversa.
@@ -640,7 +640,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–36 meses  |  **Respondente:** clinico  |  **Tempo:** 15–20 min
 - **Descrição:** Avalia desenvolvimento cognitivo e de linguagem em crianças pequenas.
 - **Opções de resposta:** `0=Não realiza`  `1=Emergente`  `2=Parcial`  `3=Adequado`
-- **Itens:** 24  |  **Domínios:** 2
+- **Itens:** 24  |  **Domínios:** 2  |  **Direção do escore:** maior = melhor
 
 ### Domínio: CAT - adaptativo/cognitivo
 1. Explora objeto com olhar e mãos
@@ -686,7 +686,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–204 meses  |  **Respondente:** autoaplicavel, pais  |  **Tempo:** 5–10 min
 - **Descrição:** Triagem de exposição a traumas e sintomas de TEPT em crianças de 3 a 17 anos, com versões para pais e autoaplicada.
 - **Opções de resposta:** `0=Nunca`  `1=Um pouco`  `2=Bastante`  `3=Quase sempre`
-- **Itens:** 20  |  **Domínios:** 4
+- **Itens:** 20  |  **Domínios:** 4  |  **Direção do escore:** maior = pior
 
 ### Domínio: Reexperiência
 1. Lembranças do evento que vêm sem eu querer
@@ -730,7 +730,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–216 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 5 min
 - **Descrição:** Autorrelato de sintomas depressivos por 20 itens referentes à última semana (6–17 anos). Alternativa de domínio público ao CDI para triagem e monitoramento de depressão.
 - **Opções de resposta:** `0=Nem um pouco`  `1=Um pouco`  `2=Mais ou menos`  `3=Muito`
-- **Itens:** 20  |  **Domínios:** 1
+- **Itens:** 20  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Fiquei incomodado(a) com coisas que normalmente não me incomodam
 2. Não tive vontade de comer, estava sem fome
@@ -767,7 +767,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–216 meses  |  **Respondente:** clinico  |  **Tempo:** 5 min
 - **Descrição:** Classifica a eficácia da comunicação na PC em 5 níveis.
 - **Opções de resposta:** `0=Nível I — comunica-se com eficácia com conhecidos e desconhecidos`  `1=Nível II — eficaz, porém mais lento, com conhecidos e desconhecidos`  `2=Nível III — comunica-se com eficácia com pessoas conhecidas`  `3=Nível IV — comunicação inconsistente, mesmo com conhecidos`  `4=Nível V — raramente comunica-se com eficácia, mesmo com conhecidos`
-- **Itens:** 1  |  **Domínios:** 1
+- **Itens:** 1  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Nível de eficácia da comunicação no dia a dia
 
@@ -788,7 +788,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–204 meses  |  **Respondente:** clinico  |  **Tempo:** < 5 min após a avaliação
 - **Descrição:** Escore único de funcionamento global (1–100, maior = melhor) atribuído pelo clínico integrando todas as fontes, geralmente sobre o menor nível de funcionamento do último mês. Descritores por faixa de 10 pontos, do funcionamento superior em todas as áreas (91–100) à necessidade de supervisão constante (1–10). Referida no fluxograma clínico como medida de função global.
 - **Opções de resposta:** `0=—`
-- **Itens:** 1  |  **Domínios:** 1
+- **Itens:** 1  |  **Domínios:** 1  |  **Direção do escore:** maior = melhor
 
 1. Faixa de funcionamento no último mês
 
@@ -805,7 +805,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–216 meses  |  **Respondente:** clinico  |  **Tempo:** 1 min
 - **Descrição:** Julgamento do clínico sobre a mudança desde o início do tratamento (1–7).
 - **Opções de resposta:** `0=1 · Muitíssimo melhor`  `1=2 · Muito melhor`  `2=3 · Um pouco melhor`  `3=4 · Sem alteração`  `4=5 · Um pouco pior`  `5=6 · Muito pior`  `6=7 · Muitíssimo pior`
-- **Itens:** 1  |  **Domínios:** 1
+- **Itens:** 1  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Melhora global desde o início do tratamento ou da referência
 
@@ -828,7 +828,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–216 meses  |  **Respondente:** clinico  |  **Tempo:** 1 min
 - **Descrição:** Julgamento do clínico sobre a gravidade atual (1–7), para comparar ao longo do seguimento.
 - **Opções de resposta:** `0=1 · Normal, não doente`  `1=2 · Limítrofe`  `2=3 · Levemente doente`  `3=4 · Moderadamente doente`  `4=5 · Acentuadamente doente`  `5=6 · Gravemente doente`  `6=7 · Entre os mais gravemente doentes`
-- **Itens:** 1  |  **Domínios:** 1
+- **Itens:** 1  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Gravidade da condição do paciente neste momento
 
@@ -851,7 +851,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 12–84 meses  |  **Respondente:** clinico  |  **Tempo:** 2 min
 - **Descrição:** Escala observacional de dor pós-operatória (1–7 anos) — 6 categorias comportamentais (choro, face, verbal, tronco, toque, pernas). Total 4–13; ≥8 indica dor significativa que requer analgesia. Validada para dor aguda pós-operatória.
 - **Opções de resposta:** `0=Ausente / confortável`  `1=Discreto`  `2=Moderado`  `3=Intenso`
-- **Itens:** 6  |  **Domínios:** 1
+- **Itens:** 6  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Choro (do gemido ao choro vigoroso/gritos).
 2. Expressão facial (careta de dor, sobrancelhas franzidas, olhos apertados).
@@ -876,7 +876,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–216 meses  |  **Respondente:** clinico  |  **Tempo:** 2 min
 - **Descrição:** Avalia distúress e dor em UTI pediátrica/neonatal por 6 comportamentos observacionais. Amplamente validada para pacientes não-verbais.
 - **Opções de resposta:** `0=1 - calmo/confortável`  `1=2`  `2=3`  `3=4`  `4=5 - muito desconfortável`
-- **Itens:** 6  |  **Domínios:** 1
+- **Itens:** 6  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Alerta/estado de vigilia
 2. Calma ou agitação
@@ -901,7 +901,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 96–216 meses  |  **Respondente:** autoaplicavel, crianca  |  **Tempo:** 15 min
 - **Descrição:** 20 itens alinhados ao DSM-5 para diagnóstico e monitorização de TEPT em crianças e adolescentes.
 - **Opções de resposta:** `0=Nunca`  `1=Uma vez/semana ou menos`  `2=2–3x por semana`  `3=4–5x por semana`  `4=Quase todo dia`
-- **Itens:** 20  |  **Domínios:** 4
+- **Itens:** 20  |  **Domínios:** 4  |  **Direção do escore:** maior = pior
 
 ### Domínio: Intrusão
 1. Lembranças aflitivas que voltam sem querer
@@ -946,7 +946,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–6 meses  |  **Respondente:** clinico  |  **Tempo:** 2 min
 - **Descrição:** Avalia dor pós-operatória neonatal por choro, saturação, sinais vitais, expressão facial e sonolencia.
 - **Opções de resposta:** `0=0 ponto`  `1=1 ponto`  `2=2 pontos`
-- **Itens:** 5  |  **Domínios:** 1
+- **Itens:** 5  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Choro — 0: ausente ou não agudo · 1: agudo, mas consolável · 2: agudo e inconsolável
 2. Necessidade de oxigênio para SatO₂ acima de 95% — 0: não · 1: até 30% · 2: mais de 30%
@@ -969,7 +969,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 96–216 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 5 min
 - **Descrição:** 13 itens avaliando intrusão, evitação e exitação após eventos traumáticos em crianças.
 - **Opções de resposta:** `0=Nunca`  `1=Raramente`  `2=Às vezes`  `3=Frequentemente`
-- **Itens:** 13  |  **Domínios:** 3
+- **Itens:** 13  |  **Domínios:** 3  |  **Direção do escore:** maior = pior
 
 ### Domínio: Intrusão
 1. Penso no evento mesmo sem querer
@@ -1005,7 +1005,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–204 meses  |  **Respondente:** clinico  |  **Tempo:** 15–30 min
 - **Descrição:** Padrão-ouro para avaliação de gravidade de TOC em crianças e adolescentes. 10 itens em obsessões e compulsões.
 - **Opções de resposta:** `0=Ausente`  `1=Leve`  `2=Moderado`  `3=Grave`  `4=Extremo`
-- **Itens:** 10  |  **Domínios:** 2
+- **Itens:** 10  |  **Domínios:** 2  |  **Direção do escore:** maior = pior
 
 ### Domínio: Obsessões (pensamentos intrusivos)
 1. Tempo ocupado pelas obsessões ao longo do dia.
@@ -1038,7 +1038,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 96–204 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 10 min
 - **Descrição:** Versão de autoavaliacão do CY-BOCS para monitorização de sintomas em crianças a partir de 8 anos.
 - **Opções de resposta:** `0=Nenhum`  `1=Leve`  `2=Moderado`  `3=Grave`  `4=Extremo`
-- **Itens:** 10  |  **Domínios:** 2
+- **Itens:** 10  |  **Domínios:** 2  |  **Direção do escore:** maior = pior
 
 ### Domínio: Obsessões (pensamentos)
 1. Tempo ocupado por obsessões
@@ -1070,7 +1070,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 144–216 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 10 min
 - **Descrição:** 20 itens avaliando 4 dimensões de TOC: contaminãção, responsabilidade/dano, inaceitável/intrusivo e simetria.
 - **Opções de resposta:** `0=Nenhum`  `1=Leve`  `2=Moderado`  `3=Grave`  `4=Extremo`
-- **Itens:** 20  |  **Domínios:** 4
+- **Itens:** 20  |  **Domínios:** 4  |  **Direção do escore:** maior = pior
 
 ### Domínio: Contaminação
 1. Tempo gasto com medo de contaminação/limpeza
@@ -1115,7 +1115,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–216 meses  |  **Respondente:** pais, autoaplicavel  |  **Tempo:** 5 min
 - **Descrição:** 10 itens avaliando sintomas de disfunção miccional em crianças: urgência, freqüência, esforço, incontinencia e constipação.
 - **Opções de resposta:** `0=Quase nunca (0)`  `1=Menos da metade das vezes (1)`  `2=Cerca de metade das vezes (2)`  `3=Quase sempre (3)`
-- **Itens:** 10  |  **Domínios:** 1
+- **Itens:** 10  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Escapou urina na roupa durante o dia
 2. Quando escapa, molha a roupa íntima (poucas gotas) sem perceber
@@ -1143,7 +1143,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 12–216 meses  |  **Respondente:** pais  |  **Tempo:** 8–12 min
 - **Descrição:** Triagem autoral do comportamento adaptativo no dia a dia — comunicação funcional, autocuidado, socialização e autonomia prática — respondida pelos pais/cuidadores e comparada ao esperado para a idade. Cobre o construto avaliado por escalas adaptativas padronizadas (ex.: Vineland-3, ABAS-3), sem substituí-las quando a avaliação normatizada for necessária.
 - **Opções de resposta:** `0=Nunca ou raramente`  `1=Às vezes (1–2x/semana)`  `2=Frequentemente (3–4x/semana)`  `3=Quase sempre (diariamente)`
-- **Itens:** 16  |  **Domínios:** 4
+- **Itens:** 16  |  **Domínios:** 4  |  **Direção do escore:** maior = pior
 
 ### Domínio: Comunicação funcional
 1. Tem dificuldade de pedir o que precisa de forma que os outros entendam.
@@ -1185,7 +1185,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–215 meses  |  **Respondente:** pais, autoaplicavel  |  **Tempo:** 12–18 min
 - **Descrição:** Escala autoral de 42 itens em 6 subdomínios para rastreamento de ansiedade clinicamente relevante em crianças e adolescentes de 4 a 17 anos e 11 meses, adaptada ao contexto clínico e cultural do Nordeste brasileiro. Baseada em SCARED, MASC-2, PARS, STAIC, RCADS, GAD-7 pediátrico e PSWQ-C, com linguagem acessível e expressões somáticas regionais. Disponível em versão Parental (P, obrigatória abaixo de 10 anos), Autoavaliação (A, 10–17 anos) e Combinada (C). Período de referên…
 - **Opções de resposta:** `0=Nunca / Quase nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre / Sempre`
-- **Itens:** 42  |  **Domínios:** 6
+- **Itens:** 42  |  **Domínios:** 6  |  **Direção do escore:** maior = pior
 
 ### Domínio: A — Ansiedade Generalizada (Preocupação)
 1. Preocupa-se muito com coisas que podem dar errado, mesmo quando isso é improvável ("e se acontecer algo ruim?").
@@ -1258,7 +1258,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–216 meses  |  **Respondente:** pais, autoaplicavel, clinico  |  **Tempo:** 15–20 min
 - **Descrição:** Instrumento autoral do Dr. Jadson Fraga Araújo Júnior para avaliação multidimensional da cefaleia na infância e adolescência, com adaptação contextual ao semiárido nordestino (Petrolina/PE). Combina escala de faces de intensidade (EFD-7, 0–10), diário de crises de 30 dias, questionário funcional de 12 itens (QF-12) sobre os últimos 3 meses, módulo de gatilhos e contexto nordestino, checklist de sinais de alarme (red flags) e classificação diagnóstica IPAF-3D (Impacto · Padrã…
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes (1–3 dias/mês)`  `2=Frequentemente (4–14 dias/mês)`  `3=Quase sempre (≥15 dias/mês)`
-- **Itens:** 12  |  **Domínios:** 4
+- **Itens:** 12  |  **Domínios:** 4  |  **Direção do escore:** maior = pior
 
 ### Domínio: Físico (itens 1–4)
 1. A dor de cabeça impediu a criança de brincar, correr ou fazer atividades físicas?
@@ -1295,7 +1295,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–216 meses  |  **Respondente:** clinico  |  **Tempo:** 5 min
 - **Descrição:** Classifica habilidade alimentar na PC em 5 níveis.
 - **Opções de resposta:** `0=Nível I — come e bebe com segurança e eficiência`  `1=Nível II — come e bebe com segurança, com eficiência reduzida`  `2=Nível III — alguma limitação de segurança; eficiência reduzida`  `3=Nível IV — limitação significativa de segurança`  `4=Nível V — incapaz de comer/beber com segurança; pode exigir via alternativa`
-- **Itens:** 1  |  **Domínios:** 1
+- **Itens:** 1  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Nível de habilidade para comer e beber com segurança
 
@@ -1316,7 +1316,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–216 meses  |  **Respondente:** clinico, pais  |  **Tempo:** 15–25 min
 - **Descrição:** Escala clínica autoral do Dr. Jadson Fraga Araújo Júnior para estimar o grau de comprometimento intelectual-adaptativo em crianças verbais e não verbais, com suspeita de atraso global, deficiência intelectual, TEA, transtorno de linguagem ou atraso adaptativo. São 30 itens em 5 domínios (0 a 4 pontos cada, máximo 120), pontuados a partir de entrevista com pais/cuidadores, observação direta, relatório escolar/terapêutico e tarefas clínicas breves. O princípio central é separa…
 - **Opções de resposta:** `0=Não realiza, não demonstra a habilidade ou depende totalmente do adulto`  `1=Realiza apenas com ajuda intensa, modelo constante, repetição excessiva ou condução física`  `2=Realiza parcialmente, com ajuda frequente ou em situações muito conhecidas`  `3=Realiza quase sozinho, mas abaixo do esperado para a idade ou com baixa consistência`  `4=Realiza de forma funcional, espontânea e compatível com a idade/desenvolvimento esperado`
-- **Itens:** 30  |  **Domínios:** 5
+- **Itens:** 30  |  **Domínios:** 5  |  **Direção do escore:** maior = melhor
 
 ### Domínio: Raciocínio não verbal e solução de problemas
 1. Entende relação de causa e efeito: aperta, puxa, abre, fecha, procura solução.
@@ -1376,7 +1376,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–215 meses  |  **Respondente:** pais, professor, clinico  |  **Tempo:** 10–15 min
 - **Descrição:** Instrumento autoral experimental do Dr. Jadson Fraga. 50 itens (10 domínios × 5, 0–3) que organizam sinais de desenvolvimento, comportamento, cognição, linguagem, sono, epilepsia, aprendizagem, autorregulação, funções executivas, sofrimento emocional e funcionalidade diária, identificando áreas comprometidas e prioridades. Ficha técnica — sem validação publicada.
 - **Opções de resposta:** `0=0 — ausente/esperado`  `1=1 — leve/ocasional`  `2=2 — moderado/frequente`  `3=3 — intenso ou com prejuízo importante`
-- **Itens:** 50  |  **Domínios:** 10
+- **Itens:** 50  |  **Domínios:** 10  |  **Direção do escore:** maior = pior
 
 ### Domínio: Desenvolvimento e autonomia
 1. Apresenta atraso ou imaturidade em habilidades esperadas para a idade.
@@ -1465,7 +1465,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–216 meses  |  **Respondente:** pais, professor, clinico  |  **Tempo:** 10–15 min
 - **Descrição:** Instrumento autoral experimental do Dr. Jadson Fraga. 48 itens (12 domínios × 4, 0–3) para uma visão 360° do funcionamento neuropsiquiátrico pediátrico: desenvolvimento, linguagem, sociabilidade, atenção, funções executivas, aprendizagem, sono, epilepsia, autorregulação, comportamento, sofrimento emocional e funcionalidade. Ficha técnica — sem validação publicada.
 - **Opções de resposta:** `0=0 — ausente/esperado`  `1=1 — leve/ocasional`  `2=2 — moderado/frequente`  `3=3 — intenso ou com prejuízo importante`
-- **Itens:** 48  |  **Domínios:** 12
+- **Itens:** 48  |  **Domínios:** 12  |  **Direção do escore:** maior = pior
 
 ### Domínio: Desenvolvimento e autonomia
 1. Apresenta atraso ou imaturidade em habilidades esperadas para a idade.
@@ -1556,7 +1556,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–215 meses  |  **Respondente:** pais, professor, clinico, autoaplicavel  |  **Tempo:** 10–15 min
 - **Descrição:** Instrumento autoral experimental do Dr. Jadson Fraga. 48 itens (9 domínios, 0–3, NA possível) para triagem, laudo, comunicação e acompanhamento longitudinal do funcionamento neuropsiquiátrico infantil. Inclui item sentinela (F6) de rastreio de experiências psicóticas. Ficha técnica — sem validação psicométrica publicada.
 - **Opções de resposta:** `0=0 — ausente/esperado`  `1=1 — leve/ocasional`  `2=2 — moderado/frequente`  `3=3 — intenso ou com prejuízo importante`
-- **Itens:** 48  |  **Domínios:** 9
+- **Itens:** 48  |  **Domínios:** 9  |  **Direção do escore:** maior = pior
 
 ### Domínio: Desenvolvimento e autonomia
 1. Apresenta atraso ou imaturidade em habilidades esperadas para a idade.
@@ -1641,7 +1641,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–216 meses  |  **Respondente:** pais  |  **Tempo:** 3–5 min
 - **Descrição:** Instrumento clínico autoral de 15 itens para acompanhar, em janelas de 7 dias, irritabilidade e frustração, agressividade e segurança, desregulação e recuperação, repetitividade associada à desregulação e impacto funcional. Preferir o mesmo cuidador nas reaplicações basal, semana 4, semana 8 e semana 12. Também pode ser usado para acompanhar resposta comportamental após início ou ajuste de medicamento, nutracêutico ou intervenção não farmacológica, sem atribuir causalidade isoladamente ao tratamento.
 - **Opções de resposta:** `0=0 — Não aconteceu`  `1=1 — Pouco / fácil de contornar`  `2=2 — Várias vezes / atrapalhou a rotina`  `3=3 — Frequente ou intenso / difícil de controlar / risco importante`
-- **Itens:** 15  |  **Domínios:** 5
+- **Itens:** 15  |  **Domínios:** 5  |  **Direção do escore:** maior = pior
 
 ### Domínio: Irritabilidade / frustração · 0–18
 1. Ficou irritada ou ‘aperreada’ por coisas pequenas, mais do que seria esperado para a situação?
@@ -1681,7 +1681,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–216 meses  |  **Respondente:** clinico  |  **Tempo:** 5 min
 - **Descrição:** Classifica desfecho de crises após cirurgia de epilepsia em 4 classes (I: livre de crises; IV: sem melhora).
 - **Opções de resposta:** `0=Classe I - livre de crises incapacitantes`  `1=Classe II - crises raras / quase livre`  `2=Classe III - melhora relevante, mas crises persistem`  `3=Classe IV - sem melhora útil`
-- **Itens:** 1  |  **Domínios:** 1
+- **Itens:** 1  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Classe de desfecho atual
 
@@ -1701,7 +1701,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–24 meses  |  **Respondente:** pais  |  **Tempo:** 5 min
 - **Descrição:** Triagem de depressão pós-parto do CUIDADOR (não da criança) por 10 itens referentes aos últimos 7 dias. Relevante no seguimento neonatal/lactente, pois a saúde mental materna impacta o neurodesenvolvimento. O item 10 aborda ideação de autolesão — investigar sempre que positivo.
 - **Opções de resposta:** `0=0`  `1=1`  `2=2`  `3=3`
-- **Itens:** 10  |  **Domínios:** 1
+- **Itens:** 10  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Tenho conseguido rir e ver o lado engraçado das coisas
 2. Tenho pensado no futuro com alegria
@@ -1729,7 +1729,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–144 meses  |  **Respondente:** pais, professor  |  **Tempo:** 10 min
 - **Descrição:** 24 itens avaliando regulação emocional e labilidade/negatividade em crianças de 2 a 12 anos respondidos por pais ou professores.
 - **Opções de resposta:** `0=Nunca/quase nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 24  |  **Domínios:** 2
+- **Itens:** 24  |  **Domínios:** 2  |  **Direção do escore:** maior = pior
 
 ### Domínio: Labilidade/negatividade
 1. Mudancas rapidas de humor
@@ -1775,7 +1775,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 144–216 meses  |  **Respondente:** clinico  |  **Tempo:** 15–25 min
 - **Descrição:** Roteiro autoral de entrevista clínica estruturada para explorar experiências do espectro psicótico em adolescentes (≥12 anos): percepções incomuns, desconfiança, ideias de referência, desorganização e impacto funcional. Cobre o construto de entrevista de estados mentais de risco (ex.: SIPS/SOPS) em formato de triagem clínica — não estabelece diagnóstico nem substitui avaliação psiquiátrica formal.
 - **Opções de resposta:** `0=Ausente`  `1=Leve/duvidoso`  `2=Presente, sem prejuízo claro`  `3=Presente, com sofrimento ou prejuízo`
-- **Itens:** 10  |  **Domínios:** 1
+- **Itens:** 10  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Percepções incomuns: ouvir sons/vozes ou ver coisas que outros não percebem.
 2. Dúvida sobre a realidade das próprias percepções ou sensação de irrealidade.
@@ -1803,7 +1803,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 96–215 meses  |  **Respondente:** autoaplicavel, clinico  |  **Tempo:** 10–15 min
 - **Descrição:** Instrumento autoral do Dr. Jadson Fraga para avaliar a ansiedade infantojuvenil nas últimas 2 semanas em três dimensões — ansiedade global e somática, ansiedade generalizada cognitiva e ansiedade de desempenho/avaliação —, classificando gravidade e impacto funcional. 25 itens (0–3). Ficha técnica — sem validação psicométrica publicada.
 - **Opções de resposta:** `0=Nunca`  `1=Alguns dias`  `2=Muitos dias`  `3=Quase todos os dias`
-- **Itens:** 25  |  **Domínios:** 3
+- **Itens:** 25  |  **Domínios:** 3  |  **Direção do escore:** maior = pior
 
 ### Domínio: Ansiedade global e somática
 1. Sente-se tenso, nervoso ou incapaz de relaxar.
@@ -1853,7 +1853,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 144–216 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 5 min
 - **Descrição:** 8 situações cotidianas para medir sonolência diurna excessiva em adolescentes.
 - **Opções de resposta:** `0=Nunca cochilaria`  `1=Pequena chance`  `2=Chance moderada`  `3=Grande chance`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Sentado(a) e lendo
 2. Assistindo à televisão
@@ -1880,7 +1880,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 84–216 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 1 min
 - **Descrição:** Linha horizontal de 10cm com ancora verbal/visual. Requer compreensão abstrata; indicada a partir de 7 anos.
 - **Opções de resposta:** `0=0`  `1=1`  `2=2`  `3=3`  `4=4`  `5=5`  `6=6`  `7=7`  `8=8`  `9=9`  `10=10`
-- **Itens:** 1  |  **Domínios:** 1
+- **Itens:** 1  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Intensidade da dor agora (0 = sem dor · 10 = pior dor imaginável)
 
@@ -1900,7 +1900,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–215 meses  |  **Respondente:** professor  |  **Tempo:** 20–30 min
 - **Descrição:** Instrumento autoral de triagem assistiva complementar do Dr. Jadson Fraga (neuropediatria), preenchido pelo professor que acompanha o aluno com maior frequência, após tempo mínimo ideal de 6 semanas de convivência escolar. Rastreia sinais observacionais de neurodesenvolvimento em 10 blocos (78 itens): aprendizagem, atenção/funções executivas, hiperatividade/impulsividade, linguagem, interação social, flexibilidade/sensorialidade, regulação emocional, oposição/conduta, autono…
 - **Opções de resposta:** `0=Não observado / falso`  `1=Ocasional / leve / aparece em situações específicas`  `2=Frequente / moderado / interfere no rendimento ou convivência`  `3=Muito frequente / intenso / gera prejuízo claro ou exige intervenção`
-- **Itens:** 78  |  **Domínios:** 10
+- **Itens:** 78  |  **Domínios:** 10  |  **Direção do escore:** maior = pior
 
 ### Domínio: Bloco A — Aprendizagem e desempenho acadêmico
 1. Lê abaixo do esperado para a série.
@@ -2016,7 +2016,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–216 meses  |  **Respondente:** clinico  |  **Tempo:** 5 min
 - **Descrição:** Avalia fluência verbal fonológica (letras F, A, S) e semântica. Sensivel a disfunções frontais e de linguagem.
 - **Opções de resposta:** `0=Não realiza`  `1=Emergente`  `2=Parcial`  `3=Adequado`
-- **Itens:** 6  |  **Domínios:** 2
+- **Itens:** 6  |  **Domínios:** 2  |  **Direção do escore:** maior = melhor
 
 ### Domínio: Fluência fonológica
 1. Letra F - produção adequada para idade/escolaridade
@@ -2044,7 +2044,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–204 meses  |  **Respondente:** pais  |  **Tempo:** 10 min
 - **Descrição:** Avalia o grau de acomodação familiar aos sintomas de TOC da criança. Importante para planejamento do tratamento.
 - **Opções de resposta:** `0=Nunca/quase nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 12  |  **Domínios:** 3
+- **Itens:** 12  |  **Domínios:** 3  |  **Direção do escore:** maior = pior
 
 ### Domínio: Participação familiar
 1. Participa de rituais/checagens
@@ -2080,7 +2080,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–84 meses  |  **Respondente:** clinico  |  **Tempo:** 2 min
 - **Descrição:** Avaliação comportamental de dor em crianças pré-verbais.
 - **Opções de resposta:** `0=0 - ausente`  `1=1 - leve/moderado`  `2=2 - claro/intenso`
-- **Itens:** 5  |  **Domínios:** 1
+- **Itens:** 5  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Face
 2. Pernas
@@ -2104,7 +2104,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–216 meses  |  **Respondente:** clinico  |  **Tempo:** 10 min
 - **Descrição:** Mede mobilidade em 3 distâncias: 5m (em casa), 50m (escola), 500m (comunidade).
 - **Opções de resposta:** `0=—`
-- **Itens:** 3  |  **Domínios:** 1
+- **Itens:** 3  |  **Domínios:** 1  |  **Direção do escore:** maior = melhor
 
 1. 5 metros (em casa)
 2. 50 metros (na escola)
@@ -2123,7 +2123,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 132–216 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 2–5 min
 - **Descrição:** Triagem de transtorno de ansiedade generalizada — 7 itens, autoaplicável (adolescentes/adultos).
 - **Opções de resposta:** `0=Nenhuma vez`  `1=Vários dias`  `2=Mais da metade dos dias`  `3=Quase todos os dias`
-- **Itens:** 7  |  **Domínios:** 1
+- **Itens:** 7  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Sentir-se nervoso(a), ansioso(a) ou muito tenso(a)
 2. Não conseguir parar ou controlar as preocupações
@@ -2149,7 +2149,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–216 meses  |  **Respondente:** pais  |  **Tempo:** 2 min
 - **Descrição:** 7 perguntas sobre o próprio cuidador nas últimas 2 semanas.
 - **Opções de resposta:** `0=Nenhuma vez`  `1=Vários dias`  `2=Mais da metade dos dias`  `3=Quase todos os dias`
-- **Itens:** 7  |  **Domínios:** 1
+- **Itens:** 7  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Sentir-se nervoso(a), ansioso(a) ou muito tenso(a)
 2. Não conseguir parar ou controlar as preocupações
@@ -2175,7 +2175,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–192 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 5 min
 - **Descrição:** Avalia gravidade e freqüência das crises em crianças com epilepsia, considerando estado pós-ictal e recuperação.
 - **Opções de resposta:** `0=Nada (0)`  `1=Pouco (1)`  `2=Bastante (2)`  `3=Muito (3)`
-- **Itens:** 7  |  **Domínios:** 1
+- **Itens:** 7  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Alteração ou perda de consciência
 2. Quedas ou tombos durante a crise
@@ -2200,7 +2200,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 144–216 meses  |  **Respondente:** clinico  |  **Tempo:** 15–25 min
 - **Descrição:** Escala heteroaplicada (entrevista clínica) para medir a gravidade da depressão. Versão de 21 itens (pontuados 0–4 ou 0–2). Amplamente usada para acompanhar a resposta ao tratamento. (O arquivo enviado como 'HAM-A' continha, na verdade, esta escala de depressão.)
 - **Opções de resposta:** `0=0 · Ausente`  `1=1 · Leve`  `2=2 · Moderado`  `3=3 · Grave`  `4=4 · Muito grave`
-- **Itens:** 17  |  **Domínios:** 1
+- **Itens:** 17  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Humor deprimido
 2. Sentimentos de culpa
@@ -2237,7 +2237,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 2–24 meses  |  **Respondente:** clinico  |  **Tempo:** 10–15 min
 - **Descrição:** Exame neurológico padronizado para lactentes — 26 itens.
 - **Opções de resposta:** `0=Não realiza`  `1=Emergente`  `2=Parcial`  `3=Adequado`
-- **Itens:** 26  |  **Domínios:** 5
+- **Itens:** 26  |  **Domínios:** 5  |  **Direção do escore:** maior = melhor
 
 ### Domínio: Nervos cranianos
 1. Seguimento visual
@@ -2291,7 +2291,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–144 meses  |  **Respondente:** pais  |  **Tempo:** 5 min
 - **Descrição:** Avalia problemas de comportamento em 16 situações domésticas.
 - **Opções de resposta:** `0=Nada (0)`  `1=Pouco (1)`  `2=Bastante (2)`  `3=Muito (3)`
-- **Itens:** 14  |  **Domínios:** 1
+- **Itens:** 14  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Durante as refeições
 2. Ao brincar sozinho
@@ -2323,7 +2323,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–215 meses  |  **Respondente:** pais, professor, clinico  |  **Tempo:** 15–20 min
 - **Descrição:** Instrumento autoral experimental do Dr. Jadson Fraga. 52 itens (9 domínios, 0–3) + 8 itens sentinela de gravidade, que organizam em linguagem prática a observação integrada de desenvolvimento, comportamento, cognição, linguagem, sono, epilepsia, aprendizagem, autorregulação, funções executivas, sofrimento emocional e funcionalidade. Ficha técnica — sem validação publicada.
 - **Opções de resposta:** `0=0 — ausente/esperado`  `1=1 — leve/ocasional`  `2=2 — moderado/frequente`  `3=3 — intenso ou com prejuízo importante`
-- **Itens:** 52  |  **Domínios:** 10
+- **Itens:** 52  |  **Domínios:** 10  |  **Direção do escore:** maior = pior
 
 ### Domínio: Desenvolvimento e autonomia
 1. Apresenta atraso ou imaturidade em habilidades esperadas para a idade.
@@ -2414,7 +2414,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–215 meses  |  **Respondente:** pais, professor, clinico  |  **Tempo:** 10–35 min
 - **Descrição:** Instrumento autoral experimental do Dr. Jadson Fraga. 45 itens (0–3) para uma visão integrada, rápida e funcional do paciente: onde está o maior prejuízo, qual o perfil predominante, quais sinais exigem prioridade e o que colocar em laudo/PEI. Ficha técnica — sem validação psicométrica publicada.
 - **Opções de resposta:** `0=0 — ausente/esperado`  `1=1 — leve/ocasional`  `2=2 — moderado/frequente`  `3=3 — intenso ou com prejuízo importante`
-- **Itens:** 45  |  **Domínios:** 9
+- **Itens:** 45  |  **Domínios:** 9  |  **Direção do escore:** maior = pior
 
 ### Domínio: Desenvolvimento e autonomia
 1. Apresenta atraso ou imaturidade em habilidades esperadas para a idade.
@@ -2496,7 +2496,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–216 meses  |  **Respondente:** pais, professor, clinico, autoaplicavel  |  **Tempo:** 20–30 min
 - **Descrição:** Instrumento autoral experimental do Dr. Jadson Fraga. Roteiro prático de 90 itens (9 domínios × 10, 0–3) que mapeia os principais sinais que interferem no funcionamento neuropsiquiátrico infantil, apoiando devolutivas, laudos e acompanhamento da resposta a intervenções. Ficha técnica — sem validação psicométrica publicada.
 - **Opções de resposta:** `0=0 — ausente/esperado`  `1=1 — leve/ocasional`  `2=2 — moderado/frequente`  `3=3 — intenso ou com prejuízo importante`
-- **Itens:** 90  |  **Domínios:** 9
+- **Itens:** 90  |  **Domínios:** 9  |  **Direção do escore:** maior = pior
 
 ### Domínio: Desenvolvimento e autonomia
 1. Apresenta atraso ou imaturidade em habilidades esperadas para a idade.
@@ -2623,7 +2623,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–215 meses  |  **Respondente:** clinico  |  **Tempo:** 15–30 min
 - **Descrição:** Módulo autoral multiperspectivo para organizar eventos paroxísticos, epilepsia, impacto funcional, diferenciais e segurança. Não fecha diagnóstico nem estima probabilidade diagnóstica.
 - **Opções de resposta:** `0=Registro qualitativo`  `1=Sem registro aplicável`
-- **Itens:** 20  |  **Domínios:** 12
+- **Itens:** 20  |  **Domínios:** 12  |  **Direção do escore:** maior = pior
 
 ### Domínio: Identificação clínica
 1. Qual evento, risco ou decisão motivou a pré-consulta e quem solicita a avaliação?
@@ -2682,7 +2682,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 96–215 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 8–15 min
 - **Descrição:** Módulo autoral multiperspectivo para organizar eventos paroxísticos, epilepsia, impacto funcional, diferenciais e segurança. Não fecha diagnóstico nem estima probabilidade diagnóstica.
 - **Opções de resposta:** `0=0 · Sem pendência clínica relevante`  `1=1 · Necessidade leve ou pontual`  `2=2 · Necessidade recorrente ou moderada`  `3=3 · Prioridade alta ou impacto intenso`  `4=N/O · Sem oportunidade ou informação`
-- **Itens:** 20  |  **Domínios:** 5
+- **Itens:** 20  |  **Domínios:** 5  |  **Direção do escore:** maior = pior
 
 ### Domínio: Experiência do evento
 1. Percebo algum aviso no corpo, pensamento, visão, audição ou emoção antes do episódio.
@@ -2730,7 +2730,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–215 meses  |  **Respondente:** clinico  |  **Tempo:** 15–30 min
 - **Descrição:** Módulo autoral multiperspectivo para organizar eventos paroxísticos, epilepsia, impacto funcional, diferenciais e segurança. Não fecha diagnóstico nem estima probabilidade diagnóstica.
 - **Opções de resposta:** `0=Registro qualitativo`  `1=Sem registro aplicável`
-- **Itens:** 20  |  **Domínios:** 13
+- **Itens:** 20  |  **Domínios:** 13  |  **Direção do escore:** maior = pior
 
 ### Domínio: Cardiovascular
 1. Pródromos, postura, palidez, sudorese, gatilho, queda flácida e recuperação rápida.
@@ -2791,7 +2791,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–215 meses  |  **Respondente:** professor  |  **Tempo:** 10–15 min
 - **Descrição:** Módulo autoral multiperspectivo para organizar eventos paroxísticos, epilepsia, impacto funcional, diferenciais e segurança. Não fecha diagnóstico nem estima probabilidade diagnóstica.
 - **Opções de resposta:** `0=0 · Sem pendência clínica relevante`  `1=1 · Necessidade leve ou pontual`  `2=2 · Necessidade recorrente ou moderada`  `3=3 · Prioridade alta ou impacto intenso`  `4=N/O · Sem oportunidade ou informação`
-- **Itens:** 30  |  **Domínios:** 4
+- **Itens:** 30  |  **Domínios:** 4  |  **Direção do escore:** maior = pior
 
 ### Domínio: Observação escolar
 1. A equipe descreve o que viu sem rotular automaticamente como crise, desmaio ou comportamento?
@@ -2847,7 +2847,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–215 meses  |  **Respondente:** pais  |  **Tempo:** 12–20 min
 - **Descrição:** Módulo autoral multiperspectivo para organizar eventos paroxísticos, epilepsia, impacto funcional, diferenciais e segurança. Não fecha diagnóstico nem estima probabilidade diagnóstica.
 - **Opções de resposta:** `0=0 · Sem pendência clínica relevante`  `1=1 · Necessidade leve ou pontual`  `2=2 · Necessidade recorrente ou moderada`  `3=3 · Prioridade alta ou impacto intenso`  `4=N/O · Sem oportunidade ou informação`
-- **Itens:** 50  |  **Domínios:** 7
+- **Itens:** 50  |  **Domínios:** 7  |  **Direção do escore:** maior = pior
 
 ### Domínio: Linha do tempo
 1. É possível identificar com clareza o primeiro sinal do episódio, antes de outros movimentos ou alterações?
@@ -2929,7 +2929,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–215 meses  |  **Respondente:** clinico  |  **Tempo:** 12–20 min
 - **Descrição:** Módulo autoral multiperspectivo para organizar eventos paroxísticos, epilepsia, impacto funcional, diferenciais e segurança. Não fecha diagnóstico nem estima probabilidade diagnóstica.
 - **Opções de resposta:** `0=0 · Sem pendência clínica relevante`  `1=1 · Necessidade leve ou pontual`  `2=2 · Necessidade recorrente ou moderada`  `3=3 · Prioridade alta ou impacto intenso`  `4=N/O · Sem oportunidade ou informação`
-- **Itens:** 20  |  **Domínios:** 12
+- **Itens:** 20  |  **Domínios:** 12  |  **Direção do escore:** maior = pior
 
 ### Domínio: Baseline
 1. Definir vigília, comunicação, postura, motricidade e comportamento antes de provocar qualquer tarefa.
@@ -2991,7 +2991,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–215 meses  |  **Respondente:** pais, professor, autoaplicavel, clinico  |  **Tempo:** 8–15 min
 - **Descrição:** Módulo autoral multiperspectivo para organizar eventos paroxísticos, epilepsia, impacto funcional, diferenciais e segurança. Não fecha diagnóstico nem estima probabilidade diagnóstica.
 - **Opções de resposta:** `0=Não presente no momento`  `1=Presente / requer decisão clínica própria`  `2=Informação insuficiente`
-- **Itens:** 20  |  **Domínios:** 17
+- **Itens:** 20  |  **Domínios:** 17  |  **Direção do escore:** maior = pior
 
 ### Domínio: Emergência
 1. Acionar o plano de emergência e tratamento imediato; não aguardar resolução indefinidamente.
@@ -3060,7 +3060,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–215 meses  |  **Respondente:** clinico  |  **Tempo:** 12–25 min
 - **Descrição:** Módulo autoral multiperspectivo para organizar eventos paroxísticos, epilepsia, impacto funcional, diferenciais e segurança. Não fecha diagnóstico nem estima probabilidade diagnóstica.
 - **Opções de resposta:** `0=Registro qualitativo`  `1=Sem registro aplicável`
-- **Itens:** 20  |  **Domínios:** 1
+- **Itens:** 20  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Uma frase que permita reconhecer o evento-alvo sem usar rótulo diagnóstico prematuro.
 2. Quais informantes e registros sustentam a descrição e onde há divergência?
@@ -3096,7 +3096,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–215 meses  |  **Respondente:** clinico  |  **Tempo:** 15–30 min
 - **Descrição:** Módulo autoral que organiza linguagem, fala, comunicação, participação e impacto funcional. Não fecha diagnóstico e não substitui avaliação fonoaudiológica, auditiva, neuropsicológica ou médica quando indicada.
 - **Opções de resposta:** `0=Registro qualitativo`  `1=Sem registro aplicável`
-- **Itens:** 20  |  **Domínios:** 20
+- **Itens:** 20  |  **Domínios:** 20  |  **Direção do escore:** maior = melhor
 
 ### Domínio: Identificação linguística
 1. Línguas, dialetos e modalidades de comunicação usadas pela criança.
@@ -3171,7 +3171,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 96–215 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 8–15 min
 - **Descrição:** Módulo autoral que organiza linguagem, fala, comunicação, participação e impacto funcional. Não fecha diagnóstico e não substitui avaliação fonoaudiológica, auditiva, neuropsicológica ou médica quando indicada.
 - **Opções de resposta:** `0=0 · Não observado / ausente`  `1=1 · Ocasional / leve`  `2=2 · Frequente / moderado`  `3=3 · Consistente / intenso`  `4=N/O · Sem oportunidade ou informação`
-- **Itens:** 20  |  **Domínios:** 5
+- **Itens:** 20  |  **Domínios:** 5  |  **Direção do escore:** maior = melhor
 
 ### Domínio: Ser compreendido
 1. As pessoas entendem o que quero dizer sem eu precisar repetir muitas vezes.
@@ -3216,7 +3216,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 6–215 meses  |  **Respondente:** clinico  |  **Tempo:** 12–25 min
 - **Descrição:** Módulo autoral que organiza linguagem, fala, comunicação, participação e impacto funcional. Não fecha diagnóstico e não substitui avaliação fonoaudiológica, auditiva, neuropsicológica ou médica quando indicada.
 - **Opções de resposta:** `0=Registro qualitativo`  `1=Sem registro aplicável`
-- **Itens:** 15  |  **Domínios:** 15
+- **Itens:** 15  |  **Domínios:** 15  |  **Direção do escore:** maior = melhor
 
 ### Domínio: Diferença linguística versus transtorno
 1. As dificuldades aparecem em todas as línguas/modalidades ou refletem exposição, dialeto e oportunidade?
@@ -3276,7 +3276,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–215 meses  |  **Respondente:** professor  |  **Tempo:** 10–15 min
 - **Descrição:** Módulo autoral que organiza linguagem, fala, comunicação, participação e impacto funcional. Não fecha diagnóstico e não substitui avaliação fonoaudiológica, auditiva, neuropsicológica ou médica quando indicada.
 - **Opções de resposta:** `0=0 · Não observado / ausente`  `1=1 · Ocasional / leve`  `2=2 · Frequente / moderado`  `3=3 · Consistente / intenso`  `4=N/O · Sem oportunidade ou informação`
-- **Itens:** 30  |  **Domínios:** 6
+- **Itens:** 30  |  **Domínios:** 6  |  **Direção do escore:** maior = melhor
 
 ### Domínio: Acesso à instrução
 1. Compreende instruções coletivas sem precisar copiar colegas.
@@ -3333,7 +3333,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 12–215 meses  |  **Respondente:** clinico  |  **Tempo:** 12–20 min
 - **Descrição:** Módulo autoral que organiza linguagem, fala, comunicação, participação e impacto funcional. Não fecha diagnóstico e não substitui avaliação fonoaudiológica, auditiva, neuropsicológica ou médica quando indicada.
 - **Opções de resposta:** `0=0 · Não observado / ausente`  `1=1 · Ocasional / leve`  `2=2 · Frequente / moderado`  `3=3 · Consistente / intenso`  `4=N/O · Sem oportunidade ou informação`
-- **Itens:** 20  |  **Domínios:** 4
+- **Itens:** 20  |  **Domínios:** 4  |  **Direção do escore:** maior = melhor
 
 ### Domínio: Estrutura e função orofacial
 1. Estruturas orais permitem vedamento, mobilidade e estabilidade para fala.
@@ -3376,7 +3376,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 6–215 meses  |  **Respondente:** pais  |  **Tempo:** 12–20 min
 - **Descrição:** Módulo autoral que organiza linguagem, fala, comunicação, participação e impacto funcional. Não fecha diagnóstico e não substitui avaliação fonoaudiológica, auditiva, neuropsicológica ou médica quando indicada.
 - **Opções de resposta:** `0=0 · Não observado / ausente`  `1=1 · Ocasional / leve`  `2=2 · Frequente / moderado`  `3=3 · Consistente / intenso`  `4=N/O · Sem oportunidade ou informação`
-- **Itens:** 50  |  **Domínios:** 10
+- **Itens:** 50  |  **Domínios:** 10  |  **Direção do escore:** maior = melhor
 
 ### Domínio: Comunicação intencional
 1. Demonstra de modo claro quando quer iniciar uma interação.
@@ -3461,7 +3461,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 6–215 meses  |  **Respondente:** clinico  |  **Tempo:** 15–25 min
 - **Descrição:** Módulo autoral que organiza linguagem, fala, comunicação, participação e impacto funcional. Não fecha diagnóstico e não substitui avaliação fonoaudiológica, auditiva, neuropsicológica ou médica quando indicada.
 - **Opções de resposta:** `0=0 · Não observado / ausente`  `1=1 · Ocasional / leve`  `2=2 · Frequente / moderado`  `3=3 · Consistente / intenso`  `4=N/O · Sem oportunidade ou informação`
-- **Itens:** 30  |  **Domínios:** 6
+- **Itens:** 30  |  **Domínios:** 6  |  **Direção do escore:** maior = melhor
 
 ### Domínio: Atenção compartilhada e intenção
 1. Orienta atenção para pessoa e objeto durante atividade compartilhada.
@@ -3518,7 +3518,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–215 meses  |  **Respondente:** clinico  |  **Tempo:** 12–25 min
 - **Descrição:** Módulo autoral que organiza linguagem, fala, comunicação, participação e impacto funcional. Não fecha diagnóstico e não substitui avaliação fonoaudiológica, auditiva, neuropsicológica ou médica quando indicada.
 - **Opções de resposta:** `0=Registro qualitativo`  `1=Sem registro aplicável`
-- **Itens:** 15  |  **Domínios:** 15
+- **Itens:** 15  |  **Domínios:** 15  |  **Direção do escore:** maior = melhor
 
 ### Domínio: Resumo funcional
 1. Síntese do que a criança compreende, expressa e consegue fazer em contextos reais.
@@ -3578,7 +3578,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–215 meses  |  **Respondente:** clinico  |  **Tempo:** 10–20 min
 - **Descrição:** Módulo autoral com 20 itens para perfil de alimentação, deglutição, respiração e nutrição. Organiza função, participação, contexto, conforto e segurança; não classifica gravidade nem substitui sistemas padronizados ou julgamento clínico.
 - **Opções de resposta:** `0=0 · Não evidenciado / preservado`  `1=1 · Leve ou ocasional`  `2=2 · Moderado ou frequente`  `3=3 · Consistente, intenso ou prioritário`  `4=N/O · Não foi possível observar`
-- **Itens:** 20  |  **Domínios:** 4
+- **Itens:** 20  |  **Domínios:** 4  |  **Direção do escore:** maior = pior
 
 ### Domínio: Fase oral e eficiência
 1. Mantém vedamento labial suficiente para conter alimento e saliva.
@@ -3624,7 +3624,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–215 meses  |  **Respondente:** clinico  |  **Tempo:** 15–30 min
 - **Descrição:** Módulo autoral com 20 campos qualitativos para roteiro de anamnese e red flags. Organiza função, participação, contexto, conforto e segurança; não classifica gravidade nem substitui sistemas padronizados ou julgamento clínico.
 - **Opções de resposta:** `0=Registro qualitativo`  `1=Sem registro aplicável`
-- **Itens:** 20  |  **Domínios:** 1
+- **Itens:** 20  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Diagnóstico, subtipo motor e data de início dos sinais.
 2. Gestação, parto, prematuridade, intercorrências neonatais e neuroimagem.
@@ -3660,7 +3660,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 96–215 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 10–20 min
 - **Descrição:** Módulo autoral com 20 itens para autorrelato apoiado da criança/adolescente. Organiza função, participação, contexto, conforto e segurança; não classifica gravidade nem substitui sistemas padronizados ou julgamento clínico.
 - **Opções de resposta:** `0=0 · Ainda não / nunca`  `1=1 · Às vezes / com muita ajuda`  `2=2 · Frequentemente / com alguma ajuda`  `3=3 · Consistentemente / de modo acessível`  `4=N/O · Não foi possível responder`
-- **Itens:** 20  |  **Domínios:** 5
+- **Itens:** 20  |  **Domínios:** 5  |  **Direção do escore:** maior = melhor
 
 ### Domínio: Conforto e energia
 1. Consigo avisar quando estou com dor ou desconforto.
@@ -3708,7 +3708,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–215 meses  |  **Respondente:** professor  |  **Tempo:** 10–20 min
 - **Descrição:** Módulo autoral com 30 itens para inventário escola e terapia. Organiza função, participação, contexto, conforto e segurança; não classifica gravidade nem substitui sistemas padronizados ou julgamento clínico.
 - **Opções de resposta:** `0=0 · Não ocorre / preservado`  `1=1 · Leve / ocasional`  `2=2 · Moderado / frequente`  `3=3 · Intenso / constante`  `4=N/O · Sem oportunidade / não sei`
-- **Itens:** 30  |  **Domínios:** 6
+- **Itens:** 30  |  **Domínios:** 6  |  **Direção do escore:** maior = pior
 
 ### Domínio: Acesso, postura e mobiliário
 1. O acesso à sala, banheiro, refeitório ou transporte escolar apresenta barreiras físicas.
@@ -3768,7 +3768,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 6–215 meses  |  **Respondente:** pais  |  **Tempo:** 10–20 min
 - **Descrição:** Módulo autoral com 50 itens para inventário da família. Organiza função, participação, contexto, conforto e segurança; não classifica gravidade nem substitui sistemas padronizados ou julgamento clínico.
 - **Opções de resposta:** `0=0 · Não ocorre / preservado`  `1=1 · Leve / ocasional`  `2=2 · Moderado / frequente`  `3=3 · Intenso / constante`  `4=N/O · Sem oportunidade / não sei`
-- **Itens:** 50  |  **Domínios:** 6
+- **Itens:** 50  |  **Domínios:** 6  |  **Direção do escore:** maior = pior
 
 ### Domínio: Conforto, dor e bem-estar
 1. Apresenta sinais de dor ou desconforto sem conseguir localizar ou explicar claramente.
@@ -3848,7 +3848,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 6–215 meses  |  **Respondente:** clinico  |  **Tempo:** 10–20 min
 - **Descrição:** Módulo autoral com 20 itens para observação clínica funcional. Organiza função, participação, contexto, conforto e segurança; não classifica gravidade nem substitui sistemas padronizados ou julgamento clínico.
 - **Opções de resposta:** `0=0 · Não evidenciado / preservado`  `1=1 · Leve ou ocasional`  `2=2 · Moderado ou frequente`  `3=3 · Consistente, intenso ou prioritário`  `4=N/O · Não foi possível observar`
-- **Itens:** 20  |  **Domínios:** 6
+- **Itens:** 20  |  **Domínios:** 6  |  **Direção do escore:** maior = pior
 
 ### Domínio: Postura e alinhamento
 1. Tem dificuldade para manter alinhamento de cabeça em relação ao tronco durante atividade funcional.
@@ -3898,7 +3898,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–215 meses  |  **Respondente:** clinico  |  **Tempo:** 15–30 min
 - **Descrição:** Módulo autoral com 20 campos qualitativos para síntese funcional, metas e plano. Organiza função, participação, contexto, conforto e segurança; não classifica gravidade nem substitui sistemas padronizados ou julgamento clínico.
 - **Opções de resposta:** `0=Registro qualitativo`  `1=Sem registro aplicável`
-- **Itens:** 20  |  **Domínios:** 1
+- **Itens:** 20  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Classificações funcionais registradas, com fonte e data.
 2. Fenótipo motor predominante e componentes mistos.
@@ -3934,7 +3934,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 6–215 meses  |  **Respondente:** clinico  |  **Tempo:** 10–20 min
 - **Descrição:** Módulo autoral com 20 itens para perfil de tônus, movimento e interferência. Organiza função, participação, contexto, conforto e segurança; não classifica gravidade nem substitui sistemas padronizados ou julgamento clínico.
 - **Opções de resposta:** `0=0 · Não evidenciado / preservado`  `1=1 · Leve ou ocasional`  `2=2 · Moderado ou frequente`  `3=3 · Consistente, intenso ou prioritário`  `4=N/O · Não foi possível observar`
-- **Itens:** 20  |  **Domínios:** 4
+- **Itens:** 20  |  **Domínios:** 4  |  **Direção do escore:** maior = pior
 
 ### Domínio: Fenótipo motor
 1. A resistência ao movimento aumenta claramente com maior velocidade de estiramento.
@@ -3980,7 +3980,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 144–215 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 8–12 min
 - **Descrição:** Autorrelato autoral sobre experiência interna, procrastinação, inquietação, prejuízo acadêmico, relações, sono, autoestima, telas, prioridades e metas. Inclui sentinelas de morte/autolesão com fluxo próprio; não substitui entrevista de risco nem avaliação clínica de humor.
 - **Opções de resposta:** `0=0 · Não ocorre / sem dificuldade`  `1=1 · Ocasional / leve`  `2=2 · Frequente / moderado`  `3=3 · Muito frequente / intenso`  `4=N/O · Sem oportunidade / não sei`
-- **Itens:** 20  |  **Domínios:** 3
+- **Itens:** 20  |  **Domínios:** 3  |  **Direção do escore:** maior = pior
 
 ### Domínio: Autopercepção
 1. Sinto que minha mente muda de assunto sem eu querer.
@@ -4024,7 +4024,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–215 meses  |  **Respondente:** clinico  |  **Tempo:** 15–30 min
 - **Descrição:** Roteiro autoral de anamnese para desenvolvimento, curso, prejuízo, sono, telas, aprendizagem, ansiedade, humor, oposição, TEA, linguagem/audição, movimentos, eventos paroxísticos, condições médicas, família, escola, forças e red flags. Campos textuais, sem escore.
 - **Opções de resposta:** `0=Registro qualitativo`  `1=Sem registro aplicável`
-- **Itens:** 18  |  **Domínios:** 1
+- **Itens:** 18  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. História do desenvolvimento — Registre gestação, prematuridade, marcos motores, linguagem, autorregulação, brincadeira e adaptação.
 2. Linha do tempo dos sintomas — Registre primeiros sinais, mudanças de demanda, transições escolares e eventos associados.
@@ -4058,7 +4058,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–215 meses  |  **Respondente:** clinico  |  **Tempo:** 15–25 min
 - **Descrição:** Matriz autoral de 20 diferenciais e condições coexistentes, com campos de achados a favor, contra e próximo passo. Inclui sono, ansiedade, humor, TEA, aprendizagem, linguagem, cognição, audição/visão, epilepsia, medicação, substâncias, trauma, dor, apneia, tiques e contexto escolar.
 - **Opções de resposta:** `0=Registro qualitativo`  `1=Sem registro aplicável`
-- **Itens:** 20  |  **Domínios:** 1
+- **Itens:** 20  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Privação de sono — registre achados a favor, achados contra, curso temporal, coexistência possível e exames ou avaliações pertinentes para privação de sono.
 2. Ansiedade — registre achados a favor, achados contra, curso temporal, coexistência possível e exames ou avaliações pertinentes para ansiedade.
@@ -4094,7 +4094,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–215 meses  |  **Respondente:** professor  |  **Tempo:** 10–15 min
 - **Descrição:** Inventário autoral escolar de 32 itens sobre participação em sala, aprendizagem, autorregulação e funções executivas escolares. Exige comparação com colegas da mesma idade, registro de adaptações já testadas e análise de instrução, linguagem, aprendizagem e ambiente antes de atribuir o padrão a TDAH.
 - **Opções de resposta:** `0=0 · Não ocorre / sem dificuldade`  `1=1 · Ocasional / leve`  `2=2 · Frequente / moderado`  `3=3 · Muito frequente / intenso`  `4=N/O · Sem oportunidade / não sei`
-- **Itens:** 32  |  **Domínios:** 4
+- **Itens:** 32  |  **Domínios:** 4  |  **Direção do escore:** maior = pior
 
 ### Domínio: Participação em sala
 1. Perde partes importantes de explicações coletivas.
@@ -4152,7 +4152,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–215 meses  |  **Respondente:** clinico  |  **Tempo:** 10–15 min
 - **Descrição:** Perfil autoral de dez processos executivos observado em tarefas ecológicas breves: inibição, memória de trabalho, flexibilidade, planejamento, organização, iniciação, monitoramento, tempo, regulação emocional e persistência. Não substitui avaliação neuropsicológica normatizada.
 - **Opções de resposta:** `0=0 · Não evidenciado`  `1=1 · Evidenciado de forma leve ou ocasional`  `2=2 · Evidenciado com frequência ou impacto moderado`  `3=3 · Evidenciado de forma consistente ou intensa`  `4=N/O · Não foi possível observar`
-- **Itens:** 10  |  **Domínios:** 1
+- **Itens:** 10  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Demonstra dificuldade de inibição diante de estímulos ou respostas dominantes.
 2. Demonstra dificuldade de memória de trabalho em tarefas de duas ou três etapas.
@@ -4181,7 +4181,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–215 meses  |  **Respondente:** pais  |  **Tempo:** 12–18 min
 - **Descrição:** Inventário autoral para responsáveis, com 48 itens em atenção sustentada, organização, inibição/impulsividade, hiperatividade, memória de trabalho e regulação emocional. Indicado para aprofundar história cotidiana e prejuízo funcional depois do rastreio inicial; não deve ser usado como critério diagnóstico isolado.
 - **Opções de resposta:** `0=0 · Não ocorre / sem dificuldade`  `1=1 · Ocasional / leve`  `2=2 · Frequente / moderado`  `3=3 · Muito frequente / intenso`  `4=N/O · Sem oportunidade / não sei`
-- **Itens:** 48  |  **Domínios:** 6
+- **Itens:** 48  |  **Domínios:** 6  |  **Direção do escore:** maior = pior
 
 ### Domínio: Atenção sustentada
 1. Tem dificuldade de manter o foco em tarefas compatíveis com a idade.
@@ -4259,7 +4259,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–215 meses  |  **Respondente:** clinico  |  **Tempo:** 8–12 min
 - **Descrição:** Roteiro autoral de observação clínica de latência, redirecionamento, atividade motora, inibição, espera, memória de instruções, flexibilidade, monitoramento e planejamento. A consulta isolada não representa todos os ambientes e não exclui TDAH quando o comportamento está organizado.
 - **Opções de resposta:** `0=0 · Não evidenciado`  `1=1 · Evidenciado de forma leve ou ocasional`  `2=2 · Evidenciado com frequência ou impacto moderado`  `3=3 · Evidenciado de forma consistente ou intensa`  `4=N/O · Não foi possível observar`
-- **Itens:** 10  |  **Domínios:** 1
+- **Itens:** 10  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Apresenta latência excessiva ou variabilidade importante para responder.
 2. Necessita de redirecionamentos repetidos para manter a proposta.
@@ -4288,7 +4288,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–215 meses  |  **Respondente:** clinico  |  **Tempo:** 10–20 min
 - **Descrição:** Ferramenta autoral de registro para convergência entre fontes, prejuízo, forças, sentinelas, síntese, exame, documentos, avaliação, contrarreferência, devolutivas, monitoramento, medicação, segurança e LGPD. Campos textuais sem escore.
 - **Opções de resposta:** `0=Registro qualitativo`  `1=Sem registro aplicável`
-- **Itens:** 15  |  **Domínios:** 1
+- **Itens:** 15  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Matriz de convergência — Compare família, escola, adolescente e consulta: convergências, divergências e possíveis explicações.
 2. Mapa de prejuízo — Registre intensidade por ambiente, tarefa e etapa do dia.
@@ -4319,7 +4319,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 156–215 meses  |  **Respondente:** clinico  |  **Tempo:** 5–8 min
 - **Descrição:** Módulo breve para adolescência: esforço social, camuflagem, relações e consentimento, autonomia, flexibilidade, interesses, sensorialidade, burnout, saúde mental e transição para ensino superior/trabalho.
 - **Opções de resposta:** `0=Adequado / sem preocupação relevante`  `1=Parcial, inconsistente ou com dúvida`  `2=Dificuldade ou achado clinicamente relevante`  `3=N/O · Sem oportunidade / não aplicável`
-- **Itens:** 10  |  **Domínios:** 1
+- **Itens:** 10  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Esforço social — Quanto planejamento e recuperação são necessários para interagir?
 2. Camuflagem — Há persona social, scripts, imitação ou supressão de autorregulação?
@@ -4348,7 +4348,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 18–30 meses  |  **Respondente:** clinico  |  **Tempo:** 5–8 min
 - **Descrição:** Módulo breve e prioritário para suspeita de TEA entre 18 e 30 meses: orientação social, atenção compartilhada, gestos, resposta ao nome, imitação, brincadeira, comunicação, repetição, flexibilidade e regressão. Favorece triagem inicial antes de ampliar para os protocolos completos.
 - **Opções de resposta:** `0=Adequado / sem preocupação relevante`  `1=Parcial, inconsistente ou com dúvida`  `2=Dificuldade ou achado clinicamente relevante`  `3=N/O · Sem oportunidade / não aplicável`
-- **Itens:** 10  |  **Domínios:** 1
+- **Itens:** 10  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Orientação social — Olha, sorri, vocaliza ou se aproxima para manter troca com cuidador?
 2. Atenção compartilhada — Alterna olhar entre pessoa e objeto; aponta para mostrar, não apenas pedir?
@@ -4377,7 +4377,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 31–47 meses  |  **Respondente:** clinico  |  **Tempo:** 5–8 min
 - **Descrição:** Módulo breve para 31–47 meses, dirigido a iniciativa social, brincar simbólico compartilhado, conversação inicial, pares, emoções, rigidez, interesses, sensorialidade, autonomia e regulação.
 - **Opções de resposta:** `0=Adequado / sem preocupação relevante`  `1=Parcial, inconsistente ou com dúvida`  `2=Dificuldade ou achado clinicamente relevante`  `3=N/O · Sem oportunidade / não aplicável`
-- **Itens:** 10  |  **Domínios:** 1
+- **Itens:** 10  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Iniciativa social — Convida adulto ou criança para compartilhar brincadeira?
 2. Brincadeira simbólica — Representa papéis e aceita mudança no enredo?
@@ -4406,7 +4406,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–71 meses  |  **Respondente:** clinico  |  **Tempo:** 5–8 min
 - **Descrição:** Módulo breve pré-escolar para conversa, narrativa, faz-de-conta cocriado, regras de grupo, amizade, literalidade, flexibilidade, perfil sensorial, aprendizagem e segurança.
 - **Opções de resposta:** `0=Adequado / sem preocupação relevante`  `1=Parcial, inconsistente ou com dúvida`  `2=Dificuldade ou achado clinicamente relevante`  `3=N/O · Sem oportunidade / não aplicável`
-- **Itens:** 10  |  **Domínios:** 1
+- **Itens:** 10  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Conversa — Mantém tema compartilhado e faz perguntas sobre o outro?
 2. Narrativa — Conta acontecimentos com sequência e contexto?
@@ -4435,7 +4435,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–107 meses  |  **Respondente:** clinico  |  **Tempo:** 5–8 min
 - **Descrição:** Módulo breve para os primeiros anos escolares: reciprocidade, inferência, amizade, recreio, regras, interesses, funções executivas, sobrecarga sensorial, autonomia, bullying e bem-estar.
 - **Opções de resposta:** `0=Adequado / sem preocupação relevante`  `1=Parcial, inconsistente ou com dúvida`  `2=Dificuldade ou achado clinicamente relevante`  `3=N/O · Sem oportunidade / não aplicável`
-- **Itens:** 10  |  **Domínios:** 1
+- **Itens:** 10  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Reciprocidade — Conversa para trocar ideias, não só transmitir fatos?
 2. Inferência — Compreende intenção, causa social e ideia principal?
@@ -4464,7 +4464,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 108–155 meses  |  **Respondente:** clinico  |  **Tempo:** 5–8 min
 - **Descrição:** Módulo breve para pré-adolescência, com foco em camuflagem, pertencimento, pragmática avançada, identidade, interesses, rigidez cognitiva, função executiva, interocepção, saúde mental e segurança digital.
 - **Opções de resposta:** `0=Adequado / sem preocupação relevante`  `1=Parcial, inconsistente ou com dúvida`  `2=Dificuldade ou achado clinicamente relevante`  `3=N/O · Sem oportunidade / não aplicável`
-- **Itens:** 10  |  **Domínios:** 1
+- **Itens:** 10  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Camuflagem — Observa e copia pares, ensaia falas ou esconde necessidades?
 2. Pertencimento — Tem amizades recíprocas ou acompanha grupos sem intimidade?
@@ -4493,7 +4493,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 144–215 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 10–15 min
 - **Descrição:** Autorrelato autoral para adolescentes, com foco em esforço social, camuflagem, identidade, pertencimento, rigidez, interesses, sobrecarga sensorial, interocepção, amizades, vulnerabilidade, saúde mental e prioridades. Útil quando a experiência interna pode estar invisível aos adultos; não substitui avaliação focada de risco suicida.
 - **Opções de resposta:** `0=0 · Não observado / funcionamento esperado`  `1=1 · Ocasional / leve`  `2=2 · Frequente / moderado`  `3=3 · Intenso / persistente`  `4=N/O · Sem oportunidade / não aplicável`
-- **Itens:** 60  |  **Domínios:** 6
+- **Itens:** 60  |  **Domínios:** 6  |  **Direção do escore:** maior = pior
 
 ### Domínio: A. Conversa, presença e esforço social
 1. Às vezes preciso planejar mentalmente o que vou dizer antes de falar com alguém.
@@ -4583,7 +4583,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–215 meses  |  **Respondente:** professor  |  **Tempo:** 20–30 min
 - **Descrição:** Inventário autoral escolar de 100 itens, orientado a participação real em sala e recreio, comunicação com pares, pragmática acadêmica, flexibilidade, sensorialidade, funções executivas, autonomia, segurança, camuflagem e saúde mental. Indicado quando é necessário comparar a criança com demandas coletivas e adaptações já testadas.
 - **Opções de resposta:** `0=0 · Não observado / funcionamento esperado`  `1=1 · Ocasional / leve`  `2=2 · Frequente / moderado`  `3=3 · Intenso / persistente`  `4=N/O · Sem oportunidade / não aplicável`
-- **Itens:** 100  |  **Domínios:** 10
+- **Itens:** 100  |  **Domínios:** 10  |  **Direção do escore:** maior = pior
 
 ### Domínio: A. Entrada, participação e disponibilidade
 1. Entra na sala com dificuldade desproporcional, mesmo em rotina conhecida.
@@ -4721,7 +4721,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 18–215 meses  |  **Respondente:** pais  |  **Tempo:** 20–30 min
 - **Descrição:** Inventário autoral abrangente para cuidador, com 100 itens em dez eixos: reciprocidade, comunicação não verbal, pragmática, relações/brincadeira, repetição, rigidez, interesses, sensorialidade/interocepção, adaptação e segurança. Mais adequado quando a suspeita de TEA exige história multicontextual detalhada; não deve ser usado como rastreador genérico isolado.
 - **Opções de resposta:** `0=0 · Não observado / funcionamento esperado`  `1=1 · Ocasional / leve`  `2=2 · Frequente / moderado`  `3=3 · Intenso / persistente`  `4=N/O · Sem oportunidade / não aplicável`
-- **Itens:** 100  |  **Domínios:** 10
+- **Itens:** 100  |  **Domínios:** 10  |  **Direção do escore:** maior = pior
 
 ### Domínio: A. Reciprocidade socioemocional
 1. Responde de modo pouco consistente quando alguém chama seu nome, mesmo sem distração evidente.
@@ -4859,7 +4859,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 18–215 meses  |  **Respondente:** clinico  |  **Tempo:** 15–25 min
 - **Descrição:** Roteiro observacional autoral de 60 itens para o clínico, cobrindo vínculo, reciprocidade, comunicação não verbal integrada, pragmática, narrativa, brincadeira, cognição social, repetição, flexibilidade, sensorialidade, função e segurança. Deve ser interpretado com história e múltiplos contextos; consulta isolada não exclui TEA.
 - **Opções de resposta:** `0=0 · Não observado`  `1=1 · Observado ocasionalmente`  `2=2 · Observado com frequência`  `3=3 · Observado de forma consistente`  `4=N/O · Sem oportunidade / não aplicável`
-- **Itens:** 60  |  **Domínios:** 6
+- **Itens:** 60  |  **Domínios:** 6  |  **Direção do escore:** maior = pior
 
 ### Domínio: A. Entrada, orientação e vínculo
 1. Orienta-se para o examinador espontaneamente ao entrar ou após mediação.
@@ -4949,7 +4949,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–215 meses  |  **Respondente:** pais  |  **Tempo:** Não aferido
 - **Descrição:** Monitor breve de frequência observável de irritabilidade/desregulação em 14 dias. monitorar frequência de sinais de irritação, resposta a mudanças e contratempos, comunicação durante o incômodo, necessidade de apoio para recuperação e interferência funcional no cotidiano Janela: últimos 14 dias. Instrumento clínico autoral de monitorização NeuroPed SDG. Não é teste psicométrico validado e não deve ser usado isoladamente para diagnóstico, indicação terapêutica ou perícia. Não há pontos de corte diagnósticos nem classificação de gravidade validada.
 - **Opções de resposta:** `0=0 — nenhum dia`  `1=1 — 1 a 3 dias`  `2=2 — 4 a 7 dias`  `3=3 — 8 a 14 dias`  `4=NO — não observado/não aplicável/informação insuficiente`
-- **Itens:** 20  |  **Domínios:** 5
+- **Itens:** 20  |  **Domínios:** 5  |  **Direção do escore:** maior = pior
 
 ### Domínio: A. Sinais e persistência da irritação
 1. Em momentos sem uma frustração identificada, manteve voz, expressão ou gestos de irritação.
@@ -4994,7 +4994,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 192–216 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 15–20 min
 - **Descrição:** Triagem de traços do espectro autista em adultos — 50 itens em 5 áreas (interação social, comunicação, imaginatividade, atenção a detalhes, flexibilidade). Escore 50–250. Não é diagnóstico.
 - **Opções de resposta:** `0=Discordo totalmente`  `1=Discordo`  `2=Neutro`  `3=Concordo`  `4=Concordo totalmente`
-- **Itens:** 50  |  **Domínios:** 5
+- **Itens:** 50  |  **Domínios:** 5  |  **Direção do escore:** maior = pior
 
 ### Domínio: Interação social
 1. Eu me sinto desconfortável em situações sociais, mesmo quando estou rodeado de pessoas conhecidas.
@@ -5072,7 +5072,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–6 meses  |  **Respondente:** clinico, pais  |  **Tempo:** 10 min
 - **Descrição:** Checklist rápido pra ver se o bebê tá cumprindo os marcos motores certinhos na primeira metade do primeiro ano — sustento da cabeça, rolar, sentar com apoio. 12 itens que o clínico observa na consulta.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. De bruços, levanta o queixo e vira a cabeça para o lado
 2. De bruços, sustenta a cabeça a ~45° apoiado nos antebraços
@@ -5103,7 +5103,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 6–12 meses  |  **Respondente:** clinico, pais  |  **Tempo:** 10 min
 - **Descrição:** Avalia se o bebê tá sentando sem apoio, engatinhando, puxando pra ficar de pé. 14 itens observacionais que o Dr. Jadson aplica rapidinho durante a consulta de puericultura.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 14  |  **Domínios:** 1
+- **Itens:** 14  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Senta sem apoio por vários minutos, com as mãos livres
 2. Passa de deitado para sentado sozinho
@@ -5136,7 +5136,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–24 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 8 min
 - **Descrição:** Verifica se o bebê tá respondendo ao nome, balbalhando, falando as primeiras palavras e começando a juntar duas palavrinhas. Os pais respondem 16 perguntinhas na sala de espera.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 16  |  **Domínios:** 1
+- **Itens:** 16  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Reage a sons altos (assusta, pisca ou se aquieta)
 2. Acalma-se ou presta atenção ao ouvir a voz da mãe/pai
@@ -5171,7 +5171,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–18 meses  |  **Respondente:** clinico  |  **Tempo:** 12 min
 - **Descrição:** Olha se o bebê tá desenvolvendo a permanência do objeto, imitação, exploração de brinquedo, resolução de problemas básica. 18 tarefas observacionais que o clínico aplica em consultório.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Procura um objeto que sumiu (permanência do objeto)
 2. Explora os brinquedos de formas variadas
@@ -5202,7 +5202,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–3 meses  |  **Respondente:** clinico  |  **Tempo:** 15 min
 - **Descrição:** Avalia como o recém-nascido tá respondendo aos estímulos do mundo — som, luz, toque, movimento. 20 itens observacionais pra identificar cedo alterações de processamento sensorial no neonato.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Acalma-se quando embalado ou aconchegado
 2. Tolera o toque do cuidado (banho, troca)
@@ -5233,7 +5233,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–36 meses  |  **Respondente:** pais  |  **Tempo:** 10 min
 - **Descrição:** Pergunta pros pais se o bebê tá sorrindo, fazendo contato de olho, imitando caras, demonstrando apego. 18 itens sobre a parte social e emocional do desenvolvimento nos primeiros 3 anos.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 18  |  **Domínios:** 1
+- **Itens:** 18  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Olha nos seus olhos durante o cuidado e a mamada
 2. Sorri quando você sorri ou conversa com ele (sorriso social)
@@ -5270,7 +5270,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 12–36 meses  |  **Respondente:** clinico, pais  |  **Tempo:** 10 min
 - **Descrição:** Vê se a criancinha tá pegando objetos pequenos com a pinça, empilhando cubos, rabiscando, passando páginas. 15 itens de motor fino que mostram como o cérebro e a mãozinha estão se comunicando.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 15  |  **Domínios:** 1
+- **Itens:** 15  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Faz pinça fina (polegar e indicador) para pegar objetos pequenos
 2. Bate dois objetos ou cubos um no outro
@@ -5304,7 +5304,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 9–18 meses  |  **Respondente:** clinico, pais  |  **Tempo:** 8 min
 - **Descrição:** Checa se o bebê tá apontando pra mostrar coisas, seguindo o olhar do adulto, buscando compartilhar interesse. Esses comportamentos são sementes da comunicação social — 12 itens observacionais.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Segue com o olhar quando você aponta para algo distante
 2. Olha na direção para onde você vira a cabeça ou os olhos
@@ -5335,7 +5335,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–36 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 12 min
 - **Descrição:** Avaliação rápida das 5 áreas — motor grosso, motor fino, linguagem expressiva, linguagem receptiva e social. Pra consulta de dois-três anos, quando a família tá com muita dúvida sobre o desenvolvimento. 30 itens.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 15  |  **Domínios:** 5
+- **Itens:** 15  |  **Domínios:** 5  |  **Direção do escore:** não declarada
 
 ### Domínio: Motor grosso
 1. Corre sem cair
@@ -5378,7 +5378,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–60 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 12 min
 - **Descrição:** Checklist pré-escolar das 5 áreas do desenvolvimento. Inclui itens de autonomia, linguagem narrativa e raciocínio básico. Muito útil antes da entrada na escola. 30 itens, resposta rápida.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 15  |  **Domínios:** 5
+- **Itens:** 15  |  **Domínios:** 5  |  **Direção do escore:** não declarada
 
 ### Domínio: Motor grosso
 1. Pula em um pé só
@@ -5421,7 +5421,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–72 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 20 min
 - **Descrição:** Versão adaptada à realidade do Nordeste do guia de estimulação precoce. 40 itens organizados por faixa etária, em linguagem acessível pra famílias de baixa escolaridade. O Dr. Jadson usa como referência de estimulação domiciliar.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 15  |  **Domínios:** 5
+- **Itens:** 15  |  **Domínios:** 5  |  **Direção do escore:** não declarada
 
 ### Domínio: Socialização
 1. Interage e busca o outro
@@ -5464,7 +5464,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–24 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 8 min
 - **Descrição:** Pergunta pros pais se o bebê reage a barulhos, vira o pescoço pra voz da mãe, para de chorar quando escuta música. 10 itens comportamentais pra flag rápido de déficit auditivo antes do teste formal.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 10  |  **Domínios:** 1
+- **Itens:** 10  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Assusta-se ou pisca com sons altos e inesperados
 2. Acalma-se ao ouvir a voz da mãe/pai
@@ -5493,7 +5493,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–12 meses  |  **Respondente:** clinico, pais  |  **Tempo:** 8 min
 - **Descrição:** Checa se o bebê tá fixando o olhar, seguindo objetos, sorrindo pro rosto da mãe. 12 itens comportamentais de função visual que o pediatra aplica na consulta sem precisar de equipamento especial.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Fixa o olhar no rosto de quem o segura
 2. Segue um rosto ou objeto que se move lentamente na horizontal
@@ -5524,7 +5524,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–60 meses  |  **Respondente:** pais  |  **Tempo:** 8 min
 - **Descrição:** Avalia se a criança tá aprendendo a comer sozinha, tirar a roupa, lavar as mãos, usar o banheiro. 18 itens de autocuidado que os pais respondem fácil. Ajuda muito na triagem de atraso global.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 18  |  **Domínios:** 1
+- **Itens:** 18  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Come sozinho com a colher sem derramar muito
 2. Bebe no copo sozinho sem entornar
@@ -5561,7 +5561,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–144 meses  |  **Respondente:** clinico, professor  |  **Tempo:** 15 min
 - **Descrição:** Checa se a criança usa a linguagem pra se comunicar de verdade — pedir, comentar, perguntar, responder. 20 itens observacionais que avaliam a função comunicativa além da forma da fala.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 14  |  **Domínios:** 1
+- **Itens:** 14  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Usa a linguagem para PEDIR o que quer
 2. Usa a linguagem para COMENTAR e compartilhar (não só para pedir)
@@ -5594,7 +5594,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 12–72 meses  |  **Respondente:** clinico, pais  |  **Tempo:** 12 min
 - **Descrição:** Avaliação detalhada dos comportamentos de atenção compartilhada — apontar declarativo, seguir olhar, mostrar objetos. Fundamental no diagnóstico precoce. 16 itens observacionais divididos por nível de desenvolvimento.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Segue o olhar ou o apontar do adulto para um objeto distante
 2. Aponta com o dedo para PEDIR algo que quer
@@ -5625,7 +5625,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–144 meses  |  **Respondente:** clinico  |  **Tempo:** 20 min
 - **Descrição:** Tarefas clínicas pra ver se a criança consegue entender o que o outro pensa, sente, quer. Falsa crença de 1ª e 2ª ordem, reconhecimento de emoções em faces, metáforas. Explica muito da dificuldade social no TEA.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Reconhece emoções básicas em rostos (alegre, triste, bravo, com medo)
 2. Nomeia como ela mesma está se sentindo
@@ -5656,7 +5656,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 18–72 meses  |  **Respondente:** clinico, pais  |  **Tempo:** 15 min
 - **Descrição:** Observa como a criança brinca — se é só funcional, se tem jogo simbólico, se inclui outras crianças. 20 itens observacionais que o terapeuta e os pais preenchem. Brincar é a janela do desenvolvimento.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Explora os brinquedos de forma variada (não só leva à boca ou joga)
 2. Usa os objetos pela função (empurra o carrinho, alimenta a boneca)
@@ -5687,7 +5687,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–216 meses  |  **Respondente:** clinico, pais  |  **Tempo:** 15 min
 - **Descrição:** Avalia se a criança não-verbal ou minimamente verbal precisa de CAA — PECS, tablet, prancha de comunicação. 18 itens que investigam intenção comunicativa, receptividade e funções comunicativas atuais.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Demonstra intenção de se comunicar (mesmo sem fala)
 2. Usa o olhar dirigido para se comunicar
@@ -5718,7 +5718,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–216 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 10 min
 - **Descrição:** Instrumento de retorno — aplica a cada 3 meses pra ver se a criança evoluiu nas terapias. 20 itens cobrindo comunicação, social, comportamento e autonomia. Os pais respondem e comparam com a consulta anterior.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 20  |  **Domínios:** 4
+- **Itens:** 20  |  **Domínios:** 4  |  **Direção do escore:** não declarada
 
 ### Domínio: Comunicação
 1. Comunica o que quer de forma clara
@@ -5764,7 +5764,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–144 meses  |  **Respondente:** pais, professor  |  **Tempo:** 10 min
 - **Descrição:** Avalia se a criança consegue mudar de plano quando precisa — se a rotina muda, se as regras mudam, se o resultado não é o esperado. 16 itens de flexibilidade adaptativa no cotidiano.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Aceita mudanças de rotina sem grande sofrimento
 2. Muda de plano quando é necessário
@@ -5795,7 +5795,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–144 meses  |  **Respondente:** professor, clinico  |  **Tempo:** 15 min
 - **Descrição:** Avalia se a criança usa a linguagem pra se relacionar de verdade na escola — pede ajuda, entende piadas, faz trocas conversacionais, interpreta metáforas. 20 itens observacionais do professor e do fonoaudiólogo.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Pede ajuda ao professor quando precisa
 2. Faz e responde perguntas de forma pertinente
@@ -5826,7 +5826,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–144 meses  |  **Respondente:** clinico  |  **Tempo:** 15 min
 - **Descrição:** Avalia se a criança conta uma história com começo, meio e fim, com personagens e causa-efeito. Tarefa observacional com história em sequência. Muito sensível pra dificuldades de linguagem e cognição.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Conta um acontecimento com início, meio e fim
 2. Inclui personagens na história
@@ -5857,7 +5857,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–96 meses  |  **Respondente:** clinico  |  **Tempo:** 20 min
 - **Descrição:** Avalia todos os níveis — silábico, fonêmico, aliteração, rima, segmentação, síntese. 24 tarefas progressivas que mapeiam o desenvolvimento fonológico antes e durante a alfabetização. Base pra risco de dislexia.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Reconhece e produz rimas
 2. Identifica palavras que começam com o mesmo som (aliteração)
@@ -5888,7 +5888,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 60–144 meses  |  **Respondente:** clinico  |  **Tempo:** 15 min
 - **Descrição:** Vai além do vocabulário receptivo — avalia se a criança entende as nuances das palavras, sinônimos, antônimos, campos semânticos. 20 tarefas de vocabulário em profundidade.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Explica o significado de palavras comuns
 2. Dá sinônimos de palavras
@@ -5919,7 +5919,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 60–216 meses  |  **Respondente:** clinico  |  **Tempo:** 10 min
 - **Descrição:** Falar o máximo de animais em 1 minuto, falar palavras que começam com F em 1 minuto. Simples, rápido, muito sensível pra problemas de acesso lexical e funções executivas. Criança nordestina adora a versão de animais.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Diz muitos animais em pouco tempo (fluência semântica)
 2. Diz muitas palavras de uma categoria sem repetir
@@ -5950,7 +5950,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–216 meses  |  **Respondente:** clinico, pais  |  **Tempo:** 15 min
 - **Descrição:** Avalia se a criança não-verbal vai se beneficiar de CAA — prancha, PECS, app no tablet. 18 itens sobre intenção comunicativa, receptividade, habilidades motoras para uso de dispositivos.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Demonstra intenção de se comunicar
 2. Usa o olhar dirigido para se comunicar
@@ -5981,7 +5981,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 60–144 meses  |  **Respondente:** clinico  |  **Tempo:** 15 min
 - **Descrição:** Avalia compreensão de frases longas, instruções em sequência, inferência, metáfora, ironia. 20 tarefas progressivas de compreensão oral. Essencial antes de concluir sobre dificuldade de leitura.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Entende frases longas e compostas
 2. Segue instruções com 2-3 passos
@@ -6012,7 +6012,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 18–36 meses  |  **Respondente:** pais  |  **Tempo:** 5 min
 - **Descrição:** Pra criança que ainda não fala as palavrinhas certas pra idade. 10 perguntas diretas pros pais responderam na sala de espera. O Dr. Jadson usa como flag de encaminhamento para fono.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 10  |  **Domínios:** 1
+- **Itens:** 10  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Fala pelo menos 10 a 20 palavras com sentido
 2. Aponta para pedir ou mostrar
@@ -6041,7 +6041,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–168 meses  |  **Respondente:** professor, clinico  |  **Tempo:** 15 min
 - **Descrição:** Avalia como a criança usa a linguagem na escola — explica, argumenta, descreve, relata. 20 itens observacionais do professor sobre linguagem acadêmica em sala de aula.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Explica um procedimento ou como algo funciona
 2. Argumenta e defende uma opinião
@@ -6072,7 +6072,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–144 meses  |  **Respondente:** clinico  |  **Tempo:** 12 min
 - **Descrição:** Avalia o ritmo, a entonação e a musicalidade da fala — flat, monótona, exagerada. Muito relevante em TEA. 16 itens observacionais que o fonoaudiólogo e o neuropediatra avaliam juntos.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. A fala tem entonação natural (sobe e desce)
 2. Demonstra emoção pela voz (alegria, dúvida, surpresa)
@@ -6103,7 +6103,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–168 meses  |  **Respondente:** clinico, professor  |  **Tempo:** 10 min
 - **Descrição:** Avalia a velocidade e precisão da leitura oral — quantas palavras por minuto, quantos erros, se entende o que leu. Tarefa observacional rápida pra detectar dislexia e dificuldade de leitura no Nordeste.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Lê palavras conhecidas com rapidez (sem soletrar)
 2. Lê com precisão (poucos erros)
@@ -6134,7 +6134,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–168 meses  |  **Respondente:** clinico, professor  |  **Tempo:** 15 min
 - **Descrição:** Avalia a letra, a organização espacial, a composição de frases e parágrafos. 20 itens de expressão escrita e 12 de avaliação da caligrafia. Diferencia disgrafia de falta de prática.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Tem letra legível
 2. Mantém o tamanho das letras uniforme
@@ -6165,7 +6165,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 96–216 meses  |  **Respondente:** autoaplicavel, pais  |  **Tempo:** 10 min
 - **Descrição:** Avalia se a criança sabe estudar — como organiza o material, se faz resumo, se consegue rever o que aprendeu, se planeja a semana de provas. 16 itens de habilidades de estudo. Muito útil no Nordeste escolar.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Organiza o material de estudo
 2. Tem um lugar e um horário para estudar
@@ -6196,7 +6196,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–168 meses  |  **Respondente:** professor, clinico  |  **Tempo:** 12 min
 - **Descrição:** Rastreia dificuldade específica em matemática — contagem, comparação de quantidades, operações básicas, resolução de problemas. 18 tarefas progressivas que mapeiam os componentes do raciocínio numérico.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Conta objetos corretamente (contagem)
 2. Reconhece os números (símbolos)
@@ -6227,7 +6227,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–144 meses  |  **Respondente:** professor, clinico  |  **Tempo:** 15 min
 - **Descrição:** Avalia a cópia do quadro, o ditado de palavras e o ditado de texto. 20 tarefas que mapeiam onde a criança trava — no motor, no fonológico ou no ortográfico. Muito útil pra relatório escolar.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Copia do quadro sem omitir partes
 2. Copia com velocidade compatível com a turma
@@ -6258,7 +6258,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–192 meses  |  **Respondente:** professor, pais  |  **Tempo:** 10 min
 - **Descrição:** Avalia se a inclusão tá funcionando — a escola tá fazendo adaptações, o professor tá entendendo, a criança tá avançando. 18 itens pra relatório de acompanhamento da inclusão escolar. Muito necessário no Nordeste.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. A escola fez as adaptações necessárias
 2. O professor compreende as necessidades da criança
@@ -6289,7 +6289,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–144 meses  |  **Respondente:** professor, clinico  |  **Tempo:** 12 min
 - **Descrição:** Avalia como a criança usa as mãos na escola — pega no lápis certo, recorta, cola, escreve. 16 itens de motor fino com foco nas atividades escolares. Muito útil antes de encaminhar pra terapia ocupacional.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Pega o lápis com preensão adequada
 2. Tem força e controle ao escrever ou desenhar
@@ -6320,7 +6320,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 12–60 meses  |  **Respondente:** clinico, pais  |  **Tempo:** 10 min
 - **Descrição:** Acompanha o caminhar, correr, pular, subir escada, chutar bola. 18 marcos motores grossos de 1 a 5 anos que o clínico observa ou os pais relatam. Pra não perder atraso motor por falta de pergunta na consulta.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Anda sozinha com firmeza
 2. Corre sem cair com frequência
@@ -6351,7 +6351,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–144 meses  |  **Respondente:** clinico  |  **Tempo:** 15 min
 - **Descrição:** Avalia se o olho e a mão trabalham juntos direito — copiar formas, encaixar, montar quebra-cabeça. 16 tarefas progressivas de integração visomotora que revelam muito sobre aprendizagem e neurologia.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Copia formas simples (círculo, cruz, quadrado)
 2. Copia formas complexas (triângulo, losango)
@@ -6382,7 +6382,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–144 meses  |  **Respondente:** clinico  |  **Tempo:** 15 min
 - **Descrição:** Avalia o planejamento motor — a criança consegue imitar gestos, fazer sequências motoras novas, usar ferramentas. 18 tarefas de praxia que diferenciam apraxia verbal de apraxia motora global.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Imita gestos simples sob modelo
 2. Imita sequências de gestos
@@ -6413,7 +6413,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–216 meses  |  **Respondente:** clinico  |  **Tempo:** 20 min
 - **Descrição:** Avalia a função motora grossa e fina da criança com PC no contexto do dia a dia — sentar, transferir, caminhar, manipular objetos. 24 itens de funcionalidade motora. Base pra planejamento das terapias.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Mantém a cabeça e o tronco controlados
 2. Senta-se com o controle possível para o seu quadro
@@ -6444,7 +6444,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–144 meses  |  **Respondente:** clinico  |  **Tempo:** 15 min
 - **Descrição:** Avalia o equilíbrio numa perna, marcha em linha, subir degrau, agachar e levantar. 18 tarefas observacionais de equilíbrio e marcha. Detecta problemas cerebelares, vestibulares e de motor grosso.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Fica em pé parada sem se desequilibrar
 2. Equilibra-se em um pé por alguns segundos
@@ -6475,7 +6475,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–168 meses  |  **Respondente:** clinico, professor  |  **Tempo:** 20 min
 - **Descrição:** Avaliação detalhada da caligrafia — pressão no papel, velocidade, espaçamento, inclinação, tamanho das letras. 20 itens qualitativos de escrita manual. Importante antes de liberar computador na escola.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Tem letra legível
 2. Faz pressão adequada no papel (nem fraca, nem forte demais)
@@ -6506,7 +6506,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 60–168 meses  |  **Respondente:** pais, professor  |  **Tempo:** 8 min
 - **Descrição:** Avalia se a criança consegue participar de esportes e brincadeiras coletivas — correr, pular corda, pegar bola, nadar. 14 itens de habilidades motoras esportivas. Importante pro desenvolvimento social e emocional.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Corre com coordenação
 2. Pula corda
@@ -6537,7 +6537,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–24 meses  |  **Respondente:** clinico  |  **Tempo:** 15 min
 - **Descrição:** Acompanha o desenvolvimento motor do prematuro pela idade corrigida — marcos esperados pra cada mês, sinais de alerta para PC. 20 itens observacionais que o Dr. Jadson aplica em cada retorno do prematuro.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Sustenta a cabeça (idade corrigida)
 2. Apoia-se nos antebraços de bruços
@@ -6568,7 +6568,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–144 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 8 min
 - **Descrição:** Acompanha se as estratégias de integração sensorial prescritas pelo TO estão funcionando em casa e na escola. 14 itens de eficácia das intervenções sensoriais. Aplicado mensalmente.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. As estratégias sensoriais ajudam a criança a se regular
 2. A criança fica mais calma após as atividades sensoriais
@@ -6599,7 +6599,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 12–144 meses  |  **Respondente:** pais  |  **Tempo:** 8 min
 - **Descrição:** Avalia as práticas de sono da família — horário fixo, rituais de dormir, luz, barulho, tela antes de dormir. 14 itens de higiene do sono que os pais respondem. Base pra orientação antes de indicar melatonina.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Tem horário fixo para dormir
 2. Tem horário fixo para acordar
@@ -6630,7 +6630,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–216 meses  |  **Respondente:** pais  |  **Tempo:** 5 min
 - **Descrição:** Acompanha a resposta da criança à melatonina prescrita — quanto tempo demorou pra dormir, quantas vezes acordou, como acordou de manhã. 12 itens de monitorização semanal do sono com melatonina.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Demora menos para pegar no sono desde a melatonina
 2. Pega no sono em menos de 30 minutos
@@ -6661,7 +6661,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 12–120 meses  |  **Respondente:** pais  |  **Tempo:** 5 min
 - **Descrição:** Mapeia e acompanha a rotina noturna da família — banho, janta, brincadeira calma, leitura, apagar a luz. 12 itens de estruturação da rotina do sono. Intervenção de primeira linha antes de qualquer remédio.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Tem horário definido para começar a rotina da noite
 2. Faz o banho como parte da rotina
@@ -6692,7 +6692,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 6–36 meses  |  **Respondente:** pais  |  **Tempo:** 8 min
 - **Descrição:** Acompanha se a criança tá desenvolvendo autonomia na alimentação — de acordo com a idade, segurar o copo, usar colher, comer com a mão, sentar na cadeirinha. 16 marcos de autonomia alimentar.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Leva a mão ou objetos à boca (início da introdução)
 2. Come pedaços com a mão
@@ -6723,7 +6723,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 60–216 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 10 min
 - **Descrição:** Avalia os fatores protetores da criança — vínculo seguro, escola que apoia, ao menos um adulto de confiança, sentido de propósito. 16 itens de resiliência que orientam o plano terapêutico multidisciplinar.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Tem um vínculo seguro com um cuidador
 2. Tem ao menos um adulto de confiança
@@ -6754,7 +6754,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–216 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 15 min
 - **Descrição:** Avalia as atividades diárias — higiene, vestir, comer, locomoção, comunicação. 24 itens de funcionalidade para crianças com PC, TEA, DI e outras condições neurodesenvolvimentais.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Alimenta-se sozinha (com a assistência esperada)
 2. Veste-se e despe-se (com a assistência esperada)
@@ -6785,7 +6785,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–216 meses  |  **Respondente:** pais  |  **Tempo:** 10 min
 - **Descrição:** Avalia se a criança com necessidades especiais tá participando de festas, brincadeiras, esportes, escola, família. 16 itens de participação social que são metas importantes das intervenções terapêuticas.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Participa de festas de aniversário
 2. Brinca com outras crianças
@@ -6816,7 +6816,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–216 meses  |  **Respondente:** pais  |  **Tempo:** 5 min
 - **Descrição:** Os pais estão satisfeitos com o tratamento? Com o jeito que o Dr. Jadson explica? Com as terapias? 12 itens de satisfação que o consultório usa semestralmente pra melhorar o atendimento.
 - **Opções de resposta:** `0=Discordo`  `1=Mais ou menos`  `2=Concordo`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Sinto-me bem acolhido(a) no atendimento
 2. O médico explica de forma clara
@@ -6847,7 +6847,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–216 meses  |  **Respondente:** pais  |  **Tempo:** 8 min
 - **Descrição:** Avalia se a família tá conseguindo manter as terapias — frequência, transporte, custos, resistência da criança, evolução percebida. 14 itens sobre barreiras e facilitadores do engajamento terapêutico no Nordeste.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Conseguimos manter a frequência das terapias
 2. Temos transporte para as terapias
@@ -6878,7 +6878,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–192 meses  |  **Respondente:** professor, pais  |  **Tempo:** 10 min
 - **Descrição:** Avalia se a inclusão tá sendo real — a criança tem amigos, participa das aulas, o professor faz adaptações, o AEE funciona. 18 itens de inclusão efetiva pra usar nas reuniões com a escola.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. A criança tem amigos na escola
 2. Participa ativamente das aulas
@@ -6909,7 +6909,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 144–216 meses  |  **Respondente:** clinico, pais  |  **Tempo:** 15 min
 - **Descrição:** Avalia onde está e para onde vai o adolescente com necessidade especial — autonomia nas AVDs, projeto profissional, vida social, sexualidade, moradia futura. 20 itens de projeto de vida.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Realiza as AVDs com a autonomia possível
 2. Cuida da própria higiene e aparência
@@ -6940,7 +6940,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–216 meses  |  **Respondente:** clinico  |  **Tempo:** 20 min
 - **Descrição:** Avaliação funcional integrada da criança com PC — motor grosso (GMFCS), motor fino (MACS), comunicação (CFCS), alimentação (EDACS), cognição. 30 itens de funcionalidade global para relatório e planejamento.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Controla a cabeça e o tronco
 2. Senta-se com a estabilidade possível
@@ -6971,7 +6971,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–4 meses  |  **Respondente:** clinico  |  **Tempo:** 10 min
 - **Descrição:** Avalia se o prematuro está pronto pra sair da sonda e começar a sugar — estado de alerta, reflexo de sucção, coordenação sucção-deglutição-respiração. 14 itens de prontidão alimentar usados na UTIN.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Mantém estado de alerta adequado
 2. Tem estabilidade respiratória
@@ -7002,7 +7002,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–6 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 8 min
 - **Descrição:** Acompanha a família que fez Canguru na UTIN — vínculo, amamentação, percepção dos pais sobre o desenvolvimento do bebê. 14 itens de monitorização mensal até os 6 meses de vida corrigida.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Os pais fazem a posição canguru regularmente
 2. O vínculo pais-bebê está fortalecido
@@ -7033,7 +7033,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–4 meses  |  **Respondente:** clinico, pais  |  **Tempo:** 15 min
 - **Descrição:** Avalia se o prematuro e a família estão prontos pra alta — alimentação suficiente, temperatura estável, mãe treinada, rede de apoio. 20 itens de prontidão para alta. Reduz reinternações.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. O bebê se alimenta o suficiente por via oral
 2. Mantém a temperatura estável fora da incubadora
@@ -7064,7 +7064,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–30 meses  |  **Respondente:** clinico  |  **Tempo:** 20 min
 - **Descrição:** Avaliação completa do prematuro aos 2 anos de idade corrigida — motor grosso, motor fino, linguagem, cognitivo, social. 30 itens com pontos de corte específicos para prematuros. Usado no ambulatório de follow-up.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Tem motor grosso adequado (idade corrigida)
 2. Tem motor fino adequado
@@ -7095,7 +7095,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–216 meses  |  **Respondente:** pais  |  **Tempo:** 8 min
 - **Descrição:** Avalia se a família está conseguindo dar o remédio certinho — horário, dose, dificuldade de engolir, custo, esquecimento. 14 itens de adesão que orientam estratégias de melhora da aderência ao tratamento.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Dá o remédio todos os dias
 2. Dá nos horários certos
@@ -7126,7 +7126,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–84 meses  |  **Respondente:** professor, pais  |  **Tempo:** 10 min
 - **Descrição:** Avalia as habilidades de comunicação social no pré-escolar e no início do ensino fundamental — turnos na conversa, assunto compartilhado, pedido de ajuda, resposta ao nome. 18 itens que identificam risco de TEA e TOL antes do diagnóstico formal.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Responde ao nome
 2. Mantém contato visual na interação
@@ -7157,7 +7157,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–168 meses  |  **Respondente:** clinico  |  **Tempo:** 20 min
 - **Descrição:** Avalia reconhecimento de emoções em faces, empatia cognitiva, leitura de intenções, reconhecimento de expressão corporal. 20 tarefas de cognição social adaptadas ao contexto nordestino. Base pra intervenção social em TEA.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Reconhece emoções básicas em faces
 2. Reconhece emoções complexas
@@ -7188,7 +7188,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 144–216 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 20 min
 - **Descrição:** Avalia o que o adolescente com DI ou TEA consegue fazer sozinho — usar o ônibus, fazer uma compra, preparar um lanche, usar o celular com segurança. 24 itens de habilidades de vida independente pra planejar a transição para a vida adulta.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Usa transporte público
 2. Faz uma compra simples e confere o troco
@@ -7219,7 +7219,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 144–216 meses  |  **Respondente:** clinico, pais  |  **Tempo:** 15 min
 - **Descrição:** Avalia o conhecimento do adolescente com TEA ou DI sobre sexualidade, privacidade corporal, relacionamentos saudáveis, risco de abuso. 18 itens que orientam a educação sexual adaptada às necessidades especiais.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Conhece as partes do corpo e a privacidade corporal
 2. Diferência toque adequado de inadequado
@@ -7250,7 +7250,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–216 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 15 min
 - **Descrição:** Aplicado a cada 3 meses no retorno com o Dr. Jadson — avalia evolução nas áreas tratadas, metas alcançadas, necessidade de ajuste no plano terapêutico. 24 itens genéricos adaptados à condição principal da criança. Base pra relatório de acompanhamento.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Houve evolução na área principal tratada
 2. Houve evolução na comunicação
@@ -7281,7 +7281,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 18–216 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 8 min
 - **Descrição:** Pra reavaliar como a criança com TEA tá evoluindo na comunicação desde a última consulta — compara com o registro anterior e vê o que melhorou, o que estagnou e o que piorou. Cobre contato visual, resposta ao nome, iniciativa de comunicação e uso de gestos. Preenche em 8 minutos e envia pro email.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Faz contato visual na interação
 2. Responde ao nome
@@ -7308,7 +7308,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–216 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 10 min
 - **Descrição:** Pra ver se o paciente com TEA tá ganhando mais independência nas atividades do dia a dia — higiene, alimentação, vestimenta, organização. Aplicado a cada 3 meses pra comparar com a consulta anterior. Ajuda a planejar metas próticas com a terapia ocupacional.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Cuida da própria higiene
 2. Alimenta-se com autonomia
@@ -7335,7 +7335,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 18–96 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 6 min
 - **Descrição:** Registra a evolução do contato visual espontâneo e da atenção conjunta — aquele momento que a criança olha pra você e pro objeto ao mesmo tempo pra compartilhar algo. Compara com o registro de 3 meses atrás. Indicador muito sensível de progresso precoce no TEA.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Faz contato visual espontâneo
 2. Sustenta o olhar na interação
@@ -7362,7 +7362,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 18–96 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 8 min
 - **Descrição:** Acompanha se a criança com TEA tá avançando nos estágios de brincadeira — de funcional (usar o objeto certo) pra simbólica (faz-de-conta). Compara com a última avaliação. Muito útil pra fonoaudiólogo e terapeuta ocupacional alinharem metas.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Explora os brinquedos de forma variada
 2. Usa os objetos pela função
@@ -7389,7 +7389,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 18–216 meses  |  **Respondente:** pais  |  **Tempo:** 5 min
 - **Descrição:** Uma avaliação rápida da percepção global dos pais sobre a evolução do filho com TEA desde o último retorno. Escala Likert simples em 8 domínios: comunicação, comportamento, sono, alimentação, escola, emoções, autonomia e qualidade de vida. Fácil, rápido e muito informativo.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Melhorou a comunicação
 2. Melhorou o social
@@ -7416,7 +7416,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–216 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 10 min
 - **Descrição:** Avalia como tão indo as funções executivas no dia a dia — planejamento, memória de trabalho, inibição, flexibilidade cognitiva. Compara com trimestre anterior. Ótimo pra acompanhar resposta à neuropsicologia e medicação. Preenche em 10 minutos com os pais.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Inicia as tarefas
 2. Organiza materiais e tarefas
@@ -7443,7 +7443,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–216 meses  |  **Respondente:** pais, professor  |  **Tempo:** 8 min
 - **Descrição:** Acompanha as notas, comportamento em sala e produtividade escolar do aluno com TDAH a cada trimestre. Inclui feedback estruturado do professor sobre atenção, organização e relações com colegas. Compara com o período anterior pra ver o impacto do tratamento na vida acadêmica.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Acompanha o conteúdo
 2. Faz as tarefas
@@ -7470,7 +7470,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–216 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 8 min
 - **Descrição:** Avalia como está a regulação emocional do paciente com TDAH — irritabilidade, frustração, impaciência, reatividade emocional. Compara com a última consulta pra ver se o tratamento tá melhorando o controle emocional além da atenção.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Acalma-se sozinha
 2. Tolera a frustração
@@ -7497,7 +7497,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 60–180 meses  |  **Respondente:** professor  |  **Tempo:** 7 min
 - **Descrição:** Formulário estruturado pra o professor preencher sobre a evolução do aluno com TDAH em sala. Avalia atenção, organização, relações com colegas, cumprimento de tarefas e impulsividade. Comparado com o preenchimento anterior pra ver se o tratamento tá funcionando na escola também.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Está mais focada em sala
 2. Está menos agitada
@@ -7524,7 +7524,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 60–216 meses  |  **Respondente:** clinico, pais  |  **Tempo:** 5 min
 - **Descrição:** Avaliação global e rápida da melhora do paciente com TDAH desde o último retorno — versão adaptada do CGI (Clinical Global Impression). Escala de 1 a 7, com descrições operacionais claras. Ótimo pra documentar resposta ao tratamento de forma padronizada e defensável.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Melhorou a atenção
 2. Melhorou a agitação
@@ -7551,7 +7551,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 12–84 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 8 min
 - **Descrição:** Acompanha o quanto o vocabulário expressivo da criança cresceu desde a última avaliação — número de palavras, novas categorias semânticas, combinação de palavras. Compara com o registro trimestral anterior. Pra ver se a fonoterapia tá acelerando o desenvolvimento de linguagem.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Usa mais palavras do que antes
 2. Nomeia objetos
@@ -7578,7 +7578,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–120 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 7 min
 - **Descrição:** Avalia se a fala da criança está ficando mais inteligível ao longo do tratamento fonoaudiológico. Percentual de inteligibilidade com estranhos, familiares e em contextos diferentes. Compara com a avaliação anterior. Ótimo pra pais que perguntam 'mas tá melhorando mesmo?'.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. É entendida por pessoas de fora da família
 2. Pronuncia os sons corretamente
@@ -7605,7 +7605,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–144 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 8 min
 - **Descrição:** Monitora a evolução do uso social da linguagem — iniciação de conversa, manutenção do tópico, adequação do contexto, compreensão de inferências. Compara com registro anterior. Muito útil em crianças com TEA ou TDL que estão em fonoterapia com foco pragmático.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Inicia conversa
 2. Mantém o tema
@@ -7632,7 +7632,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–72 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 7 min
 - **Descrição:** Checklist de marcos de comunicação esperados para cada faixa etária — gorjeio, bálbucio, primeiras palavras, combinações, frases. Marca quais foram atingidos desde a última consulta. Ótimo pra registrar progresso em lactentes e pré-escolares em acompanhamento.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Balbucia
 2. Fala as primeiras palavras
@@ -7659,7 +7659,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–216 meses  |  **Respondente:** clinico  |  **Tempo:** 10 min
 - **Descrição:** Reclassificação anual do GMFCS (Gross Motor Function Classification System) — compara o nível atual com o ano anterior. Documenta se houve progressão funcional, manutenção ou regressão. Fundamental pra planejamento terapêutico e laudos de INSS/LOAS.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Controla a cabeça e o tronco
 2. Senta-se com estabilidade
@@ -7686,7 +7686,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–216 meses  |  **Respondente:** clinico  |  **Tempo:** 12 min
 - **Descrição:** Registra a amplitude de movimento das principais articulações antes e após ciclo de fisioterapia — quadril, joelho, tornozelo, ombro. Compara com medidas anteriores. Documenta resposta ao tratamento fisioterâpico e orienta decisão sobre toxina botulínica ou cirurgia.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Boa amplitude de quadril
 2. Boa amplitude de joelho
@@ -7713,7 +7713,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–216 meses  |  **Respondente:** clinico, pais  |  **Tempo:** 8 min
 - **Descrição:** Reclassificação anual do MACS (Manual Ability Classification System) — avalia como a criança com PC usa as mãos nas atividades do dia a dia. Compara com classificação anterior. Documenta se houve melhora funcional após terapia ocupacional ou intervenção cirúrgica.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Pega objetos
 2. Manipula objetos pequenos
@@ -7740,7 +7740,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 12–216 meses  |  **Respondente:** clinico  |  **Tempo:** 12 min
 - **Descrição:** Avalia qualidade de marcha, postura estática e dinâmica, uso de dispositivos de auxílio e padrões compensatórios. Compara com a última avaliação. Ótimo pra fisioterapeutas documentarem resposta ao tratamento e orientar pais sobre expectativas realistas.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Mantém a postura sentada
 2. Mantém a postura em pé
@@ -7767,7 +7767,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 12–216 meses  |  **Respondente:** clinico, pais  |  **Tempo:** 10 min
 - **Descrição:** Documenta espasticidade, amplitude de movimento e função motor antes da aplicação de toxina botulínica e 4-6 semanas depois. Compara de forma estruturada pra justificar novos ciclos, avaliar áreas de maior resposta e documentar para planos de saúde.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Reduziu o tônus
 2. Melhorou a amplitude de movimento
@@ -7794,7 +7794,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–168 meses  |  **Respondente:** pais, professor, clinico  |  **Tempo:** 10 min
 - **Descrição:** Acompanha a evolução da leitura trimestral — velocidade, precisão e compreensão. Compara com a avaliação anterior. Inclui amostra de leitura oral e questionário de compreensão. Ótimo pra ver se a intervenção psicopedagógica tá acelerando o ganho de fluência leitora.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Lê com mais fluência
 2. Lê com precisão
@@ -7821,7 +7821,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–168 meses  |  **Respondente:** pais, professor, clinico  |  **Tempo:** 10 min
 - **Descrição:** Coleta e compara amostras de escrita ao longo do tratamento — ortografia, organização, coerência e legibilidade. Documenta com fotos das produções. Ótimo pra mostrar pros pais a evolução concreta e pros professores os ganhos conquistados com a intervenção.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Letra mais legível
 2. Menos erros ortográficos
@@ -7848,7 +7848,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–168 meses  |  **Respondente:** pais, professor, clinico  |  **Tempo:** 10 min
 - **Descrição:** Avalia evolução das habilidades matemáticas — cálculo, raciocínio numérico, resolução de problemas — depois de intervenção psicopedagógica. Compara com avaliação anterior. Inclui tarefa diagnóstica rápida pró à avaliação.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Conta e compara quantidades
 2. Faz operações básicas
@@ -7875,7 +7875,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 60–180 meses  |  **Respondente:** professor, pais  |  **Tempo:** 8 min
 - **Descrição:** Avalia se a escola está implementando as adaptações curriculares recomendadas — tempo extra, material adaptado, avaliação diferenciada — e como o aluno está respondendo. Compara com retorno anterior. Ótimo pra identificar barreiras na escola e orientar a próxima carta médica.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. A escola adapta as atividades
 2. A escola adapta as avaliações
@@ -7902,7 +7902,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–180 meses  |  **Respondente:** professor, pais, clinico  |  **Tempo:** 12 min
 - **Descrição:** Registra as metas do PEI (Plano Educacional Individualizado) e avalia quais foram atingidas, quais estão em progresso e quais precisam ser revisadas. Compara com o último trimestre. Fundamental pra reuniões de revisaão do PEI com a equipe escolar.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Metas claras definidas
 2. Metas acadêmicas alcançadas
@@ -7929,7 +7929,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–216 meses  |  **Respondente:** clinico  |  **Tempo:** 6 min
 - **Descrição:** Checklist de quais exames pedir pra cada medicação psicotrópica — e quando pedir. Organizado por medicamento: metilfenidato, valproato, carbamazepina, risperidona, aripiprazol, fluoxetina. Marca o que já foi feito, o que está pendente e quando repetir. Evita que o acompanhamento fique incompleto.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** não declarada
 
 1. Hemograma em dia
 2. Função hepática em dia
@@ -7956,7 +7956,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–216 meses  |  **Respondente:** autoaplicavel, pais  |  **Tempo:** 10 min
 - **Descrição:** Avalia a gravidade subjetiva das crises epilépticas: controle ictal, efeitos pós-ictais e impacto na vida diária.
 - **Opções de resposta:** `0=Nada (0)`  `1=Pouco (1)`  `2=Bastante (2)`  `3=Muito (3)`
-- **Itens:** 10  |  **Domínios:** 1
+- **Itens:** 10  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. As crises acontecem sem aviso (sem aura/pródromo)
 2. A criança perde a consciência durante a crise
@@ -7984,7 +7984,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–216 meses  |  **Respondente:** clinico  |  **Tempo:** 5 min
 - **Descrição:** Classifica habilidade manual na PC em 5 níveis.
 - **Opções de resposta:** `0=Nível I — manuseia objetos com facilidade e sucesso`  `1=Nível II — manuseia a maioria, com qualidade/rapidez um pouco reduzidas`  `2=Nível III — manuseia com dificuldade; precisa de ajuda para preparar/adaptar`  `3=Nível IV — manuseia seleção limitada de objetos fáceis, em situação adaptada`  `4=Nível V — não manuseia objetos; capacidade muito limitada`
-- **Itens:** 1  |  **Domínios:** 1
+- **Itens:** 1  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Nível de habilidade manual no dia a dia
 
@@ -8005,7 +8005,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–215 meses  |  **Respondente:** pais, professor, clinico, autoaplicavel  |  **Tempo:** 15–20 min
 - **Descrição:** Instrumento autoral experimental do Dr. Jadson Fraga. 60 itens (0–3) que reúnem, em matriz única, dados de família, escola e observação clínica sobre neurodesenvolvimento, comportamento, cognição, linguagem, aprendizagem, sono, epilepsia, autorregulação, sofrimento emocional e funcionalidade, documentando prejuízo funcional. Ficha técnica — sem validação publicada.
 - **Opções de resposta:** `0=0 — ausente/esperado`  `1=1 — leve/ocasional`  `2=2 — moderado/frequente`  `3=3 — intenso ou com prejuízo importante`
-- **Itens:** 60  |  **Domínios:** 12
+- **Itens:** 60  |  **Domínios:** 12  |  **Direção do escore:** maior = pior
 
 ### Domínio: Desenvolvimento e autonomia
 1. Apresenta atraso ou imaturidade em habilidades esperadas para a idade.
@@ -8108,7 +8108,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–215 meses  |  **Respondente:** pais, professor  |  **Tempo:** Não aferido
 - **Descrição:** Mapa clínico expandido de irritabilidade/desregulação; complementar ao VS1 breve. Organizar e acompanhar irritabilidade, desregulação, gatilhos, recuperação e impacto funcional, preservando o escopo clínico do MAPA-RI 18 original. Janela: últimos 14 dias. A versão operacional 1.1-app mantém os itens 17-18 em direção de dificuldade. Comparações com o predecessor 1.0 devem ser tratadas como quebra de versão, com novo basal quando possível. Instrumento clínico autoral de monitorização NeuroPed SDG. Não é teste psicométrico validado e não deve ser usado isoladamente para diagnóstico, indicação terapêutica ou perícia. Não há pontos de corte diagnósticos nem classificação de gravidade validada.
 - **Opções de resposta:** `0=0 — não ocorreu`  `1=1 — ocorreu raramente`  `2=2 — ocorreu algumas vezes`  `3=3 — ocorreu muitas vezes`  `4=4 — ocorreu quase todos os dias ou de forma muito intensa`
-- **Itens:** 18  |  **Domínios:** 4
+- **Itens:** 18  |  **Domínios:** 4  |  **Direção do escore:** maior = pior
 
 ### Domínio: A. Intensidade e recuperação
 1. Quando é contrariado(a), a reação emocional fica muito maior do que a situação costuma exigir.
@@ -8149,7 +8149,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–215 meses  |  **Respondente:** pais  |  **Tempo:** Não aferido
 - **Descrição:** Registro histórico rastreável. Não oferecer como terceira opção paralela ativa ao VS1 e ao MAPA-RI 18 enquanto não houver função diferencial própria. monitorar longitudinalmente limiar de frustração, escalada da desregulação, recuperação, flexibilidade e transições, influência do contexto e impacto funcional e de segurança Janela: últimos 14 dias. Não recomendado para novas aplicações rotineiras nesta arquitetura. Preservar registros prévios, versão, respostas e proveniência sem conversão para VS1 ou MAPA-RI 18. Instrumento clínico autoral de monitorização NeuroPed SDG. Não é teste psicométrico validado e não deve ser usado isoladamente para diagnóstico, indicação terapêutica ou perícia. Não há pontos de corte diagnósticos nem classificação de gravidade validada.
 - **Opções de resposta:** `0=0 — não ocorreu`  `1=1 — raro/leve, sem mudar a rotina`  `2=2 — algumas vezes, exigiu apoio breve`  `3=3 — frequente ou com interferência clara`  `4=4 — muito frequente/intenso, impediu atividade ou gerou risco`  `5=NO — não observado/informação insuficiente`
-- **Itens:** 24  |  **Domínios:** 6
+- **Itens:** 24  |  **Domínios:** 6  |  **Direção do escore:** maior = pior
 
 ### Domínio: A. Limiar de frustração
 1. Pequenas negativas, limites ou contratempos provocaram mudança rápida de humor ou irritação.
@@ -8200,7 +8200,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–216 meses  |  **Respondente:** autoaplicavel, pais  |  **Tempo:** 10 min
 - **Descrição:** 33 itens avaliando humor depressivo nas últimas 2 semanas.
 - **Opções de resposta:** `0=Não é verdade`  `1=Às vezes verdade`  `2=Verdade`
-- **Itens:** 13  |  **Domínios:** 1
+- **Itens:** 13  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Eu me senti muito triste ou infeliz
 2. Eu não consegui aproveitar nada (não senti prazer nas coisas)
@@ -8231,7 +8231,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–215 meses  |  **Respondente:** pais, professor, clinico  |  **Tempo:** 20–30 min
 - **Descrição:** Escala autoral experimental do Dr. Jadson Fraga Araújo Júnior que integra, em uma única estrutura clínica, sinais de neurodesenvolvimento, atenção, funções executivas, linguagem, aprendizagem, comportamento, autorregulação sensorial, sono, epilepsia, sofrimento emocional e funcionalidade em crianças e adolescentes de 3 a 17 anos e 11 meses. São 100 itens pontuados de 0 a 3, distribuídos em 10 domínios, com interpretação por média global, média por domínio, perfis clínicos (A…
 - **Opções de resposta:** `0=Ausente ou dentro do esperado para idade`  `1=Leve, ocasional ou com pouco prejuízo funcional`  `2=Moderado, frequente ou com prejuízo claro`  `3=Intenso, persistente, generalizado ou com prejuízo importante`
-- **Itens:** 100  |  **Domínios:** 10
+- **Itens:** 100  |  **Domínios:** 10  |  **Direção do escore:** maior = pior
 
 ### Domínio: DESENVOLVIMENTO GLOBAL E MARCOS FUNCIONAIS
 1. Teve atraso ou regressão em marcos motores, sociais, adaptativos ou de linguagem.
@@ -8370,7 +8370,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–215 meses  |  **Respondente:** pais, professor, clinico, autoaplicavel  |  **Tempo:** 18–25 min
 - **Descrição:** Escala autoral experimental de 72 itens em 12 domínios, concebida para integrar família, escola e clínica, com atenção a discrepâncias entre contextos e prejuízo funcional.
 - **Opções de resposta:** `0=0 — ausente/esperado`  `1=1 — leve/ocasional`  `2=2 — moderado/frequente`  `3=3 — intenso ou com prejuízo importante`
-- **Itens:** 72  |  **Domínios:** 12
+- **Itens:** 72  |  **Domínios:** 12  |  **Direção do escore:** maior = pior
 
 ### Domínio: Desenvolvimento e autonomia
 1. Apresenta atraso ou imaturidade em habilidades esperadas para a idade.
@@ -8485,7 +8485,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–215 meses  |  **Respondente:** clinico  |  **Tempo:** 15–30 min
 - **Descrição:** Ferramenta qualitativa multiperspectiva para organizar mutismo seletivo, ansiedade comunicativa, função, escola, diferenciais e segurança. Não gera escore, classificação ou diagnóstico automático.
 - **Opções de resposta:** `0=Registro qualitativo`  `1=Sem registro aplicável`
-- **Itens:** 20  |  **Domínios:** 4
+- **Itens:** 20  |  **Domínios:** 4  |  **Direção do escore:** maior = pior
 
 ### Domínio: Linha do tempo
 1. Módulo Anamnese profissional, campo 1: registre linha do tempo com fato ou relato, fonte e data, exemplos por contexto, impacto funcional, achados a favor e contra, contradições, incertezas e próximo passo.
@@ -8528,7 +8528,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 96–215 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 8–15 min
 - **Descrição:** Ferramenta qualitativa multiperspectiva para organizar mutismo seletivo, ansiedade comunicativa, função, escola, diferenciais e segurança. Não gera escore, classificação ou diagnóstico automático.
 - **Opções de resposta:** `0=Registro qualitativo`  `1=Sem registro aplicável`
-- **Itens:** 20  |  **Domínios:** 4
+- **Itens:** 20  |  **Domínios:** 4  |  **Direção do escore:** maior = pior
 
 ### Domínio: Experiência interna
 1. Módulo Autopercepção apoiada, campo 1: registre experiência interna com fato ou relato, fonte e data, exemplos por contexto, impacto funcional, achados a favor e contra, contradições, incertezas e próximo passo.
@@ -8571,7 +8571,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–215 meses  |  **Respondente:** clinico  |  **Tempo:** 15–30 min
 - **Descrição:** Ferramenta qualitativa multiperspectiva para organizar mutismo seletivo, ansiedade comunicativa, função, escola, diferenciais e segurança. Não gera escore, classificação ou diagnóstico automático.
 - **Opções de resposta:** `0=Registro qualitativo`  `1=Sem registro aplicável`
-- **Itens:** 20  |  **Domínios:** 4
+- **Itens:** 20  |  **Domínios:** 4  |  **Direção do escore:** maior = pior
 
 ### Domínio: Linguagem, fala e audição
 1. Módulo Diferenciais e condições associadas, campo 1: registre linguagem, fala e audição com fato ou relato, fonte e data, exemplos por contexto, impacto funcional, achados a favor e contra, contradições, incertezas e próximo passo.
@@ -8614,7 +8614,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–215 meses  |  **Respondente:** professor  |  **Tempo:** 12–20 min
 - **Descrição:** Ferramenta qualitativa multiperspectiva para organizar mutismo seletivo, ansiedade comunicativa, função, escola, diferenciais e segurança. Não gera escore, classificação ou diagnóstico automático.
 - **Opções de resposta:** `0=Registro qualitativo`  `1=Sem registro aplicável`
-- **Itens:** 30  |  **Domínios:** 4
+- **Itens:** 30  |  **Domínios:** 4  |  **Direção do escore:** maior = pior
 
 ### Domínio: Participação acadêmica
 1. Módulo Escola e equipe pedagógica, campo 1: registre participação acadêmica com fato ou relato, fonte e data, exemplos por contexto, impacto funcional, achados a favor e contra, contradições, incertezas e próximo passo.
@@ -8667,7 +8667,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–215 meses  |  **Respondente:** pais  |  **Tempo:** 12–20 min
 - **Descrição:** Ferramenta qualitativa multiperspectiva para organizar mutismo seletivo, ansiedade comunicativa, função, escola, diferenciais e segurança. Não gera escore, classificação ou diagnóstico automático.
 - **Opções de resposta:** `0=Registro qualitativo`  `1=Sem registro aplicável`
-- **Itens:** 30  |  **Domínios:** 4
+- **Itens:** 30  |  **Domínios:** 4  |  **Direção do escore:** maior = pior
 
 ### Domínio: Mapa da fala por contexto
 1. Módulo Família e cuidadores, campo 1: registre mapa da fala por contexto com fato ou relato, fonte e data, exemplos por contexto, impacto funcional, achados a favor e contra, contradições, incertezas e próximo passo.
@@ -8720,7 +8720,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–215 meses  |  **Respondente:** clinico  |  **Tempo:** 15–25 min
 - **Descrição:** Ferramenta qualitativa multiperspectiva para organizar mutismo seletivo, ansiedade comunicativa, função, escola, diferenciais e segurança. Não gera escore, classificação ou diagnóstico automático.
 - **Opções de resposta:** `0=Registro qualitativo`  `1=Sem registro aplicável`
-- **Itens:** 20  |  **Domínios:** 4
+- **Itens:** 20  |  **Domínios:** 4  |  **Direção do escore:** maior = pior
 
 ### Domínio: Acolhimento e regulação
 1. Módulo Observação e exame adaptado, campo 1: registre acolhimento e regulação com fato ou relato, fonte e data, exemplos por contexto, impacto funcional, achados a favor e contra, contradições, incertezas e próximo passo.
@@ -8763,7 +8763,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–215 meses  |  **Respondente:** pais, professor, autoaplicavel, clinico  |  **Tempo:** 5–10 min
 - **Descrição:** Ferramenta qualitativa multiperspectiva para organizar mutismo seletivo, ansiedade comunicativa, função, escola, diferenciais e segurança. Não gera escore, classificação ou diagnóstico automático.
 - **Opções de resposta:** `0=Registro qualitativo`  `1=Sem registro aplicável`
-- **Itens:** 10  |  **Domínios:** 3
+- **Itens:** 10  |  **Domínios:** 3  |  **Direção do escore:** maior = pior
 
 ### Domínio: Pedido de ajuda e necessidades básicas
 1. Módulo Segurança e red flags, campo 1: registre pedido de ajuda e necessidades básicas com fato ou relato, fonte e data, exemplos por contexto, impacto funcional, achados a favor e contra, contradições, incertezas e próximo passo.
@@ -8794,7 +8794,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–215 meses  |  **Respondente:** clinico  |  **Tempo:** 20–40 min
 - **Descrição:** Ferramenta qualitativa multiperspectiva para organizar mutismo seletivo, ansiedade comunicativa, função, escola, diferenciais e segurança. Não gera escore, classificação ou diagnóstico automático.
 - **Opções de resposta:** `0=Registro qualitativo`  `1=Sem registro aplicável`
-- **Itens:** 50  |  **Domínios:** 5
+- **Itens:** 50  |  **Domínios:** 5  |  **Direção do escore:** maior = pior
 
 ### Domínio: Fundamentos clínicos
 1. Módulo Fundamentos, síntese e ferramentas, campo 1: registre fundamentos clínicos com fato ou relato, fonte e data, exemplos por contexto, impacto funcional, achados a favor e contra, contradições, incertezas e próximo passo.
@@ -8869,7 +8869,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–216 meses  |  **Respondente:** pais  |  **Tempo:** 2–4 min
 - **Descrição:** Identifica o que dificulta seguir o plano combinado (esquecimento, medo, custo, falta do remédio no SUS, rotina da escola) sem culpar a família. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 8  |  **Domínios:** 3
+- **Itens:** 8  |  **Domínios:** 3  |  **Direção do escore:** maior = pior
 
 ### Domínio: Rotina
 1. Esquecemos de dar o remédio ou de fazer a atividade combinada.
@@ -8898,7 +8898,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 96–216 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 4–6 min
 - **Descrição:** A própria criança ou o adolescente conta seus medos e preocupações em seis áreas, com o impacto separado dos sintomas. O adulto pode ler em voz alta. Não diagnostica transtorno de ansiedade. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Quase nunca`  `1=Às vezes`  `2=Muitas vezes`
-- **Itens:** 20  |  **Domínios:** 6
+- **Itens:** 20  |  **Domínios:** 6  |  **Direção do escore:** maior = pior
 
 ### Domínio: Preocupações
 1. Fico pensando muito no que pode dar errado.
@@ -8945,7 +8945,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–168 meses  |  **Respondente:** pais  |  **Tempo:** 3–5 min
 - **Descrição:** Medidas simples para repetir a cada retorno e comparar: preocupações, medos, evitação e sintomas físicos, mais o impacto na escola e em casa. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 9  |  **Domínios:** 3
+- **Itens:** 9  |  **Domínios:** 3  |  **Direção do escore:** maior = pior
 
 ### Domínio: Preocupação e medo
 1. Preocupou-se muito com coisas que podem dar errado.
@@ -8975,7 +8975,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–216 meses  |  **Respondente:** pais  |  **Tempo:** 2–4 min
 - **Descrição:** Com quem a família pode contar (parentes, vizinhos, escola, UBS/CRAS, igreja ou grupos de pais) e se consegue acessar os serviços. Maior pontuação = mais apoio percebido. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Sempre`
-- **Itens:** 8  |  **Domínios:** 2
+- **Itens:** 8  |  **Domínios:** 2  |  **Direção do escore:** maior = melhor
 
 ### Domínio: Pessoas
 1. Tenho alguém que fica com a criança quando preciso resolver algo.
@@ -9002,7 +9002,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–216 meses  |  **Respondente:** pais  |  **Tempo:** 5–7 min
 - **Descrição:** Frequência de desatenção, agitação, impulsividade e desorganização em casa, separada do impacto em cada área da vida. Forma paralela para o professor. Não diagnostica TDAH. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 21  |  **Domínios:** 5
+- **Itens:** 21  |  **Domínios:** 5  |  **Direção do escore:** maior = pior
 
 ### Domínio: Desatenção
 1. Comete erros por pressa ou descuido em tarefas que sabe fazer.
@@ -9048,7 +9048,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–216 meses  |  **Respondente:** professor  |  **Tempo:** 5–7 min
 - **Descrição:** Mesmos blocos da forma dos pais, com situações de sala de aula, para comparar casa e escola. Não diagnostica TDAH. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 21  |  **Domínios:** 5
+- **Itens:** 21  |  **Domínios:** 5  |  **Direção do escore:** maior = pior
 
 ### Domínio: Desatenção
 1. Comete erros por descuido em exercícios que domina.
@@ -9094,7 +9094,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–216 meses  |  **Respondente:** pais  |  **Tempo:** 3–5 min
 - **Descrição:** Rotina e gatilhos que costumam acompanhar as dores de cabeça (sono, comida, água, telas, estresse, escola). Ajuda a conversar sobre hábitos; não classifica o tipo de cefaleia. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 10  |  **Domínios:** 3
+- **Itens:** 10  |  **Domínios:** 3  |  **Direção do escore:** maior = pior
 
 ### Domínio: Hábitos
 1. Dormiu pouco ou em horários muito irregulares.
@@ -9125,7 +9125,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–216 meses  |  **Respondente:** pais  |  **Tempo:** 6–8 min
 - **Descrição:** O que a criança/adolescente já faz sozinho na vida diária (cuidado pessoal, casa, comunidade, comunicação e convivência). Maior pontuação = mais autonomia; não mede QI nem faz diagnóstico de deficiência intelectual. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Ainda não faz`  `1=Faz com ajuda`  `2=Faz às vezes sozinho`  `3=Faz sozinho`
-- **Itens:** 8  |  **Domínios:** 2
+- **Itens:** 8  |  **Domínios:** 2  |  **Direção do escore:** maior = melhor
 
 ### Domínio: Cuidado pessoal e casa
 1. Come sozinho(a) com talher.
@@ -9152,7 +9152,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–216 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 5–7 min
 - **Descrição:** Frequência de seis tipos de comportamento em autismo ou deficiência intelectual, com autoagressão e agressão separadas da irritabilidade. Feito para repetir no mesmo intervalo e ver a resposta a terapia ou medicação. Não diagnostica. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Não aconteceu`  `1=Algumas vezes na semana`  `2=Quase todo dia`  `3=Várias vezes ao dia`
-- **Itens:** 21  |  **Domínios:** 7
+- **Itens:** 21  |  **Domínios:** 7  |  **Direção do escore:** maior = pior
 
 ### Domínio: Irritabilidade e crises
 1. Tem crises de choro, gritos ou birra difíceis de interromper.
@@ -9202,7 +9202,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–216 meses  |  **Respondente:** pais  |  **Tempo:** 5–7 min
 - **Descrição:** Descreve a frequência de movimentos repetidos, rituais, resistência a mudanças e interesses muito restritos. Serve para acompanhar a evolução e o impacto na rotina; não diagnostica autismo. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 9  |  **Domínios:** 3
+- **Itens:** 9  |  **Domínios:** 3  |  **Direção do escore:** maior = pior
 
 ### Domínio: Movimentos e uso de objetos
 1. Balança o corpo, bate as mãos ou faz movimentos repetidos com o corpo.
@@ -9232,7 +9232,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 60–180 meses  |  **Respondente:** pais  |  **Tempo:** 4–6 min
 - **Descrição:** Compara a criança com colegas da mesma idade em atividades motoras comuns. Maior pontuação = desempenho motor mais próximo ou melhor que o esperado; serve para sinalizar quem precisa de avaliação motora. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Muito pior que os colegas`  `1=Pior que os colegas`  `2=Parecido com os colegas`  `3=Melhor que os colegas`
-- **Itens:** 9  |  **Domínios:** 2
+- **Itens:** 9  |  **Domínios:** 2  |  **Direção do escore:** maior = melhor
 
 ### Domínio: Movimento amplo
 1. Pega e arremessa bola.
@@ -9260,7 +9260,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–216 meses  |  **Respondente:** pais  |  **Tempo:** 3–5 min
 - **Descrição:** Pergunta aos pais, em linguagem simples, o quanto o remédio para crises parece causar sono, lentidão, irritação, desatenção ou mal-estar. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nada`  `1=Um pouco`  `2=Bastante`  `3=Muito`
-- **Itens:** 11  |  **Domínios:** 3
+- **Itens:** 11  |  **Domínios:** 3  |  **Direção do escore:** maior = pior
 
 ### Domínio: Atenção e pensamento
 1. Parece mais lento(a) para entender ou responder.
@@ -9292,7 +9292,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–216 meses  |  **Respondente:** pais  |  **Tempo:** 2–4 min
 - **Descrição:** Lista de efeitos que costumam ser perguntados em consultas de retorno após medicação, com o quanto cada um incomodou a criança na última semana. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nada`  `1=Um pouco`  `2=Bastante`  `3=Muito`
-- **Itens:** 12  |  **Domínios:** 3
+- **Itens:** 12  |  **Domínios:** 3  |  **Direção do escore:** maior = pior
 
 ### Domínio: Corpo
 1. Comeu menos do que de costume (principalmente no almoço).
@@ -9325,7 +9325,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 120–216 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 3–5 min
 - **Descrição:** O próprio adolescente conta como se sente com o remédio: sono, energia, apetite, movimento do corpo e como vive o tratamento. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 10  |  **Domínios:** 3
+- **Itens:** 10  |  **Domínios:** 3  |  **Direção do escore:** maior = pior
 
 ### Domínio: Energia e sono
 1. Sinto sono ou moleza durante o dia.
@@ -9356,7 +9356,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–192 meses  |  **Respondente:** professor  |  **Tempo:** 4–6 min
 - **Descrição:** Frequência de sinais de dificuldade com ortografia, velocidade, organização e traçado da letra. Triagem; não diagnostica disgrafia nem disortografia. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 7  |  **Domínios:** 2
+- **Itens:** 7  |  **Domínios:** 2  |  **Direção do escore:** maior = pior
 
 ### Domínio: Ortografia e texto
 1. Comete muitos erros de ortografia mesmo em palavras comuns já ensinadas.
@@ -9382,7 +9382,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 144–216 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 4–6 min
 - **Descrição:** O adolescente descreve experiências incomuns (vozes, vultos, desconfiança, sensação de que algo está estranho). Experiências isoladas são comuns e nem sempre indicam doença; o instrumento só orienta a conversa clínica. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Não`  `1=Talvez / uma vez`  `2=Sim, às vezes`  `3=Sim, com frequência`
-- **Itens:** 10  |  **Domínios:** 3
+- **Itens:** 10  |  **Domínios:** 3  |  **Direção do escore:** maior = pior
 
 ### Domínio: Percepção
 1. Ouvi vozes ou sons que outras pessoas não ouviam.
@@ -9413,7 +9413,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–216 meses  |  **Respondente:** professor  |  **Tempo:** 3–5 min
 - **Descrição:** O professor informa se o aluno participa das atividades da turma, se há acessibilidade e se há apoio pedagógico. Maior pontuação = mais participação. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Sempre`
-- **Itens:** 8  |  **Domínios:** 2
+- **Itens:** 8  |  **Domínios:** 2  |  **Direção do escore:** maior = melhor
 
 ### Domínio: Participação
 1. Participa das atividades da turma junto com os colegas.
@@ -9440,7 +9440,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–216 meses  |  **Respondente:** pais  |  **Tempo:** 4–6 min
 - **Descrição:** O que a criança com paralisia cerebral já faz sozinha ou com ajuda em casa. Mostra mudanças ao longo do tempo para ajustar metas de terapia. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Ainda não faz`  `1=Faz com muita ajuda`  `2=Faz com pouca ajuda`  `3=Faz sozinho(a)`
-- **Itens:** 8  |  **Domínios:** 2
+- **Itens:** 8  |  **Domínios:** 2  |  **Direção do escore:** maior = melhor
 
 ### Domínio: Alimentação e higiene
 1. Comer e beber.
@@ -9467,7 +9467,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 60–216 meses  |  **Respondente:** pais  |  **Tempo:** 6–8 min
 - **Descrição:** Sete áreas das funções executivas em situações de casa, com forma paralela para o professor. Complementa a versão curta de 8 itens. Não diagnostica TDAH nem disfunção executiva. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 20  |  **Domínios:** 7
+- **Itens:** 20  |  **Domínios:** 7  |  **Direção do escore:** maior = pior
 
 ### Domínio: Iniciar e manter
 1. Adia o início das tarefas mesmo quando sabe o que fazer.
@@ -9516,7 +9516,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 60–216 meses  |  **Respondente:** pais  |  **Tempo:** 5–7 min
 - **Descrição:** Frequência de dificuldades em iniciar, organizar, lembrar e controlar impulsos nas tarefas do dia a dia. Não faz diagnóstico de TDAH nem de disfunção executiva. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 8  |  **Domínios:** 2
+- **Itens:** 8  |  **Domínios:** 2  |  **Direção do escore:** maior = pior
 
 ### Domínio: Iniciar e organizar
 1. Precisa de muitos lembretes para começar tarefas simples (tema, banho, arrumar o quarto).
@@ -9543,7 +9543,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 60–216 meses  |  **Respondente:** professor  |  **Tempo:** 6–8 min
 - **Descrição:** As mesmas sete áreas da versão dos pais, em situações de sala de aula, para comparar casa e escola. Não diagnostica TDAH nem disfunção executiva. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 20  |  **Domínios:** 7
+- **Itens:** 20  |  **Domínios:** 7  |  **Direção do escore:** maior = pior
 
 ### Domínio: Iniciar e manter
 1. Demora para começar a atividade, mesmo tendo entendido o que fazer.
@@ -9592,7 +9592,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 84–155 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 4–6 min
 - **Descrição:** A própria criança conta como tem se sentido, em frases curtas e três opções de resposta. O adulto pode ler em voz alta. Serve para ouvir a criança e acompanhar mudanças. Não inclui pergunta sobre se machucar: esse rastreio é feito à parte. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Não`  `1=Um pouco`  `2=Muito`
-- **Itens:** 17  |  **Domínios:** 5
+- **Itens:** 17  |  **Domínios:** 5  |  **Direção do escore:** maior = pior
 
 ### Domínio: Como me sinto
 1. Tenho ficado triste.
@@ -9634,7 +9634,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 96–216 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 4–6 min
 - **Descrição:** Autorrelato de humor, interesse, energia, concentração, sono e apetite. Não inclui pergunta sobre risco de suicídio: esta avaliação deve ser feita por outro instrumento ou conversa direta com o profissional. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 10  |  **Domínios:** 3
+- **Itens:** 10  |  **Domínios:** 3  |  **Direção do escore:** maior = pior
 
 ### Domínio: Humor e interesse
 1. Senti-me triste ou vazio(a).
@@ -9665,7 +9665,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 12–48 meses  |  **Respondente:** pais  |  **Tempo:** 4–6 min
 - **Descrição:** O que os pais veem no dia a dia sobre olhar, resposta ao nome, apontar, imitar e brincar com os outros. Maior pontuação = mais sinais sociais presentes; ajuda a decidir se vale um rastreio específico de TEA. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca observo`  `1=Observo às vezes`  `2=Observo com frequência`  `3=Observo sempre`
-- **Itens:** 9  |  **Domínios:** 2
+- **Itens:** 9  |  **Domínios:** 2  |  **Direção do escore:** maior = melhor
 
 ### Domínio: Olhar e resposta
 1. Olha para o seu rosto quando você fala ou brinca.
@@ -9693,7 +9693,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–216 meses  |  **Respondente:** pais  |  **Tempo:** 4–6 min
 - **Descrição:** Frequência de mudanças bruscas de humor, explosões e períodos de energia ou irritabilidade acima do habitual. Não diferencia transtorno do humor de outras causas. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 10  |  **Domínios:** 3
+- **Itens:** 10  |  **Domínios:** 3  |  **Direção do escore:** maior = pior
 
 ### Domínio: Explosões e irritabilidade
 1. Fica muito irritado(a) por motivos pequenos.
@@ -9724,7 +9724,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–192 meses  |  **Respondente:** professor  |  **Tempo:** 4–6 min
 - **Descrição:** Frequência de sinais de dificuldade na leitura em sala de aula. Triagem para encaminhar à avaliação; não diagnostica dislexia e não considera oportunidades de ensino sozinhas. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 8  |  **Domínios:** 2
+- **Itens:** 8  |  **Domínios:** 2  |  **Direção do escore:** maior = pior
 
 ### Domínio: Decodificação
 1. Lê palavras sílaba por sílaba mesmo após longo período de alfabetização.
@@ -9751,7 +9751,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–192 meses  |  **Respondente:** professor  |  **Tempo:** 4–6 min
 - **Descrição:** Frequência de sinais de dificuldade com quantidades, cálculo e problemas. Triagem para encaminhar; não diagnostica discalculia. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 8  |  **Domínios:** 2
+- **Itens:** 8  |  **Domínios:** 2  |  **Direção do escore:** maior = pior
 
 ### Domínio: Número e cálculo
 1. Tem dificuldade de comparar quantidades e entender o valor dos números.
@@ -9778,7 +9778,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–216 meses  |  **Respondente:** pais  |  **Tempo:** 2–3 min
 - **Descrição:** Para cada ambiente, como a criança se desloca hoje. Descreve a função; não substitui classificação funcional formal nem avaliação da fisioterapia. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Não faz`  `1=Só com ajuda de adulto`  `2=Com dispositivo (andador, muletas, cadeira)`  `3=Sozinho(a), sem apoio`
-- **Itens:** 6  |  **Domínios:** 1
+- **Itens:** 6  |  **Domínios:** 1  |  **Direção do escore:** maior = melhor
 
 1. Dentro de casa, de um cômodo a outro.
 2. No pátio, na quadra ou nos corredores da escola.
@@ -9800,7 +9800,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–216 meses  |  **Respondente:** clinico  |  **Tempo:** 10–15 min (durante a consulta)
 - **Descrição:** O profissional registra o que observou na consulta, em sete áreas, com quatro graus de intensidade. Organiza a observação e a descrição no prontuário. Não diagnostica TEA nem gradua o nível de suporte. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Não observado`  `1=Discreto ou ocasional`  `2=Claro ou frequente`  `3=Intenso ou persistente`
-- **Itens:** 24  |  **Domínios:** 7
+- **Itens:** 24  |  **Domínios:** 7  |  **Direção do escore:** maior = pior
 
 ### Domínio: Reciprocidade social
 1. Responde pouco quando é chamado(a) pelo nome.
@@ -9853,7 +9853,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 132–216 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 6–8 min
 - **Descrição:** O próprio adolescente conta como estão suas emoções, comportamento, atenção e relações, nos mesmos blocos das formas dos pais e do professor. Lido lado a lado com os outros relatos, mostra o que só ele vê. Não diagnostica. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 24  |  **Domínios:** 8
+- **Itens:** 24  |  **Domínios:** 8  |  **Direção do escore:** maior = pior
 
 ### Domínio: Tristeza e desânimo
 1. Passo boa parte do dia triste ou desanimado(a).
@@ -9908,7 +9908,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–216 meses  |  **Respondente:** pais  |  **Tempo:** 6–8 min
 - **Descrição:** Panorama amplo de emoções, comportamento, atenção e relações em casa, com forma paralela para o professor. Mostra onde está a queixa e quanto ela pesa no dia a dia; não diagnostica. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 24  |  **Domínios:** 8
+- **Itens:** 24  |  **Domínios:** 8  |  **Direção do escore:** maior = pior
 
 ### Domínio: Tristeza e desânimo
 1. Passa boa parte do dia com ar de tristeza ou desânimo.
@@ -9963,7 +9963,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–216 meses  |  **Respondente:** professor  |  **Tempo:** 6–8 min
 - **Descrição:** Mesmo panorama da forma dos pais, com situações da escola. Lido lado a lado com o relato da família, mostra o que aparece só em casa, só na escola ou nos dois lugares. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 24  |  **Domínios:** 8
+- **Itens:** 24  |  **Domínios:** 8  |  **Direção do escore:** maior = pior
 
 ### Domínio: Tristeza e desânimo
 1. Parece triste ou desanimado(a) durante boa parte da aula.
@@ -10018,7 +10018,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 96–216 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 5–7 min
 - **Descrição:** A própria criança ou o adolescente conta quanto a saúde e as dificuldades pesam em cinco áreas da vida. O adulto pode ler em voz alta para quem ainda lê com dificuldade. Não diagnostica. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 20  |  **Domínios:** 5
+- **Itens:** 20  |  **Domínios:** 5  |  **Direção do escore:** maior = pior
 
 ### Domínio: Corpo e energia
 1. Eu me canso fácil nas atividades do dia a dia.
@@ -10063,7 +10063,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–216 meses  |  **Respondente:** pais  |  **Tempo:** 4–6 min
 - **Descrição:** O quanto a epilepsia e o seu tratamento atrapalham escola, brincadeiras, sono, humor e a vida da família. Maior pontuação = maior impacto. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca atrapalha`  `1=Atrapalha às vezes`  `2=Atrapalha bastante`  `3=Atrapalha muito`
-- **Itens:** 9  |  **Domínios:** 3
+- **Itens:** 9  |  **Domínios:** 3  |  **Direção do escore:** maior = pior
 
 ### Domínio: Atividades e escola
 1. O medo de crises limitou brincadeiras, passeios ou esportes.
@@ -10093,7 +10093,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–216 meses  |  **Respondente:** pais  |  **Tempo:** 5–7 min
 - **Descrição:** Quanto a saúde e as dificuldades pesam em cinco áreas da vida, para acompanhar o efeito do tratamento além dos sintomas. Forma paralela para a própria criança ou adolescente. Não diagnostica. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 20  |  **Domínios:** 5
+- **Itens:** 20  |  **Domínios:** 5  |  **Direção do escore:** maior = pior
 
 ### Domínio: Corpo e energia
 1. Cansa-se com facilidade nas atividades do dia a dia.
@@ -10138,7 +10138,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–144 meses  |  **Respondente:** pais  |  **Tempo:** 3–5 min
 - **Descrição:** Competências de regulação: nomear emoções, pedir ajuda, se acalmar e voltar à atividade. Maior pontuação = mais competências presentes; serve para acompanhar mudanças. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 8  |  **Domínios:** 2
+- **Itens:** 8  |  **Domínios:** 2  |  **Direção do escore:** maior = melhor
 
 ### Domínio: Reconhecer e comunicar
 1. Diz com palavras ou gestos como está se sentindo (bravo, triste, com medo).
@@ -10165,7 +10165,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–72 meses  |  **Respondente:** pais  |  **Tempo:** 4–6 min
 - **Descrição:** Frequência de comportamentos e emoções que costumam preocupar famílias de crianças de 3 a 6 anos. Descreve; não diagnostica e deve ser lido junto ao contexto da família e da escola. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 10  |  **Domínios:** 3
+- **Itens:** 10  |  **Domínios:** 3  |  **Direção do escore:** maior = pior
 
 ### Domínio: Emoções
 1. Fica muito assustado(a) ou aflito(a) em situações novas.
@@ -10196,7 +10196,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 18–192 meses  |  **Respondente:** pais  |  **Tempo:** 4–6 min
 - **Descrição:** Aborda variedade de alimentos, texturas, medo de comer, pouco interesse e impacto no crescimento e na família. Descreve; não diagnostica transtorno alimentar. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 10  |  **Domínios:** 3
+- **Itens:** 10  |  **Domínios:** 3  |  **Direção do escore:** maior = pior
 
 ### Domínio: Variedade e sensorial
 1. Come menos de 10 alimentos diferentes.
@@ -10227,7 +10227,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–180 meses  |  **Respondente:** pais  |  **Tempo:** 5–7 min
 - **Descrição:** Frequência de reações intensas ou pouco intensas a estímulos do dia a dia. Não faz diagnóstico de transtorno de processamento sensorial. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 10  |  **Domínios:** 3
+- **Itens:** 10  |  **Domínios:** 3  |  **Direção do escore:** maior = pior
 
 ### Domínio: Sons, luz e cheiros
 1. Cobre os ouvidos ou fica aflito(a) com barulhos comuns (liquidificador, secador, aspirador).
@@ -10258,7 +10258,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–180 meses  |  **Respondente:** professor  |  **Tempo:** 4–6 min
 - **Descrição:** O que o professor observa sobre barulho, toque, movimento e transições na escola. Ajuda a combinar adaptações simples (cantinho calmo, fones, pausas). Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 8  |  **Domínios:** 3
+- **Itens:** 8  |  **Domínios:** 3  |  **Direção do escore:** maior = pior
 
 ### Domínio: Ambiente
 1. Fica aflito(a) com barulho da sala, do pátio ou do refeitório.
@@ -10287,7 +10287,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 144–216 meses  |  **Respondente:** pais  |  **Tempo:** 3–5 min
 - **Descrição:** O que a família percebeu mudar nos últimos meses (isolamento, desconfiança, fala estranha, queda do rendimento, higiene, sono). Orienta o encaminhamento; não diagnostica. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 8  |  **Domínios:** 2
+- **Itens:** 8  |  **Domínios:** 2  |  **Direção do escore:** maior = pior
 
 ### Domínio: Comportamento
 1. Isolou-se de amigos e da família.
@@ -10314,7 +10314,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 16–36 meses  |  **Respondente:** pais  |  **Tempo:** 5–7 min
 - **Descrição:** Sinais de alerta para autismo em seis áreas, incluindo perda de habilidades, que pesa mais que qualquer outro sinal. Ajuda a decidir quem precisa de avaliação do desenvolvimento e da audição. Não diagnostica autismo. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Não acontece`  `1=Acontece às vezes`  `2=Acontece muito`
-- **Itens:** 20  |  **Domínios:** 6
+- **Itens:** 20  |  **Domínios:** 6  |  **Direção do escore:** maior = pior
 
 ### Domínio: Olhar e atenção compartilhada
 1. Quase não olha nos seus olhos durante as brincadeiras ou a alimentação.
@@ -10361,7 +10361,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–216 meses  |  **Respondente:** pais  |  **Tempo:** 3–5 min
 - **Descrição:** Quanto o cuidado diário pesa sobre quem cuida (tempo, descanso, trabalho, dinheiro, apoio da família e da rede de saúde). Quem responde é o cuidador principal. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 12  |  **Domínios:** 3
+- **Itens:** 12  |  **Domínios:** 3  |  **Direção do escore:** maior = pior
 
 ### Domínio: Tempo e descanso
 1. Fiquei sem tempo para descansar ou cuidar de mim.
@@ -10394,7 +10394,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–192 meses  |  **Respondente:** pais  |  **Tempo:** 4–6 min
 - **Descrição:** Frequência de problemas de sono em 5 blocos: dormir, despertares, respiração, comportamentos durante o sono e sonolência diurna. Descreve; não diagnostica distúrbio do sono. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 13  |  **Domínios:** 4
+- **Itens:** 13  |  **Domínios:** 4  |  **Direção do escore:** maior = pior
 
 ### Domínio: Para dormir
 1. Demora mais de meia hora para pegar no sono.
@@ -10430,7 +10430,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–216 meses  |  **Respondente:** pais  |  **Tempo:** 3–5 min
 - **Descrição:** Quanto os tiques apareceram, incomodaram e atrapalharam nas últimas semanas. Para repetir a cada retorno; não mede gravidade validada. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nada`  `1=Um pouco`  `2=Bastante`  `3=Muito`
-- **Itens:** 7  |  **Domínios:** 2
+- **Itens:** 7  |  **Domínios:** 2  |  **Direção do escore:** maior = pior
 
 ### Domínio: Tiques
 1. Tiques motores (piscar, caretas, movimentos de cabeça, ombros ou membros) apareceram.
@@ -10456,7 +10456,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 60–216 meses  |  **Respondente:** pais  |  **Tempo:** 3–5 min
 - **Descrição:** Quanto tempo e sofrimento os rituais e pensamentos repetitivos causaram, e o quanto a família entra nos rituais. Para repetir a cada retorno. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nada`  `1=Um pouco`  `2=Bastante`  `3=Muito`
-- **Itens:** 6  |  **Domínios:** 2
+- **Itens:** 6  |  **Domínios:** 2  |  **Direção do escore:** maior = pior
 
 ### Domínio: Sintomas
 1. A criança teve pensamentos repetidos que a deixam aflita e que ela não consegue afastar.
@@ -10481,7 +10481,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–216 meses  |  **Respondente:** pais  |  **Tempo:** 3–5 min
 - **Descrição:** Observa se a criança mostra empatia, culpa e afeto de forma consistente, em vários contextos, ao longo do tempo. Não rotula a criança nem diagnostica. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 6  |  **Domínios:** 2
+- **Itens:** 6  |  **Domínios:** 2  |  **Direção do escore:** maior = pior
 
 ### Domínio: Empatia e culpa
 1. Parece não se importar quando magoa alguém.
@@ -10506,7 +10506,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 144–216 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 3–5 min
 - **Descrição:** O que o adolescente já faz sozinho no próprio cuidado: conhecer o diagnóstico, tomar remédio, falar na consulta, marcar atendimento. Maior pontuação = mais autonomia. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Ainda não`  `1=Com ajuda`  `2=Às vezes sozinho(a)`  `3=Sozinho(a)`
-- **Itens:** 8  |  **Domínios:** 2
+- **Itens:** 8  |  **Domínios:** 2  |  **Direção do escore:** maior = melhor
 
 ### Domínio: Conhecer a própria condição
 1. Sei explicar com minhas palavras o que tenho e por que acompanho.
@@ -10533,7 +10533,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 144–216 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 2–3 min
 - **Descrição:** Frequência de uso nos últimos 12 meses de tabaco/vape, álcool, maconha e outras substâncias, para abrir a conversa em ambiente confidencial. Sem classificação de risco por ponto de corte. Instrumento autoral NeuroPed, sem validação psicométrica. Apoio à decisão clínica, não diagnóstico. Sem ponto de corte nem classificação: o app registra as respostas por extenso para leitura item a item, junto da história clínica.
 - **Opções de resposta:** `0=Nunca`  `1=Uma ou duas vezes`  `2=Algumas vezes por mês`  `3=Toda semana ou mais`
-- **Itens:** 6  |  **Domínios:** 2
+- **Itens:** 6  |  **Domínios:** 2  |  **Direção do escore:** maior = pior
 
 ### Domínio: Frequência de uso
 1. Fumei cigarro ou usei vape.
@@ -10558,7 +10558,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–216 meses  |  **Respondente:** pais, professor, clinico  |  **Tempo:** 20–30 min
 - **Descrição:** Instrumento autoral experimental do Dr. Jadson Fraga. 84 itens (14 domínios × 6, 0–3) que navegam pelos eixos que interferem na vida real da criança/adolescente — desenvolvimento, comportamento, cognição, linguagem, sono, epilepsia, aprendizagem, autorregulação, funções executivas, sofrimento emocional e funcionalidade — transformando dados dispersos em mapa clínico. Ficha técnica — sem validação publicada.
 - **Opções de resposta:** `0=0 — ausente/esperado`  `1=1 — leve/ocasional`  `2=2 — moderado/frequente`  `3=3 — intenso ou com prejuízo importante`
-- **Itens:** 84  |  **Domínios:** 14
+- **Itens:** 84  |  **Domínios:** 14  |  **Direção do escore:** maior = pior
 
 ### Domínio: Desenvolvimento e autonomia
 1. Apresenta atraso ou imaturidade em habilidades esperadas para a idade.
@@ -10689,7 +10689,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 132–216 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 3 min
 - **Descrição:** 6 itens de triagem de depressão em pacientes com epilepsia.
 - **Opções de resposta:** `0=0 - ausente`  `1=1 - leve`  `2=2 - moderado`  `3=3 - intenso`
-- **Itens:** 6  |  **Domínios:** 2
+- **Itens:** 6  |  **Domínios:** 2  |  **Direção do escore:** maior = pior
 
 ### Domínio: Humor e prazer
 1. Humor deprimido ou desesperanca
@@ -10717,7 +10717,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–215 meses  |  **Respondente:** pais, clinico, professor, autoaplicavel  |  **Tempo:** 10–15 min
 - **Descrição:** Instrumento autoral experimental do Dr. Jadson Fraga Araújo Júnior (NeuroPed EDJ) que organiza, em uma única matriz de 12 domínios, sinais de desenvolvimento, comportamento, cognição, linguagem, sono, epilepsia/eventos paroxísticos, aprendizagem, autorregulação, funções executivas, sofrimento emocional e funcionalidade adaptativa. Não visa fechar diagnóstico automaticamente, mas oferecer uma fotografia clínica ampla para consulta, laudo, plano terapêutico, comunicação com a…
 - **Opções de resposta:** `0=Ausente ou dentro do esperado para a idade`  `1=Leve, ocasional, sem prejuízo funcional claro`  `2=Moderado, frequente, com prejuízo funcional perceptível`  `3=Intenso, persistente ou com prejuízo funcional importante`
-- **Itens:** 48  |  **Domínios:** 12
+- **Itens:** 48  |  **Domínios:** 12  |  **Direção do escore:** maior = pior
 
 ### Domínio: A. Desenvolvimento neuropsicomotor
 1. A criança ou adolescente teve atraso em sentar, andar, correr, coordenar movimentos ou realizar atividades motoras esperadas para a idade.
@@ -10807,7 +10807,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–215 meses  |  **Respondente:** pais, professor, clinico, autoaplicavel  |  **Tempo:** 15–20 min
 - **Descrição:** Instrumento autoral experimental do Dr. Jadson Fraga. Matriz clínica única (60 itens, 0–3) que organiza sinais funcionais de neurodesenvolvimento, comportamento, aprendizagem, epilepsia, sono e sofrimento emocional, integrando dados de pais, escola e consulta e sinalizando prioridades e red flags. Ficha técnica — sem validação psicométrica publicada.
 - **Opções de resposta:** `0=0 — ausente/esperado`  `1=1 — leve/ocasional`  `2=2 — moderado/frequente`  `3=3 — intenso ou com prejuízo importante`
-- **Itens:** 60  |  **Domínios:** 12
+- **Itens:** 60  |  **Domínios:** 12  |  **Direção do escore:** maior = pior
 
 ### Domínio: Desenvolvimento e autonomia
 1. Apresenta atraso ou imaturidade em habilidades esperadas para a idade.
@@ -10910,7 +10910,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–215 meses  |  **Respondente:** pais, professor, clinico  |  **Tempo:** 15–25 min
 - **Descrição:** Instrumento autoral experimental do Dr. Jadson Fraga. 96 itens (12 domínios × 8, 0–3) para rastreio e organização semiológica integrada: desenvolvimento, comportamento, linguagem, cognição, aprendizagem, sono, epilepsia, autorregulação, funções executivas, sofrimento emocional e funcionalidade cotidiana, com marcações por ambiente (Escola/Casa/Ambos). Ficha técnica — sem validação publicada.
 - **Opções de resposta:** `0=0 — ausente/esperado`  `1=1 — leve/ocasional`  `2=2 — moderado/frequente`  `3=3 — intenso ou com prejuízo importante`
-- **Itens:** 96  |  **Domínios:** 12
+- **Itens:** 96  |  **Domínios:** 12  |  **Direção do escore:** maior = pior
 
 ### Domínio: Desenvolvimento e autonomia
 1. Apresenta atraso ou imaturidade em habilidades esperadas para a idade.
@@ -11049,7 +11049,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–215 meses  |  **Respondente:** pais, professor, clinico, autoaplicavel  |  **Tempo:** 10–15 min
 - **Descrição:** Instrumento autoral experimental do Dr. Jadson Fraga. 40 itens (0–3) que integram desenvolvimento, comportamento, cognição, linguagem, sono, epilepsia, aprendizagem, autorregulação, funções executivas, sofrimento emocional e funcionalidade, identificando as áreas de maior impacto para anamnese, laudo e plano. Ficha técnica — sem validação publicada.
 - **Opções de resposta:** `0=0 — ausente/esperado`  `1=1 — leve/ocasional`  `2=2 — moderado/frequente`  `3=3 — intenso ou com prejuízo importante`
-- **Itens:** 40  |  **Domínios:** 10
+- **Itens:** 40  |  **Domínios:** 10  |  **Direção do escore:** maior = pior
 
 ### Domínio: Desenvolvimento e autonomia
 1. Apresenta atraso ou imaturidade em habilidades esperadas para a idade.
@@ -11128,7 +11128,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–215 meses  |  **Respondente:** pais  |  **Tempo:** 7–10 min
 - **Descrição:** Instrumento clínico autoral de 24 itens para acompanhar o impacto funcional do cuidado no cotidiano familiar de crianças e adolescentes. Organiza rotina, energia do cuidador, relações, trabalho/custos, rede de apoio e sustentabilidade do cuidado, com leitura exclusivamente descritiva e longitudinal.
 - **Opções de resposta:** `0=0 — Sem impacto`  `1=1 — Pequeno`  `2=2 — Moderado`  `3=3 — Alto`  `4=4 — Muito alto`  `5=N/O — Não observado`
-- **Itens:** 24  |  **Domínios:** 6
+- **Itens:** 24  |  **Domínios:** 6  |  **Direção do escore:** maior = pior
 
 ### Domínio: A. Rotina e organização da casa
 1. As necessidades de cuidado mudaram de forma importante os horários básicos da casa.
@@ -11179,7 +11179,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 36–215 meses  |  **Respondente:** pais, professor, clinico  |  **Tempo:** Não aferido
 - **Descrição:** monitorar respostas a estímulos, sobrecarga, estratégias de regulação e repercussão funcional na participação cotidiana Janela: últimos 14 dias. Família, escola/professor e clínico/profissional podem preencher o instrumento, sempre em formulários separados. Não combinar numericamente respostas de informantes diferentes. Instrumento clínico autoral de monitorização NeuroPed SDG. Não é teste psicométrico validado e não deve ser usado isoladamente para diagnóstico, indicação terapêutica ou perícia. Não há pontos de corte diagnósticos nem classificação de gravidade validada.
 - **Opções de resposta:** `0=0 — não ocorreu`  `1=1 — ocorreu, sem mudar a atividade`  `2=2 — exigiu ajuste simples`  `3=3 — interrompeu parcialmente`  `4=4 — impediu participação ou causou forte sofrimento`  `5=NO — não observado/não aplicável/informação insuficiente`
-- **Itens:** 24  |  **Domínios:** 4
+- **Itens:** 24  |  **Domínios:** 4  |  **Direção do escore:** maior = pior
 
 ### Domínio: A. Sensibilidade e evitação de estímulos
 1. Ruído comum do ambiente levou a cobrir os ouvidos, afastar-se ou interromper o que estava fazendo.
@@ -11226,7 +11226,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–216 meses  |  **Respondente:** pais, professor, clinico  |  **Tempo:** 15–20 min
 - **Descrição:** Instrumento autoral experimental do Dr. Jadson Fraga. 52 itens (13 domínios × 4, 0–3) que organizam, em matriz única, dados de família, escola e consulta sobre desenvolvimento, linguagem, interação social, atenção, funções executivas, cognição, aprendizagem, sono, epilepsia, autorregulação, comportamento, sofrimento emocional e funcionalidade. Ficha técnica — sem validação publicada.
 - **Opções de resposta:** `0=0 — ausente/esperado`  `1=1 — leve/ocasional`  `2=2 — moderado/frequente`  `3=3 — intenso ou com prejuízo importante`
-- **Itens:** 52  |  **Domínios:** 13
+- **Itens:** 52  |  **Domínios:** 13  |  **Direção do escore:** maior = pior
 
 ### Domínio: Desenvolvimento e autonomia
 1. Apresenta atraso ou imaturidade em habilidades esperadas para a idade.
@@ -11323,7 +11323,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–216 meses  |  **Respondente:** pais, professor, clinico, autoaplicavel  |  **Tempo:** 15–20 min
 - **Descrição:** Escala autoral experimental de 50 itens em 10 domínios para integrar desenvolvimento, linguagem, interação social, cognição, aprendizagem, funções executivas, sono, eventos paroxísticos, sofrimento emocional e funcionalidade.
 - **Opções de resposta:** `0=0 — ausente/esperado`  `1=1 — leve/ocasional`  `2=2 — moderado/frequente`  `3=3 — intenso ou com prejuízo importante`
-- **Itens:** 50  |  **Domínios:** 10
+- **Itens:** 50  |  **Domínios:** 10  |  **Direção do escore:** maior = pior
 
 ### Domínio: Desenvolvimento e autonomia
 1. Apresenta atraso ou imaturidade em habilidades esperadas para a idade.
@@ -11412,7 +11412,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 84–204 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 10 min
 - **Descrição:** 21 itens de triagem de sintomas obsessivo-compulsivos em crianças e adolescentes. Versão pediátrica do OCI.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Sempre`
-- **Itens:** 21  |  **Domínios:** 6
+- **Itens:** 21  |  **Domínios:** 6  |  **Direção do escore:** maior = pior
 
 ### Domínio: Lavar/limpar
 1. Lavo as mãos mais vezes ou mais tempo que o necessário
@@ -11462,7 +11462,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–215 meses  |  **Respondente:** pais, professor, clinico  |  **Tempo:** 12–18 min
 - **Descrição:** Escala autoral experimental de 45 itens para organizar desenvolvimento, comunicação, cognição, aprendizagem, funções executivas, autorregulação, sofrimento emocional, sono, epilepsia e funcionalidade.
 - **Opções de resposta:** `0=0 — ausente/esperado`  `1=1 — leve/ocasional`  `2=2 — moderado/frequente`  `3=3 — intenso ou com prejuízo importante`
-- **Itens:** 45  |  **Domínios:** 9
+- **Itens:** 45  |  **Domínios:** 9  |  **Direção do escore:** maior = pior
 
 ### Domínio: Desenvolvimento e autonomia
 1. Apresenta atraso ou imaturidade em habilidades esperadas para a idade.
@@ -11544,7 +11544,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 60–216 meses  |  **Respondente:** pais  |  **Tempo:** 5 min
 - **Descrição:** 11 itens respondidos pelos pais sobre sinais de mania na última semana. Versão sem ponderação: leitura descritiva para seguimento.
 - **Opções de resposta:** `0=0 · Ausente`  `1=1 · Leve`  `2=2 · Moderado`  `3=3 · Acentuado`  `4=4 · Grave`
-- **Itens:** 11  |  **Domínios:** 1
+- **Itens:** 11  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Humor eufórico ou exageradamente alegre, fora do contexto
 2. Energia e atividade aumentadas, não para
@@ -11571,7 +11571,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 6–72 meses  |  **Respondente:** pais, professor, clinico  |  **Tempo:** Observação passiva
 - **Descrição:** Escala passiva de competência (0–4): quanto maior, melhor a espontaneidade, estabilidade e generalização funcional. Lente observacional aplicada a família, escola e consulta. Faixa etária estimada por marcos do neurodesenvolvimento: 6–72 meses.
 - **Opções de resposta:** `0=Nunca ou raramente`  `1=Às vezes (1–2x/semana)`  `2=Frequentemente (3–4x/semana)`  `3=Quase sempre (diariamente)`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Recusa ou custa a aceitar novas texturas (só aceita amassados/líquidos além da idade típica).
 2. Engole pedaços quase sem mastigar ou 'amassa' com a língua em vez de mastigar.
@@ -11598,7 +11598,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–96 meses  |  **Respondente:** pais, professor, clinico  |  **Tempo:** Observação passiva
 - **Descrição:** Escala passiva de competência (0–4): quanto maior, melhor a espontaneidade, estabilidade e generalização funcional. Lente observacional aplicada a família, escola e consulta. Faixa etária estimada por marcos do neurodesenvolvimento: 0–96 meses.
 - **Opções de resposta:** `0=Nunca ou raramente`  `1=Às vezes (1–2x/semana)`  `2=Frequentemente (3–4x/semana)`  `3=Quase sempre (diariamente)`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. A sustentação de cabeça e tronco parece atrasada ou frouxa para a idade.
 2. Senta ou fica em pé de forma instável, precisando de apoio além do esperado.
@@ -11625,7 +11625,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 6–216 meses  |  **Respondente:** pais, professor, clinico  |  **Tempo:** Observação passiva
 - **Descrição:** Escala passiva de competência (0–4): quanto maior, melhor a espontaneidade, estabilidade e generalização funcional. Lente observacional aplicada a família, escola e consulta. Faixa etária estimada por marcos do neurodesenvolvimento: 6–216 meses.
 - **Opções de resposta:** `0=Nunca ou raramente`  `1=Às vezes (1–2x/semana)`  `2=Frequentemente (3–4x/semana)`  `3=Quase sempre (diariamente)`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. O corpo fica agitado mesmo em momentos de calma (mexe pernas, mãos, tronco sem parar).
 2. Precisa se levantar, andar ou buscar movimento o tempo todo.
@@ -11652,7 +11652,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 18–72 meses  |  **Respondente:** pais, professor, clinico  |  **Tempo:** Observação passiva
 - **Descrição:** Escala passiva de competência (0–4): quanto maior, melhor a espontaneidade, estabilidade e generalização funcional. Lente observacional aplicada a família, escola e consulta. Faixa etária estimada por marcos do neurodesenvolvimento: 18–72 meses.
 - **Opções de resposta:** `0=Nunca ou raramente`  `1=Às vezes (1–2x/semana)`  `2=Frequentemente (3–4x/semana)`  `3=Quase sempre (diariamente)`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Escapes de urina durante o dia depois de já ter desfraldado.
 2. Faz xixi na cama durante o sono em idade em que os colegas já ficam secos.
@@ -11679,7 +11679,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 6–24 meses  |  **Respondente:** pais  |  **Tempo:** 5–10 min
 - **Descrição:** Questionário para problemas de alimentação em lactentes 6-24 meses (23 itens).
 - **Opções de resposta:** `0=Nunca ou raramente`  `1=Às vezes (1–2x/semana)`  `2=Frequentemente (3–4x/semana)`  `3=Quase sempre (diariamente)`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Recusa a refeição: vira o rosto, fecha a boca, empurra a colher.
 2. Aceita pouquíssima variedade de alimentos para a idade.
@@ -11706,7 +11706,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–216 meses  |  **Respondente:** autoaplicavel, pais  |  **Tempo:** 5 min
 - **Descrição:** 6 perguntas sobre dias de escola, casa e lazer perdidos ou prejudicados pela cefaleia nos últimos 3 meses.
 - **Opções de resposta:** `0=—`
-- **Itens:** 6  |  **Domínios:** 2
+- **Itens:** 6  |  **Domínios:** 2  |  **Direção do escore:** maior = pior
 
 ### Domínio: Escola
 1. Quantos dias inteiros de aula você perdeu por causa da dor de cabeça?
@@ -11731,7 +11731,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 132–216 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 1 min
 - **Descrição:** Triagem de primeiro passo para depressão com 2 itens (humor deprimido e anedonia) nas últimas 2 semanas. Se positivo, aplicar PHQ-9/PHQ-A completo.
 - **Opções de resposta:** `0=Nenhuma vez`  `1=Vários dias`  `2=Mais da metade dos dias`  `3=Quase todos os dias`
-- **Itens:** 2  |  **Domínios:** 1
+- **Itens:** 2  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Pouco interesse ou pouco prazer em fazer as coisas
 2. Sentir-se para baixo, deprimido(a) ou sem esperança
@@ -11750,7 +11750,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–216 meses  |  **Respondente:** pais  |  **Tempo:** 3 min
 - **Descrição:** 9 perguntas sobre o próprio cuidador nas últimas 2 semanas. A saúde mental de quem cuida interfere no tratamento da criança. O item 9 aciona alerta de segurança.
 - **Opções de resposta:** `0=Nenhuma vez`  `1=Vários dias`  `2=Mais da metade dos dias`  `3=Quase todos os dias`
-- **Itens:** 9  |  **Domínios:** 1
+- **Itens:** 9  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Pouco interesse ou pouco prazer em fazer as coisas
 2. Sentir-se para baixo, deprimido(a) ou sem esperança
@@ -11779,7 +11779,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 12–71 meses  |  **Respondente:** clinico, pais  |  **Tempo:** 20–30 min
 - **Descrição:** Ficha observacional para 12 meses a 5 anos e 11 meses, organizada para consulta, escola, terapia ou avaliação estruturada. Abrange atenção compartilhada, comunicação social, brincadeira, criatividade lúdica, interesses incomuns, rigidez, sensorialidade, seletividade alimentar, funcionalidade e fechamento por pervasividade, impacto e confiabilidade.
 - **Opções de resposta:** `0=0 · Adequado`  `1=1 · Discreto`  `2=2 · Claro / moderado`  `3=3 · Intenso / importante`  `4=NO · Não observado`  `5=NA · Não aplicável`
-- **Itens:** 80  |  **Domínios:** 8
+- **Itens:** 80  |  **Domínios:** 8  |  **Direção do escore:** maior = pior
 
 ### Domínio: Comunicação social e reciprocidade
 1. Responde ao nome de forma consistente e socialmente dirigida
@@ -11890,7 +11890,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 144–216 meses  |  **Respondente:** clinico, pais, autoaplicavel  |  **Tempo:** 20–30 min
 - **Descrição:** Ficha observacional para 12 a 19 anos, com foco em reciprocidade social, amizades, julgamento social, vulnerabilidade/ingenuidade, camuflagem, flexibilidade, tolerância à incerteza, sensorialidade, autonomia, funcionalidade escolar/global, sofrimento, exaustão social e necessidade de plano de proteção quando indicado.
 - **Opções de resposta:** `0=0 · Adequado`  `1=1 · Discreto`  `2=2 · Claro / moderado`  `3=3 · Intenso / importante`  `4=NO · Não observado`  `5=NA · Não aplicável`
-- **Itens:** 80  |  **Domínios:** 9
+- **Itens:** 80  |  **Domínios:** 9  |  **Direção do escore:** maior = pior
 
 ### Domínio: Comunicação social e reciprocidade
 1. Inicia interação social espontânea com pares ou adultos
@@ -12003,7 +12003,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 72–155 meses  |  **Respondente:** clinico, pais, professor  |  **Tempo:** 20–30 min
 - **Descrição:** Ficha observacional para 6 anos a 12 anos e 11 meses, com itens de pragmática, piadas/duplo sentido, amizades, regras, flexibilidade, hiperfoco, sobrecarga sensorial, seletividade alimentar, autonomia, mediação de adultos, sofrimento social, bullying/isolamento e prejuízo em múltiplos contextos.
 - **Opções de resposta:** `0=0 · Adequado`  `1=1 · Discreto`  `2=2 · Claro / moderado`  `3=3 · Intenso / importante`  `4=NO · Não observado`  `5=NA · Não aplicável`
-- **Itens:** 80  |  **Domínios:** 8
+- **Itens:** 80  |  **Domínios:** 8  |  **Direção do escore:** maior = pior
 
 ### Domínio: Comunicação social e reciprocidade
 1. Inicia interação social espontânea
@@ -12114,7 +12114,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–216 meses  |  **Respondente:** professor, clinico  |  **Tempo:** 10–20 min
 - **Descrição:** Ficha complementar para escola ou terapia com foco em socialização, reciprocidade, pragmática, rotina, regras, hiperfoco, sensorialidade, funcionalidade e forças observadas em contexto real. Útil para documentar pervasividade e impacto funcional fora do consultório.
 - **Opções de resposta:** `0=Nunca ou raramente`  `1=Às vezes (1–2x/semana)`  `2=Frequentemente (3–4x/semana)`  `3=Quase sempre (diariamente)`
-- **Itens:** 10  |  **Domínios:** 2
+- **Itens:** 10  |  **Domínios:** 2  |  **Direção do escore:** maior = pior
 
 ### Domínio: Interação no grupo
 1. Fica à margem das brincadeiras coletivas ou interage só com adultos.
@@ -12146,7 +12146,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 12–216 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 10–20 min
 - **Descrição:** Ficha complementar por paciente para colher exemplos familiares de história inicial, regressão, linguagem, atenção compartilhada, socialização, brincadeira, rigidez, RRB, sensorialidade, funcionalidade, diferenciais, camuflagem e evolução. Não substitui avaliação diagnóstica formal.
 - **Opções de resposta:** `0=Nunca ou raramente`  `1=Às vezes (1–2x/semana)`  `2=Frequentemente (3–4x/semana)`  `3=Quase sempre (diariamente)`
-- **Itens:** 10  |  **Domínios:** 2
+- **Itens:** 10  |  **Domínios:** 2  |  **Direção do escore:** maior = pior
 
 ### Domínio: Comunicação e reciprocidade em casa
 1. Não olha ou olha pouco nos olhos durante interações afetivas.
@@ -12178,7 +12178,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–216 meses  |  **Respondente:** pais, professor, clinico  |  **Tempo:** 15–20 min
 - **Descrição:** Instrumento autoral experimental do Dr. Jadson Fraga. 72 itens (12 domínios × 6, 0–3) pensado como ponte entre família, escola e consultório, integrando desenvolvimento, linguagem, cognição, aprendizagem, atenção, funções executivas, sono, epilepsia, autorregulação, comportamento, sofrimento emocional e funcionalidade. Ficha técnica — sem validação publicada.
 - **Opções de resposta:** `0=0 — ausente/esperado`  `1=1 — leve/ocasional`  `2=2 — moderado/frequente`  `3=3 — intenso ou com prejuízo importante`
-- **Itens:** 72  |  **Domínios:** 12
+- **Itens:** 72  |  **Domínios:** 12  |  **Direção do escore:** maior = pior
 
 ### Domínio: Desenvolvimento e autonomia
 1. Apresenta atraso ou imaturidade em habilidades esperadas para a idade.
@@ -12293,7 +12293,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 12–216 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 5 min
 - **Descrição:** 20 itens comportamentais para avaliação de dor em crianças com deficiência intelectual ou comunicação limitada.
 - **Opções de resposta:** `0=Nada (0)`  `1=Pouco (1)`  `2=Bastante (2)`  `3=Muito (3)`
-- **Itens:** 15  |  **Domínios:** 1
+- **Itens:** 15  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Choramingou, gemeu ou vocalizou sofrimento
 2. Ficou agitado ou inquieto sem se acalmar
@@ -12326,7 +12326,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 144–216 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 10 min
 - **Descrição:** 12 itens de triagem de risco ultra-alto para psicose em adolescentes. Baseado nos critérios do SIPS/SOPS.
 - **Opções de resposta:** `0=Discordo totalmente`  `1=Discordo`  `2=Discordo um pouco`  `3=Nem concordo nem discordo`  `4=Concordo um pouco`  `5=Concordo`  `6=Concordo totalmente`
-- **Itens:** 12  |  **Domínios:** 1
+- **Itens:** 12  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Já achei que algo estranho ou inexplicável estava acontecendo comigo ou ao meu redor.
 2. Já me perguntei se as coisas que vejo ou ouço são reais ou só da minha cabeça.
@@ -12356,7 +12356,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 24–215 meses  |  **Respondente:** pais, professor, clinico, autoaplicavel  |  **Tempo:** 15–20 min
 - **Descrição:** Escala autoral experimental de 60 itens em 12 domínios, com leitura por domínio, índice global e alertas de gravidade para uso clínico, escolar e familiar.
 - **Opções de resposta:** `0=0 — ausente/esperado`  `1=1 — leve/ocasional`  `2=2 — moderado/frequente`  `3=3 — intenso ou com prejuízo importante`
-- **Itens:** 60  |  **Domínios:** 12
+- **Itens:** 60  |  **Domínios:** 12  |  **Direção do escore:** maior = pior
 
 ### Domínio: Desenvolvimento e autonomia
 1. Apresenta atraso ou imaturidade em habilidades esperadas para a idade.
@@ -12459,7 +12459,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–192 meses  |  **Respondente:** pais  |  **Tempo:** 5 min
 - **Descrição:** Triagem breve de problemas psicossociais em pediatria.
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`
-- **Itens:** 17  |  **Domínios:** 3
+- **Itens:** 17  |  **Domínios:** 3  |  **Direção do escore:** maior = pior
 
 ### Domínio: Internalizante
 1. Tristeza, desanimo ou preocupação persistente
@@ -12500,7 +12500,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 48–192 meses  |  **Respondente:** pais  |  **Tempo:** 5 min
 - **Descrição:** Triagem psicossocial ampla por 35 itens respondidos pelos pais (últimas semanas), com subescalas de internalização, externalização e atenção. Versão completa do PSC-17. Escala de domínio público (Massachusetts General Hospital).
 - **Opções de resposta:** `0=Nunca`  `1=Às vezes`  `2=Frequentemente`
-- **Itens:** 35  |  **Domínios:** 1
+- **Itens:** 35  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Reclama de dores
 2. Passa mais tempo sozinho(a)
@@ -12553,7 +12553,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 6–216 meses  |  **Respondente:** pais  |  **Tempo:** 8–12 min
 - **Descrição:** Triagem autoral do processamento sensorial no dia a dia em 4 padrões — busca sensorial, evitação/defensividade, hipersensibilidade e baixo registro — respondida pelos pais. Cobre o construto de perfil sensorial (ex.: Sensory Profile 2) em formato de triagem; não substitui avaliação padronizada de integração sensorial.
 - **Opções de resposta:** `0=Nunca ou raramente`  `1=Às vezes (1–2x/semana)`  `2=Frequentemente (3–4x/semana)`  `3=Quase sempre (diariamente)`
-- **Itens:** 16  |  **Domínios:** 4
+- **Itens:** 16  |  **Domínios:** 4  |  **Direção do escore:** maior = pior
 
 ### Domínio: Busca sensorial
 1. Busca movimento intenso: gira, pula, balança-se, escala, se joga.
@@ -12595,7 +12595,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 120–216 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 3 min
 - **Descrição:** Autorrelato das sensações que antecedem os tiques (9 itens + 1 de controle). Ajuda a planejar a terapia comportamental e a acompanhá-la.
 - **Opções de resposta:** `0=Nem um pouco`  `1=Um pouco`  `2=Bastante`  `3=Muito`
-- **Itens:** 10  |  **Domínios:** 2
+- **Itens:** 10  |  **Domínios:** 2  |  **Direção do escore:** maior = pior
 
 ### Domínio: Sensação antes do tique (itens 1–9)
 1. Pouco antes do tique, sinto uma coceira por dentro.
@@ -12624,7 +12624,7 @@ Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.
 - **Faixa etária:** 0–216 meses  |  **Respondente:** pais  |  **Tempo:** 5 min
 - **Descrição:** Triagem autoral da sobrecarga e do estresse do cuidador no cuidado da criança/adolescente — exaustão, rede de apoio, impacto na rotina e na relação. Cobre o construto de estresse parental (ex.: PSI) em formato breve; resultado orienta suporte à família, não é diagnóstico.
 - **Opções de resposta:** `0=Nunca ou raramente`  `1=Às vezes (1–2x/semana)`  `2=Frequentemente (3–4x/semana)`  `3=Quase sempre (diariamente)`
-- **Itens:** 12  |  **Domínios:** 2
+- **Itens:** 12  |  **Domínios:** 2  |  **Direção do escore:** maior = pior
 
 ### Domínio: Como você tem se sentido
 1. Sinto-me esgotado(a) física ou emocionalmente pelo cuidado.
@@ -12678,7 +12678,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 → Compare: Se pais marcam 15 mas criança marca 40 = criança está mascando
 → Confie mais no autorrelato em adolescentes
 - **Opções de resposta:** `0=Nunca/quase nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 30  |  **Domínios:** 6
+- **Itens:** 30  |  **Domínios:** 6  |  **Direção do escore:** maior = pior
 
 ### Domínio: Ansiedade de separação
 1. Sofrimento ao separar-se de cuidadores
@@ -12738,7 +12738,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 48–216 meses  |  **Respondente:** clinico  |  **Tempo:** 2 min
 - **Descrição:** Versão revisada do FLACC para crianças com deficiência intelectual ou incapacidades comunicativas.
 - **Opções de resposta:** `0=0 - ausente`  `1=1 - leve/moderado`  `2=2 - claro/intenso`
-- **Itens:** 5  |  **Domínios:** 1
+- **Itens:** 5  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Face em relação ao basal
 2. Pernas ou postura em relação ao basal
@@ -12762,7 +12762,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 60–215 meses  |  **Respondente:** pais, professor  |  **Tempo:** 5–8 min
 - **Descrição:** Instrumento clínico autoral de 18 itens para acompanhar cansaço, queda de rendimento, necessidade de pausas, participação e tempo de recuperação em casa, escola, terapias e vida social. A fonte admite autorrelato assistido a partir de aproximadamente 12 anos quando houver compreensão adequada; esse modo não é oferecido automaticamente pelo filtro.
 - **Opções de resposta:** `0=0 — Ausente / dentro do esperado; sem impacto perceptível`  `1=1 — Leve; exige pequeno ajuste`  `2=2 — Moderado; frequente ou exige pausas/ajuda; reduz participação`  `3=3 — Intenso; interrompe atividades ou exige recuperação prolongada`  `4=N/O — Não observado / informação insuficiente`
-- **Itens:** 18  |  **Domínios:** 4
+- **Itens:** 18  |  **Domínios:** 4  |  **Direção do escore:** maior = pior
 
 ### Domínio: A. Energia e arranque do dia
 1. Precisa de esforço incomum para levantar e começar as atividades do dia, mesmo quando teve oportunidade adequada de dormir.
@@ -12803,7 +12803,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 24–179 meses  |  **Respondente:** pais  |  **Tempo:** Não aferido
 - **Descrição:** monitorar variedade alimentar, rigidez/sensibilidade e impacto das refeições na rotina da criança e da família Janela: últimos 7 dias. Achados de mastigação, organização oral, progressão de consistências ou deglutição exigem avaliação clínica própria e não devem ser reduzidos a seletividade alimentar. Instrumento clínico autoral de monitorização NeuroPed SDG. Não é teste psicométrico validado e não deve ser usado isoladamente para diagnóstico, indicação terapêutica ou perícia. Não há pontos de corte diagnósticos nem classificação de gravidade validada.
 - **Opções de resposta:** `0=0 — não ocorreu/sem dificuldade`  `1=1 — leve ou ocasional`  `2=2 — frequente ou com impacto`  `3=3 — muito frequente/intenso ou difícil de contornar`
-- **Itens:** 12  |  **Domínios:** 3
+- **Itens:** 12  |  **Domínios:** 3  |  **Direção do escore:** maior = pior
 
 ### Domínio: Repertório/rigidez
 1. Aceita um repertório de alimentos muito estreito para a rotina da família.
@@ -12836,7 +12836,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 60–216 meses  |  **Respondente:** clinico  |  **Tempo:** 10 min
 - **Descrição:** 10 itens de exame (marcha, rigidez, toque glabelar, tremor, salivação) para parkinsonismo induzido por antipsicótico.
 - **Opções de resposta:** `0=0 · Normal`  `1=1 · Leve`  `2=2 · Moderado`  `3=3 · Acentuado`  `4=4 · Extremo`
-- **Itens:** 10  |  **Domínios:** 1
+- **Itens:** 10  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Marcha
 2. Queda dos braços
@@ -12864,7 +12864,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 36–216 meses  |  **Respondente:** autoaplicavel, pais  |  **Tempo:** 10 min
 - **Descrição:** Avalia 6 domínios de ansiedade: separação, social, obsessões, pânico, generalizada, medo de lesão.
 - **Opções de resposta:** `0=Nunca/quase nunca`  `1=Às vezes`  `2=Frequentemente`  `3=Quase sempre`
-- **Itens:** 18  |  **Domínios:** 6
+- **Itens:** 18  |  **Domínios:** 6  |  **Direção do escore:** maior = pior
 
 ### Domínio: Separação
 1. Medo intenso de ficar longe dos cuidadores
@@ -12912,7 +12912,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 132–216 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 2 min
 - **Descrição:** Triagem rápida de transtornos alimentares — 5 perguntas sim/não. ≥2 'sim' sugere avaliação adicional.
 - **Opções de resposta:** `0=Não`  `1=Sim`
-- **Itens:** 5  |  **Domínios:** 1
+- **Itens:** 5  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Você se faz vomitar porque se sente desconfortavelmente cheio(a)?
 2. Você se preocupa por ter perdido o controle sobre o quanto come?
@@ -12934,7 +12934,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 36–215 meses  |  **Respondente:** pais  |  **Tempo:** Não aferido
 - **Descrição:** Monitor breve de sono (12 itens). O VIGIA-SD 20 é a opção ampliada desta linhagem. monitorar rotina de sono, continuidade da noite e impacto do sono no funcionamento durante o dia Janela: últimos 7 dias. Selecionar manualmente quando se desejar um monitor breve. Evitar aplicação simultânea com o VIGIA-SD 20 no mesmo ponto temporal, salvo justificativa clínica. Instrumento clínico autoral de monitorização NeuroPed SDG. Não é teste psicométrico validado e não deve ser usado isoladamente para diagnóstico, indicação terapêutica ou perícia. Não há pontos de corte diagnósticos nem classificação de gravidade validada.
 - **Opções de resposta:** `0=0 — não ocorreu/sem dificuldade`  `1=1 — leve ou ocasional`  `2=2 — frequente ou com impacto`  `3=3 — muito frequente/intenso ou difícil de contornar`
-- **Itens:** 12  |  **Domínios:** 3
+- **Itens:** 12  |  **Domínios:** 3  |  **Direção do escore:** maior = pior
 
 ### Domínio: Início/rotina
 1. A rotina para dormir se prolonga ou vira negociação repetida com o adulto.
@@ -12967,7 +12967,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 24–215 meses  |  **Respondente:** pais, professor, clinico, autoaplicavel  |  **Tempo:** 10–15 min
 - **Descrição:** Instrumento autoral experimental do Dr. Jadson Fraga. 50 itens (0–3) em 10 domínios que organizam sinais de desenvolvimento, comportamento, cognição, linguagem, sono, epilepsia, aprendizagem, autorregulação, funções executivas, sofrimento emocional e funcionalidade — para triagem, priorização, comparação evolutiva e apoio ao laudo. Ficha técnica — sem validação publicada.
 - **Opções de resposta:** `0=0 — ausente/esperado`  `1=1 — leve/ocasional`  `2=2 — moderado/frequente`  `3=3 — intenso ou com prejuízo importante`
-- **Itens:** 50  |  **Domínios:** 10
+- **Itens:** 50  |  **Domínios:** 10  |  **Direção do escore:** maior = pior
 
 ### Domínio: Desenvolvimento e autonomia
 1. Apresenta atraso ou imaturidade em habilidades esperadas para a idade.
@@ -13056,7 +13056,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 36–216 meses  |  **Respondente:** pais, professor, clinico  |  **Tempo:** 15–20 min
 - **Descrição:** Instrumento autoral experimental do Dr. Jadson Fraga. 60 itens (12 domínios × 5, 0–3) que integram desenvolvimento, linguagem, sociabilidade, atenção, funções executivas, cognição, aprendizagem, sono, epilepsia, autorregulação sensorial, sofrimento emocional e funcionalidade, em matriz prática para consultório, laudo, escola e família. Ficha técnica — sem validação publicada.
 - **Opções de resposta:** `0=0 — ausente/esperado`  `1=1 — leve/ocasional`  `2=2 — moderado/frequente`  `3=3 — intenso ou com prejuízo importante`
-- **Itens:** 60  |  **Domínios:** 12
+- **Itens:** 60  |  **Domínios:** 12  |  **Direção do escore:** maior = pior
 
 ### Domínio: Desenvolvimento e autonomia
 1. Apresenta atraso ou imaturidade em habilidades esperadas para a idade.
@@ -13159,7 +13159,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 24–215 meses  |  **Respondente:** pais, professor, clinico, autoaplicavel  |  **Tempo:** 15–20 min
 - **Descrição:** Escala autoral experimental de 60 itens em 12 domínios, criada para integrar desenvolvimento, linguagem, cognição, atenção, funções executivas, comportamento, sono, eventos paroxísticos, sofrimento emocional e funcionalidade entre consultório, família e escola.
 - **Opções de resposta:** `0=0 — ausente/esperado`  `1=1 — leve/ocasional`  `2=2 — moderado/frequente`  `3=3 — intenso ou com prejuízo importante`
-- **Itens:** 60  |  **Domínios:** 12
+- **Itens:** 60  |  **Domínios:** 12  |  **Direção do escore:** maior = pior
 
 ### Domínio: Desenvolvimento e autonomia
 1. Apresenta atraso ou imaturidade em habilidades esperadas para a idade.
@@ -13262,7 +13262,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 36–216 meses  |  **Respondente:** pais  |  **Tempo:** 5 min
 - **Descrição:** Gravidade das crises e frequência.
 - **Opções de resposta:** `0=Não acontece / muito leve`  `1=Leve`  `2=Moderado`  `3=Intenso / muito frequente`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Frequência das crises no período.
 2. Duração de cada crise.
@@ -13289,7 +13289,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 72–216 meses  |  **Respondente:** pais, professor  |  **Tempo:** 5 min
 - **Descrição:** Escala de TDAH baseada em pontos fortes e fracos, com distribuição normal (evita efeito teto do SNAP). 18 itens do DSM (desatenção e hiperatividade/impulsividade) numa escala de 7 pontos de -3 a +3. Domínio público (Swanson).
 - **Opções de resposta:** `0=Muito acima da média`  `1=Acima da média`  `2=Um pouco acima`  `3=Na média`  `4=Um pouco abaixo`  `5=Abaixo da média`  `6=Muito abaixo da média`
-- **Itens:** 18  |  **Domínios:** 2
+- **Itens:** 18  |  **Domínios:** 2  |  **Direção do escore:** maior = pior
 
 ### Domínio: Atenção (itens 1–9)
 1. Presta atenção aos detalhes e evita erros por descuido
@@ -13326,7 +13326,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 1–17 meses  |  **Respondente:** pais  |  **Tempo:** 2–3 min
 - **Descrição:** Sintomas comportamentais e emocionais do bebê em três subescalas de 4 itens (inflexibilidade, irritabilidade, dificuldade com rotinas), respondidos pelos pais. Texto oficial em português; triagem.
 - **Opções de resposta:** `0=Não`  `1=Um pouco`  `2=Muito`
-- **Itens:** 12  |  **Domínios:** 3
+- **Itens:** 12  |  **Domínios:** 3  |  **Direção do escore:** maior = pior
 
 ### Domínio: Subescala 1 (itens 1–4) — Inflexibilidade
 1. Sua criança fica incomodada com novas pessoas?
@@ -13359,7 +13359,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 12–14 meses  |  **Respondente:** pais  |  **Tempo:** 3–5 min
 - **Descrição:** Marcos do desenvolvimento (cognição, linguagem e motricidade) do SWYC, formulário de 12 meses (12 a 14 meses completos), respondido pelos pais/cuidadores. Texto oficial em português; triagem, sem diagnóstico.
 - **Opções de resposta:** `0=Ainda não`  `1=Um pouco`  `2=Muito`
-- **Itens:** 10  |  **Domínios:** 1
+- **Itens:** 10  |  **Domínios:** 1  |  **Direção do escore:** maior = melhor
 
 1. Pega alimento com a mão e come
 2. Puxa para ficar de pé
@@ -13385,7 +13385,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 15–17 meses  |  **Respondente:** pais  |  **Tempo:** 3–5 min
 - **Descrição:** Marcos do desenvolvimento (cognição, linguagem e motricidade) do SWYC, formulário de 15 meses (15 a 17 meses completos), respondido pelos pais/cuidadores. Texto oficial em português; triagem, sem diagnóstico.
 - **Opções de resposta:** `0=Ainda não`  `1=Um pouco`  `2=Muito`
-- **Itens:** 10  |  **Domínios:** 1
+- **Itens:** 10  |  **Domínios:** 1  |  **Direção do escore:** maior = melhor
 
 1. Chama você de "mama" ou "papa" ou nome parecido
 2. Olha ao redor quando você diz coisas como "Onde está sua mamadeira?" ou "Onde está seu cobertor?"
@@ -13411,7 +13411,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 18–22 meses  |  **Respondente:** pais  |  **Tempo:** 3–5 min
 - **Descrição:** Marcos do desenvolvimento (cognição, linguagem e motricidade) do SWYC, formulário de 18 meses (18 a 22 meses completos), respondido pelos pais/cuidadores. Texto oficial em português; triagem, sem diagnóstico.
 - **Opções de resposta:** `0=Ainda não`  `1=Um pouco`  `2=Muito`
-- **Itens:** 10  |  **Domínios:** 1
+- **Itens:** 10  |  **Domínios:** 1  |  **Direção do escore:** maior = melhor
 
 1. Corre (sem ajuda)
 2. Sobe escadas com ajuda de uma pessoa
@@ -13437,7 +13437,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 23–28 meses  |  **Respondente:** pais  |  **Tempo:** 3–5 min
 - **Descrição:** Marcos do desenvolvimento (cognição, linguagem e motricidade) do SWYC, formulário de 24 meses (23 a 28 meses completos), respondido pelos pais/cuidadores. Texto oficial em português; triagem, sem diagnóstico.
 - **Opções de resposta:** `0=Ainda não`  `1=Um pouco`  `2=Muito`
-- **Itens:** 10  |  **Domínios:** 1
+- **Itens:** 10  |  **Domínios:** 1  |  **Direção do escore:** maior = melhor
 
 1. Fala o nome de pelo menos 5 partes do corpo como nariz, mão ou barriga
 2. Sobe escadas sozinho apoiando com as mãos na parede ou no corrimão
@@ -13463,7 +13463,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 1–3 meses  |  **Respondente:** pais  |  **Tempo:** 3–5 min
 - **Descrição:** Marcos do desenvolvimento (cognição, linguagem e motricidade) do SWYC, formulário de 2 meses (1 a 3 meses completos), respondido pelos pais/cuidadores. Texto oficial em português; triagem, sem diagnóstico.
 - **Opções de resposta:** `0=Ainda não`  `1=Um pouco`  `2=Muito`
-- **Itens:** 10  |  **Domínios:** 1
+- **Itens:** 10  |  **Domínios:** 1  |  **Direção do escore:** maior = melhor
 
 1. Faz sons que mostram para você que ele ou ela está feliz ou chateado
 2. Parece feliz em ver você
@@ -13489,7 +13489,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 29–34 meses  |  **Respondente:** pais  |  **Tempo:** 3–5 min
 - **Descrição:** Marcos do desenvolvimento (cognição, linguagem e motricidade) do SWYC, formulário de 30 meses (29 a 34 meses completos), respondido pelos pais/cuidadores. Texto oficial em português; triagem, sem diagnóstico.
 - **Opções de resposta:** `0=Ainda não`  `1=Um pouco`  `2=Muito`
-- **Itens:** 10  |  **Domínios:** 1
+- **Itens:** 10  |  **Domínios:** 1  |  **Direção do escore:** maior = melhor
 
 1. Fala o nome de pelo menos uma cor
 2. Fala alguma coisa para chamar atenção das pessoas para o que ele/ela está fazendo
@@ -13515,7 +13515,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 35–46 meses  |  **Respondente:** pais  |  **Tempo:** 3–5 min
 - **Descrição:** Marcos do desenvolvimento (cognição, linguagem e motricidade) do SWYC, formulário de 36 meses (35 a 46 meses completos), respondido pelos pais/cuidadores. Texto oficial em português; triagem, sem diagnóstico.
 - **Opções de resposta:** `0=Ainda não`  `1=Um pouco`  `2=Muito`
-- **Itens:** 10  |  **Domínios:** 1
+- **Itens:** 10  |  **Domínios:** 1  |  **Direção do escore:** maior = melhor
 
 1. Fala com outras pessoas e é compreendida a maior parte do tempo
 2. Lava e seca as mãos sem ajuda (a criança não precisa abrir a torneira)
@@ -13541,7 +13541,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 47–58 meses  |  **Respondente:** pais  |  **Tempo:** 3–5 min
 - **Descrição:** Marcos do desenvolvimento (cognição, linguagem e motricidade) do SWYC, formulário de 48 meses (47 a 58 meses completos), respondido pelos pais/cuidadores. Texto oficial em português; triagem, sem diagnóstico.
 - **Opções de resposta:** `0=Ainda não`  `1=Um pouco`  `2=Muito`
-- **Itens:** 10  |  **Domínios:** 1
+- **Itens:** 10  |  **Domínios:** 1  |  **Direção do escore:** maior = melhor
 
 1. Compara coisas usando palavras como "maior" ou "menor"
 2. Responde perguntas como "o que você faz quando está frio?" ou "quando está com sono?"
@@ -13567,7 +13567,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 4–5 meses  |  **Respondente:** pais  |  **Tempo:** 3–5 min
 - **Descrição:** Marcos do desenvolvimento (cognição, linguagem e motricidade) do SWYC, formulário de 4 meses (4 a 5 meses completos), respondido pelos pais/cuidadores. Texto oficial em português; triagem, sem diagnóstico.
 - **Opções de resposta:** `0=Ainda não`  `1=Um pouco`  `2=Muito`
-- **Itens:** 10  |  **Domínios:** 1
+- **Itens:** 10  |  **Domínios:** 1  |  **Direção do escore:** maior = melhor
 
 1. Mantém a cabeça firme quando puxado para sentar
 2. Junta as mãos
@@ -13593,7 +13593,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 59–65 meses  |  **Respondente:** pais  |  **Tempo:** 3–5 min
 - **Descrição:** Marcos do desenvolvimento (cognição, linguagem e motricidade) do SWYC, formulário de 60 meses (59 a 65 meses completos), respondido pelos pais/cuidadores. Texto oficial em português; triagem, sem diagnóstico.
 - **Opções de resposta:** `0=Ainda não`  `1=Um pouco`  `2=Muito`
-- **Itens:** 10  |  **Domínios:** 1
+- **Itens:** 10  |  **Domínios:** 1  |  **Direção do escore:** maior = melhor
 
 1. Conta a história de um livro ou programa de TV
 2. Desenha formas simples como um círculo ou quadrado
@@ -13619,7 +13619,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 6–8 meses  |  **Respondente:** pais  |  **Tempo:** 3–5 min
 - **Descrição:** Marcos do desenvolvimento (cognição, linguagem e motricidade) do SWYC, formulário de 6 meses (6 a 8 meses completos), respondido pelos pais/cuidadores. Texto oficial em português; triagem, sem diagnóstico.
 - **Opções de resposta:** `0=Ainda não`  `1=Um pouco`  `2=Muito`
-- **Itens:** 10  |  **Domínios:** 1
+- **Itens:** 10  |  **Domínios:** 1  |  **Direção do escore:** maior = melhor
 
 1. Faz sons como "ga", "ma" ou "ba"
 2. Olha quando você o/a chama pelo nome
@@ -13645,7 +13645,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 9–11 meses  |  **Respondente:** pais  |  **Tempo:** 3–5 min
 - **Descrição:** Marcos do desenvolvimento (cognição, linguagem e motricidade) do SWYC, formulário de 9 meses (9 a 11 meses completos), respondido pelos pais/cuidadores. Texto oficial em português; triagem, sem diagnóstico.
 - **Opções de resposta:** `0=Ainda não`  `1=Um pouco`  `2=Muito`
-- **Itens:** 10  |  **Domínios:** 1
+- **Itens:** 10  |  **Domínios:** 1  |  **Direção do escore:** maior = melhor
 
 1. Levanta os braços para ser carregado
 2. Passa para a posição sentada sozinho(a)
@@ -13671,7 +13671,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 18–65 meses  |  **Respondente:** pais  |  **Tempo:** 3–5 min
 - **Descrição:** Sintomas comportamentais e emocionais do pré-escolar (18 itens, escore único) respondidos pelos pais. Texto oficial em português; triagem.
 - **Opções de resposta:** `0=Não`  `1=Um pouco`  `2=Muito`
-- **Itens:** 18  |  **Domínios:** 1
+- **Itens:** 18  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Sua criança... parece medrosa ou nervosa?
 2. Sua criança... parece triste ou infeliz?
@@ -13705,7 +13705,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 1–42 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 5–10 min
 - **Descrição:** Triagem autoral de marcos do desenvolvimento do lactente (motor, comunicação e interação/cognição) para 1 a 42 meses, respondida pelos pais com apoio do clínico. Cobre o construto de avaliação do desenvolvimento infantil precoce (ex.: Bayley-III) em formato de triagem — não substitui avaliação padronizada quando indicada.
 - **Opções de resposta:** `0=Ainda não`  `1=Às vezes / começando`  `2=Sim, já faz`
-- **Itens:** 12  |  **Domínios:** 3
+- **Itens:** 12  |  **Domínios:** 3  |  **Direção do escore:** maior = melhor
 
 ### Domínio: Motor
 1. Sustenta a cabeça firme e, depois, o tronco (conforme a fase).
@@ -13741,7 +13741,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 24–84 meses  |  **Respondente:** pais  |  **Tempo:** 8–10 min
 - **Descrição:** Triagem autoral de sintomas de estresse pós-traumático em pré-escolares (2–7 anos) relatados pelo cuidador, após evento potencialmente traumático: revivescência no brincar, pesadelos, evitação, mudanças de humor e hiperativação. Cobre o construto de TEPT pré-escolar heterorrelatado (ex.: TSCYC) em formato de triagem — não substitui avaliação especializada.
 - **Opções de resposta:** `0=Nunca ou raramente`  `1=Às vezes (1–2x/semana)`  `2=Frequentemente (3–4x/semana)`  `3=Quase sempre (diariamente)`
-- **Itens:** 12  |  **Domínios:** 3
+- **Itens:** 12  |  **Domínios:** 3  |  **Direção do escore:** maior = pior
 
 ### Domínio: Revivescência e evitação
 1. Brinca repetidamente de cenas ligadas ao evento, com tensão e sem prazer.
@@ -13777,7 +13777,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 120–216 meses  |  **Respondente:** autoaplicavel, pais, clinico  |  **Tempo:** Tempo clínico variável
 - **Descrição:** Instrumento clínico autoral de 20 itens para monitorar participação do adolescente no próprio cuidado, compreensão de informações essenciais, organização da rotina de saúde e transferência gradual e segura de responsabilidades.
 - **Opções de resposta:** `0=0 — Ainda não realiza`  `1=1 — Realiza com ajuda direta`  `2=2 — Realiza com apoio leve`  `3=3 — Realiza de forma independente e consistente`  `4=N/O — Não observado`  `5=N/A — Não aplicável`
-- **Itens:** 20  |  **Domínios:** 4
+- **Itens:** 20  |  **Domínios:** 4  |  **Direção do escore:** maior = melhor
 
 ### Domínio: A. Compreensão do próprio cuidado
 1. Consegue explicar, com as próprias palavras, o principal motivo do acompanhamento de saúde ou a condição que exige cuidado.
@@ -13820,7 +13820,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 72–216 meses  |  **Respondente:** pais, clinico  |  **Tempo:** 5–10 min
 - **Descrição:** Entrevista estruturada para rastreio de tiques em crianças de 6-18 anos.
 - **Opções de resposta:** `0=Nunca ou raramente`  `1=Às vezes (1–2x/semana)`  `2=Frequentemente (3–4x/semana)`  `3=Quase sempre (diariamente)`
-- **Itens:** 8  |  **Domínios:** 1
+- **Itens:** 8  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Movimentos repetidos, rápidos e involuntários simples (piscar, careta, encolher ombro, sacudir cabeça).
 2. Movimentos involuntários mais elaborados (tocar objetos, pular, agachar, gesto em sequência).
@@ -13847,7 +13847,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 0–216 meses  |  **Respondente:** clinico  |  **Tempo:** 15 min
 - **Descrição:** 48 itens de efeitos colaterais psiquiátricos, neurológicos, autonômicos e outros.
 - **Opções de resposta:** `0=0 - ausente`  `1=1 - leve`  `2=2 - moderado`  `3=3 - intenso`
-- **Itens:** 48  |  **Domínios:** 4
+- **Itens:** 48  |  **Domínios:** 4  |  **Direção do escore:** maior = pior
 
 ### Domínio: Psiquicos
 1. Sonolência/sedação
@@ -13921,7 +13921,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 36–215 meses  |  **Respondente:** pais  |  **Tempo:** Tempo clínico variável
 - **Descrição:** Instrumento clínico autoral de 24 itens para monitorização longitudinal de sintomas possivelmente associados a medicamentos em neuropediatria e neurodesenvolvimento. Organiza tolerabilidade, segurança e impacto funcional em seis domínios, comparando basal e seguimentos sem atribuir causalidade medicamentosa de forma isolada.
 - **Opções de resposta:** `0=0 — Não ocorreu`  `1=1 — Ocorreu, sem atrapalhar`  `2=2 — Atrapalhou ou exigiu ajuste`  `3=3 — Impacto forte ou necessidade de avaliação`  `4=N/O — Não observado / não aplicável`
-- **Itens:** 24  |  **Domínios:** 6
+- **Itens:** 24  |  **Domínios:** 6  |  **Direção do escore:** maior = pior
 
 ### Domínio: A. Sono, vigília e energia
 1. Ficou sonolento durante o dia ou mais difícil de acordar do que o habitual.
@@ -13972,7 +13972,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 24–215 meses  |  **Respondente:** pais  |  **Tempo:** Não aferido
 - **Descrição:** Monitor ampliado de sono e repercussão diurna (20 itens); opção automática preferencial da linhagem de sono. Monitorar rotina de sono, início, continuidade, recuperação e repercussão diurna, com comparação basal e seguimentos. Janela: últimos 7 dias. Instrumento clínico autoral de monitorização NeuroPed SDG. Não é teste psicométrico validado e não deve ser usado isoladamente para diagnóstico, indicação terapêutica ou perícia. Não há pontos de corte diagnósticos nem classificação de gravidade validada.
 - **Opções de resposta:** `0=0 — não ocorreu`  `1=1 — ocorreu em 1-2 dias/noites`  `2=2 — ocorreu em 3-4 dias/noites`  `3=3 — ocorreu em 5-7 dias/noites`
-- **Itens:** 20  |  **Domínios:** 4
+- **Itens:** 20  |  **Domínios:** 4  |  **Direção do escore:** maior = pior
 
 ### Domínio: A. Preparação e início do sono
 1. A rotina para dormir se prolonga por negociações, pedidos ou adiamentos repetidos.
@@ -14015,7 +14015,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 108–216 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 2 min
 - **Descrição:** Índice de bem-estar psicológico — 5 itens. Escore baixo (<13 de 25) rastreia baixo bem-estar / risco de depressão.
 - **Opções de resposta:** `0=Em nenhum momento`  `1=De vez em quando`  `2=Menos da metade do tempo`  `3=Mais da metade do tempo`  `4=Na maior parte do tempo`  `5=O tempo todo`
-- **Itens:** 5  |  **Domínios:** 1
+- **Itens:** 5  |  **Domínios:** 1  |  **Direção do escore:** maior = melhor
 
 1. Tenho me sentido alegre e de bom humor
 2. Tenho me sentido calmo(a) e relaxado(a)
@@ -14038,7 +14038,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 36–216 meses  |  **Respondente:** autoaplicavel  |  **Tempo:** 1 min
 - **Descrição:** 6 faces para autoavaliação de intensidade da dor (0–10).
 - **Opções de resposta:** `0=0 — sem dor (rosto feliz)`  `1=2 — dói um pouquinho`  `2=4 — dói um pouco mais`  `3=6 — dói ainda mais`  `4=8 — dói muito`  `5=10 — dói o máximo (chora)`
-- **Itens:** 1  |  **Domínios:** 1
+- **Itens:** 1  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Qual rosto mostra a dor agora?
 
@@ -14058,7 +14058,7 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 - **Faixa etária:** 144–216 meses  |  **Respondente:** clinico  |  **Tempo:** 15–20 min
 - **Descrição:** 11 itens avaliando gravidade de mania — humor, atividade, sono, fala, pensamento.
 - **Opções de resposta:** `0=Ausente`  `1=Leve`  `2=Moderado`  `3=Grave`  `4=Extremo`
-- **Itens:** 11  |  **Domínios:** 1
+- **Itens:** 11  |  **Domínios:** 1  |  **Direção do escore:** maior = pior
 
 1. Humor elevado, eufórico ou expansivo além do contexto.
 2. Energia e atividade motora aumentadas.
@@ -14080,5 +14080,830 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 | 25% | Atenção — observar e reavaliar | amber | Alguns sinais presentes. Orientar família/escola, observar por 4–8 semanas e reavaliar; levar o resultado à consulta. |
 | 50% | Alterações moderadas — investigar | orange | Sinais frequentes com provável impacto funcional. Discutir com o clínico para investigação dirigida e plano de cuidado. |
 | 75% | Alterações importantes — priorizar avaliação | red | Sinais intensos e persistentes. Priorizar avaliação clínica detalhada e plano de intervenção. |
+
+---
+
+## ari — ARI
+- **Nome completo:** Affective Reactivity Index — Índice de Reatividade Afetiva
+- **Faixa etária:** 6–17 anos  |  **Respondente:** Pais/cuidador (ou autorrelato do adolescente)
+- **Itens:** 6  |  **Motor:** runner (opções por item, faixas por pontos)
+
+1. Fica irritado(a) com facilidade pelos outros
+   - Opções: `0=Não é verdade`  `1=Um pouco verdade`  `2=Certamente verdade`
+2. Frequentemente perde a paciência (explode)
+   - Opções: `0=Não é verdade`  `1=Um pouco verdade`  `2=Certamente verdade`
+3. Permanece com raiva por muito tempo
+   - Opções: `0=Não é verdade`  `1=Um pouco verdade`  `2=Certamente verdade`
+4. Está com raiva na maior parte do tempo
+   - Opções: `0=Não é verdade`  `1=Um pouco verdade`  `2=Certamente verdade`
+5. Fica com raiva com frequência
+   - Opções: `0=Não é verdade`  `1=Um pouco verdade`  `2=Certamente verdade`
+6. Perde o controle com facilidade
+   - Opções: `0=Não é verdade`  `1=Um pouco verdade`  `2=Certamente verdade`
+
+**Faixas de interpretação** (pontos):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 0–3 | Irritabilidade baixa | ok | Sintomas de irritabilidade dentro do esperado para a idade na maioria dos contextos. |
+| 4–7 | Irritabilidade elevada | warn | Irritabilidade acima do habitual (literatura usa ≥ 4 como clinicamente relevante em amostras de pesquisa). Avalie prejuízo funcional, comorbidades (TDAH, TOD, depressão) e contexto familiar/escolar. |
+| 8–12 | Irritabilidade grave | alert | Irritabilidade acentuada e persistente. Investigue transtorno de desregulação disruptiva do humor, TOD, transtornos de humor e fatores ambientais; considere intervenção estruturada. |
+
+---
+
+## bfmf — BFMF
+- **Nome completo:** Bimanual Fine Motor Function — função motora fina bimanual (PC)
+- **Faixa etária:** 3–18 anos (PC)  |  **Respondente:** Clínico
+- **Itens:** 1  |  **Motor:** runner (opções por item, faixas por pontos)
+
+1. Nível de função motora fina bimanual
+   - Opções: `1=Nível I — Uma mão manipula sem restrições; a outra, sem restrições ou com limitação apenas em habilidades finas avançadas`  `2=Nível II — Uma mão manipula sem restrições; a outra apenas segura ou tem limitação evidente`  `3=Nível III — Ambas as mãos com limitação; uma manipula com ajuda/adaptação`  `4=Nível IV — Função limitada nas duas mãos; no máximo segura objetos com apoio`  `5=Nível V — Não segura nem manipula; dependência total`
+
+**Faixas de interpretação** (pontos):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 1–1 | Nível I | ok | Função fina preservada ou quase; estimule habilidades avançadas. |
+| 2–2 | Nível II | ok | Assimetria funcional relevante; considere terapia de uso forçado/bimanual. |
+| 3–3 | Nível III | warn | Limitação bilateral com manipulação assistida; terapia ocupacional dirigida. |
+| 4–4 | Nível IV | warn | Função restrita à preensão com apoio; adaptações e tecnologia assistiva. |
+| 5–5 | Nível V | alert | Sem preensão funcional; foco em posicionamento e participação assistida. |
+
+---
+
+## eci-fraga-qdce — ECI-Fraga QDCe
+- **Nome completo:** Escala Cognitiva Infantil Fraga — Quociente de Desenvolvimento Cognitivo estimado (0–5 anos)
+- **Faixa etária:** 0–5 anos (0–71 meses)  |  **Respondente:** Clínico
+- **Itens:** 5  |  **Motor:** runner (opções por item, faixas por pontos)
+
+1. Atenção, contato e engajamento (peso 15%). Exemplos fáceis por idade — bebê (0–12m): olha para o rosto, sorri de volta, reage ao nome; 1–3 anos: olha quando chamado, participa de brincadeira simples com o adulto; 4–5 anos: presta atenção numa história curta até o fim
+   - Opções: `0=0 — Ainda não faz`  `15=1 — Faz muito pouco, só com muita ajuda`  `30=2 — Faz às vezes, com alguma ajuda`  `45=3 — Faz como esperado para a idade`  `60=4 — Faz com facilidade, acima do esperado`
+2. Linguagem receptiva e expressiva (peso 25%). Exemplos fáceis por idade — 0–12m: balbucia e reage à voz; 1–2 anos: fala palavras soltas e entende ordens simples ("dá tchau"); 2–3 anos: junta 2 palavrinhas ("quer água"); 4–5 anos: mantém conversa simples do dia a dia
+   - Opções: `0=0 — Ainda não faz`  `25=1 — Faz muito pouco, só com muita ajuda`  `50=2 — Faz às vezes, com alguma ajuda`  `75=3 — Faz como esperado para a idade`  `100=4 — Faz com facilidade, acima do esperado`
+3. Resolução de problemas e raciocínio prático (peso 25%). Exemplos fáceis por idade — 0–12m: procura o brinquedo que se escondeu; 1–2 anos: usa objetos do jeito certo (copo, colher, pente); 2–3 anos: encaixa peças simples; 4–5 anos: resolve pequenos problemas do dia a dia com um pouco de ajuda
+   - Opções: `0=0 — Ainda não faz`  `25=1 — Faz muito pouco, só com muita ajuda`  `50=2 — Faz às vezes, com alguma ajuda`  `75=3 — Faz como esperado para a idade`  `100=4 — Faz com facilidade, acima do esperado`
+4. Coordenação visuomotora e manipulação (peso 20%). Exemplos fáceis por idade — 0–12m: pega objetos com a mão; 1–2 anos: empilha 2–3 blocos, rabisca no papel; 2–3 anos: vira páginas de livro, faz torre maior; 4–5 anos: desenha um círculo, usa tesoura com ajuda
+   - Opções: `0=0 — Ainda não faz`  `20=1 — Faz muito pouco, só com muita ajuda`  `40=2 — Faz às vezes, com alguma ajuda`  `60=3 — Faz como esperado para a idade`  `80=4 — Faz com facilidade, acima do esperado`
+5. Brincar simbólico, autonomia e adaptação (peso 15%). Exemplos fáceis por idade — 0–12m: gosta de esconde-achou; 1–2 anos: imita tarefas de casa (varrer, mexer panela); 2–3 anos: faz de conta simples (dar comidinha à boneca); 4–5 anos: veste-se com ajuda e brinca combinando papéis
+   - Opções: `0=0 — Ainda não faz`  `15=1 — Faz muito pouco, só com muita ajuda`  `30=2 — Faz às vezes, com alguma ajuda`  `45=3 — Faz como esperado para a idade`  `60=4 — Faz com facilidade, acima do esperado`
+
+**Faixas de interpretação** (pontos):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 0–119 | QDCe 0–29 — atraso grave | alert | Atraso grave / necessidade de investigação e intervenção prioritárias. Investigar etiologia e iniciar estimulação intensiva. |
+| 120–179 | QDCe 30–44 — atraso importante | alert | Atraso importante do desenvolvimento cognitivo. Avaliação diagnóstica formal e plano terapêutico multidisciplinar. |
+| 180–239 | QDCe 45–59 — atraso moderado | warn | Atraso moderado — encaminhar para avaliação e estimulação dirigida; reavaliar em intervalo curto. |
+| 240–299 | QDCe 60–74 — atraso leve / risco | warn | Atraso leve ou risco cognitivo funcional. Estimulação orientada e reavaliação programada. |
+| 300–359 | QDCe 75–89 — desenvolvimento esperado | ok | Desenvolvimento cognitivo dentro do esperado para a idade. |
+| 360–400 | QDCe 90–100 — desenvolvimento superior | ok | Desenvolvimento cognitivo acima do padrão esperado. |
+
+---
+
+## eci-fraga-qief — ECI-Fraga QIe-F
+- **Nome completo:** Escala Cognitiva Infantil Fraga — Quociente Intelectual estimado Funcional (6–16 anos)
+- **Faixa etária:** 6–16 anos  |  **Respondente:** Clínico
+- **Itens:** 7  |  **Motor:** runner (opções por item, faixas por pontos)
+
+1. A. Raciocínio verbal e formação de conceitos (peso 20%). Exemplos fáceis por idade — 6–8 anos: diz o que é parecido entre gato e cachorro; 9–12 anos: explica uma ideia com as próprias palavras; 13–16 anos: dá opinião simples com um porquê
+   - Opções: `0=0 — Ainda não faz`  `20=1 — Faz muito pouco, só com muita ajuda`  `40=2 — Faz às vezes, com alguma ajuda`  `60=3 — Faz como esperado para a idade`  `80=4 — Faz com facilidade, acima do esperado`
+2. B. Raciocínio fluido / não verbal (peso 25%). Exemplos fáceis por idade — 6–8 anos: completa um desenho ou padrão simples; 9–12 anos: monta quebra-cabeça da idade; 13–16 anos: entende um esquema ou mapa simples
+   - Opções: `0=0 — Ainda não faz`  `25=1 — Faz muito pouco, só com muita ajuda`  `50=2 — Faz às vezes, com alguma ajuda`  `75=3 — Faz como esperado para a idade`  `100=4 — Faz com facilidade, acima do esperado`
+3. C. Organização visuoespacial (peso 15%). Exemplos fáceis por idade — 6–8 anos: copia formas simples (círculo, quadrado); 9–12 anos: copia um desenho com alguns detalhes; 13–16 anos: organiza o próprio material sem ajuda
+   - Opções: `0=0 — Ainda não faz`  `15=1 — Faz muito pouco, só com muita ajuda`  `30=2 — Faz às vezes, com alguma ajuda`  `45=3 — Faz como esperado para a idade`  `60=4 — Faz com facilidade, acima do esperado`
+4. D. Memória operacional (peso 15%). Exemplos fáceis por idade — 6–8 anos: guarda um recado curto; 9–12 anos: segue instrução de 2–3 passos; 13–16 anos: lembra os compromissos simples da semana
+   - Opções: `0=0 — Ainda não faz`  `15=1 — Faz muito pouco, só com muita ajuda`  `30=2 — Faz às vezes, com alguma ajuda`  `45=3 — Faz como esperado para a idade`  `60=4 — Faz com facilidade, acima do esperado`
+5. E. Velocidade e eficiência cognitiva (peso 10%). Exemplo fácil para qualquer idade: termina tarefas simples num tempo parecido com o da turma, sem se perder no meio da atividade
+   - Opções: `0=0 — Ainda não faz`  `10=1 — Faz muito pouco, só com muita ajuda`  `20=2 — Faz às vezes, com alguma ajuda`  `30=3 — Faz como esperado para a idade`  `40=4 — Faz com facilidade, acima do esperado`
+6. F. Aprendizagem escolar funcional (peso 10%). Exemplos fáceis por idade — 6–8 anos: lê palavras e frases simples; 9–12 anos: lê um texto curto e faz contas básicas; 13–16 anos: usa leitura e escrita nas tarefas do dia a dia
+   - Opções: `0=0 — Ainda não faz`  `10=1 — Faz muito pouco, só com muita ajuda`  `20=2 — Faz às vezes, com alguma ajuda`  `30=3 — Faz como esperado para a idade`  `40=4 — Faz com facilidade, acima do esperado`
+7. G. Autonomia adaptativa (peso 5%). Exemplos fáceis por idade — 6–8 anos: cuida dos pertences com lembretes; 9–12 anos: faz a rotina de higiene sozinho; 13–16 anos: assume pequenas responsabilidades fora de casa
+   - Opções: `0=0 — Ainda não faz`  `5=1 — Faz muito pouco, só com muita ajuda`  `10=2 — Faz às vezes, com alguma ajuda`  `15=3 — Faz como esperado para a idade`  `20=4 — Faz com facilidade, acima do esperado`
+
+**Faixas de interpretação** (pontos):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 0–99 | QIe-F 0–24 — sugestivo de DI grave/profunda | alert | Fortemente sugestivo de deficiência intelectual grave a profunda — avaliação formal e suporte intensivo. |
+| 100–139 | QIe-F 25–34 — sugestivo de DI moderada | alert | Sugestivo de deficiência intelectual moderada — confirmar com avaliação psicométrica formal. |
+| 140–179 | QIe-F 35–44 — sugestivo de DI leve | alert | Sugestivo de deficiência intelectual leve — encaminhar para avaliação formal e plano de apoio. |
+| 180–219 | QIe-F 45–54 — limítrofe | warn | Funcionamento limítrofe — investigar fatores associados; apoio pedagógico dirigido. |
+| 220–259 | QIe-F 55–64 — médio inferior / vulnerabilidade | warn | Funcionamento médio inferior com vulnerabilidade escolar — monitorar e apoiar. |
+| 260–319 | QIe-F 65–79 — médio esperado | ok | Funcionamento cognitivo funcional dentro do médio esperado. |
+| 320–359 | QIe-F 80–89 — médio superior | ok | Funcionamento médio superior. |
+| 360–400 | QIe-F 90–100 — muito alto / superior | ok | Funcionamento cognitivo estimado superior. |
+
+---
+
+## esm-edj — ESM-EDJ
+- **Nome completo:** Escala de Satisfação com a Medicação — ESM-EDJ v1.0 (protocolo clínico EDJ, padrão PANT v7.2.1)
+- **Faixa etária:** Qualquer idade pediátrica  |  **Respondente:** Pais / cuidador (Versão A)
+- **Itens:** 24  |  **Motor:** runner (opções por item, faixas por pontos)
+
+1. Eficácia Percebida · A medicação trouxe melhora perceptível nos sintomas-alvo do tratamento
+   - Opções: `1=Discordo Totalmente`  `2=Discordo Parcialmente`  `3=Nem concordo, nem discordo`  `4=Concordo Parcialmente`  `5=Concordo Totalmente`
+2. Eficácia Percebida · Observo melhora no comportamento geral desde o início do medicamento
+   - Opções: `1=Discordo Totalmente`  `2=Discordo Parcialmente`  `3=Nem concordo, nem discordo`  `4=Concordo Parcialmente`  `5=Concordo Totalmente`
+3. Eficácia Percebida · O medicamento ajuda a criança/paciente a se concentrar ou regular melhor
+   - Opções: `1=Discordo Totalmente`  `2=Discordo Parcialmente`  `3=Nem concordo, nem discordo`  `4=Concordo Parcialmente`  `5=Concordo Totalmente`
+4. Eficácia Percebida · Percebo que o efeito do medicamento é consistente ao longo dos dias
+   - Opções: `1=Discordo Totalmente`  `2=Discordo Parcialmente`  `3=Nem concordo, nem discordo`  `4=Concordo Parcialmente`  `5=Concordo Totalmente`
+5. Eficácia Percebida · A melhora obtida justifica o uso contínuo do medicamento
+   - Opções: `1=Discordo Totalmente`  `2=Discordo Parcialmente`  `3=Nem concordo, nem discordo`  `4=Concordo Parcialmente`  `5=Concordo Totalmente`
+6. Eficácia Percebida · O medicamento contribui para o desenvolvimento e aprendizado do paciente
+   - Opções: `1=Discordo Totalmente`  `2=Discordo Parcialmente`  `3=Nem concordo, nem discordo`  `4=Concordo Parcialmente`  `5=Concordo Totalmente`
+7. Tolerabilidade e Efeitos Adversos · A medicação causou efeitos colaterais inaceitáveis (reverso)
+   - Opções: `5=Discordo Totalmente`  `4=Discordo Parcialmente`  `3=Nem concordo, nem discordo`  `2=Concordo Parcialmente`  `1=Concordo Totalmente`
+8. Tolerabilidade e Efeitos Adversos · O paciente apresentou alterações de sono atribuíveis ao medicamento (reverso)
+   - Opções: `5=Discordo Totalmente`  `4=Discordo Parcialmente`  `3=Nem concordo, nem discordo`  `2=Concordo Parcialmente`  `1=Concordo Totalmente`
+9. Tolerabilidade e Efeitos Adversos · Observei perda significativa de apetite ou de peso (reverso)
+   - Opções: `5=Discordo Totalmente`  `4=Discordo Parcialmente`  `3=Nem concordo, nem discordo`  `2=Concordo Parcialmente`  `1=Concordo Totalmente`
+10. Tolerabilidade e Efeitos Adversos · Houve alterações de humor ou irritabilidade relacionadas ao uso (reverso)
+   - Opções: `5=Discordo Totalmente`  `4=Discordo Parcialmente`  `3=Nem concordo, nem discordo`  `2=Concordo Parcialmente`  `1=Concordo Totalmente`
+11. Tolerabilidade e Efeitos Adversos · Os efeitos adversos prejudicaram a rotina ou socialização do paciente (reverso)
+   - Opções: `5=Discordo Totalmente`  `4=Discordo Parcialmente`  `3=Nem concordo, nem discordo`  `2=Concordo Parcialmente`  `1=Concordo Totalmente`
+12. Tolerabilidade e Efeitos Adversos · Em geral, a relação benefício/risco do medicamento é favorável
+   - Opções: `5=Discordo Totalmente`  `4=Discordo Parcialmente`  `3=Nem concordo, nem discordo`  `2=Concordo Parcialmente`  `1=Concordo Totalmente`
+13. Adesão e Rotina de Uso · O paciente toma o medicamento nos horários corretos todos os dias
+   - Opções: `1=Discordo Totalmente`  `2=Discordo Parcialmente`  `3=Nem concordo, nem discordo`  `4=Concordo Parcialmente`  `5=Concordo Totalmente`
+14. Adesão e Rotina de Uso · Não houve esquecimento de doses na última semana
+   - Opções: `1=Discordo Totalmente`  `2=Discordo Parcialmente`  `3=Nem concordo, nem discordo`  `4=Concordo Parcialmente`  `5=Concordo Totalmente`
+15. Adesão e Rotina de Uso · A forma de administração (comprimido, xarope, etc.) é adequada e aceita
+   - Opções: `1=Discordo Totalmente`  `2=Discordo Parcialmente`  `3=Nem concordo, nem discordo`  `4=Concordo Parcialmente`  `5=Concordo Totalmente`
+16. Adesão e Rotina de Uso · O medicamento está sempre disponível sem dificuldade de acesso
+   - Opções: `1=Discordo Totalmente`  `2=Discordo Parcialmente`  `3=Nem concordo, nem discordo`  `4=Concordo Parcialmente`  `5=Concordo Totalmente`
+17. Adesão e Rotina de Uso · A família (ou paciente) não interrompeu o uso por conta própria
+   - Opções: `1=Discordo Totalmente`  `2=Discordo Parcialmente`  `3=Nem concordo, nem discordo`  `4=Concordo Parcialmente`  `5=Concordo Totalmente`
+18. Qualidade de Vida e Funcionalidade · O medicamento melhorou a participação do paciente nas atividades escolares
+   - Opções: `1=Discordo Totalmente`  `2=Discordo Parcialmente`  `3=Nem concordo, nem discordo`  `4=Concordo Parcialmente`  `5=Concordo Totalmente`
+19. Qualidade de Vida e Funcionalidade · Houve melhora nas interações sociais e relacionamentos desde o início
+   - Opções: `1=Discordo Totalmente`  `2=Discordo Parcialmente`  `3=Nem concordo, nem discordo`  `4=Concordo Parcialmente`  `5=Concordo Totalmente`
+20. Qualidade de Vida e Funcionalidade · A qualidade do sono e da alimentação foi preservada com a medicação
+   - Opções: `1=Discordo Totalmente`  `2=Discordo Parcialmente`  `3=Nem concordo, nem discordo`  `4=Concordo Parcialmente`  `5=Concordo Totalmente`
+21. Qualidade de Vida e Funcionalidade · O paciente demonstra bem-estar geral associado ao uso do medicamento
+   - Opções: `1=Discordo Totalmente`  `2=Discordo Parcialmente`  `3=Nem concordo, nem discordo`  `4=Concordo Parcialmente`  `5=Concordo Totalmente`
+22. Experiência Relacional · Me sinto adequadamente informado(a) sobre os objetivos e riscos da medicação
+   - Opções: `1=Discordo Totalmente`  `2=Discordo Parcialmente`  `3=Nem concordo, nem discordo`  `4=Concordo Parcialmente`  `5=Concordo Totalmente`
+23. Experiência Relacional · Tenho facilidade para relatar dúvidas ou preocupações ao médico responsável
+   - Opções: `1=Discordo Totalmente`  `2=Discordo Parcialmente`  `3=Nem concordo, nem discordo`  `4=Concordo Parcialmente`  `5=Concordo Totalmente`
+24. Experiência Relacional · Confio nas orientações do médico quanto à medicação utilizada
+   - Opções: `1=Discordo Totalmente`  `2=Discordo Parcialmente`  `3=Nem concordo, nem discordo`  `4=Concordo Parcialmente`  `5=Concordo Totalmente`
+
+**Faixas de interpretação** (pontos):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 24–48 | Insatisfação significativa (índice ≤40%) | alert | Rever o plano terapêutico com a família: eficácia percebida, efeitos adversos, praticidade e comunicação. |
+| 49–78 | Satisfação parcial (41–65%) | warn | Há pontos de insatisfação relevantes — identificar os módulos com menor escore e ajustar. |
+| 79–100 | Satisfação moderada a boa (66–84%) | ok | Tratamento bem aceito no geral; monitorar os itens com resposta baixa. |
+| 101–120 | Alta satisfação (≥85%) | ok | Alta satisfação com a medicação — manter o plano e o seguimento programado. |
+
+---
+
+## faces — FPS-R
+- **Nome completo:** Faces Pain Scale – Revised
+- **Faixa etária:** 3–18 anos  |  **Respondente:** Criança/adolescente (autorrelato)
+- **Itens:** 1  |  **Motor:** runner (opções por item, faixas por pontos)
+
+1. Qual face mostra o quanto dói agora?
+   - Opções: `0=😐 Face 1 — não dói nada`  `2=🙁 Face 2 — dói um pouco`  `4=☹️ Face 3 — dói um pouco mais`  `6=😣 Face 4 — dói ainda mais`  `8=😫 Face 5 — dói muito`  `10=😭 Face 6 — dói o máximo que você pode imaginar`
+
+**Faixas de interpretação** (pontos):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 0–0 | Sem dor | ok | A criança não refere dor neste momento. Reavalie conforme o contexto clínico. |
+| 1–3 | Dor leve | ok | Dor leve. Considere medidas não farmacológicas e reavaliação periódica. |
+| 4–6 | Dor moderada | warn | Dor moderada (FPS-R ≥ 4 costuma indicar dor clinicamente relevante). Considere analgesia e investigação da causa. |
+| 7–10 | Dor intensa | alert | Dor intensa. Priorize analgesia adequada, investigação da causa e reavaliação em curto intervalo. |
+
+---
+
+## fps-r — FPS-R
+- **Nome completo:** Faces Pain Scale – Revised
+- **Faixa etária:** 3–18 anos  |  **Respondente:** Criança/adolescente (autorrelato)
+- **Itens:** 1  |  **Motor:** runner (opções por item, faixas por pontos)
+
+1. Qual face mostra o quanto dói agora?
+   - Opções: `0=😐 Face 1 — não dói nada`  `2=🙁 Face 2 — dói um pouco`  `4=☹️ Face 3 — dói um pouco mais`  `6=😣 Face 4 — dói ainda mais`  `8=😫 Face 5 — dói muito`  `10=😭 Face 6 — dói o máximo que você pode imaginar`
+
+**Faixas de interpretação** (pontos):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 0–0 | Sem dor | ok | A criança não refere dor neste momento. Reavalie conforme o contexto clínico. |
+| 1–3 | Dor leve | ok | Dor leve. Considere medidas não farmacológicas e reavaliação periódica. |
+| 4–6 | Dor moderada | warn | Dor moderada (FPS-R ≥ 4 costuma indicar dor clinicamente relevante). Considere analgesia e investigação da causa. |
+| 7–10 | Dor intensa | alert | Dor intensa. Priorize analgesia adequada, investigação da causa e reavaliação em curto intervalo. |
+
+---
+
+## gad7ped — GAD-7
+- **Nome completo:** Generalized Anxiety Disorder 7-item — autorrelato
+- **Faixa etária:** 12–18 anos  |  **Respondente:** Criança/adolescente
+- **Itens:** 7  |  **Motor:** runner (opções por item, faixas por pontos)
+
+1. Sentir-se nervoso(a), ansioso(a) ou muito tenso(a)
+   - Opções: `0=Nenhuma vez`  `1=Vários dias`  `2=Mais da metade dos dias`  `3=Quase todos os dias`
+2. Não conseguir parar ou controlar as preocupações
+   - Opções: `0=Nenhuma vez`  `1=Vários dias`  `2=Mais da metade dos dias`  `3=Quase todos os dias`
+3. Preocupar-se muito com diversas coisas
+   - Opções: `0=Nenhuma vez`  `1=Vários dias`  `2=Mais da metade dos dias`  `3=Quase todos os dias`
+4. Dificuldade para relaxar
+   - Opções: `0=Nenhuma vez`  `1=Vários dias`  `2=Mais da metade dos dias`  `3=Quase todos os dias`
+5. Ficar tão agitado(a) que se torna difícil permanecer parado(a)
+   - Opções: `0=Nenhuma vez`  `1=Vários dias`  `2=Mais da metade dos dias`  `3=Quase todos os dias`
+6. Ficar facilmente aborrecido(a) ou irritável
+   - Opções: `0=Nenhuma vez`  `1=Vários dias`  `2=Mais da metade dos dias`  `3=Quase todos os dias`
+7. Sentir medo como se algo terrível fosse acontecer
+   - Opções: `0=Nenhuma vez`  `1=Vários dias`  `2=Mais da metade dos dias`  `3=Quase todos os dias`
+
+**Faixas de interpretação** (pontos):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 0–4 | Ansiedade mínima | ok | Sintomas mínimos. Acompanhamento de rotina; reavalie se houver piora. |
+| 5–9 | Ansiedade leve | warn | Sintomas leves. Monitorize; oriente estratégias e reavalie em algumas semanas. |
+| 10–14 | Ansiedade moderada | alert | ≥10: ansiedade provável. Avaliação clínica e considerar intervenção. |
+| 15–21 | Ansiedade grave | alert | Sintomas graves. Avaliação clínica prioritária e plano terapêutico. |
+
+---
+
+## mini-macs — Mini-MACS
+- **Nome completo:** Mini Manual Ability Classification System — habilidade manual (PC, 1–4 anos)
+- **Faixa etária:** 1–4 anos (PC)  |  **Respondente:** Clínico (com pais/cuidador)
+- **Itens:** 1  |  **Motor:** runner (opções por item, faixas por pontos)
+
+1. Nível de habilidade manual habitual
+   - Opções: `1=Nível I — Manuseia objetos com facilidade e sucesso`  `2=Nível II — Manuseia a maioria dos objetos, com alguma redução de qualidade/velocidade`  `3=Nível III — Manuseia com dificuldade; precisa de ajuda para preparar/adaptar atividades`  `4=Nível IV — Manuseia poucos objetos facilmente manejáveis e precisa de apoio contínuo`  `5=Nível V — Não manuseia objetos; habilidade gravemente limitada mesmo para ações simples`
+
+**Faixas de interpretação** (pontos):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 1–1 | Nível I | ok | Independência manual adequada para a idade. |
+| 2–2 | Nível II | ok | Limitação leve de qualidade/velocidade; estimulação dirigida. |
+| 3–3 | Nível III | warn | Necessita preparo/adaptação das atividades; terapia ocupacional indicada. |
+| 4–4 | Nível IV | warn | Apoio contínuo necessário; planeje adaptações e tecnologia assistiva. |
+| 5–5 | Nível V | alert | Dependência total para manuseio; foco em posicionamento, tecnologia assistiva e participação. |
+
+---
+
+## nepedq — NEPEDQ
+- **Nome completo:** NEPEDQ — Questionário de Avaliação Pedagógica Neuropediátrica (NeuroPed App, v1.0, Dr. Jadson Fraga)
+- **Faixa etária:** 4–12 anos (estimado)  |  **Respondente:** Professor
+- **Itens:** 90  |  **Motor:** runner (opções por item, faixas por pontos)
+
+1. Linguagem Oral · Inicia e mantém um diálogo de forma adequada para a idade
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+2. Linguagem Oral · Apresenta trocas de sons na fala (ex.: "faca" → "vaca") (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+3. Linguagem Oral · Apresenta vocabulário restrito para a faixa etária (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+4. Linguagem Oral · Compreende e executa instruções dadas pelo professor
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+5. Linguagem Oral · Tem facilidade para nomear objetos, pessoas e situações
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+6. Linguagem Oral · Identifica e produz rimas (ex.: "pão" rima com "mão")
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+7. Linguagem Oral · Identifica palavras que começam com o mesmo som (aliteração)
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+8. Linguagem Oral · Expressa claramente seus pensamentos em palavras
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+9. Linguagem Oral · Reconta histórias ou situações respeitando a sequência dos fatos
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+10. Linguagem Oral · Apresenta dificuldade para encontrar palavras durante a fala (anomia) (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+11. Habilidades Preditoras da Alfabetização · Nomeia cores e formas geométricas simples
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+12. Habilidades Preditoras da Alfabetização · Demonstra noção espacial (em cima/baixo, direita/esquerda)
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+13. Habilidades Preditoras da Alfabetização · Demonstra noção temporal (antes/depois, ontem/amanhã, manhã/tarde/noite)
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+14. Habilidades Preditoras da Alfabetização · Conhece os dias da semana e os meses do ano na ordem correta
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+15. Habilidades Preditoras da Alfabetização · Diferencia letras de números com facilidade
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+16. Habilidades Preditoras da Alfabetização · Nomeia todas as letras do alfabeto em ordem aleatória
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+17. Habilidades Preditoras da Alfabetização · Escreve o próprio nome completo corretamente
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+18. Habilidades Preditoras da Alfabetização · Demora excessivamente para finalizar atividades propostas (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+19. Habilidades Preditoras da Alfabetização · Apresenta dificuldade para realizar atividades que envolvam escrita (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+20. Habilidades Preditoras da Alfabetização · Soletrar palavras com sílabas simples (ex.: bola, caneta, telefone)
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+21. Leitura · Lê palavras com sílabas simples sem dificuldade perceptível
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+22. Leitura · Apresenta lentidão na leitura de palavras isoladas (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+23. Leitura · Apresenta lentidão na leitura de frases (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+24. Leitura · Apresenta dificuldade para associar letras ao som correspondente (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+25. Leitura · Tenta adivinhar a palavra lendo apenas o início dela (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+26. Leitura · Troca sons de letras semelhantes durante a leitura (p/b, t/d, f/v) (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+27. Leitura · Confunde letras ou sílabas visualmente semelhantes (m/n, p/q, em/me) (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+28. Leitura · Omite letras ou palavras durante a leitura (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+29. Leitura · Demonstra prazer ou disposição para ler em voz alta na sala
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+30. Leitura · Compreende o texto após leitura oral
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+31. Leitura · Compreende o texto após leitura silenciosa
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+32. Leitura · É um dos últimos a terminar tarefas que envolvem leitura (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+33. Leitura · Não consegue concluir tarefas por dificuldade de leitura (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+34. Escrita · Se recusa ou evita atividades de escrita (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+35. Escrita · É organizado no uso da folha (respeita linhas e margens)
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+36. Escrita · Sua escrita é incompleta ou apresenta muitas rasuras (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+37. Escrita · Apresenta dificuldade para copiar da lousa ou do livro com fidelidade (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+38. Escrita · Apresenta escrita "espelhada" (letras ou palavras invertidas) (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+39. Escrita · Apresenta lentidão para copiar e/ou escrever (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+40. Escrita · Omite, adiciona ou substitui palavras inteiras ao copiar frases (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+41. Escrita · Escreve corretamente palavras com sílabas simples (fogo, panela, canivete)
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+42. Escrita · No ditado, confunde letras auditivamente similares (p/b, t/d, f/v, c/g, s/z) (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+43. Escrita · Na escrita, confunde letras visualmente semelhantes (p/q, b/d, n/u, o/a) (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+44. Escrita · Confunde a sequência de sílabas nas palavras ("sapato" → "pasato") (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+45. Escrita · Apresenta erros de escrita significativos em relação aos colegas (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+46. Matemática · Identifica semelhanças e diferenças em formas geométricas
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+47. Matemática · Faz comparações de quantidade e tamanho (mais/menos, maior/menor)
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+48. Matemática · Conta oralmente até 20 respeitando a sequência numérica
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+49. Matemática · Escreve e lê numerais na ordem das unidades
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+50. Matemática · Faz correspondência biunívoca número-quantidade (de 1 a 9)
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+51. Matemática · Realiza cálculos de adição e subtração de unidades mentalmente
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+52. Matemática · Escreve e lê numerais na ordem das dezenas
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+53. Matemática · Compreende o conceito de antecessor e sucessor em dezenas
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+54. Matemática · Resolve contas de dezenas sem reserva
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+55. Matemática · Resolve contas de dezenas com reserva
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+56. Matemática · Escreve e lê numerais na ordem das centenas
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+57. Matemática · Resolve problemas matemáticos com enunciado verbal
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+58. Aspectos Motores · Evita ou demonstra desagrado ao desenhar (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+59. Aspectos Motores · Respeita o limite da figura ao pintar
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+60. Aspectos Motores · Apresenta coordenação motora global preservada (pula, corre, agarra)
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+61. Aspectos Motores · Apresenta coordenação motora fina preservada (recorta, abotoa, amarra)
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+62. Aspectos Motores · Apresenta dificuldade na preensão do lápis (pega de forma atípica) (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+63. Aspectos Motores · Pressiona o lápis adequadamente no papel (nem forte nem fraco)
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+64. Aspectos Motores · As letras apresentam tamanho desproporcional (muito grandes ou muito pequenas) (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+65. Aspectos Motores · A caligrafia é legível, independente do tipo de letra
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+66. Aspectos Motores · Apresenta dificuldade no traçado da letra cursiva (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+67. Atenção e Comportamento · Aceita e segue regras combinadas em sala
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+68. Atenção e Comportamento · Distrai-se com facilidade por estímulos externos (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+69. Atenção e Comportamento · Comete erros frequentes por descuido (não por falta de conhecimento) (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+70. Atenção e Comportamento · É organizado com a carteira e materiais escolares
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+71. Atenção e Comportamento · Esquece tarefas, materiais ou compromissos com frequência (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+72. Atenção e Comportamento · Demonstra interesse e motivação pelas atividades propostas
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+73. Atenção e Comportamento · Apresenta comportamento agitado/inquieto durante a aula (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+74. Atenção e Comportamento · Levanta da cadeira ou caminha pela sala sem permissão (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+75. Atenção e Comportamento · Mantém atenção durante explicações do professor
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+76. Atenção e Comportamento · Solicita repetição frequente da instrução dada (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+77. Atenção e Comportamento · Conclui as atividades iniciadas sem abandono
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+78. Atenção e Comportamento · Frequentemente termina atividades com atraso (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+79. Atenção e Comportamento · Distrai-se excessivamente com estímulos do ambiente (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+80. Atenção e Comportamento · Foge ou protela atividades que exigem esforço mental prolongado (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+81. Atenção e Comportamento · O desempenho escolar é prejudicado pela dificuldade de manter concentração (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+82. Interação Social e Regulação Emocional · Interage positivamente com colegas de turma
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+83. Interação Social e Regulação Emocional · Apresenta dificuldade para esperar sua vez em situações coletivas (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+84. Interação Social e Regulação Emocional · Interrompe colegas ou professor com frequência (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+85. Interação Social e Regulação Emocional · Reage de forma desproporcional a frustrações pequenas (item invertido — pontuação já ajustada)
+   - Opções: `5=Discordo totalmente / Nunca`  `4=Discordo / Raramente`  `3=Neutro / Às vezes`  `2=Concordo / Frequentemente`  `1=Concordo totalmente / Sempre`
+86. Interação Social e Regulação Emocional · Demonstra empatia e reconhece emoções dos outros
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+87. Interação Social e Regulação Emocional · Adapta-se bem a mudanças de rotina ou de atividade
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+88. Funções Executivas Observáveis · Planeja e organiza etapas de tarefas com múltiplos passos
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+89. Funções Executivas Observáveis · Transfere aprendizado anterior para situações novas (generalização)
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+90. Funções Executivas Observáveis · Inicia atividades de forma autônoma sem precisar de múltiplos estímulos
+   - Opções: `1=Discordo totalmente / Nunca`  `2=Discordo / Raramente`  `3=Neutro / Às vezes`  `4=Concordo / Frequentemente`  `5=Concordo totalmente / Sempre`
+
+**Faixas de interpretação** (pontos):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 90–450 | Perfil descritivo — sem ponto de corte publicado | warn | Interpretar por domínio e pelos itens marcados nas opções mais baixas (1–2 após reversão). Escore maior = melhor desempenho. Sem corte publicado pelo autor; usar como mapa pedagógico e para comparação intraindividual. |
+
+---
+
+## nrs-pain — NRS Dor
+- **Nome completo:** Numeric Rating Scale for Pain (0–10)
+- **Faixa etária:** 8–18 anos  |  **Respondente:** Criança ≥ 8 anos / adolescente (autorrelato)
+- **Itens:** 1  |  **Motor:** runner (opções por item, faixas por pontos)
+
+1. Nota da dor agora (0 = nenhuma dor; 10 = pior dor imaginável)
+   - Opções: `0=0 — nenhuma dor`  `1=1`  `2=2`  `3=3`  `4=4`  `5=5`  `6=6`  `7=7`  `8=8`  `9=9`  `10=10 — pior dor imaginável`
+
+**Faixas de interpretação** (pontos):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 0–0 | Sem dor | ok | Sem dor referida no momento. |
+| 1–3 | Dor leve | ok | Dor leve (1–3). Medidas não farmacológicas e reavaliação. |
+| 4–6 | Dor moderada | warn | Dor moderada (4–6). Considere analgesia e investigue a causa. Redução ≥ 2 pontos após intervenção é clinicamente significativa (Farrar et al., 2001). |
+| 7–10 | Dor intensa | alert | Dor intensa (7–10). Priorize controle da dor e investigação imediata da causa. |
+
+---
+
+## q-chat-10 — Q-CHAT-10
+- **Nome completo:** Quantitative Checklist for Autism in Toddlers — 10 itens
+- **Faixa etária:** 18–36 meses  |  **Respondente:** Pais/cuidador
+- **Itens:** 10  |  **Motor:** runner (opções por item, faixas por pontos)
+
+1. A criança olha para você quando você a chama pelo nome?
+   - Opções: `0=Sempre`  `0=Quase sempre`  `1=Às vezes`  `1=Raramente`  `1=Nunca`
+2. Quão fácil é para você obter contato visual com a criança?
+   - Opções: `0=Muito fácil`  `0=Razoavelmente fácil`  `1=Razoavelmente difícil`  `1=Muito difícil`  `1=Impossível`
+3. A criança aponta para indicar que quer algo (ex.: um brinquedo fora de alcance)?
+   - Opções: `0=Muitas vezes por dia`  `0=Algumas vezes por dia`  `1=Algumas vezes por semana`  `1=Menos de uma vez por semana`  `1=Nunca`
+4. A criança aponta para compartilhar interesse com você (ex.: apontar algo interessante)?
+   - Opções: `0=Muitas vezes por dia`  `0=Algumas vezes por dia`  `1=Algumas vezes por semana`  `1=Menos de uma vez por semana`  `1=Nunca`
+5. A criança brinca de faz de conta (ex.: cuidar de bonecas, falar em telefone de brinquedo)?
+   - Opções: `0=Muitas vezes por dia`  `0=Algumas vezes por dia`  `1=Algumas vezes por semana`  `1=Menos de uma vez por semana`  `1=Nunca`
+6. A criança segue para onde você está olhando?
+   - Opções: `0=Muitas vezes por dia`  `0=Algumas vezes por dia`  `1=Algumas vezes por semana`  `1=Menos de uma vez por semana`  `1=Nunca`
+7. Se alguém da família está visivelmente triste, a criança demonstra querer confortar (ex.: acariciar, abraçar)?
+   - Opções: `0=Sempre`  `0=Quase sempre`  `1=Às vezes`  `1=Raramente`  `1=Nunca`
+8. Como você descreveria as primeiras palavras da criança?
+   - Opções: `0=Muito típicas`  `0=Razoavelmente típicas`  `1=Pouco típicas`  `1=Muito atípicas`  `1=A criança não fala`
+9. A criança usa gestos simples (ex.: acenar 'tchau')?
+   - Opções: `0=Muitas vezes por dia`  `0=Algumas vezes por dia`  `1=Algumas vezes por semana`  `1=Menos de uma vez por semana`  `1=Nunca`
+10. A criança fixa o olhar em nada aparente / observa intensamente objetos sem propósito claro?
+   - Opções: `1=Muitas vezes por dia`  `1=Algumas vezes por dia`  `1=Algumas vezes por semana`  `0=Menos de uma vez por semana`  `0=Nunca`
+
+**Faixas de interpretação** (pontos):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 0–2 | Rastreio negativo | ok | Pontuação abaixo do ponto de corte (≥3). Mantenha vigilância do desenvolvimento na rotina. Reavalie se surgirem novas preocupações. |
+| 3–10 | Rastreio positivo | alert | Pontuação ≥ 3: sugere encaminhamento para avaliação diagnóstica de TEA. O Q-CHAT-10 é triagem — não confirma diagnóstico. |
+
+---
+
+## smfq — SMFQ
+- **Nome completo:** Short Mood and Feelings Questionnaire — autorrelato
+- **Faixa etária:** 5–12 anos  |  **Respondente:** Criança/adolescente
+- **Itens:** 13  |  **Motor:** runner (opções por item, faixas por pontos)
+
+1. Eu me senti muito triste ou infeliz.
+   - Opções: `0=Não é verdade`  `1=Às vezes`  `2=Verdade`
+2. Eu não consegui aproveitar ou gostar de nada.
+   - Opções: `0=Não é verdade`  `1=Às vezes`  `2=Verdade`
+3. Eu me senti tão cansado(a) que só queria sentar e não fazer nada.
+   - Opções: `0=Não é verdade`  `1=Às vezes`  `2=Verdade`
+4. Eu fiquei muito agitado(a) ou inquieto(a).
+   - Opções: `0=Não é verdade`  `1=Às vezes`  `2=Verdade`
+5. Eu senti que não valia mais nada.
+   - Opções: `0=Não é verdade`  `1=Às vezes`  `2=Verdade`
+6. Eu chorei bastante.
+   - Opções: `0=Não é verdade`  `1=Às vezes`  `2=Verdade`
+7. Tive dificuldade para pensar ou me concentrar.
+   - Opções: `0=Não é verdade`  `1=Às vezes`  `2=Verdade`
+8. Eu me odiei.
+   - Opções: `0=Não é verdade`  `1=Às vezes`  `2=Verdade`
+9. Eu achei que era uma pessoa ruim.
+   - Opções: `0=Não é verdade`  `1=Às vezes`  `2=Verdade`
+10. Eu me senti sozinho(a).
+   - Opções: `0=Não é verdade`  `1=Às vezes`  `2=Verdade`
+11. Eu achei que ninguém gostava de verdade de mim.
+   - Opções: `0=Não é verdade`  `1=Às vezes`  `2=Verdade`
+12. Eu achei que nunca seria tão bom(boa) quanto as outras crianças.
+   - Opções: `0=Não é verdade`  `1=Às vezes`  `2=Verdade`
+13. Eu senti que fazia tudo errado.
+   - Opções: `0=Não é verdade`  `1=Às vezes`  `2=Verdade`
+
+**Faixas de interpretação** (pontos):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 0–7 | Abaixo do corte | ok | Pontuação abaixo de 8. Sem rastreio positivo para sintomas depressivos no momento; reavalie se houver mudança. |
+| 8–26 | Rastreio positivo | alert | ≥ 8: sugere sintomas depressivos. Aprofunde a avaliação e investigue ativamente risco/ideação suicida. Triagem não confirma diagnóstico. |
+
+---
+
+## tdl-aprendizagem — EDJ-TDL
+- **Nome completo:** Escala Dr. Jadson (NeuroPed EDJ) — TDL e Dificuldades de Aprendizagem Escolar, versão infantil até 8 anos
+- **Faixa etária:** 2–8 anos  |  **Respondente:** Pais / professor / clínico
+- **Itens:** 70  |  **Motor:** runner (opções por item, faixas por pontos)
+
+1. A — Linguagem oral / suspeita de TDL · Demorou para começar a falar palavras ou frases.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+2. A — Linguagem oral / suspeita de TDL · Usa frases curtas demais para a idade.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+3. A — Linguagem oral / suspeita de TDL · Tem dificuldade para contar o que aconteceu no dia.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+4. A — Linguagem oral / suspeita de TDL · Troca palavras ou usa termos vagos como 'isso', 'coisa' ou 'aquele'.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+5. A — Linguagem oral / suspeita de TDL · Tem dificuldade para encontrar a palavra certa.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+6. A — Linguagem oral / suspeita de TDL · Fala de forma confusa, desorganizada ou difícil de acompanhar.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+7. A — Linguagem oral / suspeita de TDL · Tem dificuldade para entender comandos com duas ou mais etapas.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+8. A — Linguagem oral / suspeita de TDL · Precisa que o adulto repita muitas vezes a mesma orientação.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+9. A — Linguagem oral / suspeita de TDL · Tem dificuldade para responder perguntas simples sobre uma história.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+10. A — Linguagem oral / suspeita de TDL · Apresenta trocas de sons na fala além do esperado para a idade.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+11. A — Linguagem oral / suspeita de TDL · Tem dificuldade para formar frases com começo, meio e fim.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+12. A — Linguagem oral / suspeita de TDL · Parece entender menos do que outras crianças da mesma idade.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+13. B — Consciência fonológica e pré-leitura · Tem dificuldade para reconhecer rimas.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+14. B — Consciência fonológica e pré-leitura · Tem dificuldade para bater palmas separando sílabas.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+15. B — Consciência fonológica e pré-leitura · Confunde sons parecidos, como /p/ e /b/, /t/ e /d/, /f/ e /v/.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+16. B — Consciência fonológica e pré-leitura · Tem dificuldade para dizer palavras que começam com o mesmo som.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+17. B — Consciência fonológica e pré-leitura · Tem dificuldade para reconhecer letras do próprio nome.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+18. B — Consciência fonológica e pré-leitura · Esquece letras já ensinadas várias vezes.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+19. B — Consciência fonológica e pré-leitura · Confunde letras visualmente parecidas, como b/d, p/q, m/n.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+20. B — Consciência fonológica e pré-leitura · Tem dificuldade para associar letra ao som correspondente.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+21. B — Consciência fonológica e pré-leitura · Evita atividades com letras, livros ou leitura.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+22. B — Consciência fonológica e pré-leitura · Aprende letras e sons em ritmo muito mais lento que os colegas.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+23. C — Leitura inicial · Tem dificuldade para juntar sílabas.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+24. C — Leitura inicial · Lê de forma muito lenta para a idade.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+25. C — Leitura inicial · Adivinha palavras em vez de ler.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+26. C — Leitura inicial · Troca, omite ou acrescenta letras ao ler.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+27. C — Leitura inicial · Confunde palavras visualmente parecidas.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+28. C — Leitura inicial · Perde-se facilmente na linha durante a leitura.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+29. C — Leitura inicial · Lê, mas não compreende bem o que acabou de ler.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+30. C — Leitura inicial · Evita ler em voz alta.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+31. C — Leitura inicial · Cansa muito rápido em atividades de leitura.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+32. C — Leitura inicial · Precisa de ajuda constante para ler palavras simples.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+33. D — Escrita e grafomotricidade · Tem dificuldade para copiar palavras ou frases do quadro/caderno.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+34. D — Escrita e grafomotricidade · Escreve letras invertidas ou em posição inadequada com frequência.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+35. D — Escrita e grafomotricidade · Omite letras, sílabas ou palavras ao escrever.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+36. D — Escrita e grafomotricidade · Troca letras por sons parecidos.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+37. D — Escrita e grafomotricidade · Tem letra muito irregular, grande demais, pequena demais ou difícil de ler.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+38. D — Escrita e grafomotricidade · Demora muito para concluir tarefas escritas.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+39. D — Escrita e grafomotricidade · Evita escrever ou reclama muito quando precisa escrever.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+40. D — Escrita e grafomotricidade · Tem dificuldade para escrever o próprio nome ou palavras familiares.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+41. D — Escrita e grafomotricidade · Não respeita bem espaço entre palavras.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+42. D — Escrita e grafomotricidade · Tem dificuldade para transformar fala em escrita.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+43. E — Aritmética e raciocínio numérico · Tem dificuldade para contar na ordem correta.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+44. E — Aritmética e raciocínio numérico · Confunde números visualmente parecidos.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+45. E — Aritmética e raciocínio numérico · Tem dificuldade para reconhecer quantidades pequenas sem contar uma por uma.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+46. E — Aritmética e raciocínio numérico · Não entende bem conceitos como mais, menos, maior, menor, antes e depois.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+47. E — Aritmética e raciocínio numérico · Tem dificuldade para relacionar número a quantidade.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+48. E — Aritmética e raciocínio numérico · Esquece rapidamente números já ensinados.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+49. E — Aritmética e raciocínio numérico · Tem dificuldade com soma simples usando dedos ou objetos.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+50. E — Aritmética e raciocínio numérico · Tem dificuldade com subtração simples.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+51. E — Aritmética e raciocínio numérico · Inverte ou troca a ordem dos números.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+52. E — Aritmética e raciocínio numérico · Apresenta dificuldade para resolver problemas matemáticos simples do cotidiano.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+53. F — Atenção, memória e funções executivas escolares · Esquece rapidamente instruções dadas pela professora ou família.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+54. F — Atenção, memória e funções executivas escolares · Começa atividades, mas não termina.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+55. F — Atenção, memória e funções executivas escolares · Precisa de supervisão constante para realizar tarefas simples.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+56. F — Atenção, memória e funções executivas escolares · Distrai-se muito durante atividades de linguagem, leitura ou escrita.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+57. F — Atenção, memória e funções executivas escolares · Tem dificuldade para organizar material escolar.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+58. F — Atenção, memória e funções executivas escolares · Perde objetos, folhas, lápis ou tarefas com frequência.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+59. F — Atenção, memória e funções executivas escolares · Tem dificuldade para seguir rotina de estudo.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+60. F — Atenção, memória e funções executivas escolares · Parece saber em um dia e esquecer no outro.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `1=Ocorre pouco, de forma leve ou ocasional`  `2=Ocorre frequentemente, com dificuldade moderada`  `3=Ocorre quase sempre, com dificuldade importante`
+61. G — Impacto funcional negativo · A dificuldade prejudica claramente o rendimento escolar.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `2=Ocorre pouco, de forma leve ou ocasional`  `4=Ocorre frequentemente, com dificuldade moderada`  `6=Ocorre quase sempre, com dificuldade importante`
+62. G — Impacto funcional negativo · A criança precisa de ajuda muito maior que os colegas.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `2=Ocorre pouco, de forma leve ou ocasional`  `4=Ocorre frequentemente, com dificuldade moderada`  `6=Ocorre quase sempre, com dificuldade importante`
+63. G — Impacto funcional negativo · A dificuldade gera choro, irritação, vergonha ou recusa escolar.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `2=Ocorre pouco, de forma leve ou ocasional`  `4=Ocorre frequentemente, com dificuldade moderada`  `6=Ocorre quase sempre, com dificuldade importante`
+64. G — Impacto funcional negativo · A criança evita leitura, escrita, matemática ou atividades de fala.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `2=Ocorre pouco, de forma leve ou ocasional`  `4=Ocorre frequentemente, com dificuldade moderada`  `6=Ocorre quase sempre, com dificuldade importante`
+65. G — Impacto funcional negativo · A dificuldade causa comentários frequentes da escola.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `2=Ocorre pouco, de forma leve ou ocasional`  `4=Ocorre frequentemente, com dificuldade moderada`  `6=Ocorre quase sempre, com dificuldade importante`
+66. G — Impacto funcional negativo · A criança demonstra baixa autoestima por não conseguir acompanhar.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `2=Ocorre pouco, de forma leve ou ocasional`  `4=Ocorre frequentemente, com dificuldade moderada`  `6=Ocorre quase sempre, com dificuldade importante`
+67. G — Impacto funcional negativo · A família precisa estudar diariamente com esforço excessivo para compensar.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `2=Ocorre pouco, de forma leve ou ocasional`  `4=Ocorre frequentemente, com dificuldade moderada`  `6=Ocorre quase sempre, com dificuldade importante`
+68. G — Impacto funcional negativo · Há prejuízo em autonomia escolar, como fazer tarefa, copiar, responder ou acompanhar a turma.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `2=Ocorre pouco, de forma leve ou ocasional`  `4=Ocorre frequentemente, com dificuldade moderada`  `6=Ocorre quase sempre, com dificuldade importante`
+69. G — Impacto funcional negativo · A dificuldade atrapalha socialização, participação em grupo ou brincadeiras com regras.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `2=Ocorre pouco, de forma leve ou ocasional`  `4=Ocorre frequentemente, com dificuldade moderada`  `6=Ocorre quase sempre, com dificuldade importante`
+70. G — Impacto funcional negativo · O prejuízo persiste mesmo com explicação, reforço e repetição.
+   - Opções: `0=Não ocorre, ou habilidade adequada para a idade`  `2=Ocorre pouco, de forma leve ou ocasional`  `4=Ocorre frequentemente, com dificuldade moderada`  `6=Ocorre quase sempre, com dificuldade importante`
+
+**Faixas de interpretação** (pontos):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 0–35 | Faixa esperada / baixa preocupação (0–14%) | ok | Escore percentual até 14%: habilidades dentro do esperado para a idade. Manter acompanhamento escolar de rotina. |
+| 36–71 | Alerta leve (15–29%) | warn | Dificuldades leves ou ocasionais. Reforço pedagógico dirigido e reavaliação em 3–6 meses. |
+| 72–107 | Risco moderado (30–44%) | warn | Dificuldade moderada e frequente. Avaliação fonoaudiológica/psicopedagógica recomendada; observar o perfil de domínio dominante (A = linguagem oral/TDL). |
+| 108–143 | Risco alto (45–59%) | alert | Dificuldade importante com impacto funcional. Encaminhar para avaliação multidisciplinar e plano de apoio escolar. |
+| 144–240 | Risco muito alto (≥60%) | alert | Comprometimento amplo, com prejuízo funcional relevante (Domínio G pesa em dobro). Priorizar investigação diagnóstica e intervenção intensiva. |
+
+---
+
+## toc-drj-psicologia — ECG-TOC-Psi
+- **Nome completo:** Escala Clínica de Gravidade do TOC – Adolescentes (ECG-TOC-Psi, versão profissional)
+- **Faixa etária:** 12–18 anos  |  **Respondente:** Psicólogo(a) / clínico (entrevista)
+- **Itens:** 30  |  **Motor:** runner (opções por item, faixas por pontos)
+
+1. Mapa de sintomas — Obsessões · Medo de contaminação (mapa — não pontua)
+   - Opções: `0=Ausente`  `0=Presente`
+2. Mapa de sintomas — Obsessões · Medo de causar dano (mapa — não pontua)
+   - Opções: `0=Ausente`  `0=Presente`
+3. Mapa de sintomas — Obsessões · Pensamentos violentos (mapa — não pontua)
+   - Opções: `0=Ausente`  `0=Presente`
+4. Mapa de sintomas — Obsessões · Pensamentos sexuais impróprios (mapa — não pontua)
+   - Opções: `0=Ausente`  `0=Presente`
+5. Mapa de sintomas — Obsessões · Escrúpulos/religiosidade excessiva (mapa — não pontua)
+   - Opções: `0=Ausente`  `0=Presente`
+6. Mapa de sintomas — Obsessões · Necessidade de simetria/perfeição (mapa — não pontua)
+   - Opções: `0=Ausente`  `0=Presente`
+7. Mapa de sintomas — Obsessões · Dúvida patológica (mapa — não pontua)
+   - Opções: `0=Ausente`  `0=Presente`
+8. Mapa de sintomas — Obsessões · Pensamentos catastróficos (mapa — não pontua)
+   - Opções: `0=Ausente`  `0=Presente`
+9. Mapa de sintomas — Obsessões · Pensamentos intrusivos sem conteúdo definido (mapa — não pontua)
+   - Opções: `0=Ausente`  `0=Presente`
+10. Mapa de sintomas — Compulsões · Lavagem/limpeza (mapa — não pontua)
+   - Opções: `0=Ausente`  `0=Presente`
+11. Mapa de sintomas — Compulsões · Checagem (mapa — não pontua)
+   - Opções: `0=Ausente`  `0=Presente`
+12. Mapa de sintomas — Compulsões · Contagem (mapa — não pontua)
+   - Opções: `0=Ausente`  `0=Presente`
+13. Mapa de sintomas — Compulsões · Repetição de ações (mapa — não pontua)
+   - Opções: `0=Ausente`  `0=Presente`
+14. Mapa de sintomas — Compulsões · Organização/simetria (mapa — não pontua)
+   - Opções: `0=Ausente`  `0=Presente`
+15. Mapa de sintomas — Compulsões · Rituais mentais (mapa — não pontua)
+   - Opções: `0=Ausente`  `0=Presente`
+16. Mapa de sintomas — Compulsões · Busca de confirmação (mapa — não pontua)
+   - Opções: `0=Ausente`  `0=Presente`
+17. Mapa de sintomas — Compulsões · Evitação ritualística (mapa — não pontua)
+   - Opções: `0=Ausente`  `0=Presente`
+18. Gravidade das obsessões · O1 — Tempo gasto com obsessões
+   - Opções: `0=Ausente`  `1=Leve`  `2=Moderado`  `3=Grave`  `4=Extremo`
+19. Gravidade das obsessões · O2 — Interferência funcional
+   - Opções: `0=Ausente`  `1=Leve`  `2=Moderado`  `3=Grave`  `4=Extremo`
+20. Gravidade das obsessões · O3 — Sofrimento subjetivo
+   - Opções: `0=Ausente`  `1=Leve`  `2=Moderado`  `3=Grave`  `4=Extremo`
+21. Gravidade das obsessões · O4 — Resistência às obsessões
+   - Opções: `0=Ausente`  `1=Leve`  `2=Moderado`  `3=Grave`  `4=Extremo`
+22. Gravidade das obsessões · O5 — Controle percebido
+   - Opções: `0=Ausente`  `1=Leve`  `2=Moderado`  `3=Grave`  `4=Extremo`
+23. Gravidade das compulsões · C1 — Tempo gasto em rituais
+   - Opções: `0=Ausente`  `1=Leve`  `2=Moderado`  `3=Grave`  `4=Extremo`
+24. Gravidade das compulsões · C2 — Interferência funcional
+   - Opções: `0=Ausente`  `1=Leve`  `2=Moderado`  `3=Grave`  `4=Extremo`
+25. Gravidade das compulsões · C3 — Sofrimento se impedido
+   - Opções: `0=Ausente`  `1=Leve`  `2=Moderado`  `3=Grave`  `4=Extremo`
+26. Gravidade das compulsões · C4 — Resistência às compulsões
+   - Opções: `0=Ausente`  `1=Leve`  `2=Moderado`  `3=Grave`  `4=Extremo`
+27. Gravidade das compulsões · C5 — Controle percebido
+   - Opções: `0=Ausente`  `1=Leve`  `2=Moderado`  `3=Grave`  `4=Extremo`
+28. Insight · Nível de crítica do paciente
+   - Opções: `0=Ausente`  `1=Leve`  `2=Moderado`  `3=Grave`  `4=Extremo`
+29. Evitação · Evitação
+   - Opções: `0=Ausente`  `1=Leve`  `2=Moderado`  `3=Grave`  `4=Extremo`
+30. Comprometimento global · Comprometimento global
+   - Opções: `0=Ausente`  `1=Leve`  `2=Moderado`  `3=Grave`  `4=Extremo`
+
+**Faixas de interpretação** (pontos):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 0–52 | Gravidade dimensional — sem corte publicado | warn | Escore maior = maior gravidade. Comparar aplicações sucessivas do mesmo paciente; interpretar com o mapa de sintomas, insight e comprometimento global. Não é diagnóstico. |
+
+---
+
+## vas-pain — VAS Dor
+- **Nome completo:** Visual Analog Scale for Pain (0–100, adaptação digital)
+- **Faixa etária:** 8–18 anos  |  **Respondente:** Criança ≥ 8 anos / adolescente (autorrelato)
+- **Itens:** 1  |  **Motor:** runner (opções por item, faixas por pontos)
+
+1. Posição na linha de dor (mm)
+   - Opções: `0=0 — nenhuma dor`  `10=10`  `20=20`  `30=30`  `40=40`  `50=50`  `60=60`  `70=70`  `80=80`  `90=90`  `100=100 — pior dor imaginável`
+
+**Faixas de interpretação** (pontos):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 0–4 | Sem dor | ok | Sem dor relevante referida. |
+| 5–44 | Dor leve | ok | Dor leve (~5–44 mm). |
+| 45–74 | Dor moderada | warn | Dor moderada (~45–74 mm). Considere analgesia e investigação. |
+| 75–100 | Dor intensa | alert | Dor intensa (≥ 75 mm). Priorize controle da dor e investigação. |
+
+---
+
+## viking-speech — Viking Speech Scale
+- **Nome completo:** Viking Speech Scale — Inteligibilidade de fala em paralisia cerebral
+- **Faixa etária:** ≥ 4 anos (PC)  |  **Respondente:** Clínico (com pais/cuidador)
+- **Itens:** 1  |  **Motor:** runner (opções por item, faixas por pontos)
+
+1. Nível de inteligibilidade da fala
+   - Opções: `1=Nível I — A fala não é afetada pela desordem motora`  `2=Nível II — Fala imprecisa, mas habitualmente inteligível para ouvintes não familiares`  `3=Nível III — Fala pouco clara; habitualmente inteligível apenas para ouvintes familiares`  `4=Nível IV — Sem fala inteligível`
+
+**Faixas de interpretação** (pontos):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 1–1 | Nível I | ok | Fala não afetada. Acompanhe o desenvolvimento de linguagem normalmente. |
+| 2–2 | Nível II | ok | Fala imprecisa porém funcional com estranhos. Considere fonoterapia para precisão articulatória. |
+| 3–3 | Nível III | warn | Inteligível só para familiares. Indique fonoterapia intensiva e considere apoio de comunicação suplementar. |
+| 4–4 | Nível IV | alert | Sem fala inteligível. Priorize Comunicação Aumentativa e Alternativa (CAA) — o app inclui módulo CAA gratuito. |
 
 ---
