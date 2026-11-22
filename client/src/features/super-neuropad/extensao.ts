@@ -7,7 +7,7 @@
  * Nada é interpretado: o texto relata o que foi aplicado e como a criança respondeu.
  */
 import { DESCRIPTIVE_NOTICE } from "../../lib/descriptiveNotice";
-import { conceptKey, DESAFIOS_DISPONIVEIS_POR_IDADE, MAIN_INTEGRATED_BANK, OPTIONAL_BANK, PHASE_ORDER, type OptionalItem } from "./bank";
+import { conceptKey, DESAFIOS_DISPONIVEIS_POR_IDADE, IDADE_MAXIMA_AVISO_LETRAMENTO, MAIN_INTEGRATED_BANK, OPTIONAL_BANK, PHASE_ORDER, type OptionalItem } from "./bank";
 import { bandItemCount, formatDuration, itemSeconds, KIND_LABELS, ORIGIN_LABELS, phaseById, STATUS_LABELS, youngFactor, type AnswerRecord, type Item } from "./model";
 
 export const EXTENSAO_VERSAO = "2026-10-21.1";
@@ -47,9 +47,6 @@ export function proximoPendenteNaLista(lista: readonly OptionalItem[], registros
   }
   return null;
 }
-
-/** Idades em que letras e numerais ainda não são marco universal; o item continua disponível, com aviso. */
-const IDADE_MAXIMA_AVISO_LETRAMENTO = 3;
 
 /**
  * Aviso de contexto para opcionais que pedem letra ou numeral aos 2–3 anos (auditoria de 21/10/2026).
