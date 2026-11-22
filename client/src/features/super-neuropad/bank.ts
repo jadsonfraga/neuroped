@@ -32,7 +32,8 @@ export const YEARS: readonly number[] = Array.from({ length: MAX_AGE_YEARS - MIN
 /**
  * 2 anos: 3 por mundo (18, bateria dedicada); 3 a 5 anos: 4 desafios por mundo (24; aos 3 anos, bateria dedicada); 6 e 7 anos: 5 por mundo (30); 8 a 17 anos: 6 por mundo (36).
  * A criança maior sustenta mais itens e precisa de mais domínios cobertos (fluência, controle
- * mental, busca visual, cognição social, dupla tarefa motora); o teto de 20 minutos é travado por teste.
+ * mental, busca visual, cognição social, dupla tarefa motora). Esta é a contagem do núcleo; a partida soma o
+ * complemento até 50 desafios, dentro do teto de 30 minutos travado por teste.
  */
 export function itemsPerPhase(years: number): number {
   if (years === 2) return 3;
@@ -58,7 +59,7 @@ export const EMOJI_NAMES: Record<string, string> = {
   "🍽️": "prato", "🦩": "um pé só", "👣": "passos", "🖐️": "mão aberta", "👉": "dedo", "🗣️": "fala", "☝️": "dedo para cima",
   "👏": "palmas", "🙌": "mãos para cima", "🧱": "bloco", "🎈": "balão", "📚": "livros", "🧢": "boné", "🍐": "pera",
   "🎒": "mochila", "⏰": "relógio", "🎧": "fone", "🙋": "criança levantando a mão", "↩": "ao contrário", "➜": "depois",
-  "🔒": "fechar", "📞": "telefone", "🛁": "banheira", "🧍": "estátua", "🤚": "mão", "🫲": "palma da mão",
+  "🔒": "fechar", "😘": "beijo", "👋": "tchau", "📞": "telefone", "🛁": "banheira", "🧍": "estátua", "🤚": "mão", "🫲": "palma da mão",
 };
 
 const SEGMENTER = new Intl.Segmenter("pt-BR", { granularity: "grapheme" });
@@ -249,7 +250,7 @@ function vila(years: number): Draft<Item>[] {
   if (years === 5) return [
     fala("obs10", OBS("5 anos", "interagir e conversar"), "Pergunte: “O que foi legal nos últimos dias?”", "Conta pelo menos 2 acontecimentos ligados, que dá para entender", { seconds: 35 }),
     fala("sonda10", SONDA("5–7 anos", "conversação (reciprocidade)"), "Diga: “Eu gosto de banana. E você, do que gosta de comer?”", "Responde na vez dela, dentro do assunto"),
-    fala("sonda10", SONDA("3–4 anos", "atenção conjunta + pedir ajuda"), "Pergunte: “Se você se machucar no parquinho, o que você faz?”", "Diz que pede ajuda a um adulto (mãe, pai, professora)"),
+    fala("sonda10", SONDA("3–4 anos", "atenção conjunta + pedir ajuda (piso da faixa anterior)"), "Pergunte: “Se você se machucar no parquinho, o que você faz?”", "Diz que pede ajuda a um adulto (mãe, pai, professora)"),
     toque("sonda10", SONDA("5–7 anos", "narrativa + inferência (adaptado para toque)"), "O menino ganhou um sorvete. Como ele ficou?", [opt("😄", "feliz"), opt("😢", "triste"), opt("😠", "bravo")], "feliz", { big: true }),
   ];
   if (years <= 7) return [
@@ -274,7 +275,7 @@ function vila(years: number): Draft<Item>[] {
     years <= 9
       ? fala("sonda10", SONDA("8–11 anos", "flexibilidade social"), "Pergunte: “Um colega pegou seu lápis sem pedir. O que você faz?”", "Resolve sem agressão: pede de volta, conversa ou chama a professora")
       : fala("sonda10", SONDA("8–11 anos", "flexibilidade social"), "Pergunte: “Um amigo contou para a turma um segredo seu. O que você faz?”", "Propõe conversar com o amigo ou pedir ajuda a um adulto, sem vingança nem agressão"),
-    fala("obs10", OBS("9–11 anos", "interagir e conversar"), "Pergunte: “Onde você está agora e por que veio?”", "Diz o lugar (consultório, clínica, médico) e um motivo plausível"),
+    fala("obs10", OBS("9–11 anos", years === 8 ? "interagir e conversar (tarefa da faixa seguinte)" : "interagir e conversar"), "Pergunte: “Onde você está agora e por que veio?”", "Diz o lugar (consultório, clínica, médico) e um motivo plausível"),
   ];
   const older = years >= 15;
   return [
@@ -492,7 +493,7 @@ const NUM_WORDS = ["zero", "um", "dois", "três", "quatro", "cinco", "seis", "se
 function forward(years: number): Draft<SpeakItem> {
   const sequence = DIGITS[years];
   if (years === 2) return fala("sonda10", SONDA("24–35 meses", "memória inicial"), "Diga: “Repita: BOLA.”", "Repete a palavra “bola”", { stimulus: "🗣️" });
-  return fala(years >= 6 ? "obs10" : "sonda10", years >= 6 ? OBS("6–17 anos", "memória (repetição imediata)") : SONDA("3–4 anos", "memória operacional"),
+  return fala(years >= 6 ? "obs10" : "sonda10", years >= 6 ? OBS("6–17 anos", "memória (repetição imediata)") : SONDA("3–4 anos", years === 5 ? "memória operacional (piso da faixa anterior)" : "memória operacional"),
     `Diga, um número por segundo: “Repita: ${sequence.join(" – ")}.”`, `Repete os ${NUM_WORDS[sequence.length]} números na mesma ordem`, { stimulus: sequence.join(" · ") });
 }
 
@@ -630,7 +631,7 @@ function corpo(years: number): Draft<Item>[] {
     case 9: return [
       oneFoot("6–11 anos", 8),
       fazer("obs10", MOTOR("6–11 anos"), "Peça: “Ande em cima da junta do piso, um pé na frente do outro, calcanhar encostando na ponta.” 6 passos.", "Dá 6 passos sem sair da linha", { stimulus: "👣", seconds: 30 }),
-      fazer("obs10", HANDS("6–8 anos"), "Demonstre e peça: “Toque o polegar em cada dedo, do indicador ao mindinho.” Uma mão, depois a outra.", "Faz a sequência completa nas duas mãos sem pular dedo", { stimulus: "🖐️", seconds: 30 }),
+      fazer("obs10", OBS("6–8 anos", years === 9 ? "mãos, desenho e escrita (piso da faixa anterior)" : "mãos, desenho e escrita"), "Demonstre e peça: “Toque o polegar em cada dedo, do indicador ao mindinho.” Uma mão, depois a outra.", "Faz a sequência completa nas duas mãos sem pular dedo", { stimulus: "🖐️", seconds: 30 }),
       copyShape("6–11 anos", "triangulo", "o triângulo", "Desenha três lados com cantos fechados"),
       cog(years, "escrita", COGNITIVE_BANK[years].escrita[0].prompt),
     ];
