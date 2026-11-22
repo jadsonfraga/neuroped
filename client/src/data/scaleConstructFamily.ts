@@ -21,6 +21,7 @@ type ScaleLike = {
   queixas: string[];
   overlapGroup?: string;
   applicationMode?: string;
+  respondente?: string[];
 };
 
 export type InformantClass = "pais" | "professor" | "autorrelato" | "clinico" | "direto" | "outro";
@@ -83,6 +84,9 @@ const CURATED_FAMILY: Readonly<Record<string, string>> = {
   "nrs-pain": "dor-intensidade",
   wongbaker: "dor-intensidade",
   "fps-r": "dor-intensidade",
+  // A criança aponta a carinha da intensidade da dor (pais só ajudam): mesmo
+  // construto da NRS/FPS-R, embora o catálogo a registre como questionário de pais.
+  faces: "dor-intensidade",
   flacc: "dor-comportamental",
   rflacc: "dor-comportamental",
   cheops: "dor-comportamental",
@@ -160,8 +164,14 @@ export function sameInstrumentFamily(a: ScaleLike, b: ScaleLike): boolean {
  */
 export function repetitiveByFamily(a: ScaleLike, b: ScaleLike): boolean {
   if (a.id === b.id) return true;
-  const sameInformant = informantClass(a) === informantClass(b);
-  if (!sameInformant) return false;
+  if (informantClass(a) !== informantClass(b)) {
+    // Construto curado: quem responde de fato (respondente em comum, exceto o
+    // clínico, que aplica quase tudo) prevalece sobre a modalidade cadastrada.
+    const ca = CURATED_FAMILY[a.id];
+    if (!ca || ca !== CURATED_FAMILY[b.id]) return false;
+    const respondentsA = new Set((a.respondente ?? []).filter((r) => r !== "clinico"));
+    return (b.respondente ?? []).some((r) => r !== "clinico" && respondentsA.has(r));
+  }
   if (sameInstrumentFamily(a, b)) return true;
   return isBroadbandInventory(a) && isBroadbandInventory(b);
 }

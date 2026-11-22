@@ -116,3 +116,23 @@ complementar segura, o pódio mostra duas, em vez de repetir uma.
 ## Rollback
 
 `git revert` do commit. Sem migração D1 e sem mudança de contrato de API.
+
+## Teste em produção (navegador) e ajuste
+
+Depois do deploy, o filtro publicado foi testado no navegador (390 px e 1280 px) com cinco
+casos sintéticos: dor aos 6 meses, sono aos 15 meses, TDAH aos 8 anos, TEA aos 2 anos e
+6 meses, e dor aos 12 anos. Não houve erro de JavaScript nem rolagem horizontal.
+
+Dois achados:
+
+1. **Dor aos 12 anos: NRS + FACES**, as duas medindo intensidade de dor relatada pela
+   criança. A FACES está cadastrada como questionário de pais, então a regra por
+   informante não a pegava. Correção: FACES entra no grupo curado de intensidade de dor, e,
+   dentro de um grupo curado, conta como mesmo informante quem o catálogo lista como
+   respondente em comum (exceto o clínico). O pódio passa a NRS + r-FLACC + EAF:
+   autorrelato, observação do comportamento e funcionalidade.
+2. **Sono aos 15 meses: BISQ + IPN-EPI/SEG Anamnese 20 + EFDI.** A anamnese de epilepsia já
+   era a Prata escolhida pelo motor antes desta mudança, porque o catálogo marca os módulos
+   IPN-EPI/SEG com a queixa sono. Antes ela saía para a âncora funcional e a BISQ-R
+   repetitiva ficava. **Decisão clínica pendente:** confirmar se os módulos IPN-EPI/SEG
+   devem continuar marcados para sono. Se não, a SWYC BPSC assume a vaga.
