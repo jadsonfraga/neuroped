@@ -1,7 +1,7 @@
 /**
  * Super NeuroPad Game — avaliação única de pré-consulta, uma faixa por ano (2 a 17 anos).
  *
- * Integra, em uma só sessão de até 20 minutos, os elementos das quatro abas
+ * Integra, em uma só sessão de até 30 minutos, os elementos das quatro abas
  * que continuam existindo: Sonda 10 (Avaliação Direta), Observa 10 (OBS-10,
  * Pré-Consulta por faixa etária), Teste de Reconhecimento Visual e Avaliação
  * Cognitiva Infantil (Testes Cognitivos por Faixa Etária). O banco integrado
@@ -53,7 +53,7 @@ export type { ToddlerDomain };
 export { buildMatches, isJudged, itemExpected, KIND_LABELS, ORIGIN_LABELS, ORIGIN_ORDER, ORIGIN_ROUTES, MAX_AGE_YEARS, MIN_AGE_YEARS, PHASE_ORDER, YEARS, itemsPerPhase };
 export type { BuildItem, DoItem, Item, JudgedItem, Option, OriginId, PhaseId, ShapeId, SpeakItem, TouchItem };
 
-export const SUPER_NEUROPAD_VERSION = "2026-11-22.4";
+export const SUPER_NEUROPAD_VERSION = "2026-11-22.5";
 export const SUPER_NEUROPAD_TITLE = "Super NeuroPad Game";
 export const SUPER_NEUROPAD_ROUTE = "/super-neuropad-game";
 export const SUPER_NEUROPAD_NATURE =

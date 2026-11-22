@@ -713,3 +713,23 @@ leve o domínio do mundo, e não há domínio motor nessa bateria (pendência pa
 Verificação: `tests/unit/super-neuropad-curadoria-faixa.test.ts` (novo caso da reconciliação: +50 % por idade,
 presença de cada construto na faixa e gabarito da fileira de atenção seletiva). Rollback: reverter a PR; não há
 migração nem dado persistido.
+
+## Rodada de refino e caça a inconsistências (v2026-11-22.5)
+
+Auditoria automática dos 800 desafios (16 idades × 50) contra: resposta entre as opções, opções repetidas,
+tarefa duplicada na idade, contagem do critério × sequência (SOL/LUA, DIA/NOITE, DIREITA/ESQUERDA), dígitos e
+ordem inversa, palmas do CACHORRO, legibilidade no PDF, domínio aos 2–3 anos e faixa de origem × idade.
+Corrigido:
+
+- **Tela de preparação:** o selo dizia “até 45 min (30 min aos 2 anos, 35 min aos 3)”, contradizendo o teto de
+  30 min; agora lê o teto do código (`SESSION_LIMIT_SECONDS`).
+- **PDF:** a tarefa de imitação de 2 anos (😘 👋) perdia as figuras no PDF por falta de nome no glossário; entraram
+  “beijo” e “tchau”.
+- **Proveniência:** quatro itens do núcleo citavam uma faixa da Sonda 10/OBS-10 que não cobre a idade (5 anos com
+  tarefas de 3–4 anos; 8 anos com tarefa de 9–11; 9 anos com tarefa de 6–8). O conteúdo aplicado não mudou; a
+  referência agora diz “piso da faixa anterior” ou “tarefa da faixa seguinte”, como no restante do banco. Ids
+  iguais; no `golden-descritivo` mudam só os hashes desses mundos.
+- Comentários de código com “20 minutos” atualizados para 30.
+
+Regressão: novo caso em `tests/unit/super-neuropad-curadoria-faixa.test.ts` (selo sem teto antigo, partida
+inteira legível no PDF, faixa de origem compatível com a idade salvo marcação explícita).
