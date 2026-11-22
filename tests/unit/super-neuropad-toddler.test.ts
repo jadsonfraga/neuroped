@@ -69,8 +69,8 @@ test("contagem e duração: núcleo dedicado preservado e partida de 50 itens de
     for (const phaseId of PHASE_ORDER) assert.ok(estimate.byPhase[phaseId] > 0, `${years}/${phaseId}: ${estimate.byPhase[phaseId]}s`);
   }
   assert.equal(sessionLimitSeconds(2), 1800);
-  assert.equal(sessionLimitSeconds(3), 2100);
-  assert.equal(sessionLimitSeconds(4), 2700);
+  assert.equal(sessionLimitSeconds(3), 1800);
+  assert.equal(sessionLimitSeconds(4), 1800);
 });
 
 test("os seis domínios estão cobertos, cada mundo tem um domínio principal, e as habilidades-chave por idade existem", () => {
@@ -105,7 +105,7 @@ test("relatório, resumo, prontuário, bloco estruturado e PDF mostram a contage
   const session = play(2, (item) => (/resposta ao nome|apontar/.test(item.ref) ? "erro" : "acerto"));
   const summary = summarize(session);
   assert.equal(summary.domains.length, 6);
-  assert.equal(summary.domains.find((entry) => entry.domain === "atencao_conjunta")!.hits, 1);
+  assert.equal(summary.domains.find((entry) => entry.domain === "atencao_conjunta")!.hits, 3, "2 erros planejados (nome e apontar) entre 5 itens do domínio: 3 da bateria + 2 do complemento");
   assert.ok(summary.domains.every((entry) => !("level" in entry)));
   assert.ok(!("redFlags" in summary));
   const report = buildGameReport(session);
@@ -114,7 +114,7 @@ test("relatório, resumo, prontuário, bloco estruturado e PDF mostram a contage
   const rows = JSON.stringify(buildPatientRecordItems(session));
   const structured = buildStructuredLines(session).join("\n");
   assert.match(report, /CONTAGEM POR DOMÍNIO \(BATERIA 2–3 ANOS\)/);
-  assert.match(report, /Atenção conjunta: 1\/3 cumpre/);
+  assert.match(report, /Atenção conjunta: 3\/5 cumpre/);
   for (const output of [report, brief, pdf, rows, structured]) assert.doesNotMatch(output, /sinal de alerta|encaminhar avalia|^ALERTA /im);
   assert.match(structured, /^DOMINIO_2_3 /m);
   assert.doesNotMatch(structured, /"nivel"/);
