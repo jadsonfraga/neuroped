@@ -49,7 +49,7 @@ async function screen(name) {
 async function waitScreen(value) {
   await page.locator(`[data-testid="super-neuropad-game"][data-screen="${value}"]`).waitFor({ timeout: 15000 });
 }
-const ITEMS_BY_WORLD = [5, 10, 16, 9, 5, 5]; // idade 7: catálogo obrigatório completo
+const ITEMS_BY_WORLD = [7, 8, 10, 9, 8, 8]; // idade 7: catálogo obrigatório completo (curadoria por faixa de 22/11/2026)
 const WORLDS = 6;
 const TOTAL = ITEMS_BY_WORLD.reduce((sum, count) => sum + count, 0);
 /** Tipo do desafio visível: toque (opções), montar (letras) ou julgado (fala/ação). */
@@ -102,7 +102,7 @@ try {
   assert.equal(await underTwo.count(), 0, "escolher a idade tira o bloqueio");
   const estimate = page.getByTestId("super-neuropad-estimate");
   const minutes = Number((await estimate.innerText()).match(/cerca de (\d+) minutos/)?.[1]);
-  assert.ok(minutes > 0 && minutes <= 45, `tempo estimado dentro do teto (${minutes})`);
+  assert.ok(minutes > 0 && minutes <= 30, `tempo estimado dentro do teto de 30 min (${minutes})`);
   assert.match(await estimate.innerText(), /50 desafios/);
   await button("Música ligada").click(); // silencia no headless
   const steps = page.getByRole("list", { name: "Passos da preparação" });
@@ -398,7 +398,8 @@ try {
   const partialText = pdfText(`${dir}/partial.pdf`);
   if (partialText) assert.match(partialText.replace(/\s+/g, " "), /não aplicado/i, "PDF parcial informa o mundo não aplicado");
 
-  // 3 anos: bateria dedicada (4 por mundo); o primeiro mundo começa por um item de relato do cuidador.
+  // 3 anos: bateria dedicada (4 por mundo) + complemento curado; a Vila tem 7 e começa por um item de relato do cuidador.
+  const VILA_3_ANOS = 7;
   await button("Nova partida").click();
   await waitScreen("setup");
   await page.getByRole("group", { name: "Idade em anos" }).getByRole("button", { name: "3", exact: true }).click();
@@ -407,11 +408,11 @@ try {
   assert.match(await page.getByTestId("super-neuropad-jornada-anual").innerText(), /3 anos · Brincadeira que ganha vida/, "a idade nova não herda a narrativa anterior");
   await button("Começar a aventura").click();
   await page.getByRole("button", { name: /Entrar na fase/ }).click();
-  await challengeIndicator(1, 4).waitFor();
+  await challengeIndicator(1, VILA_3_ANOS).waitFor();
   await page.getByTestId("super-neuropad-caregiver").first().waitFor();
   await screen("09-tres-anos-relato-cuidador");
   await skipCurrent();
-  await challengeIndicator(2, 4).waitFor();
+  await challengeIndicator(2, VILA_3_ANOS).waitFor();
   await button("Encerrar").click();
   await waitScreen("results");
   await page.getByTestId("super-neuropad-toddler-domains").waitFor();
