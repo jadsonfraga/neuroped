@@ -52,7 +52,7 @@ jobs:
         run: node tests/e2e/regula20-previsit.mjs
       - name: Attach local synthetic QA evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: regula20-local-qa
           path: artifacts/regula20/

@@ -101,7 +101,7 @@ jobs:
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           SMTP_FROM: ${{ secrets.SMTP_FROM }}
         run: .venv-scale-mail/bin/python scripts/authorial_scale_delivery.py --send --extra out/authorial-input
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: modelos-autorais-pdf-${{ github.run_id }}

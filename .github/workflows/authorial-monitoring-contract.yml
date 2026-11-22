@@ -32,7 +32,7 @@ jobs:
       - run: npm run test:filter
       - run: npm run test:interactive
       - run: npm run build:client
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: authorial-monitoring-manifest-${{ github.sha }}
           path: client/src/data/interactiveScaleIds.generated.ts

@@ -51,7 +51,7 @@ jobs:
         run: node scripts/audit-especialidades-premium.mjs
       - name: Publish real screenshots
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: especialidades-premium-${{ github.sha }}
           retention-days: 14

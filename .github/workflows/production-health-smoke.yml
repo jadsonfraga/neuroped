@@ -79,7 +79,7 @@ jobs:
         # `always()` de propósito: o relatório da execução que FALHOU é o que
         # tem valor de diagnóstico. Sem isto, só sobraria a linha de log.
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: published-health-${{ github.run_id }}
           path: artifacts/e2e/published-health.json
@@ -127,7 +127,7 @@ jobs:
 
       - name: Upload evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: published-deep-smoke-${{ github.run_id }}
           path: artifacts/e2e/

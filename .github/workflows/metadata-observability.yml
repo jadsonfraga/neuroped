@@ -34,7 +34,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run build:client
       - run: node tests/e2e/tenant-metrics.mjs
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: synthetic-tenant-metrics
