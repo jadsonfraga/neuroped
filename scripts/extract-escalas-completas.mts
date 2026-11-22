@@ -16,7 +16,9 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 // ── Catálogo mestre (metadados de todas as escalas) ──────────────────────────
-import { allScales } from "../client/src/data/scaleFilter.ts";
+// Catálogo completo (inclui fichas e escalas não aplicáveis no app), como promete o cabeçalho;
+// `allScales` é só o subconjunto visível no filtro.
+import { allScalesComFichas as allScales } from "../client/src/data/scaleFilter.ts";
 
 // ── Escalas PANT — régua 0-4, 5 macrodomínios ────────────────────────────────
 import { pantScales, pantDomains, pantLevelLabels } from "../client/src/data/pantScales.ts";

@@ -2,7 +2,7 @@
 
 > Gerado em 2026-11-22 a partir do código-fonte.
 > **Conteúdo gerado por IA — requer validação clínica antes de qualquer uso.**
-> Total: **337 escalas** com itens interativos: 94 autorais NEXUS, 58 instrumentos publicados e 185 de outros catálogos.
+> Total: **354 escalas** com itens interativos: 94 autorais NEXUS, 58 instrumentos publicados, 185 de outros catálogos e 17 do motor runner (faixas por pontos).
 
 Para cada escala: confira os **itens**, as **opções de resposta** (com a pontuação usada), a **direção do escore** e as **faixas de corte**.
 Marcadores nos itens: _invertido_ (pontuação espelhada), _resposta livre_ (texto, não pontua), _opções próprias_ (substituem as da escala), _sentinela_ (alerta de segurança). O exemplo é o texto mostrado à família.
@@ -18154,5 +18154,804 @@ Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
 | 25% | Atenção — observar e reavaliar | amber | Alguns sinais presentes. Orientar família/escola, observar por 4–8 semanas e reavaliar; levar o resultado à consulta. |
 | 50% | Alterações moderadas — investigar | orange | Sinais frequentes com provável impacto funcional. Discutir com o clínico para investigação dirigida e plano de cuidado. |
 | 75% | Alterações importantes — priorizar avaliação | red | Sinais intensos e persistentes. Priorizar avaliação clínica detalhada e plano de intervenção. |
+
+---
+
+## ari — ARI
+- **Nome completo:** Affective Reactivity Index — Índice de Reatividade Afetiva
+- **Faixa etária:** 6–17 anos  |  **Respondente:** Pais/cuidador (ou autorrelato do adolescente)
+- **Direção do escore:** não declarada  |  **Interpretação:** faixas por pontos (motor runner)
+- **Itens:** 6
+
+1. Fica irritado(a) com facilidade pelos outros — _opções próprias: 0=Não é verdade; 1=Um pouco verdade; 2=Certamente verdade_
+2. Frequentemente perde a paciência (explode) — _opções próprias: 0=Não é verdade; 1=Um pouco verdade; 2=Certamente verdade_
+3. Permanece com raiva por muito tempo — _opções próprias: 0=Não é verdade; 1=Um pouco verdade; 2=Certamente verdade_
+4. Está com raiva na maior parte do tempo — _opções próprias: 0=Não é verdade; 1=Um pouco verdade; 2=Certamente verdade_
+5. Fica com raiva com frequência — _opções próprias: 0=Não é verdade; 1=Um pouco verdade; 2=Certamente verdade_
+6. Perde o controle com facilidade — _opções próprias: 0=Não é verdade; 1=Um pouco verdade; 2=Certamente verdade_
+
+**Faixas de interpretação** (pontos; direção: não declarada):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 0–3 | Irritabilidade baixa | ok | Sintomas de irritabilidade dentro do esperado para a idade na maioria dos contextos. |
+| 4–7 | Irritabilidade elevada | warn | Irritabilidade acima do habitual (literatura usa ≥ 4 como clinicamente relevante em amostras de pesquisa). Avalie prejuízo funcional, comorbidades (TDAH, TOD, depressão) e contexto familiar/escolar. |
+| 8–12 | Irritabilidade grave | alert | Irritabilidade acentuada e persistente. Investigue transtorno de desregulação disruptiva do humor, TOD, transtornos de humor e fatores ambientais; considere intervenção estruturada. |
+
+---
+
+## bfmf — BFMF
+- **Nome completo:** Bimanual Fine Motor Function — função motora fina bimanual (PC)
+- **Faixa etária:** 3–18 anos (PC)  |  **Respondente:** Clínico
+- **Direção do escore:** não declarada  |  **Interpretação:** faixas por pontos (motor runner)
+- **Itens:** 1
+
+1. Nível de função motora fina bimanual — _opções próprias: 1=Nível I — Uma mão manipula sem restrições; a outra, sem restrições ou com limitação apenas em habilidades finas avançadas; 2=Nível II — Uma mão manipula sem restrições; a outra apenas segura ou tem limitação evidente; 3=Nível III — Ambas as mãos com limitação; uma manipula com ajuda/adaptação; 4=Nível IV — Função limitada nas duas mãos; no máximo segura objetos com apoio; 5=Nível V — Não segura nem manipula; dependência total_
+
+**Faixas de interpretação** (pontos; direção: não declarada):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 1–1 | Nível I | ok | Função fina preservada ou quase; estimule habilidades avançadas. |
+| 2–2 | Nível II | ok | Assimetria funcional relevante; considere terapia de uso forçado/bimanual. |
+| 3–3 | Nível III | warn | Limitação bilateral com manipulação assistida; terapia ocupacional dirigida. |
+| 4–4 | Nível IV | warn | Função restrita à preensão com apoio; adaptações e tecnologia assistiva. |
+| 5–5 | Nível V | alert | Sem preensão funcional; foco em posicionamento e participação assistida. |
+
+---
+
+## eci-fraga-qdce — ECI-Fraga QDCe
+- **Nome completo:** Escala Cognitiva Infantil Fraga — Quociente de Desenvolvimento Cognitivo estimado (0–5 anos)
+- **Faixa etária:** 0–5 anos (0–71 meses)  |  **Respondente:** Clínico
+- **Direção do escore:** não declarada  |  **Interpretação:** faixas por pontos (motor runner)
+- **Itens:** 5
+
+1. Atenção, contato e engajamento (peso 15%). Exemplos fáceis por idade — bebê (0–12m): olha para o rosto, sorri de volta, reage ao nome; 1–3 anos: olha quando chamado, participa de brincadeira simples com o adulto; 4–5 anos: presta atenção numa história curta até o fim — _opções próprias: 0=0 — Ainda não faz; 15=1 — Faz muito pouco, só com muita ajuda; 30=2 — Faz às vezes, com alguma ajuda; 45=3 — Faz como esperado para a idade; 60=4 — Faz com facilidade, acima do esperado_
+   - Exemplo: Ex.: observe se olha para o rosto, atende ao nome e participa de brincadeiras.
+2. Linguagem receptiva e expressiva (peso 25%). Exemplos fáceis por idade — 0–12m: balbucia e reage à voz; 1–2 anos: fala palavras soltas e entende ordens simples ("dá tchau"); 2–3 anos: junta 2 palavrinhas ("quer água"); 4–5 anos: mantém conversa simples do dia a dia — _opções próprias: 0=0 — Ainda não faz; 25=1 — Faz muito pouco, só com muita ajuda; 50=2 — Faz às vezes, com alguma ajuda; 75=3 — Faz como esperado para a idade; 100=4 — Faz com facilidade, acima do esperado_
+   - Exemplo: Ex.: observe se balbucia, fala palavras e entende ordens simples.
+3. Resolução de problemas e raciocínio prático (peso 25%). Exemplos fáceis por idade — 0–12m: procura o brinquedo que se escondeu; 1–2 anos: usa objetos do jeito certo (copo, colher, pente); 2–3 anos: encaixa peças simples; 4–5 anos: resolve pequenos problemas do dia a dia com um pouco de ajuda — _opções próprias: 0=0 — Ainda não faz; 25=1 — Faz muito pouco, só com muita ajuda; 50=2 — Faz às vezes, com alguma ajuda; 75=3 — Faz como esperado para a idade; 100=4 — Faz com facilidade, acima do esperado_
+   - Exemplo: Ex.: observe se procura um brinquedo escondido e usa objetos do jeito certo.
+4. Coordenação visuomotora e manipulação (peso 20%). Exemplos fáceis por idade — 0–12m: pega objetos com a mão; 1–2 anos: empilha 2–3 blocos, rabisca no papel; 2–3 anos: vira páginas de livro, faz torre maior; 4–5 anos: desenha um círculo, usa tesoura com ajuda — _opções próprias: 0=0 — Ainda não faz; 20=1 — Faz muito pouco, só com muita ajuda; 40=2 — Faz às vezes, com alguma ajuda; 60=3 — Faz como esperado para a idade; 80=4 — Faz com facilidade, acima do esperado_
+   - Exemplo: Ex.: observe se empilha blocos, rabisca e usa a tesoura com ajuda.
+5. Brincar simbólico, autonomia e adaptação (peso 15%). Exemplos fáceis por idade — 0–12m: gosta de esconde-achou; 1–2 anos: imita tarefas de casa (varrer, mexer panela); 2–3 anos: faz de conta simples (dar comidinha à boneca); 4–5 anos: veste-se com ajuda e brinca combinando papéis — _opções próprias: 0=0 — Ainda não faz; 15=1 — Faz muito pouco, só com muita ajuda; 30=2 — Faz às vezes, com alguma ajuda; 45=3 — Faz como esperado para a idade; 60=4 — Faz com facilidade, acima do esperado_
+   - Exemplo: Ex.: observe se imita tarefas de casa e faz de conta com bonecos.
+
+**Faixas de interpretação** (pontos; direção: não declarada):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 0–119 | QDCe 0–29 — atraso grave | alert | Atraso grave / necessidade de investigação e intervenção prioritárias. Investigar etiologia e iniciar estimulação intensiva. |
+| 120–179 | QDCe 30–44 — atraso importante | alert | Atraso importante do desenvolvimento cognitivo. Avaliação diagnóstica formal e plano terapêutico multidisciplinar. |
+| 180–239 | QDCe 45–59 — atraso moderado | warn | Atraso moderado — encaminhar para avaliação e estimulação dirigida; reavaliar em intervalo curto. |
+| 240–299 | QDCe 60–74 — atraso leve / risco | warn | Atraso leve ou risco cognitivo funcional. Estimulação orientada e reavaliação programada. |
+| 300–359 | QDCe 75–89 — desenvolvimento esperado | ok | Desenvolvimento cognitivo dentro do esperado para a idade. |
+| 360–400 | QDCe 90–100 — desenvolvimento superior | ok | Desenvolvimento cognitivo acima do padrão esperado. |
+
+---
+
+## eci-fraga-qief — ECI-Fraga QIe-F
+- **Nome completo:** Escala Cognitiva Infantil Fraga — Quociente Intelectual estimado Funcional (6–16 anos)
+- **Faixa etária:** 6–16 anos  |  **Respondente:** Clínico
+- **Direção do escore:** não declarada  |  **Interpretação:** faixas por pontos (motor runner)
+- **Itens:** 7
+
+1. A. Raciocínio verbal e formação de conceitos (peso 20%). Exemplos fáceis por idade — 6–8 anos: diz o que é parecido entre gato e cachorro; 9–12 anos: explica uma ideia com as próprias palavras; 13–16 anos: dá opinião simples com um porquê — _opções próprias: 0=0 — Ainda não faz; 20=1 — Faz muito pouco, só com muita ajuda; 40=2 — Faz às vezes, com alguma ajuda; 60=3 — Faz como esperado para a idade; 80=4 — Faz com facilidade, acima do esperado_
+   - Exemplo: Ex.: observe se explica ideias com as próprias palavras e compara conceitos.
+2. B. Raciocínio fluido / não verbal (peso 25%). Exemplos fáceis por idade — 6–8 anos: completa um desenho ou padrão simples; 9–12 anos: monta quebra-cabeça da idade; 13–16 anos: entende um esquema ou mapa simples — _opções próprias: 0=0 — Ainda não faz; 25=1 — Faz muito pouco, só com muita ajuda; 50=2 — Faz às vezes, com alguma ajuda; 75=3 — Faz como esperado para a idade; 100=4 — Faz com facilidade, acima do esperado_
+   - Exemplo: Ex.: observe se completa padrões e monta quebra-cabeças da idade.
+3. C. Organização visuoespacial (peso 15%). Exemplos fáceis por idade — 6–8 anos: copia formas simples (círculo, quadrado); 9–12 anos: copia um desenho com alguns detalhes; 13–16 anos: organiza o próprio material sem ajuda — _opções próprias: 0=0 — Ainda não faz; 15=1 — Faz muito pouco, só com muita ajuda; 30=2 — Faz às vezes, com alguma ajuda; 45=3 — Faz como esperado para a idade; 60=4 — Faz com facilidade, acima do esperado_
+   - Exemplo: Ex.: observe se copia formas e organiza o próprio material.
+4. D. Memória operacional (peso 15%). Exemplos fáceis por idade — 6–8 anos: guarda um recado curto; 9–12 anos: segue instrução de 2–3 passos; 13–16 anos: lembra os compromissos simples da semana — _opções próprias: 0=0 — Ainda não faz; 15=1 — Faz muito pouco, só com muita ajuda; 30=2 — Faz às vezes, com alguma ajuda; 45=3 — Faz como esperado para a idade; 60=4 — Faz com facilidade, acima do esperado_
+   - Exemplo: Ex.: observe se guarda recados e segue instruções de 2–3 passos.
+5. E. Velocidade e eficiência cognitiva (peso 10%). Exemplo fácil para qualquer idade: termina tarefas simples num tempo parecido com o da turma, sem se perder no meio da atividade — _opções próprias: 0=0 — Ainda não faz; 10=1 — Faz muito pouco, só com muita ajuda; 20=2 — Faz às vezes, com alguma ajuda; 30=3 — Faz como esperado para a idade; 40=4 — Faz com facilidade, acima do esperado_
+   - Exemplo: Ex.: observe se termina tarefas simples no ritmo da turma.
+6. F. Aprendizagem escolar funcional (peso 10%). Exemplos fáceis por idade — 6–8 anos: lê palavras e frases simples; 9–12 anos: lê um texto curto e faz contas básicas; 13–16 anos: usa leitura e escrita nas tarefas do dia a dia — _opções próprias: 0=0 — Ainda não faz; 10=1 — Faz muito pouco, só com muita ajuda; 20=2 — Faz às vezes, com alguma ajuda; 30=3 — Faz como esperado para a idade; 40=4 — Faz com facilidade, acima do esperado_
+   - Exemplo: Ex.: observe se lê textos curtos e faz contas básicas.
+7. G. Autonomia adaptativa (peso 5%). Exemplos fáceis por idade — 6–8 anos: cuida dos pertences com lembretes; 9–12 anos: faz a rotina de higiene sozinho; 13–16 anos: assume pequenas responsabilidades fora de casa — _opções próprias: 0=0 — Ainda não faz; 5=1 — Faz muito pouco, só com muita ajuda; 10=2 — Faz às vezes, com alguma ajuda; 15=3 — Faz como esperado para a idade; 20=4 — Faz com facilidade, acima do esperado_
+   - Exemplo: Ex.: observe se cuida dos pertences e assume pequenas responsabilidades.
+
+**Faixas de interpretação** (pontos; direção: não declarada):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 0–99 | QIe-F 0–24 — sugestivo de DI grave/profunda | alert | Fortemente sugestivo de deficiência intelectual grave a profunda — avaliação formal e suporte intensivo. |
+| 100–139 | QIe-F 25–34 — sugestivo de DI moderada | alert | Sugestivo de deficiência intelectual moderada — confirmar com avaliação psicométrica formal. |
+| 140–179 | QIe-F 35–44 — sugestivo de DI leve | alert | Sugestivo de deficiência intelectual leve — encaminhar para avaliação formal e plano de apoio. |
+| 180–219 | QIe-F 45–54 — limítrofe | warn | Funcionamento limítrofe — investigar fatores associados; apoio pedagógico dirigido. |
+| 220–259 | QIe-F 55–64 — médio inferior / vulnerabilidade | warn | Funcionamento médio inferior com vulnerabilidade escolar — monitorar e apoiar. |
+| 260–319 | QIe-F 65–79 — médio esperado | ok | Funcionamento cognitivo funcional dentro do médio esperado. |
+| 320–359 | QIe-F 80–89 — médio superior | ok | Funcionamento médio superior. |
+| 360–400 | QIe-F 90–100 — muito alto / superior | ok | Funcionamento cognitivo estimado superior. |
+
+---
+
+## esm-edj — ESM-EDJ
+- **Nome completo:** Escala de Satisfação com a Medicação — ESM-EDJ v1.0 (protocolo clínico EDJ, padrão PANT v7.2.1)
+- **Faixa etária:** Qualquer idade pediátrica  |  **Respondente:** Pais / cuidador (Versão A)
+- **Direção do escore:** não declarada  |  **Interpretação:** faixas por pontos (motor runner)
+- **Itens:** 24
+
+1. Eficácia Percebida · A medicação trouxe melhora perceptível nos sintomas-alvo do tratamento — _opções próprias: 1=Discordo Totalmente; 2=Discordo Parcialmente; 3=Nem concordo, nem discordo; 4=Concordo Parcialmente; 5=Concordo Totalmente_
+   - Exemplo: Ex.: os sintomas melhoraram de forma perceptível.
+2. Eficácia Percebida · Observo melhora no comportamento geral desde o início do medicamento — _opções próprias: 1=Discordo Totalmente; 2=Discordo Parcialmente; 3=Nem concordo, nem discordo; 4=Concordo Parcialmente; 5=Concordo Totalmente_
+   - Exemplo: Ex.: o comportamento melhorou desde o início do remédio.
+3. Eficácia Percebida · O medicamento ajuda a criança/paciente a se concentrar ou regular melhor — _opções próprias: 1=Discordo Totalmente; 2=Discordo Parcialmente; 3=Nem concordo, nem discordo; 4=Concordo Parcialmente; 5=Concordo Totalmente_
+   - Exemplo: Ex.: consegue se concentrar melhor com o medicamento.
+4. Eficácia Percebida · Percebo que o efeito do medicamento é consistente ao longo dos dias — _opções próprias: 1=Discordo Totalmente; 2=Discordo Parcialmente; 3=Nem concordo, nem discordo; 4=Concordo Parcialmente; 5=Concordo Totalmente_
+   - Exemplo: Ex.: o efeito se mantém parecido todos os dias.
+5. Eficácia Percebida · A melhora obtida justifica o uso contínuo do medicamento — _opções próprias: 1=Discordo Totalmente; 2=Discordo Parcialmente; 3=Nem concordo, nem discordo; 4=Concordo Parcialmente; 5=Concordo Totalmente_
+   - Exemplo: Ex.: o ganho compensa manter o tratamento.
+6. Eficácia Percebida · O medicamento contribui para o desenvolvimento e aprendizado do paciente — _opções próprias: 1=Discordo Totalmente; 2=Discordo Parcialmente; 3=Nem concordo, nem discordo; 4=Concordo Parcialmente; 5=Concordo Totalmente_
+   - Exemplo: Ex.: ajuda no aprendizado e no desenvolvimento.
+7. Tolerabilidade e Efeitos Adversos · A medicação causou efeitos colaterais inaceitáveis (reverso) — _opções próprias: 5=Discordo Totalmente; 4=Discordo Parcialmente; 3=Nem concordo, nem discordo; 2=Concordo Parcialmente; 1=Concordo Totalmente_
+   - Exemplo: Ex.: teve efeitos colaterais difíceis de tolerar.
+8. Tolerabilidade e Efeitos Adversos · O paciente apresentou alterações de sono atribuíveis ao medicamento (reverso) — _opções próprias: 5=Discordo Totalmente; 4=Discordo Parcialmente; 3=Nem concordo, nem discordo; 2=Concordo Parcialmente; 1=Concordo Totalmente_
+   - Exemplo: Ex.: passou a dormir mal por causa do remédio.
+9. Tolerabilidade e Efeitos Adversos · Observei perda significativa de apetite ou de peso (reverso) — _opções próprias: 5=Discordo Totalmente; 4=Discordo Parcialmente; 3=Nem concordo, nem discordo; 2=Concordo Parcialmente; 1=Concordo Totalmente_
+   - Exemplo: Ex.: perdeu apetite ou peso com a medicação.
+10. Tolerabilidade e Efeitos Adversos · Houve alterações de humor ou irritabilidade relacionadas ao uso (reverso) — _opções próprias: 5=Discordo Totalmente; 4=Discordo Parcialmente; 3=Nem concordo, nem discordo; 2=Concordo Parcialmente; 1=Concordo Totalmente_
+   - Exemplo: Ex.: ficou mais irritado com o uso.
+11. Tolerabilidade e Efeitos Adversos · Os efeitos adversos prejudicaram a rotina ou socialização do paciente (reverso) — _opções próprias: 5=Discordo Totalmente; 4=Discordo Parcialmente; 3=Nem concordo, nem discordo; 2=Concordo Parcialmente; 1=Concordo Totalmente_
+   - Exemplo: Ex.: os efeitos atrapalharam a rotina e o convívio.
+12. Tolerabilidade e Efeitos Adversos · Em geral, a relação benefício/risco do medicamento é favorável — _opções próprias: 5=Discordo Totalmente; 4=Discordo Parcialmente; 3=Nem concordo, nem discordo; 2=Concordo Parcialmente; 1=Concordo Totalmente_
+   - Exemplo: Ex.: no geral, o benefício supera os riscos.
+13. Adesão e Rotina de Uso · O paciente toma o medicamento nos horários corretos todos os dias — _opções próprias: 1=Discordo Totalmente; 2=Discordo Parcialmente; 3=Nem concordo, nem discordo; 4=Concordo Parcialmente; 5=Concordo Totalmente_
+   - Exemplo: Ex.: toma o remédio na hora certa todo dia.
+14. Adesão e Rotina de Uso · Não houve esquecimento de doses na última semana — _opções próprias: 1=Discordo Totalmente; 2=Discordo Parcialmente; 3=Nem concordo, nem discordo; 4=Concordo Parcialmente; 5=Concordo Totalmente_
+   - Exemplo: Ex.: não esqueceu nenhuma dose na semana.
+15. Adesão e Rotina de Uso · A forma de administração (comprimido, xarope, etc.) é adequada e aceita — _opções próprias: 1=Discordo Totalmente; 2=Discordo Parcialmente; 3=Nem concordo, nem discordo; 4=Concordo Parcialmente; 5=Concordo Totalmente_
+   - Exemplo: Ex.: aceita bem o comprimido ou o xarope.
+16. Adesão e Rotina de Uso · O medicamento está sempre disponível sem dificuldade de acesso — _opções próprias: 1=Discordo Totalmente; 2=Discordo Parcialmente; 3=Nem concordo, nem discordo; 4=Concordo Parcialmente; 5=Concordo Totalmente_
+   - Exemplo: Ex.: consegue o medicamento sem dificuldade.
+17. Adesão e Rotina de Uso · A família (ou paciente) não interrompeu o uso por conta própria — _opções próprias: 1=Discordo Totalmente; 2=Discordo Parcialmente; 3=Nem concordo, nem discordo; 4=Concordo Parcialmente; 5=Concordo Totalmente_
+   - Exemplo: Ex.: não parou o uso sem orientação médica.
+18. Qualidade de Vida e Funcionalidade · O medicamento melhorou a participação do paciente nas atividades escolares — _opções próprias: 1=Discordo Totalmente; 2=Discordo Parcialmente; 3=Nem concordo, nem discordo; 4=Concordo Parcialmente; 5=Concordo Totalmente_
+   - Exemplo: Ex.: participa mais das atividades da escola.
+19. Qualidade de Vida e Funcionalidade · Houve melhora nas interações sociais e relacionamentos desde o início — _opções próprias: 1=Discordo Totalmente; 2=Discordo Parcialmente; 3=Nem concordo, nem discordo; 4=Concordo Parcialmente; 5=Concordo Totalmente_
+   - Exemplo: Ex.: melhorou o convívio com colegas e amigos.
+20. Qualidade de Vida e Funcionalidade · A qualidade do sono e da alimentação foi preservada com a medicação — _opções próprias: 1=Discordo Totalmente; 2=Discordo Parcialmente; 3=Nem concordo, nem discordo; 4=Concordo Parcialmente; 5=Concordo Totalmente_
+   - Exemplo: Ex.: manteve bom sono e boa alimentação.
+21. Qualidade de Vida e Funcionalidade · O paciente demonstra bem-estar geral associado ao uso do medicamento — _opções próprias: 1=Discordo Totalmente; 2=Discordo Parcialmente; 3=Nem concordo, nem discordo; 4=Concordo Parcialmente; 5=Concordo Totalmente_
+   - Exemplo: Ex.: demonstra bem-estar com o uso do remédio.
+22. Experiência Relacional · Me sinto adequadamente informado(a) sobre os objetivos e riscos da medicação — _opções próprias: 1=Discordo Totalmente; 2=Discordo Parcialmente; 3=Nem concordo, nem discordo; 4=Concordo Parcialmente; 5=Concordo Totalmente_
+   - Exemplo: Ex.: sente-se bem informado sobre o tratamento.
+23. Experiência Relacional · Tenho facilidade para relatar dúvidas ou preocupações ao médico responsável — _opções próprias: 1=Discordo Totalmente; 2=Discordo Parcialmente; 3=Nem concordo, nem discordo; 4=Concordo Parcialmente; 5=Concordo Totalmente_
+   - Exemplo: Ex.: consegue tirar dúvidas com o médico.
+24. Experiência Relacional · Confio nas orientações do médico quanto à medicação utilizada — _opções próprias: 1=Discordo Totalmente; 2=Discordo Parcialmente; 3=Nem concordo, nem discordo; 4=Concordo Parcialmente; 5=Concordo Totalmente_
+   - Exemplo: Ex.: confia nas orientações do médico.
+
+**Faixas de interpretação** (pontos; direção: não declarada):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 24–48 | Insatisfação significativa (índice ≤40%) | alert | Rever o plano terapêutico com a família: eficácia percebida, efeitos adversos, praticidade e comunicação. |
+| 49–78 | Satisfação parcial (41–65%) | warn | Há pontos de insatisfação relevantes — identificar os módulos com menor escore e ajustar. |
+| 79–100 | Satisfação moderada a boa (66–84%) | ok | Tratamento bem aceito no geral; monitorar os itens com resposta baixa. |
+| 101–120 | Alta satisfação (≥85%) | ok | Alta satisfação com a medicação — manter o plano e o seguimento programado. |
+
+---
+
+## faces — FPS-R
+- **Nome completo:** Faces Pain Scale – Revised
+- **Faixa etária:** 3–18 anos  |  **Respondente:** Criança/adolescente (autorrelato)
+- **Direção do escore:** não declarada  |  **Interpretação:** faixas por pontos (motor runner)
+- **Itens:** 1
+
+1. Qual face mostra o quanto dói agora? — _opções próprias: 0=😐 Face 1 — não dói nada; 2=🙁 Face 2 — dói um pouco; 4=☹️ Face 3 — dói um pouco mais; 6=😣 Face 4 — dói ainda mais; 8=😫 Face 5 — dói muito; 10=😭 Face 6 — dói o máximo que você pode imaginar_
+
+**Faixas de interpretação** (pontos; direção: não declarada):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 0–0 | Sem dor | ok | A criança não refere dor neste momento. Reavalie conforme o contexto clínico. |
+| 1–3 | Dor leve | ok | Dor leve. Considere medidas não farmacológicas e reavaliação periódica. |
+| 4–6 | Dor moderada | warn | Dor moderada (FPS-R ≥ 4 costuma indicar dor clinicamente relevante). Considere analgesia e investigação da causa. |
+| 7–10 | Dor intensa | alert | Dor intensa. Priorize analgesia adequada, investigação da causa e reavaliação em curto intervalo. |
+
+---
+
+## fps-r — FPS-R
+- **Nome completo:** Faces Pain Scale – Revised
+- **Faixa etária:** 3–18 anos  |  **Respondente:** Criança/adolescente (autorrelato)
+- **Direção do escore:** não declarada  |  **Interpretação:** faixas por pontos (motor runner)
+- **Itens:** 1
+
+1. Qual face mostra o quanto dói agora? — _opções próprias: 0=😐 Face 1 — não dói nada; 2=🙁 Face 2 — dói um pouco; 4=☹️ Face 3 — dói um pouco mais; 6=😣 Face 4 — dói ainda mais; 8=😫 Face 5 — dói muito; 10=😭 Face 6 — dói o máximo que você pode imaginar_
+
+**Faixas de interpretação** (pontos; direção: não declarada):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 0–0 | Sem dor | ok | A criança não refere dor neste momento. Reavalie conforme o contexto clínico. |
+| 1–3 | Dor leve | ok | Dor leve. Considere medidas não farmacológicas e reavaliação periódica. |
+| 4–6 | Dor moderada | warn | Dor moderada (FPS-R ≥ 4 costuma indicar dor clinicamente relevante). Considere analgesia e investigação da causa. |
+| 7–10 | Dor intensa | alert | Dor intensa. Priorize analgesia adequada, investigação da causa e reavaliação em curto intervalo. |
+
+---
+
+## gad7ped — GAD-7
+- **Nome completo:** Generalized Anxiety Disorder 7-item — autorrelato
+- **Faixa etária:** 12–18 anos  |  **Respondente:** Criança/adolescente
+- **Direção do escore:** não declarada  |  **Interpretação:** faixas por pontos (motor runner)
+- **Itens:** 7
+
+1. Sentir-se nervoso(a), ansioso(a) ou muito tenso(a) — _opções próprias: 0=Nenhuma vez; 1=Vários dias; 2=Mais da metade dos dias; 3=Quase todos os dias_
+2. Não conseguir parar ou controlar as preocupações — _opções próprias: 0=Nenhuma vez; 1=Vários dias; 2=Mais da metade dos dias; 3=Quase todos os dias_
+3. Preocupar-se muito com diversas coisas — _opções próprias: 0=Nenhuma vez; 1=Vários dias; 2=Mais da metade dos dias; 3=Quase todos os dias_
+4. Dificuldade para relaxar — _opções próprias: 0=Nenhuma vez; 1=Vários dias; 2=Mais da metade dos dias; 3=Quase todos os dias_
+5. Ficar tão agitado(a) que se torna difícil permanecer parado(a) — _opções próprias: 0=Nenhuma vez; 1=Vários dias; 2=Mais da metade dos dias; 3=Quase todos os dias_
+6. Ficar facilmente aborrecido(a) ou irritável — _opções próprias: 0=Nenhuma vez; 1=Vários dias; 2=Mais da metade dos dias; 3=Quase todos os dias_
+7. Sentir medo como se algo terrível fosse acontecer — _opções próprias: 0=Nenhuma vez; 1=Vários dias; 2=Mais da metade dos dias; 3=Quase todos os dias_
+
+**Faixas de interpretação** (pontos; direção: não declarada):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 0–4 | Ansiedade mínima | ok | Sintomas mínimos. Acompanhamento de rotina; reavalie se houver piora. |
+| 5–9 | Ansiedade leve | warn | Sintomas leves. Monitorize; oriente estratégias e reavalie em algumas semanas. |
+| 10–14 | Ansiedade moderada | alert | ≥10: ansiedade provável. Avaliação clínica e considerar intervenção. |
+| 15–21 | Ansiedade grave | alert | Sintomas graves. Avaliação clínica prioritária e plano terapêutico. |
+
+---
+
+## mini-macs — Mini-MACS
+- **Nome completo:** Mini Manual Ability Classification System — habilidade manual (PC, 1–4 anos)
+- **Faixa etária:** 1–4 anos (PC)  |  **Respondente:** Clínico (com pais/cuidador)
+- **Direção do escore:** não declarada  |  **Interpretação:** faixas por pontos (motor runner)
+- **Itens:** 1
+
+1. Nível de habilidade manual habitual — _opções próprias: 1=Nível I — Manuseia objetos com facilidade e sucesso; 2=Nível II — Manuseia a maioria dos objetos, com alguma redução de qualidade/velocidade; 3=Nível III — Manuseia com dificuldade; precisa de ajuda para preparar/adaptar atividades; 4=Nível IV — Manuseia poucos objetos facilmente manejáveis e precisa de apoio contínuo; 5=Nível V — Não manuseia objetos; habilidade gravemente limitada mesmo para ações simples_
+
+**Faixas de interpretação** (pontos; direção: não declarada):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 1–1 | Nível I | ok | Independência manual adequada para a idade. |
+| 2–2 | Nível II | ok | Limitação leve de qualidade/velocidade; estimulação dirigida. |
+| 3–3 | Nível III | warn | Necessita preparo/adaptação das atividades; terapia ocupacional indicada. |
+| 4–4 | Nível IV | warn | Apoio contínuo necessário; planeje adaptações e tecnologia assistiva. |
+| 5–5 | Nível V | alert | Dependência total para manuseio; foco em posicionamento, tecnologia assistiva e participação. |
+
+---
+
+## nepedq — NEPEDQ
+- **Nome completo:** NEPEDQ — Questionário de Avaliação Pedagógica Neuropediátrica (NeuroPed App, v1.0, Dr. Jadson Fraga)
+- **Faixa etária:** 4–12 anos (estimado)  |  **Respondente:** Professor
+- **Direção do escore:** não declarada  |  **Interpretação:** faixas por pontos (motor runner)
+- **Itens:** 90
+
+1. Linguagem Oral · Inicia e mantém um diálogo de forma adequada para a idade — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: puxa conversa e mantém o assunto com o colega.
+2. Linguagem Oral · Apresenta trocas de sons na fala (ex.: "faca" → "vaca") (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: fala 'vaca' quando quer dizer 'faca'.
+3. Linguagem Oral · Apresenta vocabulário restrito para a faixa etária (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: usa poucas palavras para a idade.
+4. Linguagem Oral · Compreende e executa instruções dadas pelo professor — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: entende e cumpre o que o professor pede.
+5. Linguagem Oral · Tem facilidade para nomear objetos, pessoas e situações — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: nomeia objetos e pessoas sem hesitar.
+6. Linguagem Oral · Identifica e produz rimas (ex.: "pão" rima com "mão") — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: percebe que 'pão' rima com 'mão'.
+7. Linguagem Oral · Identifica palavras que começam com o mesmo som (aliteração) — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: junta 'bola, bota, boneca' pelo som inicial.
+8. Linguagem Oral · Expressa claramente seus pensamentos em palavras — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: explica o que pensa com clareza.
+9. Linguagem Oral · Reconta histórias ou situações respeitando a sequência dos fatos — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: reconta a história na ordem certa.
+10. Linguagem Oral · Apresenta dificuldade para encontrar palavras durante a fala (anomia) (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: trava buscando a palavra na fala.
+11. Habilidades Preditoras da Alfabetização · Nomeia cores e formas geométricas simples — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: nomeia cores e formas geométricas simples.
+12. Habilidades Preditoras da Alfabetização · Demonstra noção espacial (em cima/baixo, direita/esquerda) — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: entende 'em cima/embaixo, direita/esquerda'.
+13. Habilidades Preditoras da Alfabetização · Demonstra noção temporal (antes/depois, ontem/amanhã, manhã/tarde/noite) — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: sabe 'ontem/amanhã, manhã/tarde/noite'.
+14. Habilidades Preditoras da Alfabetização · Conhece os dias da semana e os meses do ano na ordem correta — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: recita os dias da semana na ordem.
+15. Habilidades Preditoras da Alfabetização · Diferencia letras de números com facilidade — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: separa letras de números com facilidade.
+16. Habilidades Preditoras da Alfabetização · Nomeia todas as letras do alfabeto em ordem aleatória — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: nomeia as letras fora de ordem.
+17. Habilidades Preditoras da Alfabetização · Escreve o próprio nome completo corretamente — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: escreve o nome completo corretamente.
+18. Habilidades Preditoras da Alfabetização · Demora excessivamente para finalizar atividades propostas (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: leva tempo demais para terminar a atividade.
+19. Habilidades Preditoras da Alfabetização · Apresenta dificuldade para realizar atividades que envolvam escrita (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: trava nas tarefas que exigem escrever.
+20. Habilidades Preditoras da Alfabetização · Soletrar palavras com sílabas simples (ex.: bola, caneta, telefone) — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: soletra 'bola' ou 'caneta'.
+21. Leitura · Lê palavras com sílabas simples sem dificuldade perceptível — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: lê 'bola, casa' sem tropeçar.
+22. Leitura · Apresenta lentidão na leitura de palavras isoladas (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: lê cada palavra muito devagar.
+23. Leitura · Apresenta lentidão na leitura de frases (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: demora a ler uma frase inteira.
+24. Leitura · Apresenta dificuldade para associar letras ao som correspondente (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: não liga a letra ao som certo.
+25. Leitura · Tenta adivinhar a palavra lendo apenas o início dela (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: chuta a palavra vendo só o começo.
+26. Leitura · Troca sons de letras semelhantes durante a leitura (p/b, t/d, f/v) (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: lê 'pato' como 'bato'.
+27. Leitura · Confunde letras ou sílabas visualmente semelhantes (m/n, p/q, em/me) (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: confunde 'm' com 'n' ao ler.
+28. Leitura · Omite letras ou palavras durante a leitura (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: pula palavras durante a leitura.
+29. Leitura · Demonstra prazer ou disposição para ler em voz alta na sala — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: gosta de se voluntariar para ler na turma.
+30. Leitura · Compreende o texto após leitura oral — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: entende o texto que leu em voz alta.
+31. Leitura · Compreende o texto após leitura silenciosa — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: entende o texto lido em silêncio.
+32. Leitura · É um dos últimos a terminar tarefas que envolvem leitura (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: é sempre dos últimos a terminar de ler.
+33. Leitura · Não consegue concluir tarefas por dificuldade de leitura (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: não termina a tarefa por não conseguir ler.
+34. Escrita · Se recusa ou evita atividades de escrita (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: evita ou recusa atividades de escrever.
+35. Escrita · É organizado no uso da folha (respeita linhas e margens) — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: respeita linhas e margens no caderno.
+36. Escrita · Sua escrita é incompleta ou apresenta muitas rasuras (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: deixa a escrita incompleta e cheia de rasuras.
+37. Escrita · Apresenta dificuldade para copiar da lousa ou do livro com fidelidade (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: erra ao copiar a frase da lousa.
+38. Escrita · Apresenta escrita "espelhada" (letras ou palavras invertidas) (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: escreve letras invertidas, como num espelho.
+39. Escrita · Apresenta lentidão para copiar e/ou escrever (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: copia e escreve muito devagar.
+40. Escrita · Omite, adiciona ou substitui palavras inteiras ao copiar frases (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: troca palavras ao copiar a frase.
+41. Escrita · Escreve corretamente palavras com sílabas simples (fogo, panela, canivete) — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: escreve 'fogo, panela' sem erro.
+42. Escrita · No ditado, confunde letras auditivamente similares (p/b, t/d, f/v, c/g, s/z) (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: no ditado troca 'p' por 'b'.
+43. Escrita · Na escrita, confunde letras visualmente semelhantes (p/q, b/d, n/u, o/a) (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: escreve 'b' no lugar de 'd'.
+44. Escrita · Confunde a sequência de sílabas nas palavras ("sapato" → "pasato") (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: escreve 'pasato' em vez de 'sapato'.
+45. Escrita · Apresenta erros de escrita significativos em relação aos colegas (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: erra muito mais na escrita que os colegas.
+46. Matemática · Identifica semelhanças e diferenças em formas geométricas — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: compara formas geométricas.
+47. Matemática · Faz comparações de quantidade e tamanho (mais/menos, maior/menor) — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: identifica 'mais/menos, maior/menor'.
+48. Matemática · Conta oralmente até 20 respeitando a sequência numérica — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: conta até 20 na ordem certa.
+49. Matemática · Escreve e lê numerais na ordem das unidades — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: lê e escreve números de 0 a 9.
+50. Matemática · Faz correspondência biunívoca número-quantidade (de 1 a 9) — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: associa o '5' a cinco objetos.
+51. Matemática · Realiza cálculos de adição e subtração de unidades mentalmente — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: faz 3+2 de cabeça.
+52. Matemática · Escreve e lê numerais na ordem das dezenas — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: lê e escreve números como 34.
+53. Matemática · Compreende o conceito de antecessor e sucessor em dezenas — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: sabe o que vem antes e depois de 30.
+54. Matemática · Resolve contas de dezenas sem reserva — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: resolve 23+15 sem 'vai um'.
+55. Matemática · Resolve contas de dezenas com reserva — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: resolve 27+18 com 'vai um'.
+56. Matemática · Escreve e lê numerais na ordem das centenas — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: lê e escreve números como 250.
+57. Matemática · Resolve problemas matemáticos com enunciado verbal — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: resolve 'tinha 5, ganhou 3'.
+58. Aspectos Motores · Evita ou demonstra desagrado ao desenhar (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: demonstra desagrado quando precisa desenhar.
+59. Aspectos Motores · Respeita o limite da figura ao pintar — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: pinta sem ultrapassar o contorno.
+60. Aspectos Motores · Apresenta coordenação motora global preservada (pula, corre, agarra) — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: pula, corre e agarra a bola bem.
+61. Aspectos Motores · Apresenta coordenação motora fina preservada (recorta, abotoa, amarra) — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: recorta, abotoa e amarra o sapato.
+62. Aspectos Motores · Apresenta dificuldade na preensão do lápis (pega de forma atípica) (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: segura o lápis de forma atípica.
+63. Aspectos Motores · Pressiona o lápis adequadamente no papel (nem forte nem fraco) — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: pressiona o lápis na medida certa.
+64. Aspectos Motores · As letras apresentam tamanho desproporcional (muito grandes ou muito pequenas) (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: escreve letras grandes ou pequenas demais.
+65. Aspectos Motores · A caligrafia é legível, independente do tipo de letra — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: a caligrafia é legível em qualquer letra.
+66. Aspectos Motores · Apresenta dificuldade no traçado da letra cursiva (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: trava ao traçar a letra cursiva.
+67. Atenção e Comportamento · Aceita e segue regras combinadas em sala — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: cumpre as regras combinadas em sala.
+68. Atenção e Comportamento · Distrai-se com facilidade por estímulos externos (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: qualquer barulho tira sua atenção.
+69. Atenção e Comportamento · Comete erros frequentes por descuido (não por falta de conhecimento) (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: erra por distração, não por não saber.
+70. Atenção e Comportamento · É organizado com a carteira e materiais escolares — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: mantém a carteira e os materiais em ordem.
+71. Atenção e Comportamento · Esquece tarefas, materiais ou compromissos com frequência (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: esquece a tarefa ou o material em casa.
+72. Atenção e Comportamento · Demonstra interesse e motivação pelas atividades propostas — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: demonstra interesse pelas atividades.
+73. Atenção e Comportamento · Apresenta comportamento agitado/inquieto durante a aula (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: fica agitado e inquieto na cadeira.
+74. Atenção e Comportamento · Levanta da cadeira ou caminha pela sala sem permissão (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: levanta e anda pela sala sem pedir.
+75. Atenção e Comportamento · Mantém atenção durante explicações do professor — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: presta atenção enquanto o professor explica.
+76. Atenção e Comportamento · Solicita repetição frequente da instrução dada (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: pede para repetir a instrução várias vezes.
+77. Atenção e Comportamento · Conclui as atividades iniciadas sem abandono — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: termina o que começa.
+78. Atenção e Comportamento · Frequentemente termina atividades com atraso (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: entrega as atividades sempre atrasado.
+79. Atenção e Comportamento · Distrai-se excessivamente com estímulos do ambiente (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: distrai-se com o que acontece ao redor.
+80. Atenção e Comportamento · Foge ou protela atividades que exigem esforço mental prolongado (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: adia tarefas que exigem concentração longa.
+81. Atenção e Comportamento · O desempenho escolar é prejudicado pela dificuldade de manter concentração (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: rende menos por não manter o foco.
+82. Interação Social e Regulação Emocional · Interage positivamente com colegas de turma — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: brinca e coopera bem com os colegas.
+83. Interação Social e Regulação Emocional · Apresenta dificuldade para esperar sua vez em situações coletivas (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: não consegue esperar a vez na fila ou no jogo.
+84. Interação Social e Regulação Emocional · Interrompe colegas ou professor com frequência (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: interrompe a fala dos outros com frequência.
+85. Interação Social e Regulação Emocional · Reage de forma desproporcional a frustrações pequenas (item invertido — pontuação já ajustada) — _opções próprias: 5=Discordo totalmente / Nunca; 4=Discordo / Raramente; 3=Neutro / Às vezes; 2=Concordo / Frequentemente; 1=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: explode com pequenas frustrações.
+86. Interação Social e Regulação Emocional · Demonstra empatia e reconhece emoções dos outros — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: percebe e acolhe a emoção do colega.
+87. Interação Social e Regulação Emocional · Adapta-se bem a mudanças de rotina ou de atividade — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: aceita bem mudanças na rotina.
+88. Funções Executivas Observáveis · Planeja e organiza etapas de tarefas com múltiplos passos — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: organiza sozinho as etapas de uma tarefa.
+89. Funções Executivas Observáveis · Transfere aprendizado anterior para situações novas (generalização) — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: usa o que aprendeu numa situação nova.
+90. Funções Executivas Observáveis · Inicia atividades de forma autônoma sem precisar de múltiplos estímulos — _opções próprias: 1=Discordo totalmente / Nunca; 2=Discordo / Raramente; 3=Neutro / Às vezes; 4=Concordo / Frequentemente; 5=Concordo totalmente / Sempre_
+   - Exemplo: Ex.: começa a tarefa sem precisar de vários lembretes.
+
+**Faixas de interpretação** (pontos; direção: não declarada):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 90–450 | Perfil descritivo — sem ponto de corte publicado | warn | Interpretar por domínio e pelos itens marcados nas opções mais baixas (1–2 após reversão). Escore maior = melhor desempenho. Sem corte publicado pelo autor; usar como mapa pedagógico e para comparação intraindividual. |
+
+---
+
+## nrs-pain — NRS Dor
+- **Nome completo:** Numeric Rating Scale for Pain (0–10)
+- **Faixa etária:** 8–18 anos  |  **Respondente:** Criança ≥ 8 anos / adolescente (autorrelato)
+- **Direção do escore:** não declarada  |  **Interpretação:** faixas por pontos (motor runner)
+- **Itens:** 1
+
+1. Nota da dor agora (0 = nenhuma dor; 10 = pior dor imaginável) — _opções próprias: 0=0 — nenhuma dor; 1=1; 2=2; 3=3; 4=4; 5=5; 6=6; 7=7; 8=8; 9=9; 10=10 — pior dor imaginável_
+
+**Faixas de interpretação** (pontos; direção: não declarada):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 0–0 | Sem dor | ok | Sem dor referida no momento. |
+| 1–3 | Dor leve | ok | Dor leve (1–3). Medidas não farmacológicas e reavaliação. |
+| 4–6 | Dor moderada | warn | Dor moderada (4–6). Considere analgesia e investigue a causa. Redução ≥ 2 pontos após intervenção é clinicamente significativa (Farrar et al., 2001). |
+| 7–10 | Dor intensa | alert | Dor intensa (7–10). Priorize controle da dor e investigação imediata da causa. |
+
+---
+
+## q-chat-10 — Q-CHAT-10
+- **Nome completo:** Quantitative Checklist for Autism in Toddlers — 10 itens
+- **Faixa etária:** 18–36 meses  |  **Respondente:** Pais/cuidador
+- **Direção do escore:** não declarada  |  **Interpretação:** faixas por pontos (motor runner)
+- **Itens:** 10
+
+1. A criança olha para você quando você a chama pelo nome? — _opções próprias: 0=Sempre; 0=Quase sempre; 1=Às vezes; 1=Raramente; 1=Nunca_
+2. Quão fácil é para você obter contato visual com a criança? — _opções próprias: 0=Muito fácil; 0=Razoavelmente fácil; 1=Razoavelmente difícil; 1=Muito difícil; 1=Impossível_
+3. A criança aponta para indicar que quer algo (ex.: um brinquedo fora de alcance)? — _opções próprias: 0=Muitas vezes por dia; 0=Algumas vezes por dia; 1=Algumas vezes por semana; 1=Menos de uma vez por semana; 1=Nunca_
+4. A criança aponta para compartilhar interesse com você (ex.: apontar algo interessante)? — _opções próprias: 0=Muitas vezes por dia; 0=Algumas vezes por dia; 1=Algumas vezes por semana; 1=Menos de uma vez por semana; 1=Nunca_
+5. A criança brinca de faz de conta (ex.: cuidar de bonecas, falar em telefone de brinquedo)? — _opções próprias: 0=Muitas vezes por dia; 0=Algumas vezes por dia; 1=Algumas vezes por semana; 1=Menos de uma vez por semana; 1=Nunca_
+6. A criança segue para onde você está olhando? — _opções próprias: 0=Muitas vezes por dia; 0=Algumas vezes por dia; 1=Algumas vezes por semana; 1=Menos de uma vez por semana; 1=Nunca_
+7. Se alguém da família está visivelmente triste, a criança demonstra querer confortar (ex.: acariciar, abraçar)? — _opções próprias: 0=Sempre; 0=Quase sempre; 1=Às vezes; 1=Raramente; 1=Nunca_
+8. Como você descreveria as primeiras palavras da criança? — _opções próprias: 0=Muito típicas; 0=Razoavelmente típicas; 1=Pouco típicas; 1=Muito atípicas; 1=A criança não fala_
+9. A criança usa gestos simples (ex.: acenar 'tchau')? — _opções próprias: 0=Muitas vezes por dia; 0=Algumas vezes por dia; 1=Algumas vezes por semana; 1=Menos de uma vez por semana; 1=Nunca_
+10. A criança fixa o olhar em nada aparente / observa intensamente objetos sem propósito claro? — _opções próprias: 1=Muitas vezes por dia; 1=Algumas vezes por dia; 1=Algumas vezes por semana; 0=Menos de uma vez por semana; 0=Nunca_
+
+**Faixas de interpretação** (pontos; direção: não declarada):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 0–2 | Rastreio negativo | ok | Pontuação abaixo do ponto de corte (≥3). Mantenha vigilância do desenvolvimento na rotina. Reavalie se surgirem novas preocupações. |
+| 3–10 | Rastreio positivo | alert | Pontuação ≥ 3: sugere encaminhamento para avaliação diagnóstica de TEA. O Q-CHAT-10 é triagem — não confirma diagnóstico. |
+
+---
+
+## smfq — SMFQ
+- **Nome completo:** Short Mood and Feelings Questionnaire — autorrelato
+- **Faixa etária:** 5–12 anos  |  **Respondente:** Criança/adolescente
+- **Direção do escore:** não declarada  |  **Interpretação:** faixas por pontos (motor runner)
+- **Itens:** 13
+
+1. Eu me senti muito triste ou infeliz. — _opções próprias: 0=Não é verdade; 1=Às vezes; 2=Verdade_
+2. Eu não consegui aproveitar ou gostar de nada. — _opções próprias: 0=Não é verdade; 1=Às vezes; 2=Verdade_
+3. Eu me senti tão cansado(a) que só queria sentar e não fazer nada. — _opções próprias: 0=Não é verdade; 1=Às vezes; 2=Verdade_
+4. Eu fiquei muito agitado(a) ou inquieto(a). — _opções próprias: 0=Não é verdade; 1=Às vezes; 2=Verdade_
+5. Eu senti que não valia mais nada. — _opções próprias: 0=Não é verdade; 1=Às vezes; 2=Verdade_
+6. Eu chorei bastante. — _opções próprias: 0=Não é verdade; 1=Às vezes; 2=Verdade_
+7. Tive dificuldade para pensar ou me concentrar. — _opções próprias: 0=Não é verdade; 1=Às vezes; 2=Verdade_
+8. Eu me odiei. — _opções próprias: 0=Não é verdade; 1=Às vezes; 2=Verdade_
+9. Eu achei que era uma pessoa ruim. — _opções próprias: 0=Não é verdade; 1=Às vezes; 2=Verdade_
+10. Eu me senti sozinho(a). — _opções próprias: 0=Não é verdade; 1=Às vezes; 2=Verdade_
+11. Eu achei que ninguém gostava de verdade de mim. — _opções próprias: 0=Não é verdade; 1=Às vezes; 2=Verdade_
+12. Eu achei que nunca seria tão bom(boa) quanto as outras crianças. — _opções próprias: 0=Não é verdade; 1=Às vezes; 2=Verdade_
+13. Eu senti que fazia tudo errado. — _opções próprias: 0=Não é verdade; 1=Às vezes; 2=Verdade_
+
+**Faixas de interpretação** (pontos; direção: não declarada):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 0–7 | Abaixo do corte | ok | Pontuação abaixo de 8. Sem rastreio positivo para sintomas depressivos no momento; reavalie se houver mudança. |
+| 8–26 | Rastreio positivo | alert | ≥ 8: sugere sintomas depressivos. Aprofunde a avaliação e investigue ativamente risco/ideação suicida. Triagem não confirma diagnóstico. |
+
+---
+
+## tdl-aprendizagem — EDJ-TDL
+- **Nome completo:** Escala Dr. Jadson (NeuroPed EDJ) — TDL e Dificuldades de Aprendizagem Escolar, versão infantil até 8 anos
+- **Faixa etária:** 2–8 anos  |  **Respondente:** Pais / professor / clínico
+- **Direção do escore:** não declarada  |  **Interpretação:** faixas por pontos (motor runner)
+- **Itens:** 70
+
+1. A — Linguagem oral / suspeita de TDL · Demorou para começar a falar palavras ou frases. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: aos 2 anos ainda não formava frases como 'quero água'.
+2. A — Linguagem oral / suspeita de TDL · Usa frases curtas demais para a idade. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: diz só 'quer bola' em vez de 'eu quero a bola azul'.
+3. A — Linguagem oral / suspeita de TDL · Tem dificuldade para contar o que aconteceu no dia. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: não consegue relatar o que fez na escola.
+4. A — Linguagem oral / suspeita de TDL · Troca palavras ou usa termos vagos como 'isso', 'coisa' ou 'aquele'. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: pede 'me dá aquela coisa' em vez de nomear o objeto.
+5. A — Linguagem oral / suspeita de TDL · Tem dificuldade para encontrar a palavra certa. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: trava no meio da frase procurando o nome de algo comum.
+6. A — Linguagem oral / suspeita de TDL · Fala de forma confusa, desorganizada ou difícil de acompanhar. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: mistura os fatos ao contar um passeio.
+7. A — Linguagem oral / suspeita de TDL · Tem dificuldade para entender comandos com duas ou mais etapas. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: não segue 'pegue o sapato e traga aqui'.
+8. A — Linguagem oral / suspeita de TDL · Precisa que o adulto repita muitas vezes a mesma orientação. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: só entende após repetir o pedido várias vezes.
+9. A — Linguagem oral / suspeita de TDL · Tem dificuldade para responder perguntas simples sobre uma história. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: não sabe dizer quem era o personagem do conto.
+10. A — Linguagem oral / suspeita de TDL · Apresenta trocas de sons na fala além do esperado para a idade. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: diz 'tato' em vez de 'gato' aos 5 anos.
+11. A — Linguagem oral / suspeita de TDL · Tem dificuldade para formar frases com começo, meio e fim. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: não organiza a fala numa sequência lógica.
+12. A — Linguagem oral / suspeita de TDL · Parece entender menos do que outras crianças da mesma idade. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: fica perdida em conversas que os colegas acompanham.
+13. B — Consciência fonológica e pré-leitura · Tem dificuldade para reconhecer rimas. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: não percebe que 'pão' rima com 'mão'.
+14. B — Consciência fonológica e pré-leitura · Tem dificuldade para bater palmas separando sílabas. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: não separa 'bo-la' batendo palmas.
+15. B — Consciência fonológica e pré-leitura · Confunde sons parecidos, como /p/ e /b/, /t/ e /d/, /f/ e /v/. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: troca 'pato' por 'bato' ao repetir.
+16. B — Consciência fonológica e pré-leitura · Tem dificuldade para dizer palavras que começam com o mesmo som. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: não agrupa 'bola, bota, boneca' pelo som inicial.
+17. B — Consciência fonológica e pré-leitura · Tem dificuldade para reconhecer letras do próprio nome. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: não identifica as letras do próprio nome.
+18. B — Consciência fonológica e pré-leitura · Esquece letras já ensinadas várias vezes. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: esquece a letra aprendida no dia anterior.
+19. B — Consciência fonológica e pré-leitura · Confunde letras visualmente parecidas, como b/d, p/q, m/n. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: confunde 'b' com 'd' ao ler.
+20. B — Consciência fonológica e pré-leitura · Tem dificuldade para associar letra ao som correspondente. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: não sabe que 'M' faz o som /m/.
+21. B — Consciência fonológica e pré-leitura · Evita atividades com letras, livros ou leitura. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: recusa brincar de montar palavras.
+22. B — Consciência fonológica e pré-leitura · Aprende letras e sons em ritmo muito mais lento que os colegas. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: leva muito mais tempo que os colegas para decorar as letras.
+23. C — Leitura inicial · Tem dificuldade para juntar sílabas. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: não junta 'ca' + 'sa' para ler 'casa'.
+24. C — Leitura inicial · Lê de forma muito lenta para a idade. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: soletra letra por letra, bem devagar.
+25. C — Leitura inicial · Adivinha palavras em vez de ler. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: chuta a palavra olhando só a primeira letra.
+26. C — Leitura inicial · Troca, omite ou acrescenta letras ao ler. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: lê 'prato' como 'pato'.
+27. C — Leitura inicial · Confunde palavras visualmente parecidas. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: troca 'casa' por 'caça' ao ler.
+28. C — Leitura inicial · Perde-se facilmente na linha durante a leitura. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: pula linha ou repete a mesma ao ler.
+29. C — Leitura inicial · Lê, mas não compreende bem o que acabou de ler. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: lê o texto mas não sabe do que fala.
+30. C — Leitura inicial · Evita ler em voz alta. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: fica envergonhada quando pedem para ler na turma.
+31. C — Leitura inicial · Cansa muito rápido em atividades de leitura. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: desiste após poucas linhas de leitura.
+32. C — Leitura inicial · Precisa de ajuda constante para ler palavras simples. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: pede ajuda para ler 'bola' ou 'gato'.
+33. D — Escrita e grafomotricidade · Tem dificuldade para copiar palavras ou frases do quadro/caderno. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: não consegue copiar a frase do quadro.
+34. D — Escrita e grafomotricidade · Escreve letras invertidas ou em posição inadequada com frequência. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: escreve o 'E' ou o '3' espelhado.
+35. D — Escrita e grafomotricidade · Omite letras, sílabas ou palavras ao escrever. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: escreve 'caeta' no lugar de 'caneta'.
+36. D — Escrita e grafomotricidade · Troca letras por sons parecidos. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: escreve 'faca' como 'vaca'.
+37. D — Escrita e grafomotricidade · Tem letra muito irregular, grande demais, pequena demais ou difícil de ler. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: a letra sai torta e ilegível.
+38. D — Escrita e grafomotricidade · Demora muito para concluir tarefas escritas. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: leva o dobro do tempo para copiar a lição.
+39. D — Escrita e grafomotricidade · Evita escrever ou reclama muito quando precisa escrever. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: reclama e resiste sempre que precisa escrever.
+40. D — Escrita e grafomotricidade · Tem dificuldade para escrever o próprio nome ou palavras familiares. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: erra ao escrever o próprio nome.
+41. D — Escrita e grafomotricidade · Não respeita bem espaço entre palavras. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: escreve tudo grudado, sem espaços.
+42. D — Escrita e grafomotricidade · Tem dificuldade para transformar fala em escrita. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: sabe falar a frase mas não consegue escrevê-la.
+43. E — Aritmética e raciocínio numérico · Tem dificuldade para contar na ordem correta. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: pula números ao contar até 10.
+44. E — Aritmética e raciocínio numérico · Confunde números visualmente parecidos. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: troca o 6 pelo 9 ao ler.
+45. E — Aritmética e raciocínio numérico · Tem dificuldade para reconhecer quantidades pequenas sem contar uma por uma. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: precisa contar um a um para ver que são 3.
+46. E — Aritmética e raciocínio numérico · Não entende bem conceitos como mais, menos, maior, menor, antes e depois. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: não sabe qual grupo tem 'mais' objetos.
+47. E — Aritmética e raciocínio numérico · Tem dificuldade para relacionar número a quantidade. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: não associa o '5' a cinco dedos.
+48. E — Aritmética e raciocínio numérico · Esquece rapidamente números já ensinados. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: esquece como se escreve o número já treinado.
+49. E — Aritmética e raciocínio numérico · Tem dificuldade com soma simples usando dedos ou objetos. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: erra 2+3 mesmo usando os dedos.
+50. E — Aritmética e raciocínio numérico · Tem dificuldade com subtração simples. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: não consegue tirar 1 de 4.
+51. E — Aritmética e raciocínio numérico · Inverte ou troca a ordem dos números. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: escreve 21 no lugar de 12.
+52. E — Aritmética e raciocínio numérico · Apresenta dificuldade para resolver problemas matemáticos simples do cotidiano. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: não resolve 'tinha 3 balas, ganhou 2'.
+53. F — Atenção, memória e funções executivas escolares · Esquece rapidamente instruções dadas pela professora ou família. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: esquece o que a professora acabou de pedir.
+54. F — Atenção, memória e funções executivas escolares · Começa atividades, mas não termina. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: larga a atividade pela metade.
+55. F — Atenção, memória e funções executivas escolares · Precisa de supervisão constante para realizar tarefas simples. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: só faz a tarefa com um adulto ao lado.
+56. F — Atenção, memória e funções executivas escolares · Distrai-se muito durante atividades de linguagem, leitura ou escrita. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: distrai-se com qualquer coisa durante a lição.
+57. F — Atenção, memória e funções executivas escolares · Tem dificuldade para organizar material escolar. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: a mochila e o caderno vivem bagunçados.
+58. F — Atenção, memória e funções executivas escolares · Perde objetos, folhas, lápis ou tarefas com frequência. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: perde o lápis ou a tarefa com frequência.
+59. F — Atenção, memória e funções executivas escolares · Tem dificuldade para seguir rotina de estudo. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: não mantém uma rotina de lição de casa.
+60. F — Atenção, memória e funções executivas escolares · Parece saber em um dia e esquecer no outro. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 1=Ocorre pouco, de forma leve ou ocasional; 2=Ocorre frequentemente, com dificuldade moderada; 3=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: acerta hoje e esquece amanhã.
+61. G — Impacto funcional negativo · A dificuldade prejudica claramente o rendimento escolar. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 2=Ocorre pouco, de forma leve ou ocasional; 4=Ocorre frequentemente, com dificuldade moderada; 6=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: as notas caem por causa da dificuldade.
+62. G — Impacto funcional negativo · A criança precisa de ajuda muito maior que os colegas. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 2=Ocorre pouco, de forma leve ou ocasional; 4=Ocorre frequentemente, com dificuldade moderada; 6=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: precisa de muito mais apoio que a turma.
+63. G — Impacto funcional negativo · A dificuldade gera choro, irritação, vergonha ou recusa escolar. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 2=Ocorre pouco, de forma leve ou ocasional; 4=Ocorre frequentemente, com dificuldade moderada; 6=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: chora ou se recusa a ir à escola.
+64. G — Impacto funcional negativo · A criança evita leitura, escrita, matemática ou atividades de fala. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 2=Ocorre pouco, de forma leve ou ocasional; 4=Ocorre frequentemente, com dificuldade moderada; 6=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: foge de qualquer atividade de ler ou escrever.
+65. G — Impacto funcional negativo · A dificuldade causa comentários frequentes da escola. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 2=Ocorre pouco, de forma leve ou ocasional; 4=Ocorre frequentemente, com dificuldade moderada; 6=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: a escola comenta a dificuldade repetidas vezes.
+66. G — Impacto funcional negativo · A criança demonstra baixa autoestima por não conseguir acompanhar. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 2=Ocorre pouco, de forma leve ou ocasional; 4=Ocorre frequentemente, com dificuldade moderada; 6=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: diz que é 'burra' por não acompanhar.
+67. G — Impacto funcional negativo · A família precisa estudar diariamente com esforço excessivo para compensar. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 2=Ocorre pouco, de forma leve ou ocasional; 4=Ocorre frequentemente, com dificuldade moderada; 6=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: a família passa horas todo dia compensando.
+68. G — Impacto funcional negativo · Há prejuízo em autonomia escolar, como fazer tarefa, copiar, responder ou acompanhar a turma. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 2=Ocorre pouco, de forma leve ou ocasional; 4=Ocorre frequentemente, com dificuldade moderada; 6=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: não copia nem responde sozinha na turma.
+69. G — Impacto funcional negativo · A dificuldade atrapalha socialização, participação em grupo ou brincadeiras com regras. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 2=Ocorre pouco, de forma leve ou ocasional; 4=Ocorre frequentemente, com dificuldade moderada; 6=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: fica de fora de brincadeiras com regras.
+70. G — Impacto funcional negativo · O prejuízo persiste mesmo com explicação, reforço e repetição. — _opções próprias: 0=Não ocorre, ou habilidade adequada para a idade; 2=Ocorre pouco, de forma leve ou ocasional; 4=Ocorre frequentemente, com dificuldade moderada; 6=Ocorre quase sempre, com dificuldade importante_
+   - Exemplo: Ex.: mesmo com muito reforço, a dificuldade continua.
+
+**Faixas de interpretação** (pontos; direção: não declarada):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 0–35 | Faixa esperada / baixa preocupação (0–14%) | ok | Escore percentual até 14%: habilidades dentro do esperado para a idade. Manter acompanhamento escolar de rotina. |
+| 36–71 | Alerta leve (15–29%) | warn | Dificuldades leves ou ocasionais. Reforço pedagógico dirigido e reavaliação em 3–6 meses. |
+| 72–107 | Risco moderado (30–44%) | warn | Dificuldade moderada e frequente. Avaliação fonoaudiológica/psicopedagógica recomendada; observar o perfil de domínio dominante (A = linguagem oral/TDL). |
+| 108–143 | Risco alto (45–59%) | alert | Dificuldade importante com impacto funcional. Encaminhar para avaliação multidisciplinar e plano de apoio escolar. |
+| 144–240 | Risco muito alto (≥60%) | alert | Comprometimento amplo, com prejuízo funcional relevante (Domínio G pesa em dobro). Priorizar investigação diagnóstica e intervenção intensiva. |
+
+---
+
+## toc-drj-psicologia — ECG-TOC-Psi
+- **Nome completo:** Escala Clínica de Gravidade do TOC – Adolescentes (ECG-TOC-Psi, versão profissional)
+- **Faixa etária:** 12–18 anos  |  **Respondente:** Psicólogo(a) / clínico (entrevista)
+- **Direção do escore:** não declarada  |  **Interpretação:** faixas por pontos (motor runner)
+- **Itens:** 30
+
+1. Mapa de sintomas — Obsessões · Medo de contaminação (mapa — não pontua) — _opções próprias: 0=Ausente; 0=Presente_
+   - Exemplo: Ex.: evita tocar maçanetas com medo de germes.
+2. Mapa de sintomas — Obsessões · Medo de causar dano (mapa — não pontua) — _opções próprias: 0=Ausente; 0=Presente_
+   - Exemplo: Ex.: teme machucar alguém sem querer.
+3. Mapa de sintomas — Obsessões · Pensamentos violentos (mapa — não pontua) — _opções próprias: 0=Ausente; 0=Presente_
+   - Exemplo: Ex.: surgem imagens violentas indesejadas.
+4. Mapa de sintomas — Obsessões · Pensamentos sexuais impróprios (mapa — não pontua) — _opções próprias: 0=Ausente; 0=Presente_
+   - Exemplo: Ex.: pensamentos sexuais intrusivos que o incomodam.
+5. Mapa de sintomas — Obsessões · Escrúpulos/religiosidade excessiva (mapa — não pontua) — _opções próprias: 0=Ausente; 0=Presente_
+   - Exemplo: Ex.: preocupação excessiva com pecado ou culpa.
+6. Mapa de sintomas — Obsessões · Necessidade de simetria/perfeição (mapa — não pontua) — _opções próprias: 0=Ausente; 0=Presente_
+   - Exemplo: Ex.: precisa que tudo fique perfeitamente alinhado.
+7. Mapa de sintomas — Obsessões · Dúvida patológica (mapa — não pontua) — _opções próprias: 0=Ausente; 0=Presente_
+   - Exemplo: Ex.: duvida constantemente se trancou a porta.
+8. Mapa de sintomas — Obsessões · Pensamentos catastróficos (mapa — não pontua) — _opções próprias: 0=Ausente; 0=Presente_
+   - Exemplo: Ex.: imagina sempre o pior desfecho.
+9. Mapa de sintomas — Obsessões · Pensamentos intrusivos sem conteúdo definido (mapa — não pontua) — _opções próprias: 0=Ausente; 0=Presente_
+   - Exemplo: Ex.: pensamentos intrusivos vagos e repetitivos.
+10. Mapa de sintomas — Compulsões · Lavagem/limpeza (mapa — não pontua) — _opções próprias: 0=Ausente; 0=Presente_
+   - Exemplo: Ex.: lava as mãos repetidamente.
+11. Mapa de sintomas — Compulsões · Checagem (mapa — não pontua) — _opções próprias: 0=Ausente; 0=Presente_
+   - Exemplo: Ex.: confere várias vezes se o fogão está desligado.
+12. Mapa de sintomas — Compulsões · Contagem (mapa — não pontua) — _opções próprias: 0=Ausente; 0=Presente_
+   - Exemplo: Ex.: conta objetos ou passos repetidamente.
+13. Mapa de sintomas — Compulsões · Repetição de ações (mapa — não pontua) — _opções próprias: 0=Ausente; 0=Presente_
+   - Exemplo: Ex.: repete o mesmo gesto várias vezes.
+14. Mapa de sintomas — Compulsões · Organização/simetria (mapa — não pontua) — _opções próprias: 0=Ausente; 0=Presente_
+   - Exemplo: Ex.: reorganiza os objetos até ficarem simétricos.
+15. Mapa de sintomas — Compulsões · Rituais mentais (mapa — não pontua) — _opções próprias: 0=Ausente; 0=Presente_
+   - Exemplo: Ex.: repete frases ou orações mentalmente.
+16. Mapa de sintomas — Compulsões · Busca de confirmação (mapa — não pontua) — _opções próprias: 0=Ausente; 0=Presente_
+   - Exemplo: Ex.: pergunta várias vezes para se tranquilizar.
+17. Mapa de sintomas — Compulsões · Evitação ritualística (mapa — não pontua) — _opções próprias: 0=Ausente; 0=Presente_
+   - Exemplo: Ex.: evita situações que disparam o ritual.
+18. Gravidade das obsessões · O1 — Tempo gasto com obsessões — _opções próprias: 0=Ausente; 1=Leve; 2=Moderado; 3=Grave; 4=Extremo_
+   - Exemplo: Ex.: estime quantas horas por dia as obsessões ocupam.
+19. Gravidade das obsessões · O2 — Interferência funcional — _opções próprias: 0=Ausente; 1=Leve; 2=Moderado; 3=Grave; 4=Extremo_
+   - Exemplo: Ex.: avalie o quanto as obsessões atrapalham a rotina.
+20. Gravidade das obsessões · O3 — Sofrimento subjetivo — _opções próprias: 0=Ausente; 1=Leve; 2=Moderado; 3=Grave; 4=Extremo_
+   - Exemplo: Ex.: avalie o incômodo que as obsessões causam.
+21. Gravidade das obsessões · O4 — Resistência às obsessões — _opções próprias: 0=Ausente; 1=Leve; 2=Moderado; 3=Grave; 4=Extremo_
+   - Exemplo: Ex.: avalie o esforço para resistir aos pensamentos.
+22. Gravidade das obsessões · O5 — Controle percebido — _opções próprias: 0=Ausente; 1=Leve; 2=Moderado; 3=Grave; 4=Extremo_
+   - Exemplo: Ex.: avalie o quanto consegue controlar as obsessões.
+23. Gravidade das compulsões · C1 — Tempo gasto em rituais — _opções próprias: 0=Ausente; 1=Leve; 2=Moderado; 3=Grave; 4=Extremo_
+   - Exemplo: Ex.: estime quanto tempo por dia gasta em rituais.
+24. Gravidade das compulsões · C2 — Interferência funcional — _opções próprias: 0=Ausente; 1=Leve; 2=Moderado; 3=Grave; 4=Extremo_
+   - Exemplo: Ex.: avalie o quanto as compulsões atrapalham o dia.
+25. Gravidade das compulsões · C3 — Sofrimento se impedido — _opções próprias: 0=Ausente; 1=Leve; 2=Moderado; 3=Grave; 4=Extremo_
+   - Exemplo: Ex.: avalie a angústia ao ser impedido de ritualizar.
+26. Gravidade das compulsões · C4 — Resistência às compulsões — _opções próprias: 0=Ausente; 1=Leve; 2=Moderado; 3=Grave; 4=Extremo_
+   - Exemplo: Ex.: avalie o esforço para não ceder ao ritual.
+27. Gravidade das compulsões · C5 — Controle percebido — _opções próprias: 0=Ausente; 1=Leve; 2=Moderado; 3=Grave; 4=Extremo_
+   - Exemplo: Ex.: avalie o quanto controla as compulsões.
+28. Insight · Nível de crítica do paciente — _opções próprias: 0=Ausente; 1=Leve; 2=Moderado; 3=Grave; 4=Extremo_
+   - Exemplo: Ex.: avalie o quanto o paciente reconhece que os sintomas são excessivos.
+29. Evitação · Evitação — _opções próprias: 0=Ausente; 1=Leve; 2=Moderado; 3=Grave; 4=Extremo_
+   - Exemplo: Ex.: avalie o quanto evita situações por causa dos sintomas.
+30. Comprometimento global · Comprometimento global — _opções próprias: 0=Ausente; 1=Leve; 2=Moderado; 3=Grave; 4=Extremo_
+   - Exemplo: Ex.: avalie o prejuízo global na vida do paciente.
+
+**Faixas de interpretação** (pontos; direção: não declarada):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 0–52 | Gravidade dimensional — sem corte publicado | warn | Escore maior = maior gravidade. Comparar aplicações sucessivas do mesmo paciente; interpretar com o mapa de sintomas, insight e comprometimento global. Não é diagnóstico. |
+
+---
+
+## vas-pain — VAS Dor
+- **Nome completo:** Visual Analog Scale for Pain (0–100, adaptação digital)
+- **Faixa etária:** 8–18 anos  |  **Respondente:** Criança ≥ 8 anos / adolescente (autorrelato)
+- **Direção do escore:** não declarada  |  **Interpretação:** faixas por pontos (motor runner)
+- **Itens:** 1
+
+1. Posição na linha de dor (mm) — _opções próprias: 0=0 — nenhuma dor; 10=10; 20=20; 30=30; 40=40; 50=50; 60=60; 70=70; 80=80; 90=90; 100=100 — pior dor imaginável_
+
+**Faixas de interpretação** (pontos; direção: não declarada):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 0–4 | Sem dor | ok | Sem dor relevante referida. |
+| 5–44 | Dor leve | ok | Dor leve (~5–44 mm). |
+| 45–74 | Dor moderada | warn | Dor moderada (~45–74 mm). Considere analgesia e investigação. |
+| 75–100 | Dor intensa | alert | Dor intensa (≥ 75 mm). Priorize controle da dor e investigação. |
+
+---
+
+## viking-speech — Viking Speech Scale
+- **Nome completo:** Viking Speech Scale — Inteligibilidade de fala em paralisia cerebral
+- **Faixa etária:** ≥ 4 anos (PC)  |  **Respondente:** Clínico (com pais/cuidador)
+- **Direção do escore:** não declarada  |  **Interpretação:** faixas por pontos (motor runner)
+- **Itens:** 1
+
+1. Nível de inteligibilidade da fala — _opções próprias: 1=Nível I — A fala não é afetada pela desordem motora; 2=Nível II — Fala imprecisa, mas habitualmente inteligível para ouvintes não familiares; 3=Nível III — Fala pouco clara; habitualmente inteligível apenas para ouvintes familiares; 4=Nível IV — Sem fala inteligível_
+
+**Faixas de interpretação** (pontos; direção: não declarada):
+
+| Pontos | Classificação | Tom | Descrição |
+| ---: | --- | --- | --- |
+| 1–1 | Nível I | ok | Fala não afetada. Acompanhe o desenvolvimento de linguagem normalmente. |
+| 2–2 | Nível II | ok | Fala imprecisa porém funcional com estranhos. Considere fonoterapia para precisão articulatória. |
+| 3–3 | Nível III | warn | Inteligível só para familiares. Indique fonoterapia intensiva e considere apoio de comunicação suplementar. |
+| 4–4 | Nível IV | alert | Sem fala inteligível. Priorize Comunicação Aumentativa e Alternativa (CAA) — o app inclui módulo CAA gratuito. |
 
 ---

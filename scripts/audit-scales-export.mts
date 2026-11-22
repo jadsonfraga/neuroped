@@ -1,7 +1,8 @@
 // ============================================================
 // Exportador de AUDITORIA das escalas com itens interativos.
 // Junta metadados (escalasAutorais.ts + catálogo de scaleFilter.ts) + itens
-// interativos (interactiveScaleItems.ts) por id e emite:
+// interativos (interactiveScaleItems.ts) por id, mais as escalas do motor runner
+// (interactiveScales.ts: opções por item, faixas por pontos), e emite:
 //   1) docs/audit/escalas-autorais-auditoria.md  (leitura/revisão)
 //   2) docs/audit/escalas-autorais-itens.csv      (edição item a item)
 //   3) docs/audit/escalas-autorais-faixas.csv     (revisão dos cortes)
@@ -17,6 +18,7 @@ import { resolve } from "node:path";
 import { escalasAutoraisDrJadson } from "../client/src/data/escalasAutorais.ts";
 import { allScalesComFichas as escalasCatalogoMestre, scales as instrumentosPublicados, type ScaleEntry } from "../client/src/data/scaleFilter.ts";
 import { interactiveScaleItems, type InteractiveScaleDef } from "../client/src/data/interactiveScaleItems.ts";
+import { interactiveScales } from "../client/src/data/interactiveScales.ts";
 import { itemExample, itemReversed, itemResponseType, itemSentinel, itemText, type ScaleItem } from "../client/src/components/GenericScale.tsx";
 
 const OUT = resolve(process.cwd(), "docs/audit");
@@ -61,6 +63,10 @@ const sentinela = (item: ScaleItem, labels: string[]) => {
 };
 
 const ids = Object.keys(interactiveScaleItems).sort((a, b) => a.localeCompare(b));
+// Escalas do motor runner sem definição em interactiveScaleItems.
+const runnerIds = Object.keys(interactiveScales)
+  .filter((id) => !(id in interactiveScaleItems))
+  .sort((a, b) => a.localeCompare(b));
 const nAutorais = ids.filter((id) => autorais.has(id)).length;
 const nPublicados = ids.filter((id) => !autorais.has(id) && publicados.has(id)).length;
 
@@ -76,7 +82,7 @@ const geradoEm = process.env.NEUROPED_GENERATION_DATE || new Date().toISOString(
 md.push("# Auditoria — Escalas com itens interativos (NeuroPed)\n");
 md.push(`> Gerado em ${geradoEm} a partir do código-fonte.`);
 md.push("> **Conteúdo gerado por IA — requer validação clínica antes de qualquer uso.**");
-md.push(`> Total: **${ids.length} escalas** com itens interativos: ${nAutorais} autorais NEXUS, ${nPublicados} instrumentos publicados e ${ids.length - nAutorais - nPublicados} de outros catálogos.\n`);
+md.push(`> Total: **${ids.length + runnerIds.length} escalas** com itens interativos: ${nAutorais} autorais NEXUS, ${nPublicados} instrumentos publicados, ${ids.length - nAutorais - nPublicados} de outros catálogos e ${runnerIds.length} do motor runner (faixas por pontos).\n`);
 md.push("Para cada escala: confira os **itens**, as **opções de resposta** (com a pontuação usada), a **direção do escore** e as **faixas de corte**.");
 md.push("Marcadores nos itens: _invertido_ (pontuação espelhada), _resposta livre_ (texto, não pontua), _opções próprias_ (substituem as da escala), _sentinela_ (alerta de segurança). O exemplo é o texto mostrado à família.");
 md.push("Marque na planilha `escalas-autorais-itens.csv` o que aprova/corrige.\n");
@@ -130,11 +136,40 @@ for (const id of ids) {
   md.push("\n---\n");
 }
 
+// Motor runner: cada item tem as próprias opções (valor=rótulo); faixas por pontos (min–max).
+// Não há scoreDirection nessas definições: a direção fica "não declarada", sem supor.
+for (const id of runnerIds) {
+  const def = interactiveScales[id];
+  const nome = def.name;
+  const faixa = def.ageLabel;
+  md.push(`## ${id} — ${nome}`);
+  md.push(`- **Nome completo:** ${def.fullName}`);
+  md.push(`- **Faixa etária:** ${faixa}  |  **Respondente:** ${def.respondent}`);
+  md.push(`- **Direção do escore:** não declarada  |  **Interpretação:** faixas por pontos (motor runner)`);
+  md.push(`- **Itens:** ${def.items.length}\n`);
+  def.items.forEach((it, ii) => {
+    if (!it.text?.trim()) itemSemTexto++;
+    const proprias = it.options.map((o) => `${o.value}=${o.label}`);
+    md.push(`${ii + 1}. ${it.text} — _opções próprias: ${proprias.join("; ")}_`);
+    if (it.example) md.push(`   - Exemplo: ${it.example}`);
+    itemRows.push(row([id, nome, faixa, "", ii + 1, it.text, "escolha", "n", proprias.join(" | "), "", it.example ?? "", "", ""]));
+  });
+  md.push("");
+  md.push("**Faixas de interpretação** (pontos; direção: não declarada):\n");
+  md.push("| Pontos | Classificação | Tom | Descrição |");
+  md.push("| ---: | --- | --- | --- |");
+  for (const b of def.bands) {
+    md.push(`| ${b.min}–${b.max} | ${b.risk} | ${b.tone} | ${b.description} |`);
+    bandRows.push(row([id, nome, "não declarada", `faixa por pontos: ${b.min}–${b.max}`, "", b.risk, b.tone, b.description, ""]));
+  }
+  md.push("\n---\n");
+}
+
 writeFileSync(resolve(OUT, "escalas-autorais-auditoria.md"), md.join("\n"), "utf8");
 writeFileSync(resolve(OUT, "escalas-autorais-itens.csv"), "﻿" + itemRows.join("\n"), "utf8");
 writeFileSync(resolve(OUT, "escalas-autorais-faixas.csv"), "﻿" + bandRows.join("\n"), "utf8");
 
-console.log(`OK — ${ids.length} escalas exportadas para ${OUT}`);
+console.log(`OK — ${ids.length + runnerIds.length} escalas exportadas para ${OUT} (${runnerIds.length} do motor runner)`);
 console.log(`  • escalas-autorais-auditoria.md  (${md.length} linhas)`);
 console.log(`  • escalas-autorais-itens.csv     (${itemRows.length - 1} itens)`);
 console.log(`  • escalas-autorais-faixas.csv    (${bandRows.length - 1} faixas)`);

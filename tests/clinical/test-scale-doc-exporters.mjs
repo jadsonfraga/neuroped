@@ -10,6 +10,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { interactiveScaleItems } from "../../client/src/data/interactiveScaleItems.ts";
+import { interactiveScales } from "../../client/src/data/interactiveScales.ts";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const tsxLoader = pathToFileURL(
@@ -32,7 +33,13 @@ const exporters = [
     // Uma seção "## <id> — " por escala com itens interativos: nenhuma omitida nem duplicada.
     sections: {
       file: "escalas-autorais-auditoria.md",
-      ids: Object.keys(interactiveScaleItems).sort(),
+      // Inclui as escalas do motor runner (interactiveScales) sem definição em interactiveScaleItems.
+      ids: [
+        ...new Set([
+          ...Object.keys(interactiveScaleItems),
+          ...Object.keys(interactiveScales),
+        ]),
+      ].sort(),
     },
     // Fidelidade: marcadores de item e direção do escore vêm da definição, nunca de um texto fixo.
     fidelity: true,
