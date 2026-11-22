@@ -54,7 +54,7 @@ test("extensão: opcionais vêm dos bancos de origem da idade, sem itens criados
     const seen = new Set<string>();
     for (const { item, phaseId } of opcionaisDaIdade(years)) {
       assert.equal(itemProvenance(item), "banco_de_origem", `${item.id}: sem item autoral`);
-      assert.match(item.ref, new RegExp(`^(Cognitivos ${years} anos · |Sonda 10 · banco objetivo |OBS-10 · banco objetivo |Reconhecimento visual · reconhecer · |(Sonda 10|OBS-10) · .+ · curadoria da faixa \\(complemento\\)$)`), `${item.id}: referência do banco de origem da idade`);
+      assert.match(item.ref, new RegExp(`^(Cognitivos ${years} anos · |Sonda 10 · banco objetivo |OBS-10 · banco objetivo |Reconhecimento visual · (reconhecer|parear|nomear|conceito contextualizado) · |(Sonda 10|OBS-10) · .+ · curadoria da faixa \\(complemento\\)$)`), `${item.id}: referência do banco de origem da idade`);
       assert.ok(["cognitivo", "sonda10", "obs10", "visual"].includes(item.origin), `${item.id}: origem`);
       assert.ok(PHASE_ORDER.includes(phaseId), `${item.id}: mundo de agrupamento`);
       assert.ok(!mainTasks.has(sameTask(item)), `${item.id}: não repete tarefa da bateria (${item.prompt})`);
@@ -186,8 +186,8 @@ test("seleção padrão dos opcionais oculta redundâncias sem apagar o catálog
 test("auditoria 21/10/2026: referência visual informa o número real de alternativas", () => {
   for (const years of YEARS) {
     for (const { item } of opcionaisDaIdade(years)) {
-      if (item.kind !== "toque" || item.origin !== "visual") continue;
-      assert.match(item.ref, new RegExp(`\\(${item.options.length} opções,`), `${years} anos · ${item.prompt}`);
+      if (item.kind !== "toque" || item.origin !== "visual" || /conceito contextualizado/.test(item.ref)) continue;
+      assert.match(item.ref, new RegExp(`\\(${item.options.length} opções[,)]`), `${years} anos · ${item.prompt}`);
     }
   }
 });

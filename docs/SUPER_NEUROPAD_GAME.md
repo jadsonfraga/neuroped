@@ -62,22 +62,22 @@ Contagens geradas do banco efetivo (`GAME_BANK`); tempo por `estimateBandSeconds
 
 | Idade | Itens (por mundo) | Sonda 10 | OBS-10 | Rec. visual | Cognitiva | Tipos (toque/fala/ação/montar) | Com gesto | Tempo estimado |
 |---|---|---|---|---|---|---|---|---|
-| 2 anos | 50 (6/14/10/11/5/4) | 20 | 11 | 4 | 15 | 24/11/15/0 | 3 | 23.9 min |
-| 3 anos | 50 (7/15/7/9/7/5) | 25 | 10 | 5 | 10 | 18/15/17/0 | 3 | 25.7 min |
-| 4 anos | 50 (7/12/10/9/6/6) | 15 | 16 | 6 | 13 | 26/16/8/0 | 0 | 24.5 min |
-| 5 anos | 50 (6/9/12/9/7/7) | 14 | 18 | 6 | 12 | 29/12/9/0 | 0 | 25.5 min |
-| 6 anos | 50 (6/9/12/9/7/7) | 15 | 17 | 5 | 13 | 27/12/9/2 | 0 | 20.6 min |
-| 7 anos | 50 (6/9/12/9/7/7) | 14 | 17 | 5 | 14 | 27/13/8/2 | 0 | 20.2 min |
-| 8 anos | 50 (7/9/9/8/9/8) | 19 | 15 | 4 | 12 | 23/18/8/1 | 0 | 22.7 min |
-| 9 anos | 50 (7/8/9/9/9/8) | 18 | 17 | 3 | 12 | 23/18/8/1 | 0 | 22.8 min |
-| 10 anos | 50 (7/9/9/8/9/8) | 19 | 15 | 4 | 12 | 23/18/8/1 | 0 | 23.3 min |
-| 11 anos | 50 (7/8/9/9/9/8) | 19 | 16 | 3 | 12 | 23/18/8/1 | 0 | 23.1 min |
-| 12 anos | 50 (8/8/9/8/9/8) | 19 | 15 | 3 | 13 | 20/21/7/2 | 0 | 24.5 min |
-| 13 anos | 50 (8/8/9/8/9/8) | 17 | 18 | 3 | 12 | 20/21/7/2 | 0 | 24.6 min |
-| 14 anos | 50 (8/8/9/8/9/8) | 19 | 15 | 3 | 13 | 20/21/7/2 | 0 | 24.9 min |
-| 15 anos | 50 (8/8/9/8/9/8) | 16 | 18 | 3 | 13 | 20/21/7/2 | 0 | 24.9 min |
-| 16 anos | 50 (8/8/9/8/9/8) | 19 | 15 | 3 | 13 | 20/21/7/2 | 0 | 25.1 min |
-| 17 anos | 50 (8/8/9/8/9/8) | 16 | 18 | 3 | 13 | 20/21/7/2 | 0 | 25.2 min |
+| 2 anos | 50 (6/13/10/12/5/4) | 20 | 10 | 5 | 15 | 23/12/15/0 | 3 | 24.1 min |
+| 3 anos | 50 (7/15/7/9/7/5) | 24 | 10 | 6 | 10 | 17/16/17/0 | 3 | 25.9 min |
+| 4 anos | 50 (7/12/9/9/6/7) | 14 | 16 | 7 | 13 | 25/17/8/0 | 0 | 24.7 min |
+| 5 anos | 50 (6/9/11/9/7/8) | 14 | 17 | 8 | 11 | 28/13/9/0 | 0 | 26.0 min |
+| 6 anos | 50 (6/9/11/9/7/8) | 15 | 16 | 6 | 13 | 26/13/9/2 | 0 | 21.0 min |
+| 7 anos | 50 (6/10/10/9/7/8) | 13 | 17 | 7 | 13 | 26/14/8/2 | 0 | 20.6 min |
+| 8 anos | 50 (7/9/9/7/9/9) | 18 | 14 | 5 | 13 | 22/19/8/1 | 0 | 23.2 min |
+| 9 anos | 50 (7/8/9/8/9/9) | 16 | 17 | 4 | 13 | 22/19/8/1 | 0 | 23.3 min |
+| 10 anos | 50 (7/9/9/7/9/9) | 18 | 14 | 5 | 13 | 22/19/8/1 | 0 | 23.6 min |
+| 11 anos | 50 (7/8/9/8/9/9) | 17 | 16 | 4 | 13 | 22/19/8/1 | 0 | 23.6 min |
+| 12 anos | 50 (8/8/9/7/9/9) | 19 | 14 | 4 | 13 | 19/22/7/2 | 0 | 24.9 min |
+| 13 anos | 50 (8/8/9/7/9/9) | 15 | 18 | 4 | 13 | 19/22/7/2 | 0 | 25.0 min |
+| 14 anos | 50 (8/8/9/7/9/9) | 19 | 14 | 4 | 13 | 19/22/7/2 | 0 | 25.3 min |
+| 15 anos | 50 (8/8/9/7/9/9) | 15 | 18 | 4 | 13 | 19/22/7/2 | 0 | 25.3 min |
+| 16 anos | 50 (8/8/9/7/9/9) | 19 | 14 | 4 | 13 | 19/22/7/2 | 0 | 25.5 min |
+| 17 anos | 50 (8/8/9/7/9/9) | 15 | 18 | 4 | 13 | 19/22/7/2 | 0 | 25.6 min |
 
 **Tempo estimado**: toque 12 s (+1 s a cada 25 caracteres de leitura, máx. +25 s), fala 20 s,
 ação 25 s, montar 30 s + 2 s por letra (ou o tempo próprio do item); fator de criança pequena
@@ -96,7 +96,7 @@ semântica (animais em 60 s, com piso autoral crescente de 8 a 13), cálculo men
 (equilíbrio sem visão, saltos em um pé, polichinelo, dupla tarefa). As semelhanças de 12–17 também
 passaram a subir de abstração com a idade (transporte → medida → obra de arte). Os pisos de
 fluência e os critérios são **conservadores e autorais, para déficit grosseiro**: não são norma, e a
-leitura final continua sendo do médico. O teto segue travado por teste (30 min; estimativa máxima atual: 25,7 min, aos 3 anos).
+leitura final continua sendo do médico. O teto segue travado por teste (30 min; estimativa máxima atual: 26,0 min, aos 5 anos).
 
 **Critérios de calibração** (sem norma, sem inflar escore, sem mudar corte):
 
@@ -339,7 +339,7 @@ resposta ao nome, imitação, interesse por crianças, perda de habilidades).
 | 🏠 Casinha do Faz de Conta | Brincar simbólico | dar comida ao bebê, telefone de mentira, interesse por crianças (relato ⚠, conta em interação social) | cuidar do bebê, sequência de faz de conta, objeto como outro, faz de conta com papéis (relato ⚠) |
 
 - **Contagem e tempo do núcleo:** 2 anos = 18 itens e 3 anos = 24 itens no banco dedicado.
-  Na partida efetiva, ambos recebem 50 desafios; estimativas de 23,9 e 25,7 min, com teto de 30 min (v2026-11-22.1). Pausa planejada mantida.
+  Na partida efetiva, ambos recebem 50 desafios; estimativas de 24,1 e 25,9 min, com teto de 30 min (v2026-11-22.2). Pausa planejada mantida.
 - **Registro:** o mesmo modelo binário do jogo (Cumpre / Não cumpre, mais "não respondeu" e
   "recusou" à parte) e o campo de observações da sessão. Itens de **relato do cuidador** começam
   com "Relato do cuidador — pergunte:" e o critério termina em "(relato do cuidador)".
@@ -659,10 +659,11 @@ O catálogo de 50 por idade foi integrado à partida efetiva. O núcleo autoral 
 **Curadoria por faixa etária (v2026-11-22.1).** A medição da composição mostrou que o complemento caía todo em Olhos, Palavras e Números (bancos visual, cognitivo e objetivo), enquanto Vila, Memória e Corpo ficavam só com a bateria principal; aos 2 anos havia 20 itens em Olhos e 3 em Vila, Memória e Corpo. A seleção agora:
 
 1. **Entra primeiro a curadoria da faixa** (`curatedOptionalDrafts` em `bank.ts`): tarefas dos roteiros da Sonda 10 (`sondaDezProtocol`) e do OBS-10 (`obs10/protocol`) da própria faixa, nos domínios centrais — interação e comunicação (Vila), memória e funções executivas (Memória), motor e mãos (Corpo) —, adaptadas para a tela ou para a sala, sem objeto externo. A referência leva o sufixo "curadoria da faixa (complemento)". Aos 2–3 anos o item curado recebe o domínio do mundo na bateria dedicada (interação social, atenção, brincar simbólico etc.). Exemplos: pedir ajuda diante da bola presa na caixa (Sonda 10, 24–47 meses), atenção sustentada auditiva e troca de regra SOL/LUA (Sonda 10, 3–7 anos), ordem de 4 etapas e planejamento com imprevisto (Sonda 10, 8–11 anos), mudança de duração do trabalho e troca de regra DIREITA/ESQUERDA (Sonda 10, 12–17 anos), braços estendidos e dedo–nariz do núcleo motor (OBS-10, 5 anos em diante).
-2. **Regras de saída no restante do complemento:** aos 2–3 anos não entra item que pede letra ou numeral (o aviso de idade da auditoria de 21/10/2026 continua valendo para qualquer item desse tipo); nenhum mundo passa de 9 itens (50 ÷ 6, arredondado para cima) enquanto houver alternativa. O teto por mundo só é relaxado quando o banco da faixa não fecha 50 sem ele — hoje isso ocorre aos 2–7 anos em Olhos e Palavras, porque os roteiros dessas idades têm poucas tarefas centrais que dispensam objeto.
-3. **Sem repetição:** item curado que repetisse tarefa ou conceito da bateria interrompe a montagem do banco (erro de build), e o restante continua deduplicado por tarefa, conceito e referência.
+2. **Depois, a curadoria dos bancos de tarefa (v2026-11-22.2)** (`curatedBankGroups` em `bank.ts`; ids em `CURADORIA_BANCOS`): uma tarefa de cada modalidade do Reconhecimento Visual — parear (a partir de 4 anos), nomear (todas as idades) e conceito contextualizado (a partir de 5 anos) — e um item de cada domínio da Avaliação Cognitiva Infantil da idade (visual, fala/leitura, letras/escrita e números) que a bateria ainda não aplica. Cada grupo é uma fila: entra o primeiro candidato que não repete tarefa, conceito nem referência, com a referência exata do banco de origem. Aos 2–3 anos entram só a figura da Avaliação Cognitiva (linguagem receptiva) e a nomeação (linguagem expressiva), com o domínio do mundo; pareamento, escrita e numeral ficam de fora. Dos 8 anos em diante os 4 itens visuais da Avaliação Cognitiva já estão na bateria, por isso esse domínio não aparece no complemento.
+3. **Regras de saída no restante do complemento:** aos 2–3 anos não entra item que pede letra ou numeral (o aviso de idade da auditoria de 21/10/2026 continua valendo para qualquer item desse tipo); nenhum mundo passa de 9 itens (50 ÷ 6, arredondado para cima) enquanto houver alternativa. O teto por mundo só é relaxado quando o banco da faixa não fecha 50 sem ele — hoje isso ocorre aos 2–7 anos em Olhos e Palavras, porque os roteiros dessas idades têm poucas tarefas centrais que dispensam objeto.
+4. **Sem repetição:** item curado que repetisse tarefa ou conceito da bateria interrompe a montagem do banco (erro de build), e o restante continua deduplicado por tarefa, conceito e referência.
 
-Efeito medido (itens por mundo, Vila/Olhos/Palavras/Números/Memória/Corpo): 2 anos de 3/20/10/11/3/3 para 6/14/10/11/5/4; 5 anos de 4/11/19/8/4/4 para 6/9/12/9/7/7; 8 anos de 6/9/15/8/6/6 para 7/9/9/8/9/8; 12–17 anos de 6/8/16/8/6/6 para 8/8/9/8/9/8. O núcleo (bateria principal) não mudou: a impressão digital `tests/fixtures/golden-descritivo.json` só alterou o tempo estimado e o teto. Contrato travado em `tests/unit/super-neuropad-curadoria-faixa.test.ts`.
+Efeito medido (itens por mundo, Vila/Olhos/Palavras/Números/Memória/Corpo): 2 anos de 3/20/10/11/3/3 para 6/13/10/12/5/4; 5 anos de 4/11/19/8/4/4 para 6/9/11/9/7/8; 8 anos de 6/9/15/8/6/6 para 7/9/9/7/9/9; 12–17 anos de 6/8/16/8/6/6 para 8/8/9/7/9/9. O núcleo (bateria principal) não mudou: a impressão digital `tests/fixtures/golden-descritivo.json` só alterou o tempo estimado e o teto. Contrato travado em `tests/unit/super-neuropad-curadoria-faixa.test.ts`.
 
 **Pendente externo.** Os itens curados são adaptações operacionais dos roteiros e exigem a mesma revisão médica item a item dos demais complementares antes de produção ampla.
 

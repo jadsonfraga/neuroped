@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  conceptKey, curatedOptionalDrafts, CURADORIA_SUFIXO, GAME_BANK, INTEGRATED_BANK, MAX_POR_MUNDO, OPTIONAL_BANK, PHASE_ORDER, pedeLetraOuNumeral, YEARS,
+  conceptKey, CURADORIA_BANCOS, curatedOptionalDrafts, CURADORIA_SUFIXO, GAME_BANK, INTEGRATED_BANK, MAX_POR_MUNDO, OPTIONAL_BANK, PHASE_ORDER, pedeLetraOuNumeral, YEARS,
 } from "../../client/src/features/super-neuropad/bank";
 import { estimateBandSeconds, itemProvenance, SESSION_LIMIT_SECONDS, sessionLimitSeconds } from "../../client/src/features/super-neuropad/model";
 
@@ -72,10 +72,10 @@ test("equilíbrio: dos 8 aos 17 anos nenhum mundo passa do teto por mundo e os m
   }
   // Medição de referência da curadoria (itens por mundo); muda só com revisão deliberada da composição.
   const porMundo = (years: number) => PHASE_ORDER.map((phaseId) => GAME_BANK[years][phaseId].length).join("/");
-  assert.equal(porMundo(2), "6/14/10/11/5/4");
-  assert.equal(porMundo(5), "6/9/12/9/7/7");
-  assert.equal(porMundo(8), "7/9/9/8/9/8");
-  assert.equal(porMundo(17), "8/8/9/8/9/8");
+  assert.equal(porMundo(2), "6/13/10/12/5/4");
+  assert.equal(porMundo(5), "6/9/11/9/7/8");
+  assert.equal(porMundo(8), "7/9/9/7/9/9");
+  assert.equal(porMundo(17), "8/8/9/7/9/9");
 });
 
 test("núcleo intacto: a bateria principal mantém contagens e ids canônicos", () => {
@@ -84,6 +84,30 @@ test("núcleo intacto: a bateria principal mantém contagens e ids canônicos", 
   for (const years of YEARS) {
     for (const phaseId of PHASE_ORDER) {
       INTEGRATED_BANK[years][phaseId].forEach((item, index) => assert.equal(item.id, `${years}.${phaseId}.${index + 1}`));
+    }
+  }
+});
+
+test("curadoria dos bancos: Reconhecimento Visual (parear, nomear, conceito) e Avaliação Cognitiva entram em toda idade, sem repetir a bateria", () => {
+  for (const years of YEARS) {
+    const ids = new Set(CURADORIA_BANCOS[years]);
+    const lista = OPTIONAL_BANK[years].filter(({ item }) => ids.has(item.id));
+    assert.equal(lista.length, ids.size, `${years} anos: ids da curadoria existem no complemento`);
+    const refs = lista.map(({ item }) => item.ref);
+    assert.ok(refs.some((ref) => /^Reconhecimento visual · nomear · /.test(ref)), `${years} anos: nomear do Reconhecimento Visual`);
+    assert.ok(refs.some((ref) => new RegExp(`^Cognitivos ${years} anos · `).test(ref)), `${years} anos: item da Avaliação Cognitiva da idade`);
+    if (years >= 4) assert.ok(refs.some((ref) => /^Reconhecimento visual · parear · /.test(ref)), `${years} anos: parear`);
+    if (years >= 5) assert.ok(refs.some((ref) => /^Reconhecimento visual · conceito contextualizado · /.test(ref)), `${years} anos: conceito contextualizado`);
+    if (years >= 4) {
+      for (const dominio of ["fala/leitura", "números", "letras/escrita"]) {
+        assert.ok(refs.some((ref) => ref.startsWith(`Cognitivos ${years} anos · ${dominio} `)), `${years} anos: domínio cognitivo ${dominio}`);
+      }
+    }
+    const principal = PHASE_ORDER.flatMap((phaseId) => INTEGRATED_BANK[years][phaseId]);
+    for (const { item } of lista) {
+      assert.ok(!principal.some((entry) => entry.ref === item.ref), `${item.id}: referência já aplicada na bateria`);
+      assert.ok(!principal.map(conceptKey).includes(conceptKey(item)), `${item.id}: conceito já aplicado na bateria`);
+      if (years <= 3) assert.equal(item.domain, INTEGRATED_BANK[years][PHASE_ORDER.find((phaseId) => GAME_BANK[years][phaseId].some((entry) => entry.id === item.id))!][0].domain, `${item.id}: domínio do mundo`);
     }
   }
 });

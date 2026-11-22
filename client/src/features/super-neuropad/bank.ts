@@ -1106,6 +1106,57 @@ export function pedeLetraOuNumeral(item: AnyDraft | Item): boolean {
 /** Nenhum mundo passa disto no complemento (50 ÷ 6 arredondado para cima), salvo se o banco não fechar 50. */
 export const MAX_POR_MUNDO = Math.ceil(DESAFIOS_DISPONIVEIS_POR_IDADE / PHASE_ORDER.length);
 
+/**
+ * Curadoria dos bancos de tarefa (v2026-11-22.2): garante na idade uma tarefa de cada modalidade do
+ * Reconhecimento Visual (parear, nomear, conceito contextualizado) e um item de cada domínio da Avaliação
+ * Cognitiva Infantil que a bateria ainda não aplica. Cada grupo é uma fila: entra o primeiro candidato que
+ * não repete tarefa, conceito nem referência. Aos 2–3 anos, só o que cabe nos domínios da bateria dedicada
+ * (figura → linguagem receptiva; nomear → linguagem expressiva); escrita, numeral e pareamento ficam de fora.
+ */
+function curatedBankGroups(years: number): Array<Array<{ draft: AnyDraft; phaseId: PhaseId }>> {
+  const months = years * 12;
+  const toddler = years <= 3;
+  const seed = (index: number) => years * 1000 + 500 + index;
+  const groups: Array<Array<{ draft: AnyDraft; phaseId: PhaseId }>> = [];
+  const symbols = (mode: "pareamento" | "nomeacao") => eligibleItems(months, mode).filter((entry) => !entry.context && !entry.pair);
+  if (!toddler) {
+    const offset = (years * 5) % Math.max(1, symbols("pareamento").length);
+    const pares = symbols("pareamento");
+    groups.push(pares.map((_, index) => pares[(offset + index) % pares.length]).flatMap((target, index) => {
+      try {
+        const draft = vrMatch(years, target.id, seed(index));
+        draft.ref = draft.ref.replace(/\(\d+ opções\)/, `(${draft.options.length} opções)`);
+        return [{ draft: draft as AnyDraft, phaseId: "olhos" as PhaseId }];
+      } catch { return []; }
+    }));
+  }
+  const nomes = symbols("nomeacao");
+  const nameOffset = (years * 3) % Math.max(1, nomes.length);
+  groups.push(nomes.map((_, index) => nomes[(nameOffset + index) % nomes.length]).flatMap((target) => {
+    try { return [{ draft: vrName(years, target.id) as AnyDraft, phaseId: (toddler ? "numeros" : "olhos") as PhaseId }]; } catch { return []; }
+  }));
+  if (!toddler) {
+    const conceitos = VR_ITEMS.filter((entry) => entry.context && entry.minMonths <= months);
+    groups.push(conceitos.flatMap((target, index) => {
+      try { return [{ draft: vrContext(years, target.id, seed(100 + index)) as AnyDraft, phaseId: "palavras" as PhaseId }]; } catch { return []; }
+    }));
+  }
+  const domains: Array<[CognitiveDomain, PhaseId]> = toddler
+    ? [["visual", "palavras"], ["leitura", "numeros"]]
+    : [["visual", "olhos"], ["leitura", "palavras"], ["escrita", "corpo"], ["aritmetica", "numeros"]];
+  for (const [domain, phaseId] of domains) {
+    groups.push((COGNITIVE_BANK[years]?.[domain] ?? []).map((_, index) => ({ draft: cogAt(years, domain, index), phaseId })));
+  }
+  if (!toddler) return groups;
+  return groups.map((group) => group.map((entry) => {
+    const domain = INTEGRATED_BANK[years][entry.phaseId][0]?.domain;
+    return domain ? { ...entry, draft: { ...entry.draft, domain } as AnyDraft } : entry;
+  }));
+}
+
+/** Ids dos complementos que vieram da curadoria dos bancos (Reconhecimento Visual e Avaliação Cognitiva). */
+export const CURADORIA_BANCOS: Record<number, string[]> = {};
+
 function buildOptional(): Record<number, OptionalItem[]> {
   const out: Record<number, OptionalItem[]> = {};
   for (const years of YEARS) {
@@ -1152,6 +1203,17 @@ function buildOptional(): Record<number, OptionalItem[]> {
     // Regras de saída do complemento: aos 2–3 anos não entra item que pede letra ou numeral; nenhum mundo
     // passa de MAX_POR_MUNDO enquanto houver alternativa (a última passada só relaxa o teto se faltar item).
     const outOfBand = (draft: AnyDraft) => years <= IDADE_MAXIMA_AVISO_LETRAMENTO && pedeLetraOuNumeral(draft);
+    // Curadoria dos bancos de tarefa: uma tarefa por grupo (modalidade visual ou domínio cognitivo).
+    const fromBanks = new Set<AnyDraft>();
+    for (const group of curatedBankGroups(years)) {
+      const candidate = group.find(({ draft }) => {
+        const keys = [taskKey(draft), conceptKey(draft)];
+        return !outOfBand(draft) && !isUsed(draft.ref) && !keys.some((key) => usedKeys.has(key) || pickedKeys.has(key));
+      });
+      if (!candidate || picked.length >= need) continue;
+      take(candidate, [taskKey(candidate.draft), conceptKey(candidate.draft)]);
+      fromBanks.add(candidate.draft);
+    }
     // Primeiras passadas: só conceitos distintos entre si e da bateria. Depois: se o banco da idade não tem
     // conceitos distintos suficientes para chegar a 50, completa com a mesma tarefa em outra redação
     // (nunca a mesma tarefa idêntica); `conceitosRepetidosNosOpcionais` informa quantos casos restam.
@@ -1171,6 +1233,7 @@ function buildOptional(): Record<number, OptionalItem[]> {
     if (picked.length !== need) throw new Error(`Extensão opcional incompleta aos ${years} anos: ${picked.length} de ${need}`);
     const ordered = PHASE_ORDER.flatMap((phaseId) => picked.filter((entry) => entry.phaseId === phaseId));
     out[years] = ordered.map((entry, index) => ({ phaseId: entry.phaseId, item: { ...entry.draft, id: `${years}.opcional.${index + 1}` } as Item }));
+    CURADORIA_BANCOS[years] = ordered.flatMap((entry, index) => (fromBanks.has(entry.draft) ? [`${years}.opcional.${index + 1}`] : []));
   }
   return out;
 }

@@ -206,11 +206,11 @@ test("resumo conta acertos por mundo e no total, com completude", () => {
   assert.equal(perfect.hits, 50);
   assert.equal(perfect.total, 50);
   assert.equal(perfect.complete, true);
-  assert.deepEqual(perfect.phases.map((phase) => phase.hits), [7, 9, 9, 8, 9, 8]);
+  assert.deepEqual(perfect.phases.map((phase) => phase.hits), [7, 9, 9, 7, 9, 9]);
 
   const young = summarize(play(4));
   assert.equal(young.total, 50);
-  assert.deepEqual(young.phases.map((phase) => phase.total), [7, 12, 10, 9, 6, 6]);
+  assert.deepEqual(young.phases.map((phase) => phase.total), [7, 12, 9, 9, 6, 7]);
 
   const mixed = summarize(play(6, (index) => (index % 5 === 0 ? "erro" : index % 5 === 1 ? "sem_resposta" : index % 5 === 2 ? "recusa" : "acerto")));
   assert.deepEqual(
@@ -220,7 +220,7 @@ test("resumo conta acertos por mundo e no total, com completude", () => {
     ),
     [20, 10, 10, 10],
   );
-  assert.deepEqual(mixed.phases.map((phase) => phase.total), [6, 9, 12, 9, 7, 7]);
+  assert.deepEqual(mixed.phases.map((phase) => phase.total), [6, 9, 11, 9, 7, 8]);
 
   const partial = play(2);
   partial.answers = partial.answers.slice(0, 7);
@@ -244,7 +244,7 @@ test("mundo pulado: aparece como não aplicado com motivo; partida fica incomple
   const corpo = summary.phases.find((phase) => phase.phase.id === "corpo")!;
   assert.equal(corpo.applied, false);
   assert.equal(corpo.skipReason, "Criança cansada ou sem colaboração");
-  assert.equal(summary.hits, 44, "os mundos aplicados continuam contados");
+  assert.equal(summary.hits, 43, "os mundos aplicados continuam contados");
   for (const output of [buildGameBrief(session), buildGameReport(session), JSON.stringify(buildGameDocSpec(session, ISSUER, "30/09/2026 14:00"))]) {
     assert.match(output, /não aplicado — Criança cansada|Não aplicado - motivo: Criança cansada|não aplicado — Criança cansada/i);
     assert.match(output, /sem classificação/i);
@@ -455,7 +455,7 @@ test("resumo para o prontuário é prosa curta com idade, contagem, mundos, iten
   const session = { ...play(6, (index) => (index === 1 ? "erro" : index === 13 ? "sem_resposta" : "acerto")), observations: "Colaborou bem" };
   const brief = buildGameBrief(session, new Date("2026-09-30T12:00:00Z"));
   assert.match(brief, /^Registro lúdico de pré-consulta \(Super NeuroPad Game, 6 anos\) em 30\/09\/2026: partida completa, 50 de 50 itens registrados; 48 acertos, 1 erros, 1 sem resposta, 0 recusas\./);
-  assert.match(brief, /Por mundo: Vila da Conversa 5\/6, Floresta dos Olhos 8\/9, Ilha das Palavras 12\/12, Montanha dos Números 9\/9, Caverna da Memória 7\/7, Torre do Corpo 7\/7\./);
+  assert.match(brief, /Por mundo: Vila da Conversa 5\/6, Floresta dos Olhos 8\/9, Ilha das Palavras 11\/11, Montanha dos Números 9\/9, Caverna da Memória 7\/7, Torre do Corpo 8\/8\./);
   assert.match(brief, /Itens não acertados: .*\(errou; .*\); .*\(não respondeu; .*\)\./);
   assert.match(brief, /Observações da aplicadora: Colaborou bem\./);
   assert.match(brief, /Registro descritivo; sem classificação\. Interpretação a cargo do profissional\.$/);
