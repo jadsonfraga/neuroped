@@ -48,6 +48,8 @@ try {
   await page.locator("#login-password").fill(SYNTHETIC_CREDENTIALS.password);
   await page.locator('[data-testid="login-form"] button[type="submit"]').click();
   await page.getByTestId("obs10-workspace").waitFor({ timeout: 20000 });
+  // Fases (sem câmera) é o padrão desde a #1340; o lançador do OBS-60 fica no Guia.
+  await page.getByRole("tab", { name: /^Guia da assistente/ }).click();
   await open();
   assert.equal(await button("Gravar 60 segundos").isDisabled(), true);
   assert.equal(await panel().locator('input[type="file"]').isDisabled(), true);
