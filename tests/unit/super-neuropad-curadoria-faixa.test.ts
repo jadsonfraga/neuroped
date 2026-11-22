@@ -127,11 +127,11 @@ test("equilíbrio: nenhum mundo passa de 11 a partir dos 6 anos; composição de
   for (const years of YEARS.filter((value) => value >= 6)) {
     for (const phaseId of PHASE_ORDER) assert.ok(GAME_BANK[years][phaseId].length <= 11, `${years}/${phaseId}: ${GAME_BANK[years][phaseId].length}`);
   }
-  // Medição da revisão de 22/11/2026; muda só com revisão deliberada.
+  // Medição da revisão de 22/11/2026 (v2026-11-22.4, lacunas da reconciliação); muda só com revisão deliberada.
   assert.equal(porMundo(2), "7/5/21/6/6/5");
-  assert.equal(porMundo(5), "6/14/7/8/8/7");
-  assert.equal(porMundo(8), "7/6/10/10/9/8");
-  assert.equal(porMundo(17), "8/6/9/9/9/9");
+  assert.equal(porMundo(5), "7/12/7/8/8/8");
+  assert.equal(porMundo(8), "9/6/9/8/9/9");
+  assert.equal(porMundo(17), "8/6/8/8/10/10");
 });
 
 test("núcleo intacto: a bateria principal mantém contagens e ids canônicos", () => {
@@ -141,5 +141,25 @@ test("núcleo intacto: a bateria principal mantém contagens e ids canônicos", 
     for (const phaseId of PHASE_ORDER) {
       INTEGRATED_BANK[years][phaseId].forEach((item, index) => assert.equal(item.id, `${years}.${phaseId}.${index + 1}`));
     }
+  }
+});
+
+test("reconciliação 22/11/2026 (v2026-11-22.4): +50 % nos mundos centrais e lacunas de construto fechadas por idade", () => {
+  const prompts = (years: number) => PHASE_ORDER.flatMap((phaseId) => GAME_BANK[years][phaseId]).map((item) => item.prompt).join("\n");
+  for (const years of YEARS) {
+    const centrais = ["vila", "memoria", "corpo"] as const;
+    const antes = centrais.reduce((sum, phaseId) => sum + INTEGRATED_BANK[years][phaseId].length, 0);
+    const depois = centrais.reduce((sum, phaseId) => sum + GAME_BANK[years][phaseId].length, 0);
+    assert.ok(depois >= Math.ceil(antes * 1.5), `${years} anos: mundos centrais ${antes} → ${depois}`);
+    const texto = prompts(years);
+    if (years >= 5) assert.match(texto, /Siga o meu dedo só com os olhos/, `${years} anos: seguimento ocular (núcleo motor OBS-10)`);
+    if (years === 3 || years === 4) assert.match(texto, /em silêncio e com cara de interesse/, `${years} anos: iniciativa social espontânea`);
+    if (years >= 5 && years <= 11) assert.match(texto, /e espere 5 segundos, sem perguntar nada/, `${years} anos: reciprocidade de conversa`);
+    if (years >= 8 && years <= 11) assert.match(texto, /pontual como sempre/, `${years} anos: ironia`);
+    if (years >= 12) assert.match(texto, /Quantas vezes aparece exatamente 7A/, `${years} anos: atenção seletiva`);
+  }
+  for (const years of YEARS.filter((value) => value >= 12)) {
+    const item = OPTIONAL_BANK[years].find(({ item: entry }) => /exatamente 7A/.test(entry.prompt))!.item;
+    assert.ok(item.kind === "toque" && item.stimulus!.split(" ").filter((token) => token === "7A").length === Number(item.answer), `${years} anos: gabarito da fileira`);
   }
 });

@@ -63,21 +63,21 @@ Contagens geradas do banco efetivo (`GAME_BANK`); tempo por `estimateBandSeconds
 | Idade | Itens (por mundo) | Sonda 10 | OBS-10 | Rec. visual | Cognitiva | Tipos (toque/fala/ação/montar) | Com gesto | Tempo estimado |
 |---|---|---|---|---|---|---|---|---|
 | 2 anos | 50 (7/5/21/6/6/5) | 24 | 14 | 6 | 6 | 19/10/21/0 | 3 | 24.4 min |
-| 3 anos | 50 (7/5/18/8/7/5) | 24 | 11 | 10 | 5 | 17/13/20/0 | 3 | 24.9 min |
-| 4 anos | 50 (7/16/9/6/6/6) | 13 | 13 | 12 | 12 | 23/19/8/0 | 1 | 24.8 min |
-| 5 anos | 50 (6/14/7/8/8/7) | 12 | 15 | 11 | 12 | 27/13/10/0 | 0 | 26.1 min |
-| 6 anos | 50 (7/8/9/10/8/8) | 15 | 17 | 5 | 13 | 24/16/9/1 | 0 | 20.9 min |
-| 7 anos | 50 (7/8/10/9/8/8) | 15 | 16 | 5 | 14 | 24/16/8/2 | 0 | 20.9 min |
-| 8 anos | 50 (7/6/10/10/9/8) | 20 | 16 | 1 | 13 | 23/18/8/1 | 0 | 22.8 min |
-| 9 anos | 50 (7/6/10/10/9/8) | 18 | 17 | 1 | 14 | 23/18/8/1 | 0 | 23.0 min |
-| 10 anos | 50 (7/6/11/9/9/8) | 20 | 15 | 1 | 14 | 23/18/8/1 | 0 | 23.4 min |
-| 11 anos | 50 (7/6/10/10/9/8) | 18 | 16 | 1 | 15 | 23/18/8/1 | 0 | 23.1 min |
-| 12 anos | 50 (8/6/9/9/9/9) | 21 | 14 | 1 | 14 | 21/20/7/2 | 0 | 24.3 min |
-| 13 anos | 50 (8/6/9/9/9/9) | 19 | 17 | 1 | 13 | 21/20/7/2 | 0 | 24.4 min |
-| 14 anos | 50 (8/6/9/9/9/9) | 21 | 14 | 1 | 14 | 21/20/7/2 | 0 | 24.8 min |
-| 15 anos | 50 (8/6/9/9/9/9) | 19 | 17 | 1 | 13 | 21/20/7/2 | 0 | 24.7 min |
-| 16 anos | 50 (8/6/9/9/9/9) | 21 | 14 | 1 | 14 | 21/20/7/2 | 0 | 24.8 min |
-| 17 anos | 50 (8/6/9/9/9/9) | 19 | 17 | 1 | 13 | 21/20/7/2 | 0 | 24.9 min |
+| 3 anos | 50 (8/5/17/8/7/5) | 25 | 11 | 9 | 5 | 16/13/21/0 | 3 | 25.0 min |
+| 4 anos | 50 (8/15/9/6/6/6) | 14 | 13 | 11 | 12 | 22/19/9/0 | 1 | 24.9 min |
+| 5 anos | 50 (7/12/7/8/8/8) | 13 | 16 | 9 | 12 | 25/14/11/0 | 0 | 26.4 min |
+| 6 anos | 50 (8/8/9/8/8/9) | 16 | 16 | 5 | 13 | 22/17/10/1 | 0 | 21.2 min |
+| 7 anos | 50 (8/8/9/8/8/9) | 15 | 17 | 5 | 13 | 22/17/9/2 | 0 | 21.1 min |
+| 8 anos | 50 (9/6/9/8/9/9) | 21 | 16 | 1 | 12 | 20/20/9/1 | 0 | 23.2 min |
+| 9 anos | 50 (9/6/9/8/9/9) | 18 | 18 | 1 | 13 | 20/20/9/1 | 0 | 23.4 min |
+| 10 anos | 50 (9/6/9/8/9/9) | 20 | 16 | 1 | 13 | 20/20/9/1 | 0 | 23.6 min |
+| 11 anos | 50 (9/6/9/8/9/9) | 19 | 17 | 1 | 13 | 20/20/9/1 | 0 | 23.6 min |
+| 12 anos | 50 (8/6/9/7/10/10) | 22 | 14 | 1 | 13 | 20/20/8/2 | 0 | 24.7 min |
+| 13 anos | 50 (8/6/8/8/10/10) | 19 | 18 | 1 | 12 | 20/20/8/2 | 0 | 24.8 min |
+| 14 anos | 50 (8/6/9/7/10/10) | 22 | 14 | 1 | 13 | 20/20/8/2 | 0 | 25.2 min |
+| 15 anos | 50 (8/6/8/8/10/10) | 19 | 18 | 1 | 12 | 20/20/8/2 | 0 | 25.1 min |
+| 16 anos | 50 (8/6/8/8/10/10) | 22 | 15 | 1 | 12 | 20/20/8/2 | 0 | 25.2 min |
+| 17 anos | 50 (8/6/8/8/10/10) | 19 | 18 | 1 | 12 | 20/20/8/2 | 0 | 25.3 min |
 
 **Tempo estimado**: toque 12 s (+1 s a cada 25 caracteres de leitura, máx. +25 s), fala 20 s,
 ação 25 s, montar 30 s + 2 s por letra (ou o tempo próprio do item); fator de criança pequena
@@ -96,7 +96,7 @@ semântica (animais em 60 s, com piso autoral crescente de 8 a 13), cálculo men
 (equilíbrio sem visão, saltos em um pé, polichinelo, dupla tarefa). As semelhanças de 12–17 também
 passaram a subir de abstração com a idade (transporte → medida → obra de arte). Os pisos de
 fluência e os critérios são **conservadores e autorais, para déficit grosseiro**: não são norma, e a
-leitura final continua sendo do médico. O teto segue travado por teste (30 min; estimativa máxima atual: 26,1 min, aos 5 anos).
+leitura final continua sendo do médico. O teto segue travado por teste (30 min; estimativa máxima atual: 26,4 min, aos 5 anos).
 
 **Critérios de calibração** (sem norma, sem inflar escore, sem mudar corte):
 
@@ -690,3 +690,26 @@ A política está em `bank.ts` (`tipoTarefa`, `limitesDaIdade`, `alvosDaTarefa`)
 **Pendente externo.** Revisão médica item a item dos desafios complementares e teste manual em tablet antes de produção ampla.
 
 **Reversão.** Reverter o commit. Sem migração, sem dependência nova e sem dado persistido.
+
+## Reconciliação da curadoria e lacunas de construto (v2026-11-22.4)
+
+A curadoria da v2026-11-22.3 (PR #1355) continua sendo a base: três camadas (roteiros, bancos, preenchimento),
+política de limites por idade e teto de 30 min. A reconciliação mediu a cobertura e encontrou dois pontos abertos:
+
+- de 8 a 17 anos, os mundos centrais (Vila + Caverna + Torre) cresciam só +33 % a +44 % sobre o núcleo;
+- construtos da Sonda 10/OBS-10 que nenhum item do jogo aplicava: seguimento ocular (núcleo motor da OBS-10),
+  iniciativa social espontânea (Sonda 10, 3–4 anos), reciprocidade de conversa (Sonda 10, 5–11 anos), ironia
+  (inferência social, 8–11 anos) e atenção seletiva (Sonda 10, 12–17 anos; a grade autoral vira uma fileira de
+  letras e números na tela).
+
+Entraram somente essas tarefas, na camada de roteiros (`EYE_TRACK`, `SOCIAL_INITIATIVE`, `RECIPROCITY`, ironia e
+atenção seletiva em `curatedOptional`); cada uma desloca um item de preenchimento, então a partida segue com 50
+desafios, o núcleo e os ids canônicos não mudam (impressão digital do núcleo inalterada; muda só o tempo) e os
+limites por tipo continuam valendo. Resultado: todas as idades com pelo menos +50 % nos mundos centrais
+(2 anos +100 %; 3–4 anos +67 %; 5 anos +92 %; 6–7 anos +67 %; 8–11 anos +50 %; 12–17 anos +56 %), estimativa
+máxima de 26,4 min. Aos 2–3 anos não entrou item motor: a regra da bateria dedicada exige que todo complemento
+leve o domínio do mundo, e não há domínio motor nessa bateria (pendência para decisão clínica).
+
+Verificação: `tests/unit/super-neuropad-curadoria-faixa.test.ts` (novo caso da reconciliação: +50 % por idade,
+presença de cada construto na faixa e gabarito da fileira de atenção seletiva). Rollback: reverter a PR; não há
+migração nem dado persistido.

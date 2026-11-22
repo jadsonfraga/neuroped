@@ -373,3 +373,19 @@ Revisão médica item a item pendente.
 | R | Torre do Corpo | roteiro | Peça: “Estique os braços à frente, palmas para cima, e fique assim.” Conte até 10. | Mantém os dois braços esticados, palmas para cima, por 10 segundos | OBS-10 · 12–17 anos · movimentar com segurança (núcleo motor) |
 | R | Torre do Corpo | roteiro | Peça: “Toque o seu nariz com este dedo e depois o meu dedo.” 3 vezes de cada lado, devagar. | Acerta o nariz e o seu dedo nas 3 vezes, dos dois lados | OBS-10 · 12–17 anos · movimentar com segurança (núcleo motor) |
 | B | Torre do Corpo | montar | Escute a palavra e monte com as letras, tocando na ordem. | monta SUSCETÍVEL | Cognitivos 17 anos · letras/escrita 1 |
+
+## Adendo — reconciliação v2026-11-22.4
+
+Camada **R** (roteiros) recebeu, por idade, só tarefas de construtos antes ausentes; cada uma desloca um item de
+preenchimento (P). Composição por mundo de referência após o adendo: 2 anos 7/5/21/6/6/5 (sem mudança);
+5 anos 7/12/7/8/8/8; 8 anos 9/6/9/8/9/9; 17 anos 8/6/8/8/10/10.
+
+| Idade | Tarefa acrescentada | Fonte |
+|---|---|---|
+| 3–4 anos | Fique 10 s em silêncio, com cara de interesse: puxa conversa ou brincadeira por iniciativa própria | Sonda 10 · 3–4 anos · interação espontânea |
+| 5–11 anos | Comente algo seu e espere 5 s: continua o assunto sem mudar para um tema só dela | Sonda 10 · conversação / pragmática espontânea (reciprocidade) |
+| 5–17 anos | “Siga o meu dedo só com os olhos”: acompanha nas duas direções sem virar a cabeça | OBS-10 · núcleo motor (movimentar com segurança) |
+| 8–11 anos | “Que beleza, pontual como sempre!” — ela estava elogiando? Percebe a ironia | Sonda 10 · 8–11 anos · inferência social (ironia) |
+| 12–17 anos | Quantas vezes aparece exatamente 7A na fileira (gabarito 6) | Sonda 10 · 12–17 anos · atenção seletiva |
+
+Revisão médica item a item continua pendente.
