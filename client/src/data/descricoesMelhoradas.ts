@@ -55,7 +55,7 @@ EXEMPLOS:
 AUTORRELATO VS PAIS:
 Crianças frequentemente mascaram ansiedade em casa (aparentam estar bem)
 Autorrelato adolescente é MAIS CONFIÁVEL que relato de pais
-→ Compare: Se pais marcam 15 mas criança marca 40 = criança está mascando
+→ Compare: Se pais marcam 15 mas criança marca 40 = criança está mascarando
 → Confie mais no autorrelato em adolescentes`,
 
   // ============ PROMIS ============

@@ -16,6 +16,14 @@ const tsxLoader = pathToFileURL(
   createRequire(import.meta.url).resolve("tsx"),
 ).href;
 
+// Contagens declaradas nos dados: o export de auditoria tem de mostrá-las, não omiti-las.
+const allItems = Object.values(interactiveScaleItems).flatMap((def) => def.domains.flatMap((d) => d.items));
+const declared = {
+  invertido: allItems.filter((i) => typeof i !== "string" && i.responseType !== "text" && i.reversed).length,
+  livre: allItems.filter((i) => typeof i !== "string" && i.responseType === "text").length,
+  sentinela: allItems.filter((i) => typeof i !== "string" && i.responseType !== "text" && i.sentinel).length,
+};
+
 const exporters = [
   {
     script: "scripts/audit-scales-export.mts",
@@ -26,6 +34,8 @@ const exporters = [
       file: "escalas-autorais-auditoria.md",
       ids: Object.keys(interactiveScaleItems).sort(),
     },
+    // Fidelidade: marcadores de item e direção do escore vêm da definição, nunca de um texto fixo.
+    fidelity: true,
   },
   {
     script: "scripts/extract-escalas-completas.mts",
@@ -34,7 +44,7 @@ const exporters = [
   },
 ];
 
-for (const { script, outDir, minFiles, sections } of exporters) {
+for (const { script, outDir, minFiles, sections, fidelity } of exporters) {
   const work = mkdtempSync(join(tmpdir(), "np-scale-export-"));
   try {
     const run = spawnSync(
@@ -84,6 +94,19 @@ for (const { script, outDir, minFiles, sections } of exporters) {
         sections.ids,
         `${script} → ${sections.file}: seções diferentes das ${sections.ids.length} escalas com itens interativos`,
       );
+    }
+    if (fidelity) {
+      // Só as linhas de item ("N. texto — marcadores"); a legenda do cabeçalho não conta.
+      const itemLines = readFileSync(join(work, outDir, "escalas-autorais-auditoria.md"), "utf8")
+        .split("\n")
+        .filter((line) => /^\d+\. /.test(line));
+      const count = (needle) => itemLines.filter((line) => line.includes(needle)).length;
+      assert.equal(count("_invertido_"), declared.invertido, `${script}: itens invertidos no export ≠ declarados`);
+      assert.equal(count("_resposta livre_"), declared.livre, `${script}: itens de resposta livre no export ≠ declarados`);
+      assert.equal(count("_sentinela: "), declared.sentinela, `${script}: itens sentinela no export ≠ declarados`);
+      const faixas = readFileSync(join(work, outDir, "escalas-autorais-faixas.csv"), "utf8");
+      assert.ok(!faixas.includes("maior=melhor/intenso"), `${script}: direção do escore fixa em vez da declarada`);
+      assert.match(faixas.split("\n")[0], /direcao_escore;interpretacao;minPct/, `${script}: cabeçalho das faixas sem direção/interpretação`);
     }
     console.log(
       `✓ ${script}: ${files.length} arquivo(s) sem "[object Object]" nem "(sem metadados)"`,
