@@ -123,7 +123,7 @@ A ilustração de frango preparado foi rejeitada no pré-release e substituída 
 
 **Geração.** Os arquivos são gerados de forma determinística por `node scripts/build-recognition-kawaii.mjs`, a partir de `scripts/recognition/kawaii-figures.mjs`. O teste `tests/unit/visual-recognition-kawaii.test.ts` compara os arquivos publicados com a regeneração: nunca editar os SVGs à mão.
 
-**Outros consumidores.** O Super NeuroPad e outras chamadas sem estilo continuam no banco sóbrio. As figuras novas não aparecem para elas.
+**Outros consumidores.** O Super NeuroPad Game e outras chamadas sem estilo continuam no banco sóbrio. As figuras novas não aparecem para elas. O SuperNeuroPad Não Verbal (2 a 6 anos) segue a regra desta aba: figuras kawaii aos 2–4 anos e sóbrias aos 5–6, com o estilo registrado no texto da aplicação; os itens são os mesmos do banco sóbrio, só o desenho muda.
 
 **Limites.** Ilustrações autorais ainda não testadas empiricamente quanto à reconhecibilidade e familiaridade com crianças brasileiras. Registre familiaridade e figura ambígua, e não atribua à criança a dificuldade da figura. Revisão profissional antes de cada aplicação.
 

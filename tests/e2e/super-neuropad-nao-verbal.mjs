@@ -65,6 +65,8 @@ async function run(viewport, tag, years) {
         await page.getByRole("button", { name: "Sem resposta" }).click();
       } else {
         await group.getByRole("button").first().click();
+        // Durante a festa a resposta já foi registrada: repetir o enunciado fica bloqueado.
+        if (total === 1) assert.equal(await page.getByRole("button", { name: "Ouvir o desafio de novo" }).isDisabled(), true, "ouvir de novo bloqueado na festa");
         await page.waitForTimeout(1500);
       }
     }
