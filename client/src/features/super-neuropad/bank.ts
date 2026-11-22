@@ -1025,7 +1025,7 @@ function curatedOptional(years: number): Partial<Record<PhaseId, Draft<Item>[]>>
     ],
     memoria: [
       DOG_CLAP("3–4 anos", ["gato", "CACHORRO", "bola", "casa", "CACHORRO"]),
-      fala("sonda10", SONDA("3–4 anos", "inibição + troca de regra"), "Só se a criança entendeu a regra SOL/LUA (senão, registre “não aplicado”): “Agora vamos inverter: LUA = bata palma; SOL = mãos paradas.” Sequência: LUA – SOL – LUA – SOL",
+      fala("sonda10", SONDA("3–4 anos", "inibição + troca de regra"), "Diga: “Agora vamos inverter: LUA = bata palma; SOL = mãos paradas.” Faça uma prática de cada com a regra nova. Sequência: LUA – SOL – LUA – SOL",
         "Acerta as 4 com a regra nova (palma só na LUA)", { stimulus: "🌙 ☀️", seconds: 30 }),
     ],
     palavras: [
@@ -1046,7 +1046,7 @@ function curatedOptional(years: number): Partial<Record<PhaseId, Draft<Item>[]>>
     memoria: [
       fala("obs10", OBS("5 anos", "linguagem e raciocínio (reconto)"), "Conte: “Um gato ficou preso numa árvore. Uma pessoa trouxe uma escada e ajudou o gato a descer.” Pergunte: “O que aconteceu?” e “Como ele desceu?”",
         "Reconta o essencial (gato preso, alguém ajudou) e diz que desceu pela escada", { seconds: 30 }),
-      fala("sonda10", SONDA("5–7 anos", "flexibilidade cognitiva"), "Só se a criança entendeu a regra SOL/LUA (senão, registre “não aplicado”): “Agora mudou: LUA = bata na mesa; SOL = mãos paradas.” Sequência: LUA – SOL – SOL – LUA",
+      fala("sonda10", SONDA("5–7 anos", "flexibilidade cognitiva"), "Diga: “Agora mudou: LUA = bata na mesa; SOL = mãos paradas.” Faça uma prática de cada com a regra nova. Sequência: LUA – SOL – SOL – LUA",
         "Acerta as 4 com a regra nova (reage só na LUA)", { stimulus: "🌙 ☀️", seconds: 30 }),
       fazer("sonda10", SONDA("5–7 anos", "compreensão + memória operacional"), "Diga uma vez: “Escuta tudo antes de começar: bata palma, depois ponha a mão na cabeça e depois na barriga.”",
         "Faz as 3 ações na ordem pedida", { seconds: 20 }),
@@ -1114,9 +1114,9 @@ function curatedOptional(years: number): Partial<Record<PhaseId, Draft<Item>[]>>
         "Acerta as 4 com a regra nova", { seconds: 25 }),
       // Sonda 10 (12–17): ordem inversa com 3 a 5 palavras. A bateria aplica 3 (12–14) ou 4 (15–17); aqui, o passo seguinte.
       years >= 15
-        ? fala("sonda10", SONDA("12–17 anos", "memória operacional verbal (próximo passo)"), "Só se acertou a ordem inversa anterior. Diga, uma palavra por segundo: “Repita ao contrário: dia – mão – voz – rio – rei.”",
+        ? fala("sonda10", SONDA("12–17 anos", "memória operacional verbal (próximo passo)"), "Diga, uma palavra por segundo: “Repita ao contrário: dia – mão – voz – rio – rei.”",
           "Diz “rei – rio – voz – mão – dia”", { stimulus: "🗣️ ↩" })
-        : fala("sonda10", SONDA("12–17 anos", "memória operacional verbal (próximo passo)"), "Só se acertou a ordem inversa anterior. Diga, uma palavra por segundo: “Repita ao contrário: flor – rio – céu – pá.”",
+        : fala("sonda10", SONDA("12–17 anos", "memória operacional verbal (próximo passo)"), "Diga, uma palavra por segundo: “Repita ao contrário: flor – rio – céu – pá.”",
           "Diz “pá – céu – rio – flor”", { stimulus: "🗣️ ↩" }),
     ],
     corpo: [ARMS("12–17 anos"), FINGER_NOSE("12–17 anos")],

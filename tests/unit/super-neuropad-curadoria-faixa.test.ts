@@ -40,6 +40,14 @@ test("curadoria dos roteiros: Sonda 10/OBS-10 em toda idade, rastreável, sem it
   }
 });
 
+test("toda tarefa do complemento é aplicável e registrável com os quatro status (sem condição de “não aplicado”)", () => {
+  for (const years of YEARS) {
+    for (const { item } of OPTIONAL_BANK[years]) {
+      assert.doesNotMatch(item.prompt, /^Só se|não aplicado/i, `${item.id}: tarefa condicional sem status para registrar (${item.prompt})`);
+    }
+  }
+});
+
 test("política por idade: nenhum tipo de tarefa passa do limite da idade no complemento", () => {
   for (const years of YEARS) {
     const limites = limitesDaIdade(years);
