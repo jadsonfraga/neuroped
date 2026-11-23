@@ -250,7 +250,7 @@
     "@typescript-eslint/eslint-plugin": "^8.65.0",
     "@typescript-eslint/parser": "^8.65.0",
     "@vitejs/plugin-react": "^6.0.2",
-    "autoprefixer": "^10.4.20",
+    "autoprefixer": "^10.7.0",
     "chrome-launcher": "^1.2.1",
     "cross-env": "^7.0.3",
     "drizzle-kit": "^0.31.8",
