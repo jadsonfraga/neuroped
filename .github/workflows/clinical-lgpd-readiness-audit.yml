@@ -230,6 +230,12 @@ jobs:
           if (!report.runtime.lgpdExportConfigured) {
             report.blockers.push("LGPD_EXPORT_NOT_CONFIGURED");
           }
+          // A configured export binding is not proof that a private export
+          // successfully executed; keep the production readiness gate closed
+          // until the authorized synthetic execution has been verified.
+          if (!report.runtime.executionVerified) {
+            report.blockers.push("LGPD_EXPORT_EXECUTION_NOT_VERIFIED");
+          }
 
           report.blockers = [...new Set(report.blockers)];
           report.ready =
@@ -238,7 +244,8 @@ jobs:
             report.runtime.lgpdSchemaReady &&
             report.r2.bindingPresent &&
             report.runtime.lgpdStorageBindingPresent &&
-            report.runtime.lgpdExportConfigured;
+            report.runtime.lgpdExportConfigured &&
+            report.runtime.executionVerified;
 
           save();
 
