@@ -43,10 +43,43 @@ assert.ok(candidates(["pc"], 6).includes("hine"), "HINE continua disponível par
 assert.ok(candidates(["neonatal"], 2).includes("hine"), "HINE continua disponível para neonatal");
 assert.ok(candidates(["efeitos"], 120).includes("na-efeitos-antiepilepticos-pais"), "efeitos dos antiepilépticos continua para efeitos");
 
+// Funcionalidade é desfecho transversal: sozinha não traz bateria especializada
+// de epilepsia, mutismo seletivo ou linguagem.
+const isBattery = (prefix: string) => (id: string) => id.startsWith(prefix);
+for (const age of [9, 48, 120]) {
+  const ids = candidates(["funcionalidade"], age);
+  for (const prefix of ["ipn-epi-seg-", "mutismo-seletivo-", "ipn-lfc-"]) {
+    assert.ok(!ids.some(isBattery(prefix)), `funcionalidade aos ${age} m não traz ${prefix}*: ${ids.filter(isBattery(prefix)).join(", ")}`);
+  }
+}
+assert.ok(!candidates(["funcionalidade"], 120).includes("na-qualidade-vida-epilepsia"), "qualidade de vida na epilepsia exige epilepsia");
+// Mutismo seletivo continua para ansiedade, social e linguagem; não para atraso ou aprendizagem.
+assert.ok(candidates(["ansiedade"], 84).some(isBattery("mutismo-seletivo-")), "mutismo seletivo continua para ansiedade");
+assert.ok(candidates(["social"], 84).some(isBattery("mutismo-seletivo-")) || candidates(["linguagem"], 84).some(isBattery("mutismo-seletivo-")),
+  "mutismo seletivo continua acessível por social ou linguagem");
+assert.ok(!candidates(["atraso"], 120).some(isBattery("mutismo-seletivo-")), "atraso sozinho não traz mutismo seletivo");
+assert.ok(!candidates(["aprendizagem"], 96).some(isBattery("mutismo-seletivo-")), "aprendizagem sozinha não traz mutismo seletivo");
+// Linguagem (IPN-LFC) continua para linguagem, atraso e aprendizagem.
+for (const [queixa, age] of [["linguagem", 48], ["atraso", 84], ["aprendizagem", 96]] as const) {
+  assert.ok(candidates([queixa], age).some(isBattery("ipn-lfc-")), `IPN-LFC continua para ${queixa}`);
+}
+// Bateria de PC/funcionalidade continua para funcionalidade (é a queixa central dela).
+assert.ok(candidates(["funcionalidade"], 48).some(isBattery("ipn-pc-fun-")), "IPN-PC/FUN continua para funcionalidade");
+
+// Ouro = maior relevância entre medalhas de mesma cobertura quando não há curadoria.
+{
+  const ctx = { queixas: ["autonomia", "funcionalidade"], ageMonths: 6, ageBand: null, respondente: "professor", selectedSignals: [] };
+  const matches = filterScalesWithClinicalRescue(catalog, ctx as never);
+  const p = selectPodium(matches, null, { selectedQueixas: ctx.queixas, ageMonths: 6, selectedSignals: [], ageBand: null });
+  const medals = [p.ouro, p.prata, p.bronze].filter(Boolean);
+  const best = Math.max(...medals.map((m) => m!.relevanceScore));
+  assert.equal(p.ouro?.relevanceScore, best, `Ouro com a maior relevância do trio: ${medals.map((m) => `${m!.scale.id}:${m!.relevanceScore}`).join(", ")}`);
+}
+
 // Contrato da função pura.
 const epi = catalog.find((s) => s.id === "ipn-epi-seg-anamnese-20")!;
 assert.equal(outsideConditionAnchor(epi, ["sono"]), true);
 assert.equal(outsideConditionAnchor(epi, ["sono", "epilepsia"]), false);
 assert.equal(outsideConditionAnchor(epi, []), false, "sem queixa marcada, a âncora não bloqueia");
 
-console.log("[filter-condition-anchor] OK: epilepsia ancorada; sono, ansiedade, aprendizagem, atraso e depressão sozinhos não trazem instrumento de epilepsia");
+console.log("[filter-condition-anchor] OK: epilepsia, mutismo seletivo e IPN-LFC ancorados; funcionalidade sozinha não traz bateria especializada; Ouro pela relevância");

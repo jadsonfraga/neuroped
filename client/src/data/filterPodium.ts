@@ -831,6 +831,20 @@ export function selectPodiumDetailed(
   ouro = redundancyResolution.trio.ouro;
   prata = redundancyResolution.trio.prata;
   bronze = redundancyResolution.trio.bronze;
+  // Ouro = escala principal. Fora da curadoria clínica, a medalha de maior
+  // relevância que cobre ao menos as mesmas queixas assume o Ouro (o trio não
+  // muda; só a ordem). Evita Ouro 69 com Prata 70 por desempate secundário.
+  if (ouro && !curatedIds.includes(ouro.scale.id)) {
+    const coverageOf = (m: RefinedScaleMatch) => matchedSelectedQueixas(m).length;
+    const challenger = [prata, bronze]
+      .filter((m): m is RefinedScaleMatch => Boolean(m))
+      .filter((m) => m.relevanceScore > ouro!.relevanceScore && coverageOf(m) >= coverageOf(ouro!) && containsAge(m) && isApplicable(m))
+      .sort((a, b) => b.relevanceScore - a.relevanceScore)[0];
+    if (challenger) {
+      if (challenger === prata) [ouro, prata] = [prata, ouro];
+      else [ouro, bronze] = [bronze, ouro];
+    }
+  }
   used.clear();
   for (const medal of [ouro, prata, bronze]) {
     if (medal) used.add(medal.scale.id);

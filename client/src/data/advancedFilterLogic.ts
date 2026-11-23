@@ -573,19 +573,40 @@ export function clinicalHardBlock(
  */
 export const CONDITION_ANCHORED_DOMAINS: Record<string, readonly string[]> = {
   pc: ["pc", "motor", "funcionalidade"],
-  // Instrumentos de epilepsia (bateria IPN-EPI/SEG, NDDI-E) também pontuam sono,
-  // aprendizagem, ansiedade, atraso e depressão NO CONTEXTO da epilepsia. Sozinhas,
-  // essas queixas não trazem instrumento de epilepsia (teste em produção: anamnese
-  // de epilepsia no pódio de sono aos 15 meses). Com epilepsia marcada, as
-  // coberturas secundárias continuam valendo. Funcionalidade acompanha a condição,
-  // como na PC; efeitos de medicação, neonatal e PC mantêm acesso a efeitos de
+  // Instrumentos de epilepsia (bateria IPN-EPI/SEG, NDDI-E, qualidade de vida na
+  // epilepsia) também pontuam sono, aprendizagem, ansiedade, atraso, depressão e
+  // funcionalidade NO CONTEXTO da epilepsia. Sozinhas, essas queixas não trazem
+  // instrumento de epilepsia (teste em produção: anamnese de epilepsia no pódio de
+  // sono aos 15 meses). Com epilepsia marcada, as coberturas secundárias continuam
+  // valendo. Efeitos de medicação, neonatal e PC mantêm acesso a efeitos de
   // antiepilépticos e ao HINE (exame neurológico do lactente).
-  epilepsia: ["epilepsia", "funcionalidade", "efeitos", "neonatal", "pc"],
+  epilepsia: ["epilepsia", "efeitos", "neonatal", "pc"],
 };
 
+/**
+ * Baterias especializadas cuja queixa central é compartilhada por instrumentos
+ * gerais (ansiedade, linguagem): a âncora vale só para os módulos da BATERIA
+ * (prefixo antes de " · "), sem afetar escalas comuns da mesma queixa.
+ * Funcionalidade é desfecho transversal: sozinha não traz bateria especializada.
+ */
+export const BATTERY_ANCHORED_DOMAINS: Record<string, readonly string[]> = {
+  // Mutismo seletivo é ansiedade específica de fala em contexto social.
+  "Mutismo seletivo": ["ansiedade", "social", "linguagem"],
+  // Linguagem também responde a atraso, aprendizagem, fala motora e comunicação social.
+  "IPN-LFC": ["linguagem", "atraso", "aprendizagem", "motor", "social", "tea"],
+};
+
+function batteryAnchor(scale: ScaleEntry): readonly string[] | undefined {
+  const separator = scale.name.indexOf(" · ");
+  return separator > 0 ? BATTERY_ANCHORED_DOMAINS[scale.name.slice(0, separator)] : undefined;
+}
+
 export function outsideConditionAnchor(scale: ScaleEntry, queixas: readonly string[]): boolean {
+  if (queixas.length === 0) return false;
   const anchor = CONDITION_ANCHORED_DOMAINS[scale.queixas[0] ?? ""];
-  return Boolean(anchor) && queixas.length > 0 && !queixas.some((q) => anchor!.includes(q));
+  if (anchor && !queixas.some((q) => anchor.includes(q))) return true;
+  const battery = batteryAnchor(scale);
+  return Boolean(battery) && !queixas.some((q) => battery!.includes(q));
 }
 
 function passesMandatoryFilters(
