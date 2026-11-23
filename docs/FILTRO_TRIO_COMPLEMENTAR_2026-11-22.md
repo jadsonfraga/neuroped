@@ -173,3 +173,37 @@ em sono e ansiedade sem epilepsia, trocados por instrumentos da janela etária (
 compensar exigiria desfazer a curadoria. Em troca, o guarda ganha o invariante
 `anchored_outside_condition = 0`, que trava a regressão clínica real. Os demais pisos e
 invariantes de segurança não mudaram.
+
+## Baterias especializadas ancoradas e Ouro pela relevância (23/11/2026)
+
+Varredura de 630 cenários (31 queixas × 6 idades × 5 respondentes) em busca de baterias
+no pódio sem a queixa central delas:
+
+| Bateria ← queixa sozinha | Cenários | Decisão |
+|---|---:|---|
+| IPN-EPI/SEG ← funcionalidade | 34 | ancorada: exige epilepsia (âncora de condição sem funcionalidade) |
+| IPN-LFC ← funcionalidade | 12 | ancorada: exige linguagem, atraso, aprendizagem, motor, social ou TEA |
+| Mutismo seletivo ← funcionalidade, atraso, aprendizagem | 14 | ancorada: exige ansiedade, social ou linguagem |
+| IPN-LFC ← aprendizagem/atraso; IPN-TDAH/FE ← cognição/comportamento; IPN-TEA ← social; IPN-PC/FUN ← motor/funcionalidade; AH/SD ← altas habilidades | — | mantidas: a queixa faz parte do construto da bateria |
+
+A âncora de bateria (`BATTERY_ANCHORED_DOMAINS`) vale só para os módulos da bateria
+(prefixo antes de " · "), sem afetar escalas comuns de ansiedade ou linguagem.
+Cinco cenários ficaram sem candidata (ex.: autorrelato de funcionalidade aos 2 anos):
+antes recebiam um registro de segurança de epilepsia ou de mutismo; agora a tela mostra
+o diagnóstico de resultado vazio.
+
+**Ouro pela relevância.** Fora da curadoria clínica, a medalha de maior relevância que
+cobre ao menos as mesmas queixas assume o Ouro; o trio não muda, só a ordem (caso
+encontrado: Ouro 69 com Prata 70 por desempate secundário).
+
+**Guarda de métricas (substitui os pisos por grupo de contexto).** A divisão por grupo
+mudava de composição a cada âncora nova. Passa a medir:
+
+| Medida | Piso | Valor |
+|---|---:|---:|
+| Cobertura integral da faixa, motor SEM âncoras, todos os contextos | 89,2 (piso original) | 89,3 |
+| Cobertura integral da faixa, motor COM âncoras (o que o usuário vê) | 88,8 (valor atual) | 88,8 |
+| `anchored_outside_condition` | 0 | 0 |
+
+O piso original de 89,2 volta a valer sobre o motor sem âncoras e reprova qualquer
+regressão alheia às âncoras; a âncora em si é travada pelo invariante.

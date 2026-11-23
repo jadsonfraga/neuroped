@@ -18,6 +18,8 @@ import {
   getImplementationStatus,
   isAcuteRiskContext,
   outsideConditionAnchor,
+  CONDITION_ANCHORED_DOMAINS,
+  BATTERY_ANCHORED_DOMAINS,
   type RefinedScaleMatch,
 } from "../../client/src/data/advancedFilterLogic.ts";
 import { selectCuratedTiers, selectPodium, PODIUM_QUESTION_CAP, estimatedQuestionCount } from "../../client/src/data/filterPodium.ts";
@@ -47,6 +49,19 @@ const catalog = mergeFilterableCatalog(allScales).filter((s) => {
   seen.add(s.id);
   return true;
 });
+
+/** Executa `fn` com as âncoras de condição e de bateria desligadas; restaura sempre. */
+function withAnchorsDisabled<T>(fn: () => T): T {
+  const saved = [{ ...CONDITION_ANCHORED_DOMAINS }, { ...BATTERY_ANCHORED_DOMAINS }] as const;
+  for (const key of Object.keys(CONDITION_ANCHORED_DOMAINS)) delete CONDITION_ANCHORED_DOMAINS[key];
+  for (const key of Object.keys(BATTERY_ANCHORED_DOMAINS)) delete BATTERY_ANCHORED_DOMAINS[key];
+  try {
+    return fn();
+  } finally {
+    Object.assign(CONDITION_ANCHORED_DOMAINS, saved[0]);
+    Object.assign(BATTERY_ANCHORED_DOMAINS, saved[1]);
+  }
+}
 
 const queixaIds = queixas.map((q) => q.id);
 const respondents: Array<string | null> = [null, "pais", "professor", "clinico", "autoaplicavel", "teste_direto_crianca"];
@@ -116,10 +131,8 @@ interface Acc {
   acuteContexts: number;
   acuteBroadbandViolations: number;
   anchoredOutsideCondition: number;
-  unaffectedBandMedals: number;
-  unaffectedBandMedalsFull: number;
-  affectedBandMedals: number;
-  affectedBandMedalsFull: number;
+  noAnchorBandMedals: number;
+  noAnchorBandMedalsFull: number;
   curatedCount: number;
 }
 
@@ -129,8 +142,7 @@ const acc: Acc = {
   bandNoOverlapViolations: 0, bandMedals: 0, bandMedalsFull: 0, bandMedalsPartial: 0,
   respondentViolations: 0, redundantPairs: 0, contextsWithRedundantPair: 0, capViolations: 0,
   complaintsSelected: 0, complaintsCovered: 0, signalContexts: 0, signalContextsCovered: 0,
-  signalContextsWithSafeCandidate: 0, signalContextsCoveredWhenSafeCandidate: 0, acuteContexts: 0, acuteBroadbandViolations: 0, anchoredOutsideCondition: 0, unaffectedBandMedals: 0, unaffectedBandMedalsFull: 0,
-  affectedBandMedals: 0, affectedBandMedalsFull: 0, curatedCount: 0,
+  signalContextsWithSafeCandidate: 0, signalContextsCoveredWhenSafeCandidate: 0, acuteContexts: 0, acuteBroadbandViolations: 0, anchoredOutsideCondition: 0, noAnchorBandMedals: 0, noAnchorBandMedalsFull: 0, curatedCount: 0,
 };
 
 for (const c of contexts) {
@@ -164,11 +176,21 @@ for (const c of contexts) {
     if (matches.some((m) => m.isBroadbandFallback)) acc.acuteBroadbandViolations++;
   }
   let redundantInContext = 0;
-  // Contexto AFETADO por âncora de condição: alguma escala que casaria pela queixa
-  // foi excluída só pela âncora (ex.: bateria de epilepsia para sono). Os demais
-  // contextos têm pódio idêntico ao de antes da âncora e guardam piso próprio.
-  const anchorAffected = c.queixas.length > 0 && catalog.some((s) =>
-    s.queixas.some((q) => c.queixas.includes(q)) && outsideConditionAnchor(s, c.queixas));
+  // Referência estável: o MESMO motor com as âncoras de condição/bateria
+  // desligadas. Mede a cobertura da faixa de tudo que não é âncora, em todos os
+  // contextos, e não muda quando uma âncora nova entra.
+  if (c.band) {
+    const noAnchorMedals = withAnchorsDisabled(() => {
+      const free = filterScalesWithClinicalRescue(catalog, engineCtx as never);
+      const freeCurated = selectCuratedTiers(c.queixas, c.exactAge, new Map(free.map((m) => [m.scale.id, m])), c.respondente as never, c.band);
+      const p = selectPodium(free, freeCurated, { selectedQueixas: c.queixas, ageMonths: c.exactAge, selectedSignals: c.signals, ageBand: c.band });
+      return [p.ouro, p.prata, p.bronze].filter(Boolean) as RefinedScaleMatch[];
+    });
+    for (const m of noAnchorMedals) {
+      acc.noAnchorBandMedals++;
+      if (coversBand(m.scale, c.band)) acc.noAnchorBandMedalsFull++;
+    }
+  }
   for (const m of medals) {
     acc.medals++;
     if (getImplementationStatus(m.scale) !== "complete") acc.medalsNotApplicable++;
@@ -180,13 +202,7 @@ for (const c of contexts) {
       if (!overlapsBand(m.scale, c.band)) acc.bandNoOverlapViolations++;
       if (coversBand(m.scale, c.band)) acc.bandMedalsFull++;
       else acc.bandMedalsPartial++;
-      if (anchorAffected) {
-        acc.affectedBandMedals++;
-        if (coversBand(m.scale, c.band)) acc.affectedBandMedalsFull++;
-      } else {
-        acc.unaffectedBandMedals++;
-        if (coversBand(m.scale, c.band)) acc.unaffectedBandMedalsFull++;
-      }
+
     }
     if (c.respondente && c.respondente !== "teste_direto_crianca" && !m.scale.respondente.includes(c.respondente as never)) {
       acc.respondentViolations++;
@@ -248,8 +264,7 @@ const report = {
   acute_contexts: acc.acuteContexts,
   acute_broadband_violations: acc.acuteBroadbandViolations,
   anchored_outside_condition: acc.anchoredOutsideCondition,
-  band_medals_full_unaffected_pct: pct(acc.unaffectedBandMedalsFull, acc.unaffectedBandMedals),
-  band_medals_full_anchor_affected_pct: pct(acc.affectedBandMedalsFull, acc.affectedBandMedals),
+  band_medals_full_without_anchors_pct: pct(acc.noAnchorBandMedalsFull, acc.noAnchorBandMedals),
   curated_contexts: acc.curatedCount,
 };
 
