@@ -17,6 +17,7 @@ import {
   createSyntheticClinicalApi,
   SYNTHETIC_CREDENTIALS,
 } from "../../scripts/lib/synthetic-clinical-api.mjs";
+import { structuredTableTemplate } from "../../client/src/lib/renderizador/table-editor.mjs";
 
 // Traço sintético de teste (não é a assinatura real).
 const SYNTHETIC_SIGNATURE_PNG = "iVBORw0KGgoAAAANSUhEUgAAAPAAAAAoCAYAAADAOHfQAAABKUlEQVR42u3aQQrCMBBA0QY8gmvP6RE8p2vvoNsiYoumYSbz/kYQdJGZRyO4LJIkSZIkSZIkSVLtzpfrc/0qZe9UCe6n9x73W7MGylqrhHYrmBVxj7/tZQMXZMXe3RKA98B9P4hfPiONftBMC7gXQJAV+VY4HeAjwcGsqFhTA957ML1wgaxoWFMCjgAJZlD//Y6j9qOBC7JyYA0POBMQmGGNMGMYQIY1AdSQgGdbfphhnR5whSUHGdbpAFddaphhTQ3YAjsHWJMBtqzOB9aEgC2m84I1GeDRf3GEGVZ1AOxpC3IvqHZlIGBwa2OGNSFgaGtChjU5YHDrYPZ7tRhgA8sLGdZCV+j1sA0uL2ZYCwM2xBqQzXlCwJoTM6xS8eu1JEmSJEmSJG32AioYHtEweQA9AAAAAElFTkSuQmCC";
@@ -62,6 +63,8 @@ try {
   await page.locator('[data-testid="login-form"] button[type="submit"]').click();
   await page.getByRole("heading", { name: "Renderizador" }).waitFor({ timeout: 20000 });
   await page.getByRole("button", { name: "Colar ou editar texto" }).click();
+  // O painel da assinatura aparece desde o início, avisando que não há assinatura neste navegador.
+  await page.getByTestId("signature-panel").getByText("Sem assinatura manuscrita neste navegador").waitFor();
 
   // Texto colado sem nenhum "#": deve gerar a prévia com estrutura automática.
   const plainEditor = page.getByLabel("Markdown do laudo");
@@ -80,19 +83,19 @@ try {
   assert.equal(await page.locator(".structure-titles li").first().textContent(), "DOCUMENTO DEMONSTRATIVO",
     "a tela mostra as linhas que viraram título");
 
-  // Prescrição em prosa é bloqueada; o quadro de terapias preenchido libera o PDF.
+  // Quadro de terapias do texto padrão (#1385/#1386): prescrição em texto livre não é bloqueada
+  // e o quadro é enquadrado automaticamente em tabela, sem alterar nenhuma palavra.
   const prescriptionEditor = page.getByLabel("Markdown do laudo");
-  await prescriptionEditor.fill("# Documento demonstrativo\n\n## Terapias indicadas\n\nTexto sintético de prescrição em prosa.");
-  await page.getByRole("button", { name: "Gerar prévia PDF" }).click();
-  await page.getByRole("alert").filter({ hasText: "A prescrição precisa estar em tabela" }).waitFor();
-  assert.equal(await page.locator('iframe[title="Prévia integral do PDF"]').count(), 0, "prescrição sem tabela não chega ao PDF");
-  await page.getByRole("button", { name: "Inserir quadro de terapias" }).click();
-  await page.getByRole("button", { name: "Gerar prévia PDF" }).click();
-  await page.getByRole("alert").filter({ hasText: "Complete manualmente" }).waitFor();
-  await prescriptionEditor.fill((await prescriptionEditor.inputValue()).replaceAll("[preencher]", "Exemplo sintético"));
+  await prescriptionEditor.fill([
+    "QUADRO DE TERAPIAS",
+    "Terapia  Carga  Responsável  Objetivo",
+    "Fonoaudiologia  2 h/semana  Fonoaudióloga  Exemplo sintético",
+    "Psicoterapia  1 h/semana  Psicóloga  Exemplo sintético",
+  ].join("\n"));
   await page.getByRole("button", { name: "Gerar prévia PDF" }).click();
   await page.locator('iframe[title="Prévia integral do PDF"]').waitFor({ timeout: 20000 });
-  assert.equal(await page.getByRole("alert").count(), 0, "quadro preenchido libera a geração");
+  await page.getByRole("status").filter({ hasText: "1 tabela(s) convertida(s)" }).waitFor();
+  assert.equal(await page.getByRole("alert").count(), 0, "quadro de terapias do texto padrão não pode ser bloqueado");
 
   const markdown = [
     "# Documento demonstrativo",
@@ -107,7 +110,8 @@ try {
   await editor.fill(markdown);
   await page.locator('input[placeholder="Nome completo"]').fill("Paciente Demonstrativo");
 
-  await page.getByRole("button", { name: "Inserir estrutura de tabela" }).click();
+  // Modelo de tabela com células de exemplo (digitado à mão) continua bloqueando a geração.
+  await editor.fill(markdown + "\n\n" + structuredTableTemplate());
   await page.getByRole("button", { name: "Gerar prévia PDF" }).click();
   await page.getByRole("alert").filter({ hasText: "Complete manualmente" }).waitFor();
   assert.equal(await page.locator('iframe[title="Prévia integral do PDF"]').count(), 0,
@@ -124,6 +128,13 @@ try {
   assert.ok(draft.name.includes("RASCUNHO_NAO_LIBERADO"));
   assert.equal(draft.bytes.subarray(0, 5).toString(), "%PDF-");
   assert.ok(pdfPages(draft.bytes) >= 2, "rascunho precisa conter capa e página de conteúdo");
+
+  // Sem assinatura cadastrada, autorizar a versão definitiva pede confirmação; recusar não libera.
+  const dialogs = [];
+  page.once("dialog", async (dialog) => { dialogs.push(dialog.message()); await dialog.dismiss(); });
+  await page.getByRole("checkbox", { name: /Autorizo esta versão/ }).check({ force: true }).catch(() => {});
+  assert.match(dialogs[0] || "", /Nenhuma assinatura manuscrita/, "autorizar sem assinatura pede confirmação");
+  assert.equal(await page.getByText("Versão definitiva liberada").count(), 0, "recusar a confirmação não libera a versão definitiva");
 
   // Assinatura manuscrita sintética (traço de teste), cadastrada só neste navegador.
   await page.locator('input[type="file"][accept="image/png"]').setInputFiles({

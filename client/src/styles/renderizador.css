@@ -813,6 +813,15 @@
 .pant-studio-root .signature-box span {
   flex: 1 1 260px;
 }
+.pant-studio-root .signature-box.missing {
+  padding: 8px 10px;
+  border-left: 3px solid var(--np-color-danger);
+  background: var(--np-color-danger-bg);
+}
+.pant-studio-root .signature-box .signature-note {
+  display: block;
+  margin-top: 4px;
+}
 .pant-studio-root .signature-box img {
   display: block;
   max-width: 220px;

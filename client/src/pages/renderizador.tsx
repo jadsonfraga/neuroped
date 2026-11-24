@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { createPdfBlob, sample } from "@/lib/renderizador/document.mjs";
 import { clearStoredSignature, readStoredSignature, storeSignature } from "@/lib/renderizador/signature-store";
+import { prepareSignaturePng } from "@/lib/renderizador/signature-image.mjs";
 import { hasUnfilledTableTemplate } from "@/lib/renderizador/table-editor.mjs";
 import { structurePastedText, type StructuredText } from "@/lib/renderizador/auto-structure.mjs";
 export default function RenderizadorPage() {
@@ -39,30 +40,32 @@ export default function RenderizadorPage() {
   // nem no servidor) e aplicada apenas na versão definitiva, após o aceite.
   const [signature, setSignature] = useState(readStoredSignature);
   const signatureInput = useRef<HTMLInputElement>(null);
+  const [signatureNote, setSignatureNote] = useState("");
   async function loadSignature(f?: File) {
     if (!f) return;
-    if (f.type !== "image/png") {
-      setError("A assinatura deve ser um arquivo PNG, de preferência com fundo transparente.");
+    let prepared;
+    try {
+      // Recorta as margens transparentes e reduz PNG grande; a imagem não sai do navegador.
+      prepared = await prepareSignaturePng(f);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Não foi possível preparar a imagem da assinatura.");
       return;
     }
-    if (f.size > 400000) {
-      setError("A imagem da assinatura deve ter até 400 KB.");
-      return;
-    }
-    const dataUrl = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result));
-      reader.onerror = () => reject(reader.error);
-      reader.readAsDataURL(f);
-    });
     // O rascunho nunca leva assinatura: só uma versão definitiva já gerada fica desatualizada.
     if (approved) invalidate();
-    setSignature(dataUrl);
-    if (!storeSignature(dataUrl)) setError("A assinatura vale só nesta sessão: o navegador não permitiu guardá-la.");
+    setError("");
+    setSignature(prepared.dataUrl);
+    setSignatureNote(
+      prepared.opaque
+        ? "A imagem não tem fundo transparente: o fundo dela aparecerá sobre o papel. Prefira um PNG com fundo transparente."
+        : "",
+    );
+    if (!storeSignature(prepared.dataUrl)) setError("A assinatura vale só nesta sessão: o navegador não permitiu guardá-la.");
   }
   function removeSignature() {
     if (approved) invalidate();
     setSignature("");
+    setSignatureNote("");
     clearStoredSignature();
   }
   useEffect(() => {
@@ -436,6 +439,40 @@ export default function RenderizadorPage() {
                   />
                 </label>
               </div>
+              <div className={"signature-box" + (signature ? "" : " missing")} data-testid="signature-panel">
+                <span role="status">
+                  {signature ? (
+                    <>
+                      <img src={signature} alt="Assinatura manuscrita cadastrada neste aparelho" />
+                      Assinatura manuscrita cadastrada neste navegador. Entra no fecho, em tamanho 1,5×, só na versão definitiva, depois do seu aceite.
+                    </>
+                  ) : (
+                    <>
+                      <strong>Sem assinatura manuscrita neste navegador.</strong> A versão definitiva sairá só com a linha para assinar à caneta.
+                      Cadastre o PNG da sua assinatura: ela fica guardada apenas neste navegador e neste endereço do site, então é preciso cadastrar em cada aparelho ou navegador que usar.
+                    </>
+                  )}
+                  {signatureNote && <em className="signature-note"> {signatureNote}</em>}
+                </span>
+                <input
+                  ref={signatureInput}
+                  type="file"
+                  accept="image/png"
+                  hidden
+                  onChange={(e) => {
+                    void loadSignature(e.target.files?.[0]);
+                    e.target.value = "";
+                  }}
+                />
+                <button type="button" className="text-button" disabled={busy} onClick={() => signatureInput.current?.click()}>
+                  {signature ? "Trocar assinatura (PNG)" : "Cadastrar assinatura (PNG)"}
+                </button>
+                {signature && (
+                  <button type="button" className="text-button" disabled={busy} onClick={removeSignature}>
+                    Remover assinatura
+                  </button>
+                )}
+              </div>
               <div className="render-row">
                 <span>
                   <ShieldCheck size={14} /> Processamento local
@@ -538,36 +575,6 @@ export default function RenderizadorPage() {
                   {!approved && (
                     <button className="text-button" disabled={busy} onClick={downloadDraft}>Baixar PDF de rascunho — não liberado</button>
                   )}
-                  <div className="signature-box">
-                    <span>
-                      {signature ? (
-                        <>
-                          <img src={signature} alt="Assinatura manuscrita cadastrada neste aparelho" />
-                          Assinatura manuscrita cadastrada neste aparelho. Ela entra só na versão definitiva, depois do seu aceite.
-                        </>
-                      ) : (
-                        "Sem assinatura cadastrada: a versão definitiva sai com a linha para assinar à caneta."
-                      )}
-                    </span>
-                    <input
-                      ref={signatureInput}
-                      type="file"
-                      accept="image/png"
-                      hidden
-                      onChange={(e) => {
-                        void loadSignature(e.target.files?.[0]);
-                        e.target.value = "";
-                      }}
-                    />
-                    <button type="button" className="text-button" disabled={busy} onClick={() => signatureInput.current?.click()}>
-                      {signature ? "Trocar assinatura (PNG)" : "Cadastrar assinatura (PNG)"}
-                    </button>
-                    {signature && (
-                      <button type="button" className="text-button" disabled={busy} onClick={removeSignature}>
-                        Remover assinatura
-                      </button>
-                    )}
-                  </div>
                   <p className="clinical-review-note">O renderizador não valida nem altera a prescrição. Confira a dose por administração, os horários e cada mudança temporal. Ao confirmar abaixo, será gerada uma nova versão definitiva, identificada como revisada.</p>
                   <label className="approval">
                     <input
@@ -576,6 +583,8 @@ export default function RenderizadorPage() {
                       disabled={busy}
                       onChange={(e) => {
                         if (e.target.checked) {
+                          // Uma versão definitiva sem assinatura cadastrada só sai com ciência expressa.
+                          if (!signature && !window.confirm("Nenhuma assinatura manuscrita está cadastrada neste navegador. A versão definitiva sairá só com a linha para assinar à caneta. Gerar assim mesmo?")) return;
                           // Checkbox expresses the clinician's intent, not a completed release.
                           // Only render(true) may approve after the PDF/hash pair is complete.
                           setReviewPending(true);
