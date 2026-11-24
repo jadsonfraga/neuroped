@@ -538,6 +538,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       isAuthenticated,
       isLoading,
       userRole: user?.role,
+      userIsAppOwner: user?.isAppOwner,
       localPinConfigured: accessMode === "local" && hasConfiguredMasterPin(),
       localPinUnlocked: accessMode === "local" && isMasterPinUnlocked(),
     });
