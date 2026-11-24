@@ -815,8 +815,8 @@
 }
 .pant-studio-root .signature-box.missing {
   padding: 8px 10px;
-  border-left: 3px solid #b0473a;
-  background: rgba(176, 71, 58, 0.08);
+  border-left: 3px solid var(--np-color-danger);
+  background: var(--np-color-danger-bg);
 }
 .pant-studio-root .signature-box .signature-note {
   display: block;
