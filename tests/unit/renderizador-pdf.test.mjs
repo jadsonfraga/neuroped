@@ -226,3 +226,47 @@ console.log("Justificação preserva números e palavras com formatação intern
   assert.ok(signed.texts.some((t) => t.text === "I") && signed.texts.some((t) => t.text === "II"), "numeral romano nas seções");
   console.log("Fecho PANT com assinatura só na definitiva, negrito salmão e títulos grandes: OK");
 }
+
+// Todo negrito em salmão, inclusive dentro de tabelas, listas e citações; o
+// cabeçalho da tabela (negrito estrutural) e os títulos ficam na tinta/navy.
+{
+  const texts = [];
+  function Pdf(...args) {
+    const pdf = new jsPDF(...args);
+    const text = pdf.text.bind(pdf);
+    pdf.text = (t, x, y, o) => {
+      texts.push({ text: Array.isArray(t) ? t.join(" ") : t, color: pdf.getTextColor(), style: pdf.getFont().fontStyle });
+      return text(t, x, y, o);
+    };
+    return pdf;
+  }
+  const md = [
+    "## Seção",
+    "",
+    "Parágrafo com **alfa** destacado.",
+    "",
+    "- Item com **beta** destacado",
+    "",
+    "> Citação com **gama** destacada",
+    "",
+    "| Terapia | Objetivo |",
+    "| --- | --- |",
+    "| Fonoaudiologia | Ampliar **delta** funcional e manter o restante comum |",
+  ].join("\n");
+  createPantPdf(Pdf, md, meta, assets);
+  const isSalmon = (hex) => [176, 71, 58].every((c, i) => Math.abs(parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16) - c) <= 2);
+  for (const word of ["alfa", "beta", "gama", "delta"]) {
+    const hit = texts.find((t) => t.text === word);
+    assert.ok(hit, `${word} desenhado`);
+    assert.ok(isSalmon(hit.color) && hit.style === "bold", `${word} em negrito salmão (${hit.color})`);
+  }
+  for (const word of ["Terapia", "Objetivo"]) {
+    const hit = texts.find((t) => t.text === word);
+    assert.ok(hit && hit.style === "bold" && !isSalmon(hit.color), `cabeçalho ${word} em negrito na tinta do corpo`);
+  }
+  assert.ok(!isSalmon(texts.find((t) => t.text === "Seção").color), "título de seção segue navy");
+  assert.ok(!isSalmon(texts.find((t) => t.text === "Fonoaudiologia").color), "célula comum segue na tinta");
+  const cellWords = texts.map((t) => t.text).join(" ");
+  assert.ok(cellWords.includes("Ampliar delta funcional e manter o restante comum"), "célula preserva todas as palavras na ordem");
+  console.log("Todo negrito em salmão (parágrafo, lista, citação e tabela), cabeçalhos e títulos preservados: OK");
+}

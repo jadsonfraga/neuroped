@@ -131,6 +131,9 @@ function withFont(doc, run = {}, size = 12.5) {
   doc.setFont(run.mono ? "courier" : "Cormorant", run.mono ? "normal" : fontStyle(run));
   doc.setFontSize(size);
   if (run.link) doc.setTextColor(...COLORS.gold);
+  // Todo negrito do texto (parágrafos, listas, citações e células) sai em salmão;
+  // só o negrito estrutural do cabeçalho da tabela fica na tinta do corpo.
+  else if (run.plain) doc.setTextColor(...COLORS.ink);
   else if (run.bold && !run.mono) doc.setTextColor(...COLORS.salmon);
   else if (run.quote) doc.setTextColor(105, 86, 49);
   else doc.setTextColor(...COLORS.ink);
@@ -440,11 +443,10 @@ function renderPantPdf(jsPDF, md, meta, assets, tail) {
     const lineHeight = 13;
     const topPadding = 16;
     const rowHeight = (count) => Math.max(25, count * lineHeight + 12);
-    const wrapCells = (cells, header) => cells.map((cell) => {
-      doc.setFont("Cormorant", header ? "bold" : "normal");
-      doc.setFontSize(10.5);
-      return doc.splitTextToSize(flattenText(cell), colWidth - 13);
-    });
+    // Células com o mesmo motor de linhas do corpo: o negrito interno (**…**)
+    // é preservado e pintado em salmão, sem justificar.
+    const wrapCells = (cells, header) => cells.map((cell) =>
+      layoutRuns(doc, header ? cell.map((run) => ({ ...run, bold: true, plain: true })) : cell, colWidth - 13, 10.5));
     const paintSegment = (wraps, header, offset, count) => {
       const height = rowHeight(count);
       if (y + height > bottom) throw Error("Uma linha da tabela excedeu o limite da página.");
@@ -457,14 +459,17 @@ function renderPantPdf(jsPDF, md, meta, assets, tail) {
       doc.rect(left, y, maxWidth, height);
       for (let i = 1; i < cols; i++) doc.line(left + i * colWidth, y, left + i * colWidth, y + height);
       wraps.forEach((lines, i) => {
-        doc.setFont("Cormorant", header ? "bold" : "normal");
-        doc.setFontSize(10.5);
-        doc.setTextColor(...COLORS.ink);
-        const segment = lines.slice(offset, offset + count);
-        if (segment.length) doc.text(segment, left + i * colWidth + 7, y + topPadding, {
-          maxWidth: colWidth - 13,
+        lines.slice(offset, offset + count).forEach((line, k) => {
+          let x = left + i * colWidth + 7;
+          line.words.forEach((word) => {
+            x += word.gap;
+            withFont(doc, word.run, 10.5);
+            doc.text(word.text, x, y + topPadding + k * lineHeight);
+            x += word.width;
+          });
         });
       });
+      doc.setTextColor(...COLORS.ink);
       y += height;
       ink(y);
     };
