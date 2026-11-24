@@ -113,7 +113,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       const visitor = fingerprint ? await ensureVisitorAccount(env.DB, fingerprint) : null;
       if (!visitor) return json(INVALID, 401);
       const tokens = await createSessionTokens(env.DB, visitor, secret);
-      return json({ ...tokens, user: publicUser(visitor) }, 200);
+      return json({ ...tokens, user: publicUser(visitor, env) }, 200);
     } catch (error) {
       console.error("[auth/login] visitante: sessão indisponível:", error);
       return json(
@@ -189,7 +189,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const tokens = await createSessionTokens(env.DB, user, secret, {
       requireNoClinicMembership: isReservedE2EIdentity,
     });
-    return json({ ...tokens, user: publicUser(user) }, 200);
+    return json({ ...tokens, user: publicUser(user, env) }, 200);
   } catch (error) {
     console.error("[auth/login] não foi possível criar sessão revogável:", error);
     return json(
