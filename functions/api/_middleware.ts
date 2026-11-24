@@ -291,6 +291,11 @@ async function authorizeClinicalApi(request: Request, env: Env): Promise<Authori
   if (tenantAuthorization.handled) {
     return { failure: tenantAuthorization.failure, user };
   }
+  // A busca nominal usa POST só para manter nomes fora de URLs. A função
+  // verifica clinical.read, membership e entitlement como o GET de pacientes.
+  if (path === "/api/live/patients/search" && request.method === "POST") {
+    return { failure: null, user };
+  }
   const liveAuthorization = await liveClinicalWriteAuthorization(env.DB, request, user);
   if (liveAuthorization.handled) {
     return { failure: liveAuthorization.failure, user };

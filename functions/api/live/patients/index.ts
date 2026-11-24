@@ -80,7 +80,30 @@ function requireLiveConfiguration(env: TenantEnv): Response | null {
   return null;
 }
 
-export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
+const PAGE_SIZE = 50;
+const SEARCH_SCAN_SIZE = 150;
+type PatientCursor = [createdAt: string, id: string];
+
+function decodeCursor(raw: unknown): PatientCursor | null {
+  if (typeof raw !== "string" || raw.length > 1024) return null;
+  try {
+    const value: unknown = JSON.parse(decodeURIComponent(raw));
+    if (!Array.isArray(value) || value.length !== 2) return null;
+    const [createdAt, id] = value;
+    if (
+      typeof createdAt !== "string" || !/^\d{4}-\d{2}-\d{2}[ T][0-9:.+Z-]{8,35}$/.test(createdAt) ||
+      typeof id !== "string" || !id || id.length > 128
+    ) return null;
+    return [createdAt, id];
+  } catch {
+    return null;
+  }
+}
+
+export async function listLivePatients(
+  context: EventContext<TenantEnv, string, Record<string, unknown>>,
+  input: { clinicId?: unknown; q?: unknown; cursor?: unknown },
+): Promise<Response> {
   const db = context.env.DB;
   const user = getContextUser(context);
   if (!db) return tenantError("Banco LIVE não configurado.", "SAAS_DB_NOT_CONFIGURED", 503);
@@ -88,60 +111,71 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
   const configError = requireLiveConfiguration(context.env);
   if (configError) return configError;
 
-  const url = new URL(context.request.url);
-  const clinicId = cleanText(url.searchParams.get("clinicId"), 80);
-  const searchQuery = cleanText(url.searchParams.get("q"), 80).toLocaleLowerCase("pt-BR");
+  const clinicId = cleanText(input.clinicId, 80);
+  const searchQuery = cleanText(input.q, 80).toLocaleLowerCase("pt-BR");
   if (!clinicId) return tenantError("clinicId é obrigatório.", "VALIDATION_ERROR", 400);
-
   const membership = await getClinicMembership(db, clinicId, user);
   if (!membership || !membershipCanReadClinical(membership)) {
     return tenantError("Acesso clínico negado para esta clínica.", "TENANT_FORBIDDEN", 403);
   }
   const billingReadError = await requireBillingEntitlement(db, user.id, clinicId, "clinical");
   if (billingReadError) return billingReadError;
+  const cursor = input.cursor == null ? null : decodeCursor(input.cursor);
+  if (input.cursor != null && !cursor) {
+    return tenantError("Página inválida. Reinicie a busca.", "VALIDATION_ERROR", 400);
+  }
 
-  const rows = await db
+  const limit = searchQuery ? SEARCH_SCAN_SIZE : PAGE_SIZE;
+  const rows = (await db
     .prepare(
       `SELECT id, clinic_id, primary_professional_user_id, profile_encrypted,
               encryption_version, status, created_at, updated_at
          FROM live_patients
         WHERE clinic_id = ? AND status != 'merged'
-        ORDER BY created_at DESC
-        LIMIT 100`,
+          ${cursor ? "AND (created_at, id) < (?, ?)" : ""}
+        ORDER BY created_at DESC, id DESC
+        LIMIT ?`,
     )
-    .bind(clinicId)
-    .all<LivePatientRow>();
+    .bind(clinicId, ...(cursor ?? []), limit + 1)
+    .all<LivePatientRow>()).results ?? [];
 
   try {
-    const decrypted = await Promise.all(
-      (rows.results ?? []).map(async (row) => ({
+    const data = [];
+    let consumed = 0;
+    // Busca no servidor: só as fichas correspondentes são devolvidas. O cursor
+    // avança até o último registro examinado, não só até a última ocorrência.
+    for (const row of rows.slice(0, limit)) {
+      const profile = await decryptClinicalJson<PatientProfile>(
+        context.env, clinicId, `patient-profile:${row.id}`, row.profile_encrypted,
+      );
+      consumed++;
+      if (searchQuery && !profile.name.toLocaleLowerCase("pt-BR").includes(searchQuery)) continue;
+      data.push({
         id: row.id,
         clinicId: row.clinic_id,
         primaryProfessionalUserId: row.primary_professional_user_id,
-        profile: await decryptClinicalJson<PatientProfile>(
-          context.env,
-          clinicId,
-          `patient-profile:${row.id}`,
-          row.profile_encrypted,
-        ),
+        profile,
         encryptionVersion: row.encryption_version,
         status: row.status,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
-      })),
-    );
-    // O perfil está cifrado em repouso, portanto a busca nominal precisa ocorrer
-    // após a descriptografia no Worker. O navegador recebe somente os matches.
-    const data = decrypted
-      .filter((patient) =>
-        !searchQuery || patient.profile.name.toLocaleLowerCase("pt-BR").includes(searchQuery),
-      )
-      .slice(0, 50);
-    return tenantJson({ data, total: data.length, filtered: Boolean(searchQuery) });
+      });
+      if (data.length === PAGE_SIZE) break;
+    }
+    const last = rows[consumed - 1];
+    const nextCursor = last && consumed < rows.length
+      ? encodeURIComponent(JSON.stringify([last.created_at, last.id]))
+      : null;
+    return tenantJson({ data, total: data.length, filtered: Boolean(searchQuery), nextCursor });
   } catch (error) {
     console.error("[live.patients.GET] decrypt failure", error);
     return tenantError("Dados clínicos indisponíveis.", "CLINICAL_DECRYPT_FAILED", 500);
   }
+}
+
+export const onRequestGet: PagesFunction<TenantEnv> = (context) => {
+  const params = new URL(context.request.url).searchParams;
+  return listLivePatients(context, { clinicId: params.get("clinicId"), q: params.get("q"), cursor: params.get("cursor") });
 };
 
 export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
