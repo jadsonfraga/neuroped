@@ -454,7 +454,7 @@ export default function ReceitaC1ExpressPage() {
   const { user } = useAuth();
   const vaultAllowed = canUseCertificateVault(user);
   const remoteCertificateVault = isAccountWorkspaceRemoteMode();
-  const [rememberCert, setRememberCert] = useState(true);
+  const [rememberCert, setRememberCert] = useState(false);
   const [storedCert, setStoredCert] = useState<{ fileName: string; savedAt: string } | null>(null);
   const [accountCertificate, setAccountCertificate] = useState<AccountCertificateEnvelope | null>(null);
 
@@ -1045,7 +1045,7 @@ export default function ReceitaC1ExpressPage() {
 
         <p className="mt-3 text-xs text-muted-foreground leading-relaxed">
           A senha nunca é armazenada; a chave privada só é aberta na memória desta aba no momento da assinatura.
-          O .pfx do administrador, quando memorizado, fica cifrado (AES-GCM, chave não exportável) somente neste dispositivo.
+          Quando memorizado, o PFX cifrado fica no cofre da conta ou do dispositivo, conforme o modo de execução.
           Assinatura no padrão PAdES-BES com certificado A1 ICP-Brasil. Validade da receita: <strong>30 dias</strong>.
         </p>
       </section>
