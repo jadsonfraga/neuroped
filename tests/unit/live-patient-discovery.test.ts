@@ -83,6 +83,10 @@ test("busca privada usa o corpo e preserva as barreiras de clínica e papel", as
     assert.deepEqual(final.data.map(row => row.id), ["fake-000"]);
     assert.equal((await search("owner-b", ALFA, "mais antigo", first.nextCursor)).status, 403);
     assert.equal((await search("sec-a", ALFA, "mais antigo")).status, 403);
+    f.raw.prepare("UPDATE users SET must_change_password = 1 WHERE id = ?").run("prof-a");
+    const rotationRequired = await search("prof-a", ALFA, "mais antigo");
+    assert.equal(rotationRequired.status, 403);
+    assert.equal((await rotationRequired.json() as { code: string }).code, "PASSWORD_CHANGE_REQUIRED");
   } finally { f.raw.close(); }
 });
 
