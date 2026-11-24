@@ -63,3 +63,13 @@ assert.equal(structurePastedText(medResult.markdown).markdown, medResult.markdow
 const ambiguous = "# Prescrição de medicamentos\n\nConsiderar ajuste após revisão.";
 assert.equal(structurePastedText(ambiguous).tables, 0);
 assert.equal(structurePastedText("Histórico\nMedicamento A 10 mg em uso").tables, 0);
+
+// Linha de registro profissional ao fim do texto não vira seção numerada.
+{
+  const tail = "Considerando a idade, recomenda-se avaliação em sessões curtas, com pausas programadas.\n\nDr. Nome Sintético\nNeuropediatra\nCRM-PE 00.000 | RQE 00.000\nSoli Deo Gloria";
+  const r = structurePastedText(tail);
+  assert.equal(r.headings, 0, "CRM/RQE não é título");
+  assert.ok(!r.titles.some((t) => /CRM-PE/.test(t)));
+  assert.deepEqual(wordsOf(r.markdown), wordsOf(tail));
+  console.log("Linha de registro CRM/RQE permanece texto, sem criar seção: OK");
+}

@@ -20,9 +20,12 @@ function hasLetters(line) {
   return /\p{L}/u.test(line);
 }
 
+// Registro profissional ("CRM-PE 25.227 | RQE 17.756") é linha de identificação, nunca título de seção.
+const REGISTRY_LINE = /\b(?:CRM|RQE|CRP|CRFa|CREFITO|COREN)\b[\s-]*(?:[A-Z]{2}\b)?\s*\d/i;
+
 function isUpperTitle(line) {
   const letters = line.replace(NUMBER_PREFIX, "").match(/\p{L}/gu) || [];
-  return letters.length >= 3 && !/\p{Ll}/u.test(line) && words(line) <= 12 && line.length <= 100 && !/[.;,]$/.test(line);
+  return letters.length >= 3 && !/\p{Ll}/u.test(line) && words(line) <= 12 && line.length <= 100 && !/[.;,]$/.test(line) && !REGISTRY_LINE.test(line);
 }
 
 function isLabel(line) {

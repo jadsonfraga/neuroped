@@ -18,9 +18,20 @@ export function storeSignature(dataUrl: string): boolean {
   if (!PNG_DATA_URL.test(dataUrl)) return false;
   try {
     localStorage.setItem(SIGNATURE_KEY, dataUrl);
+    requestPersistentStorage();
     return true;
   } catch {
     return false;
+  }
+}
+
+// Pede ao navegador que não apague a assinatura por falta de uso (Safari/iOS e Chrome
+// podem descartar dados de sites pouco usados). O navegador pode negar; nada depende disso.
+function requestPersistentStorage(): void {
+  try {
+    void navigator.storage?.persist?.()?.catch(() => undefined);
+  } catch {
+    /* sem suporte */
   }
 }
 
