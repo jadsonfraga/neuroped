@@ -81,6 +81,30 @@ function readTable(lines, start) {
   return { end: i, markdown: tableToMarkdown(rows), converted: true };
 }
 
+// Detect clinical blocks conservatively; retain entire prescriptions when column boundaries are ambiguous.
+function readClinicalTable(lines, start) {
+  const header = lines[start].trim();
+  if (/[|\t\\]/.test(header)) return null;
+  const title = header.replace(/^#{1,6}\s+/, "").replace(/:$/, "").trim();
+  const therapy = /^(?:prescrição de |carga horária de |plano de )?terapias$|^(?:terapia|intervenção|especialidade)\s+(?:carga horária|carga|frequência(?: e duração)?)(?:\s+objetivo(?: principal)?)?$/i.test(title);
+  const drug = /^(?:prescrição de )?(?:medicações|medicamentos|fármacos)$|^tratamento medicamentoso$|^(?:medicamento|fármaco|medicação)(?: e concentração)?\s+(?:dose|posologia|concentração)(?:\s+(?:por tomada|horários?|frequência|via|duração|posologia|dose|ajustes))*$/i.test(title);
+  if (!therapy && !drug) return null;
+  const rows = [];
+  let i = start + 1;
+  if (!lines[i]?.trim()) i++;
+  const unit = therapy
+    ? /\b\d+(?:[.,]\d+)?\s*(?:h(?:oras?)?|min(?:utos?)?|sess(?:ão|ões)|vezes)\s*(?:\/|por|ao|a cada|semanais?|diári[ao]s?)/iu
+    : /\b\d+(?:[.,]\d+)?\s*(?:mg|mcg|µg|g|mL|gotas?|comprimidos?|cápsulas?|UI)\b/iu;
+  for (; i < lines.length; i++) {
+    const row = lines[i].trim();
+    if (!row || /^#|^.{1,70}:$/.test(row) || /[|\\]/.test(row) || !unit.test(row)) break;
+    rows.push([row]);
+  }
+  if (!rows.length) return null;
+  // Keep the original heading and all characters of each prescription.
+  return { end: i, markdown: tableToMarkdown([[header.replace(/^#{1,6}\s+/, "")], ...rows]), converted: true };
+}
+
 /**
  * @param {string} input text pasted or loaded by the clinician
  * @returns {{markdown:string, mode:"markdown"|"plain", headings:number, tables:number, lists:number, titles:string[], changed:boolean}}
@@ -113,7 +137,7 @@ export function structurePastedText(input) {
       blocks.push({ type: "blank" });
       continue;
     }
-    const table = readTable(lines, i);
+    const table = readTable(lines, i) || readClinicalTable(lines, i);
     if (table) {
       blocks.push({ type: "table", text: table.markdown });
       if (table.converted) tables++;
@@ -147,7 +171,7 @@ export function structurePastedText(input) {
       headings++;
       continue;
     }
-    if (isShortTitle(line) && prevClosed && following && isLongText(following) && !readTable(lines, i + 1)) {
+    if (isShortTitle(line) && prevClosed && following && isLongText(following) && !readTable(lines, i + 1) && !readClinicalTable(lines, i + 1)) {
       blocks.push({ type: "heading", text: "## " + line });
       headings++;
       continue;
