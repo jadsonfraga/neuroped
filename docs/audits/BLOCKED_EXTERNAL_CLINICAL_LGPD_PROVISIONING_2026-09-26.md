@@ -107,13 +107,18 @@ consultar R2. Há dois caminhos válidos, mas eles não são equivalentes:
    `neuroped-lgpd-exports` apenas no 404, injeta o binding
    `LGPD_EXPORT_BUCKET` somente se o recurso existir, faz o deploy e verifica
    nos metadados do Pages tanto o R2 quanto o D1 `DB`;
-2. **caminho manual:** criar o bucket privado `neuroped-lgpd-exports` e
-   configurar explicitamente no Cloudflare Pages de produção o binding
-   `LGPD_EXPORT_BUCKET -> neuroped-lgpd-exports`.
+2. **caminho com privilégio mínimo para CI:** um administrador autorizado
+   confirma ou cria uma vez o bucket **privado** `neuroped-lgpd-exports`, sem
+   domínio público, e configura explicitamente no projeto Pages `neuroped`,
+   ambiente de produção, `LGPD_EXPORT_BUCKET -> neuroped-lgpd-exports`.
+   Se o token de deploy não puder consultar R2 (401/403), a catraca consulta
+   somente os metadados oficiais do Pages e preserva o vínculo exato já
+   configurado. Não precisa ampliar o token de CI com escrita no R2.
 
 Criar **somente** o bucket pelo painel, mantendo o token com HTTP 403, não
-desbloqueia o pipeline atual: a etapa de deploy não consegue comprovar o
-recurso, mantém `available=0` e não injeta o binding.
+desbloqueia o pipeline atual: é obrigatório configurar também o vínculo no
+Pages. A catraca recusa metadados indisponíveis ou divergentes. Nunca se
+escreve em storage alternativo nem se expõe o bucket.
 
 Risco de não executar: `LGPD_EXPORT_NOT_CONFIGURED` permanece; exportações
 LGPD não têm armazenamento privado verificável e o worker continua
@@ -122,6 +127,10 @@ fail-closed.
 Verificação de conclusão: deploy precisa registrar o binding
 `LGPD_EXPORT_BUCKET -> neuroped-lgpd-exports`; `/api/health` deve mostrar
 `lgpdExport.storageBindingPresent=true` e `lgpdExport.configured=true`.
+Estes campos comprovam a configuração, não uma exportação concluída. Valide
+separadamente em clínica sintética o armazenamento e a releitura do artefato
+cifrado com SHA-256 e sem cruzar tenants. Não execute com registros reais
+para fins de diagnóstico.
 
 ## Critério de GO
 
