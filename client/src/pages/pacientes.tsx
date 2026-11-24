@@ -199,6 +199,7 @@ export default function PacientesPage() {
   const [search, setSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [patientPage, setPatientPage] = useState(1);
+  const [livePage, setLivePage] = useState<{ scope: string; cursors: string[] }>({ scope: "", cursors: [] });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [formName, setFormName] = useState("");
@@ -222,37 +223,51 @@ export default function PacientesPage() {
   }, [searchQuery]);
 
   const PATIENT_PAGE_SIZE = 50;
+  const liveScope = JSON.stringify([activeClinicId, searchQuery]);
+  const liveCursors = livePage.scope === liveScope ? livePage.cursors : [];
+  const liveCursor = liveCursors.at(-1) ?? null;
+  const liveSearchPending = isRemoteClinical && search.trim() !== searchQuery;
+  const liveEndpoint = "/api/live/patients";
+  const liveClinic = encodeURIComponent(activeClinicId ?? "");
   const patientQueryKey = isRemoteClinical
-    ? `/api/live/patients?clinicId=${encodeURIComponent(activeClinicId ?? "")}`
-    : `/api/patients?q=${encodeURIComponent(searchQuery)}&page=${patientPage}&limit=${PATIENT_PAGE_SIZE}`;
+    ? [liveEndpoint, activeClinicId, searchQuery, liveCursor]
+    : [`/api/patients?q=${encodeURIComponent(searchQuery)}&page=${patientPage}&limit=${PATIENT_PAGE_SIZE}`];
+  useEffect(() => {
+    setLivePage({ scope: liveScope, cursors: [] });
+  }, [liveScope]);
+
   const {
     data: patientsRaw,
-    isLoading,
+    isLoading: isPatientQueryLoading,
     isFetching,
     isError,
     refetch: refetchPatients,
   } = useQuery<any>({
-    queryKey: [patientQueryKey],
-    enabled: !isRemoteClinical || liveContextReady,
-    placeholderData: (previousData: any) => previousData,
+    queryKey: patientQueryKey,
+    enabled: !isRemoteClinical || (liveContextReady && !liveSearchPending),
+    placeholderData: isRemoteClinical ? undefined : (previousData: any) => previousData,
+    queryFn: isRemoteClinical ? async () => {
+      const response = searchQuery
+        ? await apiRequest("POST", `${liveEndpoint}/search`, { clinicId: activeClinicId, q: searchQuery, cursor: liveCursor })
+        : await apiRequest("GET", `${liveEndpoint}?clinicId=${liveClinic}${liveCursor ? `&cursor=${encodeURIComponent(liveCursor)}` : ""}`);
+      return response.json();
+    } : undefined,
   });
-  // A API retorna { data, total, page, limit }; aceita array puro por robustez.
+  const isLoading = isPatientQueryLoading || liveSearchPending;
   const patientPayload: any = patientsRaw;
   const rawPatients: any[] = Array.isArray(patientPayload)
     ? patientPayload
     : (patientPayload?.data ?? []);
+  const liveNextCursor = typeof patientPayload?.nextCursor === "string" && patientPayload.nextCursor
+    ? patientPayload.nextCursor as string
+    : null;
   const patients: any[] = isRemoteClinical
-    ? rawPatients
-        .map((patient) => ({
-          ...patient,
-          name: patient.profile?.name ?? "Paciente sem nome",
-          birthDate: patient.profile?.birthDate ?? null,
-          notes: patient.profile?.notes ?? null,
-        }))
-        .filter((patient) => {
-          const needle = searchQuery.toLocaleLowerCase("pt-BR");
-          return !needle || String(patient.name ?? "").toLocaleLowerCase("pt-BR").includes(needle);
-        })
+    ? rawPatients.map((patient) => ({
+        ...patient,
+        name: patient.profile?.name ?? "Paciente sem nome",
+        birthDate: patient.profile?.birthDate ?? null,
+        notes: patient.profile?.notes ?? null,
+      }))
     : rawPatients;
   const patientTotal = isRemoteClinical
     ? patients.length
@@ -724,7 +739,7 @@ export default function PacientesPage() {
               haptic.tap();
               handleBackup();
             }}
-            disabled={backupLoading || patientTotal === 0}
+            disabled={backupLoading || (isRemoteClinical ? !liveContextReady : patientTotal === 0)}
             title="Exportar todos os pacientes e resultados como JSON"
           >
             {backupLoading ? (
@@ -769,6 +784,7 @@ export default function PacientesPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
           placeholder="Buscar paciente..."
+          maxLength={isRemoteClinical ? 80 : undefined}
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -802,19 +818,23 @@ export default function PacientesPage() {
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={<Users className="w-7 h-7 text-muted-foreground" />}
-          mascot={patients.length === 0 ? "vazio" : undefined}
+          mascot={!searchQuery && liveCursors.length === 0 ? "vazio" : undefined}
           title={
-            patients.length === 0
-              ? "Nenhum paciente cadastrado"
-              : "Nenhum resultado encontrado"
+            liveNextCursor
+              ? "Nenhum resultado nesta página"
+              : searchQuery || liveCursors.length
+                ? "Nenhum resultado encontrado"
+                : "Nenhum paciente cadastrado"
           }
           description={
-            patients.length === 0
-              ? "Cadastre o primeiro paciente para começar o acompanhamento."
-              : "Tente outro termo de busca."
+            liveNextCursor
+              ? "Ainda há registros a consultar. Continue a busca na próxima página."
+              : searchQuery
+                ? liveCursors.length ? "Não há mais resultados para este termo." : "Tente outro termo de busca."
+                : liveCursors.length ? "Volte à página anterior." : "Cadastre o primeiro paciente para começar o acompanhamento."
           }
           action={
-            patients.length === 0
+            !searchQuery && liveCursors.length === 0 && !liveNextCursor
               ? {
                   label: "Cadastrar paciente",
                   onClick: () => {
@@ -944,7 +964,28 @@ export default function PacientesPage() {
         </motion.div>
       )}
 
-      {patientTotal > PATIENT_PAGE_SIZE && (
+      {isRemoteClinical && !isLoading && (liveCursors.length > 0 || liveNextCursor) && (
+        <div className="flex flex-col gap-2 rounded-xl border bg-card p-3 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <span>Página {liveCursors.length + 1} · {patients.length} paciente(s) nesta página</span>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={liveCursors.length === 0 || isFetching}
+              onClick={() => setLivePage({ scope: liveScope, cursors: liveCursors.slice(0, -1) })}
+            >Anterior</Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!liveNextCursor || isFetching || isError}
+              onClick={() => {
+                if (liveNextCursor) setLivePage({ scope: liveScope, cursors: [...liveCursors, liveNextCursor] });
+              }}
+            >{searchQuery && patients.length === 0 ? "Continuar busca" : "Próxima"}</Button>
+          </div>
+        </div>
+      )}
+      {!isRemoteClinical && patientTotal > PATIENT_PAGE_SIZE && (
         <div className="flex flex-col gap-2 rounded-xl border bg-card p-3 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <span>
             Página {patientPage} de {totalPatientPages} · {patientTotal} paciente(s)
