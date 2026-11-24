@@ -135,3 +135,31 @@ assert.ok(Math.abs(drawn[five + 1].x - (drawn[five].x + drawn[five].width)) < 0.
 const lineWords = drawn.filter((d) => d.y === drawn[five].y);
 assert.ok(lineWords.at(-1).x + lineWords.at(-1).width > 79 + 437 - 0.5, "a linha foi de fato justificada até a margem");
 console.log("Justificação preserva números e palavras com formatação interna: OK");
+
+// Brasão: a capa e o cabeçalho desenham a imagem na proporção real do PNG (vertical, ~0,79:1), sem esticar.
+{
+  const images = [];
+  function ImagePdf(...args) {
+    const pdf = new jsPDF(...args);
+    const original = pdf.addImage.bind(pdf);
+    pdf.addImage = (...imageArgs) => {
+      const [, , x, y, w, h] = imageArgs;
+      images.push({ x, y, w, h });
+      return original(...imageArgs);
+    };
+    return pdf;
+  }
+  createPantPdf(ImagePdf, long, meta, assets);
+  const props = new jsPDF().getImageProperties(assets.logo);
+  const ratio = props.width / props.height;
+  assert.ok(ratio < 1, "o brasão de origem é vertical");
+  assert.ok(images.length >= 2, "brasão na capa e ao menos em um cabeçalho");
+  for (const image of images) {
+    assert.ok(Math.abs(image.w / image.h - ratio) < 0.005, `brasão desenhado ${image.w.toFixed(1)}×${image.h.toFixed(1)} fora da proporção ${ratio.toFixed(3)}`);
+  }
+  const cover = images[0];
+  const pageWidth = new jsPDF({ unit: "pt", format: "a4" }).internal.pageSize.getWidth();
+  assert.ok(Math.abs(cover.x + cover.w / 2 - pageWidth / 2) < 0.01, "brasão centralizado na capa");
+  assert.ok(cover.y + cover.h < 195, "brasão da capa termina antes do título SUPERNEUROPED");
+  console.log("Brasão na proporção real, centralizado na capa: OK");
+}
