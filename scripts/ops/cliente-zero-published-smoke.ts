@@ -16,8 +16,9 @@
  * recusada antes do login (o middleware revoga a sessão dela se ganhar clínica).
  *
  * Não cria checkout, não cria conta, não convida ninguém e não chama Asaas nem
- * Resend. `--write-synthetic` grava paciente, consulta e documento em rascunho,
- * todos sintéticos, numa clínica de nome reservado. O relatório não contém
+ * Resend. `--write-synthetic` autoriza criar o consultório e gravar paciente,
+ * consulta e documento em rascunho sintéticos. Encerrar exige também
+ * `--close-clinic`. O relatório não contém
  * senha, token, e-mail do titular nem conteúdo clínico; o corpo do export é
  * descartado depois de conferir o digest.
  *
@@ -25,6 +26,7 @@
  */
 import { writeFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
+import { SOLO_ONBOARDING_KEYS } from "../../shared/onboarding";
 
 export type SmokeStatus = "VERIFIED" | "BLOCKED_EXTERNAL" | "FAILED" | "NOT_RUN";
 
@@ -38,7 +40,6 @@ export type SmokeStepId =
   | "plan"
   | "billing"
   | "membership"
-  | "first_member"
   | "patient"
   | "consultation"
   | "document"
@@ -68,7 +69,7 @@ export interface SmokeOptions {
 
 export interface SmokeReport {
   kind: "cliente-zero-published-smoke";
-  schemaVersion: 1;
+  schemaVersion: 2;
   target: string;
   startedAt: string;
   finishedAt: string;
@@ -98,7 +99,6 @@ const STEP_ORDER: readonly SmokeStepId[] = [
   "plan",
   "billing",
   "membership",
-  "first_member",
   "patient",
   "consultation",
   "document",
@@ -342,6 +342,8 @@ export async function runClienteZeroPublishedSmoke(options: SmokeOptions): Promi
       slug = existing.slug;
       clinicInfo = { slug, reused: true };
       record({ id: "clinic", status: "VERIFIED", code: "SMOKE_CLINIC_REUSED", httpStatus: 200, detail: "Clínica sintética ativa reaproveitada." });
+    } else if (!options.writeSynthetic) {
+      record({ id: "clinic", status: "NOT_RUN", code: "SYNTHETIC_WRITES_NOT_REQUESTED", detail: "Não há clínica sintética ativa. Criá-la exige --write-synthetic." });
     } else {
       const created = await call("POST", "/api/tenants", {
         token,
@@ -400,9 +402,6 @@ export async function runClienteZeroPublishedSmoke(options: SmokeOptions): Promi
       : { id: "plan", status: "FAILED", code: "PLAN_NOT_PERSISTED", detail: "Clínica sem assinatura persistida." });
     record({ id: "billing", ...classifyBillingEvidence(onboarding.billingEvidence?.status) });
     record({ id: "membership", status: "VERIFIED", code: "OWNER_MEMBERSHIP", detail: "O titular é owner ativo da clínica sintética." });
-    record(milestoneStatus(onboarding, "first_member") === "completed"
-      ? { id: "first_member", status: "VERIFIED", code: "SERVER_FIRST_MEMBER", detail: "Há membro além do titular, persistido no servidor." }
-      : { id: "first_member", status: "NOT_RUN", code: "INVITE_REQUIRES_RECIPIENT_INBOX", detail: "O aceite do convite exige o link no e-mail do convidado; o smoke não convida." });
 
     // ── Operação clínica sintética (opt-in) ──────────────────────────────────
     const created: { patient?: string; document?: string } = {};
@@ -540,19 +539,22 @@ export async function runClienteZeroPublishedSmoke(options: SmokeOptions): Promi
       record({ id: "onboarding_server", status: "FAILED", code: codeOf(final.result), httpStatus: final.result.status, detail: "Onboarding final indisponível." });
     } else if (missing.length) {
       record({ id: "onboarding_server", status: "FAILED", code: "ONBOARDING_NOT_SERVER_DERIVED", detail: `Escrita confirmada sem marco no servidor: ${missing.join(", ")}.` });
-    } else {
-      const progress = final.snapshot.progress;
+    } else if (SOLO_ONBOARDING_KEYS.every((key) => milestoneStatus(final.snapshot, key) === "completed")) {
       record({
         id: "onboarding_server",
         status: "VERIFIED",
         code: "ONBOARDING_SERVER_COMPUTED",
         httpStatus: 200,
-        detail: `Checklist calculado no servidor: ${progress?.completed ?? "?"}/${progress?.total ?? "?"}.`,
+        detail: "Os cinco marcos do Solo constam como concluídos no servidor.",
       });
+    } else {
+      record({ id: "onboarding_server", status: "NOT_RUN", code: "SOLO_MILESTONES_PENDING", httpStatus: 200, detail: "Há marcos do Solo pendentes no servidor." });
     }
 
     if (!options.closeClinic) {
       record({ id: "closure", status: "NOT_RUN", code: "CLOSURE_NOT_REQUESTED", detail: "Rode com --close-clinic para pedir o encerramento da clínica sintética." });
+    } else if (!options.writeSynthetic) {
+      record({ id: "closure", status: "NOT_RUN", code: "SYNTHETIC_WRITES_NOT_REQUESTED", detail: "O encerramento exige --write-synthetic junto de --close-clinic." });
     } else {
       const closure = await call("POST", `/api/tenants/${encodeURIComponent(clinicId)}/lifecycle`, {
         token,
@@ -572,15 +574,16 @@ export async function runClienteZeroPublishedSmoke(options: SmokeOptions): Promi
   const doesNotProve = [
     "ENTREGA_EMAIL_OBSERVADA",
     "CADASTRO_SELF_SERVICE_PONTA_A_PONTA",
+    "PAGAMENTO_REAL",
+    "LGPD_R2_EXPORT_EXECUTED",
     "RECEITA",
     "MRR",
     "CLIENTE_PAGANTE",
   ];
-  if (!(billingStatus === "SERVER_CONFIRMED" && billingEnvironment === "production")) doesNotProve.splice(2, 0, "PAGAMENTO_REAL");
 
   return {
     kind: "cliente-zero-published-smoke",
-    schemaVersion: 1,
+    schemaVersion: 2,
     target,
     startedAt,
     finishedAt: now().toISOString(),

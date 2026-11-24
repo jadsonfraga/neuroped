@@ -8,14 +8,19 @@ const health = {
     blockers: [], lgpdExport: { configured: true, storageBindingPresent: true } },
 };
 const smoke = {
-  kind: "cliente-zero-published-smoke", schemaVersion: 1, target: origin,
+  kind: "cliente-zero-published-smoke", schemaVersion: 2, target: origin,
   verdict: "VERIFIED", exitCode: 0, finishedAt: "2026-10-25T14:30:00.000Z",
   billingEvidence: { status: "SERVER_CONFIRMED", environment: "production" },
   clinicToFirstDocumentMs: 600000,
-  onboarding: { completed: 10, total: 10 },
+  onboarding: { completed: 8, total: 10, milestones: {
+    account_created: "completed", email_verified: "completed", clinic_created: "completed",
+    plan_selected: "completed", billing_configured: "completed", first_member: "pending",
+    first_patient: "completed", first_consultation: "completed", first_document: "completed",
+    first_assessment: "pending",
+  } },
   steps: [
     "api_health", "signup_gate", "billing_webhook_gate", "owner_login",
-    "clinic", "email_verified", "plan", "billing", "membership", "first_member", "patient",
+    "clinic", "email_verified", "plan", "billing", "membership", "patient",
     "consultation", "document", "audit", "export", "onboarding_server", "closure",
   ].map(id => ({ id, status: "VERIFIED" })),
 };
@@ -28,6 +33,16 @@ const check = (partial: Record<string, unknown> = {}) =>
   evaluateReleaseGate({ health, smoke, reviews, origin, now, ...partial });
 assert.equal(check().verdict, "READY_FOR_HUMAN_DECISION");
 assert.equal(check().permitsAutomaticLaunch, false);
+assert.equal(check({ smoke: { ...smoke, schemaVersion: 1 } }).verdict, "NO_GO");
+assert.equal(check({ smoke: { ...smoke, onboarding: { ...smoke.onboarding,
+  milestones: { ...smoke.onboarding.milestones, first_document: "pending" },
+} } }).verdict, "NO_GO");
+assert.equal(check({ smoke: { ...smoke, onboarding: {
+  completed: 5, total: 5,
+  milestones: { account_created: "completed", email_verified: "completed",
+    clinic_created: "completed", first_patient: "completed", first_document: "completed" },
+} } }).verdict, "NO_GO");
+assert.equal(check({ smoke: { ...smoke, onboarding: { ...smoke.onboarding, completed: 10 } } }).verdict, "NO_GO");
 assert.equal(check({ health: {}, smoke: {}, reviews: {} }).verdict, "NO_GO");
 const cryptoMissing = check({ health: { ...health,
   readiness: { ...health.readiness, clinicalCryptoConfigured: false } } });

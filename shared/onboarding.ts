@@ -44,6 +44,15 @@ export const onboardingMilestoneDefinitions = [
 
 export type OnboardingMilestoneKey =
   (typeof onboardingMilestoneDefinitions)[number]["key"];
+
+export const SOLO_ONBOARDING_KEYS = [
+  "account_created",
+  "email_verified",
+  "clinic_created",
+  "first_patient",
+  "first_document",
+] as const satisfies readonly OnboardingMilestoneKey[];
+
 export type OnboardingMilestoneSource =
   (typeof onboardingMilestoneDefinitions)[number]["source"];
 export type OnboardingMilestoneStatus =

@@ -1,6 +1,7 @@
 /** Consolidador fail-closed de evidências operacionais, sem PHI e sem escrita. */
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
+import { onboardingMilestoneDefinitions, SOLO_ONBOARDING_KEYS } from "../../shared/onboarding";
 type Dict = Record<string, unknown>;
 const obj = (x: unknown): Dict => x !== null && typeof x === "object" && !Array.isArray(x) ? x as Dict : {};
 const arr = (x: unknown): unknown[] => Array.isArray(x) ? x : [];
@@ -44,21 +45,29 @@ export function evaluateReleaseGate(input: {
   const smoke = obj(input.smoke);
   const billing = obj(smoke.billingEvidence);
   const onboard = obj(smoke.onboarding);
+  const milestones = obj(onboard.milestones);
+  const milestoneStates = onboardingMilestoneDefinitions.map(({ key }) => milestones[key]);
+  const validOnboarding =
+    onboard.total === milestoneStates.length &&
+    Object.keys(milestones).length === milestoneStates.length &&
+    milestoneStates.every(state => state === "completed" || state === "pending" || state === "blocked_external") &&
+    onboard.completed === milestoneStates.filter(state => state === "completed").length &&
+    SOLO_ONBOARDING_KEYS.every(key => milestones[key] === "completed");
   const requiredSteps = [
     "api_health", "signup_gate", "billing_webhook_gate",
-    "owner_login", "clinic", "email_verified", "plan", "billing", "membership", "first_member",
+    "owner_login", "clinic", "email_verified", "plan", "billing", "membership",
     "patient", "consultation", "document", "audit", "export",
     "onboarding_server", "closure",
   ];
   const steps = arr(smoke.steps).map(obj);
   const verified = new Set(steps.filter(s => s.status === "VERIFIED").map(s => s.id));
-  if (smoke.kind !== "cliente-zero-published-smoke" || smoke.schemaVersion !== 1 ||
+  if (smoke.kind !== "cliente-zero-published-smoke" || smoke.schemaVersion !== 2 ||
       smoke.target !== target || smoke.verdict !== "VERIFIED" || smoke.exitCode !== 0 ||
       !fresh(smoke.finishedAt, now.getTime(), 72 * 3600000) ||
       !requiredSteps.every(k => verified.has(k)) ||
       steps.some(s => s.status !== "VERIFIED") ||
       billing.status !== "SERVER_CONFIRMED" || billing.environment !== "production" ||
-      onboard.completed !== 10 || onboard.total !== 10 ||
+      !validOnboarding ||
       typeof smoke.clinicToFirstDocumentMs !== "number" ||
       smoke.clinicToFirstDocumentMs < 0 || smoke.clinicToFirstDocumentMs > 1800000) {
     blockers.push("PUBLISHED_CLIENT_ZERO_UNPROVEN");
