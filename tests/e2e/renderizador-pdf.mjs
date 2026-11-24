@@ -80,12 +80,12 @@ try {
   assert.equal(await page.locator(".structure-titles li").first().textContent(), "DOCUMENTO DEMONSTRATIVO",
     "a tela mostra as linhas que viraram título");
 
-  // Prescrição em prosa é bloqueada; o quadro de terapias preenchido libera o PDF.
+  // Prescrição em prosa é permitida; quadros opcionais incompletos continuam bloqueados.
   const prescriptionEditor = page.getByLabel("Markdown do laudo");
-  await prescriptionEditor.fill("# Documento demonstrativo\n\n## Terapias indicadas\n\nTexto sintético de prescrição em prosa.");
+  await prescriptionEditor.fill("# Documento demonstrativo\n\n## Terapias indicadas\n\nTexto sintético de prescrição em prosa.\n\n## Medicações prescritas\n\nTexto sintético de medicação em prosa.");
   await page.getByRole("button", { name: "Gerar prévia PDF" }).click();
-  await page.getByRole("alert").filter({ hasText: "A prescrição precisa estar em tabela" }).waitFor();
-  assert.equal(await page.locator('iframe[title="Prévia integral do PDF"]').count(), 0, "prescrição sem tabela não chega ao PDF");
+  await page.locator('iframe[title="Prévia integral do PDF"]').waitFor({ timeout: 20000 });
+  assert.equal(await page.getByRole("alert").count(), 0, "prescrição em prosa sem tabela deve gerar a prévia");
   await page.getByRole("button", { name: "Inserir quadro de terapias" }).click();
   await page.getByRole("button", { name: "Gerar prévia PDF" }).click();
   await page.getByRole("alert").filter({ hasText: "Complete manualmente" }).waitFor();
