@@ -193,7 +193,7 @@ export const onRequestPost: PagesFunction<EmailVerificationEnv> = async (
     return json(
       {
         ...tokens,
-        user: publicUser(user),
+        user: publicUser(user, env),
         emailVerificationRequired: true,
         emailVerificationDelivery: verificationDelivered ? "sent" : "failed",
         ...(verificationDelivered
