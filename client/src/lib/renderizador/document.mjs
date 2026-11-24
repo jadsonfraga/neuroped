@@ -28,7 +28,16 @@ const COLORS = {
   line: [217, 203, 169],
   white: [255, 255, 255],
   red: [164, 30, 30],
+  // Negrito clínico em salmão profundo: 4,8:1 sobre o papel marfim (AA para texto).
+  salmon: [176, 71, 58],
+  numeral: [168, 128, 31],
+  rule: [227, 207, 155],
 };
+
+const DOCTOR_NAME = "Dr. Jadson Fraga Araújo Júnior";
+const DOCTOR_CREDENTIALS = "NEUROPEDIATRA · CRM-PE 25.227 · RQE 17.756";
+const BODY_SIZE = 12.5;
+const BODY_LEADING = 19;
 
 function inlineRuns(tokens = [], style = {}) {
   return tokens.flatMap((token) => {
@@ -122,6 +131,7 @@ function withFont(doc, run = {}, size = 12.5) {
   doc.setFont(run.mono ? "courier" : "Cormorant", run.mono ? "normal" : fontStyle(run));
   doc.setFontSize(size);
   if (run.link) doc.setTextColor(...COLORS.gold);
+  else if (run.bold && !run.mono) doc.setTextColor(...COLORS.salmon);
   else if (run.quote) doc.setTextColor(105, 86, 49);
   else doc.setTextColor(...COLORS.ink);
 }
@@ -204,6 +214,22 @@ function drawRuns(doc, runs, x, y, maxWidth, opts = {}) {
 // Section numbers are added only when the author did not number the headings
 // and only at the section level: the shallowest depth used by two or more
 // headings (a lone document title above the sections stays unnumbered).
+export function romanNumeral(n) {
+  const table = [[1000, "M"], [900, "CM"], [500, "D"], [400, "CD"], [100, "C"], [90, "XC"], [50, "L"], [40, "XL"], [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]];
+  let rest = Math.floor(n);
+  let out = "";
+  for (const [value, glyph] of table) while (rest >= value) { out += glyph; rest -= value; }
+  return out;
+}
+
+// Texto com espaçamento entre letras centralizado: o align do jsPDF ignora o
+// charSpace na largura, então a posição é calculada aqui.
+function spacedText(doc, text, centerX, y, charSpace) {
+  const width = doc.getTextWidth(text) + charSpace * Math.max(0, text.length - 1);
+  doc.text(text, centerX - width / 2, y, { charSpace });
+  return width;
+}
+
 export function headingNumbering(blocks) {
   const headings = blocks.filter((block) => block.type === "heading");
   const text = (block) => flattenText(block.runs).trim();
@@ -223,7 +249,7 @@ export function createPantPdf(jsPDF, md, meta, assets) {
   const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4", compress: true });
   doc.setProperties({
     title: meta.title,
-    author: "Dr. Jadson Fraga Araújo Júnior",
+    author: DOCTOR_NAME,
     subject: "Laudo neuropediátrico",
     creator: "NeuroPed · Renderizador PANT",
   });
@@ -274,7 +300,7 @@ export function createPantPdf(jsPDF, md, meta, assets) {
       doc.text("S U P E R N E U R O P E D", left + 37, 55);
       doc.setFontSize(8);
       doc.setTextColor(119, 119, 119);
-      doc.text("Dr. Jadson Fraga Araújo Júnior", right, 49, { align: "right" });
+      doc.text(DOCTOR_NAME, right, 49, { align: "right" });
       doc.text("Neuropediatra · CRM-PE 25.227 · RQE 17.756", right, 61, { align: "right" });
       doc.setFontSize(7);
       doc.setTextColor(...(releaseStatus === "draft" ? COLORS.red : COLORS.navy));
@@ -315,10 +341,10 @@ export function createPantPdf(jsPDF, md, meta, assets) {
   doc.text(pdfReleaseLabel(releaseStatus), pageWidth / 2, 665, { align: "center" });
   doc.setFontSize(15);
   doc.setTextColor(...COLORS.ivory);
-  doc.text("Dr. Jadson Fraga Araújo Júnior", pageWidth / 2, 715, { align: "center" });
+  doc.text(DOCTOR_NAME, pageWidth / 2, 715, { align: "center" });
   doc.setFontSize(9);
   doc.setTextColor(...COLORS.gold);
-  doc.text("NEUROPEDIATRA · CRM-PE 25.227 · RQE 17.756", pageWidth / 2, 733, { align: "center" });
+  doc.text(DOCTOR_CREDENTIALS, pageWidth / 2, 733, { align: "center" });
   doc.setFontSize(8);
   doc.setTextColor(180, 184, 192);
   doc.text("Rua Raimundo Lacerda, 001 · São José · Petrolina/PE · CEP 56302-470", pageWidth / 2, 752, { align: "center" });
@@ -335,8 +361,8 @@ export function createPantPdf(jsPDF, md, meta, assets) {
     if (y + height > bottom) newContentPage();
   }
   function paragraph(runs, opts = {}) {
-    const size = opts.size || 12.5;
-    const leading = opts.leading || size * 1.45;
+    const size = opts.size || BODY_SIZE;
+    const leading = opts.leading || (size === BODY_SIZE ? BODY_LEADING : size * 1.45);
     const lineCount = layoutRuns(doc, runs, maxWidth - (opts.depth || 0) * 12 - (opts.indent || 0), size).length;
     // Never leave a single line of a multi-line paragraph at the foot of a page.
     // A one-line paragraph only needs its baseline to fit; the first line of a
@@ -344,13 +370,14 @@ export function createPantPdf(jsPDF, md, meta, assets) {
     ensureSpace((Math.min(lineCount, 2) - 1) * leading);
     const out = drawRuns(doc, runs, left + (opts.depth || 0) * 12, y, maxWidth - (opts.depth || 0) * 12, {
       ...opts,
+      leading,
       bottom,
       onPageBreak: () => {
         newContentPage();
         return y;
       },
     });
-    y = out.y + (opts.after ?? 7);
+    y = out.y + (opts.after ?? 9);
   }
   function renderTable(block) {
     const cols = Math.max(1, block.header.length);
@@ -420,29 +447,39 @@ export function createPantPdf(jsPDF, md, meta, assets) {
   }
   function renderBlock(block) {
     if (block.type === "heading") {
-      const fontSize = block.depth === 1 ? 22 : block.depth === 2 ? 19 : block.depth === 3 ? 16 : 14;
+      // Padrão PANT: numeral romano em versalete dourado com fio curto acima de
+      // um título grande, navy e em negrito.
       const number = numbering.get(block);
-      const textX = number ? left + 35 : left;
+      const sectionLevel = number !== undefined;
+      const fontSize = block.depth === 1 ? 27 : block.depth === 2 ? 24 : block.depth === 3 ? 18 : 15;
+      const lineGap = fontSize * 1.18;
       doc.setFont("Cormorant", "bold");
       doc.setFontSize(fontSize);
-      const headingText = flattenText(block.runs);
-      const lines = doc.splitTextToSize(headingText, right - textX);
-      const headingHeight = Math.max(fontSize + 4, lines.length * (fontSize + 3)) + 11;
-      // Keep the heading on the same page as at least three lines of what follows.
-      if (y > 111) y += 9;
-      ensureSpace(headingHeight + 7 + 3 * 12.5 * 1.45);
-      y += 7;
-      if (number) {
+      const lines = doc.splitTextToSize(flattenText(block.runs), maxWidth);
+      const numeralHeight = sectionLevel ? 20 : 0;
+      const headingHeight = numeralHeight + fontSize * 0.72 + (lines.length - 1) * lineGap + (block.depth <= 2 ? 26 : 18);
+      // Respiro antes do título; no topo da folha, só o afastamento do fio do cabeçalho.
+      y += y > 111 ? (block.depth <= 2 ? 22 : 12) : 10;
+      // Mantém o título na mesma folha que ao menos três linhas do que vem depois.
+      ensureSpace(headingHeight + 3 * BODY_LEADING);
+      if (sectionLevel) {
+        const numeral = romanNumeral(number);
         doc.setFont("Cormorant", "normal");
         doc.setFontSize(10);
-        doc.setTextColor(...COLORS.gold);
-        doc.text(String(number).padStart(2, "0"), left, y);
+        doc.setTextColor(...COLORS.numeral);
+        doc.text(numeral, left, y, { charSpace: 2.6 });
+        const numeralWidth = doc.getTextWidth(numeral) + 2.6 * Math.max(0, numeral.length - 1);
+        doc.setDrawColor(...COLORS.gold);
+        doc.setLineWidth(0.8);
+        doc.line(left + numeralWidth + 7, y - 3.2, left + numeralWidth + 7 + 34, y - 3.2);
+        y += numeralHeight;
       }
+      y += fontSize * 0.72;
       doc.setFont("Cormorant", "bold");
       doc.setFontSize(fontSize);
       doc.setTextColor(...COLORS.navy);
-      doc.text(lines, textX, y + 1);
-      y += headingHeight;
+      doc.text(lines, left, y, { lineHeightFactor: 1.18 });
+      y += (lines.length - 1) * lineGap + (block.depth <= 2 ? 26 : 18);
       return;
     }
     if (block.type === "paragraph") {
@@ -456,7 +493,7 @@ export function createPantPdf(jsPDF, md, meta, assets) {
         doc.setFontSize(12.5);
         doc.setTextColor(...COLORS.gold);
         doc.text(block.ordered ? `${block.start + i}.` : "•", left + block.depth * 12, y);
-        paragraph(item.runs, { indent: 19, depth: block.depth, after: 4 });
+        paragraph(item.runs, { indent: 19, depth: block.depth, after: 5 });
         item.nested.forEach(renderBlock);
       });
       y += 3;
@@ -487,9 +524,52 @@ export function createPantPdf(jsPDF, md, meta, assets) {
     }
   }
 
+  // Fecho do laudo no padrão PANT: assinatura manuscrita (só na versão
+  // definitiva, após o aceite médico), nome, credenciais, fio e lema.
+  function drawClosing() {
+    const signatureH = 44;
+    const blockHeight = 26 + signatureH + 70;
+    ensureSpace(blockHeight);
+    y += 26;
+    const center = pageWidth / 2;
+    const sign = releaseStatus === "definitive" && assets.signature ? assets.signature : null;
+    if (sign) {
+      const props = doc.getImageProperties(sign);
+      const ratio = props.width > 0 && props.height > 0 ? props.width / props.height : 6;
+      const w = Math.min(250, signatureH * ratio);
+      const h = w / ratio;
+      doc.addImage(sign, "PNG", center - w / 2, y + (signatureH - h), w, h, "assinatura", "SLOW");
+    } else {
+      // Rascunho (ou definitiva sem assinatura cadastrada): linha para assinar à caneta.
+      doc.setDrawColor(138, 122, 85);
+      doc.setLineWidth(0.5);
+      doc.line(center - 110, y + signatureH - 2, center + 110, y + signatureH - 2);
+    }
+    y += signatureH + 16;
+    doc.setFont("Cormorant", "normal");
+    doc.setFontSize(13.5);
+    doc.setTextColor(...COLORS.navy);
+    doc.text(DOCTOR_NAME, center, y, { align: "center" });
+    y += 14;
+    doc.setFontSize(8);
+    doc.setTextColor(...COLORS.numeral);
+    spacedText(doc, DOCTOR_CREDENTIALS, center, y, 1.3);
+    y += 16;
+    doc.setDrawColor(...COLORS.rule);
+    doc.setLineWidth(0.6);
+    doc.line(left, y, right, y);
+    y += 22;
+    doc.setFont("Cormorant", "italic");
+    doc.setFontSize(12.5);
+    doc.setTextColor(...COLORS.numeral);
+    doc.text("Soli Deo Gloria", center, y, { align: "center" });
+    y += 10;
+  }
+
   const blocks = contentFromMarkdown(md);
   const numbering = headingNumbering(blocks);
   for (const block of blocks) renderBlock(block);
+  drawClosing();
 
   const pageCount = doc.getNumberOfPages();
   for (let page = 2; page <= pageCount; page++) {
@@ -498,7 +578,6 @@ export function createPantPdf(jsPDF, md, meta, assets) {
     doc.setFontSize(8);
     doc.setTextColor(...COLORS.muted);
     doc.text(meta.patient, left, pageHeight - 41, { maxWidth: 180 });
-    doc.text("Soli Deo Gloria", pageWidth / 2, pageHeight - 41, { align: "center" });
     doc.setTextColor(139, 106, 30);
     doc.text(`fl. ${page - 1} de ${pageCount - 1}`, right, pageHeight - 41, { align: "right" });
   }

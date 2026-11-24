@@ -163,3 +163,64 @@ console.log("Justificação preserva números e palavras com formatação intern
   assert.ok(cover.y + cover.h < 195, "brasão da capa termina antes do título SUPERNEUROPED");
   console.log("Brasão na proporção real, centralizado na capa: OK");
 }
+
+// Fecho PANT: assinatura manuscrita só na versão definitiva, na proporção real;
+// negrito em salmão; títulos de seção grandes com numeral romano.
+{
+  // Traço sintético (não é a assinatura real, que nunca entra no repositório).
+  const signature = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPAAAAAoCAYAAADAOHfQAAABKUlEQVR42u3aQQrCMBBA0QY8gmvP6RE8p2vvoNsiYoumYSbz/kYQdJGZRyO4LJIkSZIkSZIkSVLtzpfrc/0qZe9UCe6n9x73W7MGylqrhHYrmBVxj7/tZQMXZMXe3RKA98B9P4hfPiONftBMC7gXQJAV+VY4HeAjwcGsqFhTA957ML1wgaxoWFMCjgAJZlD//Y6j9qOBC7JyYA0POBMQmGGNMGMYQIY1AdSQgGdbfphhnR5whSUHGdbpAFddaphhTQ3YAjsHWJMBtqzOB9aEgC2m84I1GeDRf3GEGVZ1AOxpC3IvqHZlIGBwa2OGNSFgaGtChjU5YHDrYPZ7tRhgA8sLGdZCV+j1sA0uL2ZYCwM2xBqQzXlCwJoTM6xS8eu1JEmSJEmSJG32AioYHtEweQA9AAAAAElFTkSuQmCC";
+  const record = () => {
+    const images = [];
+    const texts = [];
+    function Pdf(...args) {
+      const pdf = new jsPDF(...args);
+      const addImage = pdf.addImage.bind(pdf);
+      pdf.addImage = (...a) => {
+        images.push({ alias: a[6], x: a[2], y: a[3], w: a[4], h: a[5], page: pdf.getCurrentPageInfo().pageNumber });
+        return addImage(...a);
+      };
+      const text = pdf.text.bind(pdf);
+      pdf.text = (t, x, y, o) => {
+        texts.push({ text: Array.isArray(t) ? t.join(" ") : t, color: pdf.getTextColor(), size: pdf.getFontSize(), style: pdf.getFont().fontStyle });
+        return text(t, x, y, o);
+      };
+      return Pdf.last = pdf;
+    }
+    return { Pdf, images, texts };
+  };
+  const md = "# Laudo\n\n## Seção A\n\nTexto com **destaque clínico** no meio.\n\n## Seção B\n\nTexto final.";
+  const withSig = { ...assets, signature };
+
+  const draft = record();
+  createPantPdf(draft.Pdf, md, { ...meta, releaseStatus: "draft" }, withSig);
+  assert.equal(draft.images.filter((i) => i.alias === "assinatura").length, 0, "rascunho nunca leva a assinatura");
+
+  const unsigned = record();
+  createPantPdf(unsigned.Pdf, md, { ...meta, releaseStatus: "definitive" }, assets);
+  assert.equal(unsigned.images.filter((i) => i.alias === "assinatura").length, 0, "sem assinatura cadastrada, nenhuma imagem é inventada");
+
+  const signed = record();
+  createPantPdf(signed.Pdf, md, { ...meta, releaseStatus: "definitive" }, withSig);
+  const sig = signed.images.filter((i) => i.alias === "assinatura");
+  assert.equal(sig.length, 1, "versão definitiva leva uma assinatura");
+  const props = new jsPDF().getImageProperties(signature);
+  assert.ok(Math.abs(sig[0].w / sig[0].h - props.width / props.height) < 0.005, "assinatura na proporção real");
+  const pageWidth = new jsPDF({ unit: "pt", format: "a4" }).internal.pageSize.getWidth();
+  assert.ok(Math.abs(sig[0].x + sig[0].w / 2 - pageWidth / 2) < 0.01, "assinatura centralizada");
+  assert.equal(sig[0].page, signed.Pdf.last.getNumberOfPages(), "assinatura na última folha");
+  const names = signed.texts.filter((t) => t.text === "Dr. Jadson Fraga Araújo Júnior");
+  assert.ok(names.length >= 2, "nome no fecho além da capa");
+  assert.ok(signed.texts.some((t) => t.text.includes("CRM-PE 25.227")) && !signed.texts.some((t) => /CRM-BA/.test(t.text)), "CRM-PE, nunca CRM-BA");
+
+  const bold = signed.texts.filter((t) => t.text === "destaque" || t.text === "clínico");
+  assert.equal(bold.length, 2);
+  // jsPDF arredonda o canal (176 → 0,69 → af): tolerância de 2 por canal.
+  const isSalmon = (hex) => [176, 71, 58].every((c, i) => Math.abs(parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16) - c) <= 2);
+  assert.ok(bold.every((t) => isSalmon(t.color) && t.style === "bold"), "negrito em salmão");
+  const regular = signed.texts.find((t) => t.text === "Texto");
+  assert.ok(!isSalmon(regular.color), "texto comum segue na tinta do corpo");
+  const sectionTitles = signed.texts.filter((t) => t.text === "Seção A" || t.text === "Seção B");
+  assert.ok(sectionTitles.every((t) => t.size >= 24), "títulos de seção com fonte grande");
+  assert.ok(signed.texts.some((t) => t.text === "I") && signed.texts.some((t) => t.text === "II"), "numeral romano nas seções");
+  console.log("Fecho PANT com assinatura só na definitiva, negrito salmão e títulos grandes: OK");
+}
