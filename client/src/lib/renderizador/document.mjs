@@ -245,6 +245,19 @@ export function createPantPdf(jsPDF, md, meta, assets) {
   const bottom = pageHeight - 65;
   const releaseStatus = meta.releaseStatus === "definitive" ? "definitive" : "draft";
 
+  // Brasão sempre na proporção real da imagem (o PNG é vertical, ~0,79:1):
+  // encaixado na caixa e centralizado nela, nunca esticado.
+  const logoProps = doc.getImageProperties(assets.logo);
+  const logoRatio = logoProps.width > 0 && logoProps.height > 0 ? logoProps.width / logoProps.height : 1;
+  function drawLogo(boxX, boxY, boxW, boxH, align = "center") {
+    const fitW = Math.min(boxW, boxH * logoRatio);
+    const fitH = fitW / logoRatio;
+    const x = align === "left" ? boxX : boxX + (boxW - fitW) / 2;
+    const y = boxY + (boxH - fitH) / 2;
+    doc.addImage(assets.logo, "PNG", x, y, fitW, fitH, "brasao", "SLOW");
+    return { x, y, w: fitW, h: fitH };
+  }
+
   function drawFrame(cover) {
     doc.setFillColor(...(cover ? COLORS.navy : COLORS.ivory));
     doc.rect(0, 0, pageWidth, pageHeight, "F");
@@ -254,7 +267,7 @@ export function createPantPdf(jsPDF, md, meta, assets) {
     doc.setLineWidth(0.3);
     doc.rect(30, 30, pageWidth - 60, pageHeight - 60);
     if (!cover) {
-      doc.addImage(assets.logo, "PNG", left, 41, 25, 25);
+      drawLogo(left, 38, 25, 31, "left");
       doc.setFont("Cormorant", "normal");
       doc.setFontSize(11);
       doc.setTextColor(...COLORS.navy);
@@ -278,7 +291,7 @@ export function createPantPdf(jsPDF, md, meta, assets) {
   }
 
   drawFrame(true);
-  doc.addImage(assets.logo, "PNG", (pageWidth - 245) / 2, 69, 245, 112);
+  drawLogo((pageWidth - 245) / 2, 50, 245, 130);
   doc.setFont("Cormorant", "normal");
   doc.setFontSize(12);
   doc.setTextColor(...COLORS.gold);
