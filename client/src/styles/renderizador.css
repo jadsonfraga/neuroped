@@ -801,3 +801,21 @@
   margin: 6px 0 4px 18px;
   padding: 0;
 }
+.pant-studio-root .signature-box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  margin: 10px 0 4px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.pant-studio-root .signature-box span {
+  flex: 1 1 260px;
+}
+.pant-studio-root .signature-box img {
+  display: block;
+  max-width: 220px;
+  max-height: 40px;
+  margin-bottom: 4px;
+}

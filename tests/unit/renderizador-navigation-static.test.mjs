@@ -29,6 +29,18 @@ test("renderização é local, com revisão e sem acesso ao prontuário", () => 
   );
   assert.match(page, /BASE_URL\s*\+\s*["\']renderizador\//);
 });
+test("a assinatura manuscrita é o único dado guardado e só entra na versão definitiva", () => {
+  const store = read("client/src/lib/renderizador/signature-store.ts");
+  // O módulo toca uma única chave, só com PNG em data URL, e nada além do localStorage.
+  assert.deepEqual([...store.matchAll(/localStorage\.(\w+)\(([^,)]*)/g)].map((m) => m[2]), ["SIGNATURE_KEY", "SIGNATURE_KEY", "SIGNATURE_KEY"]);
+  assert.match(store, /const SIGNATURE_KEY = "neuroped\.renderizador\.assinatura\.v1";/);
+  assert.match(store, /PNG_DATA_URL = \/\^data:image\\\/png;base64,/);
+  assert.doesNotMatch(store, /sessionStorage|indexedDB|fetch\(|\/api\/|postMessage/);
+  // A página só repassa a assinatura ao PDF quando a versão é a liberada.
+  assert.match(page, /const signatureApplied = released && Boolean\(signature\);/);
+  assert.match(page, /\.\.\.\(signatureApplied \? \{ signature \} : \{\}\)/);
+  assert.match(page, /handwritten_signature_applied: signatureApplied/);
+});
 test("Cloudflare e Vercel permitem somente a prévia local de PDF no frame", () => {
   for (const path of ["client/public/_headers", "vercel.json"]) {
     assert.match(read(path), /frame-src 'self' blob:;/);

@@ -14,7 +14,8 @@ import {
   FileCheck2,
 } from "lucide-react";
 import { createPdfBlob, sample } from "@/lib/renderizador/document.mjs";
-import { hasUnfilledTableTemplate, structuredTableTemplate } from "@/lib/renderizador/table-editor.mjs";
+import { clearStoredSignature, readStoredSignature, storeSignature } from "@/lib/renderizador/signature-store";
+import { hasUnfilledTableTemplate, structuredTableTemplate, medicationTableTemplate, prescriptionSectionsWithoutTable, therapyTableTemplate } from "@/lib/renderizador/table-editor.mjs";
 import { structurePastedText, type StructuredText } from "@/lib/renderizador/auto-structure.mjs";
 export default function RenderizadorPage() {
   const [md, setMd] = useState(""),
@@ -34,6 +35,36 @@ export default function RenderizadorPage() {
     [structure, setStructure] = useState<StructuredText | null>(null);
   const [logoPreview, setLogoPreview] = useState("");
   const [bridgeView, setBridgeView] = useState(false);
+  // Assinatura manuscrita: guardada só neste aparelho (nunca no repositório
+  // nem no servidor) e aplicada apenas na versão definitiva, após o aceite.
+  const [signature, setSignature] = useState(readStoredSignature);
+  const signatureInput = useRef<HTMLInputElement>(null);
+  async function loadSignature(f?: File) {
+    if (!f) return;
+    if (f.type !== "image/png") {
+      setError("A assinatura deve ser um arquivo PNG, de preferência com fundo transparente.");
+      return;
+    }
+    if (f.size > 400000) {
+      setError("A imagem da assinatura deve ter até 400 KB.");
+      return;
+    }
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(f);
+    });
+    // O rascunho nunca leva assinatura: só uma versão definitiva já gerada fica desatualizada.
+    if (approved) invalidate();
+    setSignature(dataUrl);
+    if (!storeSignature(dataUrl)) setError("A assinatura vale só nesta sessão: o navegador não permitiu guardá-la.");
+  }
+  function removeSignature() {
+    if (approved) invalidate();
+    setSignature("");
+    clearStoredSignature();
+  }
   useEffect(() => {
     let active = true;
     fetch(import.meta.env.BASE_URL + "renderizador/brasao.png.json")
@@ -95,9 +126,8 @@ export default function RenderizadorPage() {
     setDetail("Exemplo sem dados clínicos");
     setTab("editor");
   }
-  function insertStructuredTable() {
+  function insertStructuredTable(table = structuredTableTemplate()) {
     invalidate();
-    const table = structuredTableTemplate();
     setMd((current) => `${current.trimEnd()}${current.trim() ? "\n\n" : ""}${table}\n`);
     setTab("editor");
   }
@@ -117,6 +147,14 @@ export default function RenderizadorPage() {
       prepared = structurePastedText(md);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Não foi possível estruturar o texto.");
+      return;
+    }
+    // Prescrição de terapias e medicações sempre em tabela, preenchida pelo médico.
+    const semTabela = prescriptionSectionsWithoutTable(prepared.markdown);
+    if (semTabela.length) {
+      setError(
+        `A prescrição precisa estar em tabela. Insira o quadro de terapias ou de medicações dentro da seção ${semTabela.map((t) => `“${t}”`).join(", ")} e preencha cada célula antes de gerar o PDF.`,
+      );
       return;
     }
     // A definitive file may only be requested from an existing, reviewable draft.
@@ -145,9 +183,11 @@ export default function RenderizadorPage() {
       const [regular, bold, italic, logo] = assetsJson as { data: string }[];
       const acceptedAt = released ? new Date().toISOString() : null;
       const meta = { patient: patient.trim(), detail, title, subtitle, releaseStatus: released ? "definitive" : "draft", releaseAcceptedAt: acceptedAt };
+      const signatureApplied = released && Boolean(signature);
       const blob = createPdfBlob(jsPDF, prepared.markdown, meta, {
         fonts: { normal: regular.data, bold: bold.data, italic: italic.data },
         logo: "data:image/png;base64," + logo.data,
+        ...(signatureApplied ? { signature } : {}),
       });
       const hash = async (b: ArrayBuffer) =>
         Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", b)))
@@ -176,6 +216,7 @@ export default function RenderizadorPage() {
         metadata: meta,
         release_status: released ? "definitive_after_medical_review" : "draft_not_released",
         medical_acceptance_at: acceptedAt,
+        handwritten_signature_applied: signatureApplied,
       };
       const nextUrl = URL.createObjectURL(blob);
       if (oldUrl.current) URL.revokeObjectURL(oldUrl.current);
@@ -353,7 +394,10 @@ export default function RenderizadorPage() {
               {tab === "editor" && (
                 <div className="table-helper">
                   <p>Tabelas coladas do Word ou de planilhas viram tabela automaticamente. Texto livre separado só por espaços nunca é convertido em tabela; para montar uma do zero, insira a estrutura e preencha cada célula.</p>
-                  <button type="button" className="text-button" onClick={insertStructuredTable}>Inserir estrutura de tabela</button>
+                  <button type="button" className="text-button" onClick={() => insertStructuredTable()}>Inserir estrutura de tabela</button>
+                  <button type="button" className="text-button" onClick={() => insertStructuredTable(therapyTableTemplate())}>Inserir quadro de terapias</button>
+                  <button type="button" className="text-button" onClick={() => insertStructuredTable(medicationTableTemplate())}>Inserir quadro de medicações</button>
+                  <p>Prescrição de terapias e de medicações sai sempre em tabela: insira o quadro dentro da seção da prescrição e preencha cada célula com o texto que você prescreveu.</p>
                 </div>
               )}
               <input
@@ -516,6 +560,36 @@ export default function RenderizadorPage() {
                   {!approved && (
                     <button className="text-button" disabled={busy} onClick={downloadDraft}>Baixar PDF de rascunho — não liberado</button>
                   )}
+                  <div className="signature-box">
+                    <span>
+                      {signature ? (
+                        <>
+                          <img src={signature} alt="Assinatura manuscrita cadastrada neste aparelho" />
+                          Assinatura manuscrita cadastrada neste aparelho. Ela entra só na versão definitiva, depois do seu aceite.
+                        </>
+                      ) : (
+                        "Sem assinatura cadastrada: a versão definitiva sai com a linha para assinar à caneta."
+                      )}
+                    </span>
+                    <input
+                      ref={signatureInput}
+                      type="file"
+                      accept="image/png"
+                      hidden
+                      onChange={(e) => {
+                        void loadSignature(e.target.files?.[0]);
+                        e.target.value = "";
+                      }}
+                    />
+                    <button type="button" className="text-button" disabled={busy} onClick={() => signatureInput.current?.click()}>
+                      {signature ? "Trocar assinatura (PNG)" : "Cadastrar assinatura (PNG)"}
+                    </button>
+                    {signature && (
+                      <button type="button" className="text-button" disabled={busy} onClick={removeSignature}>
+                        Remover assinatura
+                      </button>
+                    )}
+                  </div>
                   <p className="clinical-review-note">O renderizador não valida nem altera a prescrição. Confira a dose por administração, os horários e cada mudança temporal. Ao confirmar abaixo, será gerada uma nova versão definitiva, identificada como revisada.</p>
                   <label className="approval">
                     <input
@@ -533,7 +607,7 @@ export default function RenderizadorPage() {
                         }
                       }}
                     />{" "}
-                    Revisei o conteúdo integral, todas as páginas e cada orientação de dose, horário e mudança temporal. Autorizo esta versão para exportação, sem assinatura automática.
+                    Revisei o conteúdo integral, todas as páginas e cada orientação de dose, horário e mudança temporal. Autorizo esta versão para exportação{signature ? ", com a minha assinatura manuscrita cadastrada neste aparelho." : ", sem assinatura automática."}
                   </label>
                   <button
                     className="primary"

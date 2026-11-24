@@ -28,7 +28,16 @@ const COLORS = {
   line: [217, 203, 169],
   white: [255, 255, 255],
   red: [164, 30, 30],
+  // Negrito clínico em salmão profundo: 4,8:1 sobre o papel marfim (AA para texto).
+  salmon: [176, 71, 58],
+  numeral: [168, 128, 31],
+  rule: [227, 207, 155],
 };
+
+const DOCTOR_NAME = "Dr. Jadson Fraga Araújo Júnior";
+const DOCTOR_CREDENTIALS = "NEUROPEDIATRA · CRM-PE 25.227 · RQE 17.756";
+const BODY_SIZE = 12.5;
+const BODY_LEADING = 19;
 
 function inlineRuns(tokens = [], style = {}) {
   return tokens.flatMap((token) => {
@@ -122,6 +131,10 @@ function withFont(doc, run = {}, size = 12.5) {
   doc.setFont(run.mono ? "courier" : "Cormorant", run.mono ? "normal" : fontStyle(run));
   doc.setFontSize(size);
   if (run.link) doc.setTextColor(...COLORS.gold);
+  // Todo negrito do texto (parágrafos, listas, citações e células) sai em salmão;
+  // só o negrito estrutural do cabeçalho da tabela fica na tinta do corpo.
+  else if (run.plain) doc.setTextColor(...COLORS.ink);
+  else if (run.bold && !run.mono) doc.setTextColor(...COLORS.salmon);
   else if (run.quote) doc.setTextColor(105, 86, 49);
   else doc.setTextColor(...COLORS.ink);
 }
@@ -173,7 +186,10 @@ function drawRuns(doc, runs, x, y, maxWidth, opts = {}) {
   lines.forEach((line, index) => {
     if (index > 0) {
       lineY += leading;
-      if (opts.bottom && lineY > opts.bottom) {
+      // Fecho do laudo: as duas últimas linhas do último parágrafo descem
+      // junto com a assinatura, que nunca fica sozinha numa folha.
+      const tailNeed = opts.tailReserve && index === lines.length - 2 ? leading + opts.tailReserve : 0;
+      if (opts.bottom && (lineY > opts.bottom || lineY + tailNeed > opts.bottom)) {
         if (!opts.onPageBreak) throw Error("Texto ultrapassou o limite da página.");
         lineY = opts.onPageBreak();
       }
@@ -196,6 +212,7 @@ function drawRuns(doc, runs, x, y, maxWidth, opts = {}) {
       }
       lineX += word.width;
     });
+    opts.onLine?.(lineY);
   });
   doc.setTextColor(...COLORS.ink);
   return { y: lineY + leading, lines: lines.length };
@@ -204,6 +221,22 @@ function drawRuns(doc, runs, x, y, maxWidth, opts = {}) {
 // Section numbers are added only when the author did not number the headings
 // and only at the section level: the shallowest depth used by two or more
 // headings (a lone document title above the sections stays unnumbered).
+export function romanNumeral(n) {
+  const table = [[1000, "M"], [900, "CM"], [500, "D"], [400, "CD"], [100, "C"], [90, "XC"], [50, "L"], [40, "XL"], [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]];
+  let rest = Math.floor(n);
+  let out = "";
+  for (const [value, glyph] of table) while (rest >= value) { out += glyph; rest -= value; }
+  return out;
+}
+
+// Texto com espaçamento entre letras centralizado: o align do jsPDF ignora o
+// charSpace na largura, então a posição é calculada aqui.
+function spacedText(doc, text, centerX, y, charSpace) {
+  const width = doc.getTextWidth(text) + charSpace * Math.max(0, text.length - 1);
+  doc.text(text, centerX - width / 2, y, { charSpace });
+  return width;
+}
+
 export function headingNumbering(blocks) {
   const headings = blocks.filter((block) => block.type === "heading");
   const text = (block) => flattenText(block.runs).trim();
@@ -219,11 +252,45 @@ export function headingNumbering(blocks) {
   return numbers;
 }
 
+// Trava de layout: nenhuma folha de conteúdo antes da última pode terminar
+// acima da metade da área útil, e o fecho (assinatura) nunca fica sozinho.
+export const MIN_PAGE_FILL = 0.5;
+const CONTENT_TOP = 111;
+const SIGNATURE_BOX_H = 66;
+const SIGNATURE_MAX_W = 375;
+const CLOSING_HEIGHT = 26 + SIGNATURE_BOX_H + 70;
+
 export function createPantPdf(jsPDF, md, meta, assets) {
+  let doc = renderPantPdf(jsPDF, md, meta, assets, null);
+  if (doc.pantLayout.closingAlone) {
+    // Segunda passada determinística: o último trecho de texto reserva espaço
+    // para o fecho e desce com ele.
+    doc = renderPantPdf(jsPDF, md, meta, assets, doc.pantLayout.tail);
+    doc.pantLayout.passes = 2;
+  }
+  assertPageFill(doc.pantLayout);
+  return doc;
+}
+
+export function assertPageFill(layout) {
+  const { fill, usable } = layout;
+  for (let i = 0; i < fill.length - 1; i++) {
+    const ratio = fill[i] / usable;
+    if (ratio < MIN_PAGE_FILL) {
+      throw Error(
+        `A folha ${i + 1} ficaria preenchida só até ${Math.round(ratio * 100)}% da altura. ` +
+          "O PDF não foi gerado para não sair com folha subpreenchida: reduza o cabeçalho da tabela ou divida o bloco extenso e gere novamente.",
+      );
+    }
+  }
+  if (layout.closingAlone) throw Error("A assinatura ficaria sozinha numa folha. Gere novamente após ajustar o último parágrafo.");
+}
+
+function renderPantPdf(jsPDF, md, meta, assets, tail) {
   const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4", compress: true });
   doc.setProperties({
     title: meta.title,
-    author: "Dr. Jadson Fraga Araújo Júnior",
+    author: DOCTOR_NAME,
     subject: "Laudo neuropediátrico",
     creator: "NeuroPed · Renderizador PANT",
   });
@@ -274,7 +341,7 @@ export function createPantPdf(jsPDF, md, meta, assets) {
       doc.text("S U P E R N E U R O P E D", left + 37, 55);
       doc.setFontSize(8);
       doc.setTextColor(119, 119, 119);
-      doc.text("Dr. Jadson Fraga Araújo Júnior", right, 49, { align: "right" });
+      doc.text(DOCTOR_NAME, right, 49, { align: "right" });
       doc.text("Neuropediatra · CRM-PE 25.227 · RQE 17.756", right, 61, { align: "right" });
       doc.setFontSize(7);
       doc.setTextColor(...(releaseStatus === "draft" ? COLORS.red : COLORS.navy));
@@ -315,18 +382,29 @@ export function createPantPdf(jsPDF, md, meta, assets) {
   doc.text(pdfReleaseLabel(releaseStatus), pageWidth / 2, 665, { align: "center" });
   doc.setFontSize(15);
   doc.setTextColor(...COLORS.ivory);
-  doc.text("Dr. Jadson Fraga Araújo Júnior", pageWidth / 2, 715, { align: "center" });
+  doc.text(DOCTOR_NAME, pageWidth / 2, 715, { align: "center" });
   doc.setFontSize(9);
   doc.setTextColor(...COLORS.gold);
-  doc.text("NEUROPEDIATRA · CRM-PE 25.227 · RQE 17.756", pageWidth / 2, 733, { align: "center" });
+  doc.text(DOCTOR_CREDENTIALS, pageWidth / 2, 733, { align: "center" });
   doc.setFontSize(8);
   doc.setTextColor(180, 184, 192);
   doc.text("Rua Raimundo Lacerda, 001 · São José · Petrolina/PE · CEP 56302-470", pageWidth / 2, 752, { align: "center" });
 
   doc.addPage();
   drawFrame(false);
-  let y = 111;
+  let y = CONTENT_TOP;
+  // Linha de base mais baixa realmente usada em cada folha de conteúdo.
+  const fill = [0];
+  let closingAlone = false;
+  let paragraphCalls = 0;
+  let tableRowCalls = 0;
+  let lastKind = "";
+  function ink(baseline) {
+    const i = fill.length - 1;
+    fill[i] = Math.max(fill[i], baseline - CONTENT_TOP);
+  }
   function newContentPage() {
+    fill.push(0);
     doc.addPage();
     drawFrame(false);
     y = 111;
@@ -335,22 +413,29 @@ export function createPantPdf(jsPDF, md, meta, assets) {
     if (y + height > bottom) newContentPage();
   }
   function paragraph(runs, opts = {}) {
-    const size = opts.size || 12.5;
-    const leading = opts.leading || size * 1.45;
+    const size = opts.size || BODY_SIZE;
+    const leading = opts.leading || (size === BODY_SIZE ? BODY_LEADING : size * 1.45);
     const lineCount = layoutRuns(doc, runs, maxWidth - (opts.depth || 0) * 12 - (opts.indent || 0), size).length;
     // Never leave a single line of a multi-line paragraph at the foot of a page.
     // A one-line paragraph only needs its baseline to fit; the first line of a
     // longer paragraph must be accompanied by at least one more line.
-    ensureSpace((Math.min(lineCount, 2) - 1) * leading);
+    paragraphCalls += 1;
+    lastKind = "paragraph";
+    const tailReserve = tail?.kind === "paragraph" && paragraphCalls === tail.count ? CLOSING_HEIGHT + 14 : 0;
+    ensureSpace((Math.min(lineCount, 2) - 1) * leading + (tailReserve && lineCount <= 2 ? tailReserve : 0));
+    opts.beforeDraw?.();
     const out = drawRuns(doc, runs, left + (opts.depth || 0) * 12, y, maxWidth - (opts.depth || 0) * 12, {
       ...opts,
+      leading,
       bottom,
+      tailReserve,
+      onLine: ink,
       onPageBreak: () => {
         newContentPage();
         return y;
       },
     });
-    y = out.y + (opts.after ?? 7);
+    y = out.y + (opts.after ?? 9);
   }
   function renderTable(block) {
     const cols = Math.max(1, block.header.length);
@@ -358,11 +443,10 @@ export function createPantPdf(jsPDF, md, meta, assets) {
     const lineHeight = 13;
     const topPadding = 16;
     const rowHeight = (count) => Math.max(25, count * lineHeight + 12);
-    const wrapCells = (cells, header) => cells.map((cell) => {
-      doc.setFont("Cormorant", header ? "bold" : "normal");
-      doc.setFontSize(10.5);
-      return doc.splitTextToSize(flattenText(cell), colWidth - 13);
-    });
+    // Células com o mesmo motor de linhas do corpo: o negrito interno (**…**)
+    // é preservado e pintado em salmão, sem justificar.
+    const wrapCells = (cells, header) => cells.map((cell) =>
+      layoutRuns(doc, header ? cell.map((run) => ({ ...run, bold: true, plain: true })) : cell, colWidth - 13, 10.5));
     const paintSegment = (wraps, header, offset, count) => {
       const height = rowHeight(count);
       if (y + height > bottom) throw Error("Uma linha da tabela excedeu o limite da página.");
@@ -375,15 +459,19 @@ export function createPantPdf(jsPDF, md, meta, assets) {
       doc.rect(left, y, maxWidth, height);
       for (let i = 1; i < cols; i++) doc.line(left + i * colWidth, y, left + i * colWidth, y + height);
       wraps.forEach((lines, i) => {
-        doc.setFont("Cormorant", header ? "bold" : "normal");
-        doc.setFontSize(10.5);
-        doc.setTextColor(...COLORS.ink);
-        const segment = lines.slice(offset, offset + count);
-        if (segment.length) doc.text(segment, left + i * colWidth + 7, y + topPadding, {
-          maxWidth: colWidth - 13,
+        lines.slice(offset, offset + count).forEach((line, k) => {
+          let x = left + i * colWidth + 7;
+          line.words.forEach((word) => {
+            x += word.gap;
+            withFont(doc, word.run, 10.5);
+            doc.text(word.text, x, y + topPadding + k * lineHeight);
+            x += word.width;
+          });
         });
       });
+      doc.setTextColor(...COLORS.ink);
       y += height;
+      ink(y);
     };
     const headerWraps = wrapCells(block.header, true);
     const headerLines = Math.max(1, ...headerWraps.map((lines) => lines.length));
@@ -399,9 +487,12 @@ export function createPantPdf(jsPDF, md, meta, assets) {
     for (const row of block.rows) {
       const wraps = wrapCells(row, false);
       const total = Math.max(1, ...wraps.map((lines) => lines.length));
+      tableRowCalls += 1;
+      lastKind = "table";
+      const reserve = tail?.kind === "table" && tableRowCalls === tail.count ? CLOSING_HEIGHT + 16 : 0;
       let offset = 0;
       while (offset < total) {
-        const availableLines = Math.floor((bottom - y - 12) / lineHeight);
+        const availableLines = Math.floor((bottom - reserve - y - 12) / lineHeight);
         const count = Math.min(total - offset, availableLines);
         if (count < 1 || y + rowHeight(count) > bottom) {
           newContentPage();
@@ -420,29 +511,42 @@ export function createPantPdf(jsPDF, md, meta, assets) {
   }
   function renderBlock(block) {
     if (block.type === "heading") {
-      const fontSize = block.depth === 1 ? 22 : block.depth === 2 ? 19 : block.depth === 3 ? 16 : 14;
+      // Padrão PANT: numeral romano em versalete dourado com fio curto acima de
+      // um título grande, navy e em negrito.
       const number = numbering.get(block);
-      const textX = number ? left + 35 : left;
+      const sectionLevel = number !== undefined;
+      const fontSize = block.depth === 1 ? 27 : block.depth === 2 ? 24 : block.depth === 3 ? 18 : 15;
+      const lineGap = fontSize * 1.18;
       doc.setFont("Cormorant", "bold");
       doc.setFontSize(fontSize);
-      const headingText = flattenText(block.runs);
-      const lines = doc.splitTextToSize(headingText, right - textX);
-      const headingHeight = Math.max(fontSize + 4, lines.length * (fontSize + 3)) + 11;
-      // Keep the heading on the same page as at least three lines of what follows.
-      if (y > 111) y += 9;
-      ensureSpace(headingHeight + 7 + 3 * 12.5 * 1.45);
-      y += 7;
-      if (number) {
+      const lines = doc.splitTextToSize(flattenText(block.runs), maxWidth);
+      const numeralHeight = sectionLevel ? 20 : 0;
+      const headingHeight = numeralHeight + fontSize * 0.72 + (lines.length - 1) * lineGap + (block.depth <= 2 ? 26 : 18);
+      // Respiro antes do título; no topo da folha, só o afastamento do fio do cabeçalho.
+      y += y > 111 ? (block.depth <= 2 ? 22 : 12) : 10;
+      // Mantém o título na mesma folha que ao menos três linhas do que vem depois.
+      // Título no fim do texto desce junto com o fecho.
+      ensureSpace(headingHeight + (block === blocks.at(-1) ? CLOSING_HEIGHT : 3 * BODY_LEADING));
+      if (sectionLevel) {
+        const numeral = romanNumeral(number);
         doc.setFont("Cormorant", "normal");
         doc.setFontSize(10);
-        doc.setTextColor(...COLORS.gold);
-        doc.text(String(number).padStart(2, "0"), left, y);
+        doc.setTextColor(...COLORS.numeral);
+        doc.text(numeral, left, y, { charSpace: 2.6 });
+        const numeralWidth = doc.getTextWidth(numeral) + 2.6 * Math.max(0, numeral.length - 1);
+        doc.setDrawColor(...COLORS.gold);
+        doc.setLineWidth(0.8);
+        doc.line(left + numeralWidth + 7, y - 3.2, left + numeralWidth + 7 + 34, y - 3.2);
+        y += numeralHeight;
       }
+      y += fontSize * 0.72;
       doc.setFont("Cormorant", "bold");
       doc.setFontSize(fontSize);
       doc.setTextColor(...COLORS.navy);
-      doc.text(lines, textX, y + 1);
-      y += headingHeight;
+      doc.text(lines, left, y, { lineHeightFactor: 1.18 });
+      ink(y + (lines.length - 1) * lineGap);
+      lastKind = "heading";
+      y += (lines.length - 1) * lineGap + (block.depth <= 2 ? 26 : 18);
       return;
     }
     if (block.type === "paragraph") {
@@ -452,11 +556,20 @@ export function createPantPdf(jsPDF, md, meta, assets) {
     if (block.type === "list") {
       block.items.forEach((item, i) => {
         ensureSpace(34);
-        doc.setFont("Cormorant", "normal");
-        doc.setFontSize(12.5);
-        doc.setTextColor(...COLORS.gold);
-        doc.text(block.ordered ? `${block.start + i}.` : "•", left + block.depth * 12, y);
-        paragraph(item.runs, { indent: 19, depth: block.depth, after: 4 });
+        // O marcador é desenhado depois da decisão de quebra do parágrafo,
+        // para nunca ficar sozinho na folha anterior.
+        const marker = block.ordered ? `${block.start + i}.` : "•";
+        paragraph(item.runs, {
+          indent: 19,
+          depth: block.depth,
+          after: 5,
+          beforeDraw: () => {
+            doc.setFont("Cormorant", "normal");
+            doc.setFontSize(12.5);
+            doc.setTextColor(...COLORS.gold);
+            doc.text(marker, left + block.depth * 12, y);
+          },
+        });
         item.nested.forEach(renderBlock);
       });
       y += 3;
@@ -479,17 +592,65 @@ export function createPantPdf(jsPDF, md, meta, assets) {
       return;
     }
     if (block.type === "rule") {
-      ensureSpace(20);
+      ensureSpace(block === blocks.at(-1) ? 20 + CLOSING_HEIGHT : 20);
       doc.setDrawColor(...COLORS.gold);
       doc.setLineWidth(0.7);
       doc.line(left, y, right, y);
+      ink(y);
+      lastKind = "rule";
       y += 14;
     }
+  }
+
+  // Fecho do laudo no padrão PANT: assinatura manuscrita (só na versão
+  // definitiva, após o aceite médico), nome, credenciais, fio e lema.
+  function drawClosing() {
+    const signatureH = SIGNATURE_BOX_H;
+    if (y + CLOSING_HEIGHT > bottom) {
+      newContentPage();
+      closingAlone = true;
+    }
+    y += 26;
+    const center = pageWidth / 2;
+    const sign = releaseStatus === "definitive" && assets.signature ? assets.signature : null;
+    if (sign) {
+      const props = doc.getImageProperties(sign);
+      const ratio = props.width > 0 && props.height > 0 ? props.width / props.height : 6;
+      const w = Math.min(SIGNATURE_MAX_W, signatureH * ratio);
+      const h = w / ratio;
+      doc.addImage(sign, "PNG", center - w / 2, y + (signatureH - h), w, h, "assinatura", "SLOW");
+    } else {
+      // Rascunho (ou definitiva sem assinatura cadastrada): linha para assinar à caneta.
+      doc.setDrawColor(138, 122, 85);
+      doc.setLineWidth(0.5);
+      doc.line(center - 110, y + signatureH - 2, center + 110, y + signatureH - 2);
+    }
+    y += signatureH + 16;
+    doc.setFont("Cormorant", "normal");
+    doc.setFontSize(13.5);
+    doc.setTextColor(...COLORS.navy);
+    doc.text(DOCTOR_NAME, center, y, { align: "center" });
+    y += 14;
+    doc.setFontSize(8);
+    doc.setTextColor(...COLORS.numeral);
+    spacedText(doc, DOCTOR_CREDENTIALS, center, y, 1.3);
+    y += 16;
+    doc.setDrawColor(...COLORS.rule);
+    doc.setLineWidth(0.6);
+    doc.line(left, y, right, y);
+    y += 22;
+    doc.setFont("Cormorant", "italic");
+    doc.setFontSize(12.5);
+    doc.setTextColor(...COLORS.numeral);
+    doc.text("Soli Deo Gloria", center, y, { align: "center" });
+    ink(y);
+    y += 10;
   }
 
   const blocks = contentFromMarkdown(md);
   const numbering = headingNumbering(blocks);
   for (const block of blocks) renderBlock(block);
+  drawClosing();
 
   const pageCount = doc.getNumberOfPages();
   for (let page = 2; page <= pageCount; page++) {
@@ -498,11 +659,16 @@ export function createPantPdf(jsPDF, md, meta, assets) {
     doc.setFontSize(8);
     doc.setTextColor(...COLORS.muted);
     doc.text(meta.patient, left, pageHeight - 41, { maxWidth: 180 });
-    doc.text("Soli Deo Gloria", pageWidth / 2, pageHeight - 41, { align: "center" });
     doc.setTextColor(139, 106, 30);
     doc.text(`fl. ${page - 1} de ${pageCount - 1}`, right, pageHeight - 41, { align: "right" });
   }
   doc.setPage(pageCount);
+  doc.pantLayout = {
+    fill,
+    usable: bottom - CONTENT_TOP,
+    closingAlone,
+    tail: { kind: lastKind === "table" ? "table" : "paragraph", count: lastKind === "table" ? tableRowCalls : paragraphCalls },
+  };
   return doc;
 }
 

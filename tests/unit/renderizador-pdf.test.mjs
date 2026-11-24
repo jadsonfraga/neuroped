@@ -163,3 +163,134 @@ console.log("Justificação preserva números e palavras com formatação intern
   assert.ok(cover.y + cover.h < 195, "brasão da capa termina antes do título SUPERNEUROPED");
   console.log("Brasão na proporção real, centralizado na capa: OK");
 }
+
+// Fecho PANT: assinatura manuscrita só na versão definitiva, na proporção real;
+// negrito em salmão; títulos de seção grandes com numeral romano.
+{
+  // Traço sintético (não é a assinatura real, que nunca entra no repositório).
+  const signature = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPAAAAAoCAYAAADAOHfQAAABKUlEQVR42u3aQQrCMBBA0QY8gmvP6RE8p2vvoNsiYoumYSbz/kYQdJGZRyO4LJIkSZIkSZIkSVLtzpfrc/0qZe9UCe6n9x73W7MGylqrhHYrmBVxj7/tZQMXZMXe3RKA98B9P4hfPiONftBMC7gXQJAV+VY4HeAjwcGsqFhTA957ML1wgaxoWFMCjgAJZlD//Y6j9qOBC7JyYA0POBMQmGGNMGMYQIY1AdSQgGdbfphhnR5whSUHGdbpAFddaphhTQ3YAjsHWJMBtqzOB9aEgC2m84I1GeDRf3GEGVZ1AOxpC3IvqHZlIGBwa2OGNSFgaGtChjU5YHDrYPZ7tRhgA8sLGdZCV+j1sA0uL2ZYCwM2xBqQzXlCwJoTM6xS8eu1JEmSJEmSJG32AioYHtEweQA9AAAAAElFTkSuQmCC";
+  const record = () => {
+    const images = [];
+    const texts = [];
+    function Pdf(...args) {
+      const pdf = new jsPDF(...args);
+      const addImage = pdf.addImage.bind(pdf);
+      pdf.addImage = (...a) => {
+        images.push({ alias: a[6], x: a[2], y: a[3], w: a[4], h: a[5], page: pdf.getCurrentPageInfo().pageNumber });
+        return addImage(...a);
+      };
+      const text = pdf.text.bind(pdf);
+      pdf.text = (t, x, y, o) => {
+        texts.push({ text: Array.isArray(t) ? t.join(" ") : t, color: pdf.getTextColor(), size: pdf.getFontSize(), style: pdf.getFont().fontStyle });
+        return text(t, x, y, o);
+      };
+      return Pdf.last = pdf;
+    }
+    return { Pdf, images, texts };
+  };
+  const md = "# Laudo\n\n## Seção A\n\nTexto com **destaque clínico** no meio.\n\n## Seção B\n\nTexto final.";
+  const withSig = { ...assets, signature };
+
+  const draft = record();
+  createPantPdf(draft.Pdf, md, { ...meta, releaseStatus: "draft" }, withSig);
+  assert.equal(draft.images.filter((i) => i.alias === "assinatura").length, 0, "rascunho nunca leva a assinatura");
+
+  const unsigned = record();
+  createPantPdf(unsigned.Pdf, md, { ...meta, releaseStatus: "definitive" }, assets);
+  assert.equal(unsigned.images.filter((i) => i.alias === "assinatura").length, 0, "sem assinatura cadastrada, nenhuma imagem é inventada");
+
+  const signed = record();
+  createPantPdf(signed.Pdf, md, { ...meta, releaseStatus: "definitive" }, withSig);
+  const sig = signed.images.filter((i) => i.alias === "assinatura");
+  assert.equal(sig.length, 1, "versão definitiva leva uma assinatura");
+  const props = new jsPDF().getImageProperties(signature);
+  assert.ok(Math.abs(sig[0].w / sig[0].h - props.width / props.height) < 0.005, "assinatura na proporção real");
+  // 1,5× o tamanho original do fecho (250 pt → 375 pt de largura para traços largos).
+  assert.ok(Math.abs(sig[0].w - Math.min(375, 66 * (props.width / props.height))) < 0.01, `assinatura com ${sig[0].w.toFixed(1)} pt de largura`);
+  const pageWidth = new jsPDF({ unit: "pt", format: "a4" }).internal.pageSize.getWidth();
+  assert.ok(Math.abs(sig[0].x + sig[0].w / 2 - pageWidth / 2) < 0.01, "assinatura centralizada");
+  assert.equal(sig[0].page, signed.Pdf.last.getNumberOfPages(), "assinatura na última folha");
+  const names = signed.texts.filter((t) => t.text === "Dr. Jadson Fraga Araújo Júnior");
+  assert.ok(names.length >= 2, "nome no fecho além da capa");
+  assert.ok(signed.texts.some((t) => t.text.includes("CRM-PE 25.227")) && !signed.texts.some((t) => /CRM-BA/.test(t.text)), "CRM-PE, nunca CRM-BA");
+
+  const bold = signed.texts.filter((t) => t.text === "destaque" || t.text === "clínico");
+  assert.equal(bold.length, 2);
+  // jsPDF arredonda o canal (176 → 0,69 → af): tolerância de 2 por canal.
+  const isSalmon = (hex) => [176, 71, 58].every((c, i) => Math.abs(parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16) - c) <= 2);
+  assert.ok(bold.every((t) => isSalmon(t.color) && t.style === "bold"), "negrito em salmão");
+  const regular = signed.texts.find((t) => t.text === "Texto");
+  assert.ok(!isSalmon(regular.color), "texto comum segue na tinta do corpo");
+  const sectionTitles = signed.texts.filter((t) => t.text === "Seção A" || t.text === "Seção B");
+  assert.ok(sectionTitles.every((t) => t.size >= 24), "títulos de seção com fonte grande");
+  assert.ok(signed.texts.some((t) => t.text === "I") && signed.texts.some((t) => t.text === "II"), "numeral romano nas seções");
+  console.log("Fecho PANT com assinatura só na definitiva, negrito salmão e títulos grandes: OK");
+}
+
+// Todo negrito em salmão, inclusive dentro de tabelas, listas e citações; o
+// cabeçalho da tabela (negrito estrutural) e os títulos ficam na tinta/navy.
+{
+  const texts = [];
+  function Pdf(...args) {
+    const pdf = new jsPDF(...args);
+    const text = pdf.text.bind(pdf);
+    pdf.text = (t, x, y, o) => {
+      texts.push({ text: Array.isArray(t) ? t.join(" ") : t, color: pdf.getTextColor(), style: pdf.getFont().fontStyle });
+      return text(t, x, y, o);
+    };
+    return pdf;
+  }
+  const md = [
+    "## Seção",
+    "",
+    "Parágrafo com **alfa** destacado.",
+    "",
+    "- Item com **beta** destacado",
+    "",
+    "> Citação com **gama** destacada",
+    "",
+    "| Terapia | Objetivo |",
+    "| --- | --- |",
+    "| Fonoaudiologia | Ampliar **delta** funcional e manter o restante comum |",
+  ].join("\n");
+  createPantPdf(Pdf, md, meta, assets);
+  const isSalmon = (hex) => [176, 71, 58].every((c, i) => Math.abs(parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16) - c) <= 2);
+  for (const word of ["alfa", "beta", "gama", "delta"]) {
+    const hit = texts.find((t) => t.text === word);
+    assert.ok(hit, `${word} desenhado`);
+    assert.ok(isSalmon(hit.color) && hit.style === "bold", `${word} em negrito salmão (${hit.color})`);
+  }
+  for (const word of ["Terapia", "Objetivo"]) {
+    const hit = texts.find((t) => t.text === word);
+    assert.ok(hit && hit.style === "bold" && !isSalmon(hit.color), `cabeçalho ${word} em negrito na tinta do corpo`);
+  }
+  assert.ok(!isSalmon(texts.find((t) => t.text === "Seção").color), "título de seção segue navy");
+  assert.ok(!isSalmon(texts.find((t) => t.text === "Fonoaudiologia").color), "célula comum segue na tinta");
+  const cellWords = texts.map((t) => t.text).join(" ");
+  assert.ok(cellWords.includes("Ampliar delta funcional e manter o restante comum"), "célula preserva todas as palavras na ordem");
+  console.log("Todo negrito em salmão (parágrafo, lista, citação e tabela), cabeçalhos e títulos preservados: OK");
+}
+
+// Prescrição de terapias e medicações sempre em tabela, sem inferir a partir de texto livre.
+{
+  const { prescriptionSectionsWithoutTable, therapyTableTemplate, medicationTableTemplate } = await import("../../client/src/lib/renderizador/table-editor.mjs");
+  const prose = "Texto sintético em prosa, sem tabela.";
+  assert.deepEqual(prescriptionSectionsWithoutTable(`## Terapias indicadas\n\n${prose}`), ["Terapias indicadas"]);
+  assert.deepEqual(prescriptionSectionsWithoutTable(`## Prescrição\n\n${prose}`), ["Prescrição"]);
+  assert.deepEqual(prescriptionSectionsWithoutTable(`## Medicações prescritas\n\n${prose}\n\n## Retorno\n\n${prose}`), ["Medicações prescritas"]);
+  assert.deepEqual(prescriptionSectionsWithoutTable(`## Medicação em uso\n\n${prose}\n\n## Terapias em curso\n\n${prose}`), [], "histórico relatado não é prescrição");
+  assert.deepEqual(prescriptionSectionsWithoutTable(`## Quem é a criança\n\n${prose}`), []);
+  assert.deepEqual(prescriptionSectionsWithoutTable("## Terapias\n"), [], "seção vazia não bloqueia");
+  const filledTherapy = therapyTableTemplate().replaceAll("[preencher]", "Exemplo");
+  const filledMedication = medicationTableTemplate().replaceAll("[preencher]", "Exemplo");
+  assert.deepEqual(prescriptionSectionsWithoutTable(`## Terapias\n\n${prose}\n\n${filledTherapy}\n\n## Medicações\n\n${filledMedication}`), []);
+  assert.deepEqual(prescriptionSectionsWithoutTable(`## Plano terapêutico\n\n### Terapias\n\n${filledTherapy}`), [], "tabela em subseção vale para a seção");
+  assert.deepEqual(prescriptionSectionsWithoutTable(`## Terapias\n\n${prose}\n\n## Retorno\n\n${filledTherapy}`), ["Terapias"], "tabela fora da seção não conta");
+  assert.equal(hasUnfilledTableTemplate(therapyTableTemplate()), true, "quadro de terapias vazio bloqueia");
+  assert.equal(hasUnfilledTableTemplate(medicationTableTemplate()), true, "quadro de medicações vazio bloqueia");
+  assert.match(medicationTableTemplate(), /Medicamento e concentração \| Dose por tomada \| Horários \| Duração e ajustes/);
+  const parsed = contentFromMarkdown(filledMedication);
+  assert.equal(parsed[0].type, "table");
+  assert.equal(parsed[0].header.length, 4);
+  console.log("Prescrição de terapias e medicações exige tabela preenchida pelo médico: OK");
+}

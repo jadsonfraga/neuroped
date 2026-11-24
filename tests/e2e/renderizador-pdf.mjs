@@ -18,6 +18,9 @@ import {
   SYNTHETIC_CREDENTIALS,
 } from "../../scripts/lib/synthetic-clinical-api.mjs";
 
+// Traço sintético de teste (não é a assinatura real).
+const SYNTHETIC_SIGNATURE_PNG = "iVBORw0KGgoAAAANSUhEUgAAAPAAAAAoCAYAAADAOHfQAAABKUlEQVR42u3aQQrCMBBA0QY8gmvP6RE8p2vvoNsiYoumYSbz/kYQdJGZRyO4LJIkSZIkSZIkSVLtzpfrc/0qZe9UCe6n9x73W7MGylqrhHYrmBVxj7/tZQMXZMXe3RKA98B9P4hfPiONftBMC7gXQJAV+VY4HeAjwcGsqFhTA957ML1wgaxoWFMCjgAJZlD//Y6j9qOBC7JyYA0POBMQmGGNMGMYQIY1AdSQgGdbfphhnR5whSUHGdbpAFddaphhTQ3YAjsHWJMBtqzOB9aEgC2m84I1GeDRf3GEGVZ1AOxpC3IvqHZlIGBwa2OGNSFgaGtChjU5YHDrYPZ7tRhgA8sLGdZCV+j1sA0uL2ZYCwM2xBqQzXlCwJoTM6xS8eu1JEmSJEmSJG32AioYHtEweQA9AAAAAElFTkSuQmCC";
+const pdfImageCount = (bytes) => (bytes.toString("latin1").match(/\/Subtype \/Image/g) || []).length;
 const artifactDir = process.env.PANT_RENDERIZADOR_ARTIFACT_DIR || "/tmp/pant-renderizador-e2e";
 await mkdir(artifactDir, { recursive: true });
 const server = await startStaticServer("dist/public", {
@@ -77,6 +80,20 @@ try {
   assert.equal(await page.locator(".structure-titles li").first().textContent(), "DOCUMENTO DEMONSTRATIVO",
     "a tela mostra as linhas que viraram título");
 
+  // Prescrição em prosa é bloqueada; o quadro de terapias preenchido libera o PDF.
+  const prescriptionEditor = page.getByLabel("Markdown do laudo");
+  await prescriptionEditor.fill("# Documento demonstrativo\n\n## Terapias indicadas\n\nTexto sintético de prescrição em prosa.");
+  await page.getByRole("button", { name: "Gerar prévia PDF" }).click();
+  await page.getByRole("alert").filter({ hasText: "A prescrição precisa estar em tabela" }).waitFor();
+  assert.equal(await page.locator('iframe[title="Prévia integral do PDF"]').count(), 0, "prescrição sem tabela não chega ao PDF");
+  await page.getByRole("button", { name: "Inserir quadro de terapias" }).click();
+  await page.getByRole("button", { name: "Gerar prévia PDF" }).click();
+  await page.getByRole("alert").filter({ hasText: "Complete manualmente" }).waitFor();
+  await prescriptionEditor.fill((await prescriptionEditor.inputValue()).replaceAll("[preencher]", "Exemplo sintético"));
+  await page.getByRole("button", { name: "Gerar prévia PDF" }).click();
+  await page.locator('iframe[title="Prévia integral do PDF"]').waitFor({ timeout: 20000 });
+  assert.equal(await page.getByRole("alert").count(), 0, "quadro preenchido libera a geração");
+
   const markdown = [
     "# Documento demonstrativo",
     "",
@@ -108,7 +125,16 @@ try {
   assert.equal(draft.bytes.subarray(0, 5).toString(), "%PDF-");
   assert.ok(pdfPages(draft.bytes) >= 2, "rascunho precisa conter capa e página de conteúdo");
 
-  await page.getByRole("checkbox", { name: /Revisei o conteúdo integral/ }).check();
+  // Assinatura manuscrita sintética (traço de teste), cadastrada só neste navegador.
+  await page.locator('input[type="file"][accept="image/png"]').setInputFiles({
+    name: "assinatura-teste.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(SYNTHETIC_SIGNATURE_PNG, "base64"),
+  });
+  await page.getByRole("img", { name: /Assinatura manuscrita cadastrada/ }).waitFor();
+  assert.equal(await page.locator('iframe[title="Prévia integral do PDF"]').count(), 1, "cadastrar a assinatura não descarta o rascunho");
+  assert.ok((await page.evaluate(() => localStorage.getItem("neuroped.renderizador.assinatura.v1")))?.startsWith("data:image/png;base64,"));
+  await page.getByRole("checkbox", { name: /com a minha assinatura manuscrita/ }).check();
   await page.getByText("Versão definitiva liberada").waitFor({ timeout: 20000 });
   const definitive = await downloadedBytes(page.getByRole("button", { name: "Baixar PDF" }));
   assert.ok(definitive.name.startsWith("PANT_"));
@@ -121,6 +147,8 @@ try {
   const manifestDownload = await manifestPending;
   const manifest = JSON.parse(await readFile(await manifestDownload.path(), "utf8"));
   assert.equal(manifest.review_confirmed, true);
+  assert.equal(manifest.handwritten_signature_applied, true, "versão definitiva registra a assinatura no manifesto");
+  assert.ok(pdfImageCount(definitive.bytes) > pdfImageCount(draft.bytes), "assinatura só no PDF definitivo");
   assert.equal(manifest.release_status, "definitive_after_medical_review");
   assert.ok(manifest.medical_acceptance_at);
   assert.equal(manifest.pdf_sha256, createHash("sha256").update(definitive.bytes).digest("hex"));
