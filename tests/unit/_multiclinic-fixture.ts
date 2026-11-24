@@ -1,7 +1,7 @@
-/** Fixture compartilhada (SQLite real: schema + todas as migrations; node:sqlite, Node >= 22). Dados fictícios. */
+/** Fixture compartilhada (SQLite real, schema + migrações). Dados fictícios. */
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
-import { DatabaseSync } from "node:sqlite";
+import type { DatabaseSync } from "node:sqlite";
 import { onRequest as globalMiddleware } from "../../functions/api/_middleware";
 import { createSessionTokens } from "../../functions/api/auth/_sessions";
 import { getUserById } from "../../functions/api/auth/_shared";
@@ -10,8 +10,19 @@ const SECRET = "synthetic-multiclinic-session-secret-32chars-min";
 export const ALFA = "clinica-alfa-sintetica";
 export const BETA = "clinica-beta-sintetica";
 
+// O gate visual ainda usa Node 20. Ambos os drivers exercitam SQLite real;
+// em Node 22+ preservamos o driver nativo usado pelos demais testes.
+async function openSqlite(): Promise<DatabaseSync> {
+  if (Number(process.versions.node.split(".")[0]) >= 22) {
+    const { DatabaseSync } = await import("node:sqlite");
+    return new DatabaseSync(":memory:");
+  }
+  const { default: Database } = await import("better-sqlite3");
+  return new Database(":memory:") as unknown as DatabaseSync;
+}
+
 export async function fixture() {
-  const raw = new DatabaseSync(":memory:");
+  const raw = await openSqlite();
   raw.exec("PRAGMA foreign_keys = OFF");
   raw.exec(readFileSync("db/schema.d1.sql", "utf8"));
   for (const name of readdirSync("db/migrations").filter((n) => n.endsWith(".sql")).sort()) {
@@ -36,7 +47,8 @@ export async function fixture() {
         const out = [];
         for (const st of statements) {
           const stmt = raw.prepare(st.sql);
-          if (stmt.columns().length > 0) out.push({ success: true, results: stmt.all(...st.args as never[]), meta: { changes: 0 } });
+          const readsRows = "reader" in stmt ? stmt.reader === true : stmt.columns().length > 0;
+          if (readsRows) out.push({ success: true, results: stmt.all(...st.args as never[]), meta: { changes: 0 } });
           else out.push({ success: true, results: [], meta: { changes: Number(stmt.run(...st.args as never[]).changes) } });
         }
         raw.exec("COMMIT");
