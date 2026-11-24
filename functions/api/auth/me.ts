@@ -28,5 +28,5 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     return json({ error: "Sessão revogada.", code: "INVALID_SESSION" }, 401);
   }
 
-  return json(publicUser(user), 200);
+  return json(publicUser(user, env), 200);
 };
