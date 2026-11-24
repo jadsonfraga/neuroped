@@ -183,7 +183,10 @@ function drawRuns(doc, runs, x, y, maxWidth, opts = {}) {
   lines.forEach((line, index) => {
     if (index > 0) {
       lineY += leading;
-      if (opts.bottom && lineY > opts.bottom) {
+      // Fecho do laudo: as duas últimas linhas do último parágrafo descem
+      // junto com a assinatura, que nunca fica sozinha numa folha.
+      const tailNeed = opts.tailReserve && index === lines.length - 2 ? leading + opts.tailReserve : 0;
+      if (opts.bottom && (lineY > opts.bottom || lineY + tailNeed > opts.bottom)) {
         if (!opts.onPageBreak) throw Error("Texto ultrapassou o limite da página.");
         lineY = opts.onPageBreak();
       }
@@ -206,6 +209,7 @@ function drawRuns(doc, runs, x, y, maxWidth, opts = {}) {
       }
       lineX += word.width;
     });
+    opts.onLine?.(lineY);
   });
   doc.setTextColor(...COLORS.ink);
   return { y: lineY + leading, lines: lines.length };
@@ -245,7 +249,41 @@ export function headingNumbering(blocks) {
   return numbers;
 }
 
+// Trava de layout: nenhuma folha de conteúdo antes da última pode terminar
+// acima da metade da área útil, e o fecho (assinatura) nunca fica sozinho.
+export const MIN_PAGE_FILL = 0.5;
+const CONTENT_TOP = 111;
+const SIGNATURE_BOX_H = 66;
+const SIGNATURE_MAX_W = 375;
+const CLOSING_HEIGHT = 26 + SIGNATURE_BOX_H + 70;
+
 export function createPantPdf(jsPDF, md, meta, assets) {
+  let doc = renderPantPdf(jsPDF, md, meta, assets, null);
+  if (doc.pantLayout.closingAlone) {
+    // Segunda passada determinística: o último trecho de texto reserva espaço
+    // para o fecho e desce com ele.
+    doc = renderPantPdf(jsPDF, md, meta, assets, doc.pantLayout.tail);
+    doc.pantLayout.passes = 2;
+  }
+  assertPageFill(doc.pantLayout);
+  return doc;
+}
+
+export function assertPageFill(layout) {
+  const { fill, usable } = layout;
+  for (let i = 0; i < fill.length - 1; i++) {
+    const ratio = fill[i] / usable;
+    if (ratio < MIN_PAGE_FILL) {
+      throw Error(
+        `A folha ${i + 1} ficaria preenchida só até ${Math.round(ratio * 100)}% da altura. ` +
+          "O PDF não foi gerado para não sair com folha subpreenchida: reduza o cabeçalho da tabela ou divida o bloco extenso e gere novamente.",
+      );
+    }
+  }
+  if (layout.closingAlone) throw Error("A assinatura ficaria sozinha numa folha. Gere novamente após ajustar o último parágrafo.");
+}
+
+function renderPantPdf(jsPDF, md, meta, assets, tail) {
   const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4", compress: true });
   doc.setProperties({
     title: meta.title,
@@ -351,8 +389,19 @@ export function createPantPdf(jsPDF, md, meta, assets) {
 
   doc.addPage();
   drawFrame(false);
-  let y = 111;
+  let y = CONTENT_TOP;
+  // Linha de base mais baixa realmente usada em cada folha de conteúdo.
+  const fill = [0];
+  let closingAlone = false;
+  let paragraphCalls = 0;
+  let tableRowCalls = 0;
+  let lastKind = "";
+  function ink(baseline) {
+    const i = fill.length - 1;
+    fill[i] = Math.max(fill[i], baseline - CONTENT_TOP);
+  }
   function newContentPage() {
+    fill.push(0);
     doc.addPage();
     drawFrame(false);
     y = 111;
@@ -367,11 +416,17 @@ export function createPantPdf(jsPDF, md, meta, assets) {
     // Never leave a single line of a multi-line paragraph at the foot of a page.
     // A one-line paragraph only needs its baseline to fit; the first line of a
     // longer paragraph must be accompanied by at least one more line.
-    ensureSpace((Math.min(lineCount, 2) - 1) * leading);
+    paragraphCalls += 1;
+    lastKind = "paragraph";
+    const tailReserve = tail?.kind === "paragraph" && paragraphCalls === tail.count ? CLOSING_HEIGHT + 14 : 0;
+    ensureSpace((Math.min(lineCount, 2) - 1) * leading + (tailReserve && lineCount <= 2 ? tailReserve : 0));
+    opts.beforeDraw?.();
     const out = drawRuns(doc, runs, left + (opts.depth || 0) * 12, y, maxWidth - (opts.depth || 0) * 12, {
       ...opts,
       leading,
       bottom,
+      tailReserve,
+      onLine: ink,
       onPageBreak: () => {
         newContentPage();
         return y;
@@ -411,6 +466,7 @@ export function createPantPdf(jsPDF, md, meta, assets) {
         });
       });
       y += height;
+      ink(y);
     };
     const headerWraps = wrapCells(block.header, true);
     const headerLines = Math.max(1, ...headerWraps.map((lines) => lines.length));
@@ -426,9 +482,12 @@ export function createPantPdf(jsPDF, md, meta, assets) {
     for (const row of block.rows) {
       const wraps = wrapCells(row, false);
       const total = Math.max(1, ...wraps.map((lines) => lines.length));
+      tableRowCalls += 1;
+      lastKind = "table";
+      const reserve = tail?.kind === "table" && tableRowCalls === tail.count ? CLOSING_HEIGHT + 16 : 0;
       let offset = 0;
       while (offset < total) {
-        const availableLines = Math.floor((bottom - y - 12) / lineHeight);
+        const availableLines = Math.floor((bottom - reserve - y - 12) / lineHeight);
         const count = Math.min(total - offset, availableLines);
         if (count < 1 || y + rowHeight(count) > bottom) {
           newContentPage();
@@ -461,7 +520,8 @@ export function createPantPdf(jsPDF, md, meta, assets) {
       // Respiro antes do título; no topo da folha, só o afastamento do fio do cabeçalho.
       y += y > 111 ? (block.depth <= 2 ? 22 : 12) : 10;
       // Mantém o título na mesma folha que ao menos três linhas do que vem depois.
-      ensureSpace(headingHeight + 3 * BODY_LEADING);
+      // Título no fim do texto desce junto com o fecho.
+      ensureSpace(headingHeight + (block === blocks.at(-1) ? CLOSING_HEIGHT : 3 * BODY_LEADING));
       if (sectionLevel) {
         const numeral = romanNumeral(number);
         doc.setFont("Cormorant", "normal");
@@ -479,6 +539,8 @@ export function createPantPdf(jsPDF, md, meta, assets) {
       doc.setFontSize(fontSize);
       doc.setTextColor(...COLORS.navy);
       doc.text(lines, left, y, { lineHeightFactor: 1.18 });
+      ink(y + (lines.length - 1) * lineGap);
+      lastKind = "heading";
       y += (lines.length - 1) * lineGap + (block.depth <= 2 ? 26 : 18);
       return;
     }
@@ -489,11 +551,20 @@ export function createPantPdf(jsPDF, md, meta, assets) {
     if (block.type === "list") {
       block.items.forEach((item, i) => {
         ensureSpace(34);
-        doc.setFont("Cormorant", "normal");
-        doc.setFontSize(12.5);
-        doc.setTextColor(...COLORS.gold);
-        doc.text(block.ordered ? `${block.start + i}.` : "•", left + block.depth * 12, y);
-        paragraph(item.runs, { indent: 19, depth: block.depth, after: 5 });
+        // O marcador é desenhado depois da decisão de quebra do parágrafo,
+        // para nunca ficar sozinho na folha anterior.
+        const marker = block.ordered ? `${block.start + i}.` : "•";
+        paragraph(item.runs, {
+          indent: 19,
+          depth: block.depth,
+          after: 5,
+          beforeDraw: () => {
+            doc.setFont("Cormorant", "normal");
+            doc.setFontSize(12.5);
+            doc.setTextColor(...COLORS.gold);
+            doc.text(marker, left + block.depth * 12, y);
+          },
+        });
         item.nested.forEach(renderBlock);
       });
       y += 3;
@@ -516,10 +587,12 @@ export function createPantPdf(jsPDF, md, meta, assets) {
       return;
     }
     if (block.type === "rule") {
-      ensureSpace(20);
+      ensureSpace(block === blocks.at(-1) ? 20 + CLOSING_HEIGHT : 20);
       doc.setDrawColor(...COLORS.gold);
       doc.setLineWidth(0.7);
       doc.line(left, y, right, y);
+      ink(y);
+      lastKind = "rule";
       y += 14;
     }
   }
@@ -527,16 +600,18 @@ export function createPantPdf(jsPDF, md, meta, assets) {
   // Fecho do laudo no padrão PANT: assinatura manuscrita (só na versão
   // definitiva, após o aceite médico), nome, credenciais, fio e lema.
   function drawClosing() {
-    const signatureH = 44;
-    const blockHeight = 26 + signatureH + 70;
-    ensureSpace(blockHeight);
+    const signatureH = SIGNATURE_BOX_H;
+    if (y + CLOSING_HEIGHT > bottom) {
+      newContentPage();
+      closingAlone = true;
+    }
     y += 26;
     const center = pageWidth / 2;
     const sign = releaseStatus === "definitive" && assets.signature ? assets.signature : null;
     if (sign) {
       const props = doc.getImageProperties(sign);
       const ratio = props.width > 0 && props.height > 0 ? props.width / props.height : 6;
-      const w = Math.min(250, signatureH * ratio);
+      const w = Math.min(SIGNATURE_MAX_W, signatureH * ratio);
       const h = w / ratio;
       doc.addImage(sign, "PNG", center - w / 2, y + (signatureH - h), w, h, "assinatura", "SLOW");
     } else {
@@ -563,6 +638,7 @@ export function createPantPdf(jsPDF, md, meta, assets) {
     doc.setFontSize(12.5);
     doc.setTextColor(...COLORS.numeral);
     doc.text("Soli Deo Gloria", center, y, { align: "center" });
+    ink(y);
     y += 10;
   }
 
@@ -582,6 +658,12 @@ export function createPantPdf(jsPDF, md, meta, assets) {
     doc.text(`fl. ${page - 1} de ${pageCount - 1}`, right, pageHeight - 41, { align: "right" });
   }
   doc.setPage(pageCount);
+  doc.pantLayout = {
+    fill,
+    usable: bottom - CONTENT_TOP,
+    closingAlone,
+    tail: { kind: lastKind === "table" ? "table" : "paragraph", count: lastKind === "table" ? tableRowCalls : paragraphCalls },
+  };
   return doc;
 }
 

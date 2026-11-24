@@ -205,6 +205,8 @@ console.log("Justificação preserva números e palavras com formatação intern
   assert.equal(sig.length, 1, "versão definitiva leva uma assinatura");
   const props = new jsPDF().getImageProperties(signature);
   assert.ok(Math.abs(sig[0].w / sig[0].h - props.width / props.height) < 0.005, "assinatura na proporção real");
+  // 1,5× o tamanho original do fecho (250 pt → 375 pt de largura para traços largos).
+  assert.ok(Math.abs(sig[0].w - Math.min(375, 66 * (props.width / props.height))) < 0.01, `assinatura com ${sig[0].w.toFixed(1)} pt de largura`);
   const pageWidth = new jsPDF({ unit: "pt", format: "a4" }).internal.pageSize.getWidth();
   assert.ok(Math.abs(sig[0].x + sig[0].w / 2 - pageWidth / 2) < 0.01, "assinatura centralizada");
   assert.equal(sig[0].page, signed.Pdf.last.getNumberOfPages(), "assinatura na última folha");
