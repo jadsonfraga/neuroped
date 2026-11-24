@@ -42,12 +42,24 @@ assert.equal(structurePastedText(md).mode, "markdown");
 const pipe = structurePastedText("# T\n\n| A | B |\n| um | dois |");
 assert.equal(contentFromMarkdown(pipe.markdown).filter((b) => b.type === "table").length, 1);
 
-// Texto livre separado por espaços nunca vira tabela por inferência.
+// Cabeçalho clínico explícito e unidade reconhecida geram tabela sem inferir campos.
 const free = structurePastedText("Terapia Carga Objetivo\nFonoaudiologia 3 h/semana Comunicação funcional");
-assert.ok(contentFromMarkdown(free.markdown).every((b) => b.type !== "table"));
+assert.equal(contentFromMarkdown(free.markdown).filter((b) => b.type === "table").length, 1);
+assert.deepEqual(wordsOf(free.markdown), wordsOf("Terapia Carga Objetivo\nFonoaudiologia 3 h/semana Comunicação funcional"));
 
 // Texto sem nenhum título continua renderizável (sem bloqueio).
 const none = structurePastedText("apenas um parágrafo sintético em minúsculas, sem título.");
 assert.equal(none.headings, 0);
 assert.ok(contentFromMarkdown(none.markdown).length >= 1);
-console.log("Markdown explícito respeitado, tabela com barras corrigida e texto livre sem inferência de tabela: OK");
+console.log("Markdown explícito respeitado, tabela com barras corrigida e prescrição reconhecida sem inferência de campos: OK");
+
+const meds = "# Prescrição de medicamentos\n\nMedicamento A 2,5 mg/mL — 0,5 mL à noite\nMedicamento B 10 mg — 1 comprimido pela manhã\n\n## Observações\nReavaliar.";
+const medResult = structurePastedText(meds);
+assert.equal(medResult.tables, 1);
+assert.deepEqual(wordsOf(medResult.markdown), wordsOf(meds));
+assert.ok(medResult.markdown.includes("2,5 mg/mL — 0,5 mL à noite"));
+assert.ok(medResult.markdown.includes("10 mg — 1 comprimido pela manhã"));
+assert.equal(structurePastedText(medResult.markdown).markdown, medResult.markdown);
+const ambiguous = "# Prescrição de medicamentos\n\nConsiderar ajuste após revisão.";
+assert.equal(structurePastedText(ambiguous).tables, 0);
+assert.equal(structurePastedText("Histórico\nMedicamento A 10 mg em uso").tables, 0);
