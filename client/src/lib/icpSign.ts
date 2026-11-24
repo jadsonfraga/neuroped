@@ -8,6 +8,7 @@ import { PDFDocument } from "pdf-lib";
 import forge from "node-forge";
 import {
   addPadesPlaceholder,
+  assertCadesDetachedIntegrity,
   applyItiHealthMetadata,
   buildCadesDetachedSignature,
   type HealthDocumentMeta,
@@ -143,16 +144,24 @@ export async function assertSignedPdfIntegrity(
   }
 
   const source = buffer.toString("latin1");
-  if (!/\/ByteRange\s*\[\s*0\s+\d+\s+\d+\s+\d+\s*\]/.test(source)) {
-    throw new Error("Integridade do PDF assinado inválida: /ByteRange ausente.");
-  }
+  const ranges = Array.from(source.matchAll(/\/ByteRange\s*\[\s*0\s+(\d+)\s+(\d+)\s+(\d+)\s*\]/g));
+  if (ranges.length !== 1) throw new Error("Integridade do PDF assinado inválida: /ByteRange ambíguo ou ausente.");
   if (!/\/SubFilter\s*\/ETSI\.CAdES\.detached/.test(source)) {
     throw new Error("Integridade do PDF assinado inválida: subfiltro CAdES detached ausente.");
   }
-  const contents = source.match(/\/Contents\s*<([0-9A-Fa-f]{64,})>/);
-  if (!contents || /^0+$/.test(contents[1].slice(0, 128))) {
-    throw new Error("Integridade do PDF assinado inválida: /Contents não foi preenchido.");
+  const [firstEnd, secondStart, secondLength] = ranges[0].slice(1).map(Number);
+  if (![firstEnd, secondStart, secondLength].every(Number.isSafeInteger) ||
+      firstEnd <= 0 || secondStart <= firstEnd || secondLength <= 0 ||
+      secondStart + secondLength !== buffer.length ||
+      !/\/Contents\s*$/.test(source.slice(Math.max(0, firstEnd - 64), firstEnd))) {
+    throw new Error("Integridade do PDF assinado inválida: /ByteRange não cobre o arquivo integral.");
   }
+  const gap = source.slice(firstEnd, secondStart);
+  if (!/^<[0-9A-Fa-f]+>$/.test(gap) || (gap.length - 2) % 2 !== 0) {
+    throw new Error("Integridade do PDF assinado inválida: /Contents fora do intervalo previsto.");
+  }
+  const signedContent = Buffer.concat([buffer.subarray(0, firstEnd), buffer.subarray(secondStart)]);
+  assertCadesDetachedIntegrity(signedContent, gap.slice(1, -1));
 
   const parsed = await PDFDocument.load(signedBytes);
   if (expectedPageCount !== undefined && parsed.getPageCount() !== expectedPageCount) {

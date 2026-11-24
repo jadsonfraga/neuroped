@@ -75,4 +75,20 @@ assert.match(raw, /\/SubFilter\s*\/ETSI\.CAdES\.detached/, "assinatura deve usar
 const parsed = await PDFDocument.load(signedPdf);
 assert.equal(parsed.getPageCount(), 1, "assinatura não pode perder ou acrescentar páginas");
 
+// A estrutura continua reconhecível, mas os bytes assinados mudaram.
+const tampered = Buffer.from(signedPdf);
+const headerIndex = tampered.indexOf(Buffer.from("%PDF-"));
+tampered[headerIndex + 5] = tampered[headerIndex + 5] === 49 ? 50 : 49;
+await assert.rejects(assertSignedPdfIntegrity(tampered), /Integridade/);
+
+const appended = Buffer.concat([Buffer.from(signedPdf), Buffer.from("\n%alteracao")]);
+await assert.rejects(assertSignedPdfIntegrity(appended), /ByteRange/);
+
+const range = raw.match(/\/ByteRange\s*\[\s*0\s+(\d+)\s+(\d+)\s+(\d+)\s*\]/);
+assert.ok(range);
+const cmsTampered = Buffer.from(signedPdf);
+const cmsOffset = Number(range[1]) + 20;
+cmsTampered[cmsOffset] = cmsTampered[cmsOffset] === 48 ? 49 : 48;
+await assert.rejects(assertSignedPdfIntegrity(cmsTampered), /Integridade/);
+
 console.log("[pdf-p12-signing] ✓ PDF real assinado com PFX/P12 efêmero e reaberto com integridade estrutural.");
