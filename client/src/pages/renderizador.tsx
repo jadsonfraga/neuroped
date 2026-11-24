@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { createPdfBlob, sample } from "@/lib/renderizador/document.mjs";
 import { clearStoredSignature, readStoredSignature, storeSignature } from "@/lib/renderizador/signature-store";
-import { hasUnfilledTableTemplate, structuredTableTemplate } from "@/lib/renderizador/table-editor.mjs";
+import { hasUnfilledTableTemplate, structuredTableTemplate, medicationTableTemplate, prescriptionSectionsWithoutTable, therapyTableTemplate } from "@/lib/renderizador/table-editor.mjs";
 import { structurePastedText, type StructuredText } from "@/lib/renderizador/auto-structure.mjs";
 export default function RenderizadorPage() {
   const [md, setMd] = useState(""),
@@ -126,9 +126,8 @@ export default function RenderizadorPage() {
     setDetail("Exemplo sem dados clínicos");
     setTab("editor");
   }
-  function insertStructuredTable() {
+  function insertStructuredTable(table = structuredTableTemplate()) {
     invalidate();
-    const table = structuredTableTemplate();
     setMd((current) => `${current.trimEnd()}${current.trim() ? "\n\n" : ""}${table}\n`);
     setTab("editor");
   }
@@ -148,6 +147,14 @@ export default function RenderizadorPage() {
       prepared = structurePastedText(md);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Não foi possível estruturar o texto.");
+      return;
+    }
+    // Prescrição de terapias e medicações sempre em tabela, preenchida pelo médico.
+    const semTabela = prescriptionSectionsWithoutTable(prepared.markdown);
+    if (semTabela.length) {
+      setError(
+        `A prescrição precisa estar em tabela. Insira o quadro de terapias ou de medicações dentro da seção ${semTabela.map((t) => `“${t}”`).join(", ")} e preencha cada célula antes de gerar o PDF.`,
+      );
       return;
     }
     // A definitive file may only be requested from an existing, reviewable draft.
@@ -387,7 +394,10 @@ export default function RenderizadorPage() {
               {tab === "editor" && (
                 <div className="table-helper">
                   <p>Tabelas coladas do Word ou de planilhas viram tabela automaticamente. Texto livre separado só por espaços nunca é convertido em tabela; para montar uma do zero, insira a estrutura e preencha cada célula.</p>
-                  <button type="button" className="text-button" onClick={insertStructuredTable}>Inserir estrutura de tabela</button>
+                  <button type="button" className="text-button" onClick={() => insertStructuredTable()}>Inserir estrutura de tabela</button>
+                  <button type="button" className="text-button" onClick={() => insertStructuredTable(therapyTableTemplate())}>Inserir quadro de terapias</button>
+                  <button type="button" className="text-button" onClick={() => insertStructuredTable(medicationTableTemplate())}>Inserir quadro de medicações</button>
+                  <p>Prescrição de terapias e de medicações sai sempre em tabela: insira o quadro dentro da seção da prescrição e preencha cada célula com o texto que você prescreveu.</p>
                 </div>
               )}
               <input

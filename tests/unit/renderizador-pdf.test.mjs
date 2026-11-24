@@ -270,3 +270,27 @@ console.log("Justificação preserva números e palavras com formatação intern
   assert.ok(cellWords.includes("Ampliar delta funcional e manter o restante comum"), "célula preserva todas as palavras na ordem");
   console.log("Todo negrito em salmão (parágrafo, lista, citação e tabela), cabeçalhos e títulos preservados: OK");
 }
+
+// Prescrição de terapias e medicações sempre em tabela, sem inferir a partir de texto livre.
+{
+  const { prescriptionSectionsWithoutTable, therapyTableTemplate, medicationTableTemplate } = await import("../../client/src/lib/renderizador/table-editor.mjs");
+  const prose = "Texto sintético em prosa, sem tabela.";
+  assert.deepEqual(prescriptionSectionsWithoutTable(`## Terapias indicadas\n\n${prose}`), ["Terapias indicadas"]);
+  assert.deepEqual(prescriptionSectionsWithoutTable(`## Prescrição\n\n${prose}`), ["Prescrição"]);
+  assert.deepEqual(prescriptionSectionsWithoutTable(`## Medicações prescritas\n\n${prose}\n\n## Retorno\n\n${prose}`), ["Medicações prescritas"]);
+  assert.deepEqual(prescriptionSectionsWithoutTable(`## Medicação em uso\n\n${prose}\n\n## Terapias em curso\n\n${prose}`), [], "histórico relatado não é prescrição");
+  assert.deepEqual(prescriptionSectionsWithoutTable(`## Quem é a criança\n\n${prose}`), []);
+  assert.deepEqual(prescriptionSectionsWithoutTable("## Terapias\n"), [], "seção vazia não bloqueia");
+  const filledTherapy = therapyTableTemplate().replaceAll("[preencher]", "Exemplo");
+  const filledMedication = medicationTableTemplate().replaceAll("[preencher]", "Exemplo");
+  assert.deepEqual(prescriptionSectionsWithoutTable(`## Terapias\n\n${prose}\n\n${filledTherapy}\n\n## Medicações\n\n${filledMedication}`), []);
+  assert.deepEqual(prescriptionSectionsWithoutTable(`## Plano terapêutico\n\n### Terapias\n\n${filledTherapy}`), [], "tabela em subseção vale para a seção");
+  assert.deepEqual(prescriptionSectionsWithoutTable(`## Terapias\n\n${prose}\n\n## Retorno\n\n${filledTherapy}`), ["Terapias"], "tabela fora da seção não conta");
+  assert.equal(hasUnfilledTableTemplate(therapyTableTemplate()), true, "quadro de terapias vazio bloqueia");
+  assert.equal(hasUnfilledTableTemplate(medicationTableTemplate()), true, "quadro de medicações vazio bloqueia");
+  assert.match(medicationTableTemplate(), /Medicamento e concentração \| Dose por tomada \| Horários \| Duração e ajustes/);
+  const parsed = contentFromMarkdown(filledMedication);
+  assert.equal(parsed[0].type, "table");
+  assert.equal(parsed[0].header.length, 4);
+  console.log("Prescrição de terapias e medicações exige tabela preenchida pelo médico: OK");
+}
