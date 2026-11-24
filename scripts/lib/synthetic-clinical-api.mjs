@@ -763,6 +763,24 @@ export function createSyntheticClinicalApi(scenario = {}) {
       return true;
     }
 
+    if (pathname === "/api/live/patients/search" && request.method === "POST") {
+      const body = await readBody(request);
+      const clinicId = typeof body?.clinicId === "string" ? body.clinicId.trim() : "";
+      if (!clinicId) {
+        send(response, 400, { error: "clinicId é obrigatório.", code: "VALIDATION_ERROR" });
+        return true;
+      }
+      if (!clinicDetails.has(clinicId)) {
+        send(response, 403, { error: "Acesso clínico negado para esta clínica.", code: "TENANT_FORBIDDEN" });
+        return true;
+      }
+      const q = typeof body?.q === "string" ? body.q.trim().slice(0, 80).toLocaleLowerCase("pt-BR") : "";
+      const rows = state.patients.filter((patient) => patient.clinicId === clinicId
+        && patient.profile.name.toLocaleLowerCase("pt-BR").includes(q));
+      send(response, 200, { data: rows, total: rows.length, filtered: Boolean(q), nextCursor: null });
+      return true;
+    }
+
     const livePatientMatch = /^\/api\/(?:live\/)?patients\/([^/]+)(\/results)?$/.exec(pathname);
     if (livePatientMatch) {
       const id = decodeURIComponent(livePatientMatch[1]);

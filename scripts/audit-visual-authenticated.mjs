@@ -195,10 +195,15 @@ const CASES = [
   },
   {
     id: "pacientes-busca-filtrada", group: "Pacientes", route: "/pacientes", viewport: "desktop", theme: "light",
-    expect: ['[data-testid="input-search-patients"]'],
+    expect: ['[data-testid="input-search-patients"]', `[data-testid="button-edit-${PATIENT_TWO}"]`],
+    forbid: [LOGIN_FORM, `[data-testid="button-edit-${PATIENT}"]`],
     async prepare(page) {
-      await page.fill('[data-testid="input-search-patients"]', "Bravo");
-      await settle(page, 500);
+      const [searchResponse] = await Promise.all([
+        page.waitForResponse((response) => new URL(response.url()).pathname === "/api/live/patients/search"
+          && response.request().method() === "POST", { timeout: 10_000 }),
+        page.fill('[data-testid="input-search-patients"]', "Bravo"),
+      ]);
+      if (!searchResponse.ok()) throw new Error(`Busca LIVE da fixture retornou HTTP ${searchResponse.status()}.`);
     },
   },
   {
