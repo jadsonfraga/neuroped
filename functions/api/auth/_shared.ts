@@ -50,7 +50,7 @@ export interface PublicUser {
   name: string;
   role: string;
   mustChangePassword: boolean;
-  isAppOwner: boolean;
+  isAppOwner?: boolean;
 }
 
 // TTLs em segundos: access curto (refresh automático no client em 401) e
