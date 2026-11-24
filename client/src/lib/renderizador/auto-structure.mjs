@@ -59,12 +59,23 @@ function tableToMarkdown(rows) {
   return [line(rows[0]), "| " + Array(cols).fill("---").join(" | ") + " |", ...rows.slice(1).map(line)].join("\n");
 }
 
-// Collects consecutive rows of an explicit table (tab-separated, as copied from
-// Word/Excel/Sheets, or pipe-delimited without the Markdown separator row).
-function readTable(lines, start) {
-  const tabRow = (l) => l.includes("\t") && l.split("\t").filter((c) => c.trim()).length >= 2;
-  const pipeRow = (l) => /^\s*\|.*\|\s*$/.test(l) && splitPipeRow(l).length >= 2;
-  const kind = tabRow(lines[start]) ? "tab" : pipeRow(lines[start]) ? "pipe" : null;
+const TAB_ROW = (l) => l.includes("\t") && l.split("\t").filter((c) => c.trim()).length >= 2;
+const FRAMED_ROW = (l) => /^\s*\|.*\|\s*$/.test(l);
+const PIPE_ROW = (l) => FRAMED_ROW(l) && splitPipeRow(l).length >= 2;
+const BARE_PIPE_ROW = (l) => /(?<!\\)\|/.test(l) && splitPipeRow(l).length >= 2;
+const SPACE_ROW = (l) => !/[\t|]/.test(l) && l.trim().split(/\s{2,}/).length >= 2;
+
+// Collects consecutive delimited rows. Strict mode (any text) accepts only tab-separated rows
+// (as copied from Word/Excel/Sheets) and pipe rows framed by "|". Loose mode, used only right
+// after a clinical table title or on a recognised clinical header row, also accepts pipes
+// without the outer bars and columns separated by two or more spaces.
+function readDelimited(lines, start, loose) {
+  const first = lines[start];
+  const pipeRow = loose ? BARE_PIPE_ROW : PIPE_ROW;
+  // A one-column Markdown table (the framed title produced for free-text prescriptions) is a table
+  // only when its separator row follows, so reapplying the structuring to its own output is stable.
+  const oneColumn = FRAMED_ROW(first) && isPipeSeparator(lines[start + 1] ?? "");
+  const kind = TAB_ROW(first) ? "tab" : pipeRow(first) || oneColumn ? "pipe" : loose && SPACE_ROW(first) ? "space" : null;
   if (!kind) return null;
   const rows = [];
   let i = start;
@@ -76,36 +87,97 @@ function readTable(lines, start) {
       hasSeparator = true;
       continue;
     }
-    if (kind === "tab" ? !tabRow(l) : !pipeRow(l)) break;
-    rows.push(kind === "tab" ? l.split("\t") : splitPipeRow(l));
+    if (kind === "tab" ? !TAB_ROW(l) : kind === "pipe" ? !(pipeRow(l) || (oneColumn && FRAMED_ROW(l))) : !SPACE_ROW(l)) break;
+    rows.push(kind === "tab" ? l.split("\t") : kind === "pipe" ? splitPipeRow(l) : l.trim().split(/\s{2,}/));
   }
-  if (rows.length < 2) return null;
-  if (kind === "pipe" && hasSeparator) return { end: i, markdown: lines.slice(start, i).join("\n"), converted: false };
-  return { end: i, markdown: tableToMarkdown(rows), converted: true };
+  return rows.length ? { kind, rows, end: i, hasSeparator } : null;
+}
+
+function readTable(lines, start, loose = false) {
+  const table = readDelimited(lines, start, loose);
+  if (!table || table.rows.length < 2) return null;
+  const framed = lines.slice(start, table.end).every((l) => FRAMED_ROW(l) || isPipeSeparator(l));
+  if (table.kind === "pipe" && table.hasSeparator && framed) {
+    return { end: table.end, markdown: lines.slice(start, table.end).join("\n"), converted: false };
+  }
+  return { end: table.end, markdown: tableToMarkdown(table.rows), converted: true };
+}
+
+// ---- Clinical tables: "QUADRO DE TERAPIAS" / "QUADRO DE FARMACOLOGIA" and plain prescriptions ----
+const THERAPY_TITLE = /^(?:(?:quadro|tabela)\s+(?:de\s+|das\s+)?|(?:prescrição|carga horária|plano)\s+de\s+)?terapias(?:\s+(?:indicadas|prescritas|propostas|recomendadas))?$/iu;
+const DRUG_TITLE = /^(?:(?:quadro|tabela)\s+(?:de\s+|da\s+|das\s+)?|prescrição\s+de\s+)?(?:medicações|medicamentos|fármacos|farmacologia|farmacoterapia)(?:\s+(?:indicad[ao]s|prescrit[ao]s|propost[ao]s|recomendad[ao]s))?$|^tratamento medicamentoso$/iu;
+const THERAPY_COLUMNS = "carga horária|carga|frequência e duração|frequência|duração|responsável|objetivo principal|objetivo|indicação|evidência|justificativa";
+const THERAPY_HEADER = new RegExp(`^(?:terapia|intervenção|especialidade)(?:\\s+(?:${THERAPY_COLUMNS})){1,5}$`, "iu");
+const DRUG_COLUMNS = "dose por tomada|dose|posologia|concentração|horários?|via|duração|ajustes|frequência|responsável|e";
+const DRUG_HEADER = new RegExp(`^(?=.*\\b(?:dose|posologia|concentração)\\b)(?:medicamento|fármaco|medicação)(?:\\s+e\\s+concentração)?(?:\\s+(?:${DRUG_COLUMNS})){1,6}$`, "iu");
+const EXPLICIT_TABLE_TITLE = /^(?:quadro|tabela)\b/i;
+const COLUMN_HEAD = /^(?:terapia|interven[çc][ãa]o|especialidade|medicamentos?(?: e concentra[çc][ãa]o)?|f[áa]rmaco|medica[çc][ãa]o)$/i;
+const THERAPY_UNIT = /\b(?:\d+(?:[.,]\d+)?|uma?|duas|tr[êe]s|quatro|cinco|seis|meia)\s*(?:h(?:oras?)?|min(?:utos?)?|sess(?:ão|ões)|vezes|x)\s*(?:\/|por|ao|na|no|a cada|semanais?|quinzenais?|mensais?|diári[ao]s?)|\b(?:semanais?|quinzenais?|mensais?)\b/iu;
+const DRUG_UNIT = /\b\d+(?:[.,]\d+)?\s*(?:mg|mcg|µg|g|mL|gotas?|comprimidos?|cápsulas?|UI)\b/iu;
+
+function cleanTitle(line) {
+  return line.trim().replace(/^#{1,6}\s+/, "").replace(/[*_=+`]/g, "").replace(NUMBER_PREFIX, "").replace(/[:.]$/, "").trim();
+}
+
+function clinicalTitle(line) {
+  const title = cleanTitle(line);
+  const explicit = EXPLICIT_TABLE_TITLE.test(title);
+  if (THERAPY_TITLE.test(title)) return { therapy: true, explicit, headerLine: false };
+  if (DRUG_TITLE.test(title)) return { therapy: false, explicit, headerLine: false };
+  if (THERAPY_HEADER.test(title)) return { therapy: true, explicit: false, headerLine: true };
+  if (DRUG_HEADER.test(title)) return { therapy: false, explicit: false, headerLine: true };
+  return null;
+}
+
+// A title line that introduces a table (not a header row that already names the columns).
+function isClinicalTitle(line) {
+  const info = line && clinicalTitle(line);
+  return Boolean(info && !info.headerLine);
+}
+
+// A delimited row whose first cell is a column name ("Terapia", "Medicamento e concentração"…).
+function isHeaderRow(cells) {
+  return COLUMN_HEAD.test(cells[0].trim()) && !cells.some((c) => /\d/.test(c));
 }
 
 // Detect clinical blocks conservatively; retain entire prescriptions when column boundaries are ambiguous.
 function readClinicalTable(lines, start) {
   const header = lines[start].trim();
   if (/[|\t\\]/.test(header)) return null;
-  const title = header.replace(/^#{1,6}\s+/, "").replace(/:$/, "").trim();
-  const therapy = /^(?:prescrição de |carga horária de |plano de )?terapias$|^(?:terapia|intervenção|especialidade)\s+(?:carga horária|carga|frequência(?: e duração)?)(?:\s+objetivo(?: principal)?)?$/i.test(title);
-  const drug = /^(?:prescrição de )?(?:medicações|medicamentos|fármacos)$|^tratamento medicamentoso$|^(?:medicamento|fármaco|medicação)(?: e concentração)?\s+(?:dose|posologia|concentração)(?:\s+(?:por tomada|horários?|frequência|via|duração|posologia|dose|ajustes))*$/i.test(title);
-  if (!therapy && !drug) return null;
-  const rows = [];
+  const info = clinicalTitle(header);
+  if (!info) return null;
+  const heading = header.replace(/^#{1,6}\s+/, "");
   let i = start + 1;
   if (!lines[i]?.trim()) i++;
-  const unit = therapy
-    ? /\b\d+(?:[.,]\d+)?\s*(?:h(?:oras?)?|min(?:utos?)?|sess(?:ão|ões)|vezes)\s*(?:\/|por|ao|a cada|semanais?|diári[ao]s?)/iu
-    : /\b\d+(?:[.,]\d+)?\s*(?:mg|mcg|µg|g|mL|gotas?|comprimidos?|cápsulas?|UI)\b/iu;
+
+  // A title followed by a line that names the columns stays a heading; that line starts the table.
+  if (!info.headerLine && lines[i]?.trim() && !/[|\t\\]/.test(lines[i]) && clinicalTitle(lines[i])?.headerLine) return null;
+
+  // Delimited rows under a title: with a real header row the title stays a heading and the table
+  // is read on its own; with data rows only, the title becomes the table header (no word is added).
+  if (!info.headerLine && lines[i]) {
+    const delimited = readDelimited(lines, i, true);
+    if (delimited) {
+      if (delimited.hasSeparator || isHeaderRow(delimited.rows[0])) return null;
+      return { end: delimited.end, markdown: tableToMarkdown([[heading], ...delimited.rows]), converted: true };
+    }
+  }
+
+  // Free rows: one per line, kept whole in a single cell because column boundaries are ambiguous.
+  // After an explicit "Quadro/Tabela de …" title any short row belongs to the table; otherwise
+  // each row must carry a recognisable unit (carga horária or dose).
+  const unit = info.therapy ? THERAPY_UNIT : DRUG_UNIT;
+  const explicit = info.explicit && !info.headerLine;
+  const rows = [];
   for (; i < lines.length; i++) {
     const row = lines[i].trim();
-    if (!row || /^#|^.{1,70}:$/.test(row) || /[|\\]/.test(row) || !unit.test(row)) break;
+    if (!row || /^#|^.{1,70}:$/.test(row) || /[|\\]/.test(row) || isUpperTitle(row) || /^(?:carga total|total)\b/i.test(row)) break;
+    if (!(unit.test(row) || (explicit && !isLongText(row)))) break;
     rows.push([row]);
   }
   if (!rows.length) return null;
   // Keep the original heading and all characters of each prescription.
-  return { end: i, markdown: tableToMarkdown([[header.replace(/^#{1,6}\s+/, "")], ...rows]), converted: true };
+  return { end: i, markdown: tableToMarkdown([[heading], ...rows]), converted: true };
 }
 
 /**
@@ -127,6 +199,17 @@ export function structurePastedText(input) {
     for (let j = from; j < lines.length; j++) if (lines[j].trim()) return lines[j].trim();
     return "";
   };
+  const previousText = (from) => {
+    for (let j = from - 1; j >= 0; j--) if (lines[j].trim()) return lines[j].trim();
+    return "";
+  };
+  // Loose delimiters (pipes without outer bars, columns split by 2+ spaces) are read only
+  // right after a clinical table title or on a row that starts with a column name.
+  const looseContext = (i) => {
+    if (isClinicalTitle(previousText(i))) return true;
+    const delimited = readDelimited(lines, i, true);
+    return Boolean(delimited && isHeaderRow(delimited.rows[0]));
+  };
 
   for (let i = 0; i < lines.length; i++) {
     const raw = lines[i];
@@ -140,7 +223,7 @@ export function structurePastedText(input) {
       blocks.push({ type: "blank" });
       continue;
     }
-    const table = readTable(lines, i) || readClinicalTable(lines, i);
+    const table = readTable(lines, i, looseContext(i)) || readClinicalTable(lines, i);
     if (table) {
       blocks.push({ type: "table", text: table.markdown });
       if (table.converted) tables++;
@@ -164,7 +247,7 @@ export function structurePastedText(input) {
     const prevBlank = !blocks.length || blocks.at(-1).type === "blank";
     const prevClosed = !prev || prevBlank || prev.type !== "para" || TERMINAL.test(prev.text);
     const following = nextText(i + 1);
-    if (isUpperTitle(line) && following) {
+    if ((isUpperTitle(line) || isClinicalTitle(line)) && following) {
       blocks.push({ type: "heading", text: "## " + line });
       headings++;
       continue;
@@ -174,7 +257,7 @@ export function structurePastedText(input) {
       headings++;
       continue;
     }
-    if (isShortTitle(line) && prevClosed && following && isLongText(following) && !readTable(lines, i + 1) && !readClinicalTable(lines, i + 1)) {
+    if (isShortTitle(line) && prevClosed && following && isLongText(following) && !readTable(lines, i + 1, looseContext(i + 1)) && !readClinicalTable(lines, i + 1)) {
       blocks.push({ type: "heading", text: "## " + line });
       headings++;
       continue;
