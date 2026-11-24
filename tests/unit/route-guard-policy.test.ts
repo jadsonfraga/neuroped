@@ -26,6 +26,8 @@ if (OPEN_ACCESS) {
       `${path} deve liberar no modo aberto`,
     );
   }
+  assert.equal(decideRouteAccess({ path: "/renderizador", accessMode: "remote", isAuthenticated: false, isLoading: false }), "login");
+  assert.equal(decideRouteAccess({ path: "/renderizador", accessMode: "local", isAuthenticated: false, isLoading: false, localPinConfigured: true, localPinUnlocked: true }), "forbidden");
   // Referencia os símbolos importados para não disparar no-unused sob o early-exit.
   void isReaderClinicalRoute; void isRouteSensitive; void READER_CLINICAL_ROUTES; void SENSITIVE_ROUTES; void readFileSync;
   console.log("✓ modo ACESSO ABERTO: app inteiro libera sem PIN nem login");
@@ -228,12 +230,25 @@ for (const path of clinicalRouteSamples) {
         isAuthenticated: true,
         isLoading: false,
         userRole,
+        userIsAppOwner: userRole === "admin" && path === "/renderizador",
       }),
-      "allow",
-      `${userRole} deve abrir a rota clínica ${path}`,
+      path === "/renderizador" && userRole !== "admin" ? "forbidden" : "allow",
+      `${userRole} recebeu decisão incorreta em ${path}`,
     );
   }
 }
+
+// Apenas a identidade proprietária autenticada abre o renderizador; a senha/PIN local não basta.
+for (const input of [
+  { accessMode: "remote", isAuthenticated: true, userRole: "admin", userIsAppOwner: false, expected: "forbidden" },
+  { accessMode: "remote", isAuthenticated: true, userRole: "professional", userIsAppOwner: true, expected: "forbidden" },
+  { accessMode: "local", isAuthenticated: false, userRole: undefined, userIsAppOwner: false, expected: "forbidden" },
+] as const) {
+  assert.equal(decideRouteAccess({ path: "/renderizador", isLoading: false, ...input }), input.expected);
+  assert.equal(canRenderNavigationItem({ path: "/renderizador", isLoading: false, ...input }), false);
+}
+assert.equal(decideRouteAccess({ path: "/renderizador", accessMode: "remote", isAuthenticated: true, isLoading: false, userRole: "admin", userIsAppOwner: true }), "allow");
+assert.equal(canRenderNavigationItem({ path: "/renderizador", accessMode: "remote", isAuthenticated: true, isLoading: false, userRole: "admin", userIsAppOwner: true }), true);
 
 // Regressão Codex/PR #866: consolidar as fichas nominais em /generic-scale/:id
 // não pode custar ao reader o acesso que ele já tinha (bookmarks /vineland,
