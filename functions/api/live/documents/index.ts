@@ -281,6 +281,24 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
     return tenantError("Paciente não encontrado nesta clínica.", "PATIENT_NOT_FOUND", 404);
   }
 
+  // Clinical PDF publication requires a trusted server-side signature verdict.
+  // A client-provided status or signature object is not evidence.
+  if (isPlainJsonObject(content)) {
+    const signature = content.signature;
+    const hasPdf = content.schema === "neuroped.live-pdf.v1" ||
+      content.mimeType === "application/pdf" || "pdfBase64" in content;
+    const claimsSignature = ("signatureStatus" in content && content.signatureStatus !== "unsigned") ||
+      ("signature" in content && (!isPlainJsonObject(signature) ||
+        signature.status !== "unsigned" ||
+        Object.entries(signature).some(([key, value]) => key !== "status" && value != null)));
+    if (claimsSignature || (hasPdf && (status === "published" || familyVisibility))) {
+      return tenantError(
+        "Validação criptográfica ICP-Brasil indisponível; PDF não pode ser publicado como documento definitivo.",
+        "SIGNATURE_VERIFIER_UNAVAILABLE", 503,
+      );
+    }
+  }
+
   let existing: {
     id: string;
     current_version: number;
