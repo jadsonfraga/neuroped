@@ -12,6 +12,7 @@ interface Env extends ApiMetricsEnv {
   ENVIRONMENT?: string;
   DEMO_API_WRITES_ENABLED?: string;
   NEUROPED_JWT_SECRET?: string;
+  ADMIN_EMAIL?: string;
   NEUROPED_E2E_EMAIL?: string;
   NEUROPED_VISITOR_PASSWORD?: string;
 }
@@ -256,7 +257,7 @@ async function authorizeClinicalApi(request: Request, env: Env): Promise<Authori
     return { failure: apiError("Autenticação temporariamente indisponível.", "AUTH_UNAVAILABLE", 503), user: null };
   }
 
-  const user = publicUser(row);
+  const user = publicUser(row, env);
 
   // Visitante (somente escalas): deny-by-default, antes de qualquer outro gate.
   // O segredo do ambiente é o interruptor: removido, as sessões já emitidas
