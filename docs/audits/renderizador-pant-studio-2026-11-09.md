@@ -51,3 +51,11 @@ Após autenticação, a primeira abertura de `/#/renderizador` falhou no preload
 Rollback: reverter o este PR e redeployar o commit anterior; isso restaura a importação remota que se mostrou incompatível com a execução observada.
 
 Validação deste incidente: após deploy, autenticar, abrir Renderizador, usar o exemplo demonstrativo, gerar PDF local, revisar e verificar exportação e manifesto. Registrar resultado no PR antes do merge.
+
+## Acesso exclusivo do proprietário (2026-11-24)
+
+A rota `/#/renderizador` e seus dois itens de navegação exigem sessão remota autenticada da conta administradora cujo e-mail corresponde ao `ADMIN_EMAIL` configurado no servidor. A resposta de autenticação atesta `isAppOwner` somente para essa conta, quando está ativa e já concluiu eventual troca obrigatória de senha. Outra conta com papel `admin`, um profissional, um visitante ou alguém com apenas o PIN local recebe acesso negado. O modo de acesso aberto não libera esta rota.
+
+O renderizador gera o PDF no navegador e seus arquivos JavaScript e recursos visuais são estáticos. A restrição protege o uso dentro do app; ela não impede que alguém copie o código público e execute um renderizador independente. Bloqueio absoluto do motor exigiria renderização em backend autenticado e o envio do conteúdo clínico ao servidor, o que altera a arquitetura de privacidade atual.
+
+Validação: `node --import tsx tests/unit/route-guard-policy.test.ts`, `node --import tsx --test tests/unit/renderizador-owner-access.test.ts`, `node tests/unit/renderizador-navigation-static.test.mjs` e `npm run check`. Após deploy, confirmar proprietário, outro admin e sessão local/PIN. Rollback: reverter este PR e redeployar; não há migração nem segredo novo.

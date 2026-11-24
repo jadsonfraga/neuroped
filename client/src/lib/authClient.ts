@@ -44,6 +44,7 @@ export interface AuthUser {
   name: string;
   role: "admin" | "professional" | "reader" | "operator" | "visitor";
   mustChangePassword?: boolean;
+  isAppOwner?: boolean;
 }
 
 export interface LoginResponse {

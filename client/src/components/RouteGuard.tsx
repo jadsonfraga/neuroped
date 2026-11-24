@@ -50,6 +50,7 @@ export function RouteGuard({ children, roles }: { children: ReactNode; roles?: R
     isAuthenticated,
     isLoading,
     userRole: user?.role,
+    userIsAppOwner: user?.isAppOwner,
     allowedRoles: operationalRolesForPath(location, roles),
     localPinConfigured:
       accessMode === "local" && hasConfiguredMasterPin(),

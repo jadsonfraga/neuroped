@@ -321,6 +321,7 @@ interface RouteAccessInput {
   isAuthenticated: boolean;
   isLoading: boolean;
   userRole?: RouteUserRole | null;
+  userIsAppOwner?: boolean;
   allowedRoles?: readonly RouteUserRole[];
   localPinConfigured?: boolean;
   localPinUnlocked?: boolean;
@@ -332,6 +333,7 @@ export function decideRouteAccess({
   isAuthenticated,
   isLoading,
   userRole,
+  userIsAppOwner = false,
   allowedRoles,
   localPinConfigured = false,
   localPinUnlocked = false,
@@ -339,6 +341,14 @@ export function decideRouteAccess({
   // O visitante autenticado só vê escalas, inclusive no lugar de rotas públicas.
   if (accessMode === "remote" && isAuthenticated && userRole === "visitor") {
     return isVisitorRoute(path) ? "allow" : "forbidden";
+  }
+  // O renderizador pertence à conta administradora configurada no servidor.
+  // PIN local, modo aberto e demais contas admin não concedem esta permissão.
+  if (normalizePathname(path) === "/renderizador") {
+    if (accessMode === "checking" || isLoading) return "checking";
+    if (accessMode !== "remote") return "forbidden";
+    if (!isAuthenticated) return "login";
+    return userRole === "admin" && userIsAppOwner ? "allow" : "forbidden";
   }
   if (!isClinicalRoute(path)) return "allow";
   if (accessMode === "checking" || isLoading) return "checking";
@@ -359,6 +369,7 @@ export function canRenderNavigationItem({
   isAuthenticated,
   isLoading,
   userRole,
+  userIsAppOwner = false,
   localPinConfigured = false,
   localPinUnlocked = false,
 }: Omit<RouteAccessInput, "allowedRoles">): boolean {
@@ -370,6 +381,7 @@ export function canRenderNavigationItem({
       isAuthenticated,
       isLoading,
       userRole,
+      userIsAppOwner,
       localPinConfigured,
       localPinUnlocked,
     }) === "allow"

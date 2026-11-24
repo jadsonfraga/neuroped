@@ -50,6 +50,7 @@ export interface PublicUser {
   name: string;
   role: string;
   mustChangePassword: boolean;
+  isAppOwner?: boolean;
 }
 
 // TTLs em segundos: access curto (refresh automático no client em 401) e
@@ -77,7 +78,8 @@ export function isVisitorIdentity(u: { email: string | null | undefined; role: s
   return canonicalEmail(u.email) === VISITOR_LOGIN && u.role === VISITOR_DB_ROLE;
 }
 
-export function publicUser(u: UserRow): PublicUser {
+export function publicUser(u: UserRow, env?: Pick<Env, "ADMIN_EMAIL">): PublicUser {
+  const ownerEmail = canonicalEmail(env?.ADMIN_EMAIL);
   return {
     id: u.id,
     email: u.email,
@@ -86,6 +88,8 @@ export function publicUser(u: UserRow): PublicUser {
     // que usa getContextUser recusa "visitor" por construção (fail-closed).
     role: isVisitorIdentity(u) ? VISITOR_API_ROLE : u.role,
     mustChangePassword: !!u.must_change_password,
+    isAppOwner: Boolean(ownerEmail) && u.role === "admin" && u.is_active === 1 &&
+      !u.must_change_password && canonicalEmail(u.email) === ownerEmail,
   };
 }
 

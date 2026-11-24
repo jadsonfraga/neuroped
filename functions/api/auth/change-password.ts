@@ -157,6 +157,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
   return json({
     ...prepared.tokens,
-    user: publicUser(nextUser),
+    user: publicUser(nextUser, env),
   }, 200);
 };
