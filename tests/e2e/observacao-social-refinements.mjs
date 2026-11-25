@@ -1,0 +1,90 @@
+/** Navegador real; autenticação de teste e WebM preto sintético, sem dado clínico. */
+import assert from "node:assert/strict";
+import { fileURLToPath } from "node:url";
+import { chromium } from "playwright";
+import {
+  ACCEPTED_FIRST_VISIT_STORAGE,
+  auditBrowserLaunchOptions,
+  ensureClientBuild,
+  startStaticServer,
+} from "../../scripts/lib/browser-audit-runtime.mjs";
+import { createSyntheticClinicalApi, SYNTHETIC_CREDENTIALS } from "../../scripts/lib/synthetic-clinical-api.mjs";
+
+const videoFile = fileURLToPath(new URL("../fixtures/observacao-video-sintetico.webm", import.meta.url));
+const server = await startStaticServer(ensureClientBuild(process.cwd(), "authenticated"), {
+  port: 0, apiHandler: createSyntheticClinicalApi({ patients: "empty" }),
+});
+let browser;
+try {
+  browser = await chromium.launch(auditBrowserLaunchOptions({ args: ["--no-zygote", "--single-process"] }));
+  const ctx = await browser.newContext({ viewport: { width: 768, height: 1024 }, hasTouch: true });
+  await ctx.addInitScript((storage) => {
+    for (const [key, val] of Object.entries(storage)) localStorage.setItem(key, val);
+    const revoked = [];
+    Object.defineProperty(window, "__revokedObservationUrls", { value: revoked });
+    const original = URL.revokeObjectURL.bind(URL);
+    URL.revokeObjectURL = (url) => { revoked.push(url); original(url); };
+  }, ACCEPTED_FIRST_VISIT_STORAGE);
+  const page = await ctx.newPage();
+  await page.goto(server.origin + "/#/testes-diretos");
+  await page.locator("#login-email").fill(SYNTHETIC_CREDENTIALS.email);
+  await page.locator("#login-password").fill(SYNTHETIC_CREDENTIALS.password);
+  await page.locator('[data-testid="login-form"] button[type="submit"]').click();
+  const button = (name) => page.getByRole("button", { name, exact: true });
+  await button("Observação social").click();
+  const age = page.getByRole("combobox", { name: "Idade na data da observação" });
+  await age.selectOption({ label: "12–17 meses" });
+  await page.getByRole("button", { name: /Cesto de figuras/ }).click();
+  await button("Registrar sem usar a tela").click();
+  const toggle = page.locator("summary").filter({ hasText: "Revisar vídeo local" });
+  const clip = page.locator("#social-record video");
+  const loadClip = async () => {
+    await page.getByLabel("Selecionar vídeo").setInputFiles(videoFile);
+    await clip.waitFor({ state: "visible" });
+    const url = await clip.getAttribute("src");
+    assert.match(url, /^blob:/);
+    return url;
+  };
+  const waitRevocation = async (url) =>
+    page.waitForFunction((value) => window.__revokedObservationUrls.includes(value), url, { timeout: 3500 });
+  const note = page.getByRole("textbox", { name: "O que se vê ou ouve no vídeo?" });
+  await toggle.click();
+  const first = await loadClip();
+  await note.fill("Observação exclusivamente sintética");
+  await toggle.click();
+  await waitRevocation(first);
+  await clip.waitFor({ state: "detached", timeout: 3500 });
+  await toggle.click();
+  assert.equal(await note.inputValue(), "Observação exclusivamente sintética");
+  const second = await loadClip();
+  const third = await loadClip();
+  assert.notEqual(second, third);
+  await waitRevocation(second);
+  await button("Sonda 10").click();
+  await waitRevocation(third);
+  await button("Observação social").click();
+  assert.equal(await clip.count(), 0);
+  await toggle.click();
+  assert.equal(await note.inputValue(), "Observação exclusivamente sintética");
+  await button("Voltar às atividades").click();
+  await page.getByRole("button", { name: /Cesto de figuras/ }).click();
+  assert.equal(await button("Oportunidade insuficiente").count(), 0, "atalho não sobrescreve atividade que já tem anotação");
+  await button("Voltar às atividades").click();
+  await page.getByRole("button", { name: /Ritmos em dupla/ }).click();
+  await button("Oportunidade insuficiente").click();
+  assert.equal(await page.getByRole("radio", { name: "Oportunidade insuficiente" }).isChecked(), true);
+  assert.equal(await page.getByRole("textbox", { name: "O que você observou presencialmente?" }).inputValue(), "");
+  await button("Voltar às atividades").click();
+  await page.getByRole("button", { name: /Dois caminhos/ }).click();
+  await button("Participante preferiu parar").click();
+  await page.getByRole("button", { name: /Revisar sessão \(3 de 3 com registro\)/ }).click();
+  const review = page.getByText(/Observação em vídeo: Observação exclusivamente sintética/);
+  await review.waitFor();
+  await page.getByText(/Oportunidade insuficiente/).waitFor();
+  await page.getByText(/Participante preferiu parar/).waitFor();
+  assert.equal(await page.getByText(/Observação direta:/).count(), 0);
+  console.log("Observação Social: Chromium tablet, Blob revogado ao recolher/substituir/alternar, nota preservada e registro explícito sem simular resposta.");
+} finally {
+  await browser?.close();
+  await server.close();
+}

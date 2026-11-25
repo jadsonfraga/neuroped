@@ -3,14 +3,16 @@ import { bands, domains } from "@/data/observacaoSocial";
 import VideoReview from "./VideoReview";
 import { blank, fresh, session } from "./session";
 
-const conditions = ["Interação espontânea", "Interação após apoio", "Resposta não observada nesta oportunidade", "Participante preferiu parar", "Oportunidade insuficiente"];
+const stopped = "Participante preferiu parar";
+const noOpportunity = "Oportunidade insuficiente";
+const conditions = ["Interação espontânea", "Interação após apoio", "Resposta não observada nesta oportunidade", stopped, noOpportunity];
 const input = "mt-1 block min-h-12 w-full rounded-lg border bg-background p-3";
 const button = "min-h-12 rounded-lg border bg-background px-4 py-2 font-medium";
 const primary = "min-h-12 rounded-lg bg-primary px-5 py-2 font-semibold text-primary-foreground";
 const panel = "space-y-4 rounded-xl border bg-card p-5";
-const version = "Observação social presencial · NeuroPed v1.4 · Roteiro autoral sem validação psicométrica";
+const version = "Observação social presencial · NeuroPed v1.5 · Roteiro autoral sem validação psicométrica";
 
-export default function ObservacaoSocial() {
+export default function ObservacaoSocial({ active = true }: { active?: boolean }) {
   const [{ band, scene, stage, records }, dispatch] = useReducer(session, fresh);
   const [choice, setChoice] = useState("");
   const [copyStatus, setCopyStatus] = useState("");
@@ -27,7 +29,8 @@ export default function ObservacaoSocial() {
   }, [stage]);
   const selected = band === null ? null : bands[band];
   const activity = selected?.[1][scene];
-  const note = records[band + "/" + scene] ?? blank;
+  const existingNote = records[band + "/" + scene];
+  const note = existingNote ?? blank;
   const entries = Object.entries(records);
   const count = entries.length;
   const summary = entries.map(([key, entry]) => {
@@ -40,6 +43,11 @@ export default function ObservacaoSocial() {
   }).join("\n\n");
   const report = [version, summary, "Interpretar com história do desenvolvimento e funcionamento em outros ambientes. A sessão isolada não estabelece diagnóstico de TEA."].join("\n\n");
   const title = { choose: "Escolher atividade", prepare: "Preparar a interação", record: "Registrar o que aconteceu", review: "Revisar a sessão" }[stage];
+  function recordWithoutPresenting(condition: typeof stopped | typeof noOpportunity) {
+    if (existingNote) return;
+    dispatch({ type: "edit", field: "condition", value: condition });
+    dispatch({ type: "stage", stage: "record" });
+  }
   function present() {
     setChoice("");
     document.querySelector<HTMLVideoElement>("#social-record video")?.pause();
@@ -47,7 +55,7 @@ export default function ObservacaoSocial() {
   }
   return <article className="mx-auto max-w-3xl space-y-4 pb-8">
     <header>
-      <p className="text-sm text-muted-foreground">Observação social presencial · v1.4</p>
+      <p className="text-sm text-muted-foreground">Observação social presencial · v1.5</p>
       <h1 tabIndex={-1} ref={heading} className="my-2 text-2xl font-bold">{title}</h1>
       {stage !== "choose" && selected && <p>{selected[0]}{stage !== "review" && activity && " · " + activity[0]}</p>}
     </header>
@@ -56,9 +64,12 @@ export default function ObservacaoSocial() {
         <option value="" disabled>Escolha a idade</option>{bands.map(([name], i) => <option key={name} value={i}>{name}</option>)}</select></label>
       {count > 0 && <small>Para iniciar outra sessão, revise e encerre a atual.</small>}
       {selected && <><p>Escolha uma situação para apresentar.</p>
-        {selected[1].map(([name], i) => <button key={name} className={button + " block w-full text-left"} onClick={() => dispatch({ type: "open", scene: i })}>
-          <strong className="block">{name}</strong><span className="text-sm">{domains[i][0]}{records[band + "/" + i] && " · Com registro"}</span>
-        </button>)}</>}
+        {selected[1].map(([name], i) => {
+          const entry = records[band + "/" + i];
+          return <button key={name} className={button + " block w-full text-left"} onClick={() => dispatch({ type: "open", scene: i })}>
+            <strong className="block">{name}</strong><span className="text-sm">{domains[i][0]}{entry && " · " + (entry.condition || "Com anotação")}</span>
+          </button>;
+        })}</>}
       <p className="text-sm text-muted-foreground">Roteiro autoral sem validação psicométrica. Os registros ficam nesta página até sair ou atualizar.</p>
     </section>}
     {stage === "prepare" && activity && <section className={panel}>
@@ -69,6 +80,14 @@ export default function ObservacaoSocial() {
         <button className={primary} onClick={present}>Apresentar no tablet</button>
         <button className={button} onClick={() => dispatch({ type: "stage", stage: "record" })}>Registrar sem usar a tela</button>
       </div>
+      {!existingNote && <fieldset className="space-y-2">
+        <legend className="text-sm font-semibold">Se não der para iniciar</legend>
+        <p className="text-sm text-muted-foreground">Registre o contexto da sessão; isso não indica ausência de uma habilidade.</p>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" className={button} onClick={() => recordWithoutPresenting(noOpportunity)}>{noOpportunity}</button>
+          <button type="button" className={button} onClick={() => recordWithoutPresenting(stopped)}>{stopped}</button>
+        </div>
+      </fieldset>}
     </section>}
     {activity && <dialog ref={participant} aria-labelledby="social-invitation" onClose={() => dispatch({ type: "stage", stage: "record" })} className="fixed inset-0 m-auto w-11/12 max-w-2xl rounded-xl bg-background p-6 text-foreground backdrop:bg-slate-900">
       <h2 id="social-invitation" className="mb-6 text-3xl font-bold">{activity[1]}</h2>
@@ -86,7 +105,7 @@ export default function ObservacaoSocial() {
         {note.condition && <button className="min-h-12 underline" onClick={() => dispatch({ type: "edit", field: "condition", value: "" })}>Desmarcar opção</button>}
       </fieldset>
       <label className="block">O que você observou presencialmente?<textarea className={input} rows={3} value={note.reaction} onChange={e => dispatch({ type: "edit", field: "reaction", value: e.target.value })}/></label>
-      <VideoReview nextClip={() => ++clipSequence.current} value={note.video} onChange={value => dispatch({ type: "edit", field: "video", value })}/>
+      {active && <VideoReview nextClip={() => ++clipSequence.current} value={note.video} onChange={value => dispatch({ type: "edit", field: "video", value })}/>}
       <label className="block">Contexto, apoios e limites de interpretação (opcional)<textarea className={input} rows={2} value={note.context} onChange={e => dispatch({ type: "edit", field: "context", value: e.target.value })}/></label>
       <label className="block">Hipótese interpretativa do profissional (opcional)<textarea className={input} rows={2} value={note.interpretation} onChange={e => dispatch({ type: "edit", field: "interpretation", value: e.target.value })}/></label>
       <div className="flex flex-wrap gap-2"><button className={primary} onClick={() => dispatch({ type: "stage", stage: "choose" })}>Voltar às atividades</button>

@@ -50,7 +50,7 @@ export default function SondaDezDailyPage() {
       </nav>
       <div hidden={social}><SondaDezModes /></div>
       {visited && <div hidden={!social}>
-        <ObservacaoSocial />
+        <ObservacaoSocial active={social} />
       </div>}
     </>
   );
