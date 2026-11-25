@@ -2,6 +2,8 @@ import { useReducer, useRef, useState } from "react";
 import { AssistantScope, ClinicalAssistantCard } from "@/components/ClinicalAssistantCards";
 import { AssistantAccess } from "@/components/AssistantAccess";
 import { assistantObservationLines, emptyAssistantObservation, type AssistantObservation } from "@/lib/assistantObservation";
+import { ExamResourceChecklist, ExamActivityResources } from "@/components/ExamActivityResources";
+import { assistantExamResources, medicalExamResources } from "@/data/examResources";
 import { examExamples } from "@/data/clinicalAssistantGuide";
 import { examBands } from "@/data/exame-por-idade";
 import { examStatuses, examVisit, initialExam, summarizeExam, type ExamStatus } from "@/lib/examVisitSession";
@@ -45,8 +47,9 @@ export default function ExamePorIdade() {
           <h2 id="exam-simple" className="text-lg font-semibold">Atividades guiadas · {band.age}</h2>
           <AssistantScope />
           <p className="text-sm text-muted-foreground">Escolha uma proposta, sem obrigação de fazer as duas. Aceite gesto, olhar, fala ou o meio de comunicação habitual. Se não der para tentar, anote o contexto, sem concluir que a criança não consegue.</p>
+          <ExamResourceChecklist activities={assistantExamResources[band.age]} title="Conferir materiais das atividades guiadas" />
           <AssistantAccess />
-          {examExamples[band.age]?.map(example => <ClinicalAssistantCard key={example.title} example={example}
+          {examExamples[band.age]?.map((example, index) => <ClinicalAssistantCard key={example.title} example={example} resource={assistantExamResources[band.age][index]}
             canPresent={visit.band !== null && visit.band >= 8} note={assistantNotes[example.title] ?? emptyAssistantObservation}
             onNote={(field, value) => setAssistantNotes(notes => ({ ...notes, [example.title]: { ...(notes[example.title] ?? emptyAssistantObservation), [field]: value } }))} />)}
         </section>
@@ -57,6 +60,7 @@ export default function ExamePorIdade() {
             <p className="mt-1">{band.setup}</p>
             <p className="mt-2 text-sm"><strong>Se precisar adaptar. </strong>{band.adapt}</p>
           </div>
+          <ExamResourceChecklist activities={medicalExamResources[band.age]} title="Conferir materiais da ficha médica" />
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="font-semibold">Conduzir e registrar</h2>
             <button type="button" onClick={() => { review.current?.scrollIntoView({ block: "start" }); review.current?.focus({ preventScroll: true }); }}
@@ -71,6 +75,8 @@ export default function ExamePorIdade() {
                 <span>{item.title}</span>
                 {entry && <span className="ml-2 inline-block text-xs font-medium text-muted-foreground">{entry.status ? examStatuses[entry.status] : "Com anotação"}</span>}
               </summary>
+              <div className="mb-3"><ExamActivityResources resource={medicalExamResources[band.age][index]} alreadyRecorded={Boolean(entry?.status)}
+                onMissing={() => dispatch({ type: "record", step: index, status: "materialsMissing" })} /></div>
               <p className="mb-2"><strong>Como examinar. </strong>{item.action}</p>
               <p className="mb-3"><strong>O que observar. </strong>{item.observe}</p>
               <label className="mb-3 block text-sm font-medium">Como foi avaliado · {item.title}
@@ -114,7 +120,7 @@ export default function ExamePorIdade() {
       </div>}
       <details className="text-sm text-muted-foreground">
         <summary className="cursor-pointer py-2">Referências e versão do roteiro</summary>
-        <p>Roteiro clínico observacional NeuroPed v1.4, sem validação psicométrica. As faixas orientam a abordagem. A interpretação é clínica.</p>
+        <p>Roteiro clínico observacional NeuroPed v1.4, sem validação psicométrica. As faixas orientam a abordagem. Os recursos não substituem avaliação presencial, instrumentos clínicos ou testes validados. A interpretação é clínica.</p>
         <ul className="list-disc space-y-1 pl-5 underline">
           <li><a href="https://www.gov.br/saude/pt-br/assuntos/saude-de-a-z/s/saude-da-crianca/saude-da-crianca">Ministério da Saúde · Vigilância do desenvolvimento</a></li>
           <li><a href="https://www.cdc.gov/act-early/resources/milestones-checklist-by-age.html">CDC · Desenvolvimento por idade</a></li>

@@ -2,6 +2,8 @@ import { useRef, useState } from "react";
 import { Link } from "wouter";
 import { AssistantAccess } from "@/components/AssistantAccess";
 import { AssistantScope, ClinicalAssistantCard } from "@/components/ClinicalAssistantCards";
+import { ExamResourceChecklist } from "@/components/ExamActivityResources";
+import { assistantExamResources } from "@/data/examResources";
 import { examExamples } from "@/data/clinicalAssistantGuide";
 import { assistantObservationLines, emptyAssistantObservation, type AssistantObservation } from "@/lib/assistantObservation";
 
@@ -63,8 +65,9 @@ export default function ExameViaAssistente() {
           <p className="text-sm text-muted-foreground">
             Escolha uma proposta. Use o meio habitual de comunicação e respeite pausas ou recusas. Se não houver oportunidade, descreva o contexto sem tirar conclusões.
           </p>
+          <ExamResourceChecklist activities={assistantExamResources[ageLabel]} title="Conferir materiais das atividades guiadas" />
           <AssistantAccess />
-          {examExamples[ageLabel]?.map(example => <ClinicalAssistantCard key={example.title} example={example}
+          {examExamples[ageLabel]?.map((example, index) => <ClinicalAssistantCard key={example.title} example={example} resource={assistantExamResources[ageLabel][index]}
             canPresent={band >= 8} note={notes[example.title] ?? emptyAssistantObservation}
             onNote={(field, value) => setNotes(previous => ({
               ...previous, [example.title]: { ...(previous[example.title] ?? emptyAssistantObservation), [field]: value },
