@@ -14,13 +14,18 @@ const panel = read("client/src/components/PreferencesPanel.tsx");
 assert.match(softSounds, /SOUND_PREFERENCE_EVENT/);
 assert.match(softSounds, /getSoundVolume/);
 assert.match(softSounds, /setSoundVolume/);
-assert.match(softSounds, /_lastHoverAt/);
-assert.match(softSounds, /now - _lastHoverAt < 160/);
+// Silêncio passivo substitui o antigo contrato de hover limitado a 160 ms.
+for (const source of [softSounds, layout, read("client/src/pages/home.tsx"), read("client/src/pages/filtro-engine.tsx")]) {
+  assert.doesNotMatch(source, /\bsoftHover\b/, "passar o cursor não pode acionar sons");
+}
+assert.doesNotMatch(layout, /\bsoftWhoosh\b/, "montar a rota no shell não toca som");
+assert.match(softSounds, /localStorage\.getItem\(STORAGE_KEY\) === "on"/);
 assert.match(preferences, /updateSoundVolume/);
 assert.match(preferences, /window\.addEventListener\(SOUND_PREFERENCE_EVENT/);
 assert.match(layout, /data-testid="button-sound-toggle"/);
 assert.match(layout, /data-testid="button-sound-toggle-mobile"/);
 assert.match(panel, /data-testid="range-sound-volume"/);
 assert.match(panel, /Intensidade do som/);
+assert.match(panel, /Ouvir amostra/);
 
 console.log("sound-ux-static: ok");
