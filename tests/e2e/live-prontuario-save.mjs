@@ -65,7 +65,14 @@ try {
   await verdict.waitFor({ timeout: 25000 });
   const failures = await Promise.all(responses.filter(r => !r.ok()).map(async r => ({ status: r.status(), body: await r.json() })));
   assert.deepEqual(failures, [], "todos os eventos clínicos devem ser aceitos pelo backend real");
-  assert.match(await verdict.innerText(), /^Prontuário salvo$/);
+  if (process.env.PRONTUARIO_FAULT_LOST_RESPONSE === "create") {
+    await page.getByText("Não foi possível salvar o prontuário", { exact: true }).first().waitFor();
+    assert.equal(await symptom.inputValue(), "Queixa fictícia, primeira versão de teste.");
+    await savedForm.click();
+    await page.getByText("Prontuário salvo", { exact: true }).first().waitFor({ timeout: 25000 });
+  } else {
+    assert.match(await verdict.innerText(), /^Prontuário salvo$/);
+  }
   await page.reload();
   await anamnese();
   assert.equal(await symptom.inputValue(), "Queixa fictícia, primeira versão de teste.");
@@ -73,12 +80,27 @@ try {
   const beforeCorrection = responses.length;
   await savedForm.click();
   await verdict.waitFor({ timeout: 25000 });
+  const lostCorrection = process.env.PRONTUARIO_FAULT_LOST_RESPONSE === "correct";
+  if (lostCorrection) {
+    await page.getByText("Não foi possível salvar o prontuário", { exact: true }).first().waitFor();
+    assert.equal(await symptom.inputValue(), "Queixa fictícia, versão corrigida de teste.");
+    await savedForm.click();
+    await page.getByText("Prontuário salvo", { exact: true }).first().waitFor({ timeout: 25000 });
+  }
   const rejected = await Promise.all(responses.slice(beforeCorrection).filter(r => !r.ok()).map(async r => ({ status: r.status(), body: await r.json(), section: r.request().postDataJSON()?.encounterId })));
   assert.deepEqual(rejected, [], "a correção deve passar pelo backend real");
-  assert.match(await verdict.innerText(), /^Prontuário salvo$/);
+  if (!lostCorrection) assert.match(await verdict.innerText(), /^Prontuário salvo$/);
   const postedSections = responses.slice(beforeCorrection).filter(r => r.request().method() === "POST")
     .map(r => r.request().postDataJSON()?.encounterId);
-  assert.deepEqual(postedSections, ["encounter", "nppr-v1-anamnese-queixaPrincipal"]);
+  assert.deepEqual(postedSections, lostCorrection
+    ? ["encounter", "nppr-v1-anamnese-queixaPrincipal", "nppr-v1-anamnese-queixaPrincipal"]
+    : ["encounter", "nppr-v1-anamnese-queixaPrincipal"]);
+  if (lostCorrection) {
+    const correctionResponses = responses.slice(beforeCorrection).filter(r => r.request().postDataJSON()?.encounterId === "nppr-v1-anamnese-queixaPrincipal");
+    const [sent, resumed] = correctionResponses;
+    assert.equal(sent.request().postDataJSON().sourceRecordReference, resumed.request().postDataJSON().sourceRecordReference);
+    assert.equal(resumed.status(), 200);
+  }
   await page.reload();
   await anamnese();
   assert.equal(await symptom.inputValue(), "Queixa fictícia, versão corrigida de teste.");
@@ -90,8 +112,11 @@ try {
   const records = (await response.json()).data;
   const old = records.find(e => e.payload?.valueText === "Queixa fictícia, primeira versão de teste.");
   const current = records.find(e => e.payload?.valueText === "Queixa fictícia, versão corrigida de teste.");
+  assert.equal(records.filter(e => e.payload?.valueText === "Queixa fictícia, primeira versão de teste.").length, 1,
+    "retry após resposta perdida não deve gravar duas cópias clínicas");
   assert.equal(old?.status, "corrected");
   assert.equal(current?.status, "active");
+  assert.equal(records.filter(e => e.payload?.valueText === "Queixa fictícia, versão corrigida de teste.").length, 1);
   assert.equal(current?.supersedesEventId, old.id);
   const encounter = records.find(e => e.status === "active" && e.encounterId === "encounter");
   assert.equal(encounter?.payload?.appointmentId, appointment.id, "consulta da agenda fica vinculada ao atendimento gravado");
