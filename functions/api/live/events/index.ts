@@ -42,6 +42,20 @@ const PROVENANCE_KINDS = new Set([
 const PROVENANCE_SOURCES = new Set<string>(clinicalSources);
 const OPAQUE_ID = /^[A-Za-z0-9][A-Za-z0-9_-]{0,119}$/;
 const ISO_INSTANT = z.string().datetime({ offset: true });
+const ACTIVE_PAGE_SIZE = 100;
+const eventCursorSchema = z.tuple([
+  z.string().min(1).max(64), z.string().min(1).max(64), z.string().regex(OPAQUE_ID),
+]);
+
+function decodeEventCursor(value: string | null) {
+  if (value === null || value.length > 1024) return null;
+  try {
+    const cursor = eventCursorSchema.safeParse(JSON.parse(decodeURIComponent(value)));
+    return cursor.success ? cursor.data : null;
+  } catch {
+    return null;
+  }
+}
 
 interface LiveEventRow {
   id: string;
@@ -167,6 +181,15 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
     return tenantError("Paciente não encontrado nesta clínica.", "PATIENT_NOT_FOUND", 404);
   }
 
+  // O histórico conserva o formato e o limite existentes; só o prontuário
+  // solicita paginação explícita das entradas ativas.
+  const status = url.searchParams.get("status");
+  const activeOnly = status === "active";
+  const rawCursor = url.searchParams.get("cursor");
+  const cursor = decodeEventCursor(rawCursor);
+  if ((status !== null && !activeOnly) || (rawCursor !== null && (!activeOnly || !cursor))) {
+    return tenantError("Filtro ou página de eventos inválidos.", "VALIDATION_ERROR", 400);
+  }
   const rows = await db
     .prepare(
       `SELECT id, clinic_id, patient_id, author_user_id, event_type, occurred_at,
@@ -174,15 +197,19 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
               encryption_version, source_record_hash, supersedes_event_id, status, created_at
          FROM live_clinical_events
         WHERE clinic_id = ? AND patient_id = ?
-        ORDER BY occurred_at DESC, created_at DESC
-        LIMIT 500`,
+          ${activeOnly ? "AND status = 'active'" : ""}
+          ${cursor ? "AND (occurred_at, created_at, id) < (?, ?, ?)" : ""}
+        ORDER BY occurred_at DESC, created_at DESC${activeOnly ? ", id DESC" : ""}
+        LIMIT ?`,
     )
-    .bind(clinicId, patientId)
+    .bind(clinicId, patientId, ...(cursor ?? []), activeOnly ? ACTIVE_PAGE_SIZE + 1 : 500)
     .all<LiveEventRow>();
 
   try {
+    const records = rows.results ?? [];
+    const page = activeOnly ? records.slice(0, ACTIVE_PAGE_SIZE) : records;
     const data = await Promise.all(
-      (rows.results ?? []).map(async (row) => ({
+      page.map(async (row) => ({
         id: row.id,
         clinicId: row.clinic_id,
         patientId: row.patient_id,
@@ -204,7 +231,11 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
         createdAt: row.created_at,
       })),
     );
-    return tenantJson({ data });
+    const last = page.at(-1);
+    const nextCursor = last && records.length > page.length
+      ? encodeURIComponent(JSON.stringify([last.occurred_at, last.created_at, last.id]))
+      : null;
+    return tenantJson(activeOnly ? { data, nextCursor } : { data });
   } catch (error) {
     console.error("[live.events.GET] decrypt failure", error);
     return tenantError("Eventos clínicos indisponíveis.", "CLINICAL_DECRYPT_FAILED", 500);
