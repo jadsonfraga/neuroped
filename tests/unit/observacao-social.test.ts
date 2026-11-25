@@ -19,3 +19,12 @@ test("roteiro cobre de 1 a 19 anos com três situações distintas por faixa", (
   }
   assert.equal(titles.size, 63);
 });
+
+test("cada situação traz condução, foco observável e alternativa próprios", () => {
+  const scenes = bands.flatMap(([, activities]) => activities);
+  for (const column of [3, 4, 5] as const) {
+    const instructions = scenes.map(scene => scene[column]);
+    assert.ok(instructions.every(text => typeof text === "string" && text.trim().length > 0));
+    assert.equal(new Set(instructions).size, 63);
+  }
+});
