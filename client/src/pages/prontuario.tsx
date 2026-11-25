@@ -1,5 +1,6 @@
 import { decodeProntuarioEncounterId, encodeProntuarioEncounterId, prontuarioPayloadFingerprint } from "@/lib/prontuarioEncounterId";
 import { cloneElement, isValidElement, useState, useCallback, useEffect, useRef, type ReactElement, type ReactNode } from "react";
+import { calcProntuarioMgKg, formatProntuarioWeight, parseProntuarioDoseMg } from "@/lib/prontuarioDose";
 import {
   User, Users, Baby, Stethoscope, FileText, PlusCircle, Trash2,
   Activity, MessageSquare, Pill, Dumbbell, FlaskConical,
@@ -368,7 +369,10 @@ function buildReport(
     r += `${linha}\n`;
     medicacoes.forEach((m, i) => {
       r += `\n${i + 1}. ${m.nome} ${m.dose} — ${m.posologia}\n`;
-      if (m.peso)        r += `   Peso: ${m.peso} kg${m.nome && m.dose ? ` | mg/kg: ${calcMgKg(m.dose, m.peso)}` : ""}\n`;
+      if (m.peso) {
+        const ratio = calcProntuarioMgKg(m.dose, m.peso);
+        r += `   Peso: ${formatProntuarioWeight(m.peso)}${ratio === "—" ? "" : ` | mg/kg: ${ratio}`}\n`;
+      }
       if (m.dataInicio)  r += `   Início: ${m.dataInicio}\n`;
       if (m.objetivo)    r += `   Objetivo: ${m.objetivo}\n`;
       if (m.resposta)    r += `   Resposta: ${m.resposta}\n`;
@@ -408,13 +412,6 @@ function buildReport(
   return r;
 }
 
-function calcMgKg(dose: string, peso: string): string {
-  const d = parseFloat(dose.replace(",", "."));
-  const p = parseFloat(peso.replace(",", "."));
-  if (isNaN(d) || isNaN(p) || p === 0) return "—";
-  return (d / p).toFixed(3);
-}
-
 // ─── PRINT WINDOW ─────────────────────────────────────────────────────────────
 
 function printReport(
@@ -447,16 +444,19 @@ function printReport(
     </tr>`;
   }).filter(Boolean).join("");
 
-  const medRows = medicacoes.map((m, i) => `
+  const medRows = medicacoes.map((m, i) => {
+    const ratio = calcProntuarioMgKg(m.dose, m.peso);
+    return `
     <div class="med-card">
       <b>${i + 1}. ${escapeHtml(m.nome)} ${escapeHtml(m.dose)}</b> &nbsp;—&nbsp; ${escapeHtml(m.posologia)}<br>
-      ${m.peso ? `<span class="sub">Peso: ${escapeHtml(m.peso)} kg | mg/kg: ${escapeHtml(calcMgKg(m.dose, m.peso))}</span><br>` : ""}
+      ${m.peso ? `<span class="sub">Peso: ${escapeHtml(formatProntuarioWeight(m.peso))}${ratio === "—" ? "" : ` | mg/kg: ${escapeHtml(ratio)}`}</span><br>` : ""}
       ${m.dataInicio ? `<span class="sub">Início: ${escapeHtml(m.dataInicio)}</span><br>` : ""}
       ${m.objetivo ? `<span class="sub">Objetivo: ${escapeHtmlWithBreaks(m.objetivo)}</span><br>` : ""}
       ${m.resposta ? `<span class="sub">Resposta: ${escapeHtmlWithBreaks(m.resposta)}</span><br>` : ""}
       ${m.efeitosAdversos ? `<span class="sub">Efeitos adversos: ${escapeHtmlWithBreaks(m.efeitosAdversos)}</span>` : ""}
     </div>
-  `).join("");
+  `;
+  }).join("");
 
   const terRows = terapias.map((t, i) => `
     <div class="med-card">
@@ -933,13 +933,13 @@ function ProntuarioForm({ isRemoteClinical, activeClinicId, patientId, appointme
         if (!item.nome.trim()) continue;
         const key = `medicacao:${item.id}`;
         activeMedicationKeys.add(key);
-        const doseMg = Number.parseFloat(item.dose.replace(",", ".").replace(/[^0-9.]/g, ""));
+        const doseMg = parseProntuarioDoseMg(item.dose);
         await postEvent(key, {
           eventType: "medication",
           data: {
             action: "reported_use",
             genericName: item.nome.trim(),
-            ...(Number.isFinite(doseMg) ? { doseMg } : {}),
+            ...(doseMg === undefined ? {} : { doseMg }),
             frequency: item.posologia.trim() || undefined,
             indication: item.objetivo.trim() || undefined,
             reason: JSON.stringify({ item }),
@@ -1559,7 +1559,7 @@ function ProntuarioForm({ isRemoteClinical, activeClinicId, patientId, appointme
             )}
 
             {medicacoes.map((med, idx) => {
-              const mgkg = calcMgKg(med.dose, med.peso);
+              const mgkg = calcProntuarioMgKg(med.dose, med.peso);
               return (
                 <Card key={med.id} className="border-violet-200/60 dark:border-violet-800/40">
                   <CardContent className="p-5">
