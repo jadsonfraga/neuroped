@@ -12,6 +12,9 @@ import { startStaticServer } from "../../../scripts/lib/browser-audit-runtime.mj
 
 const operatorSuite = process.argv[2] === "--agenda-operator";
 const agendaSuite = process.argv[2] === "--agenda" || operatorSuite;
+const loseAgendaResponse = process.env.AGENDA_FAULT_LOST_RESPONSE === "1";
+assert.ok(!loseAgendaResponse || (agendaSuite && !operatorSuite));
+let agendaCreateCount = 0;
 const doseSuite = process.argv[2] === "--prontuario-dose";
 const prontuarioSuite = process.argv[2] === "--prontuario" || doseSuite;
 assert.ok(process.argv.length === 2 || (process.argv.length === 3 && (agendaSuite || prontuarioSuite)));
@@ -53,7 +56,7 @@ try {
     compatibilityDate: "2024-11-01",
     compatibilityFlags: ["nodejs_compat"],
     d1Databases: { DB: "scale-retry-synthetic" },
-    ...(operatorSuite ? { outboundService: async () => { outboundAttempted = true; return new Response(null, { status: 418 }); } } : {}),
+    ...((operatorSuite || loseAgendaResponse) ? { outboundService: async () => { outboundAttempted = true; return new Response(null, { status: 418 }); } } : {}),
     bindings: {
       ENVIRONMENT: "production",
       CLINICAL_LIVE_ENABLED: "true",
@@ -95,6 +98,8 @@ try {
     const chunks = [];
     for await (const chunk of req) chunks.push(chunk);
     const url = new URL(req.url, server.origin);
+    if (loseAgendaResponse && req.method === "POST" && url.pathname === "/api/operations"
+      && JSON.parse(Buffer.concat(chunks).toString()).action === "create_appointment") agendaCreateCount += 1;
     const response = await mf.dispatchFetch(url.href, {
       method: req.method, headers: req.headers,
       body: /^(GET|HEAD)$/.test(req.method) ? undefined : Buffer.concat(chunks),
@@ -143,6 +148,11 @@ try {
   if (process.exitCode === 0) {
     assert.equal(nextFault, undefined, "a falha solicitada não foi exercitada");
     assert.equal(loseProntuarioResponse, false, "a interrupção planejada deveria ter sido exercitada");
+  }
+  if (process.exitCode === 0 && loseAgendaResponse) {
+    assert.equal(agendaCreateCount, 1, "não reenvie a mutação automaticamente");
+    assert.equal(await d1.prepare("SELECT COUNT(*) AS n FROM appointments").first("n"), 1);
+    assert.equal(outboundAttempted, false, "nenhuma entrega a provedor externo");
   }
   if (process.exitCode === 0 && operatorSuite) {
     assert.equal(outboundAttempted, false, "nenhuma tentativa de rede para provedor externo");

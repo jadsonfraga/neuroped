@@ -260,8 +260,27 @@ export default function AgendaPage() {
     try {
       await apiRequest("POST", operationsUrlFor(providerId), payload);
     } catch (error) {
-      toast({ title: "Não foi possível concluir.", description: String(error), variant: "destructive" });
-      setBusy(false);
+      try {
+        if (payload.action === "create_appointment" && error instanceof TypeError) {
+          // A resposta não chegou: o POST pode ter sido gravado. Só releia a
+          // agenda; não reenvie nem trate a atualização como prova de sucesso.
+          const refreshed = await dashboard.refetch();
+          const sameAgenda = !refreshed.isError && Boolean(data)
+            && refreshed.data?.access.clinicId === data?.access.clinicId
+            && refreshed.data?.access.providerUserId === data?.access.providerUserId;
+          toast({
+            title: "Não foi possível confirmar a gravação.",
+            description: sameAgenda
+              ? "Agenda atualizada. Confira o horário antes de tentar novamente."
+              : "Atualize a agenda e confira o horário antes de tentar novamente.",
+            variant: "destructive",
+          });
+        } else {
+          toast({ title: "Não foi possível concluir.", description: String(error), variant: "destructive" });
+        }
+      } finally {
+        setBusy(false);
+      }
       return false;
     }
 
