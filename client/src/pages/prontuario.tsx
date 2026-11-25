@@ -1,3 +1,4 @@
+import { decodeProntuarioEncounterId, encodeProntuarioEncounterId, prontuarioPayloadFingerprint } from "@/lib/prontuarioEncounterId";
 import { cloneElement, isValidElement, useState, useCallback, useEffect, type ReactElement, type ReactNode } from "react";
 import {
   User, Users, Baby, Stethoscope, FileText, PlusCircle, Trash2,
@@ -20,6 +21,7 @@ import { softTap, softSuccess, softError, softBell } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { escapeHtml, escapeHtmlWithBreaks } from "@/lib/htmlEscape";
 import { apiRequest } from "@/lib/queryClient";
+import { loadProntuarioActiveEvents } from "@/lib/prontuarioActiveEvents";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClinic } from "@/contexts/ClinicContext";
 import { issuerCredentials, useIssuer, type DocumentIssuer } from "@/lib/issuer";
@@ -594,7 +596,7 @@ function defaultMarcos(): Marcos {
     sustentouCabeca: "", sentouSemApoio: "", engatinhou: "", ficouEmPe: "", andouSozinho: "",
     balbucio: "", primeiraspalavras: "", frasesDuasPalavras: "", linguagemFluente: "",
     sorrisoSocial: "", apontar: "", esfincteriDiurno: "", esfincteriNoturno: "",
-    regressao: "Não", regressaoDesc: "", crises: "Não", crisesDesc: "",
+    regressao: "", regressaoDesc: "", crises: "", crisesDesc: "",
   };
 }
 function defaultId(): Identificacao {
@@ -611,14 +613,24 @@ function defaultAnamnese(): Anamnese {
 // ─── MAIN PAGE ─────────────────────────────────────────────────────────────────
 
 export default function ProntuarioPage() {
-  const { toast } = useToast();
-  const { accessMode, isAuthenticated } = useAuth();
+  const { accessMode, isAuthenticated, user } = useAuth();
   const { activeClinicId } = useClinic();
-  const { issuer } = useIssuer();
   const isRemoteClinical = accessMode === "remote" && isAuthenticated;
-  const liveContextReady = isRemoteClinical && Boolean(activeClinicId);
   const patientId = patientIdFromQuery();
   const appointmentId = appointmentIdFromQuery();
+  const scope = JSON.stringify([isRemoteClinical, user?.id, activeClinicId, patientId, appointmentId]);
+  return <ProntuarioForm key={scope} {...{ isRemoteClinical, activeClinicId, patientId, appointmentId }} />;
+}
+
+function ProntuarioForm({ isRemoteClinical, activeClinicId, patientId, appointmentId }: {
+  isRemoteClinical: boolean;
+  activeClinicId: string | null;
+  patientId: string;
+  appointmentId: string;
+}) {
+  const { toast } = useToast();
+  const { issuer } = useIssuer();
+  const liveContextReady = isRemoteClinical && Boolean(activeClinicId);
 
   const [identificacao, setId] = useState<Identificacao>(defaultId);
   const [anamnese, setAnamnese] = useState<Anamnese>(defaultAnamnese);
@@ -628,6 +640,9 @@ export default function ProntuarioPage() {
   const [exames, setExames] = useState<Exame[]>([]);
   const [copied, setCopied] = useState(false);
   const [recordLoading, setRecordLoading] = useState(Boolean(patientId));
+  const [recordLoadError, setRecordLoadError] = useState(false);
+  const [recordRetry, setRecordRetry] = useState(0);
+  const remoteReadBlocked = isRemoteClinical && Boolean(patientId) && (recordLoading || recordLoadError);
 
   // Pré-preenche o médico responsável com o emissor configurado (issuer.ts),
   // sem sobrescrever um valor já digitado ou carregado do prontuário salvo.
@@ -637,20 +652,22 @@ export default function ProntuarioPage() {
   }, [issuer.doctorName]);
   const [recordSaving, setRecordSaving] = useState(false);
   const [eventIds, setEventIds] = useState<Record<string, string>>({});
+  const [savedPayloads, setSavedPayloads] = useState<Record<string, string | undefined>>({});
 
   useEffect(() => {
     if (!patientId || (isRemoteClinical && !liveContextReady)) return;
     let cancelled = false;
     setRecordLoading(true);
+    setRecordLoadError(false);
     const patientUrl = isRemoteClinical
       ? `/api/live/patients/${encodeURIComponent(patientId)}?clinicId=${encodeURIComponent(activeClinicId ?? "")}`
       : `/api/patients/${encodeURIComponent(patientId)}`;
-    const eventsUrl = isRemoteClinical
-      ? `/api/live/events?clinicId=${encodeURIComponent(activeClinicId ?? "")}&patientId=${encodeURIComponent(patientId)}`
-      : `/api/clinical-core/events?patient_id=${encodeURIComponent(patientId)}&days=3650`;
+    const fetchJson = (url: string) => apiRequest("GET", url).then((response) => response.json());
     Promise.all([
-      apiRequest("GET", patientUrl).then((response) => response.json()),
-      apiRequest("GET", eventsUrl).then((response) => response.json()),
+      fetchJson(patientUrl),
+      isRemoteClinical && activeClinicId
+        ? loadProntuarioActiveEvents(activeClinicId, patientId, fetchJson, () => cancelled)
+        : fetchJson(`/api/clinical-core/events?patient_id=${encodeURIComponent(patientId)}&days=3650`),
     ]).then(([patientPayload, eventPayload]) => {
       if (cancelled) return;
       const patient = isRemoteClinical ? { ...(patientPayload?.profile ?? {}), ...patientPayload } : patientPayload;
@@ -661,6 +678,7 @@ export default function ProntuarioPage() {
         : [];
       const activeEvents = events.filter((event) => event.status === "active");
       const nextIds: Record<string, string> = {};
+      const nextPayloads: Record<string, string | undefined> = {};
       const nextAnamnese = defaultAnamnese();
       const nextMarcos = defaultMarcos();
       const nextMedications: Medicacao[] = [];
@@ -675,11 +693,14 @@ export default function ProntuarioPage() {
 
       for (const event of activeEvents) {
         const meta = isRemoteClinical
-          ? { key: event.note ?? "" }
+          ? { key: decodeProntuarioEncounterId(event.note ?? "") }
           : parseClinicalNote(event.note);
         const eventKey = typeof meta.key === "string" ? meta.key : "";
-        if (eventKey) nextIds[eventKey] = event.id;
         const data = event.data ?? {};
+        if (eventKey) {
+          nextIds[eventKey] = event.id;
+          if (isRemoteClinical) nextPayloads[eventKey] = prontuarioPayloadFingerprint(data);
+        }
         if (event.eventType === "encounter") {
           let savedIdentification = meta.identificacao;
           if (isRemoteClinical && typeof data.subjective === "string") {
@@ -723,14 +744,19 @@ export default function ProntuarioPage() {
       setTerapias(nextTerapias);
       setExames(nextExames);
       setEventIds(nextIds);
+      setSavedPayloads(nextPayloads);
       setRecordLoading(false);
     }).catch((error) => {
       if (cancelled) return;
+      cancelled = true;
       setRecordLoading(false);
-      toast({ title: "Não foi possível carregar o prontuário persistente.", description: String(error), variant: "destructive" });
+      setRecordLoadError(true);
+      if (!isRemoteClinical) {
+        toast({ title: "Não foi possível carregar o prontuário persistente.", description: String(error), variant: "destructive" });
+      }
     });
     return () => { cancelled = true; };
-  }, [activeClinicId, isRemoteClinical, liveContextReady, patientId, toast]);
+  }, [activeClinicId, isRemoteClinical, liveContextReady, patientId, recordRetry, toast]);
 
   // ── updaters ──
   const updId = useCallback((field: keyof Identificacao, val: string) =>
@@ -775,6 +801,7 @@ export default function ProntuarioPage() {
   };
 
   const handleSave = async () => {
+    if (remoteReadBlocked) return;
     if (isRemoteClinical && !activeClinicId) {
       toast({ title: "Selecione uma clínica ativa", description: "O prontuário LIVE não pode ser salvo sem um tenant explícito.", variant: "destructive" });
       return;
@@ -811,13 +838,15 @@ export default function ProntuarioPage() {
       const nextIds = { ...eventIds };
       const postEvent = async (key: string, payload: Record<string, unknown>) => {
         const previousId = nextIds[key];
+        const fingerprint = isRemoteClinical ? prontuarioPayloadFingerprint(payload.data) : undefined;
+        if (previousId && isRemoteClinical && savedPayloads[key] === fingerprint) return;
         const requestBody = isRemoteClinical
           ? {
               clinicId: activeClinicId,
               patientId,
               eventType: payload.eventType,
               occurredAt,
-              encounterId: key,
+              encounterId: encodeProntuarioEncounterId(key),
               ...(previousId ? { supersedesEventId: previousId } : {}),
               provenanceKind: "documented",
               provenanceSource: "clinician",
@@ -842,6 +871,7 @@ export default function ProntuarioPage() {
         // se uma falha no meio do loop interromper o save, um retry precisa
         // ver os ids já criados para superseder em vez de duplicar eventos.
         setEventIds((prev) => ({ ...prev, [key]: created.id }));
+        if (isRemoteClinical) setSavedPayloads((prev) => ({ ...prev, [key]: fingerprint }));
       };
 
       await postEvent("encounter", {
@@ -858,6 +888,7 @@ export default function ProntuarioPage() {
 
       for (const field of anamneseKeys) {
         const value = anamnese[field].trim();
+        if (isRemoteClinical && !value && !nextIds[`anamnese:${field}`]) continue;
         await postEvent(`anamnese:${field}`, {
           eventType: "observation",
           data: { domain: "other", findingStatus: value ? "present" : "not_assessed", valueText: value },
@@ -867,6 +898,7 @@ export default function ProntuarioPage() {
 
       for (const field of marcoKeys) {
         const value = marcos[field].trim();
+        if (isRemoteClinical && !value && !nextIds[`marcos:${field}`]) continue;
         const isRedFlag = (field === "regressao" || field === "crises") && value === "Sim";
         await postEvent(`marcos:${field}`, {
           eventType: "observation",
@@ -1017,6 +1049,7 @@ export default function ProntuarioPage() {
             </Badge>
             <Button
               size="sm"
+              disabled={remoteReadBlocked}
               aria-label="Gerar relatório em PDF"
               data-testid="prontuario-print"
               onClick={() => { softTap(); haptic.tap(); handlePrint(); }}
@@ -1032,6 +1065,18 @@ export default function ProntuarioPage() {
 
       {/* ── main content ── */}
       <div className="mx-auto max-w-4xl px-3 pt-4 sm:px-4 sm:pt-6">
+        {remoteReadBlocked ? recordLoadError ? (
+          <div className="space-y-3 rounded-xl border bg-background p-4" data-testid="prontuario-load-error">
+            <p role="alert">Não foi possível carregar o prontuário completo. A edição e a geração de relatórios estão indisponíveis até que todos os dados sejam carregados.</p>
+            <Button variant="outline" onClick={() => {
+              setRecordLoading(true);
+              setRecordLoadError(false);
+              setRecordRetry((attempt) => attempt + 1);
+            }}>Tentar novamente</Button>
+          </div>
+        ) : (
+          <p role="status" className="rounded-xl border bg-background p-4">Carregando prontuário…</p>
+        ) : <>
         <Tabs defaultValue="identificacao" className="space-y-5 sm:space-y-6">
           <div className="flex items-center justify-between px-1 sm:hidden" aria-hidden="true">
             <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Etapas do prontuário</span>
@@ -1360,11 +1405,12 @@ export default function ProntuarioPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Field label="Regressão de marcos?">
-                      <Select value={marcos.regressao} onValueChange={v => updMarco("regressao", v)}>
+                      <Select value={marcos.regressao || "nao-informado"} onValueChange={v => updMarco("regressao", v === "nao-informado" ? "" : v)}>
                         <SelectTrigger className="border-amber-200 dark:border-amber-800">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="nao-informado">Não informado</SelectItem>
                           <SelectItem value="Não">Não</SelectItem>
                           <SelectItem value="Sim">Sim</SelectItem>
                         </SelectContent>
@@ -1382,11 +1428,12 @@ export default function ProntuarioPage() {
                   </div>
                   <div className="space-y-2">
                     <Field label="Crises convulsivas?">
-                      <Select value={marcos.crises} onValueChange={v => updMarco("crises", v)}>
+                      <Select value={marcos.crises || "nao-informado"} onValueChange={v => updMarco("crises", v === "nao-informado" ? "" : v)}>
                         <SelectTrigger className="border-amber-200 dark:border-amber-800">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="nao-informado">Não informado</SelectItem>
                           <SelectItem value="Não">Não</SelectItem>
                           <SelectItem value="Sim">Sim</SelectItem>
                         </SelectContent>
@@ -1898,6 +1945,7 @@ export default function ProntuarioPage() {
             </CardContent>
           </Card>
         </div>
+        </>}
       </div>
     </div>
   );

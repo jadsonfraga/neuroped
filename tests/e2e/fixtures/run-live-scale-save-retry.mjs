@@ -10,10 +10,12 @@ import { DatabaseSync } from "node:sqlite";
 import { pathToFileURL } from "node:url";
 import { startStaticServer } from "../../../scripts/lib/browser-audit-runtime.mjs";
 
-const agendaSuite = process.argv[2] === "--agenda";
-assert.ok(process.argv.length === 2 || (process.argv.length === 3 && agendaSuite));
+const operatorSuite = process.argv[2] === "--agenda-operator";
+const agendaSuite = process.argv[2] === "--agenda" || operatorSuite;
+const prontuarioSuite = process.argv[2] === "--prontuario";
+assert.ok(process.argv.length === 2 || (process.argv.length === 3 && (agendaSuite || prontuarioSuite)));
 const fault = process.env.SCALE_RETRY_FAULT;
-assert.ok(!agendaSuite || !fault, "Não combine a agenda com falhas de escalas");
+assert.ok(!(agendaSuite || prontuarioSuite) || !fault, "Não combine a agenda com falhas de escalas");
 let nextFault = fault;
 assert.ok([undefined, "db", "response"].includes(fault));
 assert.ok(process.env.SCALE_RETRY_MINIFLARE && process.env.SCALE_RETRY_WORKER, "Informe Miniflare e o Worker local compilado");
@@ -36,17 +38,22 @@ let mf, server;
 try {
   assert.equal(await run(["--import", "tsx", "tests/e2e/fixtures/live-patient-discovery.mts", dbPath], {
     ...env, LIVE_DISCOVERY_FIXTURE_DATA_KEY: clinicalDataKey,
+    ...(operatorSuite ? { LIVE_AGENDA_OPERATOR_FIXTURE: "1" } : {}),
+    ...(prontuarioSuite ? { LIVE_DISCOVERY_PRONTUARIO_LEGACY: "1" } : {}),
   }), 0);
+  const operationsKey = randomBytes(48).toString("base64url");
+  let outboundAttempted = false;
   const options = {
     modules: true,
     script: readFileSync(process.env.SCALE_RETRY_WORKER, "utf8"),
     compatibilityDate: "2024-11-01",
     compatibilityFlags: ["nodejs_compat"],
     d1Databases: { DB: "scale-retry-synthetic" },
+    ...(operatorSuite ? { outboundService: async () => { outboundAttempted = true; return new Response(null, { status: 418 }); } } : {}),
     bindings: {
       ENVIRONMENT: "production",
       CLINICAL_LIVE_ENABLED: "true",
-      ...(agendaSuite ? { OPERATIONAL_DATA_KEY: randomBytes(48).toString("base64url") } : {}),
+      ...((agendaSuite || prontuarioSuite) ? { OPERATIONAL_DATA_KEY: operationsKey } : {}),
       NEUROPED_JWT_SECRET: randomBytes(48).toString("base64url"),
       CLINICAL_DATA_KEY: clinicalDataKey,
       CLINICAL_DATA_KEY_ID: "k-mc-1",
@@ -116,9 +123,36 @@ try {
     res.end(Buffer.from(await response.arrayBuffer()));
     return true;
   }});
-  const test = agendaSuite ? "tests/e2e/live-agenda.mjs" : "tests/e2e/live-scale-save-retry.mjs";
+  const test = operatorSuite ? "tests/e2e/live-agenda-operator-draft.mjs" : agendaSuite ? "tests/e2e/live-agenda.mjs" : prontuarioSuite ? "tests/e2e/live-prontuario-save.mjs" : "tests/e2e/live-scale-save-retry.mjs";
   process.exitCode = await run([test], { ...env, LIVE_DISCOVERY_URL: server.origin });
   if (process.exitCode === 0) assert.equal(nextFault, undefined, "a falha solicitada não foi exercitada");
+  if (process.exitCode === 0 && operatorSuite) {
+    assert.equal(outboundAttempted, false, "nenhuma tentativa de rede para provedor externo");
+    const { decryptText } = await import("../../../functions/api/operations/_core.ts");
+    const keys = { OPERATIONAL_DATA_KEY: operationsKey, ENVIRONMENT: "production" };
+    const results = await d1.prepare(
+      `SELECT a.patient_id, a.guardian_email_encrypted, a.guardian_phone_encrypted,
+              n.recipient_encrypted, n.status, n.attempts
+         FROM appointments a
+         JOIN notification_outbox n ON n.appointment_id = a.id AND n.clinic_id = a.clinic_id
+        WHERE a.clinic_id = ? AND a.provider_user_id = ? AND n.template = 'appointment_created'
+        ORDER BY a.starts_at_local`,
+    ).bind("clinica-alfa-sintetica", "owner-a").all();
+    assert.equal(results.results.length, 2);
+    const [first, second] = results.results;
+    assert.equal(await decryptText(keys, first.guardian_email_encrypted, "guardian_email"), "primeiro@example.test");
+    assert.equal(await decryptText(keys, first.guardian_phone_encrypted, "guardian_phone"), "87999990031");
+    assert.equal(await decryptText(keys, first.recipient_encrypted, "recipient"), "87999990031");
+    assert.equal(await decryptText(keys, second.guardian_email_encrypted, "guardian_email"), "segundo@example.test");
+    assert.equal(second.guardian_phone_encrypted, null);
+    assert.equal(await decryptText(keys, second.recipient_encrypted, "recipient"), "segundo@example.test");
+    for (const row of [first, second]) {
+      assert.equal(row.patient_id, null, "papel operador não vincula prontuário");
+      assert.equal(row.status, "pending_provider");
+      assert.equal(row.attempts, 0);
+    }
+    console.log("D1 local: contatos segregados e destinatários corretos na fila sem entrega.");
+  }
 } finally {
   await server?.close();
   await mf?.dispose();

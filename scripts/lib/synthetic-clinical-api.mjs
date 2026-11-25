@@ -883,6 +883,14 @@ export function createSyntheticClinicalApi(scenario = {}) {
       const patientId = searchParams.get("patientId") ?? searchParams.get("patient_id");
       const source = core ? state.coreEvents : state.liveEvents;
       const rows = patientId ? source.filter((row) => row.patientId === patientId) : source;
+      if (pathname === "/api/live/events" && searchParams.get("status") === "active") {
+        const clinicId = searchParams.get("clinicId");
+        send(response, 200, {
+          data: state.liveEvents.filter((row) => row.patientId === patientId && row.clinicId === clinicId && row.status === "active"),
+          nextCursor: null,
+        });
+        return true;
+      }
       send(response, 200, { data: rows });
       return true;
     }
