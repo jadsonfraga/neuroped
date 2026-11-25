@@ -71,6 +71,19 @@ try {
       await years.fill("5"); await months.fill("6");
       await assertAge(66);
       assert.equal(await page.getByRole("button",{name:"Faixa etária 2–4 anos",exact:true}).getAttribute("aria-pressed"),"false");
+      // A triagem do desenvolvimento não pode ser apresentada como escala de
+      // primeira linha para a queixa em um perfil sem instrumento específico.
+      await clear();
+      await complaintSearch.fill("TDAH");
+      await options.getByRole("button",{name:/TDAH/}).click();
+      await years.fill("0"); await months.fill("6");
+      await assertAge(6);
+      const broad = cards.filter({has:page.getByTestId("medal-role")}).first();
+      assert.match(await broad.getByTestId("medal-role").innerText(),/Triagem ampla · não específica para a queixa/);
+      assert.doesNotMatch(await broad.innerText(),/1ª linha clínica|Melhor instrumento para idade, queixa/);
+      const plan = page.getByTestId("assessment-plan");
+      assert.match(await plan.innerText(),/Triagem ampla, sem escala específica/);
+      assert.doesNotMatch(await plan.innerText(),/melhor cruzamento de idade, queixa/);
       const overflow = await page.evaluate(()=>document.documentElement.scrollWidth > window.innerWidth + 1);
       assert.equal(overflow,false,`${width}px: sem overflow horizontal`);
       assert.deepEqual(errors,[],"sem erros de execução no navegador");

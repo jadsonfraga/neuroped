@@ -1450,7 +1450,8 @@ export function generateContextualRecommendation(
       primary.clinicalReason ||
       primary.scale.description ||
       "instrumento de primeira linha para este perfil";
-    return `Recomendado: ${primary.scale.name} — ${reason}`;
+    const label = primary.isBroadbandFallback ? "Triagem ampla, não específica para a queixa" : "Recomendado";
+    return `${label}: ${primary.scale.name} — ${reason}`;
   }
 
   const silver = matches.find((m) => m.tier === "silver");

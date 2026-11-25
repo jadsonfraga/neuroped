@@ -638,16 +638,18 @@ function rec(
       (slot === "Ouro"
         ? "Sem instrumento padrão-ouro para este perfil"
         : "Refine idade, queixa ou respondente"),
-    reason,
+    reason: match?.isBroadbandFallback
+      ? "Opção ampla de apoio. Não responde, por si só, à queixa selecionada."
+      : reason,
     state,
     source: scale?.fonte,
     tone,
     hasScale: Boolean(scale),
     // Saída do motor de filtragem avançada (advancedFilterLogic)
     clinicalTier: match
-      ? (SLOT_CLINICAL_LABEL[slot] ?? slot.toLowerCase())
+      ? match.isBroadbandFallback ? "Triagem ampla" : (SLOT_CLINICAL_LABEL[slot] ?? slot.toLowerCase())
       : null,
-    confidence: match?.confidenceLevel ?? null,
+    confidence: match?.isBroadbandFallback ? null : (match?.confidenceLevel ?? null),
     warnings: match?.warningFlags ?? [],
     clinicalReason: match?.clinicalReason ?? null,
     implementationStatus: match?.implementationStatus ?? null,
@@ -886,7 +888,7 @@ function itemCoverageLabel(
   item: RecommendationItem,
   selectedQueixas: string[],
 ): string {
-  if (!item.scale || selectedQueixas.length === 0) return "";
+  if (!item.scale || item.isBroadbandFallback || selectedQueixas.length === 0) return "";
   const covered = selectedQueixas
     .filter((queixaId) => item.scale?.queixas.includes(queixaId))
     .map(
@@ -970,12 +972,12 @@ function buildQualitativeFilterReport(args: {
     );
     if (broadbandComplements.length > 0) {
       paragraphs.push(
-        `Para manter três escolhas clinicamente utilizáveis sem forçar escala inadequada, o pódio foi completado com ${joinNatural(broadbandComplements.map((item) => item.title))}, usado aqui como complemento de banda larga apropriado à idade. Esse complemento ajuda a medir impacto global, funcionamento e carga emocional/comportamental enquanto a escala principal responde à queixa central.`,
+        `Como apoio complementar, o filtro também encontrou ${joinNatural(broadbandComplements.map((item) => item.title))}. Essas opções são amplas e não equivalem a instrumentos específicos para a queixa central.`,
       );
     }
   }
 
-  if (ouro?.scale) {
+  if (ouro?.scale && !ouro.isBroadbandFallback) {
     const coverage = itemCoverageLabel(ouro, selectedQueixas);
     const reason = tidySentence(
       ouro.reason || ouro.clinicalReason || ouro.scale.description,
@@ -999,7 +1001,7 @@ function buildQualitativeFilterReport(args: {
       })
       .join(" ");
     paragraphs.push(
-      `Como composição qualitativa, ${complementText} Essas escolhas evitam uma leitura estreita do caso: uma escala ancora a prioridade principal e as demais acrescentam perspectiva funcional, comportamental, escolar ou de acompanhamento.`,
+      `Como composição qualitativa, ${complementText} Confira o que cada opção acrescenta antes de aplicá-la; não é necessário usar todas as posições.`,
     );
   }
 

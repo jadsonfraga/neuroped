@@ -165,8 +165,10 @@ export function auditPodium(input: PodiumAuditInput): PodiumAudit {
       id: match.scale.id,
       name: match.scale.name,
       role,
-      roleLabel: ROLE_LABEL[role],
-      addsLabel: role === "teste_direto" || role === "escola"
+      roleLabel: match.isBroadbandFallback ? "Triagem ampla · não específica para a queixa" : ROLE_LABEL[role],
+      addsLabel: match.isBroadbandFallback
+        ? "Ajuda a descrever o funcionamento geral, mas não substitui um instrumento específico."
+        : role === "teste_direto" || role === "escola"
         ? "Categoria separada: fora do teto de 100 perguntas do trio"
         : role === "principal"
           ? primaryLabel(match, selectedQueixas, queixaLabel)
