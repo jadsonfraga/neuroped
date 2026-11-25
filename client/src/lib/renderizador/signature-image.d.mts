@@ -9,4 +9,4 @@ export function paddedCrop(bounds: InkBox, width: number, height: number, paddin
 export function scaledSize(width: number, height: number, maxWidth: number): { w: number; h: number };
 export function hasTransparency(rgba: ArrayLike<number>): boolean;
 export function dataUrlBytes(dataUrl: string): number;
-export function prepareSignaturePng(file: File): Promise<{ dataUrl: string; opaque: boolean; cropped: boolean; resized: boolean }>;
+export function prepareSignaturePng(file: File, options?: { allowProtectedJpeg?: boolean }): Promise<{ dataUrl: string; opaque: boolean; cropped: boolean; resized: boolean }>;

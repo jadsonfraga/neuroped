@@ -1,3 +1,4 @@
+import { printCurrentPageWithOwnerFacsimile } from "@/lib/printDocument";
 import { useState } from "react";
 import {
   School, Eye, Puzzle, BookOpen, Brain,
@@ -651,7 +652,7 @@ export default function InventariosEscolaPage() {
           variant="outline"
           size="sm"
           className="gap-2 flex-shrink-0 print:hidden"
-          onClick={() => window.print()}
+          onClick={() => void printCurrentPageWithOwnerFacsimile()}
         >
           <Printer className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">Imprimir</span>

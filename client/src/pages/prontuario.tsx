@@ -1,3 +1,4 @@
+import { printAppHtmlWithOwnerFacsimile } from "@/lib/printDocument";
 import { decodeProntuarioEncounterId, encodeProntuarioEncounterId, prontuarioPayloadFingerprint } from "@/lib/prontuarioEncounterId";
 import { cloneElement, isValidElement, useState, useCallback, useEffect, useRef, type ReactElement, type ReactNode } from "react";
 import { calcProntuarioMgKg, formatProntuarioWeight, parseProntuarioDoseMg } from "@/lib/prontuarioDose";
@@ -574,9 +575,7 @@ ${examRows ? `<div class="section"><h2>Exames</h2>${examRows}</div>` : ""}
 </body>
 </html>`;
 
-  w.document.write(html);
-  w.document.close();
-  w.onload = () => w.print();
+  printAppHtmlWithOwnerFacsimile(w, html);
   return true;
 }
 

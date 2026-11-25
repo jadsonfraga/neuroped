@@ -21,6 +21,7 @@ import {
   useIssuer,
   type DocumentIssuer,
 } from "@/lib/issuer";
+import { captureOwnerPdfScope, loadOwnerFacsimileDataUrl, waitForOwnerFacsimileImage } from "@/lib/ownerPdfFacsimile";
 import { dateStamp } from "@/lib/printDocument";
 import { buildLaudoPantPrintHtml, romano } from "@/lib/laudo/pantPrintTemplate";
 import { prepararIntegra } from "@/lib/laudo/pantIntegra";
@@ -28,7 +29,7 @@ import { prepararIntegra } from "@/lib/laudo/pantIntegra";
 /* ────────────────────────────────────────────────────────────
    Laudo SuperNeuroPed — WebUI de geração assistida (embutida)
    Identidade do emissor: fonte única client/src/lib/issuer.ts
-   Perfil do modelo PANT real (Luiza Gonçalves Silva):
+   Estrutura do modelo PANT:
    capa rica · 14 seções · mapa funcional · hipóteses
    com prós/contras · 3 cenários · assinatura institucional
    100% local — sem API externa (sem Claude)
@@ -99,17 +100,16 @@ function appAssetBase(): string {
 }
 
 /** Imprime só depois que as fontes e o brasão carregarem (com teto de espera). */
-function imprimirQuandoPronto(win: Window) {
+async function imprimirQuandoPronto(win: Window, assertSameScope: () => void) {
   const doc = win.document;
   const imagens = Array.from(doc.images).map((img) =>
     img.complete ? Promise.resolve() : img.decode().catch(() => undefined),
   );
   const fontes = doc.fonts?.ready ?? Promise.resolve();
   const teto = new Promise((r) => setTimeout(r, 3500));
-  void Promise.race([Promise.all([fontes, ...imagens]), teto]).then(() => {
-    win.focus();
-    win.print();
-  });
+  await Promise.race([Promise.all([fontes, ...imagens]), teto]);
+  assertSameScope();
+  if (!win.closed) { win.focus(); win.print(); }
 }
 
 // ── Formulários auxiliares (repetidores) ────────────────────────────────────
@@ -595,12 +595,13 @@ export default function LaudoSuperPage() {
   const pacienteCapa = limpo(entrada.nome) || integraPrep?.paciente || "";
 
   /** HTML no padrão PANT (pasta Panty) — só local: nada é gravado no prontuário. */
-  const montarHtmlImpressao = (): string =>
+  const montarHtmlImpressao = (facsimile?: string | null): string =>
     buildLaudoPantPrintHtml({
       texto: integraPrep ? integraPrep.texto : texto,
       paciente: integraPrep ? pacienteCapa : entrada.nome,
       medico,
       assetBase: appAssetBase(),
+      facsimile,
       idade: entrada.idade,
       tipoConsulta: entrada.tipoConsulta,
       dataConsulta: entrada.dataConsulta,
@@ -646,14 +647,27 @@ export default function LaudoSuperPage() {
     }
   };
 
-  const handlePrint = () => {
+  const [printError, setPrintError] = useState("");
+
+  const handlePrint = async () => {
     if (!podeImprimir) return;
     const win = window.open("", "_blank");
-    if (!win) return;
+    if (!win) { setPrintError("Impressão bloqueada pelo navegador."); return; }
     win.opener = null;
-    win.document.write(montarHtmlImpressao());
-    win.document.close();
-    imprimirQuandoPronto(win);
+    setPrintError("");
+    try {
+      const assertSameScope = captureOwnerPdfScope();
+      const image = await loadOwnerFacsimileDataUrl();
+      assertSameScope();
+      win.document.write(montarHtmlImpressao(image));
+      win.document.close();
+      await waitForOwnerFacsimileImage(win.document);
+      assertSameScope();
+      await imprimirQuandoPronto(win, assertSameScope);
+    } catch (error) {
+      win.close();
+      setPrintError(error instanceof Error ? error.message : "Não foi possível preparar o PDF.");
+    }
   };
 
   const aprovado = resultado?.qa.startsWith("APROVADO");
@@ -689,6 +703,7 @@ export default function LaudoSuperPage() {
           <Button onClick={handlePrint} size="sm" className="gap-2" disabled={!podeImprimir} data-testid="button-imprimir-laudo-super">
             <Printer className="h-4 w-4" /> Imprimir / Salvar PDF
           </Button>
+          {printError && <span className="text-sm text-destructive" role="alert">{printError}</span>}
           <Button variant="secondary" size="sm" className="gap-2" onClick={() => { setEntrada(ENTRADA_VAZIA); setTexto(""); setIntegra(""); setShowPreview(false); }}>
             <RefreshCw className="h-4 w-4" /> Limpar
           </Button>
@@ -769,12 +784,12 @@ export default function LaudoSuperPage() {
 
           <SecaoEditor titulo="Capa e identificação (opcional: sobrepõe o nome do texto colado)" chave="capa" aberto={!!abertos.capa} onToggle={() => toggle("capa")}>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              <CampoTexto label="Nome do paciente" id="super-nome" value={entrada.nome} onChange={set("nome")} placeholder="Ex.: Luiza Gonçalves Silva" />
-              <CampoTexto label="Idade" id="super-idade" value={entrada.idade} onChange={set("idade")} placeholder="Ex.: 17 anos" />
+              <CampoTexto label="Nome do paciente" id="super-nome" value={entrada.nome} onChange={set("nome")} placeholder="Informe o nome usado no prontuário" />
+              <CampoTexto label="Idade" id="super-idade" value={entrada.idade} onChange={set("idade")} placeholder="Informe a idade documentada" />
               <CampoTexto label="Tipo de consulta" id="super-tipo" value={entrada.tipoConsulta} onChange={set("tipoConsulta")} placeholder="Ex.: primeira consulta / reavaliação" />
-              <CampoTexto label="Data da consulta (por extenso)" id="super-data" value={entrada.dataConsulta} onChange={set("dataConsulta")} placeholder="Ex.: 18 de agosto de 2026" />
-              <CampoTexto label="Protocolo (sem prefixo)" id="super-protocolo" value={entrada.protocolo} onChange={set("protocolo")} placeholder="Ex.: 2026-08-18-0001" />
-              <CampoTexto label="Cidade/UF" id="super-cidade" value={entrada.cidade} onChange={set("cidade")} placeholder="Ex.: Petrolina/PE" />
+              <CampoTexto label="Data da consulta (por extenso)" id="super-data" value={entrada.dataConsulta} onChange={set("dataConsulta")} placeholder="Informe a data por extenso" />
+              <CampoTexto label="Protocolo (sem prefixo)" id="super-protocolo" value={entrada.protocolo} onChange={set("protocolo")} placeholder="Ano-mês-dia e sequência" />
+              <CampoTexto label="Cidade/UF" id="super-cidade" value={entrada.cidade} onChange={set("cidade")} placeholder="Município/UF" />
             </div>
             <TextareaArea label="Síntese da consulta (caixa da capa)" id="super-resumo" value={entrada.resumoCapa} onChange={set("resumoCapa")} placeholder="Parágrafo-síntese: demanda, contexto e interlocução com outras especialidades…" />
             <TextareaArea label="Caixa CID (capa)" id="super-caixaCid" value={entrada.caixaCid} onChange={set("caixaCid")} placeholder="Ex.: CID-10 F32.1 · CID-11 6A70.1, hipótese em reavaliação, não firmada nesta consulta" />
@@ -799,7 +814,7 @@ export default function LaudoSuperPage() {
           {porSecoes && (
           <div className="space-y-4">
           <SecaoEditor titulo="01 · Quem é o paciente" chave="quem" aberto={!!abertos.quem} onToggle={() => toggle("quem")}>
-            <TextareaArea label="Apresentação narrativa" id="super-quemE" value={entrada.quemE} onChange={set("quemE")} placeholder="Ex.: Luiza é uma adolescente de dezessete anos que chega a esta consulta trazendo uma história já em andamento…" />
+            <TextareaArea label="Apresentação narrativa" id="super-quemE" value={entrada.quemE} onChange={set("quemE")} placeholder="Apresente a pessoa, o motivo da avaliação e apenas o contexto documentado." />
             <TextareaArea label="Acompanhado por" id="super-acomp" value={entrada.acompanhadoPor} onChange={set("acompanhadoPor")} placeholder="Ex.: Chega acompanhada da mãe." />
             <TextareaArea label="Observação sobre a entrevista" id="super-entrevista" value={entrada.observacaoEntrevista} onChange={set("observacaoEntrevista")} placeholder="Ex.: Comunicativa, de discurso organizado, capaz de descrever com precisão o que sente…" />
           </SecaoEditor>
@@ -814,7 +829,7 @@ export default function LaudoSuperPage() {
           </SecaoEditor>
 
           <SecaoEditor titulo="04 · Convergência das fontes" chave="conv" aberto={!!abertos.conv} onToggle={() => toggle("conv")}>
-            <TextareaArea label="Convergências" id="super-conv" value={entrada.convergencia} onChange={set("convergencia")} placeholder="Ex.: O relato da mãe e o relato da própria Luiza convergem na maior parte dos pontos centrais…" />
+            <TextareaArea label="Convergências" id="super-conv" value={entrada.convergencia} onChange={set("convergencia")} placeholder="Indique quais pontos convergem e a quem se atribui cada observação." />
             <TextareaArea label="Divergências (se houver)" id="super-div" value={entrada.divergencias} onChange={set("divergencias")} placeholder="Ex.: Divergem em aspectos de dinâmica familiar… o que é, em si, um achado clínico digno de nota." />
             <TextareaArea label="Documentos que convergem" id="super-docs" value={entrada.documentosConvergentes} onChange={set("documentosConvergentes")} placeholder="Ex.: Documento psicológico anterior converge com o relato clínico…" />
           </SecaoEditor>
@@ -846,7 +861,7 @@ export default function LaudoSuperPage() {
           </SecaoEditor>
 
           <SecaoEditor titulo="10 · Conduta farmacológica e exames" chave="farm" aberto={!!abertos.farm} onToggle={() => toggle("farm")}>
-            <TextareaArea label="Conduta farmacológica" id="super-farm" value={entrada.condutaFarmaco} onChange={set("condutaFarmaco")} placeholder="Ex.: Mantida sertralina 75 mg ao dia, dose de origem confirmada nesta consulta…" />
+            <TextareaArea label="Conduta farmacológica" id="super-farm" value={entrada.condutaFarmaco} onChange={set("condutaFarmaco")} placeholder="Registre a conduta e a posologia exatamente como foram confirmadas pelo prescritor." />
             <CampoLista titulo="Solicitações desta consulta" valores={entrada.solicitacoes} onChange={(v) => setEntrada((p) => ({ ...p, solicitacoes: v }))} />
           </SecaoEditor>
 
@@ -868,7 +883,7 @@ export default function LaudoSuperPage() {
           </SecaoEditor>
 
           <SecaoEditor titulo="14 · Síntese e encaminhamento" chave="sint" aberto={!!abertos.sint} onToggle={() => toggle("sint")}>
-            <TextareaArea label="Síntese dirigida ao paciente" id="super-sintese" value={entrada.sintese} onChange={set("sintese")} placeholder='Ex.: Luiza, este documento não fecha o que ainda está em aberto…' />
+            <TextareaArea label="Síntese dirigida ao paciente" id="super-sintese" value={entrada.sintese} onChange={set("sintese")} placeholder='Dirija a síntese à pessoa atendida e explique o que ainda precisa de avaliação.' />
             <p className="text-[11px] text-muted-foreground">
               A assinatura institucional configurada em Configurações › Perfil e Configurações › Clínica é inserida automaticamente no PDF; sem perfil configurado, o documento declara a ausência de registro profissional.
             </p>
@@ -893,6 +908,7 @@ export default function LaudoSuperPage() {
                   ? integra
                   : texto || laudoSuperParaTexto(gerarLaudoSuper(entrada, medico));
                 return buildDocumentPdf({
+                  includeOwnerFacsimile: true,
                   title: "Laudo Neuropediatrico — Perfil SuperNeuroPed",
                   subtitle: `SuperNeuroPed nº ${dateStamp()} · Gerado pela assistente embarcada NeuroPed EDJ`,
                   credentials: [

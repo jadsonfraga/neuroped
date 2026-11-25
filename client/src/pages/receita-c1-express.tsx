@@ -1,3 +1,4 @@
+import { captureOwnerPdfScope, loadOwnerPdfFacsimile } from "@/lib/ownerPdfFacsimile";
 import { useState, useEffect, useRef } from "react";
 import { electronicRceBlockReason, electronicRceTransitionNotice } from "@/lib/sncrTransition";
 import {
@@ -76,7 +77,7 @@ function fmtNasc(iso: string): string {
 }
 
 // ── HTML de impressão (2 vias em A5) ─────────────────────────────
-async function buildC1TemplatePdfBytes(f: FormFields, issuer: DocumentIssuer): Promise<Uint8Array> {
+export async function buildC1TemplatePdfBytes(f: FormFields, issuer: DocumentIssuer): Promise<Uint8Array> {
   const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
   const QRCode = (await import("qrcode")).default;
   const data = todayBr();
@@ -85,7 +86,12 @@ async function buildC1TemplatePdfBytes(f: FormFields, issuer: DocumentIssuer): P
   validade.setDate(validade.getDate() + 30);
   const valBr = validade.toLocaleDateString("pt-BR");
 
+  const assertSameScope = captureOwnerPdfScope();
+  const image = await loadOwnerPdfFacsimile();
+  assertSameScope();
   const pdf = await PDFDocument.create();
+  const imageRef = !image ? null : image.media === "image/png"
+    ? await pdf.embedPng(image.bytes) : await pdf.embedJpg(image.bytes);
   const helv = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const serif = await pdf.embedFont(StandardFonts.TimesRomanBold);
@@ -103,8 +109,7 @@ async function buildC1TemplatePdfBytes(f: FormFields, issuer: DocumentIssuer): P
   const validationUrl = buildAppHashUrl("/verificar");
   const qrDataUrl = await QRCode.toDataURL(validationUrl, { width: 220, margin: 1, errorCorrectionLevel: "M" });
   const qrPng = await pdf.embedPng(qrDataUrl.split(",")[1] ?? "");
-  // Sem logo/assinatura pessoais embutidas: a identidade visual do emissor só
-  // entra quando existir upload por tenant; a assinatura é a digital ICP-Brasil.
+  // A imagem opcional só ocupa o quadro existente e vem antes da assinatura digital.
 
   const drawFitted = (page: import("pdf-lib").PDFPage, value: string, x: number, y: number, maxWidth: number, size: number, font = helv) => {
     let text = pdfSafe(value || "");
@@ -224,11 +229,16 @@ async function buildC1TemplatePdfBytes(f: FormFields, issuer: DocumentIssuer): P
     page.drawText(`${cidadeUf ? `${cidadeUf}, ` : ""}${data}  -  Validade: ${valBr}${f.cid ? `  -  CID-10: ${pdfSafe(f.cid)}` : ""}`, { x: m, y: 108, size: 5.8, font: helv, color: muted });
 
     page.drawRectangle({ x: 218, y: 44, width: 176, height: 66, borderWidth: 0.6, borderColor: rgb(0.2, 0.45, 0.34), color: rgb(0.93, 0.99, 0.96) });
+    if (imageRef) {
+      const stamp = imageRef.scale(Math.min(140 / imageRef.width, 17 / imageRef.height));
+      page.drawImage(imageRef, { x: 306 - stamp.width / 2, y: 85, width: stamp.width, height: stamp.height });
+      page.drawText("Imagem manuscrita - nao e assinatura digital", { x: 236, y: 79, size: 4.2, font: helv, color: muted });
+    }
     page.drawLine({ start: { x: 228, y: 76 }, end: { x: 384, y: 76 }, thickness: 0.25, color: rgb(0.18, 0.22, 0.2) });
     drawFitted(page, issuer.doctorName, 238, 66, 148, 6.2, bold);
     drawFitted(page, issuerCredentials(issuer), 238, 58, 148, 5.2, helv);
-    page.drawText("Assinatura digital ICP-Brasil PAdES-BES", { x: 236, y: 50, size: 5.2, font: helv, color: rgb(0.05, 0.34, 0.22) });
-    if (pageIndex === 0) page.drawText("Campo tecnico da assinatura digital embutida no PDF.", { x: 222, y: 35, size: 4.4, font: helv, color: muted });
+    page.drawText("Verifique a assinatura ICP-Brasil do arquivo", { x: 236, y: 50, size: 5.2, font: helv, color: rgb(0.05, 0.34, 0.22) });
+    if (pageIndex === 0) page.drawText("Campo reservado para verificacao da assinatura eletrônica.", { x: 222, y: 35, size: 4.4, font: helv, color: muted });
 
     page.drawRectangle({ x: m, y: 20, width: 190, height: 58, borderWidth: 0.4, borderColor: gold, color: rgb(1, 0.98, 0.92) });
     page.drawText("VALIDACAO DIGITAL", { x: m + 8, y: 64, size: 6.2, font: bold, color: ink });
@@ -240,7 +250,9 @@ async function buildC1TemplatePdfBytes(f: FormFields, issuer: DocumentIssuer): P
 
   drawVia("1a", "FARMACIA", 0);
   drawVia("2a", "PACIENTE", 1);
-  return await pdf.save({ useObjectStreams: false });
+  const bytes = await pdf.save({ useObjectStreams: false });
+  assertSameScope();
+  return bytes;
 }
 
 function buildC1PrintHtml(f: FormFields, issuer: DocumentIssuer): string {

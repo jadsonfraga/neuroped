@@ -678,6 +678,11 @@ export function createSyntheticClinicalApi(scenario = {}) {
       return true;
     }
 
+    if (pathname === "/api/me/pdf-facsimile" && request.method === "GET") {
+      response.writeHead(204, { "Cache-Control": "no-store" });
+      response.end();
+      return true;
+    }
     if (pathname === "/api/me/profile") {
       if (request.method === "PUT") {
         send(response, 200, { ok: true });

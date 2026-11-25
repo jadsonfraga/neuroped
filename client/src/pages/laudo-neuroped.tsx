@@ -16,6 +16,7 @@ import {
   useIssuer,
   type DocumentIssuer,
 } from "@/lib/issuer";
+import { captureOwnerPdfScope, loadOwnerFacsimileDataUrl, waitForOwnerFacsimileImage, ownerFacsimilePrintMarkup } from "@/lib/ownerPdfFacsimile";
 import { dateStamp } from "@/lib/printDocument";
 import { readRouteParam } from "@/lib/routeQuery";
 import { loadPatientPrefill } from "@/lib/patientPrefillSource";
@@ -60,7 +61,7 @@ function limpo(v: unknown): string {
   return typeof v === "string" ? v.trim() : "";
 }
 
-function buildPrintHtml(texto: string, issuer: DocumentIssuer): string {
+function buildPrintHtml(texto: string, issuer: DocumentIssuer, facsimile?: string | null): string {
   const today = new Date().toLocaleDateString("pt-BR");
   const safeText = escapeHtml(texto.trim() || "Sem conteúdo informado.");
   const esc = escapeHtml;
@@ -127,15 +128,16 @@ html,body{background:var(--white);font-family:'Carlito',Arial,sans-serif;font-si
   <div class="ribbon"><i class="g"></i><i class="t"></i><i class="b"></i><i class="n"></i></div>
   <main class="doc-text">${safeText}</main>
   <div class="sig-area">
+    ${ownerFacsimilePrintMarkup(facsimile)}
     <div class="sig-nm">${esc(issuer.doctorName)}</div>
     <div class="sig-rg">${esc([credenciais, issuer.specialty].filter(Boolean).join(" — "))}</div>
     <div class="sig-rg" style="margin-top:6pt;font-size:6pt;color:var(--note)">
-      Assinatura digital ICP-Brasil — conferir em validador oficial (iti.br/repositorio)
+      Sem assinatura digital nesta versão
     </div>
   </div>
   <div class="footer">
     <span>Emitido em: ${today} — NeuroPed EDJ</span>
-    <span>Documento para fins médicos · assinatura digital ICP-Brasil PAdES-BES</span>
+    <span>Versão para revisão · sem assinatura digital</span>
   </div>
 </body>
 </html>`;
@@ -243,14 +245,28 @@ export default function LaudoNeuropedPage() {
     }
   };
 
-  const handlePrint = () => {
+  const [printError, setPrintError] = useState("");
+
+  const handlePrint = async () => {
     const win = window.open("", "_blank");
-    if (!win) return;
+    if (!win) { setPrintError("Impressão bloqueada pelo navegador."); return; }
     win.opener = null;
-    win.document.write(buildPrintHtml(texto, issuer));
-    win.document.close();
-    win.focus();
-    setTimeout(() => { win.print(); }, 400);
+    setPrintError("");
+    try {
+      const assertSameScope = captureOwnerPdfScope();
+      const image = await loadOwnerFacsimileDataUrl();
+      assertSameScope();
+      win.document.write(buildPrintHtml(texto, issuer, image));
+      win.document.close();
+      await waitForOwnerFacsimileImage(win.document);
+      assertSameScope();
+      await new Promise(resolve => setTimeout(resolve, 400));
+      assertSameScope();
+      if (!win.closed) { win.focus(); win.print(); }
+    } catch (error) {
+      win.close();
+      setPrintError(error instanceof Error ? error.message : "Não foi possível preparar o PDF.");
+    }
   };
 
   const filename = `laudo-neuroped-${dateStamp()}`;
@@ -286,6 +302,7 @@ export default function LaudoNeuropedPage() {
           <Button onClick={handlePrint} size="sm" className="gap-2" disabled={!texto}>
             <Printer className="h-4 w-4" /> Imprimir / Salvar PDF
           </Button>
+          {printError && <span className="text-sm text-destructive" role="alert">{printError}</span>}
           <Button variant="secondary" size="sm" className="gap-2" onClick={() => { setEntrada(ENTRADA_VAZIA); setTexto(""); setShowPreview(false); }}>
             <RefreshCw className="h-4 w-4" /> Limpar
           </Button>
@@ -394,6 +411,7 @@ export default function LaudoNeuropedPage() {
           buildPdf={async () => {
             const { buildDocumentPdf } = await import("@/lib/documentPdf");
             return buildDocumentPdf({
+              includeOwnerFacsimile: true,
               title: "Laudo Medico Neuropediatrico",
               subtitle: "Gerado pela assistente embarcada NeuroPed EDJ",
               credentials: [

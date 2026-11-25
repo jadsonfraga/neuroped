@@ -1,3 +1,4 @@
+import { printAppHtmlWithOwnerFacsimile } from "@/lib/printDocument";
 import { useId, useState } from "react";
 import {
   Target, Users, CheckCircle2, AlertCircle, ArrowRight, ArrowLeft,
@@ -324,13 +325,9 @@ export default function PlanoTerapeuticoPage() {
       </html>
     `;
     const win = window.open("", "_blank");
-    if (win) {
-      win.opener = null;
-      win.document.write(content);
-      win.document.close();
-      win.focus();
-      win.print();
-    }
+    if (!win) return;
+    win.opener = null;
+    printAppHtmlWithOwnerFacsimile(win, content);
   };
 
   const handleReset = () => {

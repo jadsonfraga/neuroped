@@ -1,3 +1,4 @@
+import { printCurrentPageWithOwnerFacsimile } from "@/lib/printDocument";
 import { useMemo, useState } from "react";
 import { copyText } from "@/lib/shareText";
 import { Link } from "wouter";
@@ -114,7 +115,7 @@ export default function PreConsultaPage() {
 
   function imprimir() {
     if (!ageValidation.isValid) return;
-    window.print();
+    void printCurrentPageWithOwnerFacsimile();
   }
 
   return (

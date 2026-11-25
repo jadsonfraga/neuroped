@@ -17,6 +17,7 @@ import { buildAppHashUrl } from "@/lib/appUrl";
 import { wrapPdfText } from "@/lib/pdfTextWrap";
 import { decodeLogoDataUri, hexToUnit, type ClinicBranding } from "@shared/clinic-branding";
 import { loadIssuer } from "@/lib/issuer";
+import { captureOwnerPdfScope, loadOwnerPdfFacsimile } from "@/lib/ownerPdfFacsimile";
 
 /** Linha com destaque opcional: negrito e/ou tom de resposta (azul = certo, vermelho = errado, cinza = neutro). */
 export interface DocLine {
@@ -38,6 +39,8 @@ export interface DocSpec {
   subtitle?: string;
   /** Linhas do cabeçalho do profissional (nome, CRM/RQE, especialidade...). */
   credentials: string[];
+  /** Novos documentos do titular incluem a imagem antes da assinatura; false só para modelos imutáveis. */
+  includeOwnerFacsimile?: boolean;
   sections: DocSection[];
   /** Texto do rodapé (aviso legal, validade etc.). */
   footer?: string;
@@ -176,6 +179,8 @@ export function brandColors(brand: PdfBrand | null) {
   };
 }
 export async function buildDocumentPdf(rawSpecIn: DocSpec): Promise<Uint8Array> {
+  const withOwnerFacsimile = rawSpecIn.includeOwnerFacsimile !== false;
+  const assertSameScope = withOwnerFacsimile ? captureOwnerPdfScope() : undefined;
   // Marca da clínica ativa: aplicada a TODOS os documentos por este ponto único,
   // sem editar cada gerador. Só afeta a moldura (faixa, cores, logo, cabeçalho
   // e rodapé), nunca as seções de conteúdo. O emissor em cache é escopado por
@@ -196,7 +201,11 @@ export async function buildDocumentPdf(rawSpecIn: DocSpec): Promise<Uint8Array> 
     footer: [rawSpec.footer, brand?.footerText].filter((t): t is string => Boolean(t && t.trim())).map(pdfSafe).join("\n") || undefined,
   };
 
+  assertSameScope?.();
+  const facsimileSource = withOwnerFacsimile ? await loadOwnerPdfFacsimile() : null;
   const pdf = await PDFDocument.create();
+  const facsimile = !facsimileSource ? null : facsimileSource.media === "image/png"
+    ? await pdf.embedPng(facsimileSource.bytes) : await pdf.embedJpg(facsimileSource.bytes);
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const serif = await pdf.embedFont(StandardFonts.TimesRomanBold);
@@ -274,7 +283,8 @@ export async function buildDocumentPdf(rawSpecIn: DocSpec): Promise<Uint8Array> 
   let y = drawMasthead(page, false);
 
   const footerLineCount = spec.footer ? wrap(spec.footer, font, 7.3, maxW).length : 0;
-  const bottomContentFloor = 166 + footerLineCount * 9;
+  const facsimileArea = facsimile ? 58 : 0;
+  const bottomContentFloor = 166 + footerLineCount * 9 + facsimileArea;
 
   const newPage = () => {
     page = pdf.addPage([A4.w, A4.h]);
@@ -354,11 +364,18 @@ export async function buildDocumentPdf(rawSpecIn: DocSpec): Promise<Uint8Array> 
   // invadir o corpo graças ao bottomContentFloor calculado acima.
   if (spec.footer) {
     const lines = wrap(spec.footer, font, 7.3, maxW);
-    let fy = 156 + lines.length * 9;
+    let fy = 156 + lines.length * 9 + facsimileArea;
     for (const line of lines) {
       page.drawText(line, { x: M, y: fy, size: 7.3, font, color: C.muted });
       fy -= 9;
     }
+  }
+
+  if (facsimile) {
+    const stamp = facsimile.scale(Math.min(170 / facsimile.width, 35 / facsimile.height));
+    page.drawImage(facsimile, { x: (A4.w - stamp.width) / 2, y: 160, width: stamp.width, height: stamp.height });
+    const label = "Imagem manuscrita - nao e assinatura digital";
+    page.drawText(label, { x: (A4.w - font.widthOfTextAtSize(label, 7.5)) / 2, y: 147, size: 7.5, font, color: C.muted });
   }
 
   const validationY = 48;
@@ -443,5 +460,7 @@ export async function buildDocumentPdf(rawSpecIn: DocSpec): Promise<Uint8Array> 
     });
   });
 
-  return await pdf.save({ useObjectStreams: false });
+  const bytes = await pdf.save({ useObjectStreams: false });
+  assertSameScope?.();
+  return bytes;
 }

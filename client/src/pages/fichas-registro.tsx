@@ -1,3 +1,4 @@
+import { printAppHtmlWithOwnerFacsimile } from "@/lib/printDocument";
 import { useState } from "react";
 import { localIsoDate } from "@/lib/clinicalDate";
 import { ClipboardList, Printer, Mail, Loader2 } from "lucide-react";
@@ -359,9 +360,7 @@ function ScaleTab({ scaleKey }: { scaleKey: string }) {
       return;
     }
     win.opener = null;
-    win.document.write(buildHtml(scaleKey, patient, scores, issuer));
-    win.document.close();
-    win.onload = () => win.print();
+    printAppHtmlWithOwnerFacsimile(win, buildHtml(scaleKey, patient, scores, issuer));
     toast({ title: "Impressão", description: "Janela de impressão aberta." });
   }
 

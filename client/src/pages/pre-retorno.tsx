@@ -1,3 +1,4 @@
+import { printCurrentPageWithOwnerFacsimile } from "@/lib/printDocument";
 import { useMemo, useState } from "react";
 import { ClipboardCheck, Copy, MessageCircle, Printer, Save, ShieldAlert, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -208,7 +209,7 @@ export default function PreRetornoPage() {
 
   function imprimir() {
     if (!ageValidation.isValid) return;
-    window.print();
+    void printCurrentPageWithOwnerFacsimile();
   }
 
   return (

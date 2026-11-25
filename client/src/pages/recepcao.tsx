@@ -1,3 +1,4 @@
+import { printCurrentPageWithOwnerFacsimile } from "@/lib/printDocument";
 import { useEffect, useMemo, useState } from "react";
 import { copyText } from "@/lib/shareText";
 import { Link } from "wouter";
@@ -218,7 +219,7 @@ export default function RecepcaoPage() {
                 <div className="flex items-center gap-2 text-sm font-semibold text-foreground"><ClipboardCheck className="h-4 w-4 text-primary" /> Resumo para o médico</div>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={copiarResumo} className="gap-2"><Copy className="h-4 w-4" />Copiar</Button>
-                  <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-2"><Printer className="h-4 w-4" />Imprimir</Button>
+                  <Button variant="outline" size="sm" onClick={() => void printCurrentPageWithOwnerFacsimile()} className="gap-2"><Printer className="h-4 w-4" />Imprimir</Button>
                 </div>
               </div>
               <pre className="max-h-[560px] overflow-auto whitespace-pre-wrap rounded-2xl bg-muted/50 p-3 text-xs leading-relaxed text-muted-foreground">{resumo}</pre>
