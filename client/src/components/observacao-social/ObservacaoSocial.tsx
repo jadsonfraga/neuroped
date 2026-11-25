@@ -32,12 +32,13 @@ export default function ObservacaoSocial() {
       entry.context && "Contexto e apoios: " + entry.context].filter(Boolean).join("\n");
   }).join("\n\n");
   return <article className="mx-auto max-w-3xl space-y-4 pb-8">
-    <header><p className="text-sm">NeuroPed · Roteiro autoral v1.0 · Sem validação psicométrica</p>
+    <header><p className="text-sm">NeuroPed · Roteiro autoral v1.1 · Sem validação psicométrica</p>
       <h1 className="my-2 text-2xl font-bold">Observação social presencial</h1>
       <p>Use o tablet como convite para uma interação com outra pessoa. Adapte a linguagem e aceite gestos, fala, escrita e comunicação aumentativa e alternativa. A pessoa pode observar, recusar ou parar.</p></header>
     <section className={panel}>
-      <label className="block">Faixa etária<select className={input} value={band} onChange={e => { setBand(Number(e.target.value)); setScene(0); }}>
+      <label className="block">Idade na data da observação<select className={input} value={band} onChange={e => { setBand(Number(e.target.value)); setScene(0); }}>
         {bands.map(([name], i) => <option key={name} value={i}>{name}</option>)}</select></label>
+      <p className="text-sm">A idade orienta o tema. Use objetos reais, figuras, gestos ou CAA conforme o acesso da pessoa. Preserve temas compatíveis com a idade e registre o apoio oferecido.</p>
       <label className="block">Situação<select className={input} value={scene} onChange={e => setScene(Number(e.target.value))}>
         {bands[band][1].map(([title], i) => <option key={title} value={i}>{title}</option>)}</select></label>
       <h2 className="text-xl font-semibold">{domain}</h2><p>{guide}</p><p>{watch}</p>
@@ -60,7 +61,7 @@ export default function ObservacaoSocial() {
     </section>
     <section className={panel}><h2 className="text-xl font-semibold">Síntese para revisão clínica</h2>
       <p>Registro temporário. Sair de Testes diretos ou atualizar a página apaga a sessão. Revise e transfira o texto necessário antes de sair.</p>
-      <div className="whitespace-pre-wrap break-words">{summary ? "Observação social presencial · NeuroPed v1.0 · Roteiro autoral sem validação psicométrica\n\n" + summary + "\n\nInterpretar com história do desenvolvimento e funcionamento em outros ambientes. A sessão isolada não estabelece diagnóstico de TEA." : "Nenhuma observação registrada."}</div>
+      <div className="whitespace-pre-wrap break-words">{summary ? "Observação social presencial · NeuroPed v1.1 · Roteiro autoral sem validação psicométrica\n\n" + summary + "\n\nInterpretar com história do desenvolvimento e funcionamento em outros ambientes. A sessão isolada não estabelece diagnóstico de TEA." : "Nenhuma observação registrada."}</div>
       <button className={button} disabled={!summary} onClick={() => { if (window.confirm("Apagar todas as observações desta sessão?")) { setRecords({}); setBand(0); setScene(0); } }}>Limpar sessão</button>
     </section>
   </article>;
