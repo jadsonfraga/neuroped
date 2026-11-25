@@ -255,6 +255,22 @@ export default function AgendaPage() {
     setPatientSearch("");
   }, [activeProviderId]);
 
+  async function reconcileUnconfirmedBooking() {
+    // A resposta não chegou: o POST pode ter sido gravado. Só releia a
+    // agenda; não reenvie nem trate a atualização como prova de sucesso.
+    const refreshed = await dashboard.refetch().catch(() => undefined);
+    const sameAgenda = refreshed && !refreshed.isError && data
+      && refreshed.data?.access.clinicId === data.access.clinicId
+      && refreshed.data?.access.providerUserId === data.access.providerUserId;
+    toast({
+      title: "Não foi possível confirmar a gravação.",
+      description: sameAgenda
+        ? "Agenda atualizada. Confira o horário antes de tentar novamente."
+        : "Atualize a agenda e confira o horário antes de tentar novamente.",
+      variant: "destructive",
+    });
+  }
+
   async function mutate(payload: Record<string, unknown>, success: string): Promise<boolean> {
     setBusy(true);
     try {
@@ -262,19 +278,7 @@ export default function AgendaPage() {
     } catch (error) {
       try {
         if (payload.action === "create_appointment" && error instanceof TypeError) {
-          // A resposta não chegou: o POST pode ter sido gravado. Só releia a
-          // agenda; não reenvie nem trate a atualização como prova de sucesso.
-          const refreshed = await dashboard.refetch();
-          const sameAgenda = !refreshed.isError && Boolean(data)
-            && refreshed.data?.access.clinicId === data?.access.clinicId
-            && refreshed.data?.access.providerUserId === data?.access.providerUserId;
-          toast({
-            title: "Não foi possível confirmar a gravação.",
-            description: sameAgenda
-              ? "Agenda atualizada. Confira o horário antes de tentar novamente."
-              : "Atualize a agenda e confira o horário antes de tentar novamente.",
-            variant: "destructive",
-          });
+          await reconcileUnconfirmedBooking();
         } else {
           toast({ title: "Não foi possível concluir.", description: String(error), variant: "destructive" });
         }
