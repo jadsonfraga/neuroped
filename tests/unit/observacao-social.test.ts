@@ -3,7 +3,10 @@ import test from "node:test";
 import { bands, domains } from "../../client/src/data/observacaoSocial.ts";
 
 test("roteiro cobre de 1 a 19 anos com três situações distintas por faixa", () => {
-  assert.deepEqual(bands.map(([range]) => range), ["1–2 anos","3–5 anos","6–9 anos","10–13 anos","14–19 anos"]);
+  assert.deepEqual(bands.map(([range]) => range), [
+    "12–17 meses", "18–23 meses", "24–29 meses", "30–35 meses",
+    ...Array.from({ length: 17 }, (_, i) => (i + 3) + " anos"),
+  ]);
   assert.equal(domains.length, 3);
   const titles = new Set<string>();
   for (const [, scenes] of bands) {
@@ -14,5 +17,5 @@ test("roteiro cobre de 1 a 19 anos com três situações distintas por faixa", (
       titles.add(title);
     }
   }
-  assert.equal(titles.size, 15);
+  assert.equal(titles.size, 63);
 });
