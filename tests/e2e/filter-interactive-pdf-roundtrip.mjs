@@ -232,6 +232,15 @@ async function main() {
       route.fulfill({ status: 200, contentType: "application/json", body: "[]" }),
     );
 
+    // This fixture account is not the designated facsimile owner. The real
+    // endpoint returns 204 for it; the static test server has no API routes.
+    let facsimileReads = 0;
+    await page.route("**/api/me/pdf-facsimile", (route) => {
+      if (route.request().method() !== "GET") throw new Error("A geração da escala não deve gravar imagem");
+      facsimileReads++;
+      return route.fulfill({ status: 204 });
+    });
+
     await page.goto(`${base}/#/filtro`, { waitUntil: "domcontentloaded" });
     await waitForApp(page);
     await openFilterEngine(page);
@@ -253,6 +262,7 @@ async function main() {
       .locator("[data-scale-response-report]")
       .waitFor({ state: "visible", timeout: 15_000 });
     await assertPdf(page);
+    if (facsimileReads !== 1) throw new Error("PDF deve consultar o escopo uma única vez");
 
     await page.goBack({ waitUntil: "domcontentloaded" });
     await waitForApp(page);
