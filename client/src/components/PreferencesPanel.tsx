@@ -4,7 +4,7 @@ import { KeyRound, Volume2, VolumeX, Vibrate } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useUiPreferences } from "@/hooks/useUiPreferences";
-import { softTap } from "@/lib/softSounds";
+import { softMuteHint, softTap } from "@/lib/softSounds";
 import { easing } from "@/lib/motion";
 import { changePasswordRequest } from "@/lib/authClient";
 import { useAuth } from "@/contexts/AuthContext";
@@ -215,7 +215,7 @@ export function PreferencesPanel() {
             <PrefRow
               icon={soundOn ? Volume2 : VolumeX}
               label="Sons da interface"
-              description="Toques sutis ao clicar e navegar"
+              description="Feedback discreto para ações. Navegar não toca som."
               on={soundOn}
               onToggle={toggleSound}
               feedback={false}
@@ -257,6 +257,16 @@ export function PreferencesPanel() {
                 <span>Discreto</span>
                 <span>Máximo</span>
               </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-2 min-h-11 gap-2"
+                disabled={!soundOn || soundVolume === 0}
+                onClick={softMuteHint}
+              >
+                <Volume2 className="h-4 w-4" aria-hidden="true" />
+                Ouvir amostra
+              </Button>
             </div>
             <PrefRow
               icon={Vibrate}
