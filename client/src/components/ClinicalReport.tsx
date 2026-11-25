@@ -234,6 +234,7 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
         )
         .join("\n\n");
       const bytes = await buildDocumentPdf({
+        includeOwnerFacsimile: true,
         title: `Resultado da escala — ${props.scaleName}`,
         subtitle: props.scaleFullName || "Relatório clínico premium exportável",
         credentials: [

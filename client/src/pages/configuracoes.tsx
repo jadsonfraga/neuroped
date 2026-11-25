@@ -23,6 +23,7 @@ import { useClinic } from "@/contexts/ClinicContext";
 import { authFetch } from "@/lib/authClient";
 import { invalidateIssuerCache } from "@/lib/issuer";
 import { checkoutSeatsForSolo, isMultiSeatTenant } from "@/lib/soloBilling";
+import { OwnerPdfFacsimileSetup } from "@/components/OwnerPdfFacsimileSetup";
 import { OutcomesSection } from "@/components/settings/OutcomesSection";
 import { PrivacySection } from "@/components/settings/PrivacySection";
 import { LegacyMigrationCard } from "@/components/settings/LegacyMigrationCard";
@@ -913,7 +914,7 @@ function ConfiguracoesContent() {
         ))}
       </div>
 
-      {section === "perfil" && <PerfilSection />}
+      {section === "perfil" && <><PerfilSection /><OwnerPdfFacsimileSetup /></>}
       {section !== "perfil" && !activeClinicId && (
         <SectionCard title="Nenhuma clínica ativa" description="Crie sua clínica para gerenciar equipe, dados institucionais e assinatura.">
           <a href="#/onboarding" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">

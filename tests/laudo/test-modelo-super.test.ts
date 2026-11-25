@@ -32,17 +32,17 @@ function assert(cond: boolean, descricao: string) {
 
 // Caso clínico real, inspirado no laudo modelo
 const caso: SuperEntrada = {
-  nome: "Luiza Gonçalves Silva",
-  idade: "17 anos",
+  nome: "Paciente Fictício",
+  idade: "16 anos",
   tipoConsulta: "primeira consulta",
-  dataConsulta: "18 de agosto de 2026",
-  protocolo: "2026-08-18-0001",
-  cidade: "Petrolina/PE",
+  dataConsulta: "1 de janeiro de 2020",
+  protocolo: "2020-01-01-TESTE",
+  cidade: "Município de teste/PE",
   resumoCapa:
-    "Adolescente de 17 anos, encaminhada por quadro de humor deprimido e retraimento social em reavaliação, com interlocução em curso com psicologia e psiquiatria.",
+    "Adolescente de 16 anos, encaminhada por quadro de humor deprimido e retraimento social em reavaliação, com interlocução em curso com psicologia e psiquiatria.",
   caixaCid: "CID-10 F32.1 · CID-11 6A70.1, hipótese em reavaliação, não firmada nesta consulta",
   quemE:
-    "Luiza é uma adolescente de dezessete anos que chega a esta consulta trazendo uma história já em andamento, construída por consultas anteriores em outras frentes.",
+    "Paciente é uma adolescente de dezesseis anos que chega a esta consulta trazendo uma história já em andamento, construída por consultas anteriores em outras frentes.",
   acompanhadoPor: "Chega acompanhada da mãe.",
   observacaoEntrevista:
     "Comunicativa, de discurso organizado, capaz de descrever com precisão o que sente e de situar os eventos no tempo.",
@@ -55,7 +55,7 @@ const caso: SuperEntrada = {
     { titulo: "Escola e atenção", texto: "Queda no rendimento no segundo semestre; professora relata dispersão." },
   ],
   convergencia:
-    "O relato da mãe e o relato da própria Luiza convergem na maior parte dos pontos centrais do quadro.",
+    "O relato da mãe e o relato da própria Paciente convergem na maior parte dos pontos centrais do quadro.",
   divergencias:
     "Divergem em aspectos de dinâmica familiar; o que é, em si, um achado clínico digno de nota, não uma inconsistência a ser resolvida.",
   documentosConvergentes:
@@ -89,7 +89,7 @@ const caso: SuperEntrada = {
     },
   ],
   condutaFarmaco:
-    "Mantida sertralina 75 mg ao dia, dose de origem confirmada nesta consulta — 75 mg, para o peso referido, correspondem a aproximadamente 1,4 mg por quilo, dentro da faixa habitualmente utilizada, o que por si não confirma nem afasta qualquer hipótese.",
+    "Conduta fictícia: 2,3 unidades de teste por quilo, valor fictício. Este exemplo não é uma prescrição.",
   solicitacoes: ["Hemograma completo", "TSH livre"],
   prognosticoLeitura:
     "Falar em prognóstico, neste momento, é falar em condicionais. O conjunto de achados orienta uma trajetória que será reavaliada a cada etapa.",
@@ -104,7 +104,7 @@ const caso: SuperEntrada = {
   retornoCondicao:
     "Retorno sugerido após conclusão das investigações em curso, ou antes disso, caso surja qualquer sinal de alerta listado na Seção 13.",
   sintese:
-    "Luiza, este documento não fecha o que ainda está em aberto. As próximas etapas do acompanhamento seguirão o plano descrito nas seções anteriores.",
+    "Paciente, este documento não fecha o que ainda está em aberto. As próximas etapas do acompanhamento seguirão o plano descrito nas seções anteriores.",
 };
 
 console.log("\n=== Motor SuperNeuroPed — perfil do laudo modelo ===\n");
@@ -117,7 +117,7 @@ const t = laudoSuperParaTexto(r.laudo);
 assert(t.includes("SUPER NEURO PED — LAUDO NEUROPEDIÁTRICO"), "cabeçalho da capa");
 assert(t.includes("[SÍNTESE DA CONSULTA]"), "caixa-síntese da capa");
 assert(t.includes("[CAIXA CID] CID-10 F32.1 · CID-11 6A70.1"), "caixa CID da capa com paralelo");
-assert(t.includes("01  Quem é Luiza"), "Seção 01 com nome");
+assert(t.includes("01  Quem é Paciente"), "Seção 01 com nome");
 assert(t.includes("02  Motivo da avaliação"), "Seção 02");
 assert(t.includes("03  Estrutura da história"), "Seção 03");
 assert(t.includes("— O quadro do humor"), "subseção temática da história");
@@ -137,14 +137,14 @@ assert(t.includes("INDICAÇÃO:"), "rótulo INDICAÇÃO em smallcaps");
 assert(t.includes("EVIDÊNCIA:"), "rótulo EVIDÊNCIA em smallcaps");
 assert(t.includes("10  Conduta farmacológica e exames"), "Seção 10");
 assert(t.includes("[SOLICITAÇÕES DESTA CONSULTA]"), "caixa de solicitações");
-assert(t.includes("1,4 mg por quilo, dentro da faixa habitualmente utilizada"), "quantificação farmacológica");
+assert(t.includes("2,3 unidades de teste por quilo, valor fictício"), "quantificação farmacológica");
 assert(t.includes("11  Prognóstico, leitura funcional"), "Seção 11");
 assert(t.includes("12  Prognóstico em cenários"), "Seção 12");
 assert(t.includes("[FAVORÁVEL]") && t.includes("[ESPERADO]") && t.includes("[RESERVADO]"), "os 3 cenários");
 assert(t.includes("13  Acompanhamento e retorno"), "Seção 13");
 assert(t.includes("✦ Ideação suicida ou autolesão"), "sinal de alerta com ✦");
 assert(t.includes("14  Síntese e encaminhamento"), "Seção 14");
-assert(t.includes("Luiza, este documento não fecha o que ainda está em aberto"), "síntese em 2ª pessoa");
+assert(t.includes("Paciente, este documento não fecha o que ainda está em aberto"), "síntese em 2ª pessoa");
 assert(t.includes("Dra. Emissora Sintética"), "nome do emissor na assinatura");
 assert(t.includes("CRM-XX 00000 · RQE 00000"), "registro do emissor na assinatura");
 assert(t.includes("Lema sintético"), "motto na assinatura");

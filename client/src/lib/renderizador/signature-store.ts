@@ -1,12 +1,13 @@
 // Assinatura manuscrita do Renderizador: só uma imagem PNG, guardada neste
-// aparelho sob uma chave própria. Nada do laudo (texto, nome, manifesto) passa
+// aparelho, separada por conta e clínica. Nada do laudo (texto, nome, manifesto) passa
 // por aqui; nunca vai ao servidor nem ao repositório.
-const SIGNATURE_KEY = "neuroped.renderizador.assinatura.v1";
+const SIGNATURE_PREFIX = "neuroped.renderizador.assinatura.v2:";
 const PNG_DATA_URL = /^data:image\/png;base64,[A-Za-z0-9+/=]+$/;
 
-export function readStoredSignature(): string {
+export function readStoredSignature(scope: string): string {
+  if (!scope) return "";
   try {
-    const value = localStorage.getItem(SIGNATURE_KEY) || "";
+    const value = localStorage.getItem(SIGNATURE_PREFIX + scope) || "";
     return PNG_DATA_URL.test(value) ? value : "";
   } catch {
     return "";
@@ -14,10 +15,11 @@ export function readStoredSignature(): string {
 }
 
 /** Retorna false se o navegador não permitiu guardar (vale só nesta sessão). */
-export function storeSignature(dataUrl: string): boolean {
+export function storeSignature(scope: string, dataUrl: string): boolean {
+  if (!scope) return false;
   if (!PNG_DATA_URL.test(dataUrl)) return false;
   try {
-    localStorage.setItem(SIGNATURE_KEY, dataUrl);
+    localStorage.setItem(SIGNATURE_PREFIX + scope, dataUrl);
     requestPersistentStorage();
     return true;
   } catch {
@@ -35,9 +37,10 @@ function requestPersistentStorage(): void {
   }
 }
 
-export function clearStoredSignature(): void {
+export function clearStoredSignature(scope: string): void {
+  if (!scope) return;
   try {
-    localStorage.removeItem(SIGNATURE_KEY);
+    localStorage.removeItem(SIGNATURE_PREFIX + scope);
   } catch {
     /* nada guardado */
   }

@@ -15,10 +15,22 @@ import {
 } from "lucide-react";
 import { createPdfBlob, sample } from "@/lib/renderizador/document.mjs";
 import { clearStoredSignature, readStoredSignature, storeSignature } from "@/lib/renderizador/signature-store";
+import { useAuth } from "@/contexts/AuthContext";
+import { useClinic } from "@/contexts/ClinicContext";
+import { captureOwnerPdfScope, loadOwnerPdfFacsimile } from "@/lib/ownerPdfFacsimile";
 import { prepareSignaturePng } from "@/lib/renderizador/signature-image.mjs";
 import { hasUnfilledTableTemplate } from "@/lib/renderizador/table-editor.mjs";
 import { structurePastedText, type StructuredText } from "@/lib/renderizador/auto-structure.mjs";
+type ReleaseArtwork = { image: string; source: "owner_private" | "device_scoped" | "none"; assertSameScope: () => void };
+
 export default function RenderizadorPage() {
+  const { user } = useAuth();
+  const { activeClinicId } = useClinic();
+  const scope = user?.id && activeClinicId ? encodeURIComponent(user.id) + ":" + encodeURIComponent(activeClinicId) : "";
+  return <RenderizadorSession key={scope} scope={scope} />;
+}
+
+function RenderizadorSession({ scope }: { scope: string }) {
   const [md, setMd] = useState(""),
     [name, setName] = useState(""),
     [patient, setPatient] = useState(""),
@@ -38,7 +50,7 @@ export default function RenderizadorPage() {
   const [bridgeView, setBridgeView] = useState(false);
   // Assinatura manuscrita: guardada só neste aparelho (nunca no repositório
   // nem no servidor) e aplicada apenas na versão definitiva, após o aceite.
-  const [signature, setSignature] = useState(readStoredSignature);
+  const [signature, setSignature] = useState(() => readStoredSignature(scope));
   const signatureInput = useRef<HTMLInputElement>(null);
   const [signatureNote, setSignatureNote] = useState("");
   async function loadSignature(f?: File) {
@@ -60,13 +72,13 @@ export default function RenderizadorPage() {
         ? "A imagem não tem fundo transparente: o fundo dela aparecerá sobre o papel. Prefira um PNG com fundo transparente."
         : "",
     );
-    if (!storeSignature(prepared.dataUrl)) setError("A assinatura vale só nesta sessão: o navegador não permitiu guardá-la.");
+    if (!storeSignature(scope, prepared.dataUrl)) setError("A assinatura vale só nesta sessão: o navegador não permitiu guardá-la.");
   }
   function removeSignature() {
     if (approved) invalidate();
     setSignature("");
     setSignatureNote("");
-    clearStoredSignature();
+    clearStoredSignature(scope);
   }
   useEffect(() => {
     let active = true;
@@ -129,7 +141,7 @@ export default function RenderizadorPage() {
     setDetail("Exemplo sem dados clínicos");
     setTab("editor");
   }
-  async function render(released = false) {
+  async function render(released = false, artwork?: ReleaseArtwork) {
     if (hasUnfilledTableTemplate(md)) {
       setError("Complete manualmente os cabeçalhos e as células da tabela antes de gerar o PDF.");
       return;
@@ -145,6 +157,10 @@ export default function RenderizadorPage() {
       prepared = structurePastedText(md);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Não foi possível estruturar o texto.");
+      return;
+    }
+    if (released && !artwork) {
+      setError("A versão definitiva exige revisão e uma sessão confirmada.");
       return;
     }
     // A definitive file may only be requested from an existing, reviewable draft.
@@ -173,22 +189,25 @@ export default function RenderizadorPage() {
       const [regular, bold, italic, logo] = assetsJson as { data: string }[];
       const acceptedAt = released ? new Date().toISOString() : null;
       const meta = { patient: patient.trim(), detail, title, subtitle, releaseStatus: released ? "definitive" : "draft", releaseAcceptedAt: acceptedAt };
-      const signatureApplied = released && Boolean(signature);
+      artwork?.assertSameScope();
+      const signatureApplied = Boolean(released && artwork?.image);
       const blob = createPdfBlob(jsPDF, prepared.markdown, meta, {
         fonts: { normal: regular.data, bold: bold.data, italic: italic.data },
         logo: "data:image/png;base64," + logo.data,
-        ...(signatureApplied ? { signature } : {}),
+        ...(signatureApplied && artwork ? { signature: artwork.image } : {}),
       });
       const hash = async (b: ArrayBuffer) =>
         Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", b)))
           .map((n) => n.toString(16).padStart(2, "0"))
           .join("");
       // Compute both hashes before exposing a downloadable or approved PDF.
-      const [markdownHash, renderedHash, pdfHash] = await Promise.all([
+      const [markdownHash, renderedHash, pdfHash, imageHash] = await Promise.all([
         hash(new TextEncoder().encode(md).buffer as ArrayBuffer),
         hash(new TextEncoder().encode(prepared.markdown).buffer as ArrayBuffer),
         hash(await blob.arrayBuffer()),
+        signatureApplied && artwork ? hash(new TextEncoder().encode(artwork.image).buffer as ArrayBuffer) : null,
       ]);
+      artwork?.assertSameScope();
       if (job !== generation.current) return;
       const nextManifest = {
         template: "PANT Studio 1.0",
@@ -207,6 +226,8 @@ export default function RenderizadorPage() {
         release_status: released ? "definitive_after_medical_review" : "draft_not_released",
         medical_acceptance_at: acceptedAt,
         handwritten_signature_applied: signatureApplied,
+        handwritten_signature_source: signatureApplied ? artwork?.source : "none",
+        handwritten_signature_data_url_sha256: imageHash,
       };
       const nextUrl = URL.createObjectURL(blob);
       if (oldUrl.current) URL.revokeObjectURL(oldUrl.current);
@@ -226,6 +247,29 @@ export default function RenderizadorPage() {
       setBusy(false);
     }
   }
+  async function authorizeReviewedPdf() {
+    const assertSameScope = captureOwnerPdfScope();
+    const releaseGeneration = generation.current;
+    setReviewPending(true);
+    setBusy(true);
+    setError("");
+    try {
+      const ownerImage = await loadOwnerPdfFacsimile();
+      const selected = ownerImage
+        ? (await prepareSignaturePng(new File([ownerImage.bytes], "owner-facsimile", { type: ownerImage.media }), { allowProtectedJpeg: true })).dataUrl
+        : signature;
+      assertSameScope();
+      if (releaseGeneration !== generation.current) return;
+      if (!selected && !window.confirm("Nenhuma assinatura manuscrita está cadastrada neste navegador. A versão definitiva sairá só com a linha para assinar à caneta. Gerar assim mesmo?")) return;
+      await render(true, { image: selected, source: ownerImage ? "owner_private" : signature ? "device_scoped" : "none", assertSameScope });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Não foi possível verificar a imagem manuscrita.");
+    } finally {
+      setReviewPending(false);
+      setBusy(false);
+    }
+  }
+
   function downloadDraft() {
     if (!url || approved || busy || manifest?.release_status !== "draft_not_released") return;
     const a = document.createElement("a");
@@ -448,8 +492,8 @@ export default function RenderizadorPage() {
                     </>
                   ) : (
                     <>
-                      <strong>Sem assinatura manuscrita neste navegador.</strong> A versão definitiva sairá só com a linha para assinar à caneta.
-                      Cadastre o PNG da sua assinatura: ela fica guardada apenas neste navegador e neste endereço do site, então é preciso cadastrar em cada aparelho ou navegador que usar.
+                      <strong>Sem assinatura manuscrita neste navegador.</strong> A imagem privada do titular, se configurada, é verificada ao liberar o PDF.
+                      Cadastre o PNG da sua assinatura: ela fica guardada apenas neste navegador, nesta conta e nesta clínica.
                     </>
                   )}
                   {signatureNote && <em className="signature-note"> {signatureNote}</em>}
@@ -583,18 +627,13 @@ export default function RenderizadorPage() {
                       disabled={busy}
                       onChange={(e) => {
                         if (e.target.checked) {
-                          // Uma versão definitiva sem assinatura cadastrada só sai com ciência expressa.
-                          if (!signature && !window.confirm("Nenhuma assinatura manuscrita está cadastrada neste navegador. A versão definitiva sairá só com a linha para assinar à caneta. Gerar assim mesmo?")) return;
-                          // Checkbox expresses the clinician's intent, not a completed release.
-                          // Only render(true) may approve after the PDF/hash pair is complete.
-                          setReviewPending(true);
-                          void render(true);
+                          void authorizeReviewedPdf();
                         } else {
                           invalidate();
                         }
                       }}
                     />{" "}
-                    Revisei o conteúdo integral, todas as páginas e cada orientação de dose, horário e mudança temporal. Autorizo esta versão para exportação{signature ? ", com a minha assinatura manuscrita cadastrada neste aparelho." : ", sem assinatura automática."}
+                    Revisei o conteúdo integral, todas as páginas e cada orientação de dose, horário e mudança temporal. Autorizo esta versão para exportação{signature ? ", com a minha assinatura manuscrita cadastrada neste aparelho." : "; se houver imagem privada do titular, ela será incluída."}
                   </label>
                   <button
                     className="primary"

@@ -1,3 +1,4 @@
+import { printAppHtmlWithOwnerFacsimile } from "@/lib/printDocument";
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, ClipboardCopy, FileText, Plus, Printer, ShieldCheck, Trash2, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -123,10 +124,7 @@ export default function LaudoUmCliquePage() {
     const win = window.open("", "_blank");
     if (!win) return;
     win.opener = null;
-    win.document.write(buildPrintHtml(gerado.laudo.texto, "Laudo Médico Neuropediátrico", [issuer.doctorName, issuerCredentials(issuer)].filter(Boolean).join(" · ")));
-    win.document.close();
-    win.focus();
-    setTimeout(() => win.print(), 300);
+    printAppHtmlWithOwnerFacsimile(win, buildPrintHtml(gerado.laudo.texto, "Laudo Médico Neuropediátrico", [issuer.doctorName, issuerCredentials(issuer)].filter(Boolean).join(" · ")));
   };
 
   const dxSet = (i: number, patch: Partial<DiagnosticoEntrada>) =>

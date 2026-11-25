@@ -72,10 +72,11 @@ function drawCanvas(width, height) {
 /**
  * Lê o PNG escolhido, recorta as margens transparentes e reduz até caber no limite guardado.
  * @param {File} file
+ * @param {{allowProtectedJpeg?:boolean}} [options]
  * @returns {Promise<{dataUrl:string, opaque:boolean, cropped:boolean, resized:boolean}>}
  */
-export async function prepareSignaturePng(file) {
-  if (file.type !== "image/png") throw Error("A assinatura deve ser um arquivo PNG, de preferência com fundo transparente.");
+export async function prepareSignaturePng(file, options = {}) {
+  if (file.type !== "image/png" && !(options.allowProtectedJpeg && file.type === "image/jpeg")) throw Error("A assinatura deve ser um arquivo PNG, de preferência com fundo transparente.");
   if (file.size > SIGNATURE_INPUT_MAX_BYTES) throw Error("A imagem da assinatura deve ter até 8 MB.");
   let bitmap;
   try {

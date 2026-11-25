@@ -1,3 +1,4 @@
+import { testCard } from "../fixtures/owner-pdf-test-card.mjs";
 /**
  * PANT renderer E2E: authenticates with a synthetic account, inserts an
  * explicit table, blocks unfinished cells, renders a draft, then releases a
@@ -24,9 +25,22 @@ const SYNTHETIC_SIGNATURE_PNG = "iVBORw0KGgoAAAANSUhEUgAAAPAAAAAoCAYAAADAOHfQAAA
 const pdfImageCount = (bytes) => (bytes.toString("latin1").match(/\/Subtype \/Image/g) || []).length;
 const artifactDir = process.env.PANT_RENDERIZADOR_ARTIFACT_DIR || "/tmp/pant-renderizador-e2e";
 await mkdir(artifactDir, { recursive: true });
+const privateOwnerMode = process.env.PANT_RENDERIZADOR_OWNER_FIXTURE === "1";
+const ownerPng = privateOwnerMode ? testCard() : null;
+const syntheticApi = createSyntheticClinicalApi({ patients: "empty" });
+let assetReads = 0;
 const server = await startStaticServer("dist/public", {
   port: 0,
-  apiHandler: createSyntheticClinicalApi({ patients: "empty" }),
+  apiHandler(request, response, pathname, searchParams) {
+    if (ownerPng && pathname === "/api/me/pdf-facsimile" && request.method === "GET") {
+      assetReads += 1;
+      assert.ok(request.headers.authorization?.startsWith("Bearer "));
+      response.writeHead(200, { "Content-Type": "image/png", "Cache-Control": "no-store" });
+      response.end(ownerPng);
+      return true;
+    }
+    return syntheticApi(request, response, pathname, searchParams);
+  },
 });
 const browser = await chromium.launch(auditBrowserLaunchOptions());
 const context = await browser.newContext({ acceptDownloads: true, reducedMotion: "reduce" });
@@ -129,23 +143,31 @@ try {
   assert.equal(draft.bytes.subarray(0, 5).toString(), "%PDF-");
   assert.ok(pdfPages(draft.bytes) >= 2, "rascunho precisa conter capa e página de conteúdo");
 
-  // Sem assinatura cadastrada, autorizar a versão definitiva pede confirmação; recusar não libera.
-  const dialogs = [];
-  page.once("dialog", async (dialog) => { dialogs.push(dialog.message()); await dialog.dismiss(); });
-  await page.getByRole("checkbox", { name: /Autorizo esta versão/ }).check({ force: true }).catch(() => {});
-  assert.match(dialogs[0] || "", /Nenhuma assinatura manuscrita/, "autorizar sem assinatura pede confirmação");
-  assert.equal(await page.getByText("Versão definitiva liberada").count(), 0, "recusar a confirmação não libera a versão definitiva");
+  if (!privateOwnerMode) {
+    // Sem assinatura cadastrada, autorizar a versão definitiva pede confirmação; recusar não libera.
+    await page.evaluate(() => {
+      window.confirm = message => { window.sessionStorage.setItem("test:warning", message); return false; };
+    });
+    await page.getByRole("checkbox", { name: /Autorizo esta versão/ }).click({ force: true });
+    await page.waitForFunction(() => Boolean(window.sessionStorage.getItem("test:warning")));
+    assert.match(await page.evaluate(() => window.sessionStorage.getItem("test:warning")) || "", /Nenhuma assinatura manuscrita/, "autorizar sem assinatura pede confirmação");
+    assert.equal(await page.getByText("Versão definitiva liberada").count(), 0, "recusar a confirmação não libera a versão definitiva");
 
-  // Assinatura manuscrita sintética (traço de teste), cadastrada só neste navegador.
-  await page.locator('input[type="file"][accept="image/png"]').setInputFiles({
-    name: "assinatura-teste.png",
-    mimeType: "image/png",
-    buffer: Buffer.from(SYNTHETIC_SIGNATURE_PNG, "base64"),
-  });
-  await page.getByRole("img", { name: /Assinatura manuscrita cadastrada/ }).waitFor();
-  assert.equal(await page.locator('iframe[title="Prévia integral do PDF"]').count(), 1, "cadastrar a assinatura não descarta o rascunho");
-  assert.ok((await page.evaluate(() => localStorage.getItem("neuroped.renderizador.assinatura.v1")))?.startsWith("data:image/png;base64,"));
-  await page.getByRole("checkbox", { name: /com a minha assinatura manuscrita/ }).check();
+    // Assinatura manuscrita sintética (traço de teste), cadastrada só neste navegador.
+    await page.locator('input[type="file"][accept="image/png"]').setInputFiles({
+      name: "assinatura-teste.png",
+      mimeType: "image/png",
+      buffer: Buffer.from(SYNTHETIC_SIGNATURE_PNG, "base64"),
+    });
+    await page.getByRole("img", { name: /Assinatura manuscrita cadastrada/ }).waitFor();
+    assert.equal(await page.locator('iframe[title="Prévia integral do PDF"]').count(), 1, "cadastrar a assinatura não descarta o rascunho");
+    assert.ok((await page.evaluate(() => Object.entries(localStorage).find(([key]) => key.startsWith("neuroped.renderizador.assinatura.v2:"))?.[1]))?.startsWith("data:image/png;base64,"));
+    await page.getByRole("checkbox", { name: /com a minha assinatura manuscrita/ }).check();
+  } else {
+    assert.equal(assetReads, 0, "o rascunho não busca nem usa a imagem privada");
+    await page.evaluate(() => { window.confirm = () => { throw new Error("aprovação extra inesperada"); }; });
+    await page.getByRole("checkbox", { name: /Autorizo esta versão/ }).click();
+  }
   await page.getByText("Versão definitiva liberada").waitFor({ timeout: 20000 });
   const definitive = await downloadedBytes(page.getByRole("button", { name: "Baixar PDF" }));
   assert.ok(definitive.name.startsWith("PANT_"));
@@ -158,6 +180,12 @@ try {
   const manifestDownload = await manifestPending;
   const manifest = JSON.parse(await readFile(await manifestDownload.path(), "utf8"));
   assert.equal(manifest.review_confirmed, true);
+  assert.equal(manifest.handwritten_signature_source, privateOwnerMode ? "owner_private" : "device_scoped");
+  assert.match(manifest.handwritten_signature_data_url_sha256, /^[a-f0-9]{64}$/);
+  if (privateOwnerMode) {
+    assert.equal(assetReads, 1);
+    assert.equal(await page.evaluate(() => Object.keys(localStorage).some(k => k.startsWith("neuroped.renderizador.assinatura."))), false);
+  }
   assert.equal(manifest.handwritten_signature_applied, true, "versão definitiva registra a assinatura no manifesto");
   assert.ok(pdfImageCount(definitive.bytes) > pdfImageCount(draft.bytes), "assinatura só no PDF definitivo");
   assert.equal(manifest.release_status, "definitive_after_medical_review");

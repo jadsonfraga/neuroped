@@ -1,3 +1,4 @@
+import { captureOwnerPdfScope, loadOwnerPdfFacsimile } from "@/lib/ownerPdfFacsimile";
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { FileText, Printer, RefreshCw, PenSquare } from "lucide-react";
@@ -83,7 +84,7 @@ function _canonicalReceitaC1Payload(f: ReceitaFields, issuedAt: string, issuer: 
   ].join("\n");
 }
 
-async function buildReceitaC1SignedPdfBytes(f: ReceitaFields, issuer: DocumentIssuer): Promise<Uint8Array> {
+export async function buildReceitaC1SignedPdfBytes(f: ReceitaFields, issuer: DocumentIssuer): Promise<Uint8Array> {
   // Não gerar/assinar uma receita de controle especial incompleta: cada campo
   // essencial precisa ser revisado pelo prescritor antes de produzir o PDF.
   const missing = [
@@ -94,12 +95,16 @@ async function buildReceitaC1SignedPdfBytes(f: ReceitaFields, issuer: DocumentIs
   if (missing.length) throw new Error(`Preencha os campos obrigatórios: ${missing.join(", ")}.`);
   const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
   const QRCode = (await import("qrcode")).default;
+  const assertSameScope = captureOwnerPdfScope();
+  const image = await loadOwnerPdfFacsimile();
+  assertSameScope();
   const pdf = await PDFDocument.create();
+  const imageRef = !image ? null : image.media === "image/png"
+    ? await pdf.embedPng(image.bytes) : await pdf.embedJpg(image.bytes);
   const helv = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const serif = await pdf.embedFont(StandardFonts.TimesRomanBold);
-  // Sem logo/assinatura pessoais embutidas: a identidade visual do emissor só
-  // entra quando existir upload por tenant; a assinatura é a digital ICP-Brasil.
+  // A imagem opcional só ocupa o quadro existente e vem antes da assinatura digital.
 
   const cidadeUf = pdfSafe(issuerCityLine(issuer));
   const issuedAt = new Date().toLocaleString("pt-BR");
@@ -239,11 +244,16 @@ async function buildReceitaC1SignedPdfBytes(f: ReceitaFields, issuer: DocumentIs
     page.drawText(`${cidadeUf ? `${cidadeUf}, ` : ""}${pdfSafe(f.data) || issuedAt}  -  Validade: ${valBr}`, { x: m, y: 108, size: 5.8, font: helv, color: muted });
 
     page.drawRectangle({ x: 218, y: 44, width: 176, height: 66, borderWidth: 0.6, borderColor: rgb(0.2, 0.45, 0.34), color: rgb(0.93, 0.99, 0.96) });
+    if (imageRef) {
+      const stamp = imageRef.scale(Math.min(140 / imageRef.width, 17 / imageRef.height));
+      page.drawImage(imageRef, { x: 306 - stamp.width / 2, y: 85, width: stamp.width, height: stamp.height });
+      page.drawText("Imagem manuscrita - nao e assinatura digital", { x: 236, y: 79, size: 4.2, font: helv, color: muted });
+    }
     page.drawLine({ start: { x: 228, y: 76 }, end: { x: 384, y: 76 }, thickness: 0.25, color: rgb(0.18, 0.22, 0.2) });
     drawFitted(page, issuer.doctorName, 238, 66, 148, 6.2, bold);
     drawFitted(page, issuerCredentials(issuer), 238, 58, 148, 5.2, helv);
-    page.drawText("Assinatura digital ICP-Brasil PAdES-BES", { x: 236, y: 50, size: 5.2, font: helv, color: rgb(0.05, 0.34, 0.22) });
-    if (pageIndex === 0) page.drawText("Campo tecnico da assinatura digital embutida no PDF.", { x: 222, y: 35, size: 4.4, font: helv, color: muted });
+    page.drawText("Verifique a assinatura ICP-Brasil do arquivo", { x: 236, y: 50, size: 5.2, font: helv, color: rgb(0.05, 0.34, 0.22) });
+    if (pageIndex === 0) page.drawText("Campo reservado para verificacao da assinatura eletrônica.", { x: 222, y: 35, size: 4.4, font: helv, color: muted });
 
     page.drawRectangle({ x: m, y: 20, width: 190, height: 58, borderWidth: 0.4, borderColor: gold, color: rgb(1, 0.98, 0.92) });
     page.drawText("VALIDACAO DIGITAL", { x: m + 8, y: 64, size: 6.2, font: bold, color: ink });
@@ -255,7 +265,9 @@ async function buildReceitaC1SignedPdfBytes(f: ReceitaFields, issuer: DocumentIs
 
   drawVia("1a", "FARMACIA", 0);
   drawVia("2a", "PACIENTE", 1);
-  return await pdf.save({ useObjectStreams: false });
+  const bytes = await pdf.save({ useObjectStreams: false });
+  assertSameScope();
+  return bytes;
 }
 
 function viaHtml(tag: string, f: ReceitaFields, issuer: DocumentIssuer) {

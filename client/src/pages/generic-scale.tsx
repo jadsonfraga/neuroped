@@ -1,3 +1,4 @@
+import { printCurrentPageWithOwnerFacsimile } from "@/lib/printDocument";
 import { useParams, useLocation, Link } from "wouter";
 import { copyText } from "@/lib/shareText";
 import { useState } from "react";
@@ -857,7 +858,7 @@ export default function GenericScalePage() {
             Voltar ao Filtro
           </Button>
           <Button
-            onClick={() => window.print()}
+            onClick={() => void printCurrentPageWithOwnerFacsimile()}
             variant="outline"
           >
             <Download className="w-4 h-4 mr-2" />

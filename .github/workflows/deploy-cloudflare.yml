@@ -291,6 +291,20 @@ jobs:
           }
           echo "✅ Lifecycle SaaS e trilha de exportação migrados antes do deploy."
 
+      - name: Migrar D1 — imagem manuscrita privada
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0043_owner_pdf_facsimile.sql
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('owner_pdf_facsimile','owner_pdf_facsimile_segment') ORDER BY name;" \
+            > /tmp/owner-pdf-facsimile-tables.txt 2>&1
+          grep -qw "owner_pdf_facsimile" /tmp/owner-pdf-facsimile-tables.txt
+          grep -qw "owner_pdf_facsimile_segment" /tmp/owner-pdf-facsimile-tables.txt
+
       - name: Configurar secrets/vars de auth no Pages
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

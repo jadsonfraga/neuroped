@@ -1,3 +1,4 @@
+import { ownerFacsimilePrintMarkup } from "../ownerPdfFacsimile";
 // ============================================================================
 // client/src/lib/laudo/pantPrintTemplate.ts — impressão do Laudo SuperNeuroPed
 // no padrão visual PANT (mesmo desenho dos laudos arquivados na pasta Panty).
@@ -405,6 +406,7 @@ export interface PantPrintInput {
   medico: SuperMedico;
   /** URL absoluta da raiz do app (para os arquivos de client/public/brand). */
   assetBase: string;
+  facsimile?: string | null;
   /** Dados da capa quando o texto não trouxer a linha "PACIENTE: …". */
   idade?: string;
   tipoConsulta?: string;
@@ -582,6 +584,7 @@ p.sig-extra{text-align:left;font-size:10.5pt}
 <main class="corpo">
 ${abertura.length ? `<div class="abertura">${abertura.join("\n")}</div>` : ""}
 ${corpoHtml}
+${ownerFacsimilePrintMarkup(input.facsimile)}
 </main>
 </body>
 </html>`;
