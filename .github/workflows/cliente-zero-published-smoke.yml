@@ -2,8 +2,8 @@ name: Cliente-zero published smoke
 
 # Jornada cliente-zero contra o site publicado (docs/SMOKE_CLIENTE_ZERO.md),
 # pela API, com relatório por marco: VERIFIED, BLOCKED_EXTERNAL, FAILED ou
-# NOT_RUN. Só por acionamento manual: com --write-synthetic ele grava paciente,
-# consulta e documento sintéticos numa clínica de nome reservado.
+# NOT_RUN. Só por acionamento manual: --write-synthetic autoriza criar o
+# consultório reservado e gravar paciente, consulta e documento sintéticos.
 #
 # Sem NEUROPED_SMOKE_OWNER_EMAIL/PASSWORD, roda apenas as sondas públicas
 # (saúde, portão do cadastro, portão do webhook) e não cria nada. O titular
@@ -22,13 +22,13 @@ on:
         required: true
         default: "https://neuroped.pages.dev"
       write_synthetic:
-        description: "Gravar paciente, consulta e documento sintéticos"
+        description: "Criar consultório sintético se necessário e gravar paciente, consulta e documento"
         type: boolean
         default: false
       close_clinic:
-        description: "Pedir encerramento da clínica sintética ao final"
+        description: "Pedir encerramento da clínica sintética e cancelar sua assinatura (exige write_synthetic)"
         type: boolean
-        default: true
+        default: false
 
 permissions:
   contents: read

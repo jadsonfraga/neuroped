@@ -19,14 +19,18 @@ origem publicada e devolve um relatório JSON por marco: `VERIFIED`,
 # Só sondas públicas (saúde, portão do cadastro, portão do webhook). Não cria nada.
 node --import tsx scripts/ops/cliente-zero-published-smoke.ts
 
-# Jornada do titular sintético, com escrita clínica sintética e encerramento ao final.
+# Jornada do titular sintético. Na primeira passagem, deixe o consultório ativo para o checkout.
+SMOKE_OWNER_EMAIL=... SMOKE_OWNER_PASSWORD=... \
+  node --import tsx scripts/ops/cliente-zero-published-smoke.ts --write-synthetic
+
+# Após confirmar o evento de pagamento, repita e solicite encerramento ao final.
 SMOKE_OWNER_EMAIL=... SMOKE_OWNER_PASSWORD=... \
   node --import tsx scripts/ops/cliente-zero-published-smoke.ts --write-synthetic --close-clinic
 ```
 
 | Exit | Significado |
 | --- | --- |
-| 0 | Todos os marcos `VERIFIED`, inclusive `charge_paid` persistido |
+| 0 | Todos os marcos do smoke Solo `VERIFIED`, inclusive `charge_paid` persistido |
 | 2 | Algum `BLOCKED_EXTERNAL` ou `NOT_RUN`; nada falhou |
 | 1 | Algum `FAILED` |
 
@@ -39,13 +43,15 @@ Limites do script:
   e-mail (passos 1–2 abaixo, feitos uma vez à mão). A identidade técnica
   `NEUROPED_E2E_EMAIL` é recusada antes do login: o middleware revoga a sessão
   dela se ganhar clínica.
-- **Fora do script:** não cria conta, checkout ou convite e não chama Asaas
-  nem Resend. Os passos 4–8 (pagamento e convite) continuam manuais.
-- **Escrita clínica:** `--write-synthetic` grava paciente, consulta e
-  documento em rascunho, todos sintéticos, numa clínica de nome reservado
-  (`Clínica Sintética Smoke Cliente-Zero`).
+- **Fora do script:** a criação de conta, o recebimento da mensagem e o
+  pagamento no Asaas sandbox são comprovados em separado. O smoke não faz
+  cobrança nem confirma envio de e-mail.
+- **Escrita:** `--write-synthetic` autoriza criar o consultório reservado
+  (`Clínica Sintética Smoke Cliente-Zero`) e gravar paciente, consulta e
+  documento em rascunho. `--close-clinic` só tem efeito junto desse opt-in.
 - **Relatório:** sem senha, token, e-mail do titular nem conteúdo clínico. O
-  corpo do export é descartado depois de conferir o digest.
+  corpo do export do consultório é descartado depois de conferir o digest.
+  A execução da exportação LGPD pelo R2 tem evidência própria.
 
 ## Fase A — Diagnóstico de configuração (2 min)
 
@@ -72,11 +78,11 @@ real, alvo < 30 min do critério macro.
 | 5 | Pagar no sandbox Asaas (Pix ou cartão de teste) | Checkout `paid` no provedor | — |
 | 6 | Voltar ao app; conferir `/#/billing/retorno?status=success` | Página "Pagamento em processamento" | — |
 | 7 | Aguardar webhook e conferir Configurações → Plano | Assinatura `active`; entitlement liberado | **Billing configurado** (`charge_paid` persistido) |
-| 8 | Convidar 1 membro (e-mail sintético) | Convite enviado por e-mail; aceite muda papel | Primeiro membro |
+| 8 | Conferir o consultório Solo de um assento | O titular usa o próprio assento | Consultório criado |
 | 9 | Cadastrar paciente fictício (nome sintético) | Paciente criado, cifrado, isolado | Primeiro paciente |
 | 10 | Registrar consulta/evento sintético | Evento `encounter` criado com provenance | Primeira consulta |
 | 11 | Emitir documento clínico em rascunho | `draft`; nunca finalizado automaticamente | Primeiro documento |
-| 12 | Abrir Dashboard/Onboarding | Card mostra **10/10** marcos server-computed | Ativação completa |
+| 12 | Abrir Dashboard/Onboarding | Card Solo mostra **5/5** marcos calculados no servidor | Ativação Solo |
 
 ## Fase C — Critérios de aceite do smoke
 
@@ -86,7 +92,9 @@ O smoke só passa se **todos** forem verdadeiros:
    e-mail (se `ordemInvertida: true`, abortar: contas órfãs).
 2. Marco 7 concluído com evento `charge_paid` persistido — este é o único
    marcador que transforma "billing testado" em "billing comprovado".
-3. Onboarding 10/10 server-computed (a UI não pode promover por redirect).
+3. Os cinco marcos Solo constam como concluídos no servidor: conta, e-mail,
+   consultório, primeiro paciente e primeiro documento. O relatório v2 mantém
+   o snapshot completo, inclusive os marcos de equipe para ofertas futuras.
 4. Tempo total do cadastro (passo 1) ao primeiro documento (passo 11) < 30 min.
 5. Isolamento: nenhuma resposta expõe recurso de outra clínica (403/404
    consistentes — teste com segunda conta se disponível).
@@ -100,7 +108,8 @@ O smoke só passa se **todos** forem verdadeiros:
 
 ## Rollover para produção
 
-Após o smoke sandbox verde: trocar `ASAAS_ENVIRONMENT=production`, repetir a
-Fase A, e só então `SAAS_SIGNUP_ENABLED=true` (Passo 3 do GO_LIVE_M5). O
-primeiro checkout real em produção é a evidência que fecha a Prova de demanda
-na METRICS (Assinatura ≠ 0).
+Use preview isolada para as fases A–C do sandbox. Após a prévia verde e a decisão
+do proprietário, configure Asaas em produção e repita as verificações operacionais.
+O `saas-release-gate.ts` exige o smoke v2 de produção, health recente e a
+evidência independente do pagamento no provedor e das revisões. O aceite comercial
+e a abertura do cadastro seguem o plano de go-live.

@@ -1,16 +1,10 @@
 import {
+  SOLO_ONBOARDING_KEYS,
   type OnboardingMilestone,
-  type OnboardingMilestoneKey,
   type TenantOnboardingSnapshot,
 } from "../../../shared/onboarding";
 
-export const SOLO_ONBOARDING_KEYS = [
-  "account_created",
-  "email_verified",
-  "clinic_created",
-  "first_patient",
-  "first_document",
-] as const satisfies readonly OnboardingMilestoneKey[];
+export { SOLO_ONBOARDING_KEYS };
 
 export function projectSoloOnboarding(
   snapshot: TenantOnboardingSnapshot,

@@ -25,6 +25,7 @@ import { onRequestGet as healthGet } from "../../functions/api/health";
 import { onRequestPost as signupPost } from "../../functions/api/auth/signup";
 import { onRequestPost as verifyEmailPost } from "../../functions/api/auth/verify-email";
 import { onRequestPost as loginPost } from "../../functions/api/auth/login";
+import { onRequestPost as checkoutPost } from "../../functions/api/billing/checkout";
 import { onRequestPost as webhookPost } from "../../functions/api/billing/webhook";
 import { onRequestGet as tenantsGet, onRequestPost as tenantsPost } from "../../functions/api/tenants/index";
 import { onRequestGet as onboardingGet } from "../../functions/api/tenants/[id]/onboarding";
@@ -133,6 +134,10 @@ globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
     emails.push(JSON.parse(String(init?.body)));
     return new Response("{}", { status: 200 });
   }
+  if (url === "https://api-sandbox.asaas.com/v3/checkouts") {
+    providerCalls += 1;
+    return Response.json({ id: "chk-solo-sintetico", link: "https://sandbox.asaas.com/c/chk-solo-sintetico", status: "ACTIVE" });
+  }
   if (url.includes("asaas.com")) {
     providerCalls += 1;
     return new Response("{}", { status: 200 });
@@ -148,6 +153,7 @@ const ROUTES: Route[] = [
   { method: "POST", pattern: /^\/api\/auth\/signup$/, handler: signupPost as Handler },
   { method: "POST", pattern: /^\/api\/auth\/login$/, handler: loginPost as Handler },
   { method: "POST", pattern: /^\/api\/billing\/webhook$/, handler: webhookPost as Handler },
+  { method: "POST", pattern: /^\/api\/billing\/checkout$/, handler: checkoutPost as Handler },
   { method: "GET", pattern: /^\/api\/tenants$/, handler: tenantsGet as Handler },
   { method: "POST", pattern: /^\/api\/tenants$/, handler: tenantsPost as Handler },
   { method: "GET", pattern: /^\/api\/tenants\/([^/]+)\/onboarding$/, handler: onboardingGet as Handler, scope: "tenant" },
@@ -160,9 +166,12 @@ const ROUTES: Route[] = [
 ];
 
 const requested: string[] = [];
+let nextFixtureIp = 1;
 function publishedFetch(env: Record<string, unknown>): typeof fetch {
+  const fixtureIp = `192.0.2.${nextFixtureIp++}`;
   return (async (input: RequestInfo | URL, init?: RequestInit) => {
     const request = new Request(input, init);
+    request.headers.set("CF-Connecting-IP", fixtureIp);
     const url = new URL(request.url);
     assert.equal(url.origin, ORIGIN, "o smoke só fala com a origem configurada");
     requested.push(`${request.method} ${url.pathname}`);
@@ -313,7 +322,6 @@ const titular = { email: "titular-smoke@exemplo.test", password: SENHA };
     plan: "VERIFIED:PLAN_PERSISTED",
     billing: "BLOCKED_EXTERNAL:AWAITING_PROVIDER_EVENT",
     membership: "VERIFIED:OWNER_MEMBERSHIP",
-    first_member: "NOT_RUN:INVITE_REQUIRES_RECIPIENT_INBOX",
     patient: "VERIFIED:SYNTHETIC_PATIENT_CREATED",
     consultation: "VERIFIED:SYNTHETIC_ENCOUNTER_CREATED",
     document: "VERIFIED:SYNTHETIC_DRAFT_CREATED",
@@ -327,6 +335,8 @@ const titular = { email: "titular-smoke@exemplo.test", password: SENHA };
   assert.deepEqual(report.billingEvidence, { status: "AWAITING_PROVIDER_EVENT", environment: "sandbox" });
   assert.equal(report.onboarding?.milestones.billing_configured, "pending");
   assert.equal(report.onboarding?.milestones.first_document, "completed");
+  assert.equal(report.onboarding?.milestones.first_member, "pending");
+  assert.equal(report.schemaVersion, 2);
   assert.equal(report.clinic?.reused, false);
   assert.ok(typeof report.clinicToFirstDocumentMs === "number");
 
@@ -349,14 +359,29 @@ const titular = { email: "titular-smoke@exemplo.test", password: SENHA };
   semSegredo(report, titular.email, SENHA, SYNTHETIC_PATIENT_NAME, SYNTHETIC_GUARDIAN_NAME, "Bearer", "accessToken");
 }
 
-// ═══ 6. Sem --close-clinic: a clínica sintética é reaproveitada ═════════════
+// ═══ 6. Sem autorização de escrita: nem criação nem encerramento ═════════════
 {
-  const primeira = await runClienteZeroPublishedSmoke({ baseUrl: ORIGIN, fetchImpl: publishedFetch(CONFIGURADO), owner: titular });
+  requested.length = 0;
+  const preview = await runClienteZeroPublishedSmoke({
+    baseUrl: ORIGIN, fetchImpl: publishedFetch(CONFIGURADO), owner: titular, closeClinic: true,
+  });
+  assert.equal(status(preview).clinic, "NOT_RUN:SYNTHETIC_WRITES_NOT_REQUESTED");
+  assert.equal(preview.clinic, null);
+  assert.ok(!requested.some((route) => route.startsWith("POST /api/tenants")));
+
+  const primeira = await runClienteZeroPublishedSmoke({
+    baseUrl: ORIGIN, fetchImpl: publishedFetch(CONFIGURADO), owner: titular, writeSynthetic: true,
+  });
   assert.equal(status(primeira).clinic, "VERIFIED:SMOKE_CLINIC_CREATED", "clínica encerrada não é reaproveitada");
-  assert.equal(status(primeira).patient, "NOT_RUN:SYNTHETIC_WRITES_NOT_REQUESTED");
   assert.equal(status(primeira).closure, "NOT_RUN:CLOSURE_NOT_REQUESTED");
-  const segunda = await runClienteZeroPublishedSmoke({ baseUrl: ORIGIN, fetchImpl: publishedFetch(CONFIGURADO), owner: titular });
+  requested.length = 0;
+  const segunda = await runClienteZeroPublishedSmoke({
+    baseUrl: ORIGIN, fetchImpl: publishedFetch(CONFIGURADO), owner: titular, closeClinic: true,
+  });
   assert.equal(status(segunda).clinic, "VERIFIED:SMOKE_CLINIC_REUSED");
+  assert.equal(status(segunda).patient, "NOT_RUN:SYNTHETIC_WRITES_NOT_REQUESTED");
+  assert.equal(status(segunda).closure, "NOT_RUN:SYNTHETIC_WRITES_NOT_REQUESTED");
+  assert.ok(!requested.some((route) => /^POST \/api\/(tenants|live)(\/|$)/.test(route)));
   assert.equal(
     (raw.prepare("SELECT COUNT(*) AS n FROM clinics WHERE name LIKE 'Clínica Sintética Smoke%' AND status = 'active'").get() as { n: number }).n,
     1,
@@ -372,9 +397,47 @@ const titular = { email: "titular-smoke@exemplo.test", password: SENHA };
     writeSynthetic: true,
   });
   const s = status(report);
-  assert.equal(s.patient, "BLOCKED_EXTERNAL:CLINICAL_LIVE_DISABLED");
+  assert.equal(s.patient, "BLOCKED_EXTERNAL:CLINICAL_LIVE_DISABLED", JSON.stringify(s));
   assert.equal(s.document, "NOT_RUN:DEPENDS_ON_PATIENT");
   assert.equal(report.verdict, "BLOCKED_EXTERNAL", JSON.stringify(s));
+}
+
+// O relatório Solo completo é alcançável com um único assento. Só a fronteira
+// do Asaas é simulada no checkout e o webhook entra pelo handler autenticamente.
+{
+  const api = publishedFetch(CONFIGURADO);
+  const post = (path: string, body: unknown, headers: Record<string, string> = {}) =>
+    api(`${ORIGIN}${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...headers },
+      body: JSON.stringify(body),
+    });
+  const login = await post("/api/auth/login", titular);
+  assert.equal(login.status, 200);
+  const token = (await login.json()).accessToken;
+  const clinic = raw.prepare("SELECT id FROM clinics WHERE name LIKE 'Clínica Sintética Smoke%' AND status = 'active'").get() as { id: string };
+  const checkout = await post("/api/billing/checkout", { clinicId: clinic.id, seats: 1 }, { Authorization: `Bearer ${token}` });
+  assert.equal(checkout.status, 201);
+  assert.equal((await checkout.json()).monthlyPriceCents, 9900);
+
+  const paid = await post("/api/billing/webhook", {
+    id: "evt-solo-pagamento-sintetico",
+    event: "PAYMENT_CONFIRMED",
+    checkout: { id: "chk-solo-sintetico", status: "PAID" },
+    payment: { id: "pay-solo-sintetico", value: 99, subscription: "sub-solo-sintetico" },
+  }, { "asaas-access-token": CONFIGURADO.ASAAS_WEBHOOK_TOKEN });
+  assert.equal(paid.status, 200);
+
+  const smoke = await runClienteZeroPublishedSmoke({
+    baseUrl: ORIGIN, fetchImpl: publishedFetch(CONFIGURADO), owner: titular,
+    writeSynthetic: true, closeClinic: true,
+  });
+  assert.equal(smoke.verdict, "VERIFIED", JSON.stringify(status(smoke)));
+  assert.equal(smoke.exitCode, 0);
+  assert.deepEqual(smoke.billingEvidence, { status: "SERVER_CONFIRMED", environment: "sandbox" });
+  assert.equal(smoke.onboarding?.milestones.first_member, "pending");
+  assert.ok(smoke.doesNotProve.includes("PAGAMENTO_REAL"));
+  assert.ok(smoke.doesNotProve.includes("LGPD_R2_EXPORT_EXECUTED"));
 }
 
 globalThis.fetch = realFetch;
