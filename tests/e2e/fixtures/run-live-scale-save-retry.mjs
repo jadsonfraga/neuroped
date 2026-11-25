@@ -12,7 +12,8 @@ import { startStaticServer } from "../../../scripts/lib/browser-audit-runtime.mj
 
 const operatorSuite = process.argv[2] === "--agenda-operator";
 const agendaSuite = process.argv[2] === "--agenda" || operatorSuite;
-const prontuarioSuite = process.argv[2] === "--prontuario";
+const doseSuite = process.argv[2] === "--prontuario-dose";
+const prontuarioSuite = process.argv[2] === "--prontuario" || doseSuite;
 assert.ok(process.argv.length === 2 || (process.argv.length === 3 && (agendaSuite || prontuarioSuite)));
 const fault = process.env.SCALE_RETRY_FAULT;
 assert.ok(!(agendaSuite || prontuarioSuite) || !fault, "Não combine a agenda com falhas de escalas");
@@ -137,7 +138,7 @@ try {
     res.end(Buffer.from(await response.arrayBuffer()));
     return true;
   }});
-  const test = operatorSuite ? "tests/e2e/live-agenda-operator-draft.mjs" : agendaSuite ? "tests/e2e/live-agenda.mjs" : prontuarioSuite ? "tests/e2e/live-prontuario-save.mjs" : "tests/e2e/live-scale-save-retry.mjs";
+  const test = operatorSuite ? "tests/e2e/live-agenda-operator-draft.mjs" : agendaSuite ? "tests/e2e/live-agenda.mjs" : doseSuite ? "tests/e2e/live-prontuario-dose-unit.mjs" : prontuarioSuite ? "tests/e2e/live-prontuario-save.mjs" : "tests/e2e/live-scale-save-retry.mjs";
   process.exitCode = await run([test], { ...env, LIVE_DISCOVERY_URL: server.origin });
   if (process.exitCode === 0) {
     assert.equal(nextFault, undefined, "a falha solicitada não foi exercitada");
