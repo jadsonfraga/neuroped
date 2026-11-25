@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { openCommandPalette } from "@/lib/commandPaletteBus";
-import { softTap, softHover, softWhoosh } from "@/lib/softSounds";
+import { softTap } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { easing, duration, fadeIn } from "@/lib/motion";
 import { SkipNav } from "@/components/SkipNav";
@@ -118,7 +118,6 @@ function FeaturedShortcuts({
       item,
       <div
         onClick={onPick}
-        onMouseEnter={() => softHover()}
         data-testid={`featured-${item.label}`}
         data-active={active || undefined}
         className="np-side-hero group"
@@ -150,7 +149,6 @@ function FeaturedShortcuts({
       item,
       <div
         onClick={onPick}
-        onMouseEnter={() => softHover()}
         data-testid={`featured-${item.label}`}
         data-active={active || undefined}
         title={item.description}
@@ -174,7 +172,6 @@ function FeaturedShortcuts({
         title={`${item.label}${item.description ? ` — ${item.description}` : ""}`}
         aria-label={item.label}
         onClick={onPick}
-        onMouseEnter={() => softHover()}
         data-active={active || undefined}
         className={`np-side-rail-icon ${golden ? "np-side-rail-icon--golden" : ""}`}
       >
@@ -190,7 +187,6 @@ function FeaturedShortcuts({
       item,
       <div
         onClick={onPick}
-        onMouseEnter={() => softHover()}
         data-testid={`featured-${item.label}`}
         data-active={active || undefined}
         title={item.description}
@@ -476,7 +472,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
     // Layout só fecha o shell. AppRouter é o único owner do reset instantâneo
     // do document.scrollingElement, evitando duas animações concorrentes.
     setMobileOpen(false);
-    if (location !== "/") softWhoosh();
   }, [location]);
 
   useEffect(() => {
@@ -839,7 +834,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
               haptic.tap();
               openCommandPalette();
             }}
-            onMouseEnter={() => softHover()}
             data-testid="button-command-palette"
             aria-label={
               collapsed ? "Buscar escala, teste ou módulo" : undefined
@@ -976,7 +970,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
                               data-nav-href={item.href}
                               data-tone={tone}
                               data-active={active || undefined}
-                              onMouseEnter={() => softHover()}
                               onClick={() => {
                                 softTap();
                                 haptic.select();

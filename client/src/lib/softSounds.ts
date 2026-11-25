@@ -7,19 +7,17 @@
  */
 
 let _ctx: AudioContext | null = null;
-let _lastHoverAt = 0;
 
 const STORAGE_KEY = "neuroped:sounds";
 const VOLUME_STORAGE_KEY = "neuroped:sound-volume";
 export const SOUND_PREFERENCE_EVENT = "neuroped:sound-preference-changed";
-const DEFAULT_VOLUME = 0.58;
+const DEFAULT_VOLUME = 0.40;
 
 /**
  * Antes do primeiro gesto do usuário o navegador recusa o áudio e registra um
  * aviso no console ("The AudioContext was not allowed to start") — o que
- * acontecia em TODO carregamento por link direto, porque o som de troca de
- * rota roda na montagem do Layout. Sem gesto, não criamos o contexto: o som é
- * só feedback e o primeiro clique já o libera. Navegadores sem
+ * acontecia ao abrir links diretos. Sem gesto, não criamos o contexto:
+ * um clique só libera áudio se a preferência já estiver ligada. Navegadores sem
  * `navigator.userActivation` mantêm o comportamento anterior.
  */
 function hasUserActivation(): boolean {
@@ -55,9 +53,9 @@ function clampVolume(value: number): number {
 
 export function isSoundEnabled(): boolean {
   try {
-    return localStorage.getItem(STORAGE_KEY) !== "off";
+    return localStorage.getItem(STORAGE_KEY) === "on";
   } catch {
-    return true;
+    return false;
   }
 }
 
@@ -96,10 +94,10 @@ function play(spec: {
   duration: number;
   volume?: number;
   attack?: number;
-  release?: number;
   filterFreq?: number;
 }) {
-  if (!isSoundEnabled() || getSoundVolume() === 0) return;
+  const volume = getSoundVolume();
+  if (!isSoundEnabled() || volume === 0) return;
   const ctx = getCtx();
   if (!ctx) return;
 
@@ -125,7 +123,7 @@ function play(spec: {
 
     const now = ctx.currentTime;
     const attack = spec.attack ?? 0.005;
-    const peak = (spec.volume ?? 0.06) * getSoundVolume();
+    const peak = (spec.volume ?? 0.06) * volume;
 
     gain.gain.setValueAtTime(0, now);
     gain.gain.linearRampToValueAtTime(peak, now + attack);
@@ -142,8 +140,13 @@ function play(spec: {
       osc.frequency.setValueAtTime(spec.freq, now);
     }
 
+    osc.addEventListener("ended", () => {
+      osc.disconnect();
+      filter.disconnect();
+      gain.disconnect();
+    }, { once: true });
     osc.start(now);
-    osc.stop(now + spec.duration + 0.05);
+    osc.stop(now + spec.duration + 0.02);
   } catch {
     /* áudio indisponível (Web Audio bloqueado/sem suporte) — silencioso */
   }
@@ -153,25 +156,10 @@ function play(spec: {
 export function softTap(): void {
   play({
     type: "sine",
-    freq: 880,
+    freq: 587.33,
     duration: 0.08,
-    volume: 0.05,
-    attack: 0.002,
-  });
-}
-
-/** Hover/foco discreto, limitado para não criar uma sequência de bipes. */
-export function softHover(): void {
-  const now =
-    typeof performance !== "undefined" ? performance.now() : Date.now();
-  if (now - _lastHoverAt < 160) return;
-  _lastHoverAt = now;
-  play({
-    type: "sine",
-    freq: 1320,
-    duration: 0.05,
-    volume: 0.025,
-    attack: 0.001,
+    volume: 0.035,
+    attack: 0.006,
   });
 }
 
@@ -182,10 +170,10 @@ export function softSuccess(): void {
   if (!ctx) return;
   if (ctx.state === "suspended") ctx.resume().catch(() => {});
 
-  const notes = [523.25, 659.25, 783.99];
+  const notes = [523.25, 659.25];
   notes.forEach((freq, index) => {
     window.setTimeout(() => {
-      play({ type: "sine", freq, duration: 0.18, volume: 0.045, attack: 0.01 });
+      play({ type: "sine", freq, duration: 0.13, volume: 0.04, attack: 0.01 });
     }, index * 60);
   });
 }
@@ -243,7 +231,7 @@ export function softWhoosh(): void {
 export function softTick(): void {
   play({
     type: "sine",
-    freq: 2200,
+    freq: 1046.5,
     duration: 0.04,
     volume: 0.04,
     attack: 0.001,
@@ -253,28 +241,7 @@ export function softTick(): void {
 /** Alias semântico para componentes novos. */
 export const softSelect = softTick;
 
-/** Feedback de mute/desmute: toca apenas ao habilitar ou a pedido explícito. */
+/** Amostra explícita, no mesmo volume e com as mesmas proteções dos demais sons. */
 export function softMuteHint(): void {
-  const ctx = getCtx();
-  if (!ctx || getSoundVolume() === 0) return;
-  if (ctx.state === "suspended") ctx.resume().catch(() => {});
-
-  try {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.type = "sine";
-    const now = ctx.currentTime;
-    const peak = 0.05 * getSoundVolume();
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(peak, now + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-    osc.frequency.setValueAtTime(880, now);
-    osc.frequency.exponentialRampToValueAtTime(440, now + 0.13);
-    osc.start(now);
-    osc.stop(now + 0.18);
-  } catch {
-    /* áudio indisponível (Web Audio bloqueado/sem suporte) — silencioso */
-  }
+  play({ type: "sine", freq: [659.25, 523.25], duration: 0.15, volume: 0.045, attack: 0.01 });
 }

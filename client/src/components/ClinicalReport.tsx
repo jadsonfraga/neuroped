@@ -20,7 +20,6 @@ import { useToast } from "@/hooks/use-toast";
 import { haptic } from "@/lib/haptic";
 import { easing, duration } from "@/lib/motion";
 import { softSuccess, softTap } from "@/lib/softSounds";
-import { play1Up } from "@/lib/sounds";
 import {
   buildScaleResponseText,
   normalizeScaleResponseItems,
@@ -99,7 +98,7 @@ async function sendEmail(
       filename: `${safeTextFilename(scaleName)}-respostas`,
     });
     setSent(true);
-    play1Up();
+    softSuccess();
     toast({
       title: "✉️ Email aberto",
       description:

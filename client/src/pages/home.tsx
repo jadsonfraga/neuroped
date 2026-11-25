@@ -32,7 +32,7 @@ import { navigablePages } from "@/data/navigation";
 import type { ScaleEntry } from "@/data/scaleFilter";
 import { haptic } from "@/lib/haptic";
 import { easing, duration } from "@/lib/motion";
-import { softHover, softTap } from "@/lib/softSounds";
+import { softTap } from "@/lib/softSounds";
 
 interface ClinicalFlow {
   href: string;
@@ -149,7 +149,6 @@ function FlowCard({ flow, index }: { flow: ClinicalFlow; index: number }) {
         }}
         whileHover={{ y: -4 }}
         whileTap={{ scale: 0.99 }}
-        onMouseEnter={() => softHover()}
         onClick={() => {
           softTap();
           haptic.tap();
