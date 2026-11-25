@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ObservacaoSocial from "@/components/observacao-social/ObservacaoSocial";
 import SondaDigitalGuided from "@/components/sonda-dez/SondaDigitalGuided";
 import {
   BrainCircuit,
@@ -39,6 +40,23 @@ const PREFLIGHT = [
  * O atalho fica abaixo da Tela da criança (z-100), preservando o estímulo puro.
  */
 export default function SondaDezDailyPage() {
+  const [social, setSocial] = useState(false);
+  const [visited, setVisited] = useState(false);
+  return (
+    <>
+      <nav aria-label="Modalidade de observação" className="mb-4 flex flex-wrap gap-2">
+        <Button aria-pressed={!social} variant={social ? "outline" : "default"} onClick={() => setSocial(false)}>Sonda 10</Button>
+        <Button aria-pressed={social} variant={social ? "default" : "outline"} onClick={() => { setVisited(true); setSocial(true); }}>Observação social</Button>
+      </nav>
+      <div hidden={social}><SondaDezModes /></div>
+      {visited && <div hidden={!social}>
+        <ObservacaoSocial />
+      </div>}
+    </>
+  );
+}
+
+function SondaDezModes() {
   const [guided, setGuided] = useState(true);
   const [guideOpen, setGuideOpen] = useState(false);
   const [preflight, setPreflight] = useState<Record<string, boolean>>({});
