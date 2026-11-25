@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type FocusEvent, type ReactNode } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -454,7 +454,11 @@ export default function AgendaPage() {
       </section>
 
       <Tabs value={activeTab} onValueChange={setTab} className="space-y-4">
-        <TabsList className="h-auto w-full justify-start overflow-x-auto rounded-2xl p-1">
+        <TabsList
+          aria-label="Seções da agenda"
+          className="h-auto w-full justify-start overflow-x-auto rounded-2xl p-1 [&>[role=tab]]:flex-none"
+          onFocus={revealFocusedAgendaTab}
+        >
           <TabsTrigger value="agenda">Agenda</TabsTrigger>
           <TabsTrigger value="recepcao" data-testid="tab-reception-day">Recepção do dia</TabsTrigger>
           {unifiedAvailable && <TabsTrigger value="dia">Dia de todos</TabsTrigger>}
@@ -816,6 +820,22 @@ export default function AgendaPage() {
       </Tabs>
     </div>
   );
+}
+
+// A rolagem nativa de foco pode manter parte do botão cortada quando a
+// lista excede por poucos pixels (largura útil reduzida pela barra lateral).
+function revealFocusedAgendaTab(event: FocusEvent<HTMLDivElement>) {
+  const { currentTarget: list, target: tab } = event;
+  if (!(tab instanceof HTMLElement) || tab.getAttribute("role") !== "tab") return;
+  if (list.scrollWidth <= list.clientWidth) return;
+  const listBounds = list.getBoundingClientRect();
+  const tabBounds = tab.getBoundingClientRect();
+  const gutter = 4;
+  if (tabBounds.left < listBounds.left + gutter) {
+    list.scrollLeft += tabBounds.left - listBounds.left - gutter;
+  } else if (tabBounds.right > listBounds.right - gutter) {
+    list.scrollLeft += tabBounds.right - listBounds.right + gutter;
+  }
 }
 
 function Metric({ icon: Icon, label, value, detail }: { icon: typeof CalendarClock; label: string; value: string; detail?: string }) {
