@@ -179,8 +179,11 @@ async function passwordWrapKey(
   );
 }
 
-async function accountVaultRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const { authFetch } = await import("@/lib/authClient");
+async function accountVaultRequest<T>(path: string, init: RequestInit = {}, expectedEpoch?: number): Promise<T> {
+  const { authFetch, getAuthSessionEpoch } = await import("@/lib/authClient");
+  if (expectedEpoch !== undefined && expectedEpoch !== getAuthSessionEpoch()) {
+    throw new Error("Sessão alterada; o certificado não foi gravado.");
+  }
   const response = await authFetch(path, init);
   if (!response.ok) throw new Error(`Cofre de certificado indisponível (HTTP ${response.status}).`);
   return await response.json() as T;
@@ -191,6 +194,7 @@ export async function saveCertificateToAccount(
   user: VaultUser | null | undefined,
   p12: ArrayBuffer,
   password: string,
+  expectedEpoch?: number,
 ): Promise<AccountCertificateEnvelope> {
   if (!canUseCertificateVault(user)) throw new Error("Somente o administrador pode guardar o certificado na conta.");
   if (!password) throw new Error("Valide o certificado com a senha antes de memorizar.");
@@ -218,7 +222,7 @@ export async function saveCertificateToAccount(
   const result = await accountVaultRequest<{ ok: true; updatedAt: string }>("/api/certificate-vault", {
     method: "PUT",
     body: JSON.stringify(payload),
-  });
+  }, expectedEpoch);
   return { ...payload, updatedAt: result.updatedAt };
 }
 

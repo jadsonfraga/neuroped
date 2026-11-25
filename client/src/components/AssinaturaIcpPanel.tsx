@@ -1,3 +1,4 @@
+import { getAuthSessionEpoch } from "@/lib/authClient";
 import { useEffect, useId, useRef, useState } from "react";
 import {
   ShieldCheck,
@@ -61,8 +62,8 @@ function signingErrorMessage(error: unknown): string {
 
 /**
  * Assinatura digital ICP-Brasil (certificado A1 .p12) processada no navegador.
- * O arquivo vem exclusivamente do seletor local, permanece somente na memória
- * da aba e nunca é persistido ou transferido pelo cliente.
+ * O arquivo é selecionado localmente ou recuperado de um envelope cifrado na
+ * conta. Nunca transfere a senha; cada ação explícita pede nova digitação.
  */
 export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, reason, widgetRect, widgetPageIndex, archivePdf, healthDocument, signingBlockedReason }: Props) {
   const uid = useId();
@@ -97,6 +98,13 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
   // desbloqueado localmente após a senha correta. No modo local mantém o cofre do dispositivo.
   useEffect(() => {
     let cancelled = false;
+    p12LoadIdRef.current += 1;
+    setP12(null);
+    setSenha("");
+    setAccountCertificate(null);
+    setCert(null);
+    setStored(false);
+    setP12Name("");
     if (!vaultAllowed) {
       setStored(false);
       setAccountCertificate(null);
@@ -114,16 +122,9 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
             return;
           }
         } catch {
-          // Se o backend estiver indisponível, tenta o cofre cifrado local.
+          if (!cancelled) setErro("Cofre da conta indisponível. Recarregue para tentar novamente. Nenhum certificado do dispositivo foi carregado.");
         }
-        const localRecord = await loadCertificate(user);
-        if (cancelled || !localRecord) return;
-        p12LoadIdRef.current += 1;
-        setP12(localRecord.p12);
-        setP12Name(localRecord.fileName);
-        setStored(false);
-        setOkMsg("Certificado deste dispositivo recuperado. Valide a senha para memorizá-lo na conta.");
-      })().catch(() => { /* segue com seleção manual */ });
+      })();
     } else {
       void loadCertificate(user).then((record) => {
         if (cancelled || !record) return;
@@ -155,11 +156,12 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
     setOkMsg(remoteCertificateVault ? "Certificado removido do cofre da conta." : "Certificado removido deste dispositivo.");
   }
 
-  async function persistirCertificado(bytes: ArrayBuffer, password: string): Promise<string | null> {
+  async function persistirCertificado(bytes: ArrayBuffer, password: string, epoch: number): Promise<string | null> {
     if (!vaultAllowed || !rememberCert || stored) return null;
     try {
       if (remoteCertificateVault) {
-        const record = await saveCertificateToAccount(user, bytes, password);
+        const record = await saveCertificateToAccount(user, bytes, password, epoch);
+        if (epoch !== getAuthSessionEpoch()) return null;
         setAccountCertificate(record);
         setP12Name("Certificado A1 salvo na conta");
         setStored(true);
@@ -206,26 +208,35 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
       setErro("Selecione o arquivo .p12/.pfx ou use o certificado salvo na conta.");
       return;
     }
+    if (!senha) { setErro("Informe a senha do certificado."); return; }
+    const password = senha;
+    setSenha("");
+    const epoch = getAuthSessionEpoch();
+    let ephemeralPfx: ArrayBuffer | null = null;
     setErro(""); setOkMsg(""); setBusy("verify");
     try {
       const { readP12Info } = await import("@/lib/icpSign");
-      const candidate = p12 ?? await unlockCertificateFromAccount(user, accountCertificate!, senha);
-      const info = readP12Info(candidate, senha);
-      setP12(candidate);
+      const candidate = p12 ?? (ephemeralPfx = await unlockCertificateFromAccount(user, accountCertificate!, password));
+      if (epoch !== getAuthSessionEpoch()) return;
+      const info = readP12Info(candidate, password);
       setCert({ commonName: info.commonName, notAfter: info.notAfter, issuer: info.issuer });
-      const persistenceError = p12 ? await persistirCertificado(candidate, senha) : null;
+      const persistenceError = p12 ? await persistirCertificado(candidate, password, epoch) : null;
+      if (epoch !== getAuthSessionEpoch()) return;
       setOkMsg(persistenceError
         ? "Senha validada. O certificado continua disponível nesta aba, mas não foi memorizado na conta."
         : (vaultAllowed && rememberCert
           ? (remoteCertificateVault
             ? "Senha validada; certificado memorizado de forma criptografada na conta. A senha não foi enviada nem salva."
             : "Certificado memorizado de forma criptografada neste dispositivo. A senha não foi salva.")
-          : "Certificado válido; a senha permanece somente nesta aba."));
+          : "Certificado aberto localmente. Digite a senha novamente para assinar."));
       if (persistenceError) setErro(persistenceError);
     } catch (error) {
       setErro(signingErrorMessage(error));
       return;
-    } finally { setBusy(""); }
+    } finally {
+      if (ephemeralPfx) new Uint8Array(ephemeralPfx).fill(0);
+      setBusy("");
+    }
   }
 
   async function baixarSemAssinar() {
@@ -262,17 +273,23 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
       setErro("Selecione o arquivo .p12/.pfx ou use o certificado salvo na conta.");
       return;
     }
+    if (!senha) { setErro("Informe a senha do certificado."); return; }
+    const password = senha;
+    setSenha("");
+    const epoch = getAuthSessionEpoch();
+    let ephemeralPfx: ArrayBuffer | null = null;
     setErro(""); setOkMsg(""); setBusy("sign");
     let persistenceError: string | null = null;
     try {
       const { signPdfWithP12, downloadBytes, readP12Info } = await import("@/lib/icpSign");
-      const activeP12 = p12 ?? await unlockCertificateFromAccount(user, accountCertificate!, senha);
-      const certificateInfo = readP12Info(activeP12, senha);
-      setP12(activeP12);
+      const activeP12 = p12 ?? (ephemeralPfx = await unlockCertificateFromAccount(user, accountCertificate!, password));
+      if (epoch !== getAuthSessionEpoch()) return;
+      const certificateInfo = readP12Info(activeP12, password);
       setCert({ commonName: certificateInfo.commonName, notAfter: certificateInfo.notAfter, issuer: certificateInfo.issuer });
-      if (p12) persistenceError = await persistirCertificado(activeP12, senha);
+      if (p12) persistenceError = await persistirCertificado(activeP12, password, epoch);
       const pdfBytes = await buildPdf();
-      const signed = await signPdfWithP12(pdfBytes, activeP12, senha, {
+      if (epoch !== getAuthSessionEpoch()) return;
+      const signed = await signPdfWithP12(pdfBytes, activeP12, password, {
         reason: reason ?? "Assinatura digital ICP-Brasil",
         name: signerName,
         location,
@@ -280,8 +297,8 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
         widgetPageIndex,
         healthDocument,
       });
+      if (epoch !== getAuthSessionEpoch()) return;
       downloadBytes(signed, `${filename}-assinado.pdf`);
-      setSenha("");
       if (archivePdf) {
         try {
           await archivePdf(signed, {
@@ -304,11 +321,14 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
         setOkMsg("Documento assinado; o certificado não foi memorizado na conta.");
         setErro(persistenceError);
       }
-      await gerarComprovante(signed);
+      if (epoch === getAuthSessionEpoch()) await gerarComprovante(signed);
     } catch (error) {
       setErro(signingErrorMessage(error));
       return;
-    } finally { setBusy(""); }
+    } finally {
+      if (ephemeralPfx) new Uint8Array(ephemeralPfx).fill(0);
+      setBusy("");
+    }
   }
 
   return (
@@ -384,9 +404,7 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
             className="text-xs"
             data-testid="input-p12-senha"
             autoComplete="off"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") { e.preventDefault(); if (!busy && (p12 || accountCertificate)) void gerarEAssinar(); }
-            }}
+            onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
           />
         </div>
       </div>
@@ -404,7 +422,7 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
           variant="outline"
           size="sm"
           onClick={verificar}
-          disabled={!!busy || (!p12 && !accountCertificate)}
+          disabled={!!busy || (!p12 && !accountCertificate) || !senha}
         >
           {busy === "verify" ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
           Verificar certificado
@@ -413,7 +431,7 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
           type="button"
           size="sm"
           onClick={gerarEAssinar}
-          disabled={!!busy || (!p12 && !accountCertificate) || !!signingBlockedReason}
+          disabled={!!busy || (!p12 && !accountCertificate) || !senha || !!signingBlockedReason}
           data-testid="button-sign"
         >
           {busy === "sign" ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileSignature className="w-4 h-4" />}
@@ -434,7 +452,7 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
       {cert && (
         <div className="mt-3 rounded-lg border border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/30 p-2.5 text-xs">
           <p className="font-semibold text-emerald-800 dark:text-emerald-200 flex items-center gap-1">
-            <CheckCircle2 className="w-3.5 h-3.5" /> Certificado válido
+            <CheckCircle2 className="w-3.5 h-3.5" /> Dados do certificado lidos localmente
           </p>
           <p className="text-emerald-900/80 dark:text-emerald-200/80">Titular: {cert.commonName}</p>
           <p className="text-emerald-900/80 dark:text-emerald-200/80">Emissor: {cert.issuer}</p>
