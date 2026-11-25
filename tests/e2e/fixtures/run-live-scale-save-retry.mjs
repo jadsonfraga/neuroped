@@ -2,6 +2,7 @@
 // including for the two faults. No fixture DB from outside the repository.
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -14,7 +15,7 @@ let nextFault = fault;
 assert.ok([undefined, "db", "response"].includes(fault));
 assert.ok(process.env.SCALE_RETRY_MINIFLARE && process.env.SCALE_RETRY_WORKER, "Informe Miniflare e o Worker local compilado");
 const { Miniflare, convertV4MiniflareOptions } = await import(pathToFileURL(process.env.SCALE_RETRY_MINIFLARE));
-const password = "Somente-fixture-de-escalas-2026!";
+const password = randomBytes(24).toString("base64url");
 const env = { ...process.env, LIVE_DISCOVERY_EMAIL: "owner-a@example.test", LIVE_DISCOVERY_PASSWORD: password };
 
 function run(args, childEnv) {
@@ -39,7 +40,7 @@ try {
     bindings: {
       ENVIRONMENT: "production",
       CLINICAL_LIVE_ENABLED: "true",
-      NEUROPED_JWT_SECRET: "synthetic-multiclinic-session-secret-32chars-min",
+      NEUROPED_JWT_SECRET: randomBytes(48).toString("base64url"),
       CLINICAL_DATA_KEY: "multiclinic-data-key-0123456789-ABCDEFGHIJKLMNOPQRSTUVWXYZ",
       CLINICAL_DATA_KEY_ID: "k-mc-1",
       CLINICAL_INDEX_KEY: "multiclinic-index-key-9876543210-ZYXWVUTSRQPONMLKJIHGFEDCBA",
