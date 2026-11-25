@@ -135,6 +135,79 @@ export function buildCadesDetachedSignature(content: Uint8Array, input: CadesSig
   return forge.util.binary.raw.decode(der(contentInfo));
 }
 
+
+/**
+ * Verifica o CMS emitido por este módulo (um signatário RSA/SHA-256).
+ * Prova integridade e posse da chave correspondente ao certificado embutido.
+ * NÃO prova confiança ICP-Brasil, revogação ou identidade profissional.
+ */
+export function assertCadesDetachedIntegrity(content: Uint8Array, cmsHex: string): void {
+  const fail = (): never => { throw new Error("Integridade criptográfica do PDF assinado inválida."); };
+  const children = (node: Asn1 | undefined): Asn1[] => {
+    if (!node || !Array.isArray(node.value)) return fail();
+    return node.value;
+  };
+  const primitive = (node: Asn1 | undefined): string => {
+    if (!node || typeof node.value !== "string") return fail();
+    return node.value;
+  };
+  const oid = (node: Asn1 | undefined): string => {
+    if (!node || node.type !== asn1.Type.OID) return fail();
+    return asn1.derToOid(primitive(node));
+  };
+  try {
+    // O placeholder PDF inclui padding zero após o DER. Extraia somente
+    // o comprimento ASN.1 declarado e rejeite qualquer padding não nulo.
+    const raw = forge.util.hexToBytes(cmsHex);
+    if (raw.length < 4 || raw.charCodeAt(0) !== 0x30) return fail();
+    let header = 2;
+    let size = raw.charCodeAt(1);
+    if (size & 0x80) {
+      const n = size & 0x7f;
+      if (n < 1 || n > 4 || raw.length < 2 + n) return fail();
+      size = 0;
+      for (let i = 0; i < n; i++) size = size * 256 + raw.charCodeAt(2 + i);
+      header += n;
+    }
+    const end = header + size;
+    if (end > raw.length || /[^\x00]/.test(raw.slice(end))) return fail();
+    const info = children(asn1.fromDer(raw.slice(0, end)));
+    if (info.length !== 2 || oid(info[0]) !== OID.signedData) return fail();
+    const data = children(children(info[1])[0]);
+    if (data.length !== 5 || oid(children(children(data[1])[0])[0]) !== OID.sha256) return fail();
+    const encap = children(data[2]);
+    if (encap.length !== 1 || oid(encap[0]) !== OID.data) return fail();
+    const signers = children(data[4]);
+    if (signers.length !== 1) return fail();
+    const signer = children(signers[0]);
+    if (signer.length !== 6 || oid(children(signer[2])[0]) !== OID.sha256 ||
+        oid(children(signer[4])[0]) !== OID.rsaEncryption) return fail();
+    const sid = children(signer[1]);
+    const certNode = children(data[3]).find((node) => {
+      const cert = forge.pki.certificateFromAsn1(node);
+      return der(forge.pki.distinguishedNameToAsn1(cert.issuer)) === der(sid[0]) &&
+        serialBytes(cert) === primitive(sid[1]);
+    });
+    if (!certNode) return fail();
+    const cert = forge.pki.certificateFromAsn1(certNode);
+    const attrs = children(signer[3]);
+    // O perfil emitido tem exatamente três atributos assinados, todos
+    // obrigatórios. Comparar DER impede duplicatas e ESS de outro certificado.
+    const expected = [
+      signedAttribute(OID.contentType, oidNode(OID.data)),
+      signedAttribute(OID.messageDigest, octets(sha256Bytes(forge.util.binary.raw.encode(content)))),
+      signedAttribute(OID.signingCertificateV2, signingCertificateV2(cert, der(certNode))),
+    ].map(der).sort(compareBinary);
+    if (attrs.length !== expected.length ||
+        attrs.some((attr, i) => der(attr) !== expected[i])) return fail();
+    const digest = sha256Bytes(der(setOf(attrs)));
+    const publicKey = cert.publicKey as forge.pki.rsa.PublicKey;
+    if (!publicKey.verify(digest, primitive(signer[5]))) return fail();
+  } catch {
+    return fail();
+  }
+}
+
 // ── Metadados de documento de saúde (VALIDAR/ITI) ────────────────────────
 
 export type HealthDocumentKind = "prescricao" | "atestado" | "solicitacao_exame" | "relatorio";
