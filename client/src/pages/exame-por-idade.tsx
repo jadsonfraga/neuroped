@@ -19,6 +19,7 @@ export default function ExamePorIdade() {
       </label>
       {band && <div key={age} className="space-y-3">
         <p className="rounded-lg bg-muted p-4"><strong>Para começar. </strong>{band.setup}</p>
+        <p className="px-1 text-sm"><strong>Se precisar adaptar. </strong>{band.adapt}</p>
         {band.steps.map((item, index) => {
           const id = age + "/" + item.title;
           return <details key={id} open={index === 0} className="rounded-xl border bg-card px-4">
@@ -41,8 +42,9 @@ export default function ExamePorIdade() {
       </div>}
       <details className="text-sm text-muted-foreground">
         <summary className="cursor-pointer py-2">Referências e versão do roteiro</summary>
-        <p>Roteiro clínico observacional NeuroPed v1.0, sem validação psicométrica. As faixas orientam a abordagem. A interpretação é clínica.</p>
+        <p>Roteiro clínico observacional NeuroPed v1.1, sem validação psicométrica. As faixas orientam a abordagem. A interpretação é clínica.</p>
         <ul className="list-disc space-y-1 pl-5 underline">
+          <li><a href="https://www.cdc.gov/act-early/resources/milestones-checklist-by-age.html">CDC · Desenvolvimento por idade</a></li>
           <li><a href="https://aci.health.nsw.gov.au/ecat/paediatric/assessment/neurological">NSW Agency for Clinical Innovation · Exame neurológico pediátrico</a></li>
           <li><a href="https://med.stanford.edu/newborns/professional-education/photo-gallery/neuro-reflexes">Stanford Medicine · Exame neurológico do recém-nascido</a></li>
           <li><a href="https://www.rch.org.au/clinicalguide/guideline_index/Mental_state_examination/">Royal Children’s Hospital · Exame do estado mental</a></li>
@@ -51,3 +53,4 @@ export default function ExamePorIdade() {
     </section>
   );
 }
+
