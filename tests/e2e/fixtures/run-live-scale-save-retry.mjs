@@ -10,12 +10,16 @@ import { DatabaseSync } from "node:sqlite";
 import { pathToFileURL } from "node:url";
 import { startStaticServer } from "../../../scripts/lib/browser-audit-runtime.mjs";
 
+const agendaSuite = process.argv[2] === "--agenda";
+assert.ok(process.argv.length === 2 || (process.argv.length === 3 && agendaSuite));
 const fault = process.env.SCALE_RETRY_FAULT;
+assert.ok(!agendaSuite || !fault, "Não combine a agenda com falhas de escalas");
 let nextFault = fault;
 assert.ok([undefined, "db", "response"].includes(fault));
 assert.ok(process.env.SCALE_RETRY_MINIFLARE && process.env.SCALE_RETRY_WORKER, "Informe Miniflare e o Worker local compilado");
 const { Miniflare, convertV4MiniflareOptions } = await import(pathToFileURL(process.env.SCALE_RETRY_MINIFLARE));
 const password = randomBytes(24).toString("base64url");
+const clinicalDataKey = randomBytes(48).toString("base64url");
 const env = { ...process.env, LIVE_DISCOVERY_EMAIL: "owner-a@example.test", LIVE_DISCOVERY_PASSWORD: password };
 
 function run(args, childEnv) {
@@ -30,7 +34,9 @@ const temp = mkdtempSync(join(tmpdir(), "neuroped-scale-retry-"));
 const dbPath = join(temp, "fixture.sqlite");
 let mf, server;
 try {
-  assert.equal(await run(["--import", "tsx", "tests/e2e/fixtures/live-patient-discovery.mts", dbPath], env), 0);
+  assert.equal(await run(["--import", "tsx", "tests/e2e/fixtures/live-patient-discovery.mts", dbPath], {
+    ...env, LIVE_DISCOVERY_FIXTURE_DATA_KEY: clinicalDataKey,
+  }), 0);
   const options = {
     modules: true,
     script: readFileSync(process.env.SCALE_RETRY_WORKER, "utf8"),
@@ -40,10 +46,11 @@ try {
     bindings: {
       ENVIRONMENT: "production",
       CLINICAL_LIVE_ENABLED: "true",
+      ...(agendaSuite ? { OPERATIONAL_DATA_KEY: randomBytes(48).toString("base64url") } : {}),
       NEUROPED_JWT_SECRET: randomBytes(48).toString("base64url"),
-      CLINICAL_DATA_KEY: "multiclinic-data-key-0123456789-ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+      CLINICAL_DATA_KEY: clinicalDataKey,
       CLINICAL_DATA_KEY_ID: "k-mc-1",
-      CLINICAL_INDEX_KEY: "multiclinic-index-key-9876543210-ZYXWVUTSRQPONMLKJIHGFEDCBA",
+      CLINICAL_INDEX_KEY: randomBytes(48).toString("base64url"),
     },
   };
   mf = new Miniflare(convertV4MiniflareOptions ? convertV4MiniflareOptions(options) : options);
@@ -109,7 +116,8 @@ try {
     res.end(Buffer.from(await response.arrayBuffer()));
     return true;
   }});
-  process.exitCode = await run(["tests/e2e/live-scale-save-retry.mjs"], { ...env, LIVE_DISCOVERY_URL: server.origin });
+  const test = agendaSuite ? "tests/e2e/live-agenda.mjs" : "tests/e2e/live-scale-save-retry.mjs";
+  process.exitCode = await run([test], { ...env, LIVE_DISCOVERY_URL: server.origin });
   if (process.exitCode === 0) assert.equal(nextFault, undefined, "a falha solicitada não foi exercitada");
 } finally {
   await server?.close();
