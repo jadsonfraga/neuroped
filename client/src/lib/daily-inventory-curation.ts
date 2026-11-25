@@ -33,7 +33,11 @@ export function curateDailyInventory(
   }
   if (record.contingency === true) blockers.push("contingency");
   if (record.needsUpgrade === true) blockers.push("needs_upgrade");
-  if (!dailyResponseContractIsUnambiguous(record)) {
+  // A série FEX registra contagens por oportunidade e impacto em campos próprios.
+  const fexUsesOrdinalResponses =
+    record.topicId === "contingencia_funcoes_executivas" &&
+    record.items.some((item) => item.responseMode === "frequencia_0_3");
+  if (fexUsesOrdinalResponses || !dailyResponseContractIsUnambiguous(record)) {
     blockers.push("response_contract_ambiguous");
   }
 
