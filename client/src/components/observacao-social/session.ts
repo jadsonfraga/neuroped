@@ -1,12 +1,23 @@
+import { bands, domains } from "../../data/observacaoSocial";
+
 export type Stage = "choose" | "prepare" | "record" | "review";
-export type Note = { condition: string; reaction: string; context: string; video: string; interpretation: string };
-export const blank: Note = { condition: "", reaction: "", context: "", video: "", interpretation: "" };
+export type Note = { condition: string; invitation: string; reaction: string; context: string; video: string; interpretation: string };
+export const blank: Note = { condition: "", invitation: "", reaction: "", context: "", video: "", interpretation: "" };
 export type Session = {
   band: number | null;
   scene: number;
   stage: Stage;
   records: Record<string, Note>;
 };
+export const alternativeScene = 3;
+
+export function describeSocialScene(band: number, scene: number): string | null {
+  const selected = bands[band];
+  if (!selected) return null;
+  if (scene === alternativeScene) return selected[0] + " · Brincadeira sem tela";
+  return selected[1][scene] ? selected[0] + " · " + selected[1][scene][0] + " · " + domains[scene][0] : null;
+}
+
 export const fresh: Session = { band: null, scene: 0, stage: "choose", records: {} };
 export type Action =
   | { type: "age"; band: number }
@@ -16,8 +27,8 @@ export type Action =
   | { type: "reset" };
 export function session(state: Session, action: Action): Session {
   switch (action.type) {
-    case "age": return Object.keys(state.records).length ? state : { ...state, band: action.band, scene: 0, stage: "choose" };
-    case "open": return state.band === null ? state : { ...state, scene: action.scene, stage: "prepare" };
+    case "age": return Object.keys(state.records).length || !bands[action.band] ? state : { ...state, band: action.band, scene: 0, stage: "choose" };
+    case "open": return state.band === null || !describeSocialScene(state.band, action.scene) ? state : { ...state, scene: action.scene, stage: "prepare" };
     case "stage": return { ...state, stage: action.stage };
     case "reset": return fresh;
     case "edit": {

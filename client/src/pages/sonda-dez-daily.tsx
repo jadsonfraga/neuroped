@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { readRouteParam } from "@/lib/routeQuery";
 import ObservacaoSocial from "@/components/observacao-social/ObservacaoSocial";
 import SondaDigitalGuided from "@/components/sonda-dez/SondaDigitalGuided";
 import {
@@ -40,8 +41,8 @@ const PREFLIGHT = [
  * O atalho fica abaixo da Tela da criança (z-100), preservando o estímulo puro.
  */
 export default function SondaDezDailyPage() {
-  const [social, setSocial] = useState(false);
-  const [visited, setVisited] = useState(false);
+  const [social, setSocial] = useState(() => readRouteParam("modo") === "observacao-social");
+  const [visited, setVisited] = useState(social);
   return (
     <>
       <nav aria-label="Modalidade de observação" className="mb-4 flex flex-wrap gap-2">

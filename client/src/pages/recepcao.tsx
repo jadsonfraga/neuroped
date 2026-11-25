@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PremiumVisualPanel } from "@/components/PremiumVisualPanel";
 import { brandAssets } from "@/components/BrandAssets";
 import { useAuth } from "@/contexts/AuthContext";
+import { canRenderNavigationItem } from "@/security/routeGuardPolicy";
 import { useToast } from "@/hooks/use-toast";
 import { buildPreConsultaSummary, loadPreConsultas, savePreConsultas, type PreConsultaRecord, type PreConsultaStatus } from "@/lib/preConsultaCore";
 
@@ -27,7 +28,10 @@ function idade(record: PreConsultaRecord) {
 }
 
 export default function RecepcaoPage() {
-  const { accessMode, isAuthenticated } = useAuth();
+  const { accessMode, isAuthenticated, isLoading: authLoading, user } = useAuth();
+  const assistantGuideAvailable = canRenderNavigationItem({
+    path: "/exame-via-assistente", accessMode, isAuthenticated, isLoading: authLoading, userRole: user?.role,
+  });
   const { toast } = useToast();
   const localPersistenceEnabled = !(accessMode === "remote" && isAuthenticated);
   const [items, setItems] = useState<PreConsultaRecord[]>([]);
@@ -117,6 +121,15 @@ export default function RecepcaoPage() {
           </div>
         </div>
       </header>
+
+      {assistantGuideAvailable && <Card className="border-primary/20">
+        <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">Atividades por idade e observações temporárias, sem abrir a ficha médica.</p>
+          <Button asChild className="shrink-0 gap-2">
+            <Link href="/exame-via-assistente" data-testid="assistant-exam-reception-link"><ClipboardCheck className="h-4 w-4" aria-hidden="true" />Exame via assistente</Link>
+          </Button>
+        </CardContent>
+      </Card>}
 
       {!localPersistenceEnabled && (
         <Card

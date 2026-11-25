@@ -6,8 +6,11 @@ export type RouteAccessMode = "checking" | "remote" | "local";
 export type RouteUserRole = "admin" | "professional" | "reader" | "operator" | "visitor";
 export type RouteAccessDecision = "allow" | "checking" | "login" | "forbidden";
 
+const ASSISTANT_EXAM_ROUTE = "/exame-via-assistente";
+
 export const SENSITIVE_ROUTES = [
   "/exame-neurologico-mental",
+  ASSISTANT_EXAM_ROUTE,
   "/super-neuropad-game",
   "/super-neuropad-nao-verbal",
   "/neuropad-arena",
@@ -256,6 +259,7 @@ const CLINICAL_ROLE_OVERRIDES: ReadonlyArray<{
   // retornadas pelo backend. Abrir a tela não concede acesso ao prontuário.
   { route: "/configuracoes", roles: ["admin", "professional", "reader", "operator"] },
   { route: "/recepcao", roles: ["admin", "professional", "operator"] },
+  { route: ASSISTANT_EXAM_ROUTE, roles: DIRECT_TEST_ROLES },
   // A secretária opera a agenda administrativa sem receber acesso ao prontuário.
   { route: "/agenda", roles: ["admin", "professional", "operator"] },
   { route: "/super-neuropad-game", roles: DIRECT_TEST_ROLES },
@@ -341,10 +345,12 @@ export function decideRouteAccess({
   if (accessMode === "remote" && isAuthenticated && userRole === "visitor") {
     return isVisitorRoute(path) ? "allow" : "forbidden";
   }
-  if (!isClinicalRoute(path)) return "allow";
+  // A aba da assistente é exclusiva de sessão remota, inclusive em builds de demonstração.
+  const assistantExam = normalizePathname(path) === ASSISTANT_EXAM_ROUTE;
+  if (!assistantExam && !isClinicalRoute(path)) return "allow";
   if (accessMode === "checking" || isLoading) return "checking";
   if (accessMode === "local") {
-    return localPinConfigured && localPinUnlocked ? "allow" : "forbidden";
+    return !assistantExam && localPinConfigured && localPinUnlocked ? "allow" : "forbidden";
   }
   if (!isAuthenticated) return "login";
   const effectiveRoles = allowedRoles ?? getDefaultClinicalRoles(path);

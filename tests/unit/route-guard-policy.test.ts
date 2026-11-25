@@ -103,6 +103,8 @@ assert.equal(
 );
 
 const REQUIRED_SENSITIVE_ROUTES = [
+  "/exame-neurologico-mental",
+  "/exame-via-assistente",
   "/avaliacao-pre-consulta-faixa-etaria",
   "/pant",
   "/renderizador",
@@ -205,7 +207,7 @@ for (const path of clinicalRouteSamples) {
     const expected =
       path === "/configuracoes" || (userRole === "reader" && isReaderClinicalRoute(path))
         ? "allow"
-        : (path === "/recepcao" || path === "/agenda" || path === "/super-neuropad-game" || path === "/super-neuropad-nao-verbal" || path === "/neuropad-arena" || path === "/testes-diretos" || path === "/testes-reconhecimento" || path === "/testes-cognitivos" || path === "/por-faixa-etaria" || path === "/avaliacao-pre-consulta-faixa-etaria") && userRole === "operator"
+        : (path === "/recepcao" || path === "/exame-via-assistente" || path === "/agenda" || path === "/super-neuropad-game" || path === "/super-neuropad-nao-verbal" || path === "/neuropad-arena" || path === "/testes-diretos" || path === "/testes-reconhecimento" || path === "/testes-cognitivos" || path === "/por-faixa-etaria" || path === "/avaliacao-pre-consulta-faixa-etaria") && userRole === "operator"
           ? "allow"
           : "forbidden";
     assert.equal(
@@ -570,6 +572,7 @@ for (const path of ["/avaliacao-pre-consulta-faixa-etaria/interno", "/avaliacao-
     "/assinatura-digital",
     "/agenda",
     "/recepcao",
+    "/exame-via-assistente",
     "/testes-diretos",
     "/super-neuropad-game",
     "/medicamentos",

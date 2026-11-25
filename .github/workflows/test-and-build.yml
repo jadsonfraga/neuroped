@@ -134,6 +134,9 @@ jobs:
         run: node scripts/guards/npm-audit-gate.mjs
         continue-on-error: false
 
+      - name: Verify guided pediatric activities and clinical session regressions
+        run: npm run test:clinical-assistant-guide
+
       - name: Hard Release Verification Suite
         run: npm run verify
         continue-on-error: false
