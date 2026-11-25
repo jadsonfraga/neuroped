@@ -17,6 +17,9 @@ assert.ok(process.argv.length === 2 || (process.argv.length === 3 && (agendaSuit
 const fault = process.env.SCALE_RETRY_FAULT;
 assert.ok(!(agendaSuite || prontuarioSuite) || !fault, "Não combine a agenda com falhas de escalas");
 let nextFault = fault;
+const prontuarioFault = process.env.PRONTUARIO_FAULT_LOST_RESPONSE;
+assert.ok([undefined, "create", "correct"].includes(prontuarioFault));
+let loseProntuarioResponse = prontuarioSuite && Boolean(prontuarioFault);
 assert.ok([undefined, "db", "response"].includes(fault));
 assert.ok(process.env.SCALE_RETRY_MINIFLARE && process.env.SCALE_RETRY_WORKER, "Informe Miniflare e o Worker local compilado");
 const { Miniflare, convertV4MiniflareOptions } = await import(pathToFileURL(process.env.SCALE_RETRY_MINIFLARE));
@@ -116,6 +119,17 @@ try {
         return true;
       }
     }
+    const posted = loseProntuarioResponse && url.pathname === "/api/live/events" && req.method === "POST"
+      ? JSON.parse(Buffer.concat(chunks).toString()) : null;
+    if (posted?.encounterId === "nppr-v1-anamnese-queixaPrincipal"
+      && Boolean(posted.supersedesEventId) === (prontuarioFault === "correct")) {
+      assert.equal(response.status, 201, "evento já foi gravado no D1");
+      loseProntuarioResponse = false;
+      const body = Buffer.from(await response.arrayBuffer());
+      res.writeHead(response.status, { "Content-Type": "application/json", "Content-Length": body.length, Connection: "close" });
+      res.end(body.subarray(0, 1));
+      return true;
+    }
     const headers = Object.fromEntries(response.headers);
     delete headers["content-length"];
     delete headers["content-encoding"];
@@ -125,7 +139,10 @@ try {
   }});
   const test = operatorSuite ? "tests/e2e/live-agenda-operator-draft.mjs" : agendaSuite ? "tests/e2e/live-agenda.mjs" : prontuarioSuite ? "tests/e2e/live-prontuario-save.mjs" : "tests/e2e/live-scale-save-retry.mjs";
   process.exitCode = await run([test], { ...env, LIVE_DISCOVERY_URL: server.origin });
-  if (process.exitCode === 0) assert.equal(nextFault, undefined, "a falha solicitada não foi exercitada");
+  if (process.exitCode === 0) {
+    assert.equal(nextFault, undefined, "a falha solicitada não foi exercitada");
+    assert.equal(loseProntuarioResponse, false, "a interrupção planejada deveria ter sido exercitada");
+  }
   if (process.exitCode === 0 && operatorSuite) {
     assert.equal(outboundAttempted, false, "nenhuma tentativa de rede para provedor externo");
     const { decryptText } = await import("../../../functions/api/operations/_core.ts");

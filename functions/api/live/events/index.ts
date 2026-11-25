@@ -327,6 +327,40 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
     return tenantError("Paciente não encontrado nesta clínica.", "PATIENT_NOT_FOUND", 404);
   }
 
+  const sourceRecordHash = sourceRecordReference
+    ? await clinicalBlindIndex(
+        context.env,
+        clinicId,
+        `source-record:${provenanceSource}`,
+        sourceRecordReference,
+      )
+    : null;
+
+  const isProntuarioRetry = sourceRecordReference?.startsWith("nppr-save-v1-") === true;
+  const acknowledgeProntuarioReplay = async (): Promise<Response | null> => {
+    if (!isProntuarioRetry || !sourceRecordHash) return null;
+    const row = await db.prepare(
+      `SELECT id, author_user_id, event_type, occurred_at, encounter_id, provenance_kind,
+              supersedes_event_id, status, payload_encrypted
+         FROM live_clinical_events
+        WHERE clinic_id = ? AND patient_id = ? AND provenance_source = ? AND source_record_hash = ? LIMIT 1`,
+    ).bind(clinicId, patientId, provenanceSource, sourceRecordHash).first<LiveEventRow>();
+    if (!row) return null;
+    if (row.status !== "active" || row.author_user_id !== user.id || row.event_type !== eventType
+      || row.occurred_at !== occurredAt || row.encounter_id !== encounterId || row.provenance_kind !== provenanceKind
+      || row.supersedes_event_id !== supersedesEventId) {
+      return tenantError("A gravação anterior não corresponde à versão ativa desta seção.", "PRONTUARIO_REPLAY_CONFLICT", 409);
+    }
+    const saved = await decryptClinicalJson<unknown>(context.env, clinicId, `clinical-event:${row.id}`, row.payload_encrypted);
+    if (JSON.stringify(saved) !== JSON.stringify(payload)) {
+      return tenantError("A gravação anterior tem outro conteúdo.", "PRONTUARIO_REPLAY_CONFLICT", 409);
+    }
+    return tenantJson({ id: row.id, duplicate: true }, 200);
+  };
+
+  const replay = await acknowledgeProntuarioReplay();
+  if (replay) return replay;
+
   if (supersedesEventId) {
     const superseded = await db
       .prepare(
@@ -341,20 +375,13 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
       return tenantError("Evento supersedido não pertence ao mesmo paciente/tenant.", "INVALID_SUPERSESSION", 409);
     }
     if (superseded.status !== "active") {
+      const completed = await acknowledgeProntuarioReplay();
+      if (completed) return completed;
       return tenantError("Somente evento ativo pode ser supersedido.", "EVENT_NOT_ACTIVE", 409);
     }
   }
 
-  const sourceRecordHash = sourceRecordReference
-    ? await clinicalBlindIndex(
-        context.env,
-        clinicId,
-        `source-record:${provenanceSource}`,
-        sourceRecordReference,
-      )
-    : null;
-
-  if (sourceRecordHash) {
+  if (sourceRecordHash && !isProntuarioRetry) {
     const existing = await db
       .prepare(
         `SELECT id FROM live_clinical_events
@@ -432,6 +459,8 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
         (results[1]?.meta?.changes ?? 0) !== 1 ||
         (results[2]?.meta?.changes ?? 0) !== 1
       ) {
+        const completed = await acknowledgeProntuarioReplay();
+        if (completed) return completed;
         return tenantError("O evento mudou durante a correção. Recarregue a linha clínica.", "STALE_SUPERSESSION", 409);
       }
     } else {
@@ -453,7 +482,9 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
     }
   } catch (error) {
     // Corridas de deduplicação devem continuar idempotentes, não virar falso 500.
-    if (sourceRecordHash) {
+    const completed = await acknowledgeProntuarioReplay();
+    if (completed) return completed;
+    if (sourceRecordHash && !isProntuarioRetry) {
       const duplicate = await db
         .prepare(
           `SELECT id FROM live_clinical_events

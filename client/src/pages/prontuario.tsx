@@ -1,5 +1,5 @@
 import { decodeProntuarioEncounterId, encodeProntuarioEncounterId, prontuarioPayloadFingerprint } from "@/lib/prontuarioEncounterId";
-import { cloneElement, isValidElement, useState, useCallback, useEffect, type ReactElement, type ReactNode } from "react";
+import { cloneElement, isValidElement, useState, useCallback, useEffect, useRef, type ReactElement, type ReactNode } from "react";
 import {
   User, Users, Baby, Stethoscope, FileText, PlusCircle, Trash2,
   Activity, MessageSquare, Pill, Dumbbell, FlaskConical,
@@ -652,6 +652,7 @@ function ProntuarioForm({ isRemoteClinical, activeClinicId, patientId, appointme
   }, [issuer.doctorName]);
   const [recordSaving, setRecordSaving] = useState(false);
   const [eventIds, setEventIds] = useState<Record<string, string>>({});
+  const pendingClinicalWrites = useRef(new Map<string, { reference: string; intent: string }>());
   const [savedPayloads, setSavedPayloads] = useState<Record<string, string | undefined>>({});
 
   useEffect(() => {
@@ -744,6 +745,7 @@ function ProntuarioForm({ isRemoteClinical, activeClinicId, patientId, appointme
       setTerapias(nextTerapias);
       setExames(nextExames);
       setEventIds(nextIds);
+      pendingClinicalWrites.current.clear();
       setSavedPayloads(nextPayloads);
       setRecordLoading(false);
     }).catch((error) => {
@@ -839,7 +841,14 @@ function ProntuarioForm({ isRemoteClinical, activeClinicId, patientId, appointme
       const postEvent = async (key: string, payload: Record<string, unknown>) => {
         const previousId = nextIds[key];
         const fingerprint = isRemoteClinical ? prontuarioPayloadFingerprint(payload.data) : undefined;
-        if (previousId && isRemoteClinical && savedPayloads[key] === fingerprint) return;
+        const pending = pendingClinicalWrites.current.get(key);
+        const intent = JSON.stringify([previousId ?? null, occurredAt, payload.eventType, fingerprint]);
+        if (pending && pending.intent !== intent) {
+          throw new Error("A última resposta de gravação não foi confirmada. Confira a versão salva antes de mudar esta seção.");
+        }
+        if (!pending && previousId && isRemoteClinical && savedPayloads[key] === fingerprint) return;
+        const reference = isRemoteClinical ? pending?.reference ?? "nppr-save-v1-" + crypto.randomUUID() : undefined;
+        if (reference) pendingClinicalWrites.current.set(key, { reference, intent });
         const requestBody = isRemoteClinical
           ? {
               clinicId: activeClinicId,
@@ -850,6 +859,7 @@ function ProntuarioForm({ isRemoteClinical, activeClinicId, patientId, appointme
               ...(previousId ? { supersedesEventId: previousId } : {}),
               provenanceKind: "documented",
               provenanceSource: "clinician",
+              sourceRecordReference: reference,
               payload: payload.data,
             }
           : {
@@ -860,12 +870,23 @@ function ProntuarioForm({ isRemoteClinical, activeClinicId, patientId, appointme
               provenance: { kind: "documented", source: "clinician", sourceLabel: "Prontuário NeuroPed" },
               ...payload,
             };
-        const response = await apiRequest(
-          "POST",
-          isRemoteClinical ? "/api/live/events" : "/api/clinical-core/events",
-          requestBody,
-        );
-        const created = await response.json() as StoredClinicalEvent;
+        let created: StoredClinicalEvent;
+        try {
+          const response = await apiRequest(
+            "POST",
+            isRemoteClinical ? "/api/live/events" : "/api/clinical-core/events",
+            requestBody,
+          );
+          created = await response.json() as StoredClinicalEvent;
+        } catch (error) {
+          const status = typeof error === "object" && error !== null && "status" in error ? error.status : null;
+          if (!pending && typeof status === "number" && [400, 401, 403, 404, 413, 429].includes(status)) {
+            pendingClinicalWrites.current.delete(key);
+          }
+          throw error;
+        }
+        if (typeof created.id !== "string" || !created.id.trim()) throw new Error("O servidor não confirmou a gravação da seção.");
+        pendingClinicalWrites.current.delete(key);
         nextIds[key] = created.id;
         // Comita o progresso no estado a cada evento salvo (não só ao final):
         // se uma falha no meio do loop interromper o save, um retry precisa
