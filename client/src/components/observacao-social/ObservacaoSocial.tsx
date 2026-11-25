@@ -1,5 +1,6 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import { bands, domains } from "@/data/observacaoSocial";
+import VideoReview from "./VideoReview";
 import { blank, fresh, session } from "./session";
 
 const conditions = ["Interação espontânea", "Interação após apoio", "Resposta não observada nesta oportunidade", "Participante preferiu parar", "Oportunidade insuficiente"];
@@ -7,7 +8,7 @@ const input = "mt-1 block min-h-12 w-full rounded-lg border bg-background p-3";
 const button = "min-h-12 rounded-lg border bg-background px-4 py-2 font-medium";
 const primary = "min-h-12 rounded-lg bg-primary px-5 py-2 font-semibold text-primary-foreground";
 const panel = "space-y-4 rounded-xl border bg-card p-5";
-const version = "Observação social presencial · NeuroPed v1.2 · Roteiro autoral sem validação psicométrica";
+const version = "Observação social presencial · NeuroPed v1.3 · Roteiro autoral sem validação psicométrica";
 
 export default function ObservacaoSocial() {
   const [{ band, scene, stage, records }, dispatch] = useReducer(session, fresh);
@@ -15,6 +16,7 @@ export default function ObservacaoSocial() {
   const [copyStatus, setCopyStatus] = useState("");
   const participant = useRef<HTMLDialogElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
+  const clipSequence = useRef(0);
   const previousStage = useRef(stage);
   useEffect(() => {
     if (previousStage.current !== stage) {
@@ -32,17 +34,20 @@ export default function ObservacaoSocial() {
     const [b, s] = key.split("/").map(Number);
     return [bands[b][0] + " · " + bands[b][1][s][0] + " · " + domains[s][0],
       entry.condition, entry.reaction && "Observação direta: " + entry.reaction,
-      entry.context && "Contexto e apoios: " + entry.context].filter(Boolean).join("\n");
+      entry.video && "Observação em vídeo: " + entry.video,
+      entry.context && "Contexto e apoios: " + entry.context,
+      entry.interpretation && "Hipótese do profissional: " + entry.interpretation].filter(Boolean).join("\n");
   }).join("\n\n");
   const report = [version, summary, "Interpretar com história do desenvolvimento e funcionamento em outros ambientes. A sessão isolada não estabelece diagnóstico de TEA."].join("\n\n");
   const title = { choose: "Escolher atividade", prepare: "Preparar a interação", record: "Registrar o que aconteceu", review: "Revisar a sessão" }[stage];
   function present() {
     setChoice("");
+    document.querySelector<HTMLVideoElement>("#social-record video")?.pause();
     participant.current?.showModal();
   }
   return <article className="mx-auto max-w-3xl space-y-4 pb-8">
     <header>
-      <p className="text-sm text-muted-foreground">Observação social presencial · v1.2</p>
+      <p className="text-sm text-muted-foreground">Observação social presencial · v1.3</p>
       <h1 tabIndex={-1} ref={heading} className="my-2 text-2xl font-bold">{title}</h1>
       {stage !== "choose" && selected && <p>{selected[0]}{stage !== "review" && activity && " · " + activity[0]}</p>}
     </header>
@@ -74,14 +79,16 @@ export default function ObservacaoSocial() {
       })}</div>
       <button className={button + " mt-6"} onClick={() => participant.current?.close()}>Pausar e voltar</button>
     </dialog>}
-    {stage === "record" && <section className={panel}>
+    {stage === "record" && <section id="social-record" className={panel}>
       <fieldset><legend className="mb-2 font-semibold">Como ocorreu a interação?</legend>
         <div className="grid gap-2 sm:grid-cols-2">{conditions.map(c => <label key={c} className={button + " flex cursor-pointer items-center gap-2"}>
           <input type="radio" name="social-condition" checked={note.condition === c} onChange={() => dispatch({ type: "edit", field: "condition", value: c })}/>{c}</label>)}</div>
         {note.condition && <button className="min-h-12 underline" onClick={() => dispatch({ type: "edit", field: "condition", value: "" })}>Desmarcar opção</button>}
       </fieldset>
-      <label className="block">O que a pessoa fez ou comunicou?<textarea className={input} rows={3} value={note.reaction} onChange={e => dispatch({ type: "edit", field: "reaction", value: e.target.value })}/></label>
+      <label className="block">O que você observou presencialmente?<textarea className={input} rows={3} value={note.reaction} onChange={e => dispatch({ type: "edit", field: "reaction", value: e.target.value })}/></label>
+      <VideoReview nextClip={() => ++clipSequence.current} value={note.video} onChange={value => dispatch({ type: "edit", field: "video", value })}/>
       <label className="block">Contexto, apoios e limites de interpretação (opcional)<textarea className={input} rows={2} value={note.context} onChange={e => dispatch({ type: "edit", field: "context", value: e.target.value })}/></label>
+      <label className="block">Hipótese interpretativa do profissional (opcional)<textarea className={input} rows={2} value={note.interpretation} onChange={e => dispatch({ type: "edit", field: "interpretation", value: e.target.value })}/></label>
       <div className="flex flex-wrap gap-2"><button className={primary} onClick={() => dispatch({ type: "stage", stage: "choose" })}>Voltar às atividades</button>
         <button className={button} onClick={present}>Reapresentar situação</button></div>
     </section>}
@@ -98,7 +105,7 @@ export default function ObservacaoSocial() {
           catch { setCopyStatus("Selecione o texto da síntese e use a opção Copiar do dispositivo."); }
         }}>Copiar síntese</button>
         <button className={button} onClick={() => dispatch({ type: "stage", stage: "choose" })}>Voltar às atividades</button>
-        <button className={button} onClick={() => { if (window.confirm("Encerrar e apagar os registros desta sessão?")) dispatch({ type: "reset" }); }}>Encerrar e limpar</button>
+        <button className={button} onClick={() => { if (window.confirm("Encerrar e apagar os registros desta sessão?")) { clipSequence.current = 0; dispatch({ type: "reset" }); } }}>Encerrar e limpar</button>
       </div><p role="status">{copyStatus}</p>
     </section>}
   </article>;
