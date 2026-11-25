@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { selectPodium, estimatedQuestionCount, PODIUM_QUESTION_CAP } from "../../client/src/data/filterPodium.ts";
+import { enforcePodiumHardCap } from "../../client/src/data/podiumHardCap.ts";
 import type { RefinedScaleMatch } from "../../client/src/data/advancedFilterLogic.ts";
 
 // Trava a semântica dos passes PÓS-TETO do pódio com fixtures sintéticas:
@@ -227,3 +228,22 @@ function podiumTotal(p: ReturnType<typeof selectPodium>): number {
 }
 
 console.log("✓ passes pós-teto do pódio (sinal + curadoria) travados por fixtures");
+
+// Com a mesma cobertura clínica e carga, a faixa inteira tem prioridade.
+// A nota maior de uma escala parcial não pode eliminar uma combinação integral.
+{
+  const condensed = ["a", "b", "c"].map((id, i) =>
+    makeMatch({ id: "parcial-" + id, rel: 98 - i, itens: 40, queixas: ["tdah"], ageMin: 48, ageMax: 54 }));
+  const full = ["a", "b"].map((id, i) =>
+    makeMatch({ id: "integral-" + id, rel: 88 - i, itens: 40, queixas: ["tdah"], ageMin: 48, ageMax: 71 }));
+  const result = enforcePodiumHardCap({
+    ouro: condensed[0], prata: condensed[1], bronze: condensed[2],
+    candidates: [...condensed, ...full],
+    selectedQueixas: ["tdah"], ageMonths: null, ageBand: { min: 48, max: 71 },
+    countQuestions: match => match.scale.verifiedItemCount!,
+  });
+  assert.deepEqual([result.ouro?.scale.id, result.prata?.scale.id].sort(), ["integral-a", "integral-b"]);
+  assert.equal(result.bronze, undefined, "deixar a terceira vaga livre é preferível a ultrapassar 100 itens");
+  assert.equal(result.totalQuestions, 80);
+  console.log("✓ teto preserva a cobertura etária integral quando quantidade e cobertura clínica são iguais");
+}

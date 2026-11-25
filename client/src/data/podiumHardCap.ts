@@ -186,7 +186,15 @@ export function enforcePodiumHardCap({
         };
         const key = `${slotMask}|${coverageMask.toString()}|${signalMask.toString()}|${totalQuestions}`;
         const previous = next.get(key);
-        if (!previous || candidate.qualityScore > previous.qualityScore) {
+        // Para estados equivalentes em vagas, cobertura e custo, a regra
+        // final prioriza faixa integral antes da nota. Preserve essa mesma
+        // prioridade aqui, antes de eliminar definitivamente uma combinação.
+        if (
+          !previous ||
+          candidate.fullAgeCount > previous.fullAgeCount ||
+          (candidate.fullAgeCount === previous.fullAgeCount &&
+            candidate.qualityScore > previous.qualityScore)
+        ) {
           next.set(key, candidate);
         }
       }

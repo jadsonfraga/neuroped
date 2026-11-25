@@ -56,6 +56,7 @@ function PlanScaleRow({ match }: { match: RefinedScaleMatch }) {
         <span className="mr-2 rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-semibold text-foreground/80">
           {ASSESSMENT_USE_LABEL[getAssessmentUse(scale)] ?? getAssessmentUse(scale)}
         </span>
+        {match.isBroadbandFallback && <span className="mr-2">Não específica para a queixa</span>}
         {scale.tempo?.trim() || "tempo variável"}
         {match.implementationStatus !== "complete" && (
           <span className="ml-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-800 dark:text-amber-200">
@@ -68,11 +69,13 @@ function PlanScaleRow({ match }: { match: RefinedScaleMatch }) {
 }
 
 export function AssessmentPlanCard({ podium }: AssessmentPlanCardProps) {
+  const broadFirst = podium.ouro?.isBroadbandFallback === true;
   const phases: PlanPhase[] = [
     {
-      label: "Fase 1 — Instrumento principal",
-      detail:
-        "Comece por aqui: melhor cruzamento de idade, queixa e respondente para este perfil.",
+      label: broadFirst ? "Triagem ampla, sem escala específica na primeira posição" : "Fase 1 — Instrumento principal",
+      detail: broadFirst
+        ? "Use para observação geral, não para responder isoladamente à queixa informada."
+        : "Comece por aqui: melhor cruzamento de idade, queixa e respondente para este perfil.",
       matches: [podium.ouro].filter(Boolean) as RefinedScaleMatch[],
     },
     {
