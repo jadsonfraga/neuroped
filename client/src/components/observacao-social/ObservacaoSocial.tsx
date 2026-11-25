@@ -8,7 +8,7 @@ const input = "mt-1 block min-h-12 w-full rounded-lg border bg-background p-3";
 const button = "min-h-12 rounded-lg border bg-background px-4 py-2 font-medium";
 const primary = "min-h-12 rounded-lg bg-primary px-5 py-2 font-semibold text-primary-foreground";
 const panel = "space-y-4 rounded-xl border bg-card p-5";
-const version = "Observação social presencial · NeuroPed v1.3 · Roteiro autoral sem validação psicométrica";
+const version = "Observação social presencial · NeuroPed v1.4 · Roteiro autoral sem validação psicométrica";
 
 export default function ObservacaoSocial() {
   const [{ band, scene, stage, records }, dispatch] = useReducer(session, fresh);
@@ -47,7 +47,7 @@ export default function ObservacaoSocial() {
   }
   return <article className="mx-auto max-w-3xl space-y-4 pb-8">
     <header>
-      <p className="text-sm text-muted-foreground">Observação social presencial · v1.3</p>
+      <p className="text-sm text-muted-foreground">Observação social presencial · v1.4</p>
       <h1 tabIndex={-1} ref={heading} className="my-2 text-2xl font-bold">{title}</h1>
       {stage !== "choose" && selected && <p>{selected[0]}{stage !== "review" && activity && " · " + activity[0]}</p>}
     </header>
@@ -63,8 +63,8 @@ export default function ObservacaoSocial() {
     </section>}
     {stage === "prepare" && activity && <section className={panel}>
       <h2 className="font-semibold">Como conduzir</h2><p>{activity[3]}</p>
-      <h2 className="font-semibold">O que observar</h2><p>{domains[scene][1]}</p>
-      <details><summary className="cursor-pointer py-2">Adaptar a comunicação</summary><p>Use objetos reais, gestos, fala, escrita ou comunicação aumentativa e alternativa. O toque na tela é opcional. Respeite uma pausa ou recusa.</p></details>
+      <h2 className="font-semibold">O que observar</h2><p>{activity[4]}</p>
+      <details><summary className="cursor-pointer py-2">Adaptar esta atividade</summary><p>{activity[5]}</p><p>O toque na tela é opcional. Respeite uma pausa ou recusa.</p></details>
       <div className="flex flex-wrap gap-2">
         <button className={primary} onClick={present}>Apresentar no tablet</button>
         <button className={button} onClick={() => dispatch({ type: "stage", stage: "record" })}>Registrar sem usar a tela</button>
