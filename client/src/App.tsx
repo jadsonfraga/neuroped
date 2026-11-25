@@ -175,6 +175,7 @@ const AgendarPage = lazy(() => import("@/pages/agendar"));
 const MarcacaoPage = lazy(() => import("@/pages/marcacao"));
 const RecepcaoPage = lazy(() => import("@/pages/recepcao"));
 const ExamePorIdade = lazy(() => import("@/pages/exame-por-idade"));
+const ExameViaAssistente = lazy(() => import("@/pages/exame-via-assistente"));
 const PreConsultaPage = lazy(() => import("@/pages/pre-consulta"));
 const PreConsultaObs10Page = lazy(() => import("@/pages/pre-consulta-obs10"));
 const PreRetornoPage = lazy(() => import("@/pages/pre-retorno"));
@@ -434,6 +435,7 @@ function AppRouter() {
 
             <Route path="/avaliacao-pre-consulta-faixa-etaria" component={PreConsultaObs10Page} />
             <Route path="/exame-neurologico-mental"><RouteGuard roles={["admin", "professional"]}><ExamePorIdade /></RouteGuard></Route>
+            <Route path="/exame-via-assistente" component={ExameViaAssistente} />
             <Route path="/pre-consulta" component={PreConsultaPage} />
             <Route path="/pre-retorno" component={PreRetornoPage} />
             <Route path="/efeitos-colaterais" component={PreRetornoPage} />

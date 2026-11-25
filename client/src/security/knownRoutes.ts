@@ -81,6 +81,8 @@ export const KNOWN_ROUTE_PATTERNS: readonly string[] = [
   "/especialidades",
   "/esqueci-senha",
   "/etare",
+  "/exame-neurologico-mental",
+  "/exame-via-assistente",
   "/eusm10",
   "/familia",
   "/farmacologia",

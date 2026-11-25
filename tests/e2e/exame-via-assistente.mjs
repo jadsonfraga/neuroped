@@ -1,0 +1,136 @@
+/** Route and role regression in Chromium; this guide must not write clinical data. */
+import assert from "node:assert/strict";
+import { chromium } from "playwright";
+import { ACCEPTED_FIRST_VISIT_STORAGE, auditBrowserLaunchOptions, ensureClientBuild, startStaticServer } from "../../scripts/lib/browser-audit-runtime.mjs";
+import { createSyntheticClinicalApi, SYNTHETIC_CREDENTIALS } from "../../scripts/lib/synthetic-clinical-api.mjs";
+
+const realUrl = process.env.NEUROPED_ASSISTANT_D1_URL;
+const local = realUrl ? new URL(realUrl) : null;
+if (local) assert.ok(["127.0.0.1", "localhost", "[::1]"].includes(local.hostname));
+const dist = local ? null : ensureClientBuild(process.cwd(), "authenticated");
+const GUIDE = "/exame-via-assistente";
+const MEDICAL = "/exame-neurologico-mental";
+const path = (origin, hash) => origin + "/#" + hash;
+const browser = await chromium.launch(auditBrowserLaunchOptions());
+const servers = [];
+const operatorEmail = process.env.NEUROPED_ASSISTANT_OPERATOR_EMAIL;
+const professionalEmail = process.env.NEUROPED_ASSISTANT_PROFESSIONAL_EMAIL;
+const realPassword = process.env.NEUROPED_ASSISTANT_PASSWORD;
+if (local) {
+  assert.ok(operatorEmail?.endsWith("@example.test") && professionalEmail?.endsWith("@example.test") && realPassword,
+    "use somente credenciais sintéticas");
+}
+
+async function scenario(userRole) {
+  const server = local ? { origin: local.origin } : await startStaticServer(dist, {
+    port: 0, apiHandler: createSyntheticClinicalApi({
+      patients: "empty", userRole, primaryRole: userRole === "operator" ? "assistant" : "owner",
+    }),
+  });
+  if (!local) servers.push(server);
+  const context = await browser.newContext({ viewport: { width: 768, height: 1024 }, hasTouch: true, serviceWorkers: "block" });
+  await context.addInitScript(storage => {
+    for (const [key, value] of Object.entries(storage)) localStorage.setItem(key, value);
+  }, ACCEPTED_FIRST_VISIT_STORAGE);
+  const page = await context.newPage();
+  page.setDefaultTimeout(12_000);
+  await page.route("**/*", route => route.request().url().startsWith(server.origin + "/") ? route.continue() : route.abort());
+  return { context, page, origin: server.origin };
+}
+
+async function signIn(page, origin, role, target) {
+  await page.goto(origin + "/?next=" + encodeURIComponent(target) + "#/login");
+  const credential = local
+    ? { email: role === "operator" ? operatorEmail : professionalEmail, password: realPassword }
+    : SYNTHETIC_CREDENTIALS;
+  await page.locator("#login-email").fill(credential.email);
+  await page.locator("#login-password").fill(credential.password);
+  const auth = page.waitForResponse(response => new URL(response.url()).pathname === "/api/auth/login" && response.request().method() === "POST");
+  await page.getByTestId("login-form").locator("button[type=submit]").click();
+  assert.equal((await auth).status(), 200);
+  await page.waitForURL(url => url.hash === "#" + target);
+}
+
+try {
+  const anon = await scenario("operator");
+  for (const target of [GUIDE, MEDICAL, "/prontuario"]) {
+    await anon.page.goto(path(anon.origin, target));
+    await anon.page.waitForURL(url => url.hash.startsWith("#/login"));
+    assert.equal(await anon.page.getByTestId("assistant-exam-guide").count(), 0);
+    assert.equal(await anon.page.getByText("Abrir ficha médica completa", { exact: true }).count(), 0);
+  }
+  await anon.context.close();
+
+  const { context, page, origin } = await scenario("operator");
+  await signIn(page, origin, "operator", "/recepcao");
+  const button = name => page.getByRole("button", { name, exact: true });
+  const writes = [];
+  const clinicalReads = [];
+  page.on("request", request => {
+    const url = new URL(request.url());
+    if (url.pathname.startsWith("/api/") && !["GET", "HEAD", "OPTIONS"].includes(request.method())) writes.push(url.pathname);
+    if (/^\/api\/(?:live\/|clinical-core\/|patients(?:\/|$)|prontuario)/.test(url.pathname)) clinicalReads.push(url.pathname);
+  });
+  await page.getByTestId("assistant-exam-reception-link").click();
+  const guide = page.getByTestId("assistant-exam-guide");
+  await guide.getByRole("heading", { name: "Exame via assistente", exact: true }).waitFor();
+  const age = guide.getByLabel("Faixa etária", { exact: true });
+  assert.equal(await age.locator("option").count(), 18, "17 faixas e opção vazia");
+  await age.selectOption({ label: "Nascimento a 27 dias" });
+  await guide.getByText("Rosto conhecido", { exact: true }).click();
+  assert.equal(await button("Mostrar cartão visual").count(), 0);
+  await age.selectOption({ label: "3 anos" });
+  await guide.locator("summary").filter({ hasText: "Copiar um risco" }).click();
+  await button("Mostrar cartão visual").press("Enter");
+  const dialog = page.getByRole("dialog", { name: "Copiar um risco" });
+  await dialog.waitFor();
+  await page.keyboard.press("Escape");
+  await dialog.waitFor({ state: "hidden" });
+  const sentinel = "Registro fictício do ensaio isolado 82715";
+  const note = guide.getByLabel("O que aconteceu · Copiar um risco", { exact: true });
+  await note.fill(sentinel);
+  assert.match(await guide.getByRole("list", { name: "Observações temporárias" }).innerText(), /Observação direta: Registro fictício/);
+  assert.equal(await age.isDisabled(), true);
+  assert.equal(await page.getByText("Abrir ficha médica completa", { exact: true }).count(), 0);
+  const persisted = await page.evaluate(() => JSON.stringify([Object.entries(localStorage), Object.entries(sessionStorage)]));
+  assert.ok(!persisted.includes(sentinel));
+  assert.deepEqual(writes, []);
+  assert.deepEqual(clinicalReads, []);
+
+  page.once("dialog", event => event.dismiss());
+  await button("Encerrar e limpar").click();
+  assert.equal(await age.isDisabled(), true, "cancelar limpeza preserva rascunho");
+  page.once("dialog", event => event.accept());
+  await button("Encerrar e limpar").click();
+  assert.equal(await age.inputValue(), "");
+  await age.selectOption({ label: "3 anos" });
+  await guide.locator("summary").filter({ hasText: "Copiar um risco" }).click();
+  assert.equal(await note.inputValue(), "");
+  await note.fill(sentinel);
+  await page.reload();
+  await guide.getByRole("heading", { name: "Exame via assistente", exact: true }).waitFor();
+  assert.equal(await age.inputValue(), "");
+  assert.equal(await guide.getByText(sentinel, { exact: true }).count(), 0);
+  await guide.getByRole("link", { name: "Abrir Observação Social", exact: true }).click();
+  await page.getByRole("heading", { name: "Escolher atividade" }).waitFor();
+  assert.equal(await page.getByRole("button", { name: "Observação social", exact: true }).getAttribute("aria-pressed"), "true");
+  for (const target of [MEDICAL, "/prontuario"]) {
+    await page.goto(path(origin, target));
+    await page.getByRole("heading", { name: "Acesso não autorizado" }).waitFor();
+    assert.equal(await page.getByText("Abrir ficha médica completa", { exact: true }).count(), 0);
+  }
+  await context.close();
+
+  const professional = await scenario("professional");
+  await signIn(professional.page, professional.origin, "professional", GUIDE);
+  await professional.page.getByTestId("assistant-exam-guide").waitFor();
+  await professional.page.goto(path(professional.origin, MEDICAL));
+  await professional.page.getByRole("heading", { name: "Exame neurológico e mental", exact: true }).waitFor();
+  await professional.page.getByLabel("Faixa etária", { exact: true }).selectOption({ label: "3 anos" });
+  await professional.page.getByText("Abrir ficha médica completa", { exact: true }).waitFor();
+  await professional.context.close();
+  console.log("Exame via assistente: Chromium tablet, anônimo bloqueado, operador só no guia, profissional preservado, dados voláteis e cartões sem escrita clínica.");
+} finally {
+  await browser.close();
+  for (const server of servers) await server.close();
+}

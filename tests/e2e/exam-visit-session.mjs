@@ -30,6 +30,7 @@ try {
   const selector = page.getByLabel("Faixa etária", { exact: true });
   assert.equal(await selector.locator("option").count(), 18);
   await selector.selectOption({ label: "3 anos" });
+  await page.getByText("Abrir ficha médica completa", { exact: true }).click();
   await page.getByRole("heading", { name: "Preparar · 3 anos" }).waitFor();
   assert.equal(await page.getByText("Nenhum registro neste exame.").count(), 1);
   await page.getByLabel(/Como foi avaliado · Olhos/).selectOption("assisted");
@@ -50,6 +51,7 @@ try {
   assert.equal(await selector.inputValue(), "");
   assert.equal(await selector.isEnabled(), true);
   await selector.selectOption({ label: "3 anos" });
+  await page.getByText("Abrir ficha médica completa", { exact: true }).click();
   assert.equal(await page.getByLabel(/Observação temporária · Olhos/).inputValue(), "");
   await page.getByLabel(/Como foi avaliado · Olhos/).selectOption("noOpportunity");
   assert.match(await records.innerText(), /Sem oportunidade de avaliar/);
