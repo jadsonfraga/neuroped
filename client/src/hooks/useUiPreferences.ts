@@ -31,13 +31,16 @@ export function useUiPreferences() {
       setSoundVolumeState(getSoundVolume());
     };
     window.addEventListener(SOUND_PREFERENCE_EVENT, syncSound);
-    return () => window.removeEventListener(SOUND_PREFERENCE_EVENT, syncSound);
+    window.addEventListener("storage", syncSound);
+    return () => {
+      window.removeEventListener(SOUND_PREFERENCE_EVENT, syncSound);
+      window.removeEventListener("storage", syncSound);
+    };
   }, []);
 
   const toggleSound = useCallback(() => {
     const nextValue = !soundOn;
     setSoundEnabled(nextValue);
-    setSoundOn(nextValue);
     if (nextValue) softMuteHint();
   }, [soundOn]);
 

@@ -17,8 +17,8 @@
  * remount do conteúdo: apenas fade + leve subida do bloco da página. */
 @keyframes np-route-enter {
   from {
-    opacity: 0;
-    transform: translateY(6px);
+    opacity: 0.94;
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
@@ -27,7 +27,7 @@
 }
 
 .np-route-in {
-  animation: np-route-enter 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: np-route-enter 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* ── Entrada escalonada de grades ─────────────────────────────────────────

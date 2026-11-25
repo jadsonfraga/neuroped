@@ -90,7 +90,7 @@ import {
   type RefinedScaleMatch,
 } from "@/data/advancedFilterLogic";
 import { haptic } from "@/lib/haptic";
-import { softHover, softTap, softTick } from "@/lib/softSounds";
+import { softTap, softTick } from "@/lib/softSounds";
 import {
   buildFilterCsv,
   buildFilterPdf,
@@ -2296,7 +2296,6 @@ export default function FiltroPage() {
                     <button
                       key={q.label}
                       type="button"
-                      onMouseEnter={() => softHover()}
                       onClick={() => {
                         softTap();
                         haptic.tap();
@@ -2340,7 +2339,6 @@ export default function FiltroPage() {
                     type="button"
                     aria-pressed={selectedAge === age.id}
                     aria-label={`Faixa etária ${age.label}`}
-                    onMouseEnter={() => softHover()}
                     onClick={() => {
                       setExactAge({ years: "", months: "" });
                       setSelectedAge((v) => (v === age.id ? null : age.id));
@@ -2401,7 +2399,6 @@ export default function FiltroPage() {
                       key={q.id}
                       type="button"
                       aria-pressed={sel}
-                      onMouseEnter={() => softHover()}
                       onClick={() => toggleQueixa(q.id)}
                       className={`rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1.5 sm:py-2 text-left text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 min-h-9 sm:min-h-auto ${sel ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}
                     >
@@ -2444,7 +2441,6 @@ export default function FiltroPage() {
                       key={q.id}
                       type="button"
                       onClick={() => toggleQueixa(q.id)}
-                      onMouseEnter={() => softHover()}
                       aria-label={`Adicionar também a queixa ${q.label}`}
                       className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary transition hover:-translate-y-0.5 hover:bg-primary/20"
                     >
@@ -2469,7 +2465,6 @@ export default function FiltroPage() {
                   type="button"
                   aria-pressed={selectedRespondente === "teste_direto_crianca"}
                   aria-label="Direto — respondente: criança (teste direto preenchível)"
-                  onMouseEnter={() => softHover()}
                   onClick={() =>
                     setSelectedRespondente((v) =>
                       v === "teste_direto_crianca"
@@ -2488,7 +2483,6 @@ export default function FiltroPage() {
                   type="button"
                   aria-pressed={selectedRespondente === "pais"}
                   aria-label="Respondente: pais ou cuidador"
-                  onMouseEnter={() => softHover()}
                   onClick={() =>
                     setSelectedRespondente((v) =>
                       v === "pais" ? null : "pais",
@@ -2505,7 +2499,6 @@ export default function FiltroPage() {
                   type="button"
                   aria-pressed={selectedRespondente === "professor"}
                   aria-label="Respondente: professor ou escola"
-                  onMouseEnter={() => softHover()}
                   onClick={() =>
                     setSelectedRespondente((v) =>
                       v === "professor" ? null : "professor",
@@ -2522,7 +2515,6 @@ export default function FiltroPage() {
                   type="button"
                   aria-pressed={selectedRespondente === "clinico"}
                   aria-label="Respondente: clínico (observação direta)"
-                  onMouseEnter={() => softHover()}
                   onClick={() =>
                     setSelectedRespondente((v) =>
                       v === "clinico" ? null : "clinico",
@@ -2547,7 +2539,6 @@ export default function FiltroPage() {
                   type="button"
                   aria-pressed={selectedCommunication === "verbal"}
                   aria-label="Fala — comunicação: criança verbal"
-                  onMouseEnter={() => softHover()}
                   onClick={() =>
                     setSelectedCommunication((v) =>
                       v === "verbal" ? null : "verbal",
@@ -2564,7 +2555,6 @@ export default function FiltroPage() {
                   type="button"
                   aria-pressed={selectedCommunication === "nonverbal"}
                   aria-label="Comunicação: criança não-verbal"
-                  onMouseEnter={() => softHover()}
                   onClick={() =>
                     setSelectedCommunication((v) =>
                       v === "nonverbal" ? null : "nonverbal",
@@ -2589,7 +2579,6 @@ export default function FiltroPage() {
                   type="button"
                   aria-pressed={selectedLiteracy === "literate"}
                   aria-label="Alfabetização: criança alfabetizada"
-                  onMouseEnter={() => softHover()}
                   onClick={() =>
                     setSelectedLiteracy((v) =>
                       v === "literate" ? null : "literate",
@@ -2606,7 +2595,6 @@ export default function FiltroPage() {
                   type="button"
                   aria-pressed={selectedLiteracy === "preliterate"}
                   aria-label="Pré-Alfab. — alfabetização: criança pré-alfabetizada"
-                  onMouseEnter={() => softHover()}
                   onClick={() =>
                     setSelectedLiteracy((v) =>
                       v === "preliterate" ? null : "preliterate",
@@ -2631,7 +2619,6 @@ export default function FiltroPage() {
                   type="button"
                   aria-pressed={selectedAssessmentType === "diagnostic"}
                   aria-label="Tipo de avaliação: diagnóstico"
-                  onMouseEnter={() => softHover()}
                   onClick={() =>
                     setSelectedAssessmentType((v) =>
                       v === "diagnostic" ? null : "diagnostic",
@@ -2648,7 +2635,6 @@ export default function FiltroPage() {
                   type="button"
                   aria-pressed={selectedAssessmentType === "monitoring"}
                   aria-label="Tipo de avaliação: monitorização"
-                  onMouseEnter={() => softHover()}
                   onClick={() =>
                     setSelectedAssessmentType((v) =>
                       v === "monitoring" ? null : "monitoring",
@@ -2679,7 +2665,6 @@ export default function FiltroPage() {
                     type="button"
                     aria-pressed={timeBudget === bucket.minutes}
                     aria-label={`Tempo disponível: ${bucket.label}`}
-                    onMouseEnter={() => softHover()}
                     onClick={() => {
                       softTick();
                       setTimeBudget((v) => (v === bucket.minutes ? null : bucket.minutes));
@@ -2739,7 +2724,6 @@ export default function FiltroPage() {
                   haptic.tap();
                   setSelectedSignalIds([]);
                 }}
-                onHover={() => softHover()}
               />
             </div>
           )}
@@ -3390,7 +3374,6 @@ export default function FiltroPage() {
                         onClick={() => toggleCompare(s.id)}
                         disabled={disabled}
                         aria-pressed={on}
-                        onMouseEnter={() => softHover()}
                         className={`rounded-2xl border px-2.5 py-1.5 text-xs font-bold transition ${on ? "border-primary bg-primary text-primary-foreground shadow-sm" : disabled ? "cursor-not-allowed border-border bg-muted/40 text-muted-foreground/60" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}
                       >
                         {on ? "✓ " : ""}

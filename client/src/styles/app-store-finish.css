@@ -6,14 +6,27 @@
   .np-app-shell {
     --np-elevation-soft: 0 1px 1px hsl(var(--foreground) / .018), 0 18px 46px -36px hsl(214 68% 8% / .34);
     --np-elevation-card: 0 1px 1px hsl(var(--foreground) / .025), 0 18px 44px -34px hsl(214 68% 8% / .42);
+    --np-shell-light: 41 50% 88%;
+    --np-shell-light-alpha: .42;
     --np-hairline: hsl(var(--border) / .74);
     --np-gold-hairline: hsl(41 54% 54% / .22);
     position: relative;
     isolation: isolate;
     background:
-      radial-gradient(circle at 74% -8%, hsl(41 54% 54% / .055), transparent 24rem),
+      linear-gradient(145deg, hsl(var(--np-shell-light) / var(--np-shell-light-alpha)), transparent 29rem),
       radial-gradient(circle at 22% 0%, hsl(var(--primary) / .035), transparent 31rem),
       hsl(var(--background));
+  }
+
+  .dark .np-app-shell {
+    --np-shell-light: 210 59% 24%;
+    --np-shell-light-alpha: .34;
+  }
+
+  .np-app-sidebar :is(a, button):focus-visible,
+  .np-app-mobile-header :is(a, button):focus-visible {
+    outline: 2px solid var(--np-signature-gold-soft);
+    outline-offset: -2px;
   }
 
   .np-app-content {
@@ -364,4 +377,11 @@
   .np-workspace-support > article,
   .container-filtro fieldset { border-color: hsl(var(--foreground) / .32) !important; }
   [data-testid='mobile-primary-dock'] > nav { border-color: hsl(var(--foreground) / .32) !important; }
+}
+
+
+@media screen and (prefers-reduced-motion: reduce) {
+  .np-app-sidebar, .np-app-main, .np-app-mobile-header {
+    transition: none !important;
+  }
 }
