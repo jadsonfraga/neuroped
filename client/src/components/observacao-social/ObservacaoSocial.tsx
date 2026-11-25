@@ -1,68 +1,105 @@
-import { useRef, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { bands, domains } from "@/data/observacaoSocial";
+import { blank, fresh, session } from "./session";
 
 const conditions = ["Interação espontânea", "Interação após apoio", "Resposta não observada nesta oportunidade", "Participante preferiu parar", "Oportunidade insuficiente"];
-const blank = { condition: "", reaction: "", context: "" };
-type Note = typeof blank;
 const input = "mt-1 block min-h-12 w-full rounded-lg border bg-background p-3";
-const button = "min-h-12 rounded-lg border bg-background px-4 py-2";
+const button = "min-h-12 rounded-lg border bg-background px-4 py-2 font-medium";
+const primary = "min-h-12 rounded-lg bg-primary px-5 py-2 font-semibold text-primary-foreground";
 const panel = "space-y-4 rounded-xl border bg-card p-5";
+const version = "Observação social presencial · NeuroPed v1.2 · Roteiro autoral sem validação psicométrica";
 
 export default function ObservacaoSocial() {
-  const [band, setBand] = useState(0);
-  const [scene, setScene] = useState(0);
+  const [{ band, scene, stage, records }, dispatch] = useReducer(session, fresh);
   const [choice, setChoice] = useState("");
-  const [records, setRecords] = useState<Record<string, Note>>({});
+  const [copyStatus, setCopyStatus] = useState("");
   const participant = useRef<HTMLDialogElement>(null);
-  const id = band + "/" + scene;
-  const note = records[id] ?? blank;
-  const [, invitation, choices, guide] = bands[band][1][scene];
-  const [domain, watch] = domains[scene];
-  function record(field: keyof Note, value: string) {
-    setRecords(previous => {
-      const next = { ...previous, [id]: { ...(previous[id] ?? blank), [field]: value } };
-      if (!Object.values(next[id]).some(text => text.trim())) delete next[id];
-      return next;
-    });
-  }
-  const summary = Object.entries(records).map(([key, entry]) => {
+  const heading = useRef<HTMLHeadingElement>(null);
+  const previousStage = useRef(stage);
+  useEffect(() => {
+    if (previousStage.current !== stage) {
+      heading.current?.focus();
+      previousStage.current = stage;
+      setCopyStatus("");
+    }
+  }, [stage]);
+  const selected = band === null ? null : bands[band];
+  const activity = selected?.[1][scene];
+  const note = records[band + "/" + scene] ?? blank;
+  const entries = Object.entries(records);
+  const count = entries.length;
+  const summary = entries.map(([key, entry]) => {
     const [b, s] = key.split("/").map(Number);
     return [bands[b][0] + " · " + bands[b][1][s][0] + " · " + domains[s][0],
       entry.condition, entry.reaction && "Observação direta: " + entry.reaction,
       entry.context && "Contexto e apoios: " + entry.context].filter(Boolean).join("\n");
   }).join("\n\n");
+  const report = [version, summary, "Interpretar com história do desenvolvimento e funcionamento em outros ambientes. A sessão isolada não estabelece diagnóstico de TEA."].join("\n\n");
+  const title = { choose: "Escolher atividade", prepare: "Preparar a interação", record: "Registrar o que aconteceu", review: "Revisar a sessão" }[stage];
+  function present() {
+    setChoice("");
+    participant.current?.showModal();
+  }
   return <article className="mx-auto max-w-3xl space-y-4 pb-8">
-    <header><p className="text-sm">NeuroPed · Roteiro autoral v1.1 · Sem validação psicométrica</p>
-      <h1 className="my-2 text-2xl font-bold">Observação social presencial</h1>
-      <p>Use o tablet como convite para uma interação com outra pessoa. Adapte a linguagem e aceite gestos, fala, escrita e comunicação aumentativa e alternativa. A pessoa pode observar, recusar ou parar.</p></header>
-    <section className={panel}>
-      <label className="block">Idade na data da observação<select className={input} value={band} onChange={e => { setBand(Number(e.target.value)); setScene(0); }}>
-        {bands.map(([name], i) => <option key={name} value={i}>{name}</option>)}</select></label>
-      <p className="text-sm">A idade orienta o tema. Use objetos reais, figuras, gestos ou CAA conforme o acesso da pessoa. Preserve temas compatíveis com a idade e registre o apoio oferecido.</p>
-      <label className="block">Situação<select className={input} value={scene} onChange={e => setScene(Number(e.target.value))}>
-        {bands[band][1].map(([title], i) => <option key={title} value={i}>{title}</option>)}</select></label>
-      <h2 className="text-xl font-semibold">{domain}</h2><p>{guide}</p><p>{watch}</p>
-      <button className={button} onClick={() => { setChoice(""); participant.current?.showModal(); }}>Abrir tela do participante</button>
-    </section>
-    <dialog ref={participant} aria-labelledby="social-invitation" className="fixed inset-0 m-auto w-11/12 max-w-2xl rounded-xl bg-background p-6 text-foreground backdrop:bg-slate-900">
-      <h2 id="social-invitation" className="mb-6 text-3xl font-bold">{invitation}</h2>
-      <div className="grid grid-cols-2 gap-3">{choices.map(item => {
+    <header>
+      <p className="text-sm text-muted-foreground">Observação social presencial · v1.2</p>
+      <h1 tabIndex={-1} ref={heading} className="my-2 text-2xl font-bold">{title}</h1>
+      {stage !== "choose" && selected && <p>{selected[0]}{stage !== "review" && activity && " · " + activity[0]}</p>}
+    </header>
+    {stage === "choose" && <section className={panel}>
+      <label className="block font-medium">Idade na data da observação<select className={input} disabled={count > 0} value={band ?? ""} onChange={e => dispatch({ type: "age", band: Number(e.target.value) })}>
+        <option value="" disabled>Escolha a idade</option>{bands.map(([name], i) => <option key={name} value={i}>{name}</option>)}</select></label>
+      {count > 0 && <small>Para iniciar outra sessão, revise e encerre a atual.</small>}
+      {selected && <><p>Escolha uma situação para apresentar.</p>
+        {selected[1].map(([name], i) => <button key={name} className={button + " block w-full text-left"} onClick={() => dispatch({ type: "open", scene: i })}>
+          <strong className="block">{name}</strong><span className="text-sm">{domains[i][0]}{records[band + "/" + i] && " · Com registro"}</span>
+        </button>)}</>}
+      <p className="text-sm text-muted-foreground">Roteiro autoral sem validação psicométrica. Os registros ficam nesta página até sair ou atualizar.</p>
+    </section>}
+    {stage === "prepare" && activity && <section className={panel}>
+      <h2 className="font-semibold">Como conduzir</h2><p>{activity[3]}</p>
+      <h2 className="font-semibold">O que observar</h2><p>{domains[scene][1]}</p>
+      <details><summary className="cursor-pointer py-2">Adaptar a comunicação</summary><p>Use objetos reais, gestos, fala, escrita ou comunicação aumentativa e alternativa. O toque na tela é opcional. Respeite uma pausa ou recusa.</p></details>
+      <div className="flex flex-wrap gap-2">
+        <button className={primary} onClick={present}>Apresentar no tablet</button>
+        <button className={button} onClick={() => dispatch({ type: "stage", stage: "record" })}>Registrar sem usar a tela</button>
+      </div>
+    </section>}
+    {activity && <dialog ref={participant} aria-labelledby="social-invitation" onClose={() => dispatch({ type: "stage", stage: "record" })} className="fixed inset-0 m-auto w-11/12 max-w-2xl rounded-xl bg-background p-6 text-foreground backdrop:bg-slate-900">
+      <h2 id="social-invitation" className="mb-6 text-3xl font-bold">{activity[1]}</h2>
+      <div className="grid grid-cols-2 gap-3">{activity[2].map(item => {
         const [symbol, ...words] = item.split(" ");
         return <button key={item} aria-pressed={choice === item} className={button + " py-6 text-xl aria-pressed:ring-4 aria-pressed:ring-primary"} onClick={() => setChoice(item)}>
           <span aria-hidden="true" className="block text-5xl">{symbol}</span>{words.join(" ")}</button>;
       })}</div>
       <button className={button + " mt-6"} onClick={() => participant.current?.close()}>Pausar e voltar</button>
-    </dialog>
-    <section className={panel}><h2 className="text-xl font-semibold">Registro do profissional</h2>
-      <label className="block">Condição da observação<select className={input} value={note.condition} onChange={e => record("condition", e.target.value)}>
-        <option value="">Selecione</option>{conditions.map(c => <option key={c}>{c}</option>)}</select></label>
-      <label className="block">O que a pessoa fez ou comunicou?<textarea className={input} rows={3} value={note.reaction} onChange={e => record("reaction", e.target.value)} /></label>
-      <label className="block">Contexto, apoios e limites de interpretação<textarea className={input} rows={2} value={note.context} onChange={e => record("context", e.target.value)} /></label>
-    </section>
-    <section className={panel}><h2 className="text-xl font-semibold">Síntese para revisão clínica</h2>
-      <p>Registro temporário. Sair de Testes diretos ou atualizar a página apaga a sessão. Revise e transfira o texto necessário antes de sair.</p>
-      <div className="whitespace-pre-wrap break-words">{summary ? "Observação social presencial · NeuroPed v1.1 · Roteiro autoral sem validação psicométrica\n\n" + summary + "\n\nInterpretar com história do desenvolvimento e funcionamento em outros ambientes. A sessão isolada não estabelece diagnóstico de TEA." : "Nenhuma observação registrada."}</div>
-      <button className={button} disabled={!summary} onClick={() => { if (window.confirm("Apagar todas as observações desta sessão?")) { setRecords({}); setBand(0); setScene(0); } }}>Limpar sessão</button>
-    </section>
+    </dialog>}
+    {stage === "record" && <section className={panel}>
+      <fieldset><legend className="mb-2 font-semibold">Como ocorreu a interação?</legend>
+        <div className="grid gap-2 sm:grid-cols-2">{conditions.map(c => <label key={c} className={button + " flex cursor-pointer items-center gap-2"}>
+          <input type="radio" name="social-condition" checked={note.condition === c} onChange={() => dispatch({ type: "edit", field: "condition", value: c })}/>{c}</label>)}</div>
+        {note.condition && <button className="min-h-12 underline" onClick={() => dispatch({ type: "edit", field: "condition", value: "" })}>Desmarcar opção</button>}
+      </fieldset>
+      <label className="block">O que a pessoa fez ou comunicou?<textarea className={input} rows={3} value={note.reaction} onChange={e => dispatch({ type: "edit", field: "reaction", value: e.target.value })}/></label>
+      <label className="block">Contexto, apoios e limites de interpretação (opcional)<textarea className={input} rows={2} value={note.context} onChange={e => dispatch({ type: "edit", field: "context", value: e.target.value })}/></label>
+      <div className="flex flex-wrap gap-2"><button className={primary} onClick={() => dispatch({ type: "stage", stage: "choose" })}>Voltar às atividades</button>
+        <button className={button} onClick={present}>Reapresentar situação</button></div>
+    </section>}
+    {stage !== "review" && <nav aria-label="Navegação da sessão" className="flex flex-wrap gap-2">
+      {stage === "prepare" && <button className={button} onClick={() => dispatch({ type: "stage", stage: "choose" })}>Voltar às atividades</button>}
+      {count > 0 && <button className={button} onClick={() => dispatch({ type: "stage", stage: "review" })}>Revisar sessão ({count} de 3 com registro)</button>}
+    </nav>}
+    {stage === "review" && <section className={panel}>
+      <p>Revise a descrição antes de transferi-la para o prontuário. Encerrar apaga os registros desta página.</p>
+      <div className="whitespace-pre-wrap break-words rounded-lg border p-4">{report}</div>
+      <div className="flex flex-wrap gap-2">
+        <button className={primary} onClick={async () => {
+          try { await navigator.clipboard.writeText(report); setCopyStatus("Síntese copiada."); }
+          catch { setCopyStatus("Selecione o texto da síntese e use a opção Copiar do dispositivo."); }
+        }}>Copiar síntese</button>
+        <button className={button} onClick={() => dispatch({ type: "stage", stage: "choose" })}>Voltar às atividades</button>
+        <button className={button} onClick={() => { if (window.confirm("Encerrar e apagar os registros desta sessão?")) dispatch({ type: "reset" }); }}>Encerrar e limpar</button>
+      </div><p role="status">{copyStatus}</p>
+    </section>}
   </article>;
 }
