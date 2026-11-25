@@ -4,6 +4,7 @@ export const examStatuses = {
   direct: "Observado diretamente",
   assisted: "Observado com apoio",
   reported: "Relato, não observado diretamente",
+  materialsMissing: "Não aplicado por falta de material",
   noOpportunity: "Sem oportunidade de avaliar",
   stopped: "Preferiu parar",
 } as const;

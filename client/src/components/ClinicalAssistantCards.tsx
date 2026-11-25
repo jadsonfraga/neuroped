@@ -1,5 +1,7 @@
 import { useRef, useState } from "react";
 import { BookOpen, Hand, Layers, MessageCircle, Repeat2, Smile } from "lucide-react";
+import type { ExamResource } from "@/data/examResources";
+import { ExamActivityResources } from "./ExamActivityResources";
 import type { ExamExample } from "@/data/clinicalAssistantGuide";
 
 import { ParticipantPace } from "./AssistantAccess";
@@ -15,8 +17,8 @@ export function AssistantScope() {
   </p>;
 }
 
-export function ClinicalAssistantCard({ example, note, onNote, canPresent }: {
-  example: ExamExample; note: AssistantObservation; onNote: (field: keyof AssistantObservation, value: string) => void; canPresent: boolean;
+export function ClinicalAssistantCard({ example, note, onNote, canPresent, resource }: {
+  example: ExamExample; note: AssistantObservation; onNote: (field: keyof AssistantObservation, value: string) => void; canPresent: boolean; resource: ExamResource;
 }) {
   const [presentation, setPresentation] = useState(0);
   const visual = useRef<HTMLDialogElement>(null);
@@ -32,6 +34,10 @@ export function ClinicalAssistantCard({ example, note, onNote, canPresent }: {
       </span>
     </summary>
     <div className="space-y-3 border-t p-4">
+      <ExamActivityResources resource={resource} alreadyRecorded={Boolean(note.outcome || note.reaction.trim() || note.invitation.trim())} onMissing={() => onNote("outcome", "materials-missing")} />
+      {note.outcome === "materials-missing" && <div className="text-sm" role="status">
+        Não aplicado: faltou material. <button type="button" onClick={() => onNote("outcome", "")} className="min-h-11 underline">Retirar marcação</button>
+      </div>}
       <p className="text-sm"><strong>Faça assim. </strong>{example.material}</p>
       <p className="rounded-lg bg-primary/5 p-3"><strong>Diga: </strong>“{example.say}”</p>
       <p className="text-sm"><strong>Anote. </strong>{example.observe}</p>
@@ -47,14 +53,14 @@ export function ClinicalAssistantCard({ example, note, onNote, canPresent }: {
         </dialog>
       </>}
       <label className="block text-sm font-medium">O que aconteceu · {example.title}
-        <textarea className="mt-1 block w-full rounded-lg border bg-background p-3" value={note.reaction} rows={2}
+        <textarea className="mt-1 block w-full rounded-lg border bg-background p-3" value={note.reaction} disabled={note.outcome === "materials-missing"} rows={2}
           placeholder="Ex.: pegou o giz e pediu outra folha."
           onChange={event => onNote("reaction", event.target.value)} />
       </label>
       <details className="rounded-lg border px-3">
         <summary className="flex min-h-12 cursor-pointer items-center text-sm font-semibold">Acrescentar proposta e apoio</summary>
         <label className="mb-3 block text-sm font-medium">O que foi oferecido · {example.title}
-          <textarea className="mt-1 block w-full rounded-lg border bg-background p-3" value={note.invitation} rows={2}
+          <textarea className="mt-1 block w-full rounded-lg border bg-background p-3" value={note.invitation} disabled={note.outcome === "materials-missing"} rows={2}
             onChange={event => onNote("invitation", event.target.value)} />
         </label>
         <label className="mb-3 block text-sm font-medium">Apoio ou contexto · {example.title}
