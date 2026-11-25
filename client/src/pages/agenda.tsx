@@ -63,6 +63,10 @@ const scheduleRows = Array.from({ length: 14 }, (_, index) => {
   return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
 });
 
+function makeManualDraft(serviceId = "") {
+  return { serviceId, startsAtLocal: "", patientId: "", guardianName: "", patientName: "", phone: "", email: "" };
+}
+
 function localDateInput(): string {
   const now = new Date();
   const offset = now.getTimezoneOffset() * 60000;
@@ -240,7 +244,7 @@ export default function AgendaPage() {
   const [block, setBlock] = useState({ start: "", end: "", reason: "" });
   const [dayBlock, setDayBlock] = useState({ date: "", reason: "Feriado" });
   const [rescheduling, setRescheduling] = useState<{ id: string; startsAtLocal: string } | null>(null);
-  const [manual, setManual] = useState({ serviceId: "", startsAtLocal: "", patientId: "", guardianName: "", patientName: "", phone: "", email: "" });
+  const [manual, setManual] = useState(() => makeManualDraft());
   const activeProviderId = data?.access.providerUserId ?? null;
   useEffect(() => {
     // Trocar de profissional descarta o que estava sendo digitado: serviço,
@@ -352,6 +356,28 @@ export default function AgendaPage() {
   // clínica>`, então um profissional em mais de uma clínica nunca cai na
   // ambiguidade que faz o backend recusar o agendamento público (ver
   // resolveProviderClinicBySlug em functions/api/operations/_core.ts).
+  async function addManualAppointment() {
+    if (busy || !manual.serviceId || !manual.startsAtLocal) return;
+    const submitted = manual;
+    const submittedSearch = patientSearch;
+    const saved = await mutate({
+      action: "create_appointment",
+      serviceId: submitted.serviceId,
+      startsAtLocal: submitted.startsAtLocal,
+      patientId: canConfigure ? submitted.patientId || undefined : undefined,
+      guardianName: submitted.guardianName,
+      patientName: submitted.patientName,
+      guardianPhone: submitted.phone,
+      guardianEmail: submitted.email,
+    }, "Consulta adicionada à agenda.");
+    if (!saved) return;
+    // O sucesso confirma a gravação, mesmo se a atualização posterior da tela
+    // falhar. Manter só o serviço não pessoal evita herdar o contato anterior.
+    // Uma troca de profissional pode ter descartado o rascunho em paralelo.
+    setManual((current) => current === submitted ? makeManualDraft(submitted.serviceId) : current);
+    setPatientSearch((current) => current === submittedSearch ? "" : current);
+  }
+
   const publicHref = activeClinic
     ? `/agendar?provider=${encodeURIComponent(data.profile.slug)}&clinic=${encodeURIComponent(activeClinic.slug)}`
     : `/agendar?provider=${encodeURIComponent(data.profile.slug)}`;
@@ -446,15 +472,17 @@ export default function AgendaPage() {
         <TabsContent value="agenda" className="space-y-4">
           <Card>
             <CardHeader><CardTitle className="text-base">Novo agendamento manual</CardTitle></CardHeader>
-            <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              <Field label="Serviço"><select className="min-h-11 w-full rounded-xl border bg-background px-3 text-sm" value={manual.serviceId} onChange={(e) => setManual((p) => ({ ...p, serviceId: e.target.value }))}><option value="">Selecione</option>{data.services.filter((s) => s.active).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></Field>
-              <Field label="Data e horário"><Input type="datetime-local" value={manual.startsAtLocal} onChange={(e) => setManual((p) => ({ ...p, startsAtLocal: e.target.value }))} /></Field>
-              {canConfigure && <Field label="Vincular paciente ao prontuário"><div className="space-y-2"><Input value={patientSearch} onChange={(e) => setPatientSearch(e.target.value)} placeholder="Buscar paciente por nome" aria-label="Buscar paciente para vínculo clínico" /><select aria-label="Selecionar paciente para vínculo clínico" className="min-h-11 w-full rounded-xl border bg-background px-3 text-sm" value={manual.patientId} onChange={(e) => { const patientId = e.target.value; const selected = patientOptions.find((item) => item.id === patientId); setManual((p) => ({ ...p, patientId, patientName: selected?.name ?? p.patientName })); }}><option value="">Sem vínculo clínico</option>{patientsQuery.isFetching && <option disabled>Buscando pacientes…</option>}{patientOptions.map((patient) => <option key={patient.id} value={patient.id}>{patient.name}</option>)}</select><p className="text-[11px] text-muted-foreground">{patientOptions.length} paciente(s) LIVE encontrado(s) nesta clínica.</p></div></Field>}
-              <Field label="Criança"><Input value={manual.patientName} onChange={(e) => setManual((p) => ({ ...p, patientName: e.target.value }))} placeholder="Nome" /></Field>
-              <Field label="Responsável"><Input value={manual.guardianName} onChange={(e) => setManual((p) => ({ ...p, guardianName: e.target.value }))} /></Field>
-              <Field label="Telefone"><Input value={manual.phone} onChange={(e) => setManual((p) => ({ ...p, phone: e.target.value }))} /></Field>
-              <Field label="E-mail"><Input type="email" value={manual.email} onChange={(e) => setManual((p) => ({ ...p, email: e.target.value }))} /></Field>
-              <div className="md:col-span-2 xl:col-span-3"><Button disabled={busy || !manual.serviceId || !manual.startsAtLocal} onClick={() => mutate({ action: "create_appointment", serviceId: manual.serviceId, startsAtLocal: manual.startsAtLocal, patientId: canConfigure ? manual.patientId || undefined : undefined, guardianName: manual.guardianName, patientName: manual.patientName, guardianPhone: manual.phone, guardianEmail: manual.email }, "Consulta adicionada à agenda.")} className="gap-2"><Plus className="h-4 w-4" />Adicionar</Button></div>
+            <CardContent>
+              <fieldset disabled={busy} aria-label="Dados do agendamento manual" className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                <Field label="Serviço"><select className="min-h-11 w-full rounded-xl border bg-background px-3 text-sm" value={manual.serviceId} onChange={(e) => setManual((p) => ({ ...p, serviceId: e.target.value }))}><option value="">Selecione</option>{data.services.filter((s) => s.active).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></Field>
+                <Field label="Data e horário"><Input type="datetime-local" value={manual.startsAtLocal} onChange={(e) => setManual((p) => ({ ...p, startsAtLocal: e.target.value }))} /></Field>
+                {canConfigure && <Field label="Vincular paciente ao prontuário"><div className="space-y-2"><Input value={patientSearch} onChange={(e) => setPatientSearch(e.target.value)} placeholder="Buscar paciente por nome" aria-label="Buscar paciente para vínculo clínico" /><select aria-label="Selecionar paciente para vínculo clínico" className="min-h-11 w-full rounded-xl border bg-background px-3 text-sm" value={manual.patientId} onChange={(e) => { const patientId = e.target.value; const selected = patientOptions.find((item) => item.id === patientId); setManual((p) => ({ ...p, patientId, patientName: selected?.name ?? p.patientName })); }}><option value="">Sem vínculo clínico</option>{patientsQuery.isFetching && <option disabled>Buscando pacientes…</option>}{patientOptions.map((patient) => <option key={patient.id} value={patient.id}>{patient.name}</option>)}</select><p className="text-[11px] text-muted-foreground">{patientOptions.length} paciente(s) LIVE encontrado(s) nesta clínica.</p></div></Field>}
+                <Field label="Criança"><Input value={manual.patientName} onChange={(e) => setManual((p) => ({ ...p, patientName: e.target.value }))} placeholder="Nome" /></Field>
+                <Field label="Responsável"><Input value={manual.guardianName} onChange={(e) => setManual((p) => ({ ...p, guardianName: e.target.value }))} /></Field>
+                <Field label="Telefone"><Input value={manual.phone} onChange={(e) => setManual((p) => ({ ...p, phone: e.target.value }))} /></Field>
+                <Field label="E-mail"><Input type="email" value={manual.email} onChange={(e) => setManual((p) => ({ ...p, email: e.target.value }))} /></Field>
+                <div className="md:col-span-2 xl:col-span-3"><Button disabled={busy || !manual.serviceId || !manual.startsAtLocal} onClick={() => void addManualAppointment()} className="gap-2"><Plus className="h-4 w-4" />Adicionar</Button></div>
+              </fieldset>
             </CardContent>
           </Card>
 
