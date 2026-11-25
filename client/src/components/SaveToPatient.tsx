@@ -1,4 +1,4 @@
-import { useState, useId } from "react";
+import { useEffect, useState, useId, useRef } from "react";
 import { Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, invalidateApiQueries, queryClient } from "@/lib/queryClient";
@@ -50,6 +50,16 @@ interface SaveToPatientProps {
   onSaved?: (patientId: string) => void;
 }
 
+class LiveScaleDocumentHistoryLimitError extends Error {}
+
+type LiveScaleSaveCheckpoint = {
+  clinicId: string;
+  patientId: string;
+  assessmentId: string;
+  issuedAt: string;
+  snapshot: string;
+};
+
 function validApplicationDate(value: string | Date | undefined, fallback: Date): Date {
   if (!value) return fallback;
   const date = typeof value === "string" ? new Date(value) : value;
@@ -66,6 +76,7 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
   const isRemoteClinical = accessMode === "remote" && isAuthenticated;
   const selectId = useId();
   const newPatientId = useId();
+  const searchId = useId();
   const [fallbackApplicationDate] = useState(() => new Date());
   const applicationDate = validApplicationDate(
     rawProps.applicationDate,
@@ -75,18 +86,50 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
   const [newPatientName, setNewPatientName] = useState("");
   const [savedPatientId, setSavedPatientId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const liveCheckpoint = useRef<LiveScaleSaveCheckpoint | null>(null);
+  const submitting = useRef(false);
+  const [pendingLiveDocument, setPendingLiveDocument] = useState(false);
 
-  const patientQueryKey = isRemoteClinical
-    ? `/api/live/patients?clinicId=${encodeURIComponent(activeClinicId ?? "")}`
-    : "/api/patients";
+  const [patientSearch, setPatientSearch] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchPage, setSearchPage] = useState<{ scope: string; cursors: string[] }>({ scope: "", cursors: [] });
+  const searchScope = JSON.stringify([activeClinicId, searchQuery]);
+  const cursors = searchPage.scope === searchScope ? searchPage.cursors : [];
+  const cursor = cursors.at(-1) ?? null;
+  const searchPending = isRemoteClinical && patientSearch.trim() !== searchQuery;
+  const livePatientEndpoint = "/api/live/patients";
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSearchQuery(patientSearch.trim()), 250);
+    return () => window.clearTimeout(timer);
+  }, [patientSearch]);
+
   const {
     data: patientsRaw,
     isLoading: loadingPatients,
     isError: patientsError,
+    refetch: refetchPatients,
   } = useQuery<any>({
-    queryKey: [patientQueryKey],
-    enabled: !isRemoteClinical || Boolean(activeClinicId),
+    queryKey: isRemoteClinical
+      ? [livePatientEndpoint, "scale-picker", activeClinicId, searchQuery, cursor]
+      : ["/api/patients"],
+    enabled: !isRemoteClinical || (Boolean(activeClinicId) && !searchPending),
+    queryFn: isRemoteClinical ? async () => {
+      const response = searchQuery
+        ? await apiRequest("POST", `${livePatientEndpoint}/search`, { clinicId: activeClinicId, q: searchQuery, cursor })
+        : await apiRequest("GET", `${livePatientEndpoint}?clinicId=${encodeURIComponent(activeClinicId ?? "")}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`);
+      return response.json();
+    } : undefined,
   });
+  const nextCursor = isRemoteClinical && typeof patientsRaw?.nextCursor === "string"
+    ? patientsRaw.nextCursor
+    : null;
+  const pickerUnavailable = isRemoteClinical && (!activeClinicId || searchPending || loadingPatients || patientsError);
+  function changeSearchPage(nextCursors: string[]) {
+    setSearchPage({ scope: searchScope, cursors: nextCursors });
+    setSelectedPatientId("");
+    setErrorMessage(null);
+  }
   // A API retorna { data: [...] }; aceita também array puro por robustez.
   const patients: any[] = (Array.isArray(patientsRaw)
     ? patientsRaw
@@ -100,6 +143,9 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
         }
       : patient,
   );
+
+  const selectedPatientMissing = isRemoteClinical && selectedPatientId !== "" && selectedPatientId !== "__new__"
+    && !patients.some((patient) => patient.id === selectedPatientId);
 
   const createPatientMutation = useMutation({
     mutationFn: async (name: string) => {
@@ -154,15 +200,46 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
           itemPosition: index,
           value: { question: item.question, answer: item.answer },
         }));
-        const assessmentResponse = await apiRequest(
-          "POST",
-          "/api/live/assessments",
-          {
+        const appliedAt = applicationDate.toISOString();
+        const snapshot = JSON.stringify({
+          scaleName, instrumentId, instrumentVersion, patientAge: patientAge || null, appliedAt, responseRows,
+        });
+        const checkpoint = liveCheckpoint.current;
+        if (checkpoint && (checkpoint.clinicId !== activeClinicId ||
+            checkpoint.patientId !== patientId || checkpoint.snapshot !== snapshot)) {
+          throw new Error("A avaliação pendente não corresponde ao paciente e às respostas atuais.");
+        }
+        let assessmentId: string;
+        let issuedAt: string;
+        if (checkpoint) {
+          ({ assessmentId, issuedAt } = checkpoint);
+          // A resposta do POST pode ter sido perdida depois do commit. Não
+          // repita a escrita sem antes conferir os documentos do paciente.
+          const query = new URLSearchParams({ clinicId: activeClinicId, patientId });
+          const existing = await apiRequest("GET", `/api/live/documents?${query}`);
+          const payload = await existing.json();
+          if (!Array.isArray(payload?.data)) {
+            throw new Error("Não foi possível confirmar o estado do documento.");
+          }
+          const document = payload.data.find((row: any) =>
+            row.patientId === patientId && row.clinicId === activeClinicId &&
+            row.documentType === "scale" && row.origin === "instrument" &&
+            row.status === "published" && row.familyVisibility === false &&
+            row.version?.content?.assessmentId === assessmentId,
+          );
+          if (document) {
+            return { result: { id: assessmentId }, archivedDocumentId: document.id, archiveError: null };
+          }
+          // GET lista até 200 documentos. Uma lista cheia não comprova
+          // ausência; não faça outro POST com estado ainda indeterminado.
+          if (payload.data.length >= 200) throw new LiveScaleDocumentHistoryLimitError();
+        } else {
+          const response = await apiRequest("POST", "/api/live/assessments", {
             clinicId: activeClinicId,
             patientId,
             instrumentId,
             instrumentVersion,
-            appliedAt: applicationDate.toISOString(),
+            appliedAt,
             provenanceSource: "instrument",
             payload: {
               title: scaleName,
@@ -170,9 +247,16 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
               responseCount: responseRows.length,
             },
             responses: responseRows,
-          },
-        );
-        const assessment = await assessmentResponse.json();
+          });
+          const assessment = await response.json();
+          if (typeof assessment?.id !== "string" || !assessment.id ||
+              assessment.clinicId !== activeClinicId || assessment.patientId !== patientId) {
+            throw new Error("Não foi possível confirmar a avaliação salva.");
+          }
+          assessmentId = assessment.id;
+          issuedAt = new Date().toISOString();
+          liveCheckpoint.current = { clinicId: activeClinicId, patientId, assessmentId, issuedAt, snapshot };
+        }
         const documentResponse = await apiRequest(
           "POST",
           "/api/live/documents",
@@ -183,21 +267,26 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
             origin: "instrument",
             status: "published",
             familyVisibility: false,
-            issuedAt: new Date().toISOString(),
+            issuedAt,
             content: {
               title: `Resultado da escala — ${scaleName}`,
-              assessmentId: assessment.id,
+              assessmentId,
               instrumentId,
               instrumentVersion,
               patientAge: patientAge || null,
-              appliedAt: applicationDate.toISOString(),
+              appliedAt,
               responses: responseRows,
             },
           },
         );
         const document = await documentResponse.json();
+        if (typeof document?.id !== "string" || !document.id ||
+            document.clinicId !== activeClinicId || document.patientId !== patientId ||
+            document.version?.content?.assessmentId !== assessmentId) {
+          throw new Error("Não foi possível confirmar o documento salvo.");
+        }
         return {
-          result: assessment,
+          result: { id: assessmentId },
           archivedDocumentId: document.id,
           archiveError: null,
         };
@@ -276,6 +365,8 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
       return { result, archivedDocumentId, archiveError };
     },
     onSuccess: (data, patientId) => {
+      liveCheckpoint.current = null;
+      setPendingLiveDocument(false);
       setSavedPatientId(patientId);
       rawProps.onSaved?.(patientId);
       queryClient.invalidateQueries({
@@ -299,13 +390,28 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
         setErrorMessage(null);
         toast({
           title: "Salvo e arquivado!",
-          description: "Resultado e PDF premium vinculados ao paciente.",
+          description: isRemoteClinical
+            ? "Avaliação e documento interno vinculados ao paciente."
+            : "Resultado e PDF premium vinculados ao paciente.",
         });
       }
     },
-    onError: () => {
+    onError: (error) => {
+      const checkpoint = liveCheckpoint.current;
+      if (isRemoteClinical && checkpoint) {
+        setPendingLiveDocument(true);
+        queryClient.invalidateQueries({
+          queryKey: [`/api/live/assessments?clinicId=${encodeURIComponent(checkpoint.clinicId)}&patientId=${encodeURIComponent(checkpoint.patientId)}`],
+        });
+        setErrorMessage(
+          error instanceof LiveScaleDocumentHistoryLimitError
+            ? "Avaliação já salva. O histórico é muito extenso para confirmar o documento sem risco de duplicação. Confira os documentos do paciente antes de iniciar outro salvamento."
+            : "Avaliação já salva. Não foi possível confirmar o documento interno. Mantenha esta tela aberta e tente concluir o vínculo.",
+        );
+        return;
+      }
       setErrorMessage(
-        "Não foi possível salvar o resultado. Nada foi descartado; tente novamente.",
+        "Não foi possível confirmar o salvamento. O resultado permanece na tela.",
       );
       toast({
         title: "Falha ao salvar",
@@ -316,29 +422,37 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
   });
 
   async function handleSave() {
+    if (submitting.current) return;
+    submitting.current = true;
     setErrorMessage(null);
-    let patientId = selectedPatientId;
+    try {
+      const checkpoint = liveCheckpoint.current;
+      if (!checkpoint && (pickerUnavailable || selectedPatientMissing)) return;
+      let patientId = checkpoint?.patientId ?? selectedPatientId;
 
-    if (patientId === "__new__") {
-      if (!newPatientName.trim()) {
-        setErrorMessage("Informe o nome do paciente para criar o cadastro.");
+      if (patientId === "__new__") {
+        if (!newPatientName.trim()) {
+          setErrorMessage("Informe o nome do paciente para criar o cadastro.");
+          return;
+        }
+        try {
+          const patient = await createPatientMutation.mutateAsync(newPatientName.trim());
+          patientId = patient.id;
+        } catch {
+          return;
+        }
+      }
+
+      if (!patientId) {
+        setErrorMessage("Selecione um paciente antes de salvar o resultado.");
         return;
       }
-      try {
-        const patient = await createPatientMutation.mutateAsync(
-          newPatientName.trim(),
-        );
-        patientId = patient.id;
-      } catch {
-        return;
-      }
+      await saveResultMutation.mutateAsync(patientId).catch(() => {
+        // A mutação apresenta o erro correspondente; não descarte o checkpoint.
+      });
+    } finally {
+      submitting.current = false;
     }
-
-    if (!patientId) {
-      setErrorMessage("Selecione um paciente antes de salvar o resultado.");
-      return;
-    }
-    saveResultMutation.mutate(patientId);
   }
 
   if (savedPatientId) {
@@ -385,6 +499,27 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
           </Badge>
         </div>
 
+        {isRemoteClinical && (
+          <div className="space-y-1">
+            <label htmlFor={searchId} className="text-xs font-semibold text-muted-foreground">
+              Buscar paciente por nome
+            </label>
+            <Input
+              id={searchId}
+              data-testid="input-scale-patient-search"
+              value={patientSearch}
+              autoComplete="off"
+              disabled={isLoading || !activeClinicId || pendingLiveDocument}
+              onChange={(e) => {
+                setPatientSearch(e.target.value);
+                setSearchPage({ scope: "", cursors: [] });
+                setSelectedPatientId("");
+                setErrorMessage(null);
+              }}
+            />
+          </div>
+        )}
+
         <div className="space-y-1">
           <label
             htmlFor={selectId}
@@ -394,6 +529,7 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
           </label>
           <Select
             value={selectedPatientId}
+            disabled={pickerUnavailable || isLoading || pendingLiveDocument}
             onValueChange={(value) => {
               setSelectedPatientId(value);
               setErrorMessage(null);
@@ -402,17 +538,21 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
             <SelectTrigger id={selectId} data-testid="select-patient">
               <SelectValue
                 placeholder={
-                  loadingPatients
+                  loadingPatients || searchPending
                     ? "Carregando pacientes..."
                     : "Selecionar paciente..."
                 }
               />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__new__">+ Criar novo paciente</SelectItem>
+              <SelectItem value="__new__" disabled={Boolean(searchQuery && nextCursor)}>
+                + Criar novo paciente
+              </SelectItem>
               {patients.length === 0 && !loadingPatients && (
                 <SelectItem value="__empty__" disabled>
-                  Nenhum paciente cadastrado
+                  {isRemoteClinical
+                    ? nextCursor ? "Nenhum resultado nesta página" : "Nenhum paciente encontrado"
+                    : "Nenhum paciente cadastrado"}
                 </SelectItem>
               )}
               {patients.map((p: any) => (
@@ -423,6 +563,23 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
             </SelectContent>
           </Select>
         </div>
+
+        {isRemoteClinical && (cursors.length > 0 || nextCursor) && (
+          <div className="flex flex-wrap gap-2">
+            {cursors.length > 0 && (
+              <Button type="button" variant="outline" size="sm" disabled={searchPending || isLoading || pendingLiveDocument}
+                onClick={() => changeSearchPage(cursors.slice(0, -1))}>
+                Anterior
+              </Button>
+            )}
+            {nextCursor && (
+              <Button type="button" variant="outline" size="sm" disabled={pickerUnavailable || isLoading || pendingLiveDocument}
+                onClick={() => changeSearchPage([...cursors, nextCursor])}>
+                {searchQuery ? "Continuar busca" : "Próxima página"}
+              </Button>
+            )}
+          </div>
+        )}
 
         {selectedPatientId === "__new__" && (
           <div className="space-y-1">
@@ -436,6 +593,7 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
               id={newPatientId}
               placeholder="Nome do paciente"
               value={newPatientName}
+              disabled={pendingLiveDocument}
               onChange={(e) => setNewPatientName(e.target.value)}
               data-testid="input-new-patient-name"
             />
@@ -448,8 +606,10 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
             role="alert"
           >
             <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" /> Não foi
-            possível carregar pacientes. Você ainda pode tentar novamente ou
-            criar o cadastro após restabelecer a conexão.
+            possível carregar pacientes.
+            <Button type="button" variant="outline" size="sm" onClick={() => void refetchPatients()}>
+              Tentar novamente
+            </Button>
           </div>
         )}
 
@@ -467,8 +627,12 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
           onClick={handleSave}
           disabled={
             isLoading ||
-            !selectedPatientId ||
-            (selectedPatientId === "__new__" && !newPatientName.trim())
+            (pendingLiveDocument
+              ? !activeClinicId
+              : pickerUnavailable ||
+                selectedPatientMissing ||
+                !selectedPatientId ||
+                (selectedPatientId === "__new__" && !newPatientName.trim()))
           }
           size="sm"
           className="w-full gap-2"
@@ -479,7 +643,9 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
           ) : (
             <Save className="w-3 h-3" />
           )}
-          {isLoading ? "Salvando com segurança..." : "Salvar Respostas"}
+          {isLoading
+            ? "Salvando com segurança..."
+            : pendingLiveDocument ? "Concluir vínculo" : "Salvar Respostas"}
         </Button>
       </CardContent>
     </Card>
