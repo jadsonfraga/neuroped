@@ -18,6 +18,7 @@ on:
       - "tests/unit/clinic-context-readiness.test.mjs"
       - "tests/e2e/clinic-context-readiness.mjs"
       - "tests/e2e/agenda-multi-provider.mjs"
+      - "tests/e2e/agenda-tab-legibility.mjs"
       - "tests/e2e/public-booking-page.mjs"
       - "client/src/pages/agendar.tsx"
       - "client/src/lib/apiErrorMessage.ts"
@@ -121,6 +122,9 @@ jobs:
 
       - name: Prove reception chooses which provider's agenda it operates
         run: node tests/e2e/agenda-multi-provider.mjs
+
+      - name: Verify agenda tab labels and keyboard navigation at four widths
+        run: node tests/e2e/agenda-tab-legibility.mjs
 
       - name: Prove the public booking page shows clean messages and Portuguese states
         run: node tests/e2e/public-booking-page.mjs
