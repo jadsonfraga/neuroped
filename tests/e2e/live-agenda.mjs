@@ -34,6 +34,7 @@ async function signIn() {
   return { page, context, accessToken };
 }
 
+async function main() {
 try {
   const { page, context, accessToken } = await signIn();
   const setup = await context.request.post(new URL("/api/operations", base).href, {
@@ -58,6 +59,31 @@ try {
   await selectPatient.selectOption(patientId);
   await manual.getByPlaceholder("Nome", { exact: true }).fill(name);
   await input.fill(`${day}T08:00`);
+  if (process.env.AGENDA_FAULT_LOST_RESPONSE === "1") {
+    let interrupted = false;
+    await context.route("**/*", route => route.request().url().startsWith(base.origin + "/") ? route.continue() : route.abort());
+    await page.route("**/api/operations", async route => {
+      const request = route.request();
+      if (interrupted || request.method() !== "POST" || request.postDataJSON()?.action !== "create_appointment") return route.fallback();
+      interrupted = true;
+      const committed = await route.fetch({ maxRetries: 0 });
+      assert.equal(committed.status(), 200, "gravado pelo Worker antes de cortar a resposta");
+      await route.abort("failed");
+    });
+    const lost = page.waitForEvent("requestfailed", req => new URL(req.url()).pathname === "/api/operations"
+      && req.method() === "POST" && req.postDataJSON()?.action === "create_appointment");
+    await add.click();
+    assert.ok((await lost).failure()?.errorText);
+    await page.getByText("Não foi possível confirmar a gravação.", { exact: true }).waitFor();
+    await page.getByText("Agenda atualizada. Confira o horário antes de tentar novamente.", { exact: true }).waitFor();
+    const upcoming = page.getByText("Próximas consultas", { exact: true }).locator("../..");
+    await upcoming.getByText(name, { exact: true }).waitFor();
+    assert.equal(await upcoming.getByText(name, { exact: true }).count(), 1);
+    assert.equal(await input.inputValue(), `${day}T08:00`);
+    assert.equal(await page.getByText("Consulta adicionada à agenda.", { exact: true }).count(), 0);
+    console.log("Agenda LIVE: conexão caiu após gravar; painel reconciliado sem reenviar ou anunciar sucesso.");
+    return;
+  }
   const creation = matchWrite("create_appointment");
   await add.click();
   assert.equal((await creation).status(), 200);
@@ -126,3 +152,6 @@ try {
 } finally {
   await browser.close();
 }
+
+}
+await main();
