@@ -175,6 +175,35 @@ ambiguousCandidate.responseOptions = ambiguousCandidate.responseOptions.filter(
 assert.deepEqual(curateDailyInventory(ambiguousCandidate).blockers, [
   "response_contract_ambiguous",
 ]);
+const racFexOriginal = JSON.parse(
+  await readFile(
+    path.join(ROOT, "tests/fixtures/daily-authorial/rac-fex-1.0.0.json"),
+    "utf8",
+  ),
+);
+assert.equal(dailyResponseContractIsUnambiguous(racFexOriginal), true);
+const racFexMetadataOnly = {
+  ...racFexOriginal,
+  status: "revisado_clinicamente",
+  contingency: false,
+  needsUpgrade: false,
+};
+assert.deepEqual(curateDailyInventory(racFexMetadataOnly), {
+  operational: false,
+  state: "review_only",
+  blockers: ["response_contract_ambiguous"],
+});
+const racFexDescriptive = {
+  ...racFexMetadataOnly,
+  items: racFexOriginal.items.map(
+    (item: { responseMode: string }) =>
+      item.responseMode === "frequencia_0_3"
+        ? { ...item, responseMode: "descritivo" }
+        : item,
+  ),
+};
+assert.equal(curateDailyInventory(racFexDescriptive).operational, true);
+
 const catalogSource = await readFile(
   path.join(ROOT, "client/src/data/dailyAuthorialCatalog.ts"),
   "utf8",
