@@ -1,6 +1,8 @@
 import { useReducer, useRef, useState } from "react";
 import { AssistantScope, ClinicalAssistantCard } from "@/components/ClinicalAssistantCards";
 import { ExamWelcome } from "@/components/ExamWelcome";
+import { ExamTeachingAid } from "@/components/ExamTeachingAid";
+import { medicalTeaching } from "@/data/examTeachingAids";
 import { ExamSessionTrail } from "@/components/ExamSessionTrail";
 import { AssistantAccess } from "@/components/AssistantAccess";
 import { assistantObservationLines, emptyAssistantObservation, type AssistantObservation } from "@/lib/assistantObservation";
@@ -72,6 +74,7 @@ export default function ExamePorIdade() {
             <p className="mt-2 text-sm"><strong>Se precisar adaptar. </strong>{band.adapt}</p>
           </div>
           <ExamResourceChecklist activities={medicalExamResources[band.age]} title="Conferir materiais da ficha médica" />
+          <ExamTeachingAid aid={medicalTeaching[band.age]} />
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="font-semibold">Conduzir e registrar</h2>
             <button type="button" onClick={() => { review.current?.scrollIntoView({ block: "start" }); review.current?.focus({ preventScroll: true }); }}

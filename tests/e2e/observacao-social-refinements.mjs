@@ -37,6 +37,9 @@ try {
   const age = page.getByRole("combobox", { name: "Idade na data da observação" });
   await page.setViewportSize({ width: 390, height: 844 });
   await age.selectOption({ label: "8 anos" });
+  assert.equal(await button("Mostrar cartão de chegada").count(), 0);
+  assert.equal(await page.getByRole("group", { name: "Trilha da sessão" }).getByRole("listitem").count(), 1);
+  await page.locator("summary").filter({ hasText: /^Acolhimento opcional$/ }).tap();
   await page.getByRole("button", { name: "Mostrar cartão de chegada" }).tap();
   const welcome = page.getByRole("dialog", { name: "Estação de chegada" });
   await welcome.waitFor();
@@ -49,12 +52,17 @@ try {
   await page.setViewportSize({ width: 768, height: 1024 });
   await page.getByRole("button", { name: /Dica para o colega/ }).click();
   assert.match(await step.textContent(), /Preparar/);
+  const teaching = page.getByTestId("exam-teaching-aid");
+  assert.equal(await teaching.getByRole("img").count(), 0);
+  await teaching.locator("summary").click();
+  await teaching.getByText(/Pediu mais uma opção/).waitFor();
   await button("Apresentar no tablet").click();
   const stimulus = page.getByRole("dialog");
   await stimulus.waitFor();
-  assert.equal(await stimulus.getByText(/Trilha da sessão|Revisar/).count(), 0);
+  assert.equal(await stimulus.getByText(/Trilha da sessão|Revisar|Exemplo fictício/).count(), 0);
   await page.keyboard.press("Escape");
   await stimulus.waitFor({ state: "hidden" });
+  await page.getByRole("heading", { name: "Registrar o que aconteceu" }).waitFor();
   assert.match(await step.textContent(), /Registrar/);
   assert.equal(await page.locator("#social-record input:checked").count(), 0);
   await button("Voltar às atividades").click();

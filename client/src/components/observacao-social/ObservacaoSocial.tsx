@@ -1,5 +1,7 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { ExamTeachingAid } from "@/components/ExamTeachingAid";
+import { socialTeaching } from "@/data/examTeachingAids";
 import { ExamWelcome } from "@/components/ExamWelcome";
 import { ExamSessionTrail } from "@/components/ExamSessionTrail";
 import { AssistantAccess, ParticipantPace } from "@/components/AssistantAccess";
@@ -124,6 +126,7 @@ export default function ObservacaoSocial({ active = true }: { active?: boolean }
         <p className="pb-2">{socialAlternatives[selected[0]]}</p>
         <button type="button" className={button + " mb-3"} onClick={() => openActivity(alternativeScene)}>Abrir brincadeira sem tela</button>
       </details>}
+      {selected && <ExamTeachingAid aid={socialTeaching[selected[0]]} />}
       <AssistantAccess key={band + "/" + scene} />
       <details><summary className="cursor-pointer py-2">Adaptar esta atividade</summary><p>{activity[5]}</p><p>Toque, fala, gesto ou comunicação alternativa são opcionais. Não conduza a mão, não peça contato visual e respeite uma pausa ou recusa.</p></details>
       {!existingNote && <fieldset className="space-y-2">
@@ -137,6 +140,7 @@ export default function ObservacaoSocial({ active = true }: { active?: boolean }
     </section>}
     {stage === "prepare" && alternative && <section className={panel}>
       <p className="rounded-xl bg-primary/5 p-3"><strong>Proposta sem tela. </strong>{alternative}</p>
+      {selected && <ExamTeachingAid aid={socialTeaching[selected[0]]} />}
       <AssistantAccess key={band + "/alternativa"} />
       <button type="button" className={primary} onClick={() => dispatch({ type: "stage", stage: "record" })}>Registrar esta brincadeira</button>
     </section>}

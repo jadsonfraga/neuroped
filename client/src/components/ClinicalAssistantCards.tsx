@@ -1,6 +1,8 @@
 import { useRef, useState } from "react";
 import { BookOpen, Hand, Layers, MessageCircle, Repeat2, Smile } from "lucide-react";
 import type { ExamResource } from "@/data/examResources";
+import { guidedTeaching } from "@/data/examTeachingAids";
+import { ExamTeachingAid } from "./ExamTeachingAid";
 import { ExamActivityResources } from "./ExamActivityResources";
 import type { ExamExample } from "@/data/clinicalAssistantGuide";
 
@@ -35,10 +37,40 @@ export function ClinicalAssistantCard({ example, note, onNote, canPresent, resou
       </span>
     </summary>
     <div className="space-y-3 border-t p-4">
-      <ExamActivityResources resource={resource} alreadyRecorded={hasNote} onMissing={() => onNote("outcome", "materials-missing")} />
+      <div className="space-y-2">
+        <h3 className="text-sm font-semibold text-primary">1. Prepare</h3>
+        <p className="text-sm">{example.material}</p>
+        <details className="rounded-lg border px-3">
+          <summary className="flex min-h-11 cursor-pointer items-center text-sm font-semibold">Materiais e recurso desta atividade</summary>
+          <div className="pb-3">
+            <ExamActivityResources resource={resource} alreadyRecorded={hasNote} onMissing={() => onNote("outcome", "materials-missing")} />
+          </div>
+        </details>
+      </div>
       {note.outcome === "materials-missing" && <div className="text-sm" role="status">
         Não aplicado: faltou material. <button type="button" onClick={() => onNote("outcome", "")} className="min-h-11 underline">Retirar marcação</button>
       </div>}
+      <h3 className="text-sm font-semibold text-primary">2. Conduza</h3>
+      <p className="rounded-lg bg-primary/5 p-3"><strong>Diga: </strong>“{example.say}”</p>
+      {canPresent && <>
+        <button type="button" className={button} onClick={() => visual.current?.showModal()}>Mostrar convite na tela</button>
+        {/* Reset only after closing; remounting on open removes the browser's initial focus target. */}
+        <dialog ref={visual} aria-label={example.title} onClose={() => setPresentation(n => n + 1)} className="fixed inset-0 m-auto max-h-[90dvh] w-11/12 overflow-y-auto max-w-lg rounded-2xl bg-background p-5 text-center text-foreground backdrop:bg-slate-900">
+          <Icon aria-hidden="true" className="mx-auto my-4 h-20 w-20 rounded-2xl bg-primary/10 p-4 text-primary" />
+          <h3 className="mb-4 text-2xl font-bold sm:text-3xl">{example.title}</h3>
+          <ParticipantPace key={presentation} closeLabel="Fechar cartão" onClose={() => visual.current?.close()}>
+            <p className="text-xl">{example.say}</p>
+          </ParticipantPace>
+        </dialog>
+      </>}
+      <h3 className="text-sm font-semibold text-primary">3. Registre</h3>
+      <p className="text-sm">{example.observe}</p>
+      <ExamTeachingAid aid={guidedTeaching[example.title]} />
+      <label className="block text-sm font-medium">O que aconteceu · {example.title}
+        <textarea className="mt-1 block w-full rounded-lg border bg-background p-3" aria-label={"O que aconteceu · " + example.title} value={note.reaction} disabled={note.outcome === "materials-missing"} rows={2}
+          placeholder="Ex.: pegou o giz e pediu outra folha."
+          onChange={event => onNote("reaction", event.target.value)} />
+      </label>
       {note.outcome !== "materials-missing" && <fieldset className="space-y-2">
         <legend className="text-sm font-semibold">Se não der para seguir</legend>
         <p className="text-sm text-muted-foreground">Marque só o que ocorreu. Uma pausa ou falta de oportunidade não apaga o que você já observou.</p>
@@ -49,25 +81,6 @@ export function ClinicalAssistantCard({ example, note, onNote, canPresent, resou
             onClick={() => onNote("outcome", note.outcome === outcome ? "" : outcome)}>{label.slice(0, -1)}</button>)}
         </div>
       </fieldset>}
-      <p className="text-sm"><strong>Faça assim. </strong>{example.material}</p>
-      <p className="rounded-lg bg-primary/5 p-3"><strong>Diga: </strong>“{example.say}”</p>
-      <p className="text-sm"><strong>Anote. </strong>{example.observe}</p>
-      {canPresent && <>
-        <button type="button" className={button} onClick={() => visual.current?.showModal()}>Mostrar cartão visual</button>
-        {/* Reset only after closing; remounting on open removes the browser's initial focus target. */}
-        <dialog ref={visual} aria-label={example.title} onClose={() => setPresentation(n => n + 1)} className="fixed inset-0 m-auto max-h-[90dvh] w-11/12 overflow-y-auto max-w-lg rounded-2xl bg-background p-5 text-center text-foreground backdrop:bg-slate-900">
-          <Icon aria-hidden="true" className="mx-auto my-4 h-20 w-20 rounded-2xl bg-primary/10 p-4 text-primary" />
-          <h3 className="mb-4 text-2xl font-bold sm:text-3xl">{example.title}</h3>
-          <ParticipantPace key={presentation} closeLabel="Fechar cartão" onClose={() => visual.current?.close()}>
-            <p className="text-xl">{example.say}</p>
-          </ParticipantPace>
-        </dialog>
-      </>}
-      <label className="block text-sm font-medium">O que aconteceu · {example.title}
-        <textarea className="mt-1 block w-full rounded-lg border bg-background p-3" aria-label={"O que aconteceu · " + example.title} value={note.reaction} disabled={note.outcome === "materials-missing"} rows={2}
-          placeholder="Ex.: pegou o giz e pediu outra folha."
-          onChange={event => onNote("reaction", event.target.value)} />
-      </label>
       <details className="rounded-lg border px-3">
         <summary className="flex min-h-12 cursor-pointer items-center text-sm font-semibold">Acrescentar proposta e apoio</summary>
         <label className="mb-3 block text-sm font-medium">O que foi oferecido · {example.title}

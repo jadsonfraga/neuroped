@@ -34,17 +34,6 @@ export default function ExameViaAssistente() {
         <h1 className="text-2xl font-bold">Exame via assistente</h1>
         <p className="mt-1 text-muted-foreground">Guia de brincadeiras e observação por faixa etária. Não é ficha médica nem teste diagnóstico.</p>
       </header>
-      <nav aria-label="Outra atividade observacional">
-        <Link href="/testes-diretos?modo=observacao-social"
-          className="inline-flex min-h-11 items-center rounded-lg border bg-card px-3 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-          onClick={event => {
-            if (hasRecords && !window.confirm("Abrir Observação Social e descartar as anotações temporárias desta tela?")) event.preventDefault();
-          }}>
-          Abrir Observação Social
-        </Link>
-      </nav>
-      <AssistantScope />
-      <p className="text-sm text-muted-foreground">Não informe nome, documento ou contato. As anotações ficam só nesta tela e desaparecem ao sair ou recarregar.</p>
       <div>
         <label htmlFor="assistant-exam-age" className="block font-semibold">Faixa etária</label>
         <select id="assistant-exam-age" ref={age} value={band ?? ""} disabled={hasRecords}
@@ -58,8 +47,10 @@ export default function ExameViaAssistente() {
           {ageBands.map((label, index) => <option key={label} value={index}>{label}</option>)}
         </select>
       </div>
+      <AssistantScope />
+      <p className="text-sm text-muted-foreground">Não informe nome, documento ou contato. As anotações ficam só nesta tela e desaparecem ao sair ou recarregar.</p>
       {hasRecords && <p id="assistant-exam-age-locked" className="text-sm text-muted-foreground">
-        Para mudar de faixa ou iniciar outra atividade, revise e encerre este registro.
+        Você pode abrir outra atividade desta faixa sem perder a anotação. Para mudar de faixa ou começar a próxima sessão, revise e encerre.
       </p>}
       {band !== null && ageLabel && <>
         {!hasRecords && <ExamWelcome ageLabel={ageLabel} />}
@@ -95,6 +86,15 @@ export default function ExameViaAssistente() {
           <button type="button" onClick={finish} className="min-h-11 rounded-lg border border-destructive/40 bg-card px-3 text-sm font-semibold text-destructive">Encerrar e limpar</button>
         </section>
       </>}
+      <nav aria-label="Outra atividade observacional">
+        <Link href="/testes-diretos?modo=observacao-social"
+          className="inline-flex min-h-11 items-center rounded-lg border bg-card px-3 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+          onClick={event => {
+            if (hasRecords && !window.confirm("Abrir Observação Social e descartar as anotações temporárias desta tela?")) event.preventDefault();
+          }}>
+          Abrir Observação Social
+        </Link>
+      </nav>
     </section>
   );
 }
