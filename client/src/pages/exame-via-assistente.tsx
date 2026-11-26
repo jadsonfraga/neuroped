@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { Link } from "wouter";
+import { ExamSessionTrail } from "@/components/ExamSessionTrail";
 import { AssistantAccess } from "@/components/AssistantAccess";
 import { AssistantScope, ClinicalAssistantCard } from "@/components/ClinicalAssistantCards";
 import { ExamResourceChecklist } from "@/components/ExamActivityResources";
@@ -60,12 +61,20 @@ export default function ExameViaAssistente() {
         Para mudar de faixa ou iniciar outra atividade, revise e encerre este registro.
       </p>}
       {band !== null && ageLabel && <>
+        <ExamSessionTrail steps={[
+          { id: "prepare", label: "Preparar", target: "assistant-exam-prepare" },
+          { id: "activities", label: "Atividades", target: "assistant-exam-activities" },
+          { id: "review", label: "Revisar", target: "assistant-exam-review" },
+        ]} />
         <section key={ageLabel} aria-labelledby="assistant-exam-activities" className="space-y-3">
-          <h2 id="assistant-exam-activities" className="text-lg font-semibold">Atividades guiadas · {ageLabel}</h2>
+          <h2 id="assistant-exam-activities" tabIndex={-1} className="scroll-mt-24 text-lg font-semibold">Atividades guiadas · {ageLabel}</h2>
           <p className="text-sm text-muted-foreground">
             Escolha uma proposta. Use o meio habitual de comunicação e respeite pausas ou recusas. Se não houver oportunidade, descreva o contexto sem tirar conclusões.
           </p>
-          <ExamResourceChecklist activities={assistantExamResources[ageLabel]} title="Conferir materiais das atividades guiadas" />
+          <div className="space-y-2 rounded-xl border bg-card p-3">
+            <h3 id="assistant-exam-prepare" tabIndex={-1} className="scroll-mt-24 text-sm font-semibold">Preparar a atividade</h3>
+            <ExamResourceChecklist activities={assistantExamResources[ageLabel]} title="Conferir materiais das atividades guiadas" />
+          </div>
           <AssistantAccess />
           {examExamples[ageLabel]?.map((example, index) => <ClinicalAssistantCard key={example.title} example={example} resource={assistantExamResources[ageLabel][index]}
             canPresent={band >= 8} note={notes[example.title] ?? emptyAssistantObservation}
@@ -74,7 +83,7 @@ export default function ExameViaAssistente() {
             }))} />)}
         </section>
         <section aria-labelledby="assistant-exam-review" className="space-y-3 rounded-xl border bg-card p-4">
-          <h2 id="assistant-exam-review" className="font-semibold">Revisar e encerrar</h2>
+          <h2 id="assistant-exam-review" tabIndex={-1} className="scroll-mt-24 font-semibold">Revisar e encerrar</h2>
           {hasRecords ? <ul className="space-y-2" aria-label="Observações temporárias">
             {records.map(({ title, lines }) => <li key={title} className="rounded-lg bg-muted/50 p-3 text-sm">
               <strong>{title}</strong><p className="whitespace-pre-wrap break-words">{lines.join("\n")}</p>

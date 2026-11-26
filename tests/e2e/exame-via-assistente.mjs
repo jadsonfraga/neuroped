@@ -86,6 +86,11 @@ try {
   assert.equal(await age.isDisabled(), false, "preparo não é anotação");
   await age.selectOption({ label: "3 anos" });
   await guide.locator("summary").filter({ hasText: "Copiar um risco" }).click();
+  await guide.getByText("Acrescentar proposta e apoio", { exact: true }).filter({ visible: true }).click();
+  const contextNote = guide.locator("details").filter({ has: page.locator("summary").filter({ hasText: "Copiar um risco" }) }).locator("textarea").last();
+  await contextNote.fill("Contexto fictício antes da classificação");
+  const assistantMissingWithNote = await button("Registrar falta de material").isVisible();
+  await contextNote.clear();
   await button("Registrar falta de material").click();
   assert.match(await guide.getByRole("list", { name: "Observações temporárias" }).innerText(), /Não aplicado: faltou material/);
   assert.equal(await guide.getByLabel("O que aconteceu · Copiar um risco", { exact: true }).isDisabled(), true);
@@ -112,9 +117,17 @@ try {
   await dialog.waitFor();
   await page.keyboard.press("Escape");
   await dialog.waitFor({ state: "hidden" });
+  const trail = guide.getByRole("navigation", { name: "Trilha da sessão" });
+  await trail.getByRole("button", { name: "Revisar", exact: true }).press("Enter");
+  assert.equal(await page.locator(":focus").textContent(), "Revisar e encerrar");
+  assert.match(await guide.locator("#assistant-exam-review + p").textContent(), /Nenhuma observação/);
+  await trail.getByRole("button", { name: "Atividades", exact: true }).press("Enter");
+  assert.equal(await page.locator(":focus").getAttribute("id"), "assistant-exam-activities");
   const sentinel = "Registro fictício do ensaio isolado 82715";
   const note = guide.getByLabel("O que aconteceu · Copiar um risco", { exact: true });
   await note.fill(sentinel);
+  await trail.getByRole("button", { name: "Revisar", exact: true }).press("Enter");
+  assert.equal(await note.inputValue(), sentinel, "navegação não apaga o registro");
   assert.match(await guide.getByRole("list", { name: "Observações temporárias" }).innerText(), /Observação direta: Registro fictício/);
   assert.equal(await age.isDisabled(), true);
   assert.equal(await page.getByText("Abrir ficha médica completa", { exact: true }).count(), 0);
@@ -153,12 +166,21 @@ try {
   await professional.page.goto(path(professional.origin, MEDICAL));
   await professional.page.getByRole("heading", { name: "Exame neurológico e mental", exact: true }).waitFor();
   await professional.page.getByLabel("Faixa etária", { exact: true }).selectOption({ label: "3 anos" });
+  const medicalTrail = professional.page.getByRole("navigation", { name: "Trilha da sessão" });
+  await medicalTrail.getByRole("button", { name: "Revisar", exact: true }).press("Enter");
+  assert.equal(await professional.page.locator(":focus").getAttribute("id"), "exam-review");
+  assert.equal(await professional.page.getByRole("list", { name: "Registros do exame" }).count(), 0);
   await professional.page.getByText("Abrir ficha médica completa", { exact: true }).click();
   await professional.page.getByText("Conferir materiais da ficha médica", { exact: true }).click();
   await professional.page.getByRole("checkbox", { name: "Martelo de reflexos" }).waitFor();
   const medical = professional.page.getByRole("list", { name: "Materiais · Olhos, face e comunicação" });
   await medical.getByText("Copo grande e leve", { exact: true }).waitFor();
   const firstMedical = professional.page.locator("details").filter({ has: medical }).last();
+  const medicalMissing = firstMedical.getByRole("button", { name: "Registrar falta de material", exact: true });
+  const medicalNote = firstMedical.locator("textarea");
+  await medicalNote.fill("Observação fictícia sem classificação");
+  const medicalMissingWithNote = await medicalMissing.isVisible();
+  await medicalNote.clear();
   await firstMedical.getByRole("button", { name: "Registrar falta de material", exact: true }).click();
   assert.match(await professional.page.getByRole("list", { name: "Registros do exame" }).innerText(), /Não aplicado por falta de material/);
   await firstMedical.getByRole("button", { name: "Abrir recurso da atividade", exact: true }).click();
@@ -166,6 +188,9 @@ try {
   await staticTarget.getByRole("img", { name: "Bola" }).waitFor();
   await staticTarget.getByRole("button", { name: "Fechar recurso", exact: true }).click();
   await professional.context.close();
+  assert.deepEqual({ assistantMissingWithNote, medicalMissingWithNote },
+    { assistantMissingWithNote: false, medicalMissingWithNote: false },
+    "O atalho não deve reclassificar um item com anotação preexistente");
   console.log("Exame via assistente: Chromium tablet, anônimo bloqueado, operador só no guia, profissional preservado, dados voláteis e cartões sem escrita clínica.");
 } finally {
   await browser.close();

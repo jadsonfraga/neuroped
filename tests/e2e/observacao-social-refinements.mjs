@@ -32,10 +32,20 @@ try {
   await page.locator('[data-testid="login-form"] button[type="submit"]').click();
   const button = (name) => page.getByRole("button", { name, exact: true });
   await button("Observação social").click();
+  const step = page.getByRole("group", { name: "Trilha da sessão" }).locator('[aria-current="step"]');
+  assert.match(await step.textContent(), /Escolher/);
   const age = page.getByRole("combobox", { name: "Idade na data da observação" });
   await age.selectOption({ label: "12–17 meses" });
   await page.getByRole("button", { name: /Cesto de figuras/ }).click();
-  await button("Registrar sem usar a tela").click();
+  assert.match(await step.textContent(), /Preparar/);
+  await button("Apresentar no tablet").click();
+  const stimulus = page.getByRole("dialog");
+  await stimulus.waitFor();
+  assert.equal(await stimulus.getByText(/Trilha da sessão|Revisar/).count(), 0);
+  await page.keyboard.press("Escape");
+  await stimulus.waitFor({ state: "hidden" });
+  assert.match(await step.textContent(), /Registrar/);
+  assert.equal(await page.locator("#social-record input:checked").count(), 0);
   const toggle = page.locator("summary").filter({ hasText: "Revisar vídeo local" });
   const clip = page.locator("#social-record video");
   const loadClip = async () => {
@@ -78,6 +88,7 @@ try {
   await page.getByRole("button", { name: /Dois caminhos/ }).click();
   await button("Participante preferiu parar").click();
   await page.getByRole("button", { name: /Revisar sessão \(3 de 3 com registro\)/ }).click();
+  assert.match(await step.textContent(), /Revisar/);
   const review = page.getByText(/Observação em vídeo: Observação exclusivamente sintética/);
   await review.waitFor();
   await page.getByText(/Oportunidade insuficiente/).waitFor();

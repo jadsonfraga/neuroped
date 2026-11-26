@@ -1,4 +1,5 @@
 import { useEffect, useReducer, useRef, useState } from "react";
+import { ExamSessionTrail } from "@/components/ExamSessionTrail";
 import { AssistantAccess, ParticipantPace } from "@/components/AssistantAccess";
 import { assistantObservationLines } from "@/lib/assistantObservation";
 import { AssistantScope } from "@/components/ClinicalAssistantCards";
@@ -65,6 +66,12 @@ export default function ObservacaoSocial({ active = true }: { active?: boolean }
       <h1 tabIndex={-1} ref={heading} className="my-2 text-2xl font-bold">{title}</h1>
       {stage !== "choose" && selected && <p>{selected[0]}{stage !== "review" && sceneTitle && " · " + sceneTitle}</p>}
     </header>
+    <ExamSessionTrail current={stage} steps={[
+      { id: "choose", label: "Escolher" },
+      { id: "prepare", label: "Preparar" },
+      { id: "record", label: "Registrar" },
+      { id: "review", label: "Revisar" },
+    ]} />
     {stage === "choose" && <section className={panel}>
       <label className="block font-medium">Idade na data da observação<select className={input} disabled={count > 0} value={band ?? ""} onChange={e => dispatch({ type: "age", band: Number(e.target.value) })}>
         <option value="" disabled>Escolha a idade</option>{bands.map(([name], i) => <option key={name} value={i}>{name}</option>)}</select></label>
