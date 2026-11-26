@@ -1,12 +1,15 @@
 import { useReducer, useRef, useState } from "react";
 import { AssistantScope, ClinicalAssistantCard } from "@/components/ClinicalAssistantCards";
 import { ExamWelcome } from "@/components/ExamWelcome";
+import { ExamTeachingAid } from "@/components/ExamTeachingAid";
+import { medicalTeaching } from "@/data/examTeachingAids";
 import { ExamSessionTrail } from "@/components/ExamSessionTrail";
 import { AssistantAccess } from "@/components/AssistantAccess";
 import { assistantObservationLines, emptyAssistantObservation, type AssistantObservation } from "@/lib/assistantObservation";
 import { ExamResourceChecklist, ExamActivityResources } from "@/components/ExamActivityResources";
 import { assistantExamResources, medicalExamResources } from "@/data/examResources";
 import { examExamples } from "@/data/clinicalAssistantGuide";
+import { useSondaExitGuard as useVolatileExamExitGuard } from "@/hooks/useSondaExitGuard";
 import { examBands } from "@/data/exame-por-idade";
 import { examStatuses, examVisit, initialExam, summarizeExam, type ExamStatus } from "@/lib/examVisitSession";
 
@@ -19,6 +22,8 @@ export default function ExamePorIdade() {
   const [assistantNotes, setAssistantNotes] = useState<Record<string, AssistantObservation>>({});
   const descriptive = Object.entries(assistantNotes).map(([title, note]) => ({ title, lines: assistantObservationLines(note) })).filter(({ lines }) => lines.length);
   const hasRecords = records.length > 0 || descriptive.length > 0;
+  // This hook tracks the mounted route and keeps data in memory only.
+  useVolatileExamExitGuard(hasRecords, "Sair apaga as anotações temporárias deste exame. Cancele para revisar sem perder o registro. Deseja sair mesmo assim?");
 
   function finish() {
     if (hasRecords && !window.confirm("Encerrar e apagar as anotações temporárias deste exame? Confira antes se registrou o necessário no prontuário.")) return;
@@ -72,6 +77,7 @@ export default function ExamePorIdade() {
             <p className="mt-2 text-sm"><strong>Se precisar adaptar. </strong>{band.adapt}</p>
           </div>
           <ExamResourceChecklist activities={medicalExamResources[band.age]} title="Conferir materiais da ficha médica" />
+          <ExamTeachingAid aid={medicalTeaching[band.age]} />
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="font-semibold">Conduzir e registrar</h2>
             <button type="button" onClick={() => { review.current?.scrollIntoView({ block: "start" }); review.current?.focus({ preventScroll: true }); }}
@@ -86,7 +92,7 @@ export default function ExamePorIdade() {
                 <span>{item.title}</span>
                 {entry && <span className="ml-2 inline-block text-xs font-medium text-muted-foreground">{entry.status ? examStatuses[entry.status] : "Com anotação"}</span>}
               </summary>
-              <div className="mb-3"><ExamActivityResources resource={medicalExamResources[band.age][index]} alreadyRecorded={Boolean(entry)}
+              <div className="mb-3"><ExamActivityResources resource={medicalExamResources[band.age][index]} alreadyRecorded={Boolean(entry)} allowVisual={entry?.status !== "materialsMissing"}
                 onMissing={() => dispatch({ type: "record", step: index, status: "materialsMissing" })} /></div>
               <p className="mb-2"><strong>Como examinar. </strong>{item.action}</p>
               <p className="mb-3"><strong>O que observar. </strong>{item.observe}</p>

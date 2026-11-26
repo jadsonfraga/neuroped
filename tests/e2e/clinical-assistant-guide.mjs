@@ -31,7 +31,7 @@ try {
   const button = name => page.getByRole("button", { name, exact: true });
   await age.selectOption({ label: "Nascimento a 27 dias" });
   await page.getByText("Rosto conhecido", { exact: true }).click();
-  assert.equal(await button("Mostrar cartão visual").count(), 0);
+  assert.equal(await button("Mostrar convite na tela").count(), 0);
   await age.selectOption({ label: "3 anos" });
   await page.locator("summary").filter({ hasText: "Copiar um risco" }).click();
   assert.equal(await page.getByRole("heading", { name: "Preparar · 3 anos" }).isVisible(), false);
@@ -44,7 +44,7 @@ try {
   await button("Comunicação").click();
   await page.getByText(/Use o meio habitual/).waitFor();
   assert.equal(await age.isEnabled(), true);
-  await button("Mostrar cartão visual").press("Enter");
+  await button("Mostrar convite na tela").press("Enter");
   const examCard = page.getByRole("dialog", { name: "Copiar um risco" });
   await examCard.waitFor();
   assert.equal(await examCard.evaluate(element => element.contains(document.activeElement) && document.activeElement.matches("button")), true,
@@ -57,8 +57,8 @@ try {
   assert.match(await examCard.innerText(), /Você quer tentar do seu jeito/);
   await page.keyboard.press("Escape");
   await examCard.waitFor({ state: "hidden" });
-  assert.equal(await button("Mostrar cartão visual").evaluate(el => el === document.activeElement), true);
-  await button("Mostrar cartão visual").press("Enter");
+  assert.equal(await button("Mostrar convite na tela").evaluate(el => el === document.activeElement), true);
+  await button("Mostrar convite na tela").press("Enter");
   await examCard.waitFor();
   assert.match(await examCard.innerText(), /Você quer tentar do seu jeito/);
   await button("Fechar cartão").press("Enter");

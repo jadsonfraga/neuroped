@@ -1,5 +1,7 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { ExamTeachingAid } from "@/components/ExamTeachingAid";
+import { socialTeaching } from "@/data/examTeachingAids";
 import { ExamWelcome } from "@/components/ExamWelcome";
 import { ExamSessionTrail } from "@/components/ExamSessionTrail";
 import { AssistantAccess, ParticipantPace } from "@/components/AssistantAccess";
@@ -65,6 +67,14 @@ export default function ObservacaoSocial({ active = true }: { active?: boolean }
     dispatch({ type: "edit", field: "condition", value: condition });
     dispatch({ type: "stage", stage: "record" });
   }
+  const interruptionChoices = !existingNote && (<fieldset className="space-y-2">
+        <legend className="text-sm font-semibold">Se não der para iniciar</legend>
+        <p className="text-sm text-muted-foreground">Registre o contexto da sessão; isso não indica ausência de uma habilidade.</p>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" className={button} onClick={() => recordWithoutPresenting(noOpportunity)}>{noOpportunity}</button>
+          <button type="button" className={button} onClick={() => recordWithoutPresenting(stopped)}>{stopped}</button>
+        </div>
+      </fieldset>);
   function present() {
     if (!canPresentCards) return;
     setChoice("");
@@ -124,21 +134,17 @@ export default function ObservacaoSocial({ active = true }: { active?: boolean }
         <p className="pb-2">{socialAlternatives[selected[0]]}</p>
         <button type="button" className={button + " mb-3"} onClick={() => openActivity(alternativeScene)}>Abrir brincadeira sem tela</button>
       </details>}
+      {selected && <ExamTeachingAid aid={socialTeaching[selected[0]]} />}
       <AssistantAccess key={band + "/" + scene} />
       <details><summary className="cursor-pointer py-2">Adaptar esta atividade</summary><p>{activity[5]}</p><p>Toque, fala, gesto ou comunicação alternativa são opcionais. Não conduza a mão, não peça contato visual e respeite uma pausa ou recusa.</p></details>
-      {!existingNote && <fieldset className="space-y-2">
-        <legend className="text-sm font-semibold">Se não der para iniciar</legend>
-        <p className="text-sm text-muted-foreground">Registre o contexto da sessão; isso não indica ausência de uma habilidade.</p>
-        <div className="flex flex-wrap gap-2">
-          <button type="button" className={button} onClick={() => recordWithoutPresenting(noOpportunity)}>{noOpportunity}</button>
-          <button type="button" className={button} onClick={() => recordWithoutPresenting(stopped)}>{stopped}</button>
-        </div>
-      </fieldset>}
+      {interruptionChoices}
     </section>}
     {stage === "prepare" && alternative && <section className={panel}>
       <p className="rounded-xl bg-primary/5 p-3"><strong>Proposta sem tela. </strong>{alternative}</p>
+      {selected && <ExamTeachingAid aid={socialTeaching[selected[0]]} />}
       <AssistantAccess key={band + "/alternativa"} />
       <button type="button" className={primary} onClick={() => dispatch({ type: "stage", stage: "record" })}>Registrar esta brincadeira</button>
+      {interruptionChoices}
     </section>}
     {canPresentCards && activity && <dialog ref={participant} aria-label={activity[1]} onClose={() => { setPresentation(n => n + 1); dispatch({ type: "stage", stage: "record" }); }} className="fixed inset-0 m-auto max-h-[90dvh] w-11/12 overflow-y-auto max-w-2xl rounded-xl bg-background p-6 text-foreground backdrop:bg-slate-900">
       <ParticipantPace key={presentation} closeLabel="Pausar e voltar" onClose={() => participant.current?.close()}>
@@ -156,7 +162,7 @@ export default function ObservacaoSocial({ active = true }: { active?: boolean }
           <input type="radio" name="social-condition" checked={note.condition === c} onChange={() => dispatch({ type: "edit", field: "condition", value: c })}/>{c}</label>)}</div>
         {note.condition && <button className="min-h-12 underline" onClick={() => dispatch({ type: "edit", field: "condition", value: "" })}>Desmarcar opção</button>}
       </fieldset>
-      <label className="block">O que você observou presencialmente?<textarea className={input} rows={3} placeholder="Ex.: apontou para a segunda figura depois que mostrei uma de cada vez." value={note.reaction} onChange={e => dispatch({ type: "edit", field: "reaction", value: e.target.value })}/></label>
+      <label className="block">O que você observou presencialmente?<textarea className={input} rows={3} placeholder="Descreva o que aconteceu, o meio de resposta e o apoio usado, se houve." value={note.reaction} onChange={e => dispatch({ type: "edit", field: "reaction", value: e.target.value })}/></label>
       <details className="rounded-lg border px-3">
         <summary className="flex min-h-12 cursor-pointer items-center font-semibold">Acrescentar o que foi oferecido</summary>
         <label className="mb-3 block">O que foi oferecido?<textarea className={input} rows={2} value={note.invitation} onChange={e => dispatch({ type: "edit", field: "invitation", value: e.target.value })}/></label>
