@@ -1,0 +1,8 @@
+@font-face {
+  font-family: "NeuroPed Cursiva";
+  src: url("../assets/fonts/playwrite-br/playwrite-br-uppercase.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  unicode-range: U+0041-005A;
+}

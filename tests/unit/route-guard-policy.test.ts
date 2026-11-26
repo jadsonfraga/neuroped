@@ -207,7 +207,7 @@ for (const path of clinicalRouteSamples) {
     const expected =
       path === "/configuracoes" || (userRole === "reader" && isReaderClinicalRoute(path))
         ? "allow"
-        : (path === "/recepcao" || path === "/exame-via-assistente" || path === "/agenda" || path === "/super-neuropad-game" || path === "/super-neuropad-nao-verbal" || path === "/neuropad-arena" || path === "/testes-diretos" || path === "/testes-reconhecimento" || path === "/testes-cognitivos" || path === "/por-faixa-etaria" || path === "/avaliacao-pre-consulta-faixa-etaria") && userRole === "operator"
+        : (path === "/recepcao" || path === "/exame-via-assistente" || path === "/alfabeto" || path === "/agenda" || path === "/super-neuropad-game" || path === "/super-neuropad-nao-verbal" || path === "/neuropad-arena" || path === "/testes-diretos" || path === "/testes-reconhecimento" || path === "/testes-cognitivos" || path === "/por-faixa-etaria" || path === "/avaliacao-pre-consulta-faixa-etaria") && userRole === "operator"
           ? "allow"
           : "forbidden";
     assert.equal(
