@@ -247,6 +247,7 @@ export const navSections: NavSection[] = [
     items: [
       { href: "/exame-neurologico-mental", label: "Exame neurológico e mental", icon: Brain, description: "Roteiro de exame por faixa etária" },
       { href: "/exame-via-assistente", label: "Exame via assistente", icon: ClipboardCheck, description: "Guia observacional temporário" },
+      { href: "/alfabeto", label: "Alfabeto", icon: BookOpen, description: "Reconhecimento de letras bastão e cursivas" },
       { href: "/pacientes", label: "Pacientes / Prontuário", icon: Users, tone: "priority" },
       { href: "/agenda", label: "Agenda & Gestão", icon: Calendar, tone: "priority" },
       { href: "/laudo-neuroped", label: "Laudos", icon: FileText, tone: "priority" },

@@ -22,6 +22,7 @@ export const KNOWN_ROUTE_PATTERNS: readonly string[] = [
   "/acessibilidade",
   "/agenda",
   "/agendar",
+  "/alfabeto",
   "/ahsd-tea",
   "/ajuda",
   "/aq10",

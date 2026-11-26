@@ -11,6 +11,7 @@ const ASSISTANT_EXAM_ROUTE = "/exame-via-assistente";
 export const SENSITIVE_ROUTES = [
   "/exame-neurologico-mental",
   ASSISTANT_EXAM_ROUTE,
+  "/alfabeto",
   "/super-neuropad-game",
   "/super-neuropad-nao-verbal",
   "/neuropad-arena",
@@ -260,6 +261,7 @@ const CLINICAL_ROLE_OVERRIDES: ReadonlyArray<{
   { route: "/configuracoes", roles: ["admin", "professional", "reader", "operator"] },
   { route: "/recepcao", roles: ["admin", "professional", "operator"] },
   { route: ASSISTANT_EXAM_ROUTE, roles: DIRECT_TEST_ROLES },
+  { route: "/alfabeto", roles: DIRECT_TEST_ROLES },
   // A secretária opera a agenda administrativa sem receber acesso ao prontuário.
   { route: "/agenda", roles: ["admin", "professional", "operator"] },
   { route: "/super-neuropad-game", roles: DIRECT_TEST_ROLES },
