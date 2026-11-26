@@ -84,15 +84,15 @@ try {
   await page.setViewportSize({ width: 320, height: 740 });
   await page.goto(server.origin + "/#/testes-diretos");
   await button("Observação social").click();
-  await page.getByLabel("Idade na data da observação").selectOption({ label: "12–17 meses" });
-  await page.getByRole("button", { name: /Cesto de figuras/ }).click();
+  await page.getByLabel("Idade na data da observação").selectOption({ label: "8 anos" });
+  await page.getByRole("button", { name: /Dica para o colega/ }).click();
   const preview = page.getByRole("list", { name: "Prévia dos cartões" });
   assert.equal(await preview.getByRole("listitem").count(), 2);
-  await page.getByText("Outra brincadeira sem tela · 12–17 meses", { exact: true }).click();
-  await page.getByText(/O cuidador oferece um bichinho grande familiar/).waitFor();
+  await page.getByText("Outra brincadeira sem tela · 8 anos", { exact: true }).click();
+  await page.getByText(/Ponha dois títulos inventados/).waitFor();
   if (process.env.NEUROPED_GUIDE_SCREENSHOTS) {
     await page.locator("article").filter({ has: page.getByRole("heading", { name: "Preparar a interação" }) })
-      .screenshot({ path: join(process.env.NEUROPED_GUIDE_SCREENSHOTS, "NeuroPed-observacao-guia-12-17-meses.png") });
+      .screenshot({ path: join(process.env.NEUROPED_GUIDE_SCREENSHOTS, "NeuroPed-observacao-guia-8-anos.png") });
   }
   await button("Apresentar no tablet").press("Enter");
   const child = page.getByRole("dialog");
@@ -101,11 +101,11 @@ try {
     "o cartão social deve iniciar com foco dentro do diálogo");
   await page.keyboard.press("Tab");
   assert.equal(await child.evaluate(element => element.contains(document.activeElement)), true);
-  await child.getByRole("button", { name: "Gato", exact: true }).click();
-  assert.equal(await child.getByRole("button", { name: "Gato", exact: true }).getAttribute("aria-pressed"), "true");
+  await child.getByRole("button", { name: "Quebra-cabeça", exact: true }).click();
+  assert.equal(await child.getByRole("button", { name: "Quebra-cabeça", exact: true }).getAttribute("aria-pressed"), "true");
   assert.ok(await child.evaluate(el => el.scrollWidth <= el.clientWidth + 1));
   await button("Fazer uma pausa").click();
-  assert.equal(await child.getByRole("button", { name: "Gato", exact: true }).count(), 0);
+  assert.equal(await child.getByRole("button", { name: "Quebra-cabeça", exact: true }).count(), 0);
   await page.keyboard.press("Escape");
   await child.waitFor({ state: "hidden" });
   const recordHeading = page.getByRole("heading", { name: "Registrar o que aconteceu" });
@@ -125,7 +125,7 @@ try {
   await page.getByText("Acrescentar o que foi oferecido", { exact: true }).click();
   await page.getByLabel("O que foi oferecido?").fill("Ofereci o bichinho familiar.");
   await page.getByRole("button", { name: /Revisar sessão/ }).click();
-  await page.getByText(/12–17 meses · Brincadeira sem tela/).waitFor();
+  await page.getByText(/8 anos · Brincadeira sem tela/).waitFor();
   await page.getByText(/Proposta realizada: Ofereci o bichinho familiar/).waitFor();
   await page.getByText(/Observação direta: Registro fictício/).waitFor();
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));

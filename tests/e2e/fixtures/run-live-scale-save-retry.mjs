@@ -10,6 +10,7 @@ import { DatabaseSync } from "node:sqlite";
 import { pathToFileURL } from "node:url";
 import { startStaticServer } from "../../../scripts/lib/browser-audit-runtime.mjs";
 
+const examSuite = process.argv[2] === "--exam";
 const operatorSuite = process.argv[2] === "--agenda-operator";
 const agendaSuite = process.argv[2] === "--agenda" || operatorSuite;
 const loseAgendaResponse = process.env.AGENDA_FAULT_LOST_RESPONSE === "1";
@@ -17,9 +18,9 @@ assert.ok(!loseAgendaResponse || (agendaSuite && !operatorSuite));
 let agendaCreateCount = 0;
 const doseSuite = process.argv[2] === "--prontuario-dose";
 const prontuarioSuite = process.argv[2] === "--prontuario" || doseSuite;
-assert.ok(process.argv.length === 2 || (process.argv.length === 3 && (agendaSuite || prontuarioSuite)));
+assert.ok(process.argv.length === 2 || (process.argv.length === 3 && (agendaSuite || prontuarioSuite || examSuite)));
 const fault = process.env.SCALE_RETRY_FAULT;
-assert.ok(!(agendaSuite || prontuarioSuite) || !fault, "Não combine a agenda com falhas de escalas");
+assert.ok(!(agendaSuite || prontuarioSuite || examSuite) || !fault, "Não combine outros fluxos com falhas de escalas");
 let nextFault = fault;
 const prontuarioFault = process.env.PRONTUARIO_FAULT_LOST_RESPONSE;
 assert.ok([undefined, "create", "correct"].includes(prontuarioFault));
@@ -45,7 +46,7 @@ let mf, server;
 try {
   assert.equal(await run(["--import", "tsx", "tests/e2e/fixtures/live-patient-discovery.mts", dbPath], {
     ...env, LIVE_DISCOVERY_FIXTURE_DATA_KEY: clinicalDataKey,
-    ...(operatorSuite ? { LIVE_AGENDA_OPERATOR_FIXTURE: "1" } : {}),
+    ...((operatorSuite || examSuite) ? { LIVE_AGENDA_OPERATOR_FIXTURE: "1" } : {}),
     ...(prontuarioSuite ? { LIVE_DISCOVERY_PRONTUARIO_LEGACY: "1" } : {}),
   }), 0);
   const operationsKey = randomBytes(48).toString("base64url");
@@ -143,8 +144,17 @@ try {
     res.end(Buffer.from(await response.arrayBuffer()));
     return true;
   }});
-  const test = operatorSuite ? "tests/e2e/live-agenda-operator-draft.mjs" : agendaSuite ? "tests/e2e/live-agenda.mjs" : doseSuite ? "tests/e2e/live-prontuario-dose-unit.mjs" : prontuarioSuite ? "tests/e2e/live-prontuario-save.mjs" : "tests/e2e/live-scale-save-retry.mjs";
-  process.exitCode = await run([test], { ...env, LIVE_DISCOVERY_URL: server.origin });
+  const test = examSuite ? "tests/e2e/exame-via-assistente.mjs" : operatorSuite ? "tests/e2e/live-agenda-operator-draft.mjs" : agendaSuite ? "tests/e2e/live-agenda.mjs" : doseSuite ? "tests/e2e/live-prontuario-dose-unit.mjs" : prontuarioSuite ? "tests/e2e/live-prontuario-save.mjs" : "tests/e2e/live-scale-save-retry.mjs";
+  process.exitCode = await run([test], {
+    ...env,
+    LIVE_DISCOVERY_URL: server.origin,
+    ...(examSuite ? {
+      NEUROPED_ASSISTANT_D1_URL: server.origin,
+      NEUROPED_ASSISTANT_OPERATOR_EMAIL: "sec-a@example.test",
+      NEUROPED_ASSISTANT_PROFESSIONAL_EMAIL: env.LIVE_DISCOVERY_EMAIL,
+      NEUROPED_ASSISTANT_PASSWORD: password,
+    } : {}),
+  });
   if (process.exitCode === 0) {
     assert.equal(nextFault, undefined, "a falha solicitada não foi exercitada");
     assert.equal(loseProntuarioResponse, false, "a interrupção planejada deveria ter sido exercitada");

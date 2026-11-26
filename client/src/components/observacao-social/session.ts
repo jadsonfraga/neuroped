@@ -1,4 +1,5 @@
 import { bands, domains } from "../../data/observacaoSocial";
+import { welcomeProfile } from "../../lib/examWelcome";
 
 export type Stage = "choose" | "prepare" | "record" | "review";
 export type Note = { condition: string; invitation: string; reaction: string; context: string; video: string; interpretation: string };
@@ -10,6 +11,19 @@ export type Session = {
   records: Record<string, Note>;
 };
 export const alternativeScene = 3;
+
+export function canPresentSocialCards(band: number | null) {
+  const name = band === null ? undefined : bands[band]?.[0];
+  return Boolean(name && welcomeProfile(name) !== "presencial");
+}
+
+export function canInterpretSocialObservation(role: string | undefined) {
+  return role === "admin" || role === "professional";
+}
+
+export function socialReviewLabel(count: number) {
+  return "Revisar sessão (" + count + (count === 1 ? " registro)" : " registros)");
+}
 
 export function describeSocialScene(band: number, scene: number): string | null {
   const selected = bands[band];

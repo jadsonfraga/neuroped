@@ -70,7 +70,7 @@
     "audit:a11y": "node scripts/audit-a11y.mjs",
     "audit:visual-proof": "node scripts/audit-visual-proof.mjs",
     "audit:visual-authenticated": "node scripts/audit-visual-authenticated.mjs",
-    "test:clinical-assistant-guide": "node --import tsx --test tests/unit/exame-via-assistente-policy.test.ts tests/unit/assistant-observation.test.ts tests/unit/clinical-assistant-guide.test.ts tests/unit/exame-por-idade.test.mjs tests/unit/exam-resource-coverage.test.ts tests/unit/exam-visit-session.test.ts tests/unit/observacao-social.test.ts tests/unit/observacao-social-session.test.ts && node tests/e2e/clinical-assistant-guide.mjs && node tests/e2e/exam-visit-session.mjs && node tests/e2e/observacao-social-refinements.mjs && node tests/e2e/exame-via-assistente.mjs",
+    "test:clinical-assistant-guide": "node --import tsx --test tests/unit/exam-session-trail.test.mjs tests/unit/exam-welcome.test.mjs tests/unit/exam-synthetic-cases.test.ts tests/unit/exame-via-assistente-policy.test.ts tests/unit/assistant-observation.test.ts tests/unit/clinical-assistant-guide.test.ts tests/unit/exame-por-idade.test.mjs tests/unit/exam-resource-coverage.test.ts tests/unit/exam-visit-session.test.ts tests/unit/observacao-social.test.ts tests/unit/observacao-social-session.test.ts && node tests/e2e/clinical-assistant-guide.mjs && node tests/e2e/exam-visit-session.mjs && node tests/e2e/observacao-social-refinements.mjs && node tests/e2e/exame-via-assistente.mjs && node tests/e2e/exam-synthetic-age-matrix.mjs",
     "test:e2e:visual-sensory": "node tests/e2e/visual-sensory-foundation.mjs",
     "test:visual-authenticated-contract": "node tests/unit/visual-authenticated-matrix.test.mjs",
     "audit:a11y:full": "cross-env A11Y_FULL=1 node scripts/audit-a11y.mjs",

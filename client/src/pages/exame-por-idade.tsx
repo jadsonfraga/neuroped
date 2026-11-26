@@ -1,5 +1,7 @@
 import { useReducer, useRef, useState } from "react";
 import { AssistantScope, ClinicalAssistantCard } from "@/components/ClinicalAssistantCards";
+import { ExamWelcome } from "@/components/ExamWelcome";
+import { ExamSessionTrail } from "@/components/ExamSessionTrail";
 import { AssistantAccess } from "@/components/AssistantAccess";
 import { assistantObservationLines, emptyAssistantObservation, type AssistantObservation } from "@/lib/assistantObservation";
 import { ExamResourceChecklist, ExamActivityResources } from "@/components/ExamActivityResources";
@@ -43,11 +45,20 @@ export default function ExamePorIdade() {
       </div>
       {hasRecords && <p id="exam-age-locked" className="text-sm text-muted-foreground">Faixa vinculada aos registros. Para iniciar outro exame, revise e encerre este.</p>}
       {band && <div key={band.age} className="space-y-3">
+        {!hasRecords && <ExamWelcome ageLabel={band.age} />}
+        <ExamSessionTrail steps={[
+          { id: "prepare", label: "Preparar", target: "exam-prepare" },
+          { id: "activities", label: "Atividades", target: "exam-simple" },
+          { id: "review", label: "Revisar", target: "exam-review" },
+        ]} />
         <section aria-labelledby="exam-simple" className="space-y-3">
-          <h2 id="exam-simple" className="text-lg font-semibold">Atividades guiadas · {band.age}</h2>
+          <h2 id="exam-simple" tabIndex={-1} className="scroll-mt-24 text-lg font-semibold">Atividades guiadas · {band.age}</h2>
           <AssistantScope />
           <p className="text-sm text-muted-foreground">Escolha uma proposta, sem obrigação de fazer as duas. Aceite gesto, olhar, fala ou o meio de comunicação habitual. Se não der para tentar, anote o contexto, sem concluir que a criança não consegue.</p>
-          <ExamResourceChecklist activities={assistantExamResources[band.age]} title="Conferir materiais das atividades guiadas" />
+          <div className="space-y-2 rounded-xl border bg-card p-3">
+            <h3 id="exam-prepare" tabIndex={-1} className="scroll-mt-24 text-sm font-semibold">Preparar a atividade</h3>
+            <ExamResourceChecklist activities={assistantExamResources[band.age]} title="Conferir materiais das atividades guiadas" />
+          </div>
           <AssistantAccess />
           {examExamples[band.age]?.map((example, index) => <ClinicalAssistantCard key={example.title} example={example} resource={assistantExamResources[band.age][index]}
             canPresent={visit.band !== null && visit.band >= 8} note={assistantNotes[example.title] ?? emptyAssistantObservation}
@@ -75,19 +86,19 @@ export default function ExamePorIdade() {
                 <span>{item.title}</span>
                 {entry && <span className="ml-2 inline-block text-xs font-medium text-muted-foreground">{entry.status ? examStatuses[entry.status] : "Com anotação"}</span>}
               </summary>
-              <div className="mb-3"><ExamActivityResources resource={medicalExamResources[band.age][index]} alreadyRecorded={Boolean(entry?.status)}
+              <div className="mb-3"><ExamActivityResources resource={medicalExamResources[band.age][index]} alreadyRecorded={Boolean(entry)}
                 onMissing={() => dispatch({ type: "record", step: index, status: "materialsMissing" })} /></div>
               <p className="mb-2"><strong>Como examinar. </strong>{item.action}</p>
               <p className="mb-3"><strong>O que observar. </strong>{item.observe}</p>
               <label className="mb-3 block text-sm font-medium">Como foi avaliado · {item.title}
-                <select value={entry?.status ?? ""} onChange={event => dispatch({ type: "record", step: index, status: event.target.value as ExamStatus | "" })}
+                <select aria-label={"Como foi avaliado · " + item.title} value={entry?.status ?? ""} onChange={event => dispatch({ type: "record", step: index, status: event.target.value as ExamStatus | "" })}
                   className="mt-1 block min-h-11 w-full rounded-lg border bg-background p-2">
                   <option value="">Sem classificação</option>
                   {Object.entries(examStatuses).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
                 </select>
               </label>
               <label className="mb-4 block text-sm">Observação temporária · {item.title}
-                <textarea className="mt-1 block w-full rounded-lg border bg-background p-2" rows={2} value={entry?.note ?? ""}
+                <textarea className="mt-1 block w-full rounded-lg border bg-background p-2" rows={2} aria-label={"Observação temporária · " + item.title} value={entry?.note ?? ""}
                   placeholder="Descreva a resposta, o apoio usado ou o limite do que pôde observar."
                   onChange={event => dispatch({ type: "record", step: index, note: event.target.value })} />
               </label>
