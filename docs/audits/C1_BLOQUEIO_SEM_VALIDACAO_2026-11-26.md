@@ -1,0 +1,10 @@
+# Receita C1: bloquear liberação eletrônica sem validação qualificada
+
+Base: `b20e724818610e11768bff4782bccbb4683eda22`. No ensaio local do baseline, a rota Express baixava um arquivo rotulado “assinado” com um certificado sintético autossinado. Não havia verificador independente nem arquivamento da emissão. A via vinculada usava o painel compartilhado, que igualmente baixa antes do arquivamento e não valida a qualificação com um serviço independente.
+
+Este candidato remove a ação de assinatura do Express e impede que Enter a inicie. A via vinculada apresenta bloqueio explícito enquanto não houver integração qualificada; a trava independente de transição SNCR continua aplicada. Conferir o certificado localmente não equivale a validar uma assinatura. Os caminhos de preparo, prévia, impressão física e PDF sem assinatura foram mantidos. As duas vias do PDF Express agora dizem que se trata de rascunho sem assinatura, não de receita eletrônica válida. O painel compartilhado só muda o rótulo da leitura local quando a assinatura estiver ativamente bloqueada.
+
+## Aceite local
+- `node tests/e2e/fixtures/run-live-scale-save-retry.mjs --c1-safety` (Chromium, Pages Functions e D1 descartável). Um PKCS#12 gerado para o teste não pode acionar emissão por Enter na Express ou na via vinculada. Existe apenas um download explícito do rascunho, com duas páginas e sem dicionário de assinatura. Nada foi enviado a serviços externos.
+- Para destravar emissão eletrônica, ainda é necessário homologar a verificação qualificada dos mesmos bytes, inclusive titularidade/trilha, e o caminho aplicável de numeração e dispensação. Este bloqueio não altera as rotas Mevo, A/B, laudos ou o vault. Nenhuma credencial, receita, número, assinatura ou paciente reais utilizados.
+- Não fiz push, merge ou deploy. Não aplica autoridade clínica ou regulatória, não homologa produção. Rollback técnico por reversão do commit (não executar em produção sem nova análise, pois voltaria a abrir o caminho não verificado).

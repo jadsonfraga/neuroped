@@ -37,7 +37,8 @@ assert.match(c1, /Doses por dia/);
 
 const c1Express = read("client/src/pages/receita-c1-express.tsx");
 assert.match(c1Express, /buildC1TemplatePdfBytes/);
-assert.match(c1Express, /signPdfWithP12/);
+assert.doesNotMatch(c1Express, /signPdfWithP12|gerarEAssinar/);
+assert.match(c1Express, /Rascunho sem assinatura digital/);
 assert.match(c1Express, /\.p12|\.pfx|PFX|P12/i);
 assert.match(c1Express, /idadePaciente/);
 assert.match(c1Express, /dosesPorDia/);

@@ -1,9 +1,8 @@
 import { captureOwnerPdfScope, loadOwnerPdfFacsimile } from "@/lib/ownerPdfFacsimile";
 import { useState, useEffect, useRef } from "react";
-import { electronicRceBlockReason, electronicRceTransitionNotice } from "@/lib/sncrTransition";
+import { C1_UNVERIFIED_BLOCK_REASON, electronicRceTransitionNotice } from "@/lib/sncrTransition";
 import {
   Pill,
-  FileSignature,
   Printer,
   Download,
   ShieldCheck,
@@ -48,7 +47,7 @@ import { dateStamp } from "@/lib/printDocument";
 /* ──────────────────────────────────────────────────────────────
    Receita C1 Express — Receita de Controle Especial
    Identidade do emissor: fonte única client/src/lib/issuer.ts
-   Certificado acoplado: preencha a receita + insira apenas a senha
+   Preparo da receita e conferência local de certificado, sem emissão eletrônica
 ──────────────────────────────────────────────────────────────── */
 
 // ── Helpers ──────────────────────────────────────────────────────
@@ -237,14 +236,14 @@ export async function buildC1TemplatePdfBytes(f: FormFields, issuer: DocumentIss
     page.drawLine({ start: { x: 228, y: 76 }, end: { x: 384, y: 76 }, thickness: 0.25, color: rgb(0.18, 0.22, 0.2) });
     drawFitted(page, issuer.doctorName, 238, 66, 148, 6.2, bold);
     drawFitted(page, issuerCredentials(issuer), 238, 58, 148, 5.2, helv);
-    page.drawText("Verifique a assinatura ICP-Brasil do arquivo", { x: 236, y: 50, size: 5.2, font: helv, color: rgb(0.05, 0.34, 0.22) });
-    if (pageIndex === 0) page.drawText("Campo reservado para verificacao da assinatura eletrônica.", { x: 222, y: 35, size: 4.4, font: helv, color: muted });
+    page.drawText("Rascunho sem assinatura digital", { x: 236, y: 50, size: 5.2, font: helv, color: rgb(0.05, 0.34, 0.22) });
+    if (pageIndex === 0) page.drawText("PDF para revisao. Nao dispensar.", { x: 222, y: 35, size: 4.4, font: helv, color: muted });
 
     page.drawRectangle({ x: m, y: 20, width: 190, height: 58, borderWidth: 0.4, borderColor: gold, color: rgb(1, 0.98, 0.92) });
     page.drawText("VALIDACAO DIGITAL", { x: m + 8, y: 64, size: 6.2, font: bold, color: ink });
     page.drawText("Abra no Adobe Acrobat ou no validador ICP-Brasil/ITI.", { x: m + 8, y: 52, size: 4.8, font: helv, color: ink });
     page.drawText("Escaneie o QR para abrir a pagina de verificacao.", { x: m + 8, y: 43, size: 4.8, font: helv, color: ink });
-    page.drawText("Confira a assinatura ICP-Brasil embutida no PDF.", { x: m + 8, y: 32, size: 4.3, font: helv, color: rgb(0.04, 0.19, 0.48) });
+    page.drawText("Este PDF nao e uma receita eletronica valida.", { x: m + 8, y: 32, size: 4.3, font: helv, color: rgb(0.04, 0.19, 0.48) });
     page.drawImage(qrPng, { x: m + 152, y: 30, width: 34, height: 34 });
   };
 
@@ -470,7 +469,7 @@ export default function ReceitaC1ExpressPage() {
   const [storedCert, setStoredCert] = useState<{ fileName: string; savedAt: string } | null>(null);
   const [accountCertificate, setAccountCertificate] = useState<AccountCertificateEnvelope | null>(null);
 
-  const [busy, setBusy] = useState<"" | "sign" | "plain" | "verify">("");
+  const [busy, setBusy] = useState<"" | "plain" | "verify">("");
   const [error, setError] = useState("");
   const [ok, setOk] = useState("");
   const [showPreview, setShowPreview] = useState(false);
@@ -576,7 +575,7 @@ export default function ReceitaC1ExpressPage() {
           ? (remoteCertificateVault
             ? "Senha validada; certificado memorizado de forma criptografada na conta. A senha não foi enviada nem salva."
             : "Certificado memorizado de forma criptografada neste dispositivo. A senha não foi salva.")
-          : "Certificado válido; a senha permanece somente nesta aba."));
+          : "Certificado lido localmente. Isso não verifica uma assinatura qualificada."));
       if (persistenceError) setError(persistenceError);
     } catch {
       setError("Senha incorreta ou certificado inválido.");
@@ -598,46 +597,6 @@ export default function ReceitaC1ExpressPage() {
     setShowUpload(false);
     setOk("Certificado carregado. Verifique a senha correta para memorizá-lo na conta.");
     setError("");
-  }
-
-  // ── Gerar PDF + assinar ───────────────────────────────────────
-  async function gerarEAssinar() {
-    const blocked = electronicRceBlockReason();
-    if (blocked) { setError(blocked); return; }
-    if (!p12 && !(remoteCertificateVault && accountCertificate)) { setError("Certificado não disponível."); return; }
-    if (!senha) { setError("Informe a senha do certificado."); return; }
-    if (!form.paciente || !form.cpf.trim() || !form.idadePaciente || !form.dosesPorDia || !form.medicamento || !form.instrucoes) {
-      setError("Preencha: paciente, CPF (ou passaporte), idade do paciente, doses por dia, medicamento e instruções de uso.");
-      return;
-    }
-    setError(""); setOk(""); setBusy("sign");
-    let persistenceError: string | null = null;
-    try {
-      const { readP12Info, signPdfWithP12, downloadBytes } = await import("@/lib/icpSign");
-      const activeP12 = p12 ?? await unlockCertificateFromAccount(user, accountCertificate!, senha);
-      const info = readP12Info(activeP12, senha);
-      setP12(activeP12);
-      setCertInfo({ commonName: info.commonName, notAfter: info.notAfter });
-      if (p12) persistenceError = await persistirCertificado(activeP12, senha);
-      const pdfBytes = await buildC1TemplatePdfBytes(form, issuer);
-      const signed = await signPdfWithP12(pdfBytes, activeP12, senha, {
-        reason: "Receita de Controle Especial C1",
-        name: pdfSafe(issuer.doctorName) || undefined,
-        location: issuerCityLine(issuer) || undefined,
-        widgetRect: [218, 44, 394, 110],
-        widgetPageIndex: 0,
-        healthDocument: { kind: "prescricao", credentialsLine: issuer.credentialsLine },
-      });
-      downloadBytes(signed, `receita-c1-${dateStamp(false)}-assinada.pdf`);
-      setSenha("");
-      setOk(persistenceError
-        ? "Receita assinada; o certificado não foi memorizado na conta."
-        : "Receita assinada e baixada com sucesso.");
-      if (persistenceError) setError(persistenceError);
-    } catch (error) {
-      const { icpErrorMessage } = await import("@/lib/icpSign");
-      setError(icpErrorMessage(error));
-    } finally { setBusy(""); }
   }
 
   // ── Imprimir 2 vias ───────────────────────────────────────────
@@ -682,11 +641,9 @@ export default function ReceitaC1ExpressPage() {
       {/* ── Header ─────────────────────────────────────────────── */}
       <PageHero
         icon={Pill}
-        eyebrow="receita c1 · emissão rápida"
-        title="Emissão Rápida — Receita C1"
-        subtitle={remoteCertificateVault
-          ? "Preencha a receita e informe a senha do certificado. Após validação local, o administrador pode memorizar o PFX cifrado na conta; a senha nunca é enviada nem salva. Digite a senha e tecle Enter para assinar."
-          : "Preencha a receita e informe a senha do certificado. O administrador pode memorizar o PFX cifrado neste dispositivo; a senha nunca é salva. Digite a senha e tecle Enter para assinar."}
+        eyebrow="receita c1 · preparo rápido"
+        title="Preparo Rápido — Receita C1"
+        subtitle="Prepare os dados, revise a prévia e imprima duas vias. O PDF sem assinatura não é uma receita eletrônica válida."
         gradient="from-primary to-chart-2"
       />
 
@@ -796,7 +753,7 @@ export default function ReceitaC1ExpressPage() {
                 onChange={(e) => setSenha(e.target.value)}
                 placeholder="Digite a senha do .pfx"
                 className="pr-9"
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); if (!busy) void gerarEAssinar(); } }}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); } }}
                 autoComplete="off"
               />
               <button
@@ -1009,16 +966,8 @@ export default function ReceitaC1ExpressPage() {
 
       {/* ── Ações ────────────────────────────────────────────────── */}
       <section className="rounded-2xl border border-border/70 bg-card/80 p-4">
+        <p role="status" className="mb-3 text-sm text-muted-foreground">{C1_UNVERIFIED_BLOCK_REASON}</p>
         <div className="flex flex-wrap gap-2.5">
-          <Button
-            onClick={gerarEAssinar}
-            disabled={!!busy || !p12 || !senha || !!electronicRceBlockReason()}
-            size="default"
-            className="gap-2 font-semibold"
-          >
-            {busy === "sign" ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSignature className="h-4 w-4" />}
-            Assinar e baixar C1
-          </Button>
           <Button
             onClick={imprimirDuasVias}
             variant="outline"
@@ -1056,9 +1005,9 @@ export default function ReceitaC1ExpressPage() {
         </div>
 
         <p className="mt-3 text-xs text-muted-foreground leading-relaxed">
-          A senha nunca é armazenada; a chave privada só é aberta na memória desta aba no momento da assinatura.
+          A senha não é armazenada; a conferência nesta tela só lê o certificado localmente.
           O .pfx do administrador, quando memorizado, fica cifrado (AES-GCM, chave não exportável) somente neste dispositivo.
-          Assinatura no padrão PAdES-BES com certificado A1 ICP-Brasil. Validade da receita: <strong>30 dias</strong>.
+          Este fluxo não gera assinatura digital nem confirma dispensação.
         </p>
       </section>
 

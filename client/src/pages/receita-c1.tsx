@@ -23,7 +23,7 @@ import {
 } from "@/lib/issuer";
 import { dateStamp } from "@/lib/printDocument";
 import { readRouteParam } from "@/lib/routeQuery";
-import { electronicRceBlockReason, electronicRceTransitionNotice } from "@/lib/sncrTransition";
+import { C1_UNVERIFIED_BLOCK_REASON, electronicRceBlockReason, electronicRceTransitionNotice } from "@/lib/sncrTransition";
 
 /* ────────────────────────────────────────────────────────────
    Receita de Controle Especial (Lista C1) — 2 vias
@@ -616,7 +616,7 @@ export default function ReceitaC1Page() {
           widgetRect={[218, 44, 394, 110]}
           widgetPageIndex={0}
           healthDocument={{ kind: "prescricao", credentialsLine: issuer.credentialsLine }}
-          signingBlockedReason={electronicRceBlockReason()}
+          signingBlockedReason={electronicRceBlockReason() ?? C1_UNVERIFIED_BLOCK_REASON}
           archivePdf={async (bytes, meta) => {
             await archiveClinicalPdf({
               bytes,

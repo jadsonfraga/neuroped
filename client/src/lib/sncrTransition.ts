@@ -35,3 +35,8 @@ export function electronicRceTransitionNotice(now: Date | number = Date.now()): 
     ? `Transição SNCR: a C1 eletrônica sem integração ao SNCR é aceita até ${SNCR_RCE_UNINTEGRATED_LAST_DAY_LABEL}. A partir de 04/03/2027, use a impressão com assinatura de próprio punho até a integração oficial.`
     : electronicRceBlockReason(now) ?? "";
 }
+
+/** No approved qualified verification pipeline is connected to the internal C1 composer. */
+export const C1_UNVERIFIED_BLOCK_REASON =
+  "Emissão eletrônica C1 indisponível: o NeuroPed ainda não verifica a assinatura qualificada antes de liberar o PDF. " +
+  "O PDF sem assinatura é um rascunho, não uma receita eletrônica para dispensação.";
