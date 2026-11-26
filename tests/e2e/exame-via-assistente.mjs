@@ -238,7 +238,10 @@ try {
   await medicalNote.clear();
   await firstMedical.getByRole("button", { name: "Registrar falta de material", exact: true }).click();
   assert.match(await professional.page.getByRole("list", { name: "Registros do exame" }).innerText(), /Não aplicado por falta de material/);
-  await firstMedical.getByRole("button", { name: "Abrir recurso da atividade", exact: true }).click();
+  const medicalResource = firstMedical.getByRole("button", { name: "Abrir recurso da atividade", exact: true });
+  assert.equal(await medicalResource.count(), 0, "o recurso não abre com item marcado como não aplicado");
+  await firstMedical.getByLabel("Como foi avaliado · Olhos, face e comunicação", { exact: true }).selectOption("");
+  await medicalResource.click();
   const staticTarget = professional.page.getByRole("dialog", { name: "Alvo visual estático, sem brilho" });
   await staticTarget.getByRole("img", { name: "Bola" }).waitFor();
   await staticTarget.getByRole("button", { name: "Fechar recurso", exact: true }).click();

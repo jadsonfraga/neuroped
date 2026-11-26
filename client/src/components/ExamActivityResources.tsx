@@ -77,7 +77,7 @@ export function ExamResourceChecklist({ activities, title }: { activities: reado
   </details>;
 }
 
-export function ExamActivityResources({ resource, onMissing, alreadyRecorded = false }: { resource: ExamResource; onMissing: () => void; alreadyRecorded?: boolean }) {
+export function ExamActivityResources({ resource, onMissing, alreadyRecorded = false, allowVisual = true }: { resource: ExamResource; onMissing: () => void; alreadyRecorded?: boolean; allowVisual?: boolean }) {
   const visual: Visual | undefined = resource.visual ? examVisuals[resource.visual] : undefined;
   const dialog = useRef<HTMLDialogElement>(null);
   const [presentation, setPresentation] = useState(0);
@@ -89,7 +89,7 @@ export function ExamActivityResources({ resource, onMissing, alreadyRecorded = f
       </ul>
       {!alreadyRecorded && <button type="button" onClick={onMissing} className="min-h-11 rounded-lg border bg-background px-3 text-sm">Registrar falta de material</button>}
     </>}
-    {visual && <>
+    {allowVisual && visual && <>
       <button type="button" onClick={() => dialog.current?.showModal()} className="min-h-11 rounded-lg border bg-background px-3 text-sm font-semibold">Abrir recurso da atividade</button>
       <dialog ref={dialog} aria-label={visual.title} onClose={() => setPresentation(n => n + 1)}
         className="m-auto max-h-[90dvh] w-11/12 max-w-xl overflow-auto rounded-2xl bg-background p-4 text-foreground backdrop:bg-slate-900">
