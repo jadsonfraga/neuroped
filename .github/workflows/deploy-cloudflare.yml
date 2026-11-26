@@ -387,10 +387,9 @@ jobs:
 
       - name: Provisionar bucket LGPD (R2) e binding (idempotente, condicional)
         # O binding LGPD_EXPORT_BUCKET só entra no wrangler.toml desta execução
-        # quando o bucket comprovadamente existe (ou foi criado agora). Sem
-        # permissão R2 no token, o passo declara o bloqueio externo e o deploy
-        # segue sem o binding; o runtime continua fail-closed
-        # (LGPD_BUCKET_NOT_CONFIGURED) e nada é executado "de outro jeito".
+        # quando o bucket está comprovado pela API R2 ou quando o vínculo
+        # esperado já está configurado nos metadados do Pages de produção.
+        # Sem nenhuma dessas provas, declara o bloqueio e não inventa binding.
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -413,7 +412,24 @@ jobs:
                 echo "::error::Falha ao criar o bucket $bucket (HTTP $create)."; exit 1
               fi ;;
             401|403)
-              echo "::warning::BLOCKED_EXTERNAL_R2_TOKEN_PERMISSION — o token CLOUDFLARE_API_TOKEN não tem permissão 'Workers R2 Storage: Edit' (HTTP $code). Sem isso o bucket $bucket não pode ser conferido nem criado; o deploy segue sem o binding e a exportação LGPD permanece fail-closed (docs/audits/BLOCKED_EXTERNAL_CLINICAL_LGPD_PROVISIONING_2026-09-26.md)." ;;
+              # Não contorna a API R2 e não cria o recurso com este token. Um
+              # operador autorizado pode provisionar o bucket e o vínculo uma vez.
+              pages="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/neuroped"
+              meta=$(curl -fsS -H "$auth" "$pages") || {
+                echo "::error::Metadados do Pages indisponíveis; não é possível preservar o vínculo LGPD com segurança."; exit 1;
+              }
+              if ! printf '%s' "$meta" | jq -e '.success == true and (.result.deployment_configs.production | type == "object")' >/dev/null; then
+                echo "::error::Resposta de metadados de produção do Pages inválida."; exit 1
+              fi
+              existing=$(printf '%s' "$meta" | jq -r '.result.deployment_configs.production.r2_buckets.LGPD_EXPORT_BUCKET.name // empty')
+              if [ "$existing" = "$bucket" ]; then
+                echo "Vínculo LGPD existente no Pages de produção confirmado; preservando $bucket sem acesso direto ao R2."
+                available=1
+              elif [ -n "$existing" ]; then
+                echo "::error::Vínculo LGPD de produção não corresponde ao bucket esperado; não será sobrescrito."; exit 1
+              else
+                echo "::warning::BLOCKED_EXTERNAL_R2_TOKEN_PERMISSION — sem acesso ao R2 (HTTP $code) e sem vínculo previamente configurado no Pages de produção. Exportação LGPD permanece fail-closed (docs/audits/BLOCKED_EXTERNAL_CLINICAL_LGPD_PROVISIONING_2026-09-26.md)."
+              fi ;;
             *) echo "::error::Consulta ao bucket $bucket falhou (HTTP $code)."; exit 1 ;;
           esac
           if [ "$available" = "1" ]; then
@@ -481,11 +497,15 @@ jobs:
       - name: Validar health autenticado do backend publicado
         run: |
           set -euo pipefail
+          health_check='.database == "ok" and .authentication.required == true and .authentication.configured == true'
+          if [ "${LGPD_BUCKET_BOUND:-false}" = "true" ]; then
+            health_check+=' and .readiness.lgpdExport.storageBindingPresent == true and .readiness.lgpdExport.configured == true'
+          fi
           ok=0
           for i in $(seq 1 12); do
             if curl -fsSL "https://neuroped.pages.dev/api/health?run=${GITHUB_RUN_ID}&try=$i" \
                  -o /tmp/cloudflare-health.json 2>/dev/null \
-               && jq -e '.database == "ok" and .authentication.required == true and .authentication.configured == true' \
+               && jq -e "$health_check" \
                     /tmp/cloudflare-health.json >/dev/null; then
               ok=1
               break
@@ -493,7 +513,7 @@ jobs:
             sleep 10
           done
           cat /tmp/cloudflare-health.json 2>/dev/null || true
-          [ "$ok" -eq 1 ] || { echo "::error::Backend publicado sem D1/auth plenamente configurados"; exit 1; }
+          [ "$ok" -eq 1 ] || { echo "::error::Backend publicado sem D1/auth ou vínculo LGPD esperado no runtime"; exit 1; }
           echo "✅ HEALTH OK — D1 e autenticação nominal configurados."
 
       - name: Validar CORS restrito do mirror oficial
