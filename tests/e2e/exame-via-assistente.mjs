@@ -138,6 +138,9 @@ try {
   const sentinel = "Registro fictício do ensaio isolado 82715";
   const note = guide.getByLabel("O que aconteceu · Copiar um risco", { exact: true });
   await note.fill(sentinel);
+  await guide.getByRole("button", { name: "Preferiu parar", exact: true }).click();
+  assert.match(await guide.getByRole("list", { name: "Observações temporárias" }).innerText(), /Preferiu parar/);
+  assert.equal(await note.inputValue(), sentinel, "marcar a recusa não substitui o que foi observado");
   assert.equal(await welcome.count(), 0);
   await trail.getByRole("button", { name: "Revisar", exact: true }).press("Enter");
   assert.equal(await note.inputValue(), sentinel, "navegação não apaga o registro");
@@ -166,6 +169,14 @@ try {
   await guide.getByRole("link", { name: "Abrir Observação Social", exact: true }).click();
   await page.getByRole("heading", { name: "Escolher atividade" }).waitFor();
   assert.equal(await page.getByRole("button", { name: "Observação social", exact: true }).getAttribute("aria-pressed"), "true");
+  await page.getByRole("combobox", { name: "Idade na data da observação" }).selectOption({ label: "18–23 meses" });
+  await page.getByRole("button", { name: /Janela do quintal/ }).click();
+  assert.equal(await button("Apresentar no tablet").count(), 0);
+  await button("Registrar sem usar a tela").click();
+  assert.equal(await page.getByText("Somente para revisão do profissional", { exact: true }).count(), 0);
+  await page.getByRole("textbox", { name: "O que você observou presencialmente?" }).fill("Observação objetiva sintética");
+  await page.getByRole("button", { name: /^Revisar sessão/ }).click();
+  await page.getByText(/Observação direta: Observação objetiva sintética/).waitFor();
   for (const target of [MEDICAL, "/prontuario"]) {
     await page.goto(path(origin, target));
     await page.getByRole("heading", { name: "Acesso não autorizado" }).waitFor();

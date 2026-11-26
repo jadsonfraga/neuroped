@@ -91,14 +91,14 @@ export default function ExamePorIdade() {
               <p className="mb-2"><strong>Como examinar. </strong>{item.action}</p>
               <p className="mb-3"><strong>O que observar. </strong>{item.observe}</p>
               <label className="mb-3 block text-sm font-medium">Como foi avaliado · {item.title}
-                <select value={entry?.status ?? ""} onChange={event => dispatch({ type: "record", step: index, status: event.target.value as ExamStatus | "" })}
+                <select aria-label={"Como foi avaliado · " + item.title} value={entry?.status ?? ""} onChange={event => dispatch({ type: "record", step: index, status: event.target.value as ExamStatus | "" })}
                   className="mt-1 block min-h-11 w-full rounded-lg border bg-background p-2">
                   <option value="">Sem classificação</option>
                   {Object.entries(examStatuses).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
                 </select>
               </label>
               <label className="mb-4 block text-sm">Observação temporária · {item.title}
-                <textarea className="mt-1 block w-full rounded-lg border bg-background p-2" rows={2} value={entry?.note ?? ""}
+                <textarea className="mt-1 block w-full rounded-lg border bg-background p-2" rows={2} aria-label={"Observação temporária · " + item.title} value={entry?.note ?? ""}
                   placeholder="Descreva a resposta, o apoio usado ou o limite do que pôde observar."
                   onChange={event => dispatch({ type: "record", step: index, note: event.target.value })} />
               </label>

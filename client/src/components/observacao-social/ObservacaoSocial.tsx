@@ -1,4 +1,5 @@
 import { useEffect, useReducer, useRef, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { ExamWelcome } from "@/components/ExamWelcome";
 import { ExamSessionTrail } from "@/components/ExamSessionTrail";
 import { AssistantAccess, ParticipantPace } from "@/components/AssistantAccess";
@@ -7,7 +8,7 @@ import { AssistantScope } from "@/components/ClinicalAssistantCards";
 import { socialAlternatives } from "@/data/clinicalAssistantGuide";
 import { bands, domains } from "@/data/observacaoSocial";
 import VideoReview from "./VideoReview";
-import { alternativeScene, blank, describeSocialScene, fresh, session } from "./session";
+import { alternativeScene, blank, canInterpretSocialObservation, canPresentSocialCards, describeSocialScene, fresh, session, socialReviewLabel } from "./session";
 
 const stopped = "Participante preferiu parar";
 const noOpportunity = "Oportunidade insuficiente";
@@ -16,10 +17,13 @@ const input = "mt-1 block min-h-12 w-full rounded-lg border bg-background p-3";
 const button = "min-h-12 rounded-lg border bg-background px-4 py-2 font-medium";
 const primary = "min-h-12 rounded-lg bg-primary px-5 py-2 font-semibold text-primary-foreground";
 const panel = "space-y-4 rounded-xl border bg-card p-5";
-const version = "Observação social presencial · NeuroPed v1.7 · Roteiro autoral sem validação psicométrica";
+const version = "Observação social presencial · NeuroPed v1.8 · Roteiro autoral sem validação psicométrica";
 
 export default function ObservacaoSocial({ active = true }: { active?: boolean }) {
   const [{ band, scene, stage, records }, dispatch] = useReducer(session, fresh);
+  const { user } = useAuth();
+  const canInterpret = canInterpretSocialObservation(user?.role);
+  const canPresentCards = canPresentSocialCards(band);
   const [hasOpenedActivity, setHasOpenedActivity] = useState(false);
   const [presentation, setPresentation] = useState(0);
   const [choice, setChoice] = useState("");
@@ -48,7 +52,7 @@ export default function ObservacaoSocial({ active = true }: { active?: boolean }
     return [describeSocialScene(b, s), entry.condition,
       ...assistantObservationLines({ invitation: entry.invitation, reaction: entry.reaction, support: entry.context }),
       entry.video && "Observação em vídeo: " + entry.video,
-      entry.interpretation && "Hipótese do profissional: " + entry.interpretation].filter(Boolean).join("\n");
+      canInterpret && entry.interpretation && "Hipótese do profissional: " + entry.interpretation].filter(Boolean).join("\n");
   }).join("\n\n");
   const report = [version, summary, "Interpretar com história do desenvolvimento e funcionamento em outros ambientes. A sessão isolada não estabelece diagnóstico de TEA."].join("\n\n");
   const title = { choose: "Escolher atividade", prepare: "Preparar a interação", record: "Registrar o que aconteceu", review: "Revisar a sessão" }[stage];
@@ -62,13 +66,14 @@ export default function ObservacaoSocial({ active = true }: { active?: boolean }
     dispatch({ type: "stage", stage: "record" });
   }
   function present() {
+    if (!canPresentCards) return;
     setChoice("");
     document.querySelector<HTMLVideoElement>("#social-record video")?.pause();
     participant.current?.showModal();
   }
   return <article className="mx-auto max-w-3xl space-y-4 pb-8">
     <header>
-      <p className="text-sm text-muted-foreground">Observação social presencial · v1.7</p>
+      <p className="text-sm text-muted-foreground">Observação social presencial · v1.8</p>
       <h1 tabIndex={-1} ref={heading} className="my-2 text-2xl font-bold">{title}</h1>
       {stage !== "choose" && selected && <p>{selected[0]}{stage !== "review" && sceneTitle && " · " + sceneTitle}</p>}
     </header>
@@ -83,7 +88,7 @@ export default function ObservacaoSocial({ active = true }: { active?: boolean }
         <option value="" disabled>Escolha a idade</option>{bands.map(([name], i) => <option key={name} value={i}>{name}</option>)}</select></label>
       {count > 0 && <small>Para iniciar outra sessão, revise e encerre a atual.</small>}
       {selected && !hasOpenedActivity && <ExamWelcome ageLabel={selected[0]} />}
-      {selected && <><AssistantScope /><p>Escolha uma brincadeira. Você pode propor com o tablet, com objetos da sala ou só conversar.</p>
+      {selected && <><AssistantScope /><p>Escolha uma brincadeira. {canPresentCards ? "Você pode propor com o tablet, com objetos da sala ou só conversar." : "Use objetos familiares e o apoio do cuidador. Nesta faixa, não apresente uma tela à criança."}</p>
         {selected[1].map(([name], i) => {
           const entry = records[band + "/" + i];
           return <button key={name} className={button + " block w-full text-left"} onClick={() => openActivity(i)}>
@@ -101,17 +106,17 @@ export default function ObservacaoSocial({ active = true }: { active?: boolean }
         <p className="rounded-xl bg-primary/5 p-3"><strong>Diga: </strong>“{activity[1]}”</p>
         <p><strong>Faça assim. </strong>{activity[3]}</p>
         <p><strong>Anote. </strong>{activity[4]}</p>
-        <ul aria-label="Prévia dos cartões" className="grid grid-cols-2 gap-2">
+        {canPresentCards && <ul aria-label="Prévia dos cartões" className="grid grid-cols-2 gap-2">
           {activity[2].map(item => {
             const [symbol, ...label] = item.split(" ");
             return <li key={item} className="rounded-lg border bg-background p-2 text-center text-sm font-medium">
               <span aria-hidden="true" className="block text-2xl">{symbol}</span>{label.join(" ")}
             </li>;
           })}
-        </ul>
+        </ul>}
       </div>
       <div className="flex flex-wrap gap-2">
-        <button className={primary} onClick={present}>Apresentar no tablet</button>
+        {canPresentCards && <button className={primary} onClick={present}>Apresentar no tablet</button>}
         <button className={button} onClick={() => dispatch({ type: "stage", stage: "record" })}>Registrar sem usar a tela</button>
       </div>
       {selected && <details className="rounded-lg border px-3">
@@ -135,7 +140,7 @@ export default function ObservacaoSocial({ active = true }: { active?: boolean }
       <AssistantAccess key={band + "/alternativa"} />
       <button type="button" className={primary} onClick={() => dispatch({ type: "stage", stage: "record" })}>Registrar esta brincadeira</button>
     </section>}
-    {activity && <dialog ref={participant} aria-label={activity[1]} onClose={() => { setPresentation(n => n + 1); dispatch({ type: "stage", stage: "record" }); }} className="fixed inset-0 m-auto max-h-[90dvh] w-11/12 overflow-y-auto max-w-2xl rounded-xl bg-background p-6 text-foreground backdrop:bg-slate-900">
+    {canPresentCards && activity && <dialog ref={participant} aria-label={activity[1]} onClose={() => { setPresentation(n => n + 1); dispatch({ type: "stage", stage: "record" }); }} className="fixed inset-0 m-auto max-h-[90dvh] w-11/12 overflow-y-auto max-w-2xl rounded-xl bg-background p-6 text-foreground backdrop:bg-slate-900">
       <ParticipantPace key={presentation} closeLabel="Pausar e voltar" onClose={() => participant.current?.close()}>
       <h2 className="text-3xl font-bold">{activity[1]}</h2>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">{activity[2].map(item => {
@@ -158,14 +163,14 @@ export default function ObservacaoSocial({ active = true }: { active?: boolean }
       </details>
       {active && <VideoReview nextClip={() => ++clipSequence.current} value={note.video} onChange={value => dispatch({ type: "edit", field: "video", value })}/>}
       <label className="block">Contexto, apoios e limites de interpretação (opcional)<textarea className={input} rows={2} value={note.context} onChange={e => dispatch({ type: "edit", field: "context", value: e.target.value })}/></label>
-      <details className="rounded-lg border p-3"><summary className="cursor-pointer font-medium">Somente para revisão do profissional</summary>
-      <label className="mt-2 block">Hipótese interpretativa do profissional (opcional)<textarea className={input} rows={2} value={note.interpretation} onChange={e => dispatch({ type: "edit", field: "interpretation", value: e.target.value })}/></label></details>
+      {canInterpret && <details className="rounded-lg border p-3"><summary className="cursor-pointer font-medium">Somente para revisão do profissional</summary>
+      <label className="mt-2 block">Hipótese interpretativa do profissional (opcional)<textarea className={input} rows={2} value={note.interpretation} onChange={e => dispatch({ type: "edit", field: "interpretation", value: e.target.value })}/></label></details>}
       <div className="flex flex-wrap gap-2"><button className={primary} onClick={() => dispatch({ type: "stage", stage: "choose" })}>Voltar às atividades</button>
-        {activity && <button className={button} onClick={present}>Reapresentar situação</button>}</div>
+        {canPresentCards && activity && <button className={button} onClick={present}>Reapresentar situação</button>}</div>
     </section>}
     {stage !== "review" && <nav aria-label="Navegação da sessão" className="flex flex-wrap gap-2">
       {stage === "prepare" && <button className={button} onClick={() => dispatch({ type: "stage", stage: "choose" })}>Voltar às atividades</button>}
-      {count > 0 && <button className={button} onClick={() => dispatch({ type: "stage", stage: "review" })}>Revisar sessão ({count} de {records[band + "/" + alternativeScene] ? 4 : 3} com registro)</button>}
+      {count > 0 && <button className={button} onClick={() => dispatch({ type: "stage", stage: "review" })}>{socialReviewLabel(count)}</button>}
     </nav>}
     {stage === "review" && <section className={panel}>
       <p>Revise a descrição antes de transferi-la para o prontuário. Encerrar apaga os registros desta página.</p>

@@ -49,7 +49,7 @@ export const examExamples: Record<string, readonly [ExamExample, ExamExample]> =
     example("story", "Passeio do boneco", "Use o boneco e dois lugares desenhados no papel.", "Para onde ele vai primeiro?", "Descreva como indicou o destino e qualquer ajuda que você deu."),
   ],
   "4 anos": [
-    example("story", "História de dois desenhos", "Mostre duas imagens de uma ação cotidiana, sem uma ordem obrigatória.", "O que você acha que aconteceu aqui?", "Anote o que contou ou mostrou, incluindo alguma pista que pediu."),
+    example("story", "História de dois desenhos", "Mostre as figuras de garrafa e copo. Elas são objetos para imaginar uma cena, sem ordem obrigatória.", "Que história dá para imaginar com estes dois objetos?", "Anote o que contou ou mostrou, incluindo alguma pista que pediu."),
     example("choice", "Traços à escolha", "Mostre um traço reto e outro ondulado no papel, com lápis grosso à disposição.", "Qual desses você quer tentar?", "Descreva a escolha e como fez o traço, sem corrigir a execução."),
   ],
   "5 anos": [
@@ -58,7 +58,7 @@ export const examExamples: Record<string, readonly [ExamExample, ExamExample]> =
   ],
   "6 a 8 anos": [
     example("hand", "Trajeto no papel", "Desenhe dois caminhos largos entre figuras; ofereça lápis ou aceite indicação por gesto.", "Escolha um caminho e me mostre como seguir.", "Anote a estratégia e se precisou de repetição ou de apoio visual."),
-    example("book", "Notícia de um minuto", "Use três figuras de uma atividade de que a criança goste.", "Qual dessas você usaria para contar como foi sua manhã?", "Descreva como organizou a explicação e que apoio escolheu."),
+    example("book", "Notícia de um minuto", "Mostre as figuras de sol, livro e pipa. A criança pode usar outra ideia ou não escolher nenhuma.", "Quer escolher uma figura para começar a contar como foi sua manhã?", "Descreva como organizou a explicação e que apoio escolheu."),
   ],
   "9 a 11 anos": [
     example("story", "Explicar um jogo", "Ofereça papel para desenhar ou escrever, sem exigir leitura.", "Como você ensinaria seu jogo favorito a alguém novo?", "Anote a sequência apresentada e se a pessoa usou desenho, gesto ou fala."),

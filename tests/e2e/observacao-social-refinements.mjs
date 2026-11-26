@@ -47,9 +47,7 @@ try {
   assert.match(await step.textContent(), /Escolher/);
   assert.equal(await age.isDisabled(), false);
   await page.setViewportSize({ width: 768, height: 1024 });
-  await age.selectOption({ label: "12–17 meses" });
-  assert.equal(await page.getByRole("button", { name: "Mostrar cartão de chegada" }).count(), 0);
-  await page.getByRole("button", { name: /Cesto de figuras/ }).click();
+  await page.getByRole("button", { name: /Dica para o colega/ }).click();
   assert.match(await step.textContent(), /Preparar/);
   await button("Apresentar no tablet").click();
   const stimulus = page.getByRole("dialog");
@@ -59,6 +57,15 @@ try {
   await stimulus.waitFor({ state: "hidden" });
   assert.match(await step.textContent(), /Registrar/);
   assert.equal(await page.locator("#social-record input:checked").count(), 0);
+  await button("Voltar às atividades").click();
+  await age.selectOption({ label: "12–17 meses" });
+  assert.equal(await button("Mostrar cartão de chegada").count(), 0);
+  await page.getByRole("button", { name: /Cesto de figuras/ }).click();
+  assert.equal(await button("Apresentar no tablet").count(), 0);
+  assert.equal(await page.getByRole("list", { name: "Prévia dos cartões" }).count(), 0);
+  await button("Registrar sem usar a tela").click();
+  assert.equal(await button("Reapresentar situação").count(), 0);
+  await page.getByText("Somente para revisão do profissional", { exact: true }).waitFor();
   const toggle = page.locator("summary").filter({ hasText: "Revisar vídeo local" });
   const clip = page.locator("#social-record video");
   const loadClip = async () => {
@@ -101,7 +108,7 @@ try {
   await button("Voltar às atividades").click();
   await page.getByRole("button", { name: /Dois caminhos/ }).click();
   await button("Participante preferiu parar").click();
-  await page.getByRole("button", { name: /Revisar sessão \(3 de 3 com registro\)/ }).click();
+  await page.getByRole("button", { name: /Revisar sessão \(3 registros\)/ }).click();
   assert.match(await step.textContent(), /Revisar/);
   const review = page.getByText(/Observação em vídeo: Observação exclusivamente sintética/);
   await review.waitFor();

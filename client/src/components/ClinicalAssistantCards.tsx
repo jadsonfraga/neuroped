@@ -5,7 +5,7 @@ import { ExamActivityResources } from "./ExamActivityResources";
 import type { ExamExample } from "@/data/clinicalAssistantGuide";
 
 import { ParticipantPace } from "./AssistantAccess";
-import { assistantObservationLines, type AssistantObservation } from "@/lib/assistantObservation";
+import { assistantObservationLines, participationOutcomes, type AssistantObservation } from "@/lib/assistantObservation";
 
 const icons = { face: Smile, hand: Hand, book: BookOpen, choice: Layers, turn: Repeat2, story: MessageCircle };
 const button = "min-h-12 rounded-xl border bg-background px-4 py-2 text-sm font-semibold";
@@ -39,6 +39,16 @@ export function ClinicalAssistantCard({ example, note, onNote, canPresent, resou
       {note.outcome === "materials-missing" && <div className="text-sm" role="status">
         Não aplicado: faltou material. <button type="button" onClick={() => onNote("outcome", "")} className="min-h-11 underline">Retirar marcação</button>
       </div>}
+      {note.outcome !== "materials-missing" && <fieldset className="space-y-2">
+        <legend className="text-sm font-semibold">Se não der para seguir</legend>
+        <p className="text-sm text-muted-foreground">Marque só o que ocorreu. Uma pausa ou falta de oportunidade não apaga o que você já observou.</p>
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(participationOutcomes).map(([outcome, label]) => <button key={outcome} type="button"
+            aria-pressed={note.outcome === outcome}
+            className={button + " aria-pressed:border-primary aria-pressed:bg-primary/10"}
+            onClick={() => onNote("outcome", note.outcome === outcome ? "" : outcome)}>{label.slice(0, -1)}</button>)}
+        </div>
+      </fieldset>}
       <p className="text-sm"><strong>Faça assim. </strong>{example.material}</p>
       <p className="rounded-lg bg-primary/5 p-3"><strong>Diga: </strong>“{example.say}”</p>
       <p className="text-sm"><strong>Anote. </strong>{example.observe}</p>
@@ -54,18 +64,18 @@ export function ClinicalAssistantCard({ example, note, onNote, canPresent, resou
         </dialog>
       </>}
       <label className="block text-sm font-medium">O que aconteceu · {example.title}
-        <textarea className="mt-1 block w-full rounded-lg border bg-background p-3" value={note.reaction} disabled={note.outcome === "materials-missing"} rows={2}
+        <textarea className="mt-1 block w-full rounded-lg border bg-background p-3" aria-label={"O que aconteceu · " + example.title} value={note.reaction} disabled={note.outcome === "materials-missing"} rows={2}
           placeholder="Ex.: pegou o giz e pediu outra folha."
           onChange={event => onNote("reaction", event.target.value)} />
       </label>
       <details className="rounded-lg border px-3">
         <summary className="flex min-h-12 cursor-pointer items-center text-sm font-semibold">Acrescentar proposta e apoio</summary>
         <label className="mb-3 block text-sm font-medium">O que foi oferecido · {example.title}
-          <textarea className="mt-1 block w-full rounded-lg border bg-background p-3" value={note.invitation} disabled={note.outcome === "materials-missing"} rows={2}
+          <textarea className="mt-1 block w-full rounded-lg border bg-background p-3" aria-label={"O que foi oferecido · " + example.title} value={note.invitation} disabled={note.outcome === "materials-missing"} rows={2}
             onChange={event => onNote("invitation", event.target.value)} />
         </label>
         <label className="mb-3 block text-sm font-medium">Apoio ou contexto · {example.title}
-          <textarea className="mt-1 block w-full rounded-lg border bg-background p-3" value={note.support} rows={2}
+          <textarea className="mt-1 block w-full rounded-lg border bg-background p-3" aria-label={"Apoio ou contexto · " + example.title} value={note.support} rows={2}
             onChange={event => onNote("support", event.target.value)} />
         </label>
       </details>

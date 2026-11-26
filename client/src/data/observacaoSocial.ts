@@ -6,7 +6,7 @@ export const bands: [string, Scene[]][] = [
       "Cesto de figuras",
       "Olha! Qual bichinho?",
       ["🐱 Gato", "🐦 Pássaro"],
-      "Deixe as figuras ao alcance visual. Faça o som do animal que atraiu a criança e pare, mantendo o tablet junto ao cuidador.",
+      "Use figuras impressas de animais ou brinquedos grandes familiares. O cuidador acompanha o interesse da criança, faz um som conhecido e aguarda.",
       "Depois do som, descreva para onde se orientou, se repetiu o som ou se tentou envolver alguém. Registre quem iniciou a troca.",
       "Se as figuras não despertarem interesse, use um bichinho familiar. O cuidador pode aproximá-lo sem conduzir a mão da criança."
     ],
@@ -22,9 +22,9 @@ export const bands: [string, Scene[]][] = [
       "Dois caminhos",
       "Aqui ou ali?",
       ["🌳 Árvore", "🌼 Flor"],
-      "Faça dois dedos passearem até a árvore. Pare no meio e deixe a criança indicar se o passeio continua ali ou vai até a flor.",
-      "Descreva se acompanhou o percurso, indicou um destino, afastou o tablet ou precisou que os destinos fossem mostrados separadamente.",
-      "Se a tela pequena dificultar a escolha, use dois objetos grandes e familiares sobre a mesa."
+      "Com duas figuras impressas ou dois objetos grandes familiares, o cuidador indica um destino, pausa e deixa a criança continuar, mudar ou encerrar.",
+      "Descreva se acompanhou o movimento, indicou um destino, afastou o material ou precisou que cada opção fosse mostrada separadamente.",
+      "Se as figuras não forem úteis, use dois objetos grandes e familiares sobre uma superfície estável."
     ]
   ]],
   ["18–23 meses", [
@@ -32,7 +32,7 @@ export const bands: [string, Scene[]][] = [
       "Janela do quintal",
       "Quem está aqui?",
       ["🐦 Ave", "🐈 Gato"],
-      "Sente-se ao lado do cuidador. Mostre o quintal, acompanhe a figura que chamou atenção e deixe o cuidador fazer um comentário curto.",
+      "Use uma página de livro ou figuras impressas de animais. O cuidador acompanha o interesse da criança, faz um comentário curto e espera.",
       "Descreva se a criança aproximou a figura, fez um som dirigido ao cuidador ou continuou explorando sozinha após o comentário.",
       "Se não reconhecer o animal, o cuidador pode usar seu nome habitual ou mostrar um brinquedo conhecido."
     ],
@@ -48,9 +48,9 @@ export const bands: [string, Scene[]][] = [
       "Passeio do dedo",
       "Vamos até onde?",
       ["🌊 Água", "🌿 Folha"],
-      "Deslize o dedo até a figura escolhida. Na volta, mostre a outra e deixe disponíveis os dois destinos.",
+      "Use dois destinos em papel ou dois objetos grandes familiares. O cuidador indica o primeiro e depois oferece a outra opção, sem exigir troca.",
       "Registre como indicou repetir o destino, mudar ou parar, e se a segunda oferta foi percebida.",
-      "Se arrastar o dedo for difícil, o adulto faz o percurso a partir de uma vocalização ou gesto."
+      "Aceite olhar, gesto ou vocalização. Se a criança indicar, o cuidador pode mostrar o destino sem conduzir a mão."
     ]
   ]],
   ["24–29 meses", [
