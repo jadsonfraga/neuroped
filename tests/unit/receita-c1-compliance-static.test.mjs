@@ -17,8 +17,13 @@ for (const path of pages) {
   // Título medido para caber na faixa bordô.
   assert.match(src, /widthOfTextAtSize\(tituloC1, tituloSize\)/, `${path}: título C1 sem ajuste de largura`);
   // OIDs ITI de prescrição e trava SNCR.
-  assert.match(src, /healthDocument[=:]\s*\{\{?\s*kind: "prescricao"/, `${path}: metadados ITI ausentes`);
-  assert.match(src, /electronicRceBlockReason\(\)/, `${path}: trava de transição SNCR ausente`);
+  if (path.endsWith("/receita-c1.tsx")) {
+    assert.match(src, /healthDocument[=:]\s*\{\{?\s*kind: "prescricao"/, `${path}: metadados ITI ausentes`);
+    assert.match(src, /signingBlockedReason=\{electronicRceBlockReason\(\) \?\? C1_UNVERIFIED_BLOCK_REASON\}/);
+  } else {
+    assert.match(src, /C1_UNVERIFIED_BLOCK_REASON/);
+    assert.doesNotMatch(src, /signPdfWithP12|gerarEAssinar|Assinar e baixar C1/);
+  }
   assert.match(src, /Identificação do comprador/, `${path}: bloco do comprador ausente na impressão`);
   assert.match(src, /Identificação do fornecedor/, `${path}: bloco do fornecedor ausente na impressão`);
 }

@@ -10,6 +10,7 @@ import { DatabaseSync } from "node:sqlite";
 import { pathToFileURL } from "node:url";
 import { startStaticServer } from "../../../scripts/lib/browser-audit-runtime.mjs";
 
+const c1Suite = process.argv[2] === "--c1-safety";
 const operatorSuite = process.argv[2] === "--agenda-operator";
 const agendaSuite = process.argv[2] === "--agenda" || operatorSuite;
 const loseAgendaResponse = process.env.AGENDA_FAULT_LOST_RESPONSE === "1";
@@ -17,9 +18,9 @@ assert.ok(!loseAgendaResponse || (agendaSuite && !operatorSuite));
 let agendaCreateCount = 0;
 const doseSuite = process.argv[2] === "--prontuario-dose";
 const prontuarioSuite = process.argv[2] === "--prontuario" || doseSuite;
-assert.ok(process.argv.length === 2 || (process.argv.length === 3 && (agendaSuite || prontuarioSuite)));
+assert.ok(process.argv.length === 2 || (process.argv.length === 3 && (agendaSuite || prontuarioSuite || c1Suite)));
 const fault = process.env.SCALE_RETRY_FAULT;
-assert.ok(!(agendaSuite || prontuarioSuite) || !fault, "Não combine a agenda com falhas de escalas");
+assert.ok(!(agendaSuite || prontuarioSuite || c1Suite) || !fault, "Não combine a agenda com falhas de escalas");
 let nextFault = fault;
 const prontuarioFault = process.env.PRONTUARIO_FAULT_LOST_RESPONSE;
 assert.ok([undefined, "create", "correct"].includes(prontuarioFault));
@@ -143,7 +144,7 @@ try {
     res.end(Buffer.from(await response.arrayBuffer()));
     return true;
   }});
-  const test = operatorSuite ? "tests/e2e/live-agenda-operator-draft.mjs" : agendaSuite ? "tests/e2e/live-agenda.mjs" : doseSuite ? "tests/e2e/live-prontuario-dose-unit.mjs" : prontuarioSuite ? "tests/e2e/live-prontuario-save.mjs" : "tests/e2e/live-scale-save-retry.mjs";
+  const test = c1Suite ? "tests/e2e/live-c1-unverified-block.mjs" : operatorSuite ? "tests/e2e/live-agenda-operator-draft.mjs" : agendaSuite ? "tests/e2e/live-agenda.mjs" : doseSuite ? "tests/e2e/live-prontuario-dose-unit.mjs" : prontuarioSuite ? "tests/e2e/live-prontuario-save.mjs" : "tests/e2e/live-scale-save-retry.mjs";
   process.exitCode = await run([test], { ...env, LIVE_DISCOVERY_URL: server.origin });
   if (process.exitCode === 0) {
     assert.equal(nextFault, undefined, "a falha solicitada não foi exercitada");

@@ -434,7 +434,7 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
       {cert && (
         <div className="mt-3 rounded-lg border border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/30 p-2.5 text-xs">
           <p className="font-semibold text-emerald-800 dark:text-emerald-200 flex items-center gap-1">
-            <CheckCircle2 className="w-3.5 h-3.5" /> Certificado válido
+            <CheckCircle2 className="w-3.5 h-3.5" /> {signingBlockedReason ? "Certificado lido localmente" : "Certificado válido"}
           </p>
           <p className="text-emerald-900/80 dark:text-emerald-200/80">Titular: {cert.commonName}</p>
           <p className="text-emerald-900/80 dark:text-emerald-200/80">Emissor: {cert.issuer}</p>
