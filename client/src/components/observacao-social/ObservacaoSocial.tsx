@@ -1,4 +1,5 @@
 import { useEffect, useReducer, useRef, useState } from "react";
+import { ExamWelcome } from "@/components/ExamWelcome";
 import { ExamSessionTrail } from "@/components/ExamSessionTrail";
 import { AssistantAccess, ParticipantPace } from "@/components/AssistantAccess";
 import { assistantObservationLines } from "@/lib/assistantObservation";
@@ -19,6 +20,7 @@ const version = "Observação social presencial · NeuroPed v1.7 · Roteiro auto
 
 export default function ObservacaoSocial({ active = true }: { active?: boolean }) {
   const [{ band, scene, stage, records }, dispatch] = useReducer(session, fresh);
+  const [hasOpenedActivity, setHasOpenedActivity] = useState(false);
   const [presentation, setPresentation] = useState(0);
   const [choice, setChoice] = useState("");
   const [copyStatus, setCopyStatus] = useState("");
@@ -50,6 +52,10 @@ export default function ObservacaoSocial({ active = true }: { active?: boolean }
   }).join("\n\n");
   const report = [version, summary, "Interpretar com história do desenvolvimento e funcionamento em outros ambientes. A sessão isolada não estabelece diagnóstico de TEA."].join("\n\n");
   const title = { choose: "Escolher atividade", prepare: "Preparar a interação", record: "Registrar o que aconteceu", review: "Revisar a sessão" }[stage];
+  function openActivity(scene: number) {
+    setHasOpenedActivity(true);
+    dispatch({ type: "open", scene });
+  }
   function recordWithoutPresenting(condition: typeof stopped | typeof noOpportunity) {
     if (existingNote) return;
     dispatch({ type: "edit", field: "condition", value: condition });
@@ -73,17 +79,18 @@ export default function ObservacaoSocial({ active = true }: { active?: boolean }
       { id: "review", label: "Revisar" },
     ]} />
     {stage === "choose" && <section className={panel}>
-      <label className="block font-medium">Idade na data da observação<select className={input} disabled={count > 0} value={band ?? ""} onChange={e => dispatch({ type: "age", band: Number(e.target.value) })}>
+      <label className="block font-medium">Idade na data da observação<select className={input} disabled={count > 0} value={band ?? ""} onChange={e => { setHasOpenedActivity(false); dispatch({ type: "age", band: Number(e.target.value) }); }}>
         <option value="" disabled>Escolha a idade</option>{bands.map(([name], i) => <option key={name} value={i}>{name}</option>)}</select></label>
       {count > 0 && <small>Para iniciar outra sessão, revise e encerre a atual.</small>}
+      {selected && !hasOpenedActivity && <ExamWelcome ageLabel={selected[0]} />}
       {selected && <><AssistantScope /><p>Escolha uma brincadeira. Você pode propor com o tablet, com objetos da sala ou só conversar.</p>
         {selected[1].map(([name], i) => {
           const entry = records[band + "/" + i];
-          return <button key={name} className={button + " block w-full text-left"} onClick={() => dispatch({ type: "open", scene: i })}>
+          return <button key={name} className={button + " block w-full text-left"} onClick={() => openActivity(i)}>
             <strong className="block">{name}</strong><span className="text-sm">{domains[i][0]}{entry && " · " + (entry.condition || "Com anotação")}</span>
           </button>;
         })}
-        <button type="button" className={button + " block w-full text-left"} onClick={() => dispatch({ type: "open", scene: alternativeScene })}>
+        <button type="button" className={button + " block w-full text-left"} onClick={() => openActivity(alternativeScene)}>
           <strong className="block">Brincadeira sem tela</strong>
           <span className="text-sm">{records[band + "/" + alternativeScene] ? "Com registro próprio" : "Uma proposta presencial para esta idade"}</span>
         </button></>}
@@ -110,7 +117,7 @@ export default function ObservacaoSocial({ active = true }: { active?: boolean }
       {selected && <details className="rounded-lg border px-3">
         <summary className="cursor-pointer py-2 font-medium">Outra brincadeira sem tela · {selected[0]}</summary>
         <p className="pb-2">{socialAlternatives[selected[0]]}</p>
-        <button type="button" className={button + " mb-3"} onClick={() => dispatch({ type: "open", scene: alternativeScene })}>Abrir brincadeira sem tela</button>
+        <button type="button" className={button + " mb-3"} onClick={() => openActivity(alternativeScene)}>Abrir brincadeira sem tela</button>
       </details>}
       <AssistantAccess key={band + "/" + scene} />
       <details><summary className="cursor-pointer py-2">Adaptar esta atividade</summary><p>{activity[5]}</p><p>Toque, fala, gesto ou comunicação alternativa são opcionais. Não conduza a mão, não peça contato visual e respeite uma pausa ou recusa.</p></details>
@@ -169,7 +176,7 @@ export default function ObservacaoSocial({ active = true }: { active?: boolean }
           catch { setCopyStatus("Selecione o texto da síntese e use a opção Copiar do dispositivo."); }
         }}>Copiar síntese</button>
         <button className={button} onClick={() => dispatch({ type: "stage", stage: "choose" })}>Voltar às atividades</button>
-        <button className={button} onClick={() => { if (window.confirm("Encerrar e apagar os registros desta sessão?")) { clipSequence.current = 0; dispatch({ type: "reset" }); } }}>Encerrar e limpar</button>
+        <button className={button} onClick={() => { if (window.confirm("Encerrar e apagar os registros desta sessão?")) { clipSequence.current = 0; setHasOpenedActivity(false); dispatch({ type: "reset" }); } }}>Encerrar e limpar</button>
       </div><p role="status">{copyStatus}</p>
     </section>}
   </article>;

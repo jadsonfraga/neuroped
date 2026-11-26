@@ -1,5 +1,6 @@
 import { useReducer, useRef, useState } from "react";
 import { AssistantScope, ClinicalAssistantCard } from "@/components/ClinicalAssistantCards";
+import { ExamWelcome } from "@/components/ExamWelcome";
 import { ExamSessionTrail } from "@/components/ExamSessionTrail";
 import { AssistantAccess } from "@/components/AssistantAccess";
 import { assistantObservationLines, emptyAssistantObservation, type AssistantObservation } from "@/lib/assistantObservation";
@@ -44,6 +45,7 @@ export default function ExamePorIdade() {
       </div>
       {hasRecords && <p id="exam-age-locked" className="text-sm text-muted-foreground">Faixa vinculada aos registros. Para iniciar outro exame, revise e encerre este.</p>}
       {band && <div key={band.age} className="space-y-3">
+        {!hasRecords && <ExamWelcome ageLabel={band.age} />}
         <ExamSessionTrail steps={[
           { id: "prepare", label: "Preparar", target: "exam-prepare" },
           { id: "activities", label: "Atividades", target: "exam-simple" },

@@ -35,7 +35,20 @@ try {
   const step = page.getByRole("group", { name: "Trilha da sessão" }).locator('[aria-current="step"]');
   assert.match(await step.textContent(), /Escolher/);
   const age = page.getByRole("combobox", { name: "Idade na data da observação" });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await age.selectOption({ label: "8 anos" });
+  await page.getByRole("button", { name: "Mostrar cartão de chegada" }).tap();
+  const welcome = page.getByRole("dialog", { name: "Estação de chegada" });
+  await welcome.waitFor();
+  const bounds = await welcome.boundingBox();
+  assert.ok(bounds && bounds.x >= 0 && bounds.x + bounds.width <= 390, "acolhimento cabe na tela estreita");
+  await welcome.getByRole("button", { name: "Fechar acolhimento" }).tap();
+  await welcome.waitFor({ state: "hidden" });
+  assert.match(await step.textContent(), /Escolher/);
+  assert.equal(await age.isDisabled(), false);
+  await page.setViewportSize({ width: 768, height: 1024 });
   await age.selectOption({ label: "12–17 meses" });
+  assert.equal(await page.getByRole("button", { name: "Mostrar cartão de chegada" }).count(), 0);
   await page.getByRole("button", { name: /Cesto de figuras/ }).click();
   assert.match(await step.textContent(), /Preparar/);
   await button("Apresentar no tablet").click();
@@ -77,6 +90,7 @@ try {
   await toggle.click();
   assert.equal(await note.inputValue(), "Observação exclusivamente sintética");
   await button("Voltar às atividades").click();
+  assert.equal(await page.getByRole("region", { name: "Acolhimento opcional" }).count(), 0);
   await page.getByRole("button", { name: /Cesto de figuras/ }).click();
   assert.equal(await button("Oportunidade insuficiente").count(), 0, "atalho não sobrescreve atividade que já tem anotação");
   await button("Voltar às atividades").click();

@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { Link } from "wouter";
+import { ExamWelcome } from "@/components/ExamWelcome";
 import { ExamSessionTrail } from "@/components/ExamSessionTrail";
 import { AssistantAccess } from "@/components/AssistantAccess";
 import { AssistantScope, ClinicalAssistantCard } from "@/components/ClinicalAssistantCards";
@@ -61,6 +62,7 @@ export default function ExameViaAssistente() {
         Para mudar de faixa ou iniciar outra atividade, revise e encerre este registro.
       </p>}
       {band !== null && ageLabel && <>
+        {!hasRecords && <ExamWelcome ageLabel={ageLabel} />}
         <ExamSessionTrail steps={[
           { id: "prepare", label: "Preparar", target: "assistant-exam-prepare" },
           { id: "activities", label: "Atividades", target: "assistant-exam-activities" },
