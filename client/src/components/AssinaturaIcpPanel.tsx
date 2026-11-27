@@ -89,7 +89,7 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
   const { user } = useAuth();
   const vaultAllowed = canUseCertificateVault(user);
   const remoteCertificateVault = isAccountWorkspaceRemoteMode();
-  const [rememberCert, setRememberCert] = useState(true);
+  const [rememberCert, setRememberCert] = useState(false);
   const [stored, setStored] = useState(false);
   const [accountCertificate, setAccountCertificate] = useState<AccountCertificateEnvelope | null>(null);
 
@@ -220,7 +220,7 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
           ? (remoteCertificateVault
             ? "Senha validada; certificado memorizado de forma criptografada na conta. A senha não foi enviada nem salva."
             : "Certificado memorizado de forma criptografada neste dispositivo. A senha não foi salva.")
-          : "Certificado válido; a senha permanece somente nesta aba."));
+          : "Senha do certificado validada localmente; a cadeia ICP-Brasil não foi verificada."));
       if (persistenceError) setErro(persistenceError);
     } catch (error) {
       setErro(signingErrorMessage(error));
@@ -280,7 +280,7 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
         widgetPageIndex,
         healthDocument,
       });
-      downloadBytes(signed, `${filename}-assinado.pdf`);
+      downloadBytes(signed, `${filename}-assinatura-nao-validada.pdf`);
       setSenha("");
       if (archivePdf) {
         try {
@@ -292,16 +292,16 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
             certificateIssuer: certificateInfo.issuer,
             certificateValidUntil: certificateInfo.notAfter.toISOString(),
           });
-          setOkMsg("Documento assinado, baixado e arquivado com retenção permanente.");
+          setOkMsg("PDF assinado localmente e arquivado; confira a validação independente antes de emitir.");
         } catch (archiveError) {
-          setOkMsg("Documento assinado e baixado; o arquivamento não foi concluído.");
+          setOkMsg("PDF assinado localmente; validação ICP-Brasil e arquivamento não concluídos. Não emitir.");
           setErro(archiveError instanceof Error ? archiveError.message : "Storage indisponível para arquivar o PDF.");
         }
       } else {
-        setOkMsg("Documento assinado e baixado com sucesso.");
+        setOkMsg("PDF assinado localmente, sem validação independente. Não emitir antes de validar.");
       }
       if (persistenceError) {
-        setOkMsg("Documento assinado; o certificado não foi memorizado na conta.");
+        setOkMsg("PDF assinado localmente, sem validação independente; certificado não memorizado.");
         setErro(persistenceError);
       }
       await gerarComprovante(signed);
@@ -385,7 +385,7 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
             data-testid="input-p12-senha"
             autoComplete="off"
             onKeyDown={(e) => {
-              if (e.key === "Enter") { e.preventDefault(); if (!busy && (p12 || accountCertificate)) void gerarEAssinar(); }
+              if (e.key === "Enter") e.preventDefault();
             }}
           />
         </div>
@@ -434,7 +434,7 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
       {cert && (
         <div className="mt-3 rounded-lg border border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/30 p-2.5 text-xs">
           <p className="font-semibold text-emerald-800 dark:text-emerald-200 flex items-center gap-1">
-            <CheckCircle2 className="w-3.5 h-3.5" /> Certificado válido
+            <CheckCircle2 className="w-3.5 h-3.5" /> Senha validada localmente
           </p>
           <p className="text-emerald-900/80 dark:text-emerald-200/80">Titular: {cert.commonName}</p>
           <p className="text-emerald-900/80 dark:text-emerald-200/80">Emissor: {cert.issuer}</p>
@@ -503,8 +503,7 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
       )}
 
       <p className="mt-3 text-[10px] text-muted-foreground leading-snug">
-        Perfil PAdES-BES com seu certificado A1 ICP-Brasil. A chave privada e a senha permanecem
-        somente na memória da aba atual e são descartadas ao recarregar ou fechar a página.
+        A assinatura local não comprova cadeia ICP-Brasil, revogação ou vínculo com o médico. Não emita o PDF antes de validação independente. A senha não é persistida; se optar por memorizar, o PFX cifrado permanece no cofre da conta ou do dispositivo.
       </p>
     </section>
   );

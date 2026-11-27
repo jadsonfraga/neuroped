@@ -130,6 +130,19 @@ export function registerDocumentRoutes(app: Express): void {
           return res.status(409).json({ error: "Este PDF ja esta arquivado como documento clinico", code: "DOCUMENT_ALREADY_REGISTERED", documentId: existing.id });
         }
 
+        // The client cannot attest to PAdES integrity, ICP-Brasil trust or signer identity.
+        // Fail closed until a server-side verifier is available; hashes alone are not signatures.
+        if (parsed.signatureStatus !== "unsigned" || [
+          parsed.signatureType, parsed.signatureAlgorithm, parsed.signerName,
+          parsed.certificateSubject, parsed.certificateIssuer,
+          parsed.certificateSerial, parsed.certificateValidUntil,
+        ].some(value => value != null)) {
+          return res.status(503).json({
+            error: "Validação criptográfica ICP-Brasil indisponível; o documento não foi arquivado como assinado.",
+            code: "SIGNATURE_VERIFIER_UNAVAILABLE",
+          });
+        }
+
         const created = db.insert(clinicalDocuments).values({
           ownerUserId: (req as any).user!.id,
           patientId: parsed.patientId ?? file.patientId ?? null,

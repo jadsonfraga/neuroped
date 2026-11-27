@@ -157,6 +157,9 @@ async function archiveInClinicalLive(
 
 export async function archiveClinicalPdf(params: ArchiveClinicalPdfParams): Promise<ArchivedClinicalDocument> {
   if (!params.bytes.length) throw new Error("O PDF esta vazio.");
+  if (params.signatureStatus === "signed" || params.signatureStatus === "verified") {
+    throw new Error("Validação ICP-Brasil no servidor indisponível. PDF local não arquivado nem publicado como assinado.");
+  }
 
   // Em produção remota, a clínica ativa é a fronteira tenant. PDFs pequenos
   // (receitas e relatórios compactos) ficam dentro do Clinical Core LIVE,

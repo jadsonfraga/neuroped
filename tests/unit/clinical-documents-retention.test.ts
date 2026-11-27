@@ -124,16 +124,26 @@ try {
   assert.equal(pendingCreate.status, 409);
   assert.equal((await pendingCreate.json()).code, "FILE_NOT_CONFIRMED");
 
+  // A hash matching an unsigned PDF cannot substantiate any signature claim.
+  for (const signatureStatus of ["signed", "verified"]) {
+    const forged = await request("/api/documents", {
+      method: "POST",
+      body: JSON.stringify({
+        fileId, documentType: "receita", title: "Teste sintético",
+        signatureStatus, sha256,
+      }),
+    });
+    assert.equal(forged.status, 503);
+    assert.equal((await forged.json()).code, "SIGNATURE_VERIFIER_UNAVAILABLE");
+  }
+
   const create = await request("/api/documents", {
     method: "POST",
     body: JSON.stringify({
       fileId,
       documentType: "receita",
       title: "Receita de teste",
-      signatureStatus: "signed",
-      signatureType: "ICP-Brasil A1 / PAdES",
-      signatureAlgorithm: "ETSI.CAdES.detached",
-      signerName: "Profissional Teste",
+      signatureStatus: "unsigned",
       sha256,
       metadata: { test: true, retention: "permanent" },
     }),
